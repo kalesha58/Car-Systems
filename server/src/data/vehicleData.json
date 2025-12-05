@@ -1,0 +1,127 @@
+{
+  "brands": [
+    {
+      "id": "b1",
+      "name": "Hyundai",
+      "type": "Car"
+    },
+    {
+      "id": "b2",
+      "name": "Maruti Suzuki",
+      "type": "Car"
+    },
+    {
+      "id": "b3",
+      "name": "Honda",
+      "type": "Car"
+    },
+    {
+      "id": "b4",
+      "name": "Toyota",
+      "type": "Car"
+    },
+    {
+      "id": "b5",
+      "name": "Bajaj",
+      "type": "Bike"
+    },
+    {
+      "id": "b6",
+      "name": "Hero",
+      "type": "Bike"
+    },
+    {
+      "id": "b7",
+      "name": "TVS",
+      "type": "Bike"
+    },
+    {
+      "id": "b8",
+      "name": "Yamaha",
+      "type": "Bike"
+    }
+  ],
+  "models": [
+    {
+      "id": "m1",
+      "brandId": "b1",
+      "name": "i20"
+    },
+    {
+      "id": "m2",
+      "brandId": "b1",
+      "name": "Creta"
+    },
+    {
+      "id": "m3",
+      "brandId": "b1",
+      "name": "Verna"
+    },
+    {
+      "id": "m4",
+      "brandId": "b2",
+      "name": "Swift"
+    },
+    {
+      "id": "m5",
+      "brandId": "b2",
+      "name": "Baleno"
+    },
+    {
+      "id": "m6",
+      "brandId": "b2",
+      "name": "Dzire"
+    },
+    {
+      "id": "m7",
+      "brandId": "b3",
+      "name": "City"
+    },
+    {
+      "id": "m8",
+      "brandId": "b3",
+      "name": "Amaze"
+    },
+    {
+      "id": "m9",
+      "brandId": "b4",
+      "name": "Innova"
+    },
+    {
+      "id": "m10",
+      "brandId": "b4",
+      "name": "Fortuner"
+    },
+    {
+      "id": "m11",
+      "brandId": "b5",
+      "name": "Pulsar"
+    },
+    {
+      "id": "m12",
+      "brandId": "b5",
+      "name": "Dominar"
+    },
+    {
+      "id": "m13",
+      "brandId": "b6",
+      "name": "Splendor"
+    },
+    {
+      "id": "m14",
+      "brandId": "b6",
+      "name": "Passion Pro"
+    },
+    {
+      "id": "m15",
+      "brandId": "b7",
+      "name": "Apache"
+    },
+    {
+      "id": "m16",
+      "brandId": "b8",
+      "name": "R15"
+    }
+  ]
+}
+

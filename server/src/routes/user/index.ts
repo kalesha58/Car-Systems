@@ -1,0 +1,24 @@
+import { Router } from 'express';
+import vehicleRoutes from './vehicleRoutes';
+import postRoutes from './postRoutes';
+import uploadRoutes from './uploadRoutes';
+import profileRoutes from './profileRoutes';
+import productRoutes from './productRoutes';
+import groupRoutes from './groupRoutes';
+import chatRoutes from './chatRoutes';
+import orderRoutes from './orderRoutes';
+
+const router = Router();
+
+// Mount all user route modules (keeping same API paths for backward compatibility)
+router.use('/vehicles', vehicleRoutes);
+router.use('/posts', postRoutes);
+router.use('/upload', uploadRoutes);
+router.use('/profile', profileRoutes);
+router.use('/products', productRoutes);
+router.use('/groups', groupRoutes);
+router.use('/chats', chatRoutes);
+router.use('/orders', orderRoutes);
+
+export default router;
+
