@@ -20,6 +20,7 @@ router.use(adminMiddleware);
  * /admin/addresses:
  *   get:
  *     summary: Get all addresses with pagination and filters (admin only)
+ *     description: Retrieve all addresses in the system with pagination, search, and filtering options. Admins can filter by user ID to see all addresses for a specific user.
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -28,32 +29,52 @@ router.use(adminMiddleware);
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 50
+ *         description: Number of addresses per page
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
+ *         description: Search by name, address, or phone number
  *       - in: query
  *         name: addressType
  *         schema:
  *           type: string
  *           enum: [home, office, other]
+ *         description: Filter by address type
  *       - in: query
  *         name: userId
  *         schema:
  *           type: string
+ *         description: Filter by user ID to get all addresses for a specific user
  *     responses:
  *       200:
  *         description: Addresses retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AddressListResponse'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/', getAllAddressesController);
 
@@ -62,6 +83,7 @@ router.get('/', getAllAddressesController);
  * /admin/addresses/{id}:
  *   get:
  *     summary: Get address by ID (admin only)
+ *     description: Retrieve a specific address by ID. Admins can access any user's address.
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -71,15 +93,32 @@ router.get('/', getAllAddressesController);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Address ID
  *     responses:
  *       200:
  *         description: Address retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AddressResponse'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Address not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/:id', getAddressByIdController);
 

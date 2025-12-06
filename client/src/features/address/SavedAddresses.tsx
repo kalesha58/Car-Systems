@@ -92,25 +92,6 @@ const SavedAddresses = () => {
     }
   };
 
-  const renderHeader = () => {
-    return (
-      <View style={styles.headerContainer}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigate('AddNewAddress')}>
-            <View style={styles.addButton}>
-              <Icon name="add" size={RFValue(20)} color={Colors.secondary} />
-              <CustomText
-                variant="h7"
-                fontFamily={Fonts.Medium}
-                style={styles.addButtonText}>
-                Add New
-              </CustomText>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
 
   const renderAddressItem = ({item, index}: {item: IAddress; index: number}) => {
     return (
@@ -137,10 +118,26 @@ const SavedAddresses = () => {
     );
   };
 
+  const renderHeaderButton = () => {
+    return (
+      <TouchableOpacity onPress={() => navigate('AddNewAddress')}>
+        <View style={styles.headerAddButton}>
+          <Icon name="add" size={RFValue(16)} color={Colors.secondary} />
+          <CustomText
+            variant="h8"
+            fontFamily={Fonts.Medium}
+            style={styles.headerAddButtonText}>
+            Add
+          </CustomText>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   if (loading && addresses.length === 0) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Saved Addresses" />
+        <CustomHeader title="Saved Addresses" rightComponent={renderHeaderButton()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.secondary} />
         </View>
@@ -150,12 +147,11 @@ const SavedAddresses = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Saved Addresses" />
+      <CustomHeader title="Saved Addresses" rightComponent={renderHeaderButton()} />
       <FlatList
         data={addresses}
         renderItem={renderAddressItem}
         keyExtractor={item => item._id || item.name}
-        ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={
           addresses.length === 0 ? styles.emptyListContainer : styles.listContainer
@@ -173,26 +169,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  headerContainer: {
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  addButton: {
+  headerAddButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 5,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: Colors.secondary,
   },
-  addButtonText: {
+  headerAddButtonText: {
     color: Colors.secondary,
+    fontSize: RFValue(11),
   },
   listContainer: {
     paddingBottom: 20,

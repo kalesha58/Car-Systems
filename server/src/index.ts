@@ -58,7 +58,7 @@ app.get('/', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
       endpoints: {
       health: '/health',
-      apiDocs: '/api-docs',
+      apiDocs: '/api/api-docs',
       auth: '/api/auth',
       vehicles: '/api/vehicles',
       posts: '/api/posts',
@@ -66,6 +66,7 @@ app.get('/', (req: Request, res: Response) => {
       dealers: '/api/dealers',
       services: '/api/services',
       profile: '/api/profile',
+      addresses: '/api/addresses',
       support: '/api/support',
       admin: '/admin',
     },
@@ -82,13 +83,13 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Swagger API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Car Connect API Documentation',
 }));
 
 // Swagger JSON endpoint
-app.get('/api-docs.json', (req: Request, res: Response) => {
+app.get('/api/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });

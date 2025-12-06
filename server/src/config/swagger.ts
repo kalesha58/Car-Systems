@@ -318,6 +318,191 @@ const swaggerDefinition: SwaggerDefinition = {
           },
         },
       },
+      AddressCoordinates: {
+        type: 'object',
+        required: ['latitude', 'longitude'],
+        properties: {
+          latitude: {
+            type: 'number',
+            minimum: -90,
+            maximum: 90,
+            example: 12.9716,
+            description: 'Latitude coordinate',
+          },
+          longitude: {
+            type: 'number',
+            minimum: -180,
+            maximum: 180,
+            example: 77.5946,
+            description: 'Longitude coordinate',
+          },
+        },
+      },
+      Address: {
+        type: 'object',
+        properties: {
+          _id: {
+            type: 'string',
+            example: '507f1f77bcf86cd799439011',
+          },
+          userId: {
+            type: 'string',
+            example: '507f1f77bcf86cd799439011',
+          },
+          name: {
+            type: 'string',
+            example: 'John Doe',
+          },
+          phone: {
+            type: 'string',
+            pattern: '^[0-9]{10}$',
+            example: '1234567890',
+          },
+          fullAddress: {
+            type: 'string',
+            example: '123 Main Street, Bangalore, Karnataka 560001',
+          },
+          coordinates: {
+            $ref: '#/components/schemas/AddressCoordinates',
+          },
+          addressType: {
+            type: 'string',
+            enum: ['home', 'office', 'other'],
+            example: 'home',
+          },
+          iconType: {
+            type: 'string',
+            enum: ['home', 'building', 'location'],
+            example: 'home',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-15T10:30:00.000Z',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-15T10:30:00.000Z',
+          },
+        },
+      },
+      CreateAddressRequest: {
+        type: 'object',
+        required: ['name', 'phone', 'fullAddress', 'coordinates'],
+        properties: {
+          name: {
+            type: 'string',
+            example: 'John Doe',
+            description: 'Name for the address (e.g., person name or label)',
+          },
+          phone: {
+            type: 'string',
+            pattern: '^[0-9]{10}$',
+            example: '1234567890',
+            description: 'Phone number (exactly 10 digits)',
+          },
+          fullAddress: {
+            type: 'string',
+            example: '123 Main Street, Bangalore, Karnataka 560001',
+            description: 'Complete address string',
+          },
+          coordinates: {
+            $ref: '#/components/schemas/AddressCoordinates',
+          },
+          addressType: {
+            type: 'string',
+            enum: ['home', 'office', 'other'],
+            default: 'home',
+            example: 'home',
+          },
+          iconType: {
+            type: 'string',
+            enum: ['home', 'building', 'location'],
+            default: 'location',
+            example: 'home',
+          },
+        },
+      },
+      UpdateAddressRequest: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            example: 'John Doe',
+          },
+          phone: {
+            type: 'string',
+            pattern: '^[0-9]{10}$',
+            example: '1234567890',
+          },
+          fullAddress: {
+            type: 'string',
+            example: '123 Main Street, Bangalore, Karnataka 560001',
+          },
+          coordinates: {
+            $ref: '#/components/schemas/AddressCoordinates',
+          },
+          addressType: {
+            type: 'string',
+            enum: ['home', 'office', 'other'],
+            example: 'home',
+          },
+          iconType: {
+            type: 'string',
+            enum: ['home', 'building', 'location'],
+            example: 'home',
+          },
+        },
+      },
+      AddressListResponse: {
+        type: 'object',
+        properties: {
+          success: {
+            type: 'boolean',
+            example: true,
+          },
+          addresses: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/Address',
+            },
+          },
+          pagination: {
+            type: 'object',
+            properties: {
+              page: {
+                type: 'number',
+                example: 1,
+              },
+              limit: {
+                type: 'number',
+                example: 50,
+              },
+              total: {
+                type: 'number',
+                example: 10,
+              },
+              pages: {
+                type: 'number',
+                example: 1,
+              },
+            },
+          },
+        },
+      },
+      AddressResponse: {
+        type: 'object',
+        properties: {
+          success: {
+            type: 'boolean',
+            example: true,
+          },
+          address: {
+            $ref: '#/components/schemas/Address',
+          },
+        },
+      },
     },
   },
   tags: [
