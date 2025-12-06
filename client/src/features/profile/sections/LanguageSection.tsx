@@ -1,19 +1,53 @@
 import {View, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
 import React, {FC} from 'react';
-import {Colors, Fonts} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useLanguageStore} from '@state/languageStore';
 import {LANGUAGES, LanguageCode} from '../../../types/language/ILanguage';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from '@hooks/useTheme';
 
 const LanguageSection: FC = () => {
   const {selectedLanguage, setLanguage} = useLanguageStore();
   const {t} = useTranslation();
+  const {colors} = useTheme();
 
   const handleLanguagePress = (languageCode: LanguageCode) => {
     setLanguage(languageCode);
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      marginBottom: 24,
+    },
+    title: {
+      marginBottom: 12,
+    },
+    languageContainer: {
+      flexDirection: 'row',
+      gap: 10,
+      paddingRight: 4,
+    },
+    languageButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.backgroundSecondary,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    languageButtonSelected: {
+      backgroundColor: colors.cardBackground,
+      borderColor: colors.secondary,
+    },
+    languageText: {
+      color: colors.text,
+    },
+    languageTextSelected: {
+      color: colors.secondary,
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -53,38 +87,6 @@ const LanguageSection: FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
-  },
-  title: {
-    marginBottom: 12,
-  },
-  languageContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingRight: 4,
-  },
-  languageButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  languageButtonSelected: {
-    backgroundColor: '#fff',
-    borderColor: Colors.secondary,
-  },
-  languageText: {
-    color: Colors.text,
-  },
-  languageTextSelected: {
-    color: Colors.secondary,
-  },
-});
 
 export default LanguageSection;
 

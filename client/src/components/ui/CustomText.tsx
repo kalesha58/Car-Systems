@@ -1,7 +1,8 @@
-import { Colors, Fonts } from "@utils/Constants";
+import { Fonts } from "@utils/Constants";
 import { FC } from "react";
 import { StyleSheet, Text, TextStyle } from "react-native";
-import { RFValue } from 'react-native-responsive-fontsize'
+import { RFValue } from 'react-native-responsive-fontsize';
+import { useTheme } from '@hooks/useTheme';
 
 interface Props {
     variant?:
@@ -35,6 +36,7 @@ const CustomText:FC<Props> = ({
     onLayout,
     ...props
 }) => {
+    const {colors} = useTheme();
     let computedFontSize: number;
   
     switch (variant) {
@@ -81,7 +83,7 @@ const CustomText:FC<Props> = ({
       onLayout={onLayout}
       style={[
         styles.text,
-        {color:Colors.text, fontSize:computedFontSize},
+        {color: colors.text, fontSize: computedFontSize},
         fontFamilyStyle,
         style
       ]}

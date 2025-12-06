@@ -1,14 +1,20 @@
 import {View, Text, StyleSheet, Image} from 'react-native';
-import React from 'react';
+import React, {useMemo} from 'react';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import {useCollapsibleContext} from '@r0b0t3d/react-native-collapsible';
 import Animated, {interpolate, useAnimatedStyle} from 'react-native-reanimated';
 import {darkWeatherColors} from '@utils/Constants';
 import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
+import {animations} from '@utils/animationConfig';
 
 const Visuals = () => {
   const {scrollY} = useCollapsibleContext();
+  
+  const selectedAnimation = useMemo(() => {
+    const randomIndex = Math.floor(Math.random() * animations.length);
+    return animations[randomIndex];
+  }, []);
   
   const headerAniamtedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [0, 120], [1, 0]);
@@ -27,7 +33,7 @@ const Visuals = () => {
         enableMergePathsAndroidForKitKatAndAbove={true}
         loop={true}
         style={styles.lottie}
-        source={require('@assets/animations/raining.json')}
+        source={selectedAnimation.source}
       />
     </Animated.View>
   );

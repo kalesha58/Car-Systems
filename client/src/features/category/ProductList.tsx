@@ -1,12 +1,12 @@
 import {View, Text, StyleSheet, FlatList} from 'react-native';
 import React, {FC} from 'react';
-import {Colors} from '@utils/Constants';
 import ProductItem from './ProductItem';
 import VehicleItem from './VehicleItem';
 import ServiceItem from './ServiceItem';
 import {IProduct} from '@types/product/IProduct';
 import {IDealerVehicle} from '@types/vehicle/IVehicle';
 import {IService} from '@types/service/IService';
+import {useTheme} from '@hooks/useTheme';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -16,6 +16,20 @@ interface ProductListProps {
 }
 
 const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
+  const {colors} = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      height: '100%',
+      backgroundColor: colors.backgroundSecondary,
+    },
+    content: {
+      paddingVertical: 10,
+      paddingBottom: 100,
+    },
+  });
+
   const renderItem = ({item, index}: {item: ItemType; index: number}) => {
     if (itemType === 'vehicles') {
       return <VehicleItem item={item as IDealerVehicle} index={index} />;
@@ -37,17 +51,5 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
     />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    height: '100%',
-    backgroundColor: Colors.backgroundSecondary,
-  },
-  content: {
-    paddingVertical: 10,
-    paddingBottom: 100,
-  },
-});
 
 export default ProductList;

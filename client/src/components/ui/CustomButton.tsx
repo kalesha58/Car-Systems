@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { FC } from 'react'
-import { Colors, Fonts } from '@utils/Constants';
+import { Fonts } from '@utils/Constants';
 import CustomText from './CustomText';
+import { useTheme } from '@hooks/useTheme';
 
 
 interface CustomButtonProps {
@@ -13,26 +14,9 @@ interface CustomButtonProps {
 
 
 const CustomButton:FC<CustomButtonProps> = ({onPress,loading,title,disabled}) => {
-  return (
-    <TouchableOpacity
-    onPress={onPress}
-    disabled={disabled}
-    activeOpacity={0.8}
-    style={[styles.btn,{
-        backgroundColor:disabled ? Colors.disabled : Colors.secondary
-    }]}
-    >{
-        loading ? 
-        <ActivityIndicator color='#fff' size='small' />:
-        <CustomText style={styles.text} variant='h6' fontFamily={Fonts.SemiBold}>
-            {title}
-        </CustomText>
-    }
-    </TouchableOpacity>
-  )
-}
+  const {colors} = useTheme();
 
-const styles = StyleSheet.create({
+  const styles = StyleSheet.create({
     btn: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -42,8 +26,27 @@ const styles = StyleSheet.create({
         width: '100%'
     },
     text: {
-        color: '#fff'
+        color: colors.white
     }
-})
+  });
+
+  return (
+    <TouchableOpacity
+    onPress={onPress}
+    disabled={disabled}
+    activeOpacity={0.8}
+    style={[styles.btn,{
+        backgroundColor: disabled ? colors.disabled : colors.secondary
+    }]}
+    >{
+        loading ? 
+        <ActivityIndicator color={colors.white} size='small' />:
+        <CustomText style={styles.text} variant='h6' fontFamily={Fonts.SemiBold}>
+            {title}
+        </CustomText>
+    }
+    </TouchableOpacity>
+  )
+}
 
 export default CustomButton

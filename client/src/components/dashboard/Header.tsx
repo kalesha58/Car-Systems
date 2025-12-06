@@ -5,19 +5,21 @@ import {useAuthStore} from '@state/authStore';
 import Geolocation from '@react-native-community/geolocation';
 import {reverseGeocode} from '@service/mapService';
 import CustomText from '@components/ui/CustomText';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {navigate} from '@utils/NavigationUtils';
 import {getSavedAddresses} from '@service/addressService';
 import type {IAddress} from '../../types/address/IAddress';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from '@hooks/useTheme';
 
 const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
   const {setUser, user} = useAuthStore();
   const {t} = useTranslation();
   const [savedAddress, setSavedAddress] = useState<IAddress | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState<boolean>(false);
+  const {colors} = useTheme();
 
   const fetchSavedAddresses = async () => {
     try {
@@ -83,11 +85,11 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
             style={styles.text}>
             15 {t('dashboard.minutes')}
           </CustomText>
-          <TouchableOpacity style={styles.noticeBtn} onPress={showNotice}>
+          <TouchableOpacity style={[styles.noticeBtn, {backgroundColor: colors.backgroundSecondary}]} onPress={showNotice}>
             <CustomText
               fontSize={RFValue(5)}
               fontFamily={Fonts.SemiBold}
-              style={{color: '#3B4886'}}>
+              style={{color: colors.text}}>
               ⛈️ Rain
             </CustomText>
           </TouchableOpacity>
@@ -103,7 +105,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
           </CustomText>
           <Icon
             name="menu-down"
-            color="#fff"
+            color={colors.white}
             size={RFValue(20)}
             style={{bottom: -1}}
           />
@@ -113,7 +115,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
       <TouchableOpacity
         onPress={() => navigate('Profile')}
         activeOpacity={0.8}
-        style={styles.profileImageContainer}>
+        style={[styles.profileImageContainer, {borderColor: colors.white}]}>
         {user?.profileImage ? (
           <Image
             source={{uri: user.profileImage}}
@@ -121,7 +123,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
             resizeMode="cover"
           />
         ) : (
-          <View style={styles.placeholderContainer}>
+          <View style={[styles.placeholderContainer, {backgroundColor: colors.primary}]}>
             <CustomText
               variant="h8"
               fontFamily={Fonts.Bold}
@@ -164,7 +166,6 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   noticeBtn: {
-    backgroundColor: '#E8EAF5',
     borderRadius: 100,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -176,7 +177,6 @@ const styles = StyleSheet.create({
     borderRadius: RFValue(18),
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#fff',
   },
   profileImage: {
     width: '100%',
@@ -187,7 +187,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: RFValue(18),
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

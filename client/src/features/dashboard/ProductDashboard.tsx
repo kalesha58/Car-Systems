@@ -32,6 +32,7 @@ import Content from '@components/dashboard/Content';
 import StickySearchBar from './StickySearchBar';
 import withCart from '../../features/cart/WithCart';
 import withLiveStatus from '@features/map/withLiveStatus';
+import {useTheme} from '@hooks/useTheme';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -41,6 +42,7 @@ const ProductDashboard = () => {
   const insets = useSafeAreaInsets();
   const {scrollY, expand} = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
+  const {colors} = useTheme();
 
   const backToTopStyle = useAnimatedStyle(() => {
     const isScrollingUp =
@@ -80,6 +82,28 @@ const ProductDashboard = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  const styles = StyleSheet.create({
+    panelContainer: {
+      flex: 1,
+    },
+    transparent: {
+      backgroundColor: 'transparent',
+    },
+    backToTopButton: {
+      position: 'absolute',
+      alignSelf: 'center',
+      top: Platform.OS === 'ios' ? screenHeight * 0.18 : 100,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.backgroundTertiary,
+      borderRadius: 20,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      zIndex: 999,
+    },
+  });
+
   return (
     <NoticeAnimation noticePosition={noticePosition}>
       <>
@@ -94,12 +118,12 @@ const ProductDashboard = () => {
             style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <Icon
               name="arrow-up-circle-outline"
-              color="white"
+              color={colors.text}
               size={RFValue(12)}
             />
             <CustomText
               variant="h9"
-              style={{color: 'white'}}
+              style={{color: colors.text}}
               fontFamily={Fonts.SemiBold}>
               Back to top
             </CustomText>
@@ -127,7 +151,7 @@ const ProductDashboard = () => {
             showsVerticalScrollIndicator={false}>
             <Content />
 
-            <View style={{backgroundColor: '#f8f8f8', padding: 20}}>
+            <View style={{backgroundColor: colors.backgroundSecondary, padding: 20}}>
               <CustomText
                 fontSize={RFValue(32)}
                 fontFamily={Fonts.Bold}
@@ -146,28 +170,6 @@ const ProductDashboard = () => {
     </NoticeAnimation>
   );
 };
-
-const styles = StyleSheet.create({
-  panelContainer: {
-    flex: 1,
-  },
-  transparent: {
-    backgroundColor: 'transparent',
-  },
-  backToTopButton: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: Platform.OS === 'ios' ? screenHeight * 0.18 : 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'black',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    zIndex: 999,
-  },
-});
 
 export default withLiveStatus(
   withCart(withCollapsibleContext(ProductDashboard)),

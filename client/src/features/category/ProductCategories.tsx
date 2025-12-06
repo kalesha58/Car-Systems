@@ -1,7 +1,6 @@
 import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
-import {Colors} from '@utils/Constants';
 import Sidebar, {CategoryType} from './Sidebar';
 import ProductList from './ProductList';
 import {getCategories} from '@service/categoryService';
@@ -12,6 +11,7 @@ import type {IProduct} from '../../types/product/IProduct';
 import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import type {IService} from '../../types/service/IService';
 import type {ICategoryItem} from '../../types/category/ICategoryItem';
+import {useTheme} from '@hooks/useTheme';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -160,12 +160,31 @@ const ProductCategories = () => {
     return categoryType.charAt(0).toUpperCase() + categoryType.slice(1);
   };
 
+  const {colors} = useTheme();
+
+  const styles = StyleSheet.create({
+    mainContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    subContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+
   return (
     <View style={styles.mainContainer}>
       <CustomHeader title={getHeaderTitle()} search />
       <View style={styles.subContainer}>
         {categoriesLoading ? (
-          <ActivityIndicator size="small" color={Colors.border} />
+          <ActivityIndicator size="small" color={colors.border} />
         ) : (
           <Sidebar
             categories={categories}
@@ -183,7 +202,7 @@ const ProductCategories = () => {
         {itemsLoading ? (
           <ActivityIndicator
             size="large"
-            color={Colors.border}
+            color={colors.border}
             style={styles.center}
           />
         ) : (
@@ -193,22 +212,5 @@ const ProductCategories = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  subContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default ProductCategories;

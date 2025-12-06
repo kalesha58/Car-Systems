@@ -24,7 +24,8 @@
     "gallery": "गैलरी",
     "cancel": "रद्द करें",
     "error": "त्रुटि",
-    "uploadFailed": "प्रोफ़ाइल छवि अपलोड करने में विफल। कृपया पुनः प्रयास करें।"
+    "uploadFailed": "प्रोफ़ाइल छवि अपलोड करने में विफल। कृपया पुनः प्रयास करें।",
+    "darkMode": "डार्क मोड"
   },
   "common": {
     "wallet": "वॉलेट",
@@ -53,6 +54,11 @@
   "dashboard": {
     "deliveryIn": "डिलीवरी",
     "minutes": "मिनट में"
+  },
+  "animations": {
+    "rain": "बारिश",
+    "sakuraFall": "सकुरा गिरना",
+    "christmasSleigh": "क्रिसमस स्लेज"
   }
 }
 

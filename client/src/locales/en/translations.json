@@ -24,7 +24,8 @@
     "gallery": "Gallery",
     "cancel": "Cancel",
     "error": "Error",
-    "uploadFailed": "Failed to upload profile image. Please try again."
+    "uploadFailed": "Failed to upload profile image. Please try again.",
+    "darkMode": "Dark Mode"
   },
   "common": {
     "wallet": "Wallet",
@@ -53,6 +54,11 @@
   "dashboard": {
     "deliveryIn": "Delivery in",
     "minutes": "minutes"
+  },
+  "animations": {
+    "rain": "Rain",
+    "sakuraFall": "Sakura Fall",
+    "christmasSleigh": "Christmas Sleigh"
   }
 }
 

@@ -153,6 +153,26 @@ export const categories = [
         name: "Cleaning Essentials",
         image: require('../assets/category/8.png')
     },
+    {
+        id: 9,
+        name: "Car Parts",
+        image: require('../assets/category/9.png')
+    },
+    {
+        id: 10,
+        name: "Accessories",
+        image: require('../assets/category/10.png')
+    },
+    {
+        id: 11,
+        name: "Tools & Equipment",
+        image: require('../assets/category/11.png')
+    },
+    {
+        id: 12,
+        name: "Spare Parts",
+        image: require('../assets/category/12.png')
+    },
 ]
 
 

@@ -6,7 +6,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {navigationRef} from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Colors, Fonts} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import SplashScreen from '@features/auth/SplashScreen';
 import DeliveryLogin from '@features/auth/DeliveryLogin';
@@ -21,24 +21,26 @@ import AddNewAddress from '@features/address/AddNewAddress';
 import AddressForm from '@features/address/AddressForm';
 import OrderSuccess from '@features/order/OrderSuccess';
 import {useCartStore} from '@state/cartStore';
+import {useTheme} from '@hooks/useTheme';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs: FC = () => {
   const {cart} = useCartStore();
+  const {colors} = useTheme();
   const cartCount = cart.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.secondary,
-        tabBarInactiveTintColor: Colors.disabled,
+        tabBarActiveTintColor: colors.secondary,
+        tabBarInactiveTintColor: colors.disabled,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.cardBackground,
           borderTopWidth: 1,
-          borderTopColor: Colors.border,
+          borderTopColor: colors.border,
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,

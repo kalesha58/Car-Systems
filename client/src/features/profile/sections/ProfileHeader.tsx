@@ -11,16 +11,18 @@ import React, {FC, useState} from 'react';
 import {launchImageLibrary, launchCamera, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useAuthStore} from '@state/authStore';
 import {useTranslation} from 'react-i18next';
 import {updateProfileImage} from '@service/profileService';
+import {useTheme} from '@hooks/useTheme';
 
 const ProfileHeader: FC = () => {
   const {user, setUser} = useAuthStore();
   const {t} = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
+  const {colors} = useTheme();
 
   const getInitialLetter = (): string => {
     if (user?.name) {
@@ -111,7 +113,7 @@ const ProfileHeader: FC = () => {
             resizeMode="cover"
           />
         ) : (
-          <View style={styles.placeholderContainer}>
+          <View style={[styles.placeholderContainer, {backgroundColor: colors.primary}]}>
             <CustomText variant="h2" fontFamily={Fonts.Bold} style={styles.placeholderText}>
               {getInitialLetter()}
             </CustomText>
@@ -119,11 +121,11 @@ const ProfileHeader: FC = () => {
         )}
         {isUploading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="small" color={Colors.primary} />
+            <ActivityIndicator size="small" color={colors.primary} />
           </View>
         )}
-        <View style={styles.editIconContainer}>
-          <Icon name="pencil" size={RFValue(18)} color="#fff" />
+        <View style={[styles.editIconContainer, {backgroundColor: colors.secondary, borderColor: colors.white}]}>
+          <Icon name="pencil" size={RFValue(18)} color={colors.white} />
         </View>
       </TouchableOpacity>
     </View>
@@ -151,7 +153,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 50,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -165,11 +166,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.secondary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2.5,
-    borderColor: '#fff',
     zIndex: 10,
     elevation: 8,
     shadowColor: '#000',

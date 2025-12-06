@@ -11,11 +11,12 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {Colors, Fonts} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import type {ICategoryItem} from '../../types/category/ICategoryItem';
 import type {SharedValue} from 'react-native-reanimated';
+import {useTheme} from '@hooks/useTheme';
 
 export type CategoryType = 'products' | 'vehicles' | 'services';
 
@@ -42,38 +43,74 @@ const CategoryItem: FC<CategoryItemProps> = ({
   animatedValue,
   onPress,
 }) => {
+  const {colors} = useTheme();
   const animatedStyle = useAnimatedStyle(() => ({
     bottom: animatedValue?.value ?? -15,
   }));
 
+  const itemStyles = StyleSheet.create({
+    categoryButton: {
+      padding: 10,
+      height: 100,
+      paddingVertical: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+    },
+    imageContainer: {
+      borderRadius: 100,
+      height: '50%',
+      marginBottom: 10,
+      width: '75%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      overflow: 'hidden',
+    },
+    selectedImageContainer: {
+      backgroundColor: colors.backgroundTertiary,
+    },
+    image: {
+      width: '80%',
+      height: '80%',
+      resizeMode: 'contain',
+    },
+    placeholderIcon: {
+      width: '60%',
+      height: '60%',
+      backgroundColor: colors.disabled,
+      borderRadius: 50,
+    },
+  });
+
   return (
     <TouchableOpacity
       activeOpacity={1}
-      style={styles.categoryButton}
+      style={itemStyles.categoryButton}
       onPress={onPress}>
       <View
         style={[
-          styles.imageContainer,
-          isSelected && styles.selectedImageContainer,
+          itemStyles.imageContainer,
+          isSelected && itemStyles.selectedImageContainer,
         ]}>
         {category?.image ? (
           typeof category.image === 'number' ? (
             <Animated.Image
               source={category.image}
-              style={[styles.image, animatedStyle]}
+              style={[itemStyles.image, animatedStyle]}
               resizeMode="contain"
             />
           ) : typeof category.image === 'string' && category.image.trim() !== '' ? (
             <Animated.Image
               source={{uri: category.image}}
-              style={[styles.image, animatedStyle]}
+              style={[itemStyles.image, animatedStyle]}
               resizeMode="contain"
             />
           ) : (
-            <Animated.View style={[styles.placeholderIcon, animatedStyle]} />
+            <Animated.View style={[itemStyles.placeholderIcon, animatedStyle]} />
           )
         ) : (
-          <Animated.View style={[styles.placeholderIcon, animatedStyle]} />
+          <Animated.View style={[itemStyles.placeholderIcon, animatedStyle]} />
         )}
       </View>
 
@@ -91,6 +128,7 @@ const Sidebar: FC<SidebarProps> = ({
   selectedCategoryType = 'products',
   onCategoryTypePress,
 }) => {
+  const {colors} = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
   const indicatorPosition = useSharedValue(0);
   const maxCategories = 20;
@@ -177,6 +215,84 @@ const Sidebar: FC<SidebarProps> = ({
     transform: [{translateY: indicatorPosition.value}],
   }));
 
+  const styles = StyleSheet.create({
+    sideBar: {
+      width: '24%',
+      backgroundColor: colors.cardBackground,
+      borderRightWidth: 0.8,
+      borderRightColor: colors.border,
+      position: 'relative',
+    },
+    categoryButton: {
+      padding: 10,
+      height: 100,
+      paddingVertical: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+    },
+    indicator: {
+      position: 'absolute',
+      right: 0,
+      width: 4,
+      height: 80,
+      top: 10,
+      alignSelf: 'center',
+      backgroundColor: colors.secondary,
+      borderTopLeftRadius: 15,
+      borderBottomLeftRadius: 15,
+    },
+    image: {
+      width: '80%',
+      height: '80%',
+      resizeMode: 'contain',
+    },
+    imageContainer: {
+      borderRadius: 100,
+      height: '50%',
+      marginBottom: 10,
+      width: '75%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      overflow: 'hidden',
+    },
+    selectedImageContainer: {
+      backgroundColor: colors.backgroundTertiary,
+    },
+    categoryTypesContainer: {
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    categoryTypeButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      marginVertical: 2,
+      borderRadius: 6,
+    },
+    selectedCategoryTypeButton: {
+      backgroundColor: colors.backgroundSecondary,
+    },
+    categoryTypeText: {
+      textAlign: 'center',
+    },
+    selectedCategoryTypeText: {
+      color: colors.secondary,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    placeholderIcon: {
+      width: '60%',
+      height: '60%',
+      backgroundColor: colors.disabled,
+      borderRadius: 50,
+    },
+  });
+
   return (
     <View style={styles.sideBar}>
       <ScrollView
@@ -230,84 +346,5 @@ const Sidebar: FC<SidebarProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  sideBar: {
-    width: '24%',
-    backgroundColor: '#fff',
-    borderRightWidth: 0.8,
-    borderRightColor: '#eee',
-    position: 'relative',
-  },
-  categoryButton: {
-    padding: 10,
-    height: 100,
-    paddingVertical: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-  },
-
-  indicator: {
-    position: 'absolute',
-    right: 0,
-    width: 4,
-    height: 80,
-    top: 10,
-    alignSelf: 'center',
-    backgroundColor: Colors.secondary,
-    borderTopLeftRadius: 15,
-    borderBottomLeftRadius: 15,
-  },
-  image: {
-    width: '80%',
-    height: '80%',
-    resizeMode: 'contain',
-  },
-  imageContainer: {
-    borderRadius: 100,
-    height: '50%',
-    marginBottom: 10,
-    width: '75%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F7',
-    overflow: 'hidden',
-  },
-  selectedImageContainer: {
-    backgroundColor: '#CFFFDB',
-  },
-  categoryTypesContainer: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  categoryTypeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginVertical: 2,
-    borderRadius: 6,
-  },
-  selectedCategoryTypeButton: {
-    backgroundColor: Colors.backgroundSecondary,
-  },
-  categoryTypeText: {
-    textAlign: 'center',
-  },
-  selectedCategoryTypeText: {
-    color: Colors.secondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#eee',
-    marginVertical: 8,
-  },
-  placeholderIcon: {
-    width: '60%',
-    height: '60%',
-    backgroundColor: '#ddd',
-    borderRadius: 50,
-  },
-});
 
 export default Sidebar;

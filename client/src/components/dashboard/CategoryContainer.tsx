@@ -4,8 +4,45 @@ import ScalePress from '@components/ui/ScalePress'
 import { navigate } from '@utils/NavigationUtils'
 import CustomText from '@components/ui/CustomText'
 import { Fonts } from '@utils/Constants'
+import { useTheme } from '@hooks/useTheme'
 
 const CategoryContainer: FC<{ data: any }> = ({ data }) => {
+  const {colors} = useTheme();
+
+  const styles = StyleSheet.create({
+    container:{
+        marginVertical:15,
+    },
+    row:{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 25
+    },
+    text: {
+        textAlign: 'center'
+    },
+    item: {
+        width: '22%',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    imageContainer: {
+        width: '100%',
+        height: 80,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 10,
+        padding: 6,
+        backgroundColor: colors.backgroundSecondary,
+        marginBottom: 8
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain'
+    }
+  });
 
  const renderItems=(items:any[])=>{
     return(
@@ -36,40 +73,5 @@ const CategoryContainer: FC<{ data: any }> = ({ data }) => {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-    container:{
-        marginVertical:15,
-    },
-    row:{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 25
-    },
-    text: {
-        textAlign: 'center'
-    },
-    item: {
-        width: '22%',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    imageContainer: {
-        width: '100%',
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 10,
-        padding: 6,
-        backgroundColor: "#E5F3F3",
-        marginBottom: 8
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'contain'
-    }
-})
 
 export default CategoryContainer
