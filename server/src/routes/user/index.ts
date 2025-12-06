@@ -7,6 +7,7 @@ import productRoutes from './productRoutes';
 import groupRoutes from './groupRoutes';
 import chatRoutes from './chatRoutes';
 import orderRoutes from './orderRoutes';
+import addressRoutes from './addressRoutes';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.use('/products', productRoutes);
 router.use('/groups', groupRoutes);
 router.use('/chats', chatRoutes);
 router.use('/orders', orderRoutes);
+router.use('/addresses', addressRoutes);
 
 export default router;
 
