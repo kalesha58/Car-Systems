@@ -8,17 +8,18 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
-import SplashScreen from '../features/auth/SplashScreen';
-import DeliveryLogin from '../features/auth/DeliveryLogin';
-import CustomerLogin from '../features/auth/CustomerLogin';
-import ProductDashboard from '../features/dashboard/ProductDashboard';
-import PlayScreen from '../features/play/PlayScreen';
-import ProductCategories from '../features/category/ProductCategories';
-import CartScreen from '../features/cart/CartScreen';
-import Profile from '../features/profile/Profile';
-import SavedAddresses from '../features/address/SavedAddresses';
-import AddNewAddress from '../features/address/AddNewAddress';
-import AddressForm from '../features/address/AddressForm';
+import SplashScreen from '@features/auth/SplashScreen';
+import DeliveryLogin from '@features/auth/DeliveryLogin';
+import CustomerLogin from '@features/auth/CustomerLogin';
+import ProductDashboard from '@features/dashboard/ProductDashboard';
+import PlayScreen from '@features/play/PlayScreen';
+import ProductCategories from '@features/category/ProductCategories';
+import CartScreen from '@features/cart/CartScreen';
+import Profile from '@features/profile/Profile';
+import SavedAddresses from '@features/address/SavedAddresses';
+import AddNewAddress from '@features/address/AddNewAddress';
+import AddressForm from '@features/address/AddressForm';
+import OrderSuccess from '@features/order/OrderSuccess';
 import {useCartStore} from '@state/cartStore';
 
 const Stack = createNativeStackNavigator();
@@ -132,6 +133,7 @@ const Navigation: FC = () => {
         <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
         <Stack.Screen name="AddNewAddress" component={AddNewAddress} />
         <Stack.Screen name="AddressForm" component={AddressForm} />
+        <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
         <Stack.Screen
           options={{
             animation: 'fade',

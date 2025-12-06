@@ -1,48 +1,311 @@
-import React from 'react';
-import {View, StyleSheet, FlatList} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import CustomText from '@components/ui/CustomText';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Platform,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import React, {useState} from 'react';
+import {useFocusEffect, useRoute, useNavigation} from '@react-navigation/native';
+import CustomHeader from '@components/ui/CustomHeader';
 import {Colors, Fonts} from '@utils/Constants';
+import OrderList from '@features/order/OrderList';
+import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import IconIonicons from 'react-native-vector-icons/Ionicons';
+import BillDetails from '@features/order/BillDetails';
 import {useCartStore} from '@state/cartStore';
-import {screenHeight, screenWidth} from '@utils/Scaling';
+import {useAuthStore} from '@state/authStore';
+import {hocStyles} from '@styles/GlobalStyles';
+import ArrowButton from '@components/ui/ArrowButton';
+import {createOrder} from '@service/orderService';
+import {navigate} from '@utils/NavigationUtils';
+import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
+import {IAddress} from '../../types/address/IAddress';
+import {useTranslation} from 'react-i18next';
+
+interface RouteParams {
+  selectedAddress?: IAddress;
+}
 
 const CartScreen: React.FC = () => {
-  const {cart} = useCartStore();
+  const {getTotalPrice, cart, clearCart} = useCartStore();
+  const {user, setCurrentOrder, currentOrder} = useAuthStore();
+  const totalItemPrice = getTotalPrice();
+  const route = useRoute();
+  const navigation = useNavigation();
 
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <CustomText
-          fontSize={RFValue(20)}
-          fontFamily={Fonts.Bold}
-          style={styles.title}>
-          Cart
-        </CustomText>
-      </View>
-      {cart.length === 0 ? (
+  const [loading, setLoading] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = route.params as RouteParams | undefined;
+      if (params?.selectedAddress) {
+        setSelectedAddress(params.selectedAddress);
+        navigation.setParams({selectedAddress: undefined} as never);
+      }
+    }, [route.params, navigation]),
+  );
+
+  const parseAddressToShippingAddress = (
+    address: IAddress | null,
+  ): IShippingAddress => {
+    if (!address || !address.fullAddress) {
+      return {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'India',
+      };
+    }
+
+    const parts = address.fullAddress.split(',').map(part => part.trim());
+    return {
+      street: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2] || '',
+      zipCode: parts[3] || '',
+      country: 'India',
+    };
+  };
+
+  const getAddressIcon = (iconType: string) => {
+    switch (iconType) {
+      case 'home':
+        return 'home-outline';
+      case 'building':
+        return 'business-outline';
+      case 'location':
+        return 'location-outline';
+      default:
+        return 'location-outline';
+    }
+  };
+
+  const handleAddAddress = () => {
+    navigate('SavedAddresses', {selectMode: true});
+  };
+
+  const handleChangeAddress = () => {
+    if (selectedAddress?._id) {
+      navigate('SavedAddresses', {
+        selectMode: true,
+        preselectedAddressId: selectedAddress._id,
+      });
+    } else {
+      navigate('SavedAddresses', {selectMode: true});
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (currentOrder !== null) {
+      Alert.alert('Let your first order to be delivered');
+      return;
+    }
+
+    if (cart.length === 0) {
+      Alert.alert('Add any items to place order');
+      return;
+    }
+
+    if (!selectedAddress) {
+      Alert.alert('Please select a delivery address');
+      return;
+    }
+
+    const shippingAddress = parseAddressToShippingAddress(selectedAddress);
+
+    const orderItems = cart.map(item => ({
+      productId: item.item?.id || item._id.toString(),
+      name: item.item?.name || '',
+      quantity: item.count,
+      price: item.item?.price || 0,
+      total: item.count * (item.item?.price || 0),
+    }));
+
+    const orderData: ICreateOrderRequest = {
+      items: orderItems,
+      shippingAddress,
+      paymentMethod: 'cash_on_delivery',
+    };
+
+    setLoading(true);
+    try {
+      const data = await createOrder(orderData);
+
+      if (data !== null) {
+        setCurrentOrder(data);
+        clearCart();
+        navigate('OrderSuccess', {...data});
+      } else {
+        Alert.alert('There was an error');
+      }
+    } catch (error) {
+      Alert.alert('Failed to create order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (cart.length === 0) {
+    return (
+      <View style={styles.container}>
+        <CustomHeader title={t('cart.title')} />
         <View style={styles.emptyContainer}>
+          <IconIonicons
+            name="bag-outline"
+            size={RFValue(120)}
+            color={Colors.disabled}
+          />
           <CustomText
             fontSize={RFValue(16)}
             fontFamily={Fonts.Medium}
             style={styles.emptyText}>
-            Your cart is empty
+            {t('cart.emptyCart')}
+          </CustomText>
+          <CustomText
+            fontSize={RFValue(12)}
+            fontFamily={Fonts.Medium}
+            style={styles.emptySubText}>
+            {t('cart.addItems')}
           </CustomText>
         </View>
-      ) : (
-        <FlatList
-          data={cart}
-          keyExtractor={item => item._id.toString()}
-          renderItem={({item}) => (
-            <View style={styles.cartItem}>
-              <CustomText fontFamily={Fonts.Medium}>
-                {item.item?.name || 'Item'} x {item.count}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <CustomHeader title="Cart" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <OrderList />
+
+        <View style={styles.flexRowBetween}>
+          <View style={styles.flexRow}>
+            <Image
+              source={require('@assets/icons/coupon.png')}
+              style={{width: 25, height: 25}}
+            />
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+              Use Coupons
+            </CustomText>
+          </View>
+          <Icon name="chevron-right" size={RFValue(16)} color={Colors.text} />
+        </View>
+
+        <BillDetails totalItemPrice={totalItemPrice} />
+
+        <View style={styles.flexRowBetween}>
+          <View>
+            <CustomText variant="h8" fontFamily={Fonts.SemiBold}>
+              Cancellation Policy
+            </CustomText>
+            <CustomText
+              variant="h9"
+              style={styles.cancelText}
+              fontFamily={Fonts.SemiBold}>
+              Orders cannot be cancelled once packed for delivery, In case of
+              unexpected delays, refund will be provided, if applicable
+            </CustomText>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={hocStyles.cartContainer}>
+        <View style={styles.absoluteContainer}>
+          <View style={styles.addressContainer}>
+            {selectedAddress ? (
+              <>
+                <View style={styles.flexRow}>
+                  <IconIonicons
+                    name={getAddressIcon(selectedAddress.iconType)}
+                    size={RFValue(20)}
+                    color={Colors.text}
+                  />
+                  <View style={{width: '75%'}}>
+                    <CustomText variant="h8" fontFamily={Fonts.Medium}>
+                      Delivering to {selectedAddress.name}
+                    </CustomText>
+                    <CustomText
+                      variant="h9"
+                      numberOfLines={2}
+                      style={{opacity: 0.6}}>
+                      {selectedAddress.fullAddress}
+                    </CustomText>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={handleChangeAddress}>
+                  <CustomText
+                    variant="h8"
+                    style={{color: Colors.secondary}}
+                    fontFamily={Fonts.Medium}>
+                    Change
+                  </CustomText>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.flexRow}>
+                  <IconIonicons
+                    name="location-outline"
+                    size={RFValue(20)}
+                    color={Colors.disabled}
+                  />
+                  <View style={{width: '75%'}}>
+                    <CustomText variant="h8" fontFamily={Fonts.Medium}>
+                      Deliver to address
+                    </CustomText>
+                    <CustomText
+                      variant="h9"
+                      numberOfLines={2}
+                      style={{opacity: 0.6}}>
+                      No address selected
+                    </CustomText>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={handleAddAddress}>
+                  <CustomText
+                    variant="h8"
+                    style={{color: Colors.secondary}}
+                    fontFamily={Fonts.Medium}>
+                    Add
+                  </CustomText>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+
+          <View style={styles.paymentGateway}>
+            <View style={{width: '30%'}}>
+              <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
+                💵 PAY USING
+              </CustomText>
+              <CustomText
+                fontFamily={Fonts.Regular}
+                variant="h9"
+                style={{marginTop: 2}}>
+                Cash on Delivery
               </CustomText>
             </View>
-          )}
-        />
-      )}
-    </SafeAreaView>
+
+            <View style={{width: '70%'}}>
+              <ArrowButton
+                loading={loading}
+                price={totalItemPrice}
+                title="Place Order"
+                onPress={handlePlaceOrder}
+                disabled={!selectedAddress}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 };
 
@@ -51,27 +314,64 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.02,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+  scrollContainer: {
+    backgroundColor: Colors.backgroundSecondary,
+    padding: 10,
+    paddingBottom: 250,
   },
-  title: {
-    color: Colors.text,
+  cancelText: {
+    marginTop: 4,
+    opacity: 0.6,
+  },
+  flexRowBetween: {
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    flexDirection: 'row',
+    borderRadius: 15,
+    marginBottom: 15,
+  },
+  flexRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  paymentGateway: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 14,
+    paddingTop: 10,
+  },
+  addressContainer: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 0.7,
+    borderColor: Colors.border,
+  },
+  absoluteContainer: {
+    marginVertical: 15,
+    marginBottom: Platform.OS === 'ios' ? 30 : 10,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   emptyText: {
-    color: Colors.disabled,
+    color: Colors.text,
+    marginTop: 20,
+    textAlign: 'center',
   },
-  cartItem: {
-    padding: screenWidth * 0.04,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+  emptySubText: {
+    color: Colors.disabled,
+    marginTop: 6,
+    textAlign: 'center',
   },
 });
 

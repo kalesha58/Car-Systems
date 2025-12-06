@@ -52,7 +52,10 @@ const MapViewComponent = ({
       showsBuildings={false}
       showsIndoors={false}
       showsScale={false}
-      showsIndoorLevelPicker={false}>
+      showsIndoorLevelPicker={false}
+      onUserLocationChange={() => {
+        // Handler to prevent "topUserLocationChange" event error
+      }}>
 
       {deliveryPersonLocation &&
         (hasPickedUp || hasAccepted) &&

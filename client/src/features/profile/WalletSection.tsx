@@ -1,17 +1,20 @@
-import { View, Text, StyleSheet } from 'react-native'
-import React from 'react'
-import { Colors } from '@utils/Constants'
-import WalletItem from './WalletItem'
+import {View, Text, StyleSheet} from 'react-native';
+import React from 'react';
+import {Colors} from '@utils/Constants';
+import WalletItem from './WalletItem';
+import {useTranslation} from 'react-i18next';
 
 const WalletSection = () => {
-    return (
-        <View style={styles.walletContainer}>
-            <WalletItem icon='wallet-outline' label='wallet' />
-            <WalletItem icon='chatbubble-ellipses-outline' label='Support' />
-            <WalletItem icon='card-outline' label='Payments' />
-        </View>
-    )
-}
+  const {t} = useTranslation();
+
+  return (
+    <View style={styles.walletContainer}>
+      <WalletItem icon="wallet-outline" label={t('common.wallet')} />
+      <WalletItem icon="chatbubble-ellipses-outline" label={t('common.support')} />
+      <WalletItem icon="card-outline" label={t('common.payments')} />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
     walletContainer: {

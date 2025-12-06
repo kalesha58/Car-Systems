@@ -5,26 +5,35 @@ import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import UniversalAdd from '@components/ui/UniversalAdd';
+import {IProduct} from '../../types/product/IProduct';
 
-const ProductItem: FC<{item: any; index: number}> = ({index, item}) => {
-  const isSecondColumn = index % 2 != 0;
+interface ProductItemProps {
+  item: IProduct;
+  index: number;
+}
+
+const ProductItem: FC<ProductItemProps> = ({index, item}) => {
+  const isSecondColumn = index % 2 !== 0;
+  const imageUrl = item.images && item.images.length > 0 ? item.images[0] : '';
 
   return (
     <View style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}>
       <View style={styles.imageContainer}>
-        <Image source={{uri: item?.image}} style={styles.image} />
+        {imageUrl ? (
+          <Image source={{uri: imageUrl}} style={styles.image} />
+        ) : (
+          <View style={styles.placeholderImage} />
+        )}
       </View>
 
       <View style={styles.content}>
-        <View style={styles.flexRow}>
-          <Image
-            source={require('@assets/icons/clock.png')}
-            style={styles.clockIcon}
-          />
-          <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
-            16 MINS
-          </CustomText>
-        </View>
+        {item.dealer && (
+          <View style={styles.dealerBadge}>
+            <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
+              {item.dealer.businessName}
+            </CustomText>
+          </View>
+        )}
 
         <CustomText
           fontFamily={Fonts.Medium}
@@ -37,14 +46,16 @@ const ProductItem: FC<{item: any; index: number}> = ({index, item}) => {
         <View style={styles.priceContainer}>
           <View>
             <CustomText variant="h8" fontFamily={Fonts.Medium}>
-              ₹{item?.price}
+              ₹{item.price?.toLocaleString()}
             </CustomText>
-            <CustomText
-              fontFamily={Fonts.Medium}
-              variant="h8"
-              style={{opacity: 0.8, textDecorationLine: 'line-through'}}>
-              ₹{item?.discountPrice}
-            </CustomText>
+            {item.originalPrice && item.originalPrice > item.price && (
+              <CustomText
+                fontFamily={Fonts.Medium}
+                variant="h8"
+                style={{opacity: 0.8, textDecorationLine: 'line-through'}}>
+                ₹{item.originalPrice.toLocaleString()}
+              </CustomText>
+            )}
           </View>
 
           <UniversalAdd item={item} />
@@ -61,7 +72,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 10,
     marginLeft: 10,
-    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   imageContainer: {
     height: screenHeight * 0.12,
@@ -69,6 +87,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 12,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    overflow: 'hidden',
   },
   image: {
     height: '100%',
@@ -76,22 +97,25 @@ const styles = StyleSheet.create({
     aspectRatio: 1 / 1,
     resizeMode: 'contain',
   },
+  placeholderImage: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: Colors.backgroundSecondary,
+  },
   content: {
     flex: 1,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 12,
   },
-  flexRow: {
+  dealerBadge: {
     flexDirection: 'row',
-    padding: 2,
+    padding: 4,
     borderRadius: 4,
     alignItems: 'center',
-    gap: 2,
     backgroundColor: Colors.backgroundSecondary,
     alignSelf: 'flex-start',
-  },
-  clockIcon: {
-    height: 15,
-    width: 15,
+    marginBottom: 4,
   },
   priceContainer: {
     flexDirection: 'row',

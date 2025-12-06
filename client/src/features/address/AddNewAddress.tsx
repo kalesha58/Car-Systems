@@ -1,5 +1,6 @@
 import {View, StyleSheet, TextInput, TouchableOpacity, ScrollView} from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import {useRoute} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
@@ -8,10 +9,39 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {goBack, navigate} from '@utils/NavigationUtils';
 import AddressMapView from './AddressMapView';
 import {ILocationData} from '../../types/address/IAddress';
+import {getSavedAddresses} from '@service/addressService';
+
+interface RouteParams {
+  selectMode?: boolean;
+}
 
 const AddNewAddress = () => {
+  const route = useRoute();
+  const {selectMode} = (route.params as RouteParams) || {};
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<ILocationData | null>(null);
+  const [defaultCoordinates, setDefaultCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchDefaultCoordinates = async () => {
+      try {
+        const addresses = await getSavedAddresses();
+        if (addresses && addresses.length > 0 && addresses[0].coordinates) {
+          setDefaultCoordinates({
+            latitude: addresses[0].coordinates.latitude,
+            longitude: addresses[0].coordinates.longitude,
+          });
+        }
+      } catch (error) {
+        // Silently fail - will use hardcoded defaults
+      }
+    };
+
+    fetchDefaultCoordinates();
+  }, []);
 
   const handleLocationSelect = (location: ILocationData) => {
     setSelectedLocation(location);
@@ -19,7 +49,10 @@ const AddNewAddress = () => {
 
   const handleAddAddressDetails = () => {
     if (selectedLocation) {
-      navigate('AddressForm', {location: selectedLocation});
+      navigate('AddressForm', {
+        location: selectedLocation,
+        selectMode: selectMode,
+      });
     }
   };
 
@@ -46,6 +79,7 @@ const AddNewAddress = () => {
           <AddressMapView
             onLocationSelect={handleLocationSelect}
             initialLocation={selectedLocation || undefined}
+            defaultCoordinates={defaultCoordinates || undefined}
           />
         </View>
 
@@ -81,10 +115,11 @@ const AddNewAddress = () => {
           <CustomText
             variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={[
-              styles.addButtonText,
-              !selectedLocation && styles.addButtonTextDisabled,
-            ]}>
+            style={
+              !selectedLocation
+                ? styles.addButtonTextDisabled
+                : styles.addButtonText
+            }>
             Add address details
           </CustomText>
         </TouchableOpacity>

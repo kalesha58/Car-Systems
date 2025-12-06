@@ -11,9 +11,20 @@ interface IAddressItemProps {
   index: number;
   onMenuPress?: (item: IAddress, action: 'edit' | 'delete') => void;
   isDeleting?: boolean;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: (item: IAddress) => void;
 }
 
-const AddressItem: FC<IAddressItemProps> = ({item, index, onMenuPress, isDeleting = false}) => {
+const AddressItem: FC<IAddressItemProps> = ({
+  item,
+  index,
+  onMenuPress,
+  isDeleting = false,
+  selectMode = false,
+  isSelected = false,
+  onSelect,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
 
   const getIconName = (iconType: string) => {
@@ -38,29 +49,74 @@ const AddressItem: FC<IAddressItemProps> = ({item, index, onMenuPress, isDeletin
     onMenuPress?.(item, action);
   };
 
-  return (
-    <View style={[styles.container, {borderTopWidth: index === 0 ? 0.7 : 0}]}>
-      <View style={styles.flexRow}>
-        <View style={styles.iconContainer}>
-          <Icon
-            name={getIconName(item.iconType)}
-            size={RFValue(20)}
-            color={Colors.text}
-          />
-        </View>
+  const handleItemPress = () => {
+    if (selectMode && onSelect) {
+      onSelect(item);
+    }
+  };
 
-        <View style={styles.contentContainer}>
-          <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
-            {item.name}
-          </CustomText>
-          <CustomText variant="h8" style={styles.addressText} numberOfLines={3}>
-            {item.fullAddress}
-          </CustomText>
-          <CustomText variant="h9" style={styles.phoneText}>
-            {item.phone}
-          </CustomText>
-        </View>
+  const containerStyle = [
+    styles.container,
+    {borderTopWidth: index === 0 ? 0.7 : 0},
+    selectMode && styles.selectableContainer,
+    isSelected && styles.selectedContainer,
+  ];
 
+  const contentWrapper = selectMode ? (
+    <TouchableOpacity
+      style={styles.flexRow}
+      onPress={handleItemPress}
+      activeOpacity={0.7}
+      disabled={isDeleting}>
+      <View style={styles.iconContainer}>
+        <Icon
+          name={getIconName(item.iconType)}
+          size={RFValue(20)}
+          color={isSelected ? Colors.secondary : Colors.text}
+        />
+      </View>
+
+      <View style={styles.contentContainer}>
+        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+          {item.name}
+        </CustomText>
+        <CustomText variant="h8" style={styles.addressText} numberOfLines={3}>
+          {item.fullAddress}
+        </CustomText>
+        <CustomText variant="h9" style={styles.phoneText}>
+          {item.phone}
+        </CustomText>
+      </View>
+
+      {isSelected && (
+        <View style={styles.checkmarkContainer}>
+          <Icon name="checkmark-circle" size={RFValue(24)} color={Colors.secondary} />
+        </View>
+      )}
+    </TouchableOpacity>
+  ) : (
+    <View style={styles.flexRow}>
+      <View style={styles.iconContainer}>
+        <Icon
+          name={getIconName(item.iconType)}
+          size={RFValue(20)}
+          color={Colors.text}
+        />
+      </View>
+
+      <View style={styles.contentContainer}>
+        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+          {item.name}
+        </CustomText>
+        <CustomText variant="h8" style={styles.addressText} numberOfLines={3}>
+          {item.fullAddress}
+        </CustomText>
+        <CustomText variant="h9" style={styles.phoneText}>
+          {item.phone}
+        </CustomText>
+      </View>
+
+      {!selectMode && (
         <View style={styles.menuContainer}>
           {showMenu && (
             <View style={styles.menuOptions}>
@@ -104,9 +160,11 @@ const AddressItem: FC<IAddressItemProps> = ({item, index, onMenuPress, isDeletin
             )}
           </TouchableOpacity>
         </View>
-      </View>
+      )}
     </View>
   );
+
+  return <View style={containerStyle}>{contentWrapper}</View>;
 };
 
 const styles = StyleSheet.create({
@@ -115,6 +173,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderTopWidth: 0.7,
     borderColor: Colors.border,
+  },
+  selectableContainer: {
+    paddingVertical: 12,
+  },
+  selectedContainer: {
+    backgroundColor: Colors.backgroundSecondary,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.secondary,
   },
   flexRow: {
     flexDirection: 'row',
@@ -184,6 +250,11 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     color: '#ff3b30',
+  },
+  checkmarkContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 8,
   },
 });
 

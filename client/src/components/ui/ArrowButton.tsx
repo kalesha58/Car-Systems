@@ -16,6 +16,7 @@ interface ArrowButtonProps {
   onPress?: () => void;
   price?: number;
   loading?: boolean;
+  disabled?: boolean;
 }
 
 const ArrowButton: FC<ArrowButtonProps> = ({
@@ -23,15 +24,18 @@ const ArrowButton: FC<ArrowButtonProps> = ({
   onPress,
   price,
   loading,
+  disabled = false,
 }) => {
+  const isDisabled = disabled || loading;
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      disabled={loading}
+      disabled={isDisabled}
       onPress={onPress}
       style={[
         styles.btn,
         {justifyContent: price !== 0 ? 'space-between' : 'center'},
+        isDisabled && styles.btnDisabled,
       ]}>
       {price != 0 && price && (
         <View>
@@ -84,6 +88,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 10,
     marginHorizontal: 15,
+  },
+  btnDisabled: {
+    backgroundColor: Colors.disabled,
+    opacity: 0.6,
   },
   flexRow: {
     flexDirection: 'row',

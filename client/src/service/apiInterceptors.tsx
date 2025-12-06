@@ -10,12 +10,12 @@ export const appAxios = axios.create({
 })
 
 appAxios.interceptors.request.use(async config => {
-    const accessToken = tokenStorage.getString('accessToken')
+    const accessToken = tokenStorage.getString('accessToken');
     if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`
+        config.headers.Authorization = `Bearer ${accessToken}`;
     }
-    return config
-})
+    return config;
+});
 
 appAxios.interceptors.response.use(
     response=>response,

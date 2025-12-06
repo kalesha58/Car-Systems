@@ -12,11 +12,16 @@ import {ILocationData} from '../../types/address/IAddress';
 interface IAddressMapViewProps {
   onLocationSelect: (location: ILocationData) => void;
   initialLocation?: ILocationData;
+  defaultCoordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 const AddressMapView: FC<IAddressMapViewProps> = ({
   onLocationSelect,
   initialLocation,
+  defaultCoordinates,
 }) => {
   const mapRef = useRef<MapView>(null);
   const [selectedLocation, setSelectedLocation] = useState<ILocationData | null>(
@@ -27,18 +32,14 @@ const AddressMapView: FC<IAddressMapViewProps> = ({
   const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
-    console.log('📍 AddressMapView initialized with location:', initialLocation);
     if (initialLocation) {
       setSelectedLocation(initialLocation);
       animateToLocation(initialLocation.latitude, initialLocation.longitude);
-    } else {
-      console.log('📍 No initial location, using default coordinates');
     }
 
     // Set timeout to detect if map doesn't load
     const mapLoadTimeout = setTimeout(() => {
       if (!isMapReady) {
-        console.log('📍 Map load timeout - map may not be loading');
         setMapError('Map is taking longer than expected to load. Please check your internet connection and API key configuration.');
       }
     }, 10000); // 10 second timeout
@@ -95,24 +96,14 @@ const AddressMapView: FC<IAddressMapViewProps> = ({
     setIsLoading(false);
   };
 
-  const defaultLatitude = selectedLocation?.latitude || 17.385044;
-  const defaultLongitude = selectedLocation?.longitude || 78.486671;
-
-  useEffect(() => {
-    console.log('📍 Map region set to:', {
-      latitude: defaultLatitude,
-      longitude: defaultLongitude,
-      hasSelectedLocation: !!selectedLocation,
-    });
-  }, [defaultLatitude, defaultLongitude, selectedLocation]);
-
-  useEffect(() => {
-    console.log('📍 Map region set to:', {
-      latitude: defaultLatitude,
-      longitude: defaultLongitude,
-      hasSelectedLocation: !!selectedLocation,
-    });
-  }, [defaultLatitude, defaultLongitude, selectedLocation]);
+  const defaultLatitude =
+    selectedLocation?.latitude ||
+    defaultCoordinates?.latitude ||
+    17.385044;
+  const defaultLongitude =
+    selectedLocation?.longitude ||
+    defaultCoordinates?.longitude ||
+    78.486671;
 
   return (
     <View style={styles.container}>
@@ -125,7 +116,6 @@ const AddressMapView: FC<IAddressMapViewProps> = ({
         showsMyLocationButton={false}
         onPress={handleMapPress}
         onMapReady={() => {
-          console.log('📍 Map is ready and loaded successfully');
           setIsMapReady(true);
           setMapError(null);
         }}

@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "title": "ప్రొఫైల్",
+    "yourAccount": "మీ ఖాతా",
+    "tryInLanguage": "మీ భాషలో Car Connect ప్రయత్నించండి",
+    "accountSettings": "ఖాతా సెట్టింగ్‌లు",
+    "editProfile": "ప్రొఫైల్ సవరించండి",
+    "savedAddresses": "సేవ్ చేసిన చిరునామాలు",
+    "savedCards": "సేవ్ చేసిన క్రెడిట్ / డెబిట్ & గిఫ్ట్ కార్డ్‌లు",
+    "notificationSettings": "నోటిఫికేషన్ సెట్టింగ్‌లు",
+    "privacyCenter": "గోప్యతా కేంద్రం",
+    "myActivity": "నా కార్యాచరణ",
+    "reviews": "సమీక్షలు",
+    "questionsAnswers": "ప్రశ్నలు & జవాబులు",
+    "feedbackInformation": "ఫీడ్‌బ్యాక్ & సమాచారం",
+    "termsPolicies": "నిబంధనలు, విధానాలు మరియు లైసెన్స్‌లు",
+    "browseFAQs": "తరచుగా అడిగే ప్రశ్నలను బ్రౌజ్ చేయండి",
+    "logOut": "లాగ్ అవుట్",
+    "pastOrders": "గత ఆర్డర్‌లు",
+    "continue": "కొనసాగించు"
+  },
+  "common": {
+    "wallet": "వాలెట్",
+    "support": "మద్దతు",
+    "payments": "చెల్లింపులు"
+  },
+  "auth": {
+    "login": "లాగిన్",
+    "email": "ఇమెయిల్",
+    "password": "పాస్‌వర్డ్",
+    "loginOrSignUp": "లాగిన్ చేయండి లేదా సైన్ అప్ చేయండి"
+  },
+  "cart": {
+    "title": "కార్ట్",
+    "emptyCart": "మీ కార్ట్ ఖాళీగా ఉంది",
+    "addItems": "ప్రారంభించడానికి వస్తువులను జోడించండి",
+    "placeOrder": "ఆర్డర్ చేయండి",
+    "total": "మొత్తం"
+  },
+  "address": {
+    "addressType": "చిరునామా రకం",
+    "home": "ఇల్లు",
+    "office": "ఆఫీస్",
+    "other": "ఇతర"
+  },
+  "dashboard": {
+    "deliveryIn": "డెలివరీ",
+    "minutes": "నిమిషాలలో"
+  }
+}
+

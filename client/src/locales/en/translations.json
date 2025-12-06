@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "title": "Profile",
+    "yourAccount": "Your account",
+    "tryInLanguage": "Try Car Connect in your language",
+    "accountSettings": "Account Settings",
+    "editProfile": "Edit Profile",
+    "savedAddresses": "Saved Addresses",
+    "savedCards": "Saved Credit / Debit & Gift Cards",
+    "notificationSettings": "Notification Settings",
+    "privacyCenter": "Privacy Center",
+    "myActivity": "My Activity",
+    "reviews": "Reviews",
+    "questionsAnswers": "Questions & Answers",
+    "feedbackInformation": "Feedback & Information",
+    "termsPolicies": "Terms, Policies and Licenses",
+    "browseFAQs": "Browse FAQs",
+    "logOut": "Log Out",
+    "pastOrders": "PAST ORDERS",
+    "continue": "Continue"
+  },
+  "common": {
+    "wallet": "Wallet",
+    "support": "Support",
+    "payments": "Payments"
+  },
+  "auth": {
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "loginOrSignUp": "Log in or sign up"
+  },
+  "cart": {
+    "title": "Cart",
+    "emptyCart": "Your cart is empty",
+    "addItems": "Add items to get started",
+    "placeOrder": "Place Order",
+    "total": "Total"
+  },
+  "address": {
+    "addressType": "Address Type",
+    "home": "Home",
+    "office": "Office",
+    "other": "Other"
+  },
+  "dashboard": {
+    "deliveryIn": "Delivery in",
+    "minutes": "minutes"
+  }
+}
+

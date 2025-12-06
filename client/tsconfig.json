@@ -20,6 +20,10 @@
       "@models/*": ["src/models/*"],
       "@api/*": ["src/api/*"],
       "@features/*": ["src/features/*"],
+      "@assets/animations/*": ["src/assets/animations/*"],
+      "@assets/images/*": ["src/assets/images/*"],
+      //order related
+      "@order/*": ["src/features/order/*"],
     }
   }
 }

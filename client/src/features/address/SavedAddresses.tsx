@@ -1,5 +1,6 @@
 import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert, ActivityIndicator} from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {useRoute, useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
@@ -10,11 +11,22 @@ import AddressItem from './AddressItem';
 import {IAddress} from '../../types/address/IAddress';
 import Icon from 'react-native-vector-icons/Ionicons';
 
+interface RouteParams {
+  selectMode?: boolean;
+  preselectedAddressId?: string;
+}
+
 const SavedAddresses = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const {selectMode, preselectedAddressId} = (route.params as RouteParams) || {};
   const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(
+    preselectedAddressId,
+  );
 
   const fetchAddresses = async () => {
     try {
@@ -92,14 +104,28 @@ const SavedAddresses = () => {
     }
   };
 
+  const handleAddressSelect = (item: IAddress) => {
+    if (selectMode) {
+      setSelectedAddressId(item._id);
+      const nav = navigation as any;
+      nav.navigate('MainTabs', {
+        screen: 'Cart',
+        params: {selectedAddress: item},
+      });
+    }
+  };
 
   const renderAddressItem = ({item, index}: {item: IAddress; index: number}) => {
+    const isSelected = selectMode && selectedAddressId === item._id;
     return (
       <AddressItem
         item={item}
         index={index}
-        onMenuPress={handleMenuPress}
+        onMenuPress={selectMode ? undefined : handleMenuPress}
         isDeleting={deletingId === item._id}
+        selectMode={selectMode}
+        isSelected={isSelected}
+        onSelect={handleAddressSelect}
       />
     );
   };
@@ -120,7 +146,10 @@ const SavedAddresses = () => {
 
   const renderHeaderButton = () => {
     return (
-      <TouchableOpacity onPress={() => navigate('AddNewAddress')}>
+      <TouchableOpacity
+        onPress={() =>
+          navigate('AddNewAddress', selectMode ? {selectMode: true} : undefined)
+        }>
         <View style={styles.headerAddButton}>
           <Icon name="add" size={RFValue(16)} color={Colors.secondary} />
           <CustomText
@@ -137,7 +166,10 @@ const SavedAddresses = () => {
   if (loading && addresses.length === 0) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Saved Addresses" rightComponent={renderHeaderButton()} />
+        <CustomHeader
+          title={selectMode ? 'Select Address' : 'Saved Addresses'}
+          rightComponent={renderHeaderButton()}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.secondary} />
         </View>
@@ -147,7 +179,10 @@ const SavedAddresses = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Saved Addresses" rightComponent={renderHeaderButton()} />
+      <CustomHeader
+        title={selectMode ? 'Select Address' : 'Saved Addresses'}
+        rightComponent={renderHeaderButton()}
+      />
       <FlatList
         data={addresses}
         renderItem={renderAddressItem}

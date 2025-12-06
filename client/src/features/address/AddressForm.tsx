@@ -7,26 +7,45 @@ import CustomInput from '@components/ui/CustomInput';
 import {Colors, Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {goBack, navigate} from '@utils/NavigationUtils';
+import {goBack, navigate, replace} from '@utils/NavigationUtils';
 import {saveAddress, updateAddress} from '@service/addressService';
 import {ILocationData, IAddressFormData, IAddress} from '../../types/address/IAddress';
+import {useTranslation} from 'react-i18next';
 
 interface RouteParams {
   location?: ILocationData;
   address?: IAddress;
   isEdit?: boolean;
+  selectMode?: boolean;
 }
 
 const AddressForm = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const {location, address, isEdit} = (route.params as RouteParams) || {};
+  const {t} = useTranslation();
+  const {location, address, isEdit, selectMode} = (route.params as RouteParams) || {};
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [addressType, setAddressType] = useState<'home' | 'office' | 'other'>('home');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const isValidPhone = (phoneNumber: string): boolean => {
+    const cleanedPhone = phoneNumber.trim();
+    return /^[0-9]{10}$/.test(cleanedPhone);
+  };
+
+  const isFormValid = (): boolean => {
+    return name.trim().length > 0 && isValidPhone(phone);
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const numericText = text.replace(/[^0-9]/g, '');
+    if (numericText.length <= 10) {
+      setPhone(numericText);
+    }
+  };
 
   useEffect(() => {
     if (isEdit && address) {
@@ -72,6 +91,11 @@ const AddressForm = () => {
       return;
     }
 
+    if (!isValidPhone(phone)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      return;
+    }
+
     if (isEdit && address) {
       // Edit mode
       if (!address._id) {
@@ -98,7 +122,7 @@ const AddressForm = () => {
           {
             text: 'OK',
             onPress: () => {
-              navigate('SavedAddresses');
+              replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
             },
           },
         ]);
@@ -137,7 +161,7 @@ const AddressForm = () => {
           {
             text: 'OK',
             onPress: () => {
-              navigate('SavedAddresses');
+              replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
             },
           },
         ]);
@@ -201,9 +225,11 @@ const AddressForm = () => {
 
         <CustomInput
           value={phone}
-          onChangeText={setPhone}
-          placeholder="Phone number"
+          onChangeText={handlePhoneChange}
+          placeholder="Phone number (10 digits)"
           inputMode="tel"
+          keyboardType="numeric"
+          maxLength={10}
           left={
             <Icon
               name="call-outline"
@@ -217,7 +243,7 @@ const AddressForm = () => {
 
         <View style={styles.addressTypeContainer}>
           <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.label}>
-            Address Type
+            {t('address.addressType')}
           </CustomText>
           <View style={styles.typeButtons}>
             {(['home', 'office', 'other'] as const).map(type => (
@@ -247,7 +273,7 @@ const AddressForm = () => {
                       ? [styles.typeButtonText, styles.typeButtonTextActive]
                       : styles.typeButtonText
                   }>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(`address.${type}`)}
                 </CustomText>
               </TouchableOpacity>
             ))}
@@ -280,13 +306,19 @@ const AddressForm = () => {
         </View>
 
         <TouchableOpacity
-          style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            (!isFormValid() || isLoading) && styles.saveButtonDisabled,
+          ]}
           onPress={handleSave}
-          disabled={isLoading || !name.trim() || !phone.trim()}>
+          disabled={!isFormValid() || isLoading}>
           <CustomText
             variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={styles.saveButtonText}>
+            style={[
+              styles.saveButtonText,
+              (!isFormValid() || isLoading) && styles.saveButtonTextDisabled,
+            ]}>
             {isLoading
               ? isEdit
                 ? 'Updating...'
@@ -384,9 +416,13 @@ const styles = StyleSheet.create({
   },
   saveButtonDisabled: {
     backgroundColor: Colors.disabled,
+    opacity: 0.6,
   },
   saveButtonText: {
     color: '#fff',
+  },
+  saveButtonTextDisabled: {
+    opacity: 0.7,
   },
 });
 

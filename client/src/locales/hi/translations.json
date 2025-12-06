@@ -1,0 +1,51 @@
+{
+  "profile": {
+    "title": "प्रोफ़ाइल",
+    "yourAccount": "आपका खाता",
+    "tryInLanguage": "अपनी भाषा में Car Connect आज़माएं",
+    "accountSettings": "खाता सेटिंग्स",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "savedAddresses": "सहेजे गए पते",
+    "savedCards": "सहेजे गए क्रेडिट / डेबिट और गिफ्ट कार्ड",
+    "notificationSettings": "अधिसूचना सेटिंग्स",
+    "privacyCenter": "गोपनीयता केंद्र",
+    "myActivity": "मेरी गतिविधि",
+    "reviews": "समीक्षाएं",
+    "questionsAnswers": "प्रश्न और उत्तर",
+    "feedbackInformation": "प्रतिक्रिया और जानकारी",
+    "termsPolicies": "नियम, नीतियां और लाइसेंस",
+    "browseFAQs": "अक्सर पूछे जाने वाले प्रश्न देखें",
+    "logOut": "लॉग आउट",
+    "pastOrders": "पिछले ऑर्डर",
+    "continue": "जारी रखें"
+  },
+  "common": {
+    "wallet": "वॉलेट",
+    "support": "सहायता",
+    "payments": "भुगतान"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "loginOrSignUp": "लॉग इन या साइन अप करें"
+  },
+  "cart": {
+    "title": "कार्ट",
+    "emptyCart": "आपकी कार्ट खाली है",
+    "addItems": "शुरू करने के लिए आइटम जोड़ें",
+    "placeOrder": "ऑर्डर करें",
+    "total": "कुल"
+  },
+  "address": {
+    "addressType": "पता प्रकार",
+    "home": "घर",
+    "office": "कार्यालय",
+    "other": "अन्य"
+  },
+  "dashboard": {
+    "deliveryIn": "डिलीवरी",
+    "minutes": "मिनट में"
+  }
+}
+

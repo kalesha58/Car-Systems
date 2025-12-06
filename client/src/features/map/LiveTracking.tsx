@@ -111,7 +111,7 @@ const LiveTracking = () => {
           fontFamily={Fonts.SemiBold}
           variant="h6"
           style={{opacity: 0.6, marginTop: 20}}>
-          Ritik Prasad x Grocery Delivery App
+           Car Connect 
         </CustomText>
       </ScrollView>
     </View>

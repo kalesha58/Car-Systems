@@ -1,5 +1,6 @@
 import {View, Text, StyleSheet, Platform, TouchableOpacity} from 'react-native';
-import React, {FC, useEffect} from 'react';
+import React, {FC, useEffect, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {useAuthStore} from '@state/authStore';
 import Geolocation from '@react-native-community/geolocation';
 import {reverseGeocode} from '@service/mapService';
@@ -8,9 +9,32 @@ import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {navigate} from '@utils/NavigationUtils';
+import {getSavedAddresses} from '@service/addressService';
+import type {IAddress} from '../../types/address/IAddress';
+import {useTranslation} from 'react-i18next';
 
 const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
   const {setUser, user} = useAuthStore();
+  const {t} = useTranslation();
+  const [savedAddress, setSavedAddress] = useState<IAddress | null>(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState<boolean>(false);
+
+  const fetchSavedAddresses = async () => {
+    try {
+      setIsLoadingAddress(true);
+      const addresses = await getSavedAddresses();
+      if (addresses && addresses.length > 0) {
+        setSavedAddress(addresses[0]);
+      } else {
+        setSavedAddress(null);
+      }
+    } catch (error) {
+      // Silently fail - will fallback to user.address or hardcoded text
+      setSavedAddress(null);
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
 
   const updateUserLocation = async () => {
     Geolocation.requestAuthorization();
@@ -19,7 +43,9 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
         const {latitude, longitude} = position.coords;
         reverseGeocode(latitude, longitude, setUser);
       },
-      error => console.log(error),
+      () => {
+        // Error handling - silently fail
+      },
       {
         enableHighAccuracy: false,
         timeout: 10000,
@@ -27,22 +53,28 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
     );
   };
 
-    useEffect(() => {
-      updateUserLocation;
-    }, []);
+  useEffect(() => {
+    updateUserLocation();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchSavedAddresses();
+    }, []),
+  );
 
   return (
     <View style={styles.subContainer}>
       <TouchableOpacity activeOpacity={0.8}>
         <CustomText fontFamily={Fonts.Bold} variant="h8" style={styles.text}>
-          Delivery in
+          {t('dashboard.deliveryIn')}
         </CustomText>
         <View style={styles.flexRowGap}>
           <CustomText
             fontFamily={Fonts.SemiBold}
             variant="h2"
             style={styles.text}>
-            15 minutes
+            15 {t('dashboard.minutes')}
           </CustomText>
           <TouchableOpacity style={styles.noticeBtn} onPress={showNotice}>
             <CustomText
@@ -60,7 +92,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
             numberOfLines={1}
             fontFamily={Fonts.Medium}
             style={styles.text2}>
-            {user?.address || 'Knowhere, Somewhere 😅'}
+            {savedAddress?.fullAddress || user?.address || 'Knowhere, Somewhere 😅'}
           </CustomText>
           <Icon
             name="menu-down"

@@ -1,10 +1,9 @@
-import React from 'react'
-import Navigation from '@navigation/Navigation'
+import React from 'react';
+import './src/config/i18n';
+import Navigation from '@navigation/Navigation';
 
 const App = () => {
-  return (
-    <Navigation />
-  )
-}
+  return <Navigation />;
+};
 
 export default App

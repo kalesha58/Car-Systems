@@ -28,6 +28,7 @@ import CustomButton from '@components/ui/CustomButton';
 import { customerLogin } from '@service/authService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useTranslation} from 'react-i18next';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -38,6 +39,7 @@ const CustomerLogin = () => {
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
+  const {t} = useTranslation();
 
   useEffect(() => {
     if (keyboardOffsetHeight === 0) {
@@ -117,14 +119,14 @@ const CustomerLogin = () => {
                   variant="h5"
                   fontFamily={Fonts.SemiBold}
                   style={styles.text}>
-                  Log in or sign up
+                  {t('auth.loginOrSignUp')}
                 </CustomText>
 
                 <CustomInput
                   onChangeText={setEmail}
                   onClear={() => setEmail('')}
                   value={email}
-                  placeholder="Email"
+                  placeholder={t('auth.email')}
                   inputMode="email"
                   left={
                     <Ionicons
@@ -141,7 +143,7 @@ const CustomerLogin = () => {
                   onChangeText={setPassword}
                   onClear={() => setPassword('')}
                   value={password}
-                  placeholder="Password"
+                  placeholder={t('auth.password')}
                   secureTextEntry
                   left={
                     <Ionicons

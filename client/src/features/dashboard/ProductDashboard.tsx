@@ -132,12 +132,12 @@ const ProductDashboard = () => {
                 fontSize={RFValue(32)}
                 fontFamily={Fonts.Bold}
                 style={{opacity: 0.2}}>
-                Grocery Delivery App 🛒
+                Car Connect 🚗
               </CustomText>
               <CustomText
                 fontFamily={Fonts.Bold}
                 style={{marginTop: 10, paddingBottom: 100, opacity: 0.2}}>
-                Developed By ❤️ Ritik Prasad
+                Trust Us ❤️ 
               </CustomText>
             </View>
           </CollapsibleScrollView>
