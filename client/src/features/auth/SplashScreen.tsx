@@ -46,11 +46,11 @@ const SplashScreen: FC = () => {
 
   const navigateByRole = (userRole: string | null) => {
     if (userRole === 'user') {
-      resetAndNavigate('ProductDashboard');
+      resetAndNavigate('MainTabs');
     } else if (userRole === 'dealer') {
-      resetAndNavigate('ProductDashboard');
+      resetAndNavigate('MainTabs');
     } else if (userRole === 'admin') {
-      resetAndNavigate('ProductDashboard');
+      resetAndNavigate('MainTabs');
     } else {
       resetAndNavigate('CustomerLogin');
     }

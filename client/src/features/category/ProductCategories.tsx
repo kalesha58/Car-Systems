@@ -24,7 +24,7 @@ const ProductCategories = () => {
         //   setSelectedCategory(data[0]);
         // }
       } catch (error) {
-        console.log('Error Fetching Categories', error);
+        // Handle error silently
       } finally {
         setCategoriesLoading(false);
       }
@@ -42,7 +42,7 @@ const ProductCategories = () => {
             // const data = await getProductsByCategoryId(categoryId)
             // setProducts(data)
         } catch (error) {
-            console.log("Error Fetching Products", error)
+            // Handle error silently
         } finally {
             setProductsLoading(false)
         }
@@ -98,4 +98,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// export default withCart(ProductCategories)
+export default ProductCategories;

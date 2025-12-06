@@ -106,6 +106,7 @@ const swaggerUiOptions = {
 // Serve Swagger UI assets and setup
 app.use('/api/api-docs', swaggerUi.serve);
 app.get('/api/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+app.get('/api/api-docs/', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Routes
 app.use('/api/auth', authRoutes);

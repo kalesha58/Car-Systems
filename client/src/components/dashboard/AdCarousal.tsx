@@ -14,6 +14,7 @@ interface CarouselItemProps {
   scrollX: SharedValue<number>;
   carouselWidth: number;
   carouselHeight: number;
+  horizontalPadding: number;
 }
 
 const CarouselItem: FC<CarouselItemProps> = ({
@@ -22,12 +23,13 @@ const CarouselItem: FC<CarouselItemProps> = ({
   scrollX,
   carouselWidth,
   carouselHeight,
+  horizontalPadding,
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
-      (index - 1) * carouselWidth,
-      index * carouselWidth,
-      (index + 1) * carouselWidth,
+      (index - 1) * carouselWidth + horizontalPadding,
+      index * carouselWidth + horizontalPadding,
+      (index + 1) * carouselWidth + horizontalPadding,
     ];
     const scale = interpolate(
       scrollX.value,
@@ -60,7 +62,8 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollX = useSharedValue(0);
   const {width} = useWindowDimensions();
-  const carouselWidth = width;
+  const horizontalPadding = 20;
+  const carouselWidth = width - horizontalPadding * 2;
   const carouselHeight = carouselWidth * 0.5;
   const currentIndex = useRef(0);
 
@@ -80,7 +83,7 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
 
   const handleScroll = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    scrollX.value = offsetX;
+    scrollX.value = offsetX + horizontalPadding;
     currentIndex.current = Math.round(offsetX / carouselWidth);
   };
 
@@ -88,18 +91,22 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
     return null;
   }
 
+  const snapOffsets = adData.map((_: any, index: number) => 
+    index * carouselWidth
+  );
+
   return (
-    <View style={[styles.container, {left: -20, marginVertical: 20}]}>
+    <View style={[styles.container, {marginVertical: 20}]}>
       <ScrollView
         ref={scrollViewRef}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         decelerationRate="fast"
-        snapToInterval={carouselWidth}
-        snapToAlignment="start">
+        snapToOffsets={snapOffsets}
+        snapToAlignment="start"
+        contentContainerStyle={styles.scrollContent}>
         {adData.map((item: any, index: number) => (
           <CarouselItem
             key={index}
@@ -108,6 +115,7 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
             scrollX={scrollX}
             carouselWidth={carouselWidth}
             carouselHeight={carouselHeight}
+            horizontalPadding={horizontalPadding}
           />
         ))}
       </ScrollView>
@@ -118,6 +126,9 @@ const AdCarousal: FC<{adData: any}> = ({adData}) => {
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
+  },
+  scrollContent: {
+    paddingHorizontal: 10,
   },
   imageContainer: {
     width: '100%',

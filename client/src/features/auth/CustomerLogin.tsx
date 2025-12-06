@@ -80,7 +80,7 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       await customerLogin(email, password);
-      resetAndNavigate('ProductDashboard');
+      resetAndNavigate('MainTabs');
     } catch (error) {
       Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
     } finally {
