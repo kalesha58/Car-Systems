@@ -82,7 +82,7 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Swagger JSON endpoint (must be before swaggerUi setup)
+// Swagger JSON endpoint
 app.get('/api/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
@@ -93,15 +93,19 @@ const swaggerUiOptions = {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Car Connect API Documentation',
   swaggerOptions: {
-    url: '/api/api-docs.json',
     persistAuthorization: true,
     displayRequestDuration: true,
     filter: true,
     tryItOutEnabled: true,
+    docExpansion: 'list',
+    defaultModelsExpandDepth: 2,
+    defaultModelExpandDepth: 2,
   },
 };
 
-app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+// Serve Swagger UI assets and setup
+app.use('/api/api-docs', swaggerUi.serve);
+app.get('/api/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Routes
 app.use('/api/auth', authRoutes);
