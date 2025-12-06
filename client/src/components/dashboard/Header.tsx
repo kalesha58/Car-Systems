@@ -1,11 +1,11 @@
-import {View, Text, StyleSheet, Platform, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, Platform, TouchableOpacity, Image} from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 import {useAuthStore} from '@state/authStore';
 import Geolocation from '@react-native-community/geolocation';
 import {reverseGeocode} from '@service/mapService';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import {Fonts, Colors} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {navigate} from '@utils/NavigationUtils';
@@ -63,6 +63,13 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
     }, []),
   );
 
+  const getInitialLetter = (): string => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   return (
     <View style={styles.subContainer}>
       <TouchableOpacity activeOpacity={0.8}>
@@ -103,8 +110,26 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigate('Profile')}>
-        <Icon name="account-circle-outline" size={RFValue(36)} color="#fff" />
+      <TouchableOpacity
+        onPress={() => navigate('Profile')}
+        activeOpacity={0.8}
+        style={styles.profileImageContainer}>
+        {user?.profileImage ? (
+          <Image
+            source={{uri: user.profileImage}}
+            style={styles.profileImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.placeholderContainer}>
+            <CustomText
+              variant="h8"
+              fontFamily={Fonts.Bold}
+              style={styles.placeholderText}>
+              {getInitialLetter()}
+            </CustomText>
+          </View>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -144,6 +169,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     bottom: -2,
+  },
+  profileImageContainer: {
+    width: RFValue(36),
+    height: RFValue(36),
+    borderRadius: RFValue(18),
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: RFValue(18),
+  },
+  placeholderContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: RFValue(18),
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#fff',
+    fontSize: RFValue(14),
   },
 });
 

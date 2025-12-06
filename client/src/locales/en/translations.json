@@ -17,7 +17,14 @@
     "browseFAQs": "Browse FAQs",
     "logOut": "Log Out",
     "pastOrders": "PAST ORDERS",
-    "continue": "Continue"
+    "continue": "Continue",
+    "selectImage": "Select Image",
+    "chooseOption": "Choose an option",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "cancel": "Cancel",
+    "error": "Error",
+    "uploadFailed": "Failed to upload profile image. Please try again."
   },
   "common": {
     "wallet": "Wallet",
