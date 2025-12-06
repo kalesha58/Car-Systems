@@ -22,7 +22,7 @@ const swaggerDefinition: SwaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: 'https://api.carconnect.com',
+      url: 'https://car-systems.vercel.app',
       description: 'Production server',
     },
   ],

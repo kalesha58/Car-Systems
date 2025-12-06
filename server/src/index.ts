@@ -82,17 +82,26 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
-// Swagger API Documentation
-app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Car Connect API Documentation',
-}));
-
-// Swagger JSON endpoint
+// Swagger JSON endpoint (must be before swaggerUi setup)
 app.get('/api/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
+
+// Swagger API Documentation
+const swaggerUiOptions = {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Car Connect API Documentation',
+  swaggerOptions: {
+    url: '/api/api-docs.json',
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    tryItOutEnabled: true,
+  },
+};
+
+app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Routes
 app.use('/api/auth', authRoutes);
