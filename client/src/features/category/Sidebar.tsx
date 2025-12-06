@@ -11,21 +11,16 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import type {ICategoryItem} from '../../types/category/ICategoryItem';
 import type {SharedValue} from 'react-native-reanimated';
 import {useTheme} from '@hooks/useTheme';
 
-export type CategoryType = 'products' | 'vehicles' | 'services';
-
 interface SidebarProps {
   selectedCategory: ICategoryItem | null;
   categories: ICategoryItem[];
   onCategoryPress: (category: ICategoryItem) => void;
-  selectedCategoryType?: CategoryType;
-  onCategoryTypePress?: (type: CategoryType) => void;
 }
 
 interface CategoryItemProps {
@@ -114,7 +109,9 @@ const CategoryItem: FC<CategoryItemProps> = ({
         )}
       </View>
 
-      <CustomText fontSize={RFValue(7)} style={{textAlign: 'center'}}>
+      <CustomText
+        fontSize={RFValue(7)}
+        style={{textAlign: 'center', color: isSelected ? colors.secondary : colors.text}}>
         {category?.name}
       </CustomText>
     </TouchableOpacity>
@@ -125,13 +122,10 @@ const Sidebar: FC<SidebarProps> = ({
   selectedCategory,
   categories,
   onCategoryPress,
-  selectedCategoryType = 'products',
-  onCategoryTypePress,
 }) => {
   const {colors} = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
   const indicatorPosition = useSharedValue(0);
-  const maxCategories = 20;
 
   const animatedValue0 = useSharedValue(0);
   const animatedValue1 = useSharedValue(0);
@@ -175,12 +169,6 @@ const Sidebar: FC<SidebarProps> = ({
     animatedValue17,
     animatedValue18,
     animatedValue19,
-  ];
-
-  const categoryTypes: {type: CategoryType; label: string}[] = [
-    {type: 'products', label: 'Products'},
-    {type: 'vehicles', label: 'Vehicles'},
-    {type: 'services', label: 'Services'},
   ];
 
   useEffect(() => {
@@ -260,31 +248,6 @@ const Sidebar: FC<SidebarProps> = ({
     selectedImageContainer: {
       backgroundColor: colors.backgroundTertiary,
     },
-    categoryTypesContainer: {
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    categoryTypeButton: {
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      marginVertical: 2,
-      borderRadius: 6,
-    },
-    selectedCategoryTypeButton: {
-      backgroundColor: colors.backgroundSecondary,
-    },
-    categoryTypeText: {
-      textAlign: 'center',
-    },
-    selectedCategoryTypeText: {
-      color: colors.secondary,
-    },
-    divider: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginVertical: 8,
-    },
     placeholderIcon: {
       width: '60%',
       height: '60%',
@@ -300,35 +263,6 @@ const Sidebar: FC<SidebarProps> = ({
         contentContainerStyle={{paddingBottom: 50}}
         showsVerticalScrollIndicator={false}>
         <Animated.View style={[styles.indicator, indicatorStyle]} />
-
-        <View style={styles.categoryTypesContainer}>
-          {categoryTypes.map(({type, label}) => (
-            <TouchableOpacity
-              key={type}
-              activeOpacity={1}
-              style={[
-                styles.categoryTypeButton,
-                selectedCategoryType === type && styles.selectedCategoryTypeButton,
-              ]}
-              onPress={() => onCategoryTypePress?.(type)}>
-              <CustomText
-                fontSize={RFValue(8)}
-                fontFamily={
-                  selectedCategoryType === type ? Fonts.Medium : Fonts.Regular
-                }
-                style={[
-                  styles.categoryTypeText,
-                  ...(selectedCategoryType === type
-                    ? [styles.selectedCategoryTypeText]
-                    : []),
-                ]}>
-                {label}
-              </CustomText>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.divider} />
 
         <View>
           {categories?.map((category: ICategoryItem, index: number) => (

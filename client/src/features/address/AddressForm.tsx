@@ -11,6 +11,7 @@ import {goBack, navigate, replace} from '@utils/NavigationUtils';
 import {saveAddress, updateAddress} from '@service/addressService';
 import {ILocationData, IAddressFormData, IAddress} from '../../types/address/IAddress';
 import {useTranslation} from 'react-i18next';
+import {useToast} from '@hooks/useToast';
 
 interface RouteParams {
   location?: ILocationData;
@@ -23,6 +24,7 @@ const AddressForm = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const {t} = useTranslation();
+  const {showSuccess, showError} = useToast();
   const {location, address, isEdit, selectMode} = (route.params as RouteParams) || {};
 
   const [name, setName] = useState('');
@@ -62,7 +64,7 @@ const AddressForm = () => {
         setAdditionalDetails(additional);
       }
     } else if (!location) {
-      Alert.alert('Error', 'Location data is missing');
+      showError('Location data is missing');
       goBack();
     }
   }, [location, address, isEdit]);
@@ -82,24 +84,24 @@ const AddressForm = () => {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a name');
+      showError('Please enter a name');
       return;
     }
 
     if (!phone.trim()) {
-      Alert.alert('Error', 'Please enter a phone number');
+      showError('Please enter a phone number');
       return;
     }
 
     if (!isValidPhone(phone)) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      showError('Please enter a valid 10-digit phone number');
       return;
     }
 
     if (isEdit && address) {
       // Edit mode
       if (!address._id) {
-        Alert.alert('Error', 'Invalid address ID');
+        showError('Invalid address ID');
         return;
       }
 
@@ -118,23 +120,20 @@ const AddressForm = () => {
 
         await updateAddress(address._id, addressData);
 
-        Alert.alert('Success', 'Address updated successfully', [
-          {
-            text: 'OK',
-            onPress: () => {
-              replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
-            },
-          },
-        ]);
-      } catch (error) {
-        Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update address. Please try again.');
-      } finally {
         setIsLoading(false);
+        showSuccess('Address updated successfully');
+        
+        setTimeout(() => {
+          replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
+        }, 1000);
+      } catch (error) {
+        setIsLoading(false);
+        showError(error instanceof Error ? error.message : 'Failed to update address. Please try again.');
       }
     } else {
       // Add mode
       if (!location) {
-        Alert.alert('Error', 'Location data is missing');
+        showError('Location data is missing');
         return;
       }
 
@@ -157,18 +156,15 @@ const AddressForm = () => {
 
         await saveAddress(addressData);
 
-        Alert.alert('Success', 'Address saved successfully', [
-          {
-            text: 'OK',
-            onPress: () => {
-              replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
-            },
-          },
-        ]);
-      } catch (error) {
-        Alert.alert('Error', error instanceof Error ? error.message : 'Failed to save address. Please try again.');
-      } finally {
         setIsLoading(false);
+        showSuccess('Address saved successfully');
+        
+        setTimeout(() => {
+          replace('SavedAddresses', selectMode ? {selectMode: true} : undefined);
+        }, 1000);
+      } catch (error) {
+        setIsLoading(false);
+        showError(error instanceof Error ? error.message : 'Failed to save address. Please try again.');
       }
     }
   };

@@ -28,7 +28,11 @@ export interface ITranslations {
     login: string;
     email: string;
     password: string;
+    phone: string;
+    signUp: string;
     loginOrSignUp: string;
+    dontHaveAccount: string;
+    alreadyHaveAccount: string;
   };
   cart: {
     title: string;

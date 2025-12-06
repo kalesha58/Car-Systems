@@ -10,6 +10,7 @@ import {getSavedAddresses, deleteAddress} from '@service/addressService';
 import AddressItem from './AddressItem';
 import {IAddress} from '../../types/address/IAddress';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {useToast} from '@hooks/useToast';
 
 interface RouteParams {
   selectMode?: boolean;
@@ -19,6 +20,7 @@ interface RouteParams {
 const SavedAddresses = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const {showSuccess, showError} = useToast();
   const {selectMode, preselectedAddressId} = (route.params as RouteParams) || {};
   const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,7 +36,7 @@ const SavedAddresses = () => {
       const data = await getSavedAddresses();
       setAddresses(data);
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to fetch addresses');
+      showError(error instanceof Error ? error.message : 'Failed to fetch addresses');
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ const SavedAddresses = () => {
       const data = await getSavedAddresses();
       setAddresses(data);
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to refresh addresses');
+      showError(error instanceof Error ? error.message : 'Failed to refresh addresses');
     } finally {
       setRefreshing(false);
     }
@@ -77,16 +79,16 @@ const SavedAddresses = () => {
           style: 'destructive',
           onPress: async () => {
             if (!item._id) {
-              Alert.alert('Error', 'Invalid address ID');
+              showError('Invalid address ID');
               return;
             }
             try {
               setDeletingId(item._id);
               await deleteAddress(item._id);
               await fetchAddresses();
-              Alert.alert('Success', 'Address deleted successfully');
+              showSuccess('Address deleted successfully');
             } catch (error) {
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to delete address');
+              showError(error instanceof Error ? error.message : 'Failed to delete address');
             } finally {
               setDeletingId(null);
             }

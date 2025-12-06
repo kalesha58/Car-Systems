@@ -1,148 +1,191 @@
-import {View, Text, StyleSheet, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, ActivityIndicator} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
-import Sidebar, {CategoryType} from './Sidebar';
+import Sidebar from './Sidebar';
 import ProductList from './ProductList';
-import {getCategories} from '@service/categoryService';
+import FilterBar from './FilterBar';
+import FilterModal, {IFilterState} from './FilterModal';
 import {getProducts} from '@service/productService';
 import {getDealerVehicles} from '@service/vehicleService';
 import {getServices} from '@service/serviceService';
+import {getDropdownOptions} from '@service/dropdownService';
 import type {IProduct} from '../../types/product/IProduct';
 import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import type {IService} from '../../types/service/IService';
-import type {ICategoryItem} from '../../types/category/ICategoryItem';
+import type {ICategoryItem, CategoryType} from '../../types/category/ICategoryItem';
 import {useTheme} from '@hooks/useTheme';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
 const allProductsImage = require('@assets/images/AutoMobile-Services.jpeg');
 const allVehiclesImage = require('@assets/images/All-Vehicles.jpeg');
-const carImage = require('@assets/images/Car.jpeg');
-const bikeImage = require('@assets/images/Bike.jpeg');
 const allServicesImage = require('@assets/images/AutoMobile-Services.jpeg');
-const repairImage = require('@assets/images/Repair.jpeg');
-const maintenanceImage = require('@assets/images/Maintenance.jpeg');
-const homeServiceImage = require('@assets/images/Home Service.jpeg');
 
 const ProductCategories = () => {
-  const [categoryType, setCategoryType] = useState<CategoryType>('products');
   const [categories, setCategories] = useState<ICategoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ICategoryItem | null>(null);
   const [items, setItems] = useState<ItemType[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [itemsLoading, setItemsLoading] = useState<boolean>(false);
+  const [filters, setFilters] = useState<IFilterState>({});
+  const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
+  const [productCount, setProductCount] = useState<number>(0);
+  const [dropdownOptions, setDropdownOptions] = useState<{
+    vehicleTypes: Array<{label: string; value: string}>;
+    brands: Array<{label: string; value: string}>;
+  }>({
+    vehicleTypes: [],
+    brands: [],
+  });
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        if (categoryType === 'products') {
-          const response = await getCategories('active');
-          const categoriesData: ICategoryItem[] = [
-            {
-              _id: 'all',
-              name: 'All Products',
-              image: allProductsImage,
-            },
-            ...(response.categories || []).map((cat) => ({
-              _id: cat.id,
-              name: cat.name,
-              image: allProductsImage,
-            })),
-          ];
-          setCategories(categoriesData);
-          if (categoriesData.length > 0) {
-            setSelectedCategory(categoriesData[0]);
-          }
-        } else if (categoryType === 'vehicles') {
-          const vehicleCategories: ICategoryItem[] = [
-            {_id: 'all', name: 'All Vehicles', image: allVehiclesImage},
-            {_id: 'car', name: 'Cars', image: carImage},
-            {_id: 'bike', name: 'Bikes', image: bikeImage},
-          ];
-          setCategories(vehicleCategories);
-          setSelectedCategory(vehicleCategories[0]);
-        } else if (categoryType === 'services') {
-          const serviceCategories: ICategoryItem[] = [
-            {_id: 'all', name: 'All Services', image: allServicesImage},
-            {_id: 'repair', name: 'Repair', image: repairImage},
-            {_id: 'maintenance', name: 'Maintenance', image: maintenanceImage},
-            {_id: 'home', name: 'Home Service', image: homeServiceImage},
-          ];
-          setCategories(serviceCategories);
-          setSelectedCategory(serviceCategories[0]);
+
+        const dropdownData = await getDropdownOptions();
+        setDropdownOptions({
+          vehicleTypes: dropdownData.vehicleTypes || [],
+          brands: dropdownData.brands || [],
+        });
+        const backendCategories: ICategoryItem[] =
+          dropdownData.categories?.map(cat => ({
+            _id: cat.value,
+            name: cat.label,
+            image: null,
+            type: 'products' as CategoryType,
+          })) || [];
+
+        const allCategories: ICategoryItem[] = [
+          {
+            _id: 'all-categories',
+            name: 'All Categories',
+            image: allProductsImage,
+            type: 'all' as CategoryType,
+          },
+          {
+            _id: 'all-products',
+            name: 'All Products',
+            image: allProductsImage,
+            type: 'products' as CategoryType,
+          },
+          {
+            _id: 'all-vehicles',
+            name: 'All Vehicles',
+            image: allVehiclesImage,
+            type: 'vehicles' as CategoryType,
+          },
+          {
+            _id: 'all-services',
+            name: 'All Services',
+            image: allServicesImage,
+            type: 'services' as CategoryType,
+          },
+          ...backendCategories,
+        ];
+
+        setCategories(allCategories);
+        if (allCategories.length > 0) {
+          setSelectedCategory(allCategories[0]);
         }
       } catch (error) {
-        // Handle error - set empty categories on error
-        if (categoryType === 'products') {
-          const categoriesData: ICategoryItem[] = [
-            {
-              _id: 'all',
-              name: 'All Products',
-              image: allProductsImage,
-            },
-          ];
-          setCategories(categoriesData);
-          setSelectedCategory(categoriesData[0]);
-        } else if (categoryType === 'vehicles') {
-          const vehicleCategories: ICategoryItem[] = [
-            {_id: 'all', name: 'All Vehicles', image: allVehiclesImage},
-            {_id: 'car', name: 'Cars', image: carImage},
-            {_id: 'bike', name: 'Bikes', image: bikeImage},
-          ];
-          setCategories(vehicleCategories);
-          setSelectedCategory(vehicleCategories[0]);
-        } else if (categoryType === 'services') {
-          const serviceCategories: ICategoryItem[] = [
-            {_id: 'all', name: 'All Services', image: allServicesImage},
-            {_id: 'repair', name: 'Repair', image: repairImage},
-            {_id: 'maintenance', name: 'Maintenance', image: maintenanceImage},
-            {_id: 'home', name: 'Home Service', image: homeServiceImage},
-          ];
-          setCategories(serviceCategories);
-          setSelectedCategory(serviceCategories[0]);
-        }
+        const defaultCategories: ICategoryItem[] = [
+          {
+            _id: 'all-categories',
+            name: 'All Categories',
+            image: allProductsImage,
+            type: 'all' as CategoryType,
+          },
+          {
+            _id: 'all-products',
+            name: 'All Products',
+            image: allProductsImage,
+            type: 'products' as CategoryType,
+          },
+          {
+            _id: 'all-vehicles',
+            name: 'All Vehicles',
+            image: allVehiclesImage,
+            type: 'vehicles' as CategoryType,
+          },
+          {
+            _id: 'all-services',
+            name: 'All Services',
+            image: allServicesImage,
+            type: 'services' as CategoryType,
+          },
+        ];
+        setCategories(defaultCategories);
+        setSelectedCategory(defaultCategories[0]);
       } finally {
         setCategoriesLoading(false);
       }
     };
 
     fetchCategories();
-  }, [categoryType]);
+  }, []);
 
   useEffect(() => {
     const fetchItems = async () => {
+      if (!selectedCategory || !selectedCategory.type) {
+        return;
+      }
+
       try {
         setItemsLoading(true);
-        if (categoryType === 'products') {
-          const query: {category?: string} = {};
-          if (selectedCategory?._id && selectedCategory._id !== 'all') {
-            query.category = selectedCategory.name;
-          }
-          const response = await getProducts(query);
-          setItems(response.Response?.products || []);
+        const categoryType = selectedCategory.type;
+
+        const queryParams: any = {};
+        if (filters.type) {
+          queryParams.vehicleType = filters.type;
+        }
+        if (filters.brand) {
+          queryParams.brand = filters.brand;
+        }
+        if (filters.minPrice !== undefined) {
+          queryParams.minPrice = filters.minPrice;
+        }
+        if (filters.maxPrice !== undefined) {
+          queryParams.maxPrice = filters.maxPrice;
+        }
+        if (selectedCategory.type === 'products' && selectedCategory._id !== 'all-products') {
+          queryParams.category = selectedCategory.name;
+        }
+
+        if (categoryType === 'all') {
+          const [productsResponse, vehiclesResponse, servicesResponse] = await Promise.all([
+            getProducts(queryParams),
+            getDealerVehicles(queryParams),
+            getServices(queryParams),
+          ]);
+
+          const allItems: ItemType[] = [
+            ...(productsResponse.Response?.products || []),
+            ...(vehiclesResponse.Response?.vehicles || []),
+            ...(servicesResponse.Response?.services || []),
+          ];
+
+          setItems(allItems);
+          setProductCount(allItems.length);
+        } else if (categoryType === 'products') {
+          const response = await getProducts(queryParams);
+          const products = response.Response?.products || [];
+          setItems(products);
+          setProductCount(products.length);
         } else if (categoryType === 'vehicles') {
-          const query: {vehicleType?: 'Car' | 'Bike'} = {};
-          if (selectedCategory?._id === 'car') {
-            query.vehicleType = 'Car';
-          } else if (selectedCategory?._id === 'bike') {
-            query.vehicleType = 'Bike';
-          }
-          const response = await getDealerVehicles(query);
-          setItems(response.Response?.vehicles || []);
+          const response = await getDealerVehicles(queryParams);
+          const vehicles = response.Response?.vehicles || [];
+          setItems(vehicles);
+          setProductCount(vehicles.length);
         } else if (categoryType === 'services') {
-          const query: {homeService?: boolean; category?: string} = {};
-          if (selectedCategory?._id === 'home') {
-            query.homeService = true;
-          } else if (selectedCategory && selectedCategory._id !== 'all') {
-            query.category = selectedCategory.name;
-          }
-          const response = await getServices(query);
-          setItems(response.Response?.services || []);
+          const response = await getServices(queryParams);
+          const services = response.Response?.services || [];
+          setItems(services);
+          setProductCount(services.length);
         }
       } catch (error) {
-        // Handle error - set empty items on error
         setItems([]);
+        setProductCount(0);
       } finally {
         setItemsLoading(false);
       }
@@ -151,13 +194,49 @@ const ProductCategories = () => {
     if (selectedCategory) {
       fetchItems();
     }
-  }, [selectedCategory, categoryType]);
+  }, [selectedCategory, filters]);
 
   const getHeaderTitle = () => {
     if (selectedCategory?.name) {
       return selectedCategory.name;
     }
-    return categoryType.charAt(0).toUpperCase() + categoryType.slice(1);
+    return 'Categories';
+  };
+
+  const handleFilterApply = (appliedFilters: IFilterState) => {
+    setFilters(appliedFilters);
+  };
+
+  const handleFilterPress = () => {
+    setFilterModalVisible(true);
+  };
+
+  const handleTypePress = () => {
+    setFilterModalVisible(true);
+  };
+
+  const handleBrandPress = () => {
+    setFilterModalVisible(true);
+  };
+
+  const getSelectedTypeLabel = (): string | undefined => {
+    if (!filters.type) {
+      return undefined;
+    }
+    const typeOption = dropdownOptions.vehicleTypes.find(
+      opt => opt.value === filters.type,
+    );
+    return typeOption?.label;
+  };
+
+  const getSelectedBrandLabel = (): string | undefined => {
+    if (!filters.brand) {
+      return undefined;
+    }
+    const brandOption = dropdownOptions.brands.find(
+      opt => opt.value === filters.brand,
+    );
+    return brandOption?.label;
   };
 
   const {colors} = useTheme();
@@ -171,6 +250,9 @@ const ProductCategories = () => {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
+    },
+    contentContainer: {
+      flex: 1,
     },
     center: {
       flex: 1,
@@ -190,25 +272,38 @@ const ProductCategories = () => {
             categories={categories}
             selectedCategory={selectedCategory}
             onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
-            selectedCategoryType={categoryType}
-            onCategoryTypePress={(type: CategoryType) => {
-              setCategoryType(type);
-              setSelectedCategory(null);
-              setItems([]);
-            }}
           />
         )}
 
-        {itemsLoading ? (
-          <ActivityIndicator
-            size="large"
-            color={colors.border}
-            style={styles.center}
+        <View style={styles.contentContainer}>
+          <FilterBar
+            onFilterPress={handleFilterPress}
+            onTypePress={handleTypePress}
+            onBrandPress={handleBrandPress}
+            selectedType={getSelectedTypeLabel()}
+            selectedBrand={getSelectedBrandLabel()}
           />
-        ) : (
-          <ProductList data={items || []} itemType={categoryType} />
-        )}
+          {itemsLoading ? (
+            <ActivityIndicator
+              size="large"
+              color={colors.border}
+              style={styles.center}
+            />
+          ) : (
+            <ProductList 
+              data={items || []} 
+              itemType={selectedCategory?.type === 'all' ? undefined : (selectedCategory?.type || 'products')} 
+            />
+          )}
+        </View>
       </View>
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApplyFilters={handleFilterApply}
+        initialFilters={filters}
+        productCount={productCount}
+      />
     </View>
   );
 };

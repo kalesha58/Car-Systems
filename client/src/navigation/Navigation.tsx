@@ -20,8 +20,11 @@ import SavedAddresses from '@features/address/SavedAddresses';
 import AddNewAddress from '@features/address/AddNewAddress';
 import AddressForm from '@features/address/AddressForm';
 import OrderSuccess from '@features/order/OrderSuccess';
+import ProductDetail from '@features/product/ProductDetail';
+import CreateNewPost from '@features/play/CreateNewPost';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
+import {ToastProvider} from '@context/ToastContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -119,39 +122,55 @@ const MainTabs: FC = () => {
 
 const Navigation: FC = () => {
   return (
-    <NavigationContainer
-      ref={navigationRef}
-      onReady={() => {
-        // Navigation is ready
-      }}>
-      <Stack.Navigator
-        initialRouteName="SplashScreen"
-        screenOptions={{
-          headerShown: false,
+    <ToastProvider>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={() => {
+          // Navigation is ready
         }}>
-        <Stack.Screen name="SplashScreen" component={SplashScreen} />
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="Profile" component={Profile} />
-        <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
-        <Stack.Screen name="AddNewAddress" component={AddNewAddress} />
-        <Stack.Screen name="AddressForm" component={AddressForm} />
-        <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
-        <Stack.Screen
-          options={{
-            animation: 'fade',
-          }}
-          name="DeliveryLogin"
-          component={DeliveryLogin}
-        />
-        <Stack.Screen
-          options={{
-            animation: 'fade',
-          }}
-          name="CustomerLogin"
-          component={CustomerLogin}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="SplashScreen"
+          screenOptions={{
+            headerShown: false,
+          }}>
+          <Stack.Screen name="SplashScreen" component={SplashScreen} />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
+          <Stack.Screen name="AddNewAddress" component={AddNewAddress} />
+          <Stack.Screen name="AddressForm" component={AddressForm} />
+          <Stack.Screen name="OrderSuccess" component={OrderSuccess} />
+          <Stack.Screen
+            name="ProductDetail"
+            component={ProductDetail}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="CreateNewPost"
+            component={CreateNewPost}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            options={{
+              animation: 'fade',
+            }}
+            name="DeliveryLogin"
+            component={DeliveryLogin}
+          />
+          <Stack.Screen
+            options={{
+              animation: 'fade',
+            }}
+            name="CustomerLogin"
+            component={CustomerLogin}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ToastProvider>
   );
 };
 

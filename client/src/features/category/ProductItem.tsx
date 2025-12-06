@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, Image} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, Pressable} from 'react-native';
 import React, {FC} from 'react';
 import {screenHeight} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
@@ -7,6 +7,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import UniversalAdd from '@components/ui/UniversalAdd';
 import {IProduct} from '../../types/product/IProduct';
 import {useTheme} from '@hooks/useTheme';
+import {navigate} from '@utils/NavigationUtils';
 
 interface ProductItemProps {
   item: IProduct;
@@ -40,6 +41,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
       justifyContent: 'center',
       alignItems: 'center',
       padding: 12,
+      backgroundColor: '#f4f4f4',
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
       overflow: 'hidden',
@@ -53,7 +55,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
     placeholderImage: {
       height: '100%',
       width: '100%',
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: '#f4f4f4',
     },
     content: {
       flex: 1,
@@ -79,8 +81,14 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
     },
   });
 
+  const handleProductPress = () => {
+    navigate('ProductDetail', {productId: item.id});
+  };
+
   return (
-    <View style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}>
+    <Pressable
+      style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
+      onPress={handleProductPress}>
       <View style={styles.imageContainer}>
         {imageUrl ? (
           <Image source={{uri: imageUrl}} style={styles.image} />
@@ -121,10 +129,14 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
             )}
           </View>
 
-          <UniversalAdd item={item} />
+          <Pressable onPress={(e) => {
+            e.stopPropagation();
+          }}>
+            <UniversalAdd item={item} />
+          </Pressable>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 

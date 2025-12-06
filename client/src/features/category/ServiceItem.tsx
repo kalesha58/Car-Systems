@@ -39,7 +39,7 @@ const ServiceItem: FC<ServiceItemProps> = ({index, item}) => {
       justifyContent: 'center',
       alignItems: 'center',
       padding: 12,
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: '#f4f4f4',
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
       overflow: 'hidden',
@@ -53,7 +53,7 @@ const ServiceItem: FC<ServiceItemProps> = ({index, item}) => {
     placeholderImage: {
       height: '100%',
       width: '100%',
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: '#f4f4f4',
     },
     content: {
       flex: 1,

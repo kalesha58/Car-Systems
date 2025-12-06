@@ -36,7 +36,13 @@
     "login": "Login",
     "email": "Email",
     "password": "Password",
-    "loginOrSignUp": "Log in or sign up"
+    "phone": "Phone number",
+    "signUp": "Sign Up",
+    "loginOrSignUp": "Log in or sign up",
+    "dontHaveAccount": "Don't have an account? Sign Up",
+    "alreadyHaveAccount": "Already have an account? Login",
+    "loginSuccess": "Login successful!",
+    "signupSuccess": "Account created successfully!"
   },
   "cart": {
     "title": "Cart",

@@ -30,11 +30,36 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
     },
   });
 
+  const getItemType = (item: ItemType): 'products' | 'vehicles' | 'services' => {
+    // If itemType is provided, use it
+    if (itemType) {
+      return itemType;
+    }
+
+    // Determine type from item properties
+    const itemAny = item as any;
+    
+    // IDealerVehicle has vehicleModel and year as distinguishing properties
+    if (itemAny.vehicleModel !== undefined && itemAny.year !== undefined) {
+      return 'vehicles';
+    }
+    
+    // IService has durationMinutes and homeService as distinguishing properties
+    if (itemAny.durationMinutes !== undefined && itemAny.homeService !== undefined) {
+      return 'services';
+    }
+    
+    // Default to products
+    return 'products';
+  };
+
   const renderItem = ({item, index}: {item: ItemType; index: number}) => {
-    if (itemType === 'vehicles') {
+    const detectedType = getItemType(item);
+    
+    if (detectedType === 'vehicles') {
       return <VehicleItem item={item as IDealerVehicle} index={index} />;
     }
-    if (itemType === 'services') {
+    if (detectedType === 'services') {
       return <ServiceItem item={item as IService} index={index} />;
     }
     return <ProductItem item={item as IProduct} index={index} />;

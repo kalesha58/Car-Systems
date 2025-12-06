@@ -4,7 +4,7 @@ import {screenHeight} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {IDealerVehicle} from '@types/vehicle/IVehicle';
+import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {useTheme} from '@hooks/useTheme';
 
 interface VehicleItemProps {
@@ -39,7 +39,7 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
       justifyContent: 'center',
       alignItems: 'center',
       padding: 12,
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: '#f4f4f4',
       borderTopLeftRadius: 10,
       borderTopRightRadius: 10,
       overflow: 'hidden',
@@ -53,7 +53,7 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
     placeholderImage: {
       height: '100%',
       width: '100%',
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: '#f4f4f4',
     },
     content: {
       flex: 1,

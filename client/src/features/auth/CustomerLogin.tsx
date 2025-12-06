@@ -25,21 +25,25 @@ import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
-import { customerLogin } from '@service/authService';
+import { customerLogin, customerSignup } from '@service/authService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
+import {useToast} from '@hooks/useToast';
 
 const bottomColors = [...lightColors].reverse();
 
 const CustomerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [isSignupMode, setIsSignupMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const {t} = useTranslation();
+  const {showSuccess} = useToast();
 
   useEffect(() => {
     if (keyboardOffsetHeight === 0) {
@@ -77,14 +81,67 @@ const CustomerLogin = () => {
     }
   };
 
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isValidPhone = (phone: string): boolean => {
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    return cleanPhone.length === 10;
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const numericText = text.replace(/[^0-9]/g, '');
+    if (numericText.length <= 10) {
+      setPhone(numericText);
+    }
+  };
+
+  const isFormValid = (): boolean => {
+    if (isSignupMode) {
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      return (
+        email.trim().length > 0 &&
+        isValidEmail(email.trim()) &&
+        cleanPhone.length === 10 &&
+        password.length >= 8
+      );
+    }
+    return email.trim().length > 0 && password.length >= 8;
+  };
+
   const handleAuth = async () => {
     Keyboard.dismiss();
     setLoading(true);
     try {
       await customerLogin(email, password);
+      showSuccess(t('auth.loginSuccess'));
       resetAndNavigate('MainTabs');
-    } catch (error) {
-      Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || 'Invalid email or password. Please try again.';
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async () => {
+    Keyboard.dismiss();
+    setLoading(true);
+    try {
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      await customerSignup(email, cleanPhone, password);
+      showSuccess(t('auth.signupSuccess'));
+      setIsSignupMode(false);
+      setEmail('');
+      setPassword('');
+      setPhone('');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || 'Signup failed. Please try again.';
+      Alert.alert('Signup Failed', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -113,7 +170,7 @@ const CustomerLogin = () => {
                 />
 
                 <CustomText variant="h2" fontFamily={Fonts.Bold}>
-                  Grocery Delivery App
+                 Car Connect App
                 </CustomText>
                 <CustomText
                   variant="h5"
@@ -139,6 +196,27 @@ const CustomerLogin = () => {
                   right={false}
                 />
 
+                {isSignupMode && (
+                  <CustomInput
+                    onChangeText={handlePhoneChange}
+                    onClear={() => setPhone('')}
+                    value={phone}
+                    placeholder={t('auth.phone')}
+                    inputMode="tel"
+                    keyboardType="numeric"
+                    maxLength={10}
+                    left={
+                      <Ionicons
+                        name="call"
+                        color="#F8890E"
+                        style={{ marginLeft: 10 }}
+                        size={RFValue(18)}
+                      />
+                    }
+                    right={false}
+                  />
+                )}
+
                 <CustomInput
                   onChangeText={setPassword}
                   onClear={() => setPassword('')}
@@ -157,11 +235,22 @@ const CustomerLogin = () => {
                 />
 
                 <CustomButton
-                  disabled={email.length === 0 || password.length < 8}
-                  onPress={handleAuth}
+                  disabled={!isFormValid()}
+                  onPress={isSignupMode ? handleSignup : handleAuth}
                   loading={loading}
-                  title="Continue"
+                  title={isSignupMode ? t('auth.signUp') : 'Continue'}
                 />
+
+                <TouchableOpacity
+                  onPress={() => setIsSignupMode(!isSignupMode)}
+                  style={styles.signupButton}>
+                  <CustomText
+                    variant="h6"
+                    fontFamily={Fonts.Medium}
+                    style={styles.signupButtonText}>
+                    {isSignupMode ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
+                  </CustomText>
+                </TouchableOpacity>
               </View>
             </Animated.ScrollView>
           </PanGestureHandler>
@@ -214,7 +303,8 @@ const styles = StyleSheet.create({
     height: 50,
     width: 50,
     borderRadius: 20,
-    marginVertical: 10,
+    marginTop: 0,
+    marginBottom: 10,
   },
   subContainer: {
     flex: 1,
@@ -236,7 +326,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   gradient: {
-    paddingTop: 60,
+    paddingTop: 0,
     width: '100%',
   },
   content: {
@@ -245,7 +335,16 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'white',
     paddingHorizontal: 20,
+    paddingTop: 0,
     paddingBottom: 20,
+  },
+  signupButton: {
+    marginTop: 10,
+    paddingVertical: 10,
+  },
+  signupButtonText: {
+    color: Colors.secondary,
+    textAlign: 'center',
   },
 });
 

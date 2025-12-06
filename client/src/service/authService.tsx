@@ -18,6 +18,21 @@ export const customerLogin = async (email: string, password: string) => {
   }
 };
 
+export const customerSignup = async (email: string, phone: string, password: string) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/auth/signup`, { email, phone, password });
+    console.log('Signup API Response:', response);
+    console.log('Signup API Response Data:', response.data);
+    const { Response } = response.data;
+    console.log('Signup User Data:', Response);
+    const { setUser } = useAuthStore.getState();
+    setUser(Response);
+  } catch (error) {
+    console.log('Signup API Error:', error);
+    throw error;
+  }
+};
+
 export const deliveryLogin = async(email: string, password: string)=>{
     try {
         const response = await axios.post(`${BASE_URL}/delivery/login`, { email, password })

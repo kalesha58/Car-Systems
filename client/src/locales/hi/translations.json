@@ -36,7 +36,11 @@
     "login": "लॉगिन",
     "email": "ईमेल",
     "password": "पासवर्ड",
-    "loginOrSignUp": "लॉग इन या साइन अप करें"
+    "phone": "फ़ोन नंबर",
+    "signUp": "साइन अप करें",
+    "loginOrSignUp": "लॉग इन या साइन अप करें",
+    "dontHaveAccount": "खाता नहीं है? साइन अप करें",
+    "alreadyHaveAccount": "पहले से खाता है? लॉगिन करें"
   },
   "cart": {
     "title": "कार्ट",

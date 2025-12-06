@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Colors, Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {getPosts} from '@service/postService';
 import {IPost} from '../../types/post/IPost';
 import ImagePostItem from './ImagePostItem';
+import {navigate} from '@utils/NavigationUtils';
 
 const TABS = ['For You', 'Beauty Binge', 'Trends for him', 'Trends for her'];
 
@@ -26,6 +29,12 @@ const PlayScreen: React.FC = () => {
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPosts();
+    }, []),
+  );
 
   const fetchPosts = async () => {
     try {
@@ -56,9 +65,16 @@ const PlayScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <CustomText fontSize={RFValue(18)} fontFamily={Fonts.Bold} style={styles.title}>
-          Play
-        </CustomText>
+        <View style={styles.headerRow}>
+          <CustomText fontSize={RFValue(18)} fontFamily={Fonts.Bold} style={styles.title}>
+            Play
+          </CustomText>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigate('CreateNewPost')}>
+            <Icon name="add-circle-outline" size={RFValue(24)} color="#fff" />
+          </TouchableOpacity>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -114,9 +130,17 @@ const styles = StyleSheet.create({
     paddingBottom: screenHeight * 0.01,
     backgroundColor: '#000',
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: screenHeight * 0.01,
+  },
   title: {
     color: '#fff',
-    marginBottom: screenHeight * 0.01,
+  },
+  addButton: {
+    padding: 4,
   },
   tabsContainer: {
     flexDirection: 'row',

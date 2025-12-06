@@ -20,6 +20,15 @@ export interface IProduct {
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
+  rating?: number;
+  reviewCount?: number;
+  quantity?: string;
+  offers?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    discount?: number;
+  }>;
 }
 
 export interface IGetProductsRequest {

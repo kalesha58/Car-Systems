@@ -63,10 +63,10 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: "row",
-        marginBottom: 10
+        marginBottom: 5
     },
     itemContainer: {
-        marginBottom: 12,
+        marginBottom: 8,
         marginHorizontal: 10,
         width: screenWidth * 0.26,
         height: screenWidth * 0.26,
