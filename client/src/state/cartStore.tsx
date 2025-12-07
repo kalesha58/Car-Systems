@@ -17,14 +17,27 @@ interface CartStore {
   getTotalPrice: () => number;
 }
 
+/**
+ * Normalize item ID to handle both id and _id fields
+ * @param item - Item object or ID value
+ * @returns Normalized ID (string | number)
+ */
+const normalizeId = (item: any): string | number => {
+  if (typeof item === 'string' || typeof item === 'number') {
+    return item;
+  }
+  return item?._id ?? item?.id;
+};
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       cart: [],
       addItem: item => {
         const currentCart = get().cart;
+        const normalizedId = normalizeId(item);
         const existingItemIndex = currentCart?.findIndex(
-          cartItem => cartItem?._id === item?._id,
+          cartItem => cartItem?._id === normalizedId,
         );
         //WHEN ITEM EXIST
         if (existingItemIndex >= 0) {
@@ -36,7 +49,7 @@ export const useCartStore = create<CartStore>()(
           set({cart: updatedCart});
         } else {
           set({
-            cart: [...currentCart, {_id: item._id, item: item, count: 1}],
+            cart: [...currentCart, {_id: normalizedId, item: item, count: 1}],
           });
         }
       },
@@ -44,29 +57,34 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({cart: []}),
 
       removeItem: id => {
-        const currentCart = get().cart
-        const existingItemIndex = currentCart.findIndex(cartItem => cartItem?._id === id)
+        const currentCart = get().cart;
+        const normalizedId = normalizeId(id);
+        const existingItemIndex = currentCart.findIndex(
+          cartItem => cartItem?._id === normalizedId,
+        );
 
         if (existingItemIndex >= 0) {
-            const updatedCart = [...currentCart]
-            const existingItem = updatedCart[existingItemIndex];
+          const updatedCart = [...currentCart];
+          const existingItem = updatedCart[existingItemIndex];
 
-            if (existingItem.count > 1) {
-                updatedCart[existingItemIndex] = {
-                    ...existingItem,
-                    count: existingItem?.count - 1
-                }
-            } else {
-                updatedCart.splice(existingItemIndex, 1)
-            }
+          if (existingItem.count > 1) {
+            updatedCart[existingItemIndex] = {
+              ...existingItem,
+              count: existingItem?.count - 1,
+            };
+          } else {
+            updatedCart.splice(existingItemIndex, 1);
+          }
 
-            set({ cart: updatedCart })
+          set({cart: updatedCart});
         }
-
       },
 
       getItemCount: id => {
-        const currentItem = get().cart.find(cartItem => cartItem._id === id);
+        const normalizedId = normalizeId(id);
+        const currentItem = get().cart.find(
+          cartItem => cartItem._id === normalizedId,
+        );
         return currentItem ? currentItem?.count : 0;
       },
 

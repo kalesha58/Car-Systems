@@ -3,11 +3,21 @@ import React, {FC} from 'react';
 import {useCartStore} from '@state/cartStore';
 import {Colors, Fonts} from '@utils/Constants';
 import CustomText from './CustomText';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
-import { RFValue } from 'react-native-responsive-fontsize';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {RFValue} from 'react-native-responsive-fontsize';
+
+/**
+ * Normalize item ID to handle both id and _id fields
+ * @param item - Item object
+ * @returns Normalized ID (string | number)
+ */
+const normalizeId = (item: any): string | number => {
+  return item?._id ?? item?.id;
+};
 
 const UniversalAdd: FC<{item: any}> = ({item}) => {
-  const count = useCartStore(state => state.getItemCount(item._id));
+  const itemId = normalizeId(item);
+  const count = useCartStore(state => state.getItemCount(itemId));
   const {addItem, removeItem} = useCartStore();
 
   return (
@@ -27,7 +37,7 @@ const UniversalAdd: FC<{item: any}> = ({item}) => {
         </Pressable>
       ) : (
         <View style={styles.counterContainer}>
-          <Pressable onPress={() => removeItem(item._id)}>
+          <Pressable onPress={() => removeItem(itemId)}>
             <Icon name="minus" color="#fff" size={RFValue(13)} />
           </Pressable>
           <CustomText
