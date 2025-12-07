@@ -1,11 +1,49 @@
 import {View, Text, StyleSheet} from 'react-native';
-import React, { FC } from 'react';
+import React, {FC} from 'react';
 import {Colors, Fonts} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
+import {IShippingAddress} from '../../types/order/IOrder';
 
-const DeliveryDetails: FC<{ details: any }> = ({ details }) => {
+interface IDeliveryDetailsProps {
+  details?: {
+    name?: string;
+    phone?: string;
+    address?: string;
+  };
+  shippingAddress?: IShippingAddress;
+  deliveryLocation?: {
+    address?: string;
+  };
+}
+
+const DeliveryDetails: FC<IDeliveryDetailsProps> = ({
+  details,
+  shippingAddress,
+  deliveryLocation,
+}) => {
+  const formatAddress = (): string => {
+    if (deliveryLocation?.address) {
+      return deliveryLocation.address;
+    }
+
+    if (details?.address) {
+      return details.address;
+    }
+
+    if (shippingAddress) {
+      const parts = [
+        shippingAddress.street,
+        shippingAddress.city,
+        shippingAddress.state,
+        shippingAddress.zipCode,
+      ].filter(Boolean);
+      return parts.join(', ') || 'Address not available';
+    }
+
+    return 'Address not available';
+  };
 
   return (
     <View style={styles.container}>
@@ -35,8 +73,8 @@ const DeliveryDetails: FC<{ details: any }> = ({ details }) => {
           <CustomText variant="h8" fontFamily={Fonts.Medium}>
             Delivery at Home
           </CustomText>
-          <CustomText variant="h8" numberOfLines={2} fontFamily={Fonts.Regular}>
-            {details?.address || '-----'}
+          <CustomText variant="h8" numberOfLines={3} fontFamily={Fonts.Regular}>
+            {formatAddress()}
           </CustomText>
         </View>
       </View>

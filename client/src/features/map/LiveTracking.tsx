@@ -1,7 +1,8 @@
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {useAuthStore} from '@state/authStore';
-// import {getOrderById} from '../../service/orderService';
+import {getOrderById} from '@service/orderService';
+import {SOCKET_URL} from '@service/config';
 import {Colors, Fonts} from '@utils/Constants';
 import LiveHeader from './LiveHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -10,31 +11,75 @@ import CustomText from '@components/ui/CustomText';
 import OrderSummary from './OrderSummary';
 import DeliveryDetails from './DeliveryDetails';
 import LiveMap from './LiveMap';
+import {getOrderStatusDisplay, isOrderAccepted, isOrderPickedUp} from '@utils/orderStatusUtils';
+import {io, Socket} from 'socket.io-client';
 
 const LiveTracking = () => {
   const {currentOrder, setCurrentOrder} = useAuthStore();
+  const socketRef = useRef<Socket | null>(null);
 
   const fetchOrderDetails = async () => {
-    // const data = await getOrderById(currentOrder?._id as any);
-    // setCurrentOrder(data);
+    if (!currentOrder?._id && !currentOrder?.id) {
+      return;
+    }
+
+    try {
+      const orderId = currentOrder._id || currentOrder.id;
+      const data = await getOrderById(orderId);
+      if (data) {
+        setCurrentOrder(data);
+      }
+    } catch (error) {
+      // Error handling - no fallback per rules
+    }
   };
 
   useEffect(() => {
     fetchOrderDetails();
   }, []);
 
-  let msg = 'Packing your order';
-  let time = 'Arriving in 10 minutes';
-  if (currentOrder?.status == 'confirmed') {
-    msg = 'Arriving Soon';
-    time = 'Arriving in 8 minutes';
-  } else if (currentOrder?.status == 'arriving') {
-    msg = 'Order Picked Up';
-    time = 'Arriving in 6 minutes';
-  } else if (currentOrder?.status == 'delivered') {
-    msg = 'Order Delivered';
-    time = 'Fastest Delivery ⚡️';
-  }
+  useEffect(() => {
+    if (currentOrder) {
+      const orderId = currentOrder._id || currentOrder.id;
+      if (!orderId) {
+        return;
+      }
+
+      const socketInstance = io(SOCKET_URL, {
+        transports: ['websocket'],
+        withCredentials: true,
+      });
+
+      socketRef.current = socketInstance;
+
+      socketInstance.emit('joinRoom', orderId);
+
+      const handleLiveTrackingUpdates = () => {
+        fetchOrderDetails();
+      };
+
+      const handleOrderConfirmed = () => {
+        fetchOrderDetails();
+      };
+
+      socketInstance.on('liveTrackingUpdates', handleLiveTrackingUpdates);
+      socketInstance.on('orderConfirmed', handleOrderConfirmed);
+
+      return () => {
+        socketInstance.off('liveTrackingUpdates', handleLiveTrackingUpdates);
+        socketInstance.off('orderConfirmed', handleOrderConfirmed);
+        socketInstance.disconnect();
+        socketRef.current = null;
+      };
+    }
+  }, [currentOrder?._id || currentOrder?.id]);
+
+  const statusDisplay = currentOrder?.status
+    ? getOrderStatusDisplay(currentOrder.status)
+    : {message: 'Packing your order', timeEstimate: 'Arriving in 10 minutes'};
+
+  const msg = statusDisplay.message;
+  const time = statusDisplay.timeEstimate;
 
   return (
     <View style={styles.container}>
@@ -48,8 +93,8 @@ const LiveTracking = () => {
           deliveryLocation={currentOrder?.deliveryLocation}
           pickupLocation={currentOrder?.pickupLocation}
           deliveryPersonLocation={currentOrder?.deliveryPersonLocation}
-          hasAccepted={currentOrder?.status == 'confirmed'}
-          hasPickedUp={currentOrder?.status == 'arriving'}
+          hasAccepted={isOrderAccepted(currentOrder?.status || '')}
+          hasPickedUp={isOrderPickedUp(currentOrder?.status || '')}
         />
 
         <View style={styles.flexRow}>
@@ -66,12 +111,13 @@ const LiveTracking = () => {
               variant="h7"
               fontFamily={Fonts.SemiBold}>
               {currentOrder?.deliveryPartner?.name ||
+                currentOrder?.dealerId ||
                 'We will soon assign delivery partner'}
             </CustomText>
 
-            {currentOrder?.deliveryPartner && (
+            {currentOrder?.deliveryPartner?.phone && (
               <CustomText variant="h7" fontFamily={Fonts.Medium}>
-                {currentOrder?.deliveryPartner?.phone}
+                {currentOrder.deliveryPartner.phone}
               </CustomText>
             )}
 
@@ -83,7 +129,11 @@ const LiveTracking = () => {
           </View>
         </View>
 
-        <DeliveryDetails details={currentOrder?.customer} />
+        <DeliveryDetails
+          details={currentOrder?.customer}
+          shippingAddress={currentOrder?.shippingAddress}
+          deliveryLocation={currentOrder?.deliveryLocation}
+        />
 
         <OrderSummary order={currentOrder} />
 

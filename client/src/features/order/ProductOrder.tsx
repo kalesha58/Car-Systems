@@ -19,8 +19,9 @@ import {useCartStore} from '@state/cartStore';
 import {useAuthStore} from '@state/authStore';
 import {hocStyles} from '@styles/GlobalStyles';
 import ArrowButton from '@components/ui/ArrowButton';
-// import { createOrder } from '@service/orderService';
-import { navigate } from '@utils/NavigationUtils';
+import {createOrder} from '@service/orderService';
+import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
+import {navigate} from '@utils/NavigationUtils';
 
 const ProductOrder = () => {
   const {getTotalPrice, cart, clearCart} = useCartStore();
@@ -29,37 +30,67 @@ const ProductOrder = () => {
 
   const [loading, setLoading] = useState(false);
 
+  const parseAddressToShippingAddress = (
+    addressString: string,
+  ): IShippingAddress => {
+    const parts = addressString.split(',').map(part => part.trim());
+    return {
+      street: parts[0] || '',
+      city: parts[1] || '',
+      state: parts[2] || '',
+      zipCode: parts[3] || '',
+      country: parts[4] || 'India',
+    };
+  };
+
   const handlePlaceOrder = async () => {
-
     if (currentOrder !== null) {
-        Alert.alert("Let your first order to be delivered")
-        return
+      Alert.alert('Let your first order to be delivered');
+      return;
     }
 
-
-    const formattedData = cart.map(item => ({
-        id: item._id,
-        item: item._id,
-        count: item.count
-    }))
-
-    if (formattedData.length == 0) {
-        Alert.alert("Add any items to place order")
-        return
+    if (cart.length === 0) {
+      Alert.alert('Add any items to place order');
+      return;
     }
 
-    setLoading(true)
-    // const data = await createOrder(formattedData, totalItemPrice)
+    if (!user?.address) {
+      Alert.alert('Please set a delivery address');
+      return;
+    }
 
-    // if (data != null) {
-    //     setCurrentOrder(data)
-    //     clearCart()
-    //     navigate('OrderSuccess', { ...data })
-    // } else {
-    //     Alert.alert("There was an error")
-    // }
+    const shippingAddress = parseAddressToShippingAddress(user.address);
 
-    setLoading(false)
+    const orderItems = cart.map(item => ({
+      productId: item.item?.id || item._id.toString(),
+      name: item.item?.name || '',
+      quantity: item.count,
+      price: item.item?.price || 0,
+      total: item.count * (item.item?.price || 0),
+    }));
+
+    const orderData: ICreateOrderRequest = {
+      items: orderItems,
+      shippingAddress,
+      paymentMethod: 'cash_on_delivery',
+    };
+
+    setLoading(true);
+    try {
+      const data = await createOrder(orderData);
+
+      if (data !== null) {
+        setCurrentOrder(data);
+        clearCart();
+        navigate('OrderSuccess', {...data});
+      } else {
+        Alert.alert('There was an error');
+      }
+    } catch (error) {
+      Alert.alert('Failed to create order');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

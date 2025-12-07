@@ -8,12 +8,15 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:dev": "npm run dev",
+    "start:socket": "node dist/socket-server.js",
+    "dev:socket": "ts-node src/socket-server.ts",
     "seed:chat": "ts-node src/scripts/seedChatData.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.0",
     "cors": "^2.8.5",
@@ -24,6 +27,7 @@
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.10",
+    "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.18.3"
@@ -36,6 +40,7 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.10.6",
     "@types/nodemailer": "^7.0.4",
+    "@types/socket.io": "^3.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@vercel/node": "^3.0.0",

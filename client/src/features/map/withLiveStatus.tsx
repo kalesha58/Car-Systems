@@ -1,14 +1,14 @@
 import CustomText from '@components/ui/CustomText';
 import {useNavigationState} from '@react-navigation/native';
 import {SOCKET_URL} from '@service/config';
-// import {getOrderById} from '@service/orderService';
+import {getOrderById} from '@service/orderService';
 import {useAuthStore} from '@state/authStore';
 import {hocStyles} from '@styles/GlobalStyles';
 import {Colors, Fonts} from '@utils/Constants';
 import {navigate} from '@utils/NavigationUtils';
-import {FC, useEffect} from 'react';
+import {FC, useEffect, useRef} from 'react';
 import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {io} from 'socket.io-client';
+import {io, Socket} from 'socket.io-client';
 
 const withLiveStatus = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
@@ -18,41 +18,65 @@ const withLiveStatus = <P extends object>(
     const routeName = useNavigationState(
       state => state.routes[state.index]?.name,
     );
+    const socketRef = useRef<Socket | null>(null);
 
     const fetchOrderDetails = async () => {
-      // const data = await getOrderById(currentOrder?._id as any);
-      // setCurrentOrder(data);
+      if (!currentOrder?._id && !currentOrder?.id) {
+        return;
+      }
+
+      try {
+        const orderId = currentOrder._id || currentOrder.id;
+        const data = await getOrderById(orderId);
+        if (data) {
+          setCurrentOrder(data);
+        }
+      } catch (error) {
+        // Error handling - no fallback per rules
+      }
     };
 
     useEffect(() => {
       if (currentOrder) {
+        const orderId = currentOrder._id || currentOrder.id;
+        if (!orderId) {
+          return;
+        }
+
         const socketInstance = io(SOCKET_URL, {
           transports: ['websocket'],
           withCredentials: true,
         });
-        socketInstance.emit('joinRoom', currentOrder?._id);
 
-        socketInstance?.on('liveTrackingUpdates', updatedOrder => {
-          fetchOrderDetails();
-          console.log('RECEIVING LIVE UPDATES 🔴');
-        });
+        socketRef.current = socketInstance;
 
-        socketInstance.on('orderConfirmed', confirmOrder => {
+        socketInstance.emit('joinRoom', orderId);
+
+        const handleLiveTrackingUpdates = () => {
           fetchOrderDetails();
-          console.log('ORDER CONFIRMATION LIVE UPDATES🔴');
-        });
+        };
+
+        const handleOrderConfirmed = () => {
+          fetchOrderDetails();
+        };
+
+        socketInstance.on('liveTrackingUpdates', handleLiveTrackingUpdates);
+        socketInstance.on('orderConfirmed', handleOrderConfirmed);
 
         return () => {
+          socketInstance.off('liveTrackingUpdates', handleLiveTrackingUpdates);
+          socketInstance.off('orderConfirmed', handleOrderConfirmed);
           socketInstance.disconnect();
+          socketRef.current = null;
         };
       }
-    }, [currentOrder]);
+    }, [currentOrder?._id || currentOrder?.id]);
 
     return (
       <View style={styles.container}>
         <WrappedComponent {...props} />
 
-        {currentOrder && routeName === 'ProductDashboard' && (
+        {currentOrder && routeName === 'Home' && (
           <View
             style={[
               hocStyles.cartContainer,
@@ -71,10 +95,12 @@ const withLiveStatus = <P extends object>(
                   Order is {currentOrder?.status}
                 </CustomText>
                 <CustomText variant="h9" fontFamily={Fonts.Medium}>
-                  {currentOrder?.items![0]?.item.name +
-                    (currentOrder?.items?.length - 1 > 0
-                      ? ` and ${currentOrder?.items?.length - 1}+ items`
-                      : '')}
+                  {currentOrder?.items?.[0]?.name
+                    ? currentOrder.items[0].name +
+                        (currentOrder.items.length > 1
+                          ? ` and ${currentOrder.items.length - 1}+ items`
+                          : '')
+                    : 'Order items'}
                 </CustomText>
               </View>
             </View>

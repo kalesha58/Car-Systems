@@ -35,6 +35,12 @@ export interface IAddress {
   country: string;
 }
 
+export interface ILocation {
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
 export interface ITracking {
   trackingNumber: string;
   carrier: string;
@@ -88,6 +94,9 @@ export interface IOrderDocument extends Document {
   documents?: IOrderDocumentRef[];
   returnRequest?: IReturnRequest;
   expectedDeliveryDate?: Date;
+  deliveryLocation?: ILocation;
+  pickupLocation?: ILocation;
+  deliveryPersonLocation?: ILocation;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -163,6 +172,15 @@ const returnRequestSchema = new Schema<IReturnRequest>(
     requestedAt: { type: Date, default: Date.now },
     processedAt: { type: Date },
     notes: { type: String },
+  },
+  { _id: false },
+);
+
+const locationSchema = new Schema<ILocation>(
+  {
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    address: { type: String },
   },
   { _id: false },
 );
@@ -263,6 +281,15 @@ const orderSchema = new Schema<IOrderDocument>(
     },
     expectedDeliveryDate: {
       type: Date,
+    },
+    deliveryLocation: {
+      type: locationSchema,
+    },
+    pickupLocation: {
+      type: locationSchema,
+    },
+    deliveryPersonLocation: {
+      type: locationSchema,
     },
   },
   {

@@ -21,6 +21,7 @@ import {
 import { NotFoundError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { validateStatusTransitionOrThrow } from '../../utils/orderStatusValidator';
+import { emitToOrderRoom } from '../socket/socketService';
 
 /**
  * Generate unique order number
@@ -281,6 +282,18 @@ export const updateOrderStatus = async (
         adminId,
         data.notes,
       );
+
+      // Emit socket event for real-time updates
+      try {
+        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+          orderId,
+          status: newStatus,
+          previousStatus,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (socketError) {
+        logger.error('Error emitting socket event for order status update:', socketError);
+      }
 
       logger.info(
         `Order status updated by admin: ${order.orderNumber} - ${newStatus}`,

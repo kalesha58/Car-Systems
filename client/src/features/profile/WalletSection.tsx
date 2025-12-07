@@ -1,17 +1,25 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
+import {useNavigation} from '@react-navigation/native';
 import {Colors} from '@utils/Constants';
 import WalletItem from './WalletItem';
 import {useTranslation} from 'react-i18next';
 
 const WalletSection = () => {
   const {t} = useTranslation();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.walletContainer}>
       <WalletItem icon="wallet-outline" label={t('common.wallet')} />
       <WalletItem icon="chatbubble-ellipses-outline" label={t('common.support')} />
-      <WalletItem icon="card-outline" label={t('common.payments')} />
+      <WalletItem
+        icon="bag-outline"
+        label={t('profile.myOrders')}
+        onPress={() => {
+          navigation.navigate('OrdersList' as never);
+        }}
+      />
     </View>
   );
 };

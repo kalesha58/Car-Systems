@@ -64,13 +64,7 @@ export const createOrderController = async (
 
     res.status(201).json({
       success: true,
-      data: {
-        id: order.id,
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-        paymentStatus: order.paymentStatus,
-        status: order.status,
-      },
+      data: order,
     });
   } catch (error: any) {
     logger.error('Error in createOrderController:', error);

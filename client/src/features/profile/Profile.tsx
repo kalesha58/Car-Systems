@@ -1,9 +1,9 @@
-import {View, StyleSheet, ScrollView, TouchableOpacity, FlatList} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import {View, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import React, {useMemo} from 'react';
+import {useNavigation} from '@react-navigation/native';
 import {useAuthStore} from '@state/authStore';
 import {useCartStore} from '@state/cartStore';
 import CustomHeader from '@components/ui/CustomHeader';
-import ProfileOrderItem from './ProfileOrderItem';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import {storage, tokenStorage} from '@state/storage';
@@ -18,20 +18,10 @@ import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
 
 const Profile = () => {
-  const [orders, setOrders] = useState([]);
-  const {logout, user} = useAuthStore();
+  const {logout} = useAuthStore();
   const {clearCart} = useCartStore();
   const {t} = useTranslation();
   const {colors} = useTheme();
-
-  const fetchOrders = async () => {
-    // const data = await fetchCustomerOrders(user?._id);
-    // setOrders(data);
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
 
   const handleLogout = () => {
     clearCart();
@@ -41,40 +31,32 @@ const Profile = () => {
     resetAndNavigate('CustomerLogin');
   };
 
-  const renderOrders = ({item, index}: any) => {
-    return <ProfileOrderItem item={item} index={index} />;
-  };
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: colors.background,
-    },
-    scrollViewContent: {
-      padding: 16,
-      paddingTop: 20,
-      paddingBottom: 100,
-    },
-    sectionTitle: {
-      marginBottom: 12,
-      opacity: 0.7,
-      paddingHorizontal: 4,
-    },
-    ordersSection: {
-      marginBottom: 24,
-    },
-    logoutButton: {
-      backgroundColor: colors.secondary,
-      borderRadius: 10,
-      paddingVertical: 16,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 20,
-    },
-    logoutText: {
-      color: colors.white,
-    },
-  });
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        scrollViewContent: {
+          padding: 16,
+          paddingTop: 20,
+          paddingBottom: 100,
+        },
+        logoutButton: {
+          backgroundColor: colors.secondary,
+          borderRadius: 10,
+          paddingVertical: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 20,
+        },
+        logoutText: {
+          color: colors.white,
+        },
+      }),
+    [colors],
+  );
 
   return (
     <View style={styles.container}>
@@ -88,20 +70,6 @@ const Profile = () => {
         <AccountSettingsSection />
         <ActivitySection />
         <FeedbackSection />
-
-        {orders.length > 0 && (
-          <View style={styles.ordersSection}>
-            <CustomText variant="h8" style={styles.sectionTitle}>
-              {t('profile.pastOrders')}
-            </CustomText>
-            <FlatList
-              data={orders}
-              renderItem={renderOrders}
-              keyExtractor={(item: any) => item?.orderId}
-              scrollEnabled={false}
-            />
-          </View>
-        )}
 
         <TouchableOpacity
           style={styles.logoutButton}

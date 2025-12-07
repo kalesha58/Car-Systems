@@ -7,13 +7,16 @@ import CustomText from '@components/ui/CustomText';
 import BillDetails from '@features/order/BillDetails';
 
 const OrderSummary: FC<{order: any}> = ({order}) => {
-    
   const totalPrice =
     order?.items?.reduce(
-      (total: number, cartItem: any) =>
-        total + cartItem.item.price * cartItem.count,
+      (total: number, orderItem: any) => {
+        // Handle both old format (item.item.price) and new format (item.price)
+        const price = orderItem.price || orderItem.item?.price || 0;
+        const quantity = orderItem.quantity || orderItem.count || 0;
+        return total + price * quantity;
+      },
       0,
-    ) || 0;
+    ) || order?.totalAmount || 0;
 
   return (
     <View style={styles.container}>
@@ -30,25 +33,34 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
             Order summary
           </CustomText>
           <CustomText variant="h9" fontFamily={Fonts.Medium}>
-            Order ID - #{order?.orderId}
+            Order ID - #{order?.orderNumber || order?.orderId}
           </CustomText>
         </View>
       </View>
 
       {order?.items?.map((item: any, index: number) => {
+        // Handle both old format (item.item) and new format (item directly)
+        const itemName = item.name || item.item?.name || 'Item';
+        const itemPrice = item.price || item.item?.price || 0;
+        const quantity = item.quantity || item.count || 0;
+        const itemImage = item.image || item.item?.image;
+        const itemQuantity = item.quantity || item.item?.quantity || '';
+
         return (
           <View style={styles.flexRow} key={index}>
-            <View style={styles.imgContainer}>
-              <Image source={{uri: item?.item?.image}} style={styles.img} />
-            </View>
-            <View style={{width: '55%'}}>
+            {itemImage && (
+              <View style={styles.imgContainer}>
+                <Image source={{uri: itemImage}} style={styles.img} />
+              </View>
+            )}
+            <View style={{width: itemImage ? '55%' : '75%'}}>
               <CustomText
                 numberOfLines={2}
                 variant="h8"
                 fontFamily={Fonts.Medium}>
-                {item.item.name}
+                {itemName}
               </CustomText>
-              <CustomText variant="h9">{item.item.quantity}</CustomText>
+              {itemQuantity && <CustomText variant="h9">{itemQuantity}</CustomText>}
             </View>
 
             <View style={{width: '20%', alignItems: 'flex-end'}}>
@@ -56,13 +68,13 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={{alignSelf: 'flex-end', marginTop: 4}}>
-                ₹{item.count * item.item.price}
+                ₹{itemPrice * quantity}
               </CustomText>
               <CustomText
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={{alignSelf: 'flex-end', marginTop: 4}}>
-                {item.count}x
+                {quantity}x
               </CustomText>
             </View>
           </View>

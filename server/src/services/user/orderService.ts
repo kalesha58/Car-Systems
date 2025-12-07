@@ -9,6 +9,7 @@ import {
   canUserCancel,
   canRequestReturn,
 } from '../../utils/orderStatusValidator';
+import { emitToOrderRoom } from '../socket/socketService';
 
 export interface IUserOrder {
   id: string;
@@ -31,6 +32,9 @@ export interface IUserOrder {
   documents?: any[];
   returnRequest?: any;
   expectedDeliveryDate?: string;
+  deliveryLocation?: { latitude: number; longitude: number; address?: string };
+  pickupLocation?: { latitude: number; longitude: number; address?: string };
+  deliveryPersonLocation?: { latitude: number; longitude: number; address?: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -112,6 +116,9 @@ const orderToUserOrder = (orderDoc: IOrderDocument): IUserOrder => {
     documents: orderDoc.documents,
     returnRequest: orderDoc.returnRequest,
     expectedDeliveryDate: orderDoc.expectedDeliveryDate?.toISOString(),
+    deliveryLocation: orderDoc.deliveryLocation,
+    pickupLocation: orderDoc.pickupLocation,
+    deliveryPersonLocation: orderDoc.deliveryPersonLocation,
     createdAt: orderDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: orderDoc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -201,6 +208,18 @@ export const createUserOrder = async (
       'Order created',
     );
 
+    // Emit socket event for order creation
+    try {
+      const orderId = (order._id as any).toString();
+      await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+        orderId,
+        status: 'ORDER_PLACED',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (socketError) {
+      logger.error('Error emitting socket event for order creation:', socketError);
+    }
+
     // TESTING: Auto-confirm payment for UPI/COD (Remove when implementing real payment gateway)
     // TODO: Remove this block when implementing actual payment gateway integration
     if (data.paymentMethod === 'upi' || data.paymentMethod === 'cash_on_delivery') {
@@ -231,6 +250,19 @@ export const createUserOrder = async (
         'system',
         paymentNote,
       );
+      
+      // Emit socket event for payment confirmation
+      try {
+        const orderId = (order._id as any).toString();
+        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+          orderId,
+          status: 'PAYMENT_CONFIRMED',
+          previousStatus,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (socketError) {
+        logger.error('Error emitting socket event for payment confirmation:', socketError);
+      }
       
       logger.info(`Payment auto-confirmed for testing: ${order.orderNumber} (${data.paymentMethod})`);
     }

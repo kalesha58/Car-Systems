@@ -1,5 +1,6 @@
-import {View, Text, StyleSheet, SafeAreaView, Pressable} from 'react-native';
+import {View, Text, StyleSheet, Pressable} from 'react-native';
 import React, {FC} from 'react';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuthStore} from '@state/authStore';
 import {navigate} from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -23,7 +24,7 @@ const LiveHeader: FC<{
           style={styles.backButton}
           onPress={() => {
             if (isCustomer) {
-              navigate('ProductDashboard');
+              navigate('MainTabs');
               if (currentOrder?.status == 'delivered') {
                 setCurrentOrder(null);
               }

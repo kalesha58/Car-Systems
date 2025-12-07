@@ -27,6 +27,7 @@ import {
   validateStatusTransitionOrThrow,
   canDealerCancel,
 } from '../../utils/orderStatusValidator';
+import { emitToOrderRoom } from '../socket/socketService';
 
 /**
  * Convert order document to dealer order interface
@@ -335,6 +336,18 @@ export const updateOrderStatus = async (
         dealerId,
         data.notes,
       );
+
+      // Emit socket event for real-time updates
+      try {
+        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+          orderId,
+          status: data.status,
+          previousStatus,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (socketError) {
+        logger.error('Error emitting socket event for order status update:', socketError);
+      }
 
       logger.info(`Order status updated: ${order.orderNumber} - ${data.status}`);
     }
@@ -751,6 +764,23 @@ export const acceptOrder = async (
       dealerId,
       'Order accepted by dealer',
     );
+
+    // Emit socket event for order confirmation
+    try {
+      await emitToOrderRoom(orderId, 'orderConfirmed', {
+        orderId,
+        status: 'ORDER_CONFIRMED',
+        timestamp: new Date().toISOString(),
+      });
+      await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+        orderId,
+        status: 'ORDER_CONFIRMED',
+        previousStatus,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (socketError) {
+      logger.error('Error emitting socket event for order confirmation:', socketError);
+    }
 
     logger.info(`Order accepted: ${order.orderNumber} by dealer: ${dealerId}`);
 

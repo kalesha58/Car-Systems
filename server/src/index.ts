@@ -4,11 +4,13 @@ import './config/env';
 
 // Now import everything else
 import express, { Request, Response, NextFunction } from 'express';
+import http from 'http';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database';
 import { errorHandler, IAppError } from './utils/errorHandler';
 import { swaggerSpec } from './config/swagger';
+import { initializeSocket } from './services/socket/socketService';
 import authRoutes from './routes/authRoutes';
 import vehicleRoutes from './routes/user/vehicleRoutes';
 import postRoutes from './routes/user/postRoutes';
@@ -167,12 +169,19 @@ const initializeDatabase = async (): Promise<void> => {
 if (!isServerless) {
   initializeDatabase()
     .then(() => {
-      const server = app.listen(PORT, () => {
+      // Create HTTP server from Express app
+      const httpServer = http.createServer(app);
+
+      // Initialize Socket.io
+      initializeSocket(httpServer);
+
+      // Start server
+      httpServer.listen(PORT, () => {
         logger.info(`Server is running on port ${PORT}`);
         logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
       });
 
-      server.on('error', (error: NodeJS.ErrnoException) => {
+      httpServer.on('error', (error: NodeJS.ErrnoException) => {
         if (error.code === 'EADDRINUSE') {
           logger.error(`Port ${PORT} is already in use. Please stop the other process or change the PORT in .env file`);
           process.exit(1);

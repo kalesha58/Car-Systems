@@ -22,6 +22,8 @@ import AddressForm from '@features/address/AddressForm';
 import OrderSuccess from '@features/order/OrderSuccess';
 import ProductDetail from '@features/product/ProductDetail';
 import CreateNewPost from '@features/play/CreateNewPost';
+import LiveTracking from '@features/map/LiveTracking';
+import OrdersList from '@features/order/OrdersList';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
 import {ToastProvider} from '@context/ToastContext';
@@ -167,6 +169,20 @@ const Navigation: FC = () => {
             }}
             name="CustomerLogin"
             component={CustomerLogin}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="LiveTracking"
+            component={LiveTracking}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="OrdersList"
+            component={OrdersList}
           />
         </Stack.Navigator>
       </NavigationContainer>

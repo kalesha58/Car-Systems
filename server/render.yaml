@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: socket-server
+    env: node
+    buildCommand: npm run build
+    startCommand: npm run start:socket
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        sync: false  # Render will provide this automatically
+      - key: SOCKET_API_KEY
+        generateValue: true  # Generate a secure random key
+        sync: false
+      - key: CORS_ORIGIN
+        value: '*'  # Update to specific origins in production
+        sync: false
+
