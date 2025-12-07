@@ -1,6 +1,5 @@
 import { Group, IGroupDocument } from '../../models/Group';
 import { GroupMember, IGroupMemberDocument } from '../../models/GroupMember';
-import { JoinRequest, IJoinRequestDocument } from '../../models/JoinRequest';
 import { SignUp } from '../../models/SignUp';
 import {
   ICreateGroupRequest,
@@ -10,8 +9,6 @@ import {
   IGroupsResponse,
   IGroupMember,
   IGroupMembersResponse,
-  IJoinRequest,
-  IJoinRequestsResponse,
 } from '../../types/group';
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
@@ -249,9 +246,8 @@ export const deleteGroup = async (groupId: string, userId: string): Promise<void
     throw new AppError('Only group owner can delete the group', 403);
   }
 
-  // Delete all members and join requests
+  // Delete all members
   await GroupMember.deleteMany({ groupId: group.id });
-  await JoinRequest.deleteMany({ groupId: group.id });
 
   await Group.findByIdAndDelete(groupId);
 
@@ -286,135 +282,27 @@ export const joinGroup = async (
     if (group.joinCode !== joinCode) {
       throw new AppError('Invalid join code', 400);
     }
-
-    // Create join request for private groups
-    const existingRequest = await JoinRequest.findOne({ groupId: group.id, userId });
-    if (existingRequest && existingRequest.status === 'pending') {
-      throw new AppError('Join request already pending', 400);
-    }
-
-    const joinRequest = new JoinRequest({
-      groupId: group.id,
-      userId,
-      status: 'pending',
-    });
-    await joinRequest.save();
-
-    logger.info(`Join request created for group: ${group.id} by user: ${userId}`);
-
-    return {
-      Response: await groupToIGroup(group),
-    };
-  } else {
-    // Public group - join directly
-    if (existingMember) {
-      existingMember.status = 'active';
-      await existingMember.save();
-    } else {
-      const member = new GroupMember({
-        groupId: group.id,
-        userId,
-        role: 'member',
-        status: 'active',
-      });
-      await member.save();
-    }
-
-    logger.info(`User joined group: ${group.id} by user: ${userId}`);
-
-    return {
-      Response: await groupToIGroup(group),
-    };
-  }
-};
-
-/**
- * Accept join request (admin only)
- */
-export const acceptJoinRequest = async (
-  groupId: string,
-  requestUserId: string,
-  adminUserId: string,
-): Promise<void> => {
-  const group = await Group.findById(groupId);
-
-  if (!group) {
-    throw new NotFoundError('Group not found');
   }
 
-  // Check if user is admin
-  const adminMember = await GroupMember.findOne({ groupId: group.id, userId: adminUserId, role: 'admin' });
-  if (!adminMember) {
-    throw new AppError('Only group admins can accept join requests', 403);
-  }
-
-  const joinRequest = await JoinRequest.findOne({
-    groupId: group.id,
-    userId: requestUserId,
-    status: 'pending',
-  });
-
-  if (!joinRequest) {
-    throw new NotFoundError('Join request not found');
-  }
-
-  joinRequest.status = 'accepted';
-  joinRequest.respondedAt = new Date();
-  await joinRequest.save();
-
-  // Add user as member
-  const existingMember = await GroupMember.findOne({ groupId: group.id, userId: requestUserId });
+  // Join group directly (both public and private with valid code)
   if (existingMember) {
     existingMember.status = 'active';
     await existingMember.save();
   } else {
     const member = new GroupMember({
       groupId: group.id,
-      userId: requestUserId,
+      userId,
       role: 'member',
       status: 'active',
     });
     await member.save();
   }
 
-  logger.info(`Join request accepted for group: ${group.id} user: ${requestUserId}`);
-};
+  logger.info(`User joined group: ${group.id} by user: ${userId}`);
 
-/**
- * Reject join request (admin only)
- */
-export const rejectJoinRequest = async (
-  groupId: string,
-  requestUserId: string,
-  adminUserId: string,
-): Promise<void> => {
-  const group = await Group.findById(groupId);
-
-  if (!group) {
-    throw new NotFoundError('Group not found');
-  }
-
-  // Check if user is admin
-  const adminMember = await GroupMember.findOne({ groupId: group.id, userId: adminUserId, role: 'admin' });
-  if (!adminMember) {
-    throw new AppError('Only group admins can reject join requests', 403);
-  }
-
-  const joinRequest = await JoinRequest.findOne({
-    groupId: group.id,
-    userId: requestUserId,
-    status: 'pending',
-  });
-
-  if (!joinRequest) {
-    throw new NotFoundError('Join request not found');
-  }
-
-  joinRequest.status = 'rejected';
-  joinRequest.respondedAt = new Date();
-  await joinRequest.save();
-
-  logger.info(`Join request rejected for group: ${group.id} user: ${requestUserId}`);
+  return {
+    Response: await groupToIGroup(group),
+  };
 };
 
 /**
@@ -457,57 +345,6 @@ export const getGroupMembers = async (groupId: string): Promise<IGroupMembersRes
 
   return {
     Response: membersWithUser,
-  };
-};
-
-/**
- * Get pending join requests for a group (admin only)
- */
-export const getJoinRequests = async (
-  groupId: string,
-  adminUserId: string,
-): Promise<IJoinRequestsResponse> => {
-  const group = await Group.findById(groupId);
-
-  if (!group) {
-    throw new NotFoundError('Group not found');
-  }
-
-  // Check if user is admin
-  const adminMember = await GroupMember.findOne({ groupId: group.id, userId: adminUserId, role: 'admin' });
-  if (!adminMember) {
-    throw new AppError('Only group admins can view join requests', 403);
-  }
-
-  const requests = await JoinRequest.find({ groupId: group.id, status: 'pending' });
-  const userIds = requests.map((r) => r.userId);
-
-  const users = await SignUp.find({ _id: { $in: userIds } }).select('_id name profileImage');
-
-  const userMap = new Map<string, { name: string; profileImage?: string }>();
-  users.forEach((user) => {
-    userMap.set((user._id as any).toString(), {
-      name: user.name,
-      profileImage: user.profileImage,
-    });
-  });
-
-  const requestsWithUser: IJoinRequest[] = requests.map((request) => {
-    const user = userMap.get(request.userId);
-    return {
-      id: request.id,
-      groupId: request.groupId,
-      userId: request.userId,
-      userName: user?.name,
-      userAvatar: user?.profileImage,
-      status: request.status,
-      requestedAt: request.requestedAt.toISOString(),
-      respondedAt: request.respondedAt?.toISOString(),
-    };
-  });
-
-  return {
-    Response: requestsWithUser,
   };
 };
 

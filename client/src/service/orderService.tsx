@@ -4,6 +4,7 @@ import {
   IOrderResponse,
   IOrderData,
   IOrdersListResponse,
+  ILocation,
 } from '../types/order/IOrder';
 
 export const createOrder = async (
@@ -48,6 +49,72 @@ export const getUserOrders = async (
       return response.data.data;
     }
     return [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendLiveOrderUpdates = async (
+  orderId: string,
+  location: ILocation | null,
+  status: string,
+): Promise<IOrderData | null> => {
+  try {
+    const requestBody: {
+      status: string;
+      deliveryPersonLocation?: ILocation;
+    } = {
+      status,
+    };
+
+    if (location) {
+      requestBody.deliveryPersonLocation = location;
+    }
+
+    const response = await appAxios.patch<{
+      success: boolean;
+      Response: IOrderData;
+    }>(`/dealer/orders/${orderId}/status`, requestBody);
+
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    return null;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const confirmOrder = async (
+  orderId: string,
+  location: ILocation | null,
+): Promise<IOrderData | null> => {
+  try {
+    const response = await appAxios.post<{
+      success: boolean;
+      Response: IOrderData;
+    }>(`/dealer/orders/${orderId}/accept`);
+
+    if (response.data.success && response.data.Response) {
+      const acceptedOrder = response.data.Response;
+
+      if (location) {
+        const updateResponse = await appAxios.patch<{
+          success: boolean;
+          Response: IOrderData;
+        }>(`/dealer/orders/${orderId}/status`, {
+          status: acceptedOrder.status,
+          deliveryPersonLocation: location,
+        });
+
+        if (updateResponse.data.success && updateResponse.data.Response) {
+          return updateResponse.data.Response;
+        }
+      }
+
+      return acceptedOrder;
+    }
+    return null;
   } catch (error) {
     throw error;
   }

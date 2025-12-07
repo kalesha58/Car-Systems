@@ -7,6 +7,8 @@ import {
   ICreateDirectChatRequest,
   ICreateMessageRequest,
   IStartLiveLocationRequest,
+  ICreateGroupChatRequest,
+  IEditGroupChatRequest,
   IChat,
   IChatResponse,
   IChatsResponse,
@@ -16,8 +18,10 @@ import {
   ILiveLocation,
   ILiveLocationsResponse,
 } from '../../types/chat';
+import { Group } from '../../models/Group';
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
+import { emitToChatRoom } from '../socket/socketService';
 
 /**
  * Convert chat document to IChat interface
@@ -70,6 +74,30 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
     unreadCount = 0;
   }
 
+  // Get group information if it's a group chat
+  let groupName: string | undefined;
+  let isMember: boolean | undefined;
+  let canFollow: boolean | undefined;
+
+  if (chatDoc.type === 'group' && chatDoc.groupId) {
+    const group = await Group.findById(chatDoc.groupId);
+    if (group) {
+      groupName = group.name;
+      
+      if (userId) {
+        const member = await GroupMember.findOne({ 
+          groupId: group.id, 
+          userId, 
+          status: 'active' 
+        });
+        isMember = !!member;
+        
+        // Can follow if group is public and user is not a member
+        canFollow = group.privacy === 'public' && !isMember;
+      }
+    }
+  }
+
   return {
     id: chatDoc.id,
     type: chatDoc.type,
@@ -77,8 +105,11 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
     participantNames,
     participantAvatars,
     groupId: chatDoc.groupId,
+    groupName,
     lastMessage,
     unreadCount,
+    isMember,
+    canFollow,
     createdAt: chatDoc.createdAt.toISOString(),
     updatedAt: chatDoc.updatedAt.toISOString(),
   };
@@ -102,6 +133,8 @@ const messageToIMessage = async (messageDoc: IMessageDocument): Promise<IMessage
     messageType: messageDoc.messageType,
     location: messageDoc.location,
     isLiveLocation: messageDoc.isLiveLocation,
+    imageUrl: messageDoc.imageUrl,
+    imagePublicId: messageDoc.imagePublicId,
     createdAt: messageDoc.createdAt.toISOString(),
   };
 };
@@ -156,16 +189,32 @@ export const getUserChats = async (userId: string): Promise<IChatsResponse> => {
     participants: userId,
   }).sort({ updatedAt: -1 });
 
-  // Get group chats (user must be a member)
+  // Get group chats where user is a member
   const groupMemberships = await GroupMember.find({ userId, status: 'active' });
-  const groupIds = groupMemberships.map((m) => m.groupId);
+  const memberGroupIds = groupMemberships.map((m) => m.groupId);
 
-  const groupChats = await Chat.find({
+  const memberGroupChats = await Chat.find({
     type: 'group',
-    groupId: { $in: groupIds },
+    groupId: { $in: memberGroupIds },
   }).sort({ updatedAt: -1 });
 
-  const allChats = [...directChats, ...groupChats].sort(
+  // Get all public group chats (even if user is not a member)
+  const publicGroups = await Group.find({ privacy: 'public' });
+  const publicGroupIds = publicGroups.map((g) => g.id);
+
+  const publicGroupChats = await Chat.find({
+    type: 'group',
+    groupId: { $in: publicGroupIds },
+  }).sort({ updatedAt: -1 });
+
+  // Combine all chats, removing duplicates
+  const allChatsMap = new Map<string, IChatDocument>();
+  
+  [...directChats, ...memberGroupChats, ...publicGroupChats].forEach((chat) => {
+    allChatsMap.set(chat.id, chat);
+  });
+
+  const allChats = Array.from(allChatsMap.values()).sort(
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
   );
 
@@ -198,6 +247,210 @@ export const getChatById = async (chatId: string, userId: string): Promise<IChat
       throw new AppError('You are not a participant of this chat', 403);
     }
   }
+
+  return {
+    Response: await chatToIChat(chat, userId),
+  };
+};
+
+/**
+ * Create group chat with multiple users
+ */
+export const createGroupChat = async (
+  userId: string,
+  data: ICreateGroupChatRequest,
+): Promise<IChatResponse> => {
+  const { name, userIds, privacy } = data;
+
+  if (!name || !name.trim()) {
+    throw new AppError('Group name is required', 400);
+  }
+
+  if (!userIds || userIds.length === 0) {
+    throw new AppError('At least one user must be selected', 400);
+  }
+
+  // Ensure creator is included in participants
+  const allUserIds = [...new Set([userId, ...userIds])];
+
+  // Create Group document
+  const group = new Group({
+    name: name.trim(),
+    type: 'bikeCarDrive', // Default type for chat groups
+    ownerId: userId,
+    privacy: privacy || 'private',
+    chatEnabled: true,
+    liveLocationEnabled: true,
+  });
+
+  await group.save();
+
+  // Create GroupMember entries for all participants
+  const memberPromises = allUserIds.map((uid) => {
+    return GroupMember.findOneAndUpdate(
+      { groupId: group.id, userId: uid },
+      {
+        groupId: group.id,
+        userId: uid,
+        role: uid === userId ? 'admin' : 'member',
+        status: 'active',
+      },
+      { upsert: true, new: true },
+    );
+  });
+
+  await Promise.all(memberPromises);
+
+  // Create Chat document for the group
+  const chat = new Chat({
+    type: 'group',
+    participants: allUserIds,
+    groupId: group.id,
+  });
+
+  await chat.save();
+
+  logger.info(`Group chat created: ${chat.id} for group: ${group.id} by user: ${userId}`);
+
+  return {
+    Response: await chatToIChat(chat, userId),
+  };
+};
+
+/**
+ * Edit group chat (rename, add/remove members, change privacy)
+ */
+export const editGroupChat = async (
+  chatId: string,
+  userId: string,
+  data: IEditGroupChatRequest,
+): Promise<IChatResponse> => {
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) {
+    throw new NotFoundError('Chat not found');
+  }
+
+  if (chat.type !== 'group' || !chat.groupId) {
+    throw new AppError('This endpoint is only for group chats', 400);
+  }
+
+  // Get group and verify user is owner
+  const group = await Group.findById(chat.groupId);
+  if (!group) {
+    throw new NotFoundError('Group not found');
+  }
+
+  if (group.ownerId !== userId) {
+    throw new AppError('Only group owner can edit the group', 403);
+  }
+
+  // Update group name if provided
+  if (data.name !== undefined) {
+    group.name = data.name.trim();
+  }
+
+  // Update privacy if provided
+  if (data.privacy !== undefined) {
+    group.privacy = data.privacy;
+  }
+
+  await group.save();
+
+  // Add members if provided
+  if (data.userIdsToAdd && data.userIdsToAdd.length > 0) {
+    const addPromises = data.userIdsToAdd.map((uid) => {
+      return GroupMember.findOneAndUpdate(
+        { groupId: group.id, userId: uid },
+        {
+          groupId: group.id,
+          userId: uid,
+          role: 'member',
+          status: 'active',
+        },
+        { upsert: true, new: true },
+      );
+    });
+
+    await Promise.all(addPromises);
+
+    // Update chat participants
+    const newMembers = await GroupMember.find({ groupId: group.id, status: 'active' });
+    chat.participants = newMembers.map((m) => m.userId);
+  }
+
+  // Remove members if provided
+  if (data.userIdsToRemove && data.userIdsToRemove.length > 0) {
+    // Don't allow removing the owner
+    const filteredRemoveIds = data.userIdsToRemove.filter((uid) => uid !== userId);
+
+    await GroupMember.updateMany(
+      { groupId: group.id, userId: { $in: filteredRemoveIds } },
+      { status: 'pending' },
+    );
+
+    // Update chat participants
+    const remainingMembers = await GroupMember.find({ groupId: group.id, status: 'active' });
+    chat.participants = remainingMembers.map((m) => m.userId);
+  }
+
+  await chat.save();
+
+  logger.info(`Group chat edited: ${chat.id} by user: ${userId}`);
+
+  return {
+    Response: await chatToIChat(chat, userId),
+  };
+};
+
+/**
+ * Follow/join public group chat
+ */
+export const followGroupChat = async (chatId: string, userId: string): Promise<IChatResponse> => {
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) {
+    throw new NotFoundError('Chat not found');
+  }
+
+  if (chat.type !== 'group' || !chat.groupId) {
+    throw new AppError('This endpoint is only for group chats', 400);
+  }
+
+  // Get group and verify it's public
+  const group = await Group.findById(chat.groupId);
+  if (!group) {
+    throw new NotFoundError('Group not found');
+  }
+
+  if (group.privacy !== 'public') {
+    throw new AppError('This group is private. You cannot follow it directly.', 403);
+  }
+
+  // Check if user is already a member
+  const existingMember = await GroupMember.findOne({ groupId: group.id, userId });
+
+  if (!existingMember || existingMember.status !== 'active') {
+    // Create or update GroupMember entry
+    await GroupMember.findOneAndUpdate(
+      { groupId: group.id, userId },
+      {
+        groupId: group.id,
+        userId,
+        role: 'member',
+        status: 'active',
+      },
+      { upsert: true, new: true },
+    );
+
+    // Add user to chat participants if not already there
+    if (!chat.participants.includes(userId)) {
+      chat.participants.push(userId);
+      await chat.save();
+    }
+  }
+
+  logger.info(`User ${userId} followed public group chat: ${chat.id}`);
 
   return {
     Response: await chatToIChat(chat, userId),
@@ -328,6 +581,8 @@ export const sendMessage = async (
     messageType: data.messageType || 'text',
     location: data.location,
     isLiveLocation: data.isLiveLocation || false,
+    imageUrl: data.image?.url,
+    imagePublicId: data.image?.publicId,
   });
 
   await message.save();
@@ -336,10 +591,14 @@ export const sendMessage = async (
   chat.updatedAt = new Date();
   await chat.save();
 
+  // Emit socket event for new message
+  const messageData = await messageToIMessage(message);
+  emitToChatRoom(chatId, 'newMessage', messageData);
+
   logger.info(`Message sent: ${message.id} in chat: ${chatId} by user: ${userId}`);
 
   return {
-    Response: await messageToIMessage(message),
+    Response: messageData,
   };
 };
 

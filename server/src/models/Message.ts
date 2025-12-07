@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type MessageType = 'text' | 'location' | 'liveLocation';
+export type MessageType = 'text' | 'location' | 'liveLocation' | 'image';
 
 export interface ILocationData {
   latitude: number;
@@ -17,6 +17,8 @@ export interface IMessageDocument extends Document {
   messageType: MessageType;
   location?: ILocationData;
   isLiveLocation?: boolean;
+  imageUrl?: string;
+  imagePublicId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,7 +55,7 @@ const messageSchema = new Schema<IMessageDocument>(
     },
     messageType: {
       type: String,
-      enum: ['text', 'location', 'liveLocation'],
+      enum: ['text', 'location', 'liveLocation', 'image'],
       default: 'text',
     },
     location: {
@@ -62,6 +64,12 @@ const messageSchema = new Schema<IMessageDocument>(
     isLiveLocation: {
       type: Boolean,
       default: false,
+    },
+    imageUrl: {
+      type: String,
+    },
+    imagePublicId: {
+      type: String,
     },
   },
   {

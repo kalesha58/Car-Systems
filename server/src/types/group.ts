@@ -1,6 +1,5 @@
 import { GroupType, GroupPrivacy } from '../models/Group';
 import { MemberRole, MemberStatus } from '../models/GroupMember';
-import { JoinRequestStatus } from '../models/JoinRequest';
 
 export interface IVanDetails {
   vanNumber: string;
@@ -79,21 +78,6 @@ export interface IGroupMember {
 
 export interface IGroupMembersResponse {
   Response: IGroupMember[];
-}
-
-export interface IJoinRequest {
-  id: string;
-  groupId: string;
-  userId: string;
-  userName?: string;
-  userAvatar?: string;
-  status: JoinRequestStatus;
-  requestedAt: string;
-  respondedAt?: string;
-}
-
-export interface IJoinRequestsResponse {
-  Response: IJoinRequest[];
 }
 
 export interface IJoinGroupRequest {

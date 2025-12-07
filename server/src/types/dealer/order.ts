@@ -6,6 +6,7 @@ import {
   IAddress,
   ITracking,
   ITimelineEvent,
+  ILocation,
 } from '../../models/Order';
 
 export interface IDealerOrder {
@@ -26,6 +27,9 @@ export interface IDealerOrder {
   tracking?: ITracking;
   timeline: ITimelineEvent[];
   cancellationReason?: string;
+  deliveryLocation?: ILocation;
+  pickupLocation?: ILocation;
+  deliveryPersonLocation?: ILocation;
   createdAt: string;
   updatedAt: string;
   customer?: {
@@ -56,6 +60,7 @@ export interface IGetDealerOrdersRequest {
 export interface IUpdateOrderStatusRequest {
   status: OrderStatus;
   notes?: string;
+  deliveryPersonLocation?: ILocation;
 }
 
 export interface ICancelOrderRequest {

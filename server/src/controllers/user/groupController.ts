@@ -6,10 +6,7 @@ import {
   updateGroup,
   deleteGroup,
   joinGroup,
-  acceptJoinRequest,
-  rejectJoinRequest,
   getGroupMembers,
-  getJoinRequests,
   removeMember,
   markAttendance,
   driverConsent,
@@ -217,78 +214,6 @@ export const joinGroupController = async (
 };
 
 /**
- * Accept join request controller
- */
-export const acceptJoinRequestController = async (
-  req: IAuthRequest,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const adminUserId = req.user?.userId;
-    const groupId = req.params.id;
-    const requestUserId = req.params.userId;
-
-    if (!adminUserId) {
-      res.status(401).json({
-        success: false,
-        Response: {
-          ReturnMessage: 'Unauthorized',
-        },
-      });
-      return;
-    }
-
-    await acceptJoinRequest(groupId, requestUserId, adminUserId);
-
-    res.status(200).json({
-      success: true,
-      Response: {
-        ReturnMessage: 'Join request accepted',
-      },
-    });
-  } catch (error) {
-    errorHandler(error as IAppError, res);
-  }
-};
-
-/**
- * Reject join request controller
- */
-export const rejectJoinRequestController = async (
-  req: IAuthRequest,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const adminUserId = req.user?.userId;
-    const groupId = req.params.id;
-    const requestUserId = req.params.userId;
-
-    if (!adminUserId) {
-      res.status(401).json({
-        success: false,
-        Response: {
-          ReturnMessage: 'Unauthorized',
-        },
-      });
-      return;
-    }
-
-    await rejectJoinRequest(groupId, requestUserId, adminUserId);
-
-    res.status(200).json({
-      success: true,
-      Response: {
-        ReturnMessage: 'Join request rejected',
-      },
-    });
-  } catch (error) {
-    errorHandler(error as IAppError, res);
-  }
-};
-
-/**
  * Get group members controller
  */
 export const getGroupMembersController = async (
@@ -299,39 +224,6 @@ export const getGroupMembersController = async (
   try {
     const groupId = req.params.id;
     const result = await getGroupMembers(groupId);
-
-    res.status(200).json({
-      success: true,
-      ...result,
-    });
-  } catch (error) {
-    errorHandler(error as IAppError, res);
-  }
-};
-
-/**
- * Get join requests controller
- */
-export const getJoinRequestsController = async (
-  req: IAuthRequest,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const adminUserId = req.user?.userId;
-    const groupId = req.params.id;
-
-    if (!adminUserId) {
-      res.status(401).json({
-        success: false,
-        Response: {
-          ReturnMessage: 'Unauthorized',
-        },
-      });
-      return;
-    }
-
-    const result = await getJoinRequests(groupId, adminUserId);
 
     res.status(200).json({
       success: true,

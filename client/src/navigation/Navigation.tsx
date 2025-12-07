@@ -1,9 +1,10 @@
-import React, {FC} from 'react';
-import {View} from 'react-native';
+import React, {FC, useEffect} from 'react';
+import {View, AppState} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
-import {navigationRef} from '@utils/NavigationUtils';
+import {navigationRef, resetAndNavigate} from '@utils/NavigationUtils';
+import {useAuthStore} from '@state/authStore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
@@ -26,7 +27,13 @@ import CreateNewPost from '@features/play/CreateNewPost';
 import LiveTracking from '@features/map/LiveTracking';
 import OrdersList from '@features/order/OrdersList';
 import DealerOrdersList from '@features/order/DealerOrdersList';
+import DeliveryMap from '@features/delivery/DeliveryMap';
 import InventoryScreen from '@features/inventory/InventoryScreen';
+import ChatScreen from '@features/chat/ChatScreen';
+import UserSelectionScreen from '@features/chat/UserSelectionScreen';
+import ChatMessageScreen from '@features/chat/ChatMessageScreen';
+import CreateGroupScreen from '@features/chat/CreateGroupScreen';
+import EditGroupScreen from '@features/chat/EditGroupScreen';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
 import {ToastProvider} from '@context/ToastContext';
@@ -184,6 +191,62 @@ const DealerTabs: FC = () => {
 };
 
 const Navigation: FC = () => {
+  const {user} = useAuthStore();
+
+  const checkUserRole = (role: string | string[] | undefined): string | null => {
+    if (!role) {
+      return null;
+    }
+    
+    const roleArray = Array.isArray(role) ? role : [role];
+    
+    if (roleArray.includes('admin')) {
+      return 'admin';
+    }
+    if (roleArray.includes('dealer')) {
+      return 'dealer';
+    }
+    if (roleArray.includes('user')) {
+      return 'user';
+    }
+    
+    return null;
+  };
+
+  const navigateByRole = (userRole: string | null) => {
+    if (userRole === 'user') {
+      resetAndNavigate('MainTabs');
+    } else if (userRole === 'dealer') {
+      resetAndNavigate('DealerTabs');
+    } else if (userRole === 'admin') {
+      resetAndNavigate('MainTabs');
+    }
+  };
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active' && user && user.role) {
+        const userRole = checkUserRole(user.role);
+        if (userRole && navigationRef.isReady()) {
+          const currentRoute = navigationRef.getCurrentRoute();
+          if (currentRoute) {
+            const currentRouteName = currentRoute.name;
+            if (userRole === 'dealer' && currentRouteName !== 'DealerTabs' && !currentRouteName.includes('Dealer')) {
+              navigateByRole(userRole);
+            } else if (userRole === 'user' && currentRouteName === 'DealerTabs') {
+              navigateByRole(userRole);
+            }
+          }
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, [user]);
+
   return (
     <ToastProvider>
       <NavigationContainer
@@ -246,8 +309,50 @@ const Navigation: FC = () => {
             options={{
               headerShown: false,
             }}
+            name="DeliveryMap"
+            component={DeliveryMap}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
             name="OrdersList"
             component={OrdersList}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="Chat"
+            component={ChatScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="UserSelection"
+            component={UserSelectionScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="ChatMessage"
+            component={ChatMessageScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="CreateGroup"
+            component={CreateGroupScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="EditGroup"
+            component={EditGroupScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>

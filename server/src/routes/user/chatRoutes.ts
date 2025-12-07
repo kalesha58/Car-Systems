@@ -3,13 +3,18 @@ import {
   createDirectChatController,
   getUserChatsController,
   getChatByIdController,
+  createGroupChatController,
+  editGroupChatController,
+  followGroupChatController,
   getOrCreateGroupChatController,
   getChatMessagesController,
   sendMessageController,
+  sendImageMessageController,
   startLiveLocationController,
   stopLiveLocationController,
   getLiveLocationsController,
 } from '../../controllers/user/chatController';
+import { uploadSingle } from '../../middleware/uploadMiddleware';
 import { authMiddleware } from '../../middleware/authMiddleware';
 
 const router = Router();
@@ -48,6 +53,42 @@ router.post('/direct', authMiddleware, createDirectChatController);
 
 /**
  * @swagger
+ * /api/chats/group:
+ *   post:
+ *     summary: Create group chat with multiple users
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - userIds
+ *             properties:
+ *               name:
+ *                 type: string
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               privacy:
+ *                 type: string
+ *                 enum: [public, private]
+ *                 default: private
+ *     responses:
+ *       201:
+ *         description: Group chat created successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/group', authMiddleware, createGroupChatController);
+
+/**
+ * @swagger
  * /api/chats/{id}:
  *   get:
  *     summary: Get chat by ID
@@ -77,6 +118,38 @@ router.get('/:id', authMiddleware, getChatByIdController);
  *         description: Unauthorized
  */
 router.get('/group/:groupId', authMiddleware, getOrCreateGroupChatController);
+
+/**
+ * @swagger
+ * /api/chats/{chatId}/edit:
+ *   put:
+ *     summary: Edit group chat (rename, add/remove members, change privacy)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Group chat edited successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/:chatId/edit', authMiddleware, editGroupChatController);
+
+/**
+ * @swagger
+ * /api/chats/{chatId}/follow:
+ *   post:
+ *     summary: Follow/join public group chat
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully followed group chat
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:chatId/follow', authMiddleware, followGroupChatController);
 
 /**
  * @swagger
@@ -119,6 +192,22 @@ router.get('/:chatId/messages', authMiddleware, getChatMessagesController);
  *         description: Unauthorized
  */
 router.post('/:chatId/messages', authMiddleware, sendMessageController);
+
+/**
+ * @swagger
+ * /api/chats/{chatId}/messages/image:
+ *   post:
+ *     summary: Send image message
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Image message sent successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:chatId/messages/image', authMiddleware, uploadSingle, sendImageMessageController);
 
 /**
  * @swagger

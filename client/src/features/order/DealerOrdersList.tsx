@@ -130,7 +130,7 @@ const DealerOrdersList: React.FC = () => {
 
   const handleOrderPress = (order: IOrderData) => {
     setCurrentOrder(order);
-    navigate('LiveTracking');
+    navigate('DeliveryMap', order);
   };
 
   const renderOrderItem = ({item}: {item: IOrderData}) => {

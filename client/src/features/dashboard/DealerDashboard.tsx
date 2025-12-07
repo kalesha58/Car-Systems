@@ -53,6 +53,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
+import withLiveOrder from '@features/delivery/withLiveOrder';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -670,6 +671,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export default withCollapsibleContext(DealerDashboard);
+export default withLiveOrder(withCollapsibleContext(DealerDashboard));
 
 

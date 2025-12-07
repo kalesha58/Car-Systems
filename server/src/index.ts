@@ -25,6 +25,7 @@ import chatRoutes from './routes/user/chatRoutes';
 import orderRoutes from './routes/user/orderRoutes';
 import dealerVehicleRoutes from './routes/user/dealerVehicleRoutes';
 import supportChatRoutes from './routes/user/supportChatRoutes';
+import userRoutes from './routes/user/userRoutes';
 import addressRoutes from './routes/user/addressRoutes';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
@@ -134,6 +135,8 @@ app.use('/api/dropdowns', dropdownRoutes);
 logger.info('[Routes] Dropdowns route mounted at /api/dropdowns');
 app.use('/api/support', supportChatRoutes);
 logger.info('[Routes] Support chat route mounted at /api/support');
+app.use('/api/users', userRoutes);
+logger.info('[Routes] Users route mounted at /api/users');
 
 // Admin Routes (all prefixed with /admin)
 app.use('/admin', adminRoutes);

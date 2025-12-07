@@ -69,11 +69,18 @@ const PlayScreen: React.FC = () => {
           <CustomText fontSize={RFValue(18)} fontFamily={Fonts.Bold} style={styles.title}>
             Play
           </CustomText>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigate('CreateNewPost')}>
-            <Icon name="add-circle-outline" size={RFValue(24)} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.messageButton}
+              onPress={() => navigate('Chat')}>
+              <Icon name="chatbubble-outline" size={RFValue(24)} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigate('CreateNewPost')}>
+              <Icon name="add-circle-outline" size={RFValue(24)} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </View>
         <ScrollView
           horizontal
@@ -138,6 +145,14 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  messageButton: {
+    padding: 4,
   },
   addButton: {
     padding: 4,

@@ -21,14 +21,10 @@ export const customerLogin = async (email: string, password: string) => {
 export const customerSignup = async (email: string, phone: string, password: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/signup`, { email, phone, password });
-    console.log('Signup API Response:', response);
-    console.log('Signup API Response Data:', response.data);
     const { Response } = response.data;
-    console.log('Signup User Data:', Response);
     const { setUser } = useAuthStore.getState();
     setUser(Response);
   } catch (error) {
-    console.log('Signup API Error:', error);
     throw error;
   }
 };
@@ -42,7 +38,7 @@ export const deliveryLogin = async(email: string, password: string)=>{
         const {setUser}=useAuthStore.getState()
         setUser(deliveryPartner)
     } catch (error) {
-        console.log("Login Error", error)
+        throw error;
     }
 }
 
@@ -61,9 +57,9 @@ export const refresh_tokens = async () => {
         tokenStorage.set('refreshToken', new_refresh_token)
         return new_access_token;
     } catch (error) {
-        console.log("REFRESH TOKEN ERROR", error)
         tokenStorage.clearAll()
         resetAndNavigate("CustomerLogin")
+        throw error;
     }
 }
 
@@ -88,6 +84,6 @@ export const updateUserLocation = async (data: any, setUser: any) => {
         const response = await appAxios.patch(`/user`, data)
         refetchUser(setUser)
     } catch (error) {
-        console.log("update User Location Error", error)
+        throw error;
     }
 }

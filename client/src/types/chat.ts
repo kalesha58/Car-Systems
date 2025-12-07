@@ -1,5 +1,5 @@
-import { ChatType } from '../models/Chat';
-import { MessageType } from '../models/Message';
+export type ChatType = 'direct' | 'group';
+export type MessageType = 'text' | 'location' | 'liveLocation' | 'image';
 
 export interface ILocation {
   latitude: number;
@@ -55,46 +55,6 @@ export interface ICreateMessageRequest {
   };
 }
 
-export interface IStartLiveLocationRequest {
-  coordinates: ILocation;
-  scheduledTimes?: {
-    startTime: string;
-    endTime: string;
-    days?: string[];
-  };
-}
-
-export interface IChatResponse {
-  Response: IChat;
-}
-
-export interface IChatsResponse {
-  Response: IChat[];
-}
-
-export interface IMessageResponse {
-  Response: IMessage;
-}
-
-export interface IMessagesResponse {
-  Response: IMessage[];
-}
-
-export interface ILiveLocation {
-  id: string;
-  userId: string;
-  userName?: string;
-  userAvatar?: string;
-  groupId: string;
-  coordinates: ILocation;
-  isActive: boolean;
-  lastUpdated: string;
-}
-
-export interface ILiveLocationsResponse {
-  Response: ILiveLocation[];
-}
-
 export interface ICreateGroupChatRequest {
   name: string;
   userIds: string[];
@@ -108,4 +68,10 @@ export interface IEditGroupChatRequest {
   privacy?: 'public' | 'private';
 }
 
+export interface IUserListItem {
+  id: string;
+  name: string;
+  email: string;
+  profileImage?: string;
+}
 

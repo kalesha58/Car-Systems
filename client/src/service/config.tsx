@@ -4,6 +4,8 @@ import { Platform } from "react-native"
 // Example: https://your-backend.onrender.com
 export const BASE_URL = 'https://car-systems.onrender.com/api';
 export const SOCKET_URL = 'https://car-systems.onrender.com';
+// export const BASE_URL = 'http://82.29.162.228:3002/api';
+// export const SOCKET_URL = 'http://82.29.162.228:3002';
 export const GOOGLE_MAP_API = "AIzaSyA6GTR1erzNtNl5tD02_mnADtYzF860HjA";
 export const BRANCH_ID ='YOUR_BRANCH_ID';
 

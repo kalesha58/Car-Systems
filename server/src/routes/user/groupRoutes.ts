@@ -6,10 +6,7 @@ import {
   updateGroupController,
   deleteGroupController,
   joinGroupController,
-  acceptJoinRequestController,
-  rejectJoinRequestController,
   getGroupMembersController,
-  getJoinRequestsController,
   removeMemberController,
   markAttendanceController,
   driverConsentController,
@@ -129,54 +126,6 @@ router.post('/:id/join', authMiddleware, joinGroupController);
  *         description: Unauthorized
  */
 router.get('/:id/members', authMiddleware, getGroupMembersController);
-
-/**
- * @swagger
- * /api/groups/{id}/join-requests:
- *   get:
- *     summary: Get pending join requests (admin only)
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Join requests retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/:id/join-requests', authMiddleware, getJoinRequestsController);
-
-/**
- * @swagger
- * /api/groups/{id}/members/{userId}/accept:
- *   post:
- *     summary: Accept join request (admin only)
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Join request accepted
- *       401:
- *         description: Unauthorized
- */
-router.post('/:id/members/:userId/accept', authMiddleware, acceptJoinRequestController);
-
-/**
- * @swagger
- * /api/groups/{id}/members/{userId}/reject:
- *   post:
- *     summary: Reject join request (admin only)
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Join request rejected
- *       401:
- *         description: Unauthorized
- */
-router.post('/:id/members/:userId/reject', authMiddleware, rejectJoinRequestController);
 
 /**
  * @swagger

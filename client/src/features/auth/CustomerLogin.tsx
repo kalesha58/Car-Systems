@@ -30,6 +30,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
 import {useToast} from '@hooks/useToast';
+import {useAuthStore} from '@state/authStore';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -44,6 +45,38 @@ const CustomerLogin = () => {
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const {t} = useTranslation();
   const {showSuccess} = useToast();
+
+  const checkUserRole = (role: string | string[] | undefined): string | null => {
+    if (!role) {
+      return null;
+    }
+    
+    const roleArray = Array.isArray(role) ? role : [role];
+    
+    if (roleArray.includes('admin')) {
+      return 'admin';
+    }
+    if (roleArray.includes('dealer')) {
+      return 'dealer';
+    }
+    if (roleArray.includes('user')) {
+      return 'user';
+    }
+    
+    return null;
+  };
+
+  const navigateByRole = (userRole: string | null) => {
+    if (userRole === 'user') {
+      resetAndNavigate('MainTabs');
+    } else if (userRole === 'dealer') {
+      resetAndNavigate('DealerTabs');
+    } else if (userRole === 'admin') {
+      resetAndNavigate('MainTabs');
+    } else {
+      resetAndNavigate('CustomerLogin');
+    }
+  };
 
   useEffect(() => {
     if (keyboardOffsetHeight === 0) {
@@ -117,7 +150,14 @@ const CustomerLogin = () => {
     try {
       await customerLogin(email, password);
       showSuccess(t('auth.loginSuccess'));
-      resetAndNavigate('MainTabs');
+      
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser && currentUser.role) {
+        const userRole = checkUserRole(currentUser.role);
+        navigateByRole(userRole);
+      } else {
+        resetAndNavigate('MainTabs');
+      }
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || 'Invalid email or password. Please try again.';

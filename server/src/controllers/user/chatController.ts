@@ -3,6 +3,9 @@ import {
   getOrCreateDirectChat,
   getUserChats,
   getChatById,
+  createGroupChat,
+  editGroupChat,
+  followGroupChat,
   getOrCreateGroupChat,
   getChatMessages,
   sendMessage,
@@ -14,10 +17,15 @@ import {
   ICreateDirectChatRequest,
   ICreateMessageRequest,
   IStartLiveLocationRequest,
+  ICreateGroupChatRequest,
+  IEditGroupChatRequest,
 } from '../../types/chat';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
-import { IAuthRequest } from '../../middleware/authMiddleware';
+import { IAuthRequest, IMulterFile } from '../../middleware/authMiddleware';
 import { logger } from '../../utils/logger';
+import { uploadSingle } from '../../middleware/uploadMiddleware';
+import { uploadToCloudinary } from '../../config/cloudinary';
+import fs from 'fs';
 
 /**
  * Create or get direct chat controller
@@ -107,6 +115,106 @@ export const getChatByIdController = async (
     }
 
     const result = await getChatById(chatId, userId);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Create group chat controller
+ */
+export const createGroupChatController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const groupData: ICreateGroupChatRequest = req.body;
+    const result = await createGroupChat(userId, groupData);
+
+    res.status(201).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Edit group chat controller
+ */
+export const editGroupChatController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = req.params.chatId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const editData: IEditGroupChatRequest = req.body;
+    const result = await editGroupChat(chatId, userId, editData);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Follow/join public group chat controller
+ */
+export const followGroupChatController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = req.params.chatId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await followGroupChat(chatId, userId);
 
     res.status(200).json({
       success: true,
@@ -215,6 +323,71 @@ export const sendMessageController = async (
       ...result,
     });
   } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Send image message controller
+ */
+export const sendImageMessageController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = req.params.chatId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const file = req.file as IMulterFile;
+    if (!file) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Image file is required',
+        },
+      });
+      return;
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await uploadToCloudinary(file.path, 'chat-images');
+    
+    // Clean up temporary file
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+
+    const messageData: ICreateMessageRequest = {
+      text: req.body.text || 'Image',
+      messageType: 'image',
+      image: {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+      },
+    };
+
+    const result = await sendMessage(chatId, userId, messageData);
+
+    res.status(201).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    // Clean up file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     errorHandler(error as IAppError, res);
   }
 };

@@ -102,6 +102,9 @@ const orderToDealerOrder = (
       previousStatus: event.previousStatus,
     })),
     cancellationReason: orderDoc.cancellationReason,
+    deliveryLocation: orderDoc.deliveryLocation,
+    pickupLocation: orderDoc.pickupLocation,
+    deliveryPersonLocation: orderDoc.deliveryPersonLocation,
     createdAt: orderDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: orderDoc.updatedAt?.toISOString() || new Date().toISOString(),
     customer: customer ? {
@@ -392,6 +395,11 @@ export const updateOrderStatus = async (
       throw new ForbiddenError('Unauthorized to update this order');
     }
 
+    // Update delivery person location if provided
+    if (data.deliveryPersonLocation) {
+      order.deliveryPersonLocation = data.deliveryPersonLocation;
+    }
+
     // Validate status transition
     if (order.status !== data.status) {
       validateStatusTransitionOrThrow(order.status, data.status, 'dealer');
@@ -409,8 +417,6 @@ export const updateOrderStatus = async (
         previousStatus,
       });
 
-      await order.save();
-
       await logStatusChange(
         orderId,
         previousStatus,
@@ -420,20 +426,11 @@ export const updateOrderStatus = async (
         data.notes,
       );
 
-      // Emit socket event for real-time updates
-      try {
-        emitToOrderRoom(orderId, 'liveTrackingUpdates', {
-          orderId,
-          status: data.status,
-          previousStatus,
-          timestamp: new Date().toISOString(),
-        });
-      } catch (socketError) {
-        logger.error('Error emitting socket event for order status update:', socketError);
-      }
-
       logger.info(`Order status updated: ${order.orderNumber} - ${data.status}`);
     }
+
+    // Save order (for both status and location updates)
+    await order.save();
 
     const user = await SignUp.findById(order.userId).select('name phone').lean();
     const customer = user
@@ -460,12 +457,21 @@ export const updateOrderStatus = async (
       }
     }
 
-    return orderToDealerOrder(
+    const dealerOrder = orderToDealerOrder(
       order,
       dealerProductIds.length > 0 ? dealerProductIds : undefined,
       customer,
       dealerInfo,
     );
+
+    // Emit socket event for real-time updates with full order data
+    try {
+      emitToOrderRoom(orderId, 'liveTrackingUpdates', dealerOrder);
+    } catch (socketError) {
+      logger.error('Error emitting socket event for order update:', socketError);
+    }
+
+    return dealerOrder;
   } catch (error) {
     logger.error('Error updating order status:', error);
     throw error;

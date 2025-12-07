@@ -2,10 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Image,
   Pressable,
 } from 'react-native';
 import {useRoute, RouteProp} from '@react-navigation/native';
@@ -41,7 +39,8 @@ const ProductDetail: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
-  const [highlightsExpanded, setHighlightsExpanded] = useState<boolean>(false);
+  const [showDeliveryBanner, setShowDeliveryBanner] = useState<boolean>(true);
+  const [quantity, setQuantity] = useState<number>(1);
   const {colors} = useTheme();
   const {addItem, getItemCount} = useCartStore();
   const insets = useSafeAreaInsets();
@@ -82,7 +81,9 @@ const ProductDetail: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       const productWithId = {...product, _id: product.id};
-      addItem(productWithId);
+      for (let i = 0; i < quantity; i++) {
+        addItem(productWithId);
+      }
     }
   };
 
@@ -90,11 +91,12 @@ const ProductDetail: React.FC = () => {
     setIsWishlisted(!isWishlisted);
   };
 
-  const cartCount = product ? getItemCount(product.id) : 0;
-  const discountAmount =
+  const discountPercentage =
     product && product.originalPrice && product.originalPrice > product.price
-      ? product.originalPrice - product.price
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
+  
+  const hasDiscount = product && product.originalPrice && product.originalPrice > product.price;
 
   const styles = StyleSheet.create({
     container: {
@@ -116,6 +118,7 @@ const ProductDetail: React.FC = () => {
     },
     content: {
       backgroundColor: colors.background,
+      paddingBottom: 100,
     },
     ratingContainer: {
       flexDirection: 'row',
@@ -125,7 +128,7 @@ const ProductDetail: React.FC = () => {
       gap: 8,
     },
     ratingText: {
-      color: colors.secondary,
+      color: colors.text,
     },
     productNameContainer: {
       flexDirection: 'row',
@@ -143,9 +146,26 @@ const ProductDetail: React.FC = () => {
       height: 40,
       justifyContent: 'center',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 20,
+    },
+    stockBadge: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+    },
+    stockText: {
+      color: '#FF6B35',
+      fontFamily: Fonts.Medium,
+    },
+    offerTag: {
+      backgroundColor: '#007AFF',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+      marginLeft: 8,
+    },
+    offerTagText: {
+      color: colors.white,
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Medium,
     },
     quantityText: {
       paddingHorizontal: 16,
@@ -157,68 +177,63 @@ const ProductDetail: React.FC = () => {
       alignItems: 'center',
       paddingHorizontal: 16,
       paddingTop: 12,
-      gap: 12,
+      gap: 8,
+      flexWrap: 'wrap',
     },
     currentPrice: {
-      backgroundColor: colors.secondary,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 6,
-    },
-    currentPriceText: {
-      color: colors.white,
+      color: colors.secondary,
+      fontFamily: Fonts.SemiBold,
     },
     originalPrice: {
       textDecorationLine: 'line-through',
       opacity: 0.6,
+      marginLeft: 8,
     },
-    discountText: {
-      color: colors.secondary,
-    },
-    card: {
-      backgroundColor: colors.cardBackground,
-      marginHorizontal: 16,
-      marginTop: 16,
+    discountBadge: {
+      backgroundColor: '#007AFF',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
       borderRadius: 8,
-      padding: 16,
+      marginLeft: 8,
+    },
+    discountBadgeText: {
+      color: colors.white,
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Medium,
+    },
+    viewDetailsLink: {
       flexDirection: 'row',
       alignItems: 'center',
-    },
-    cardContent: {
-      flex: 1,
-      marginLeft: 12,
-    },
-    cardTitle: {
-      marginBottom: 4,
-    },
-    cardLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 8,
+      paddingHorizontal: 16,
+      paddingTop: 8,
       gap: 4,
     },
-    cardLinkText: {
+    viewDetailsText: {
       color: colors.secondary,
+      fontFamily: Fonts.Medium,
     },
-    policyCardsContainer: {
+    serviceHighlightsContainer: {
       flexDirection: 'row',
       paddingHorizontal: 16,
       paddingTop: 16,
       gap: 12,
     },
-    policyCard: {
+    serviceCard: {
       flex: 1,
-      backgroundColor: colors.cardBackground,
+      backgroundColor: colors.backgroundSecondary,
       borderRadius: 8,
       padding: 16,
       alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 80,
     },
-    policyIcon: {
+    serviceIcon: {
       marginBottom: 8,
     },
-    policyText: {
+    serviceText: {
       textAlign: 'center',
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
+      fontFamily: Fonts.Medium,
     },
     highlightsContent: {
       paddingTop: 8,
@@ -226,15 +241,18 @@ const ProductDetail: React.FC = () => {
     highlightRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingVertical: 8,
+      paddingVertical: 10,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
     highlightLabel: {
       opacity: 0.7,
+      flex: 1,
     },
     highlightValue: {
       fontFamily: Fonts.Medium,
+      flex: 1,
+      textAlign: 'right',
     },
     viewMoreLink: {
       flexDirection: 'row',
@@ -252,26 +270,162 @@ const ProductDetail: React.FC = () => {
       opacity: 0.7,
       lineHeight: 20,
     },
-    addToCartButton: {
-      backgroundColor: '#FF6B9D',
+    emiBanner: {
+      backgroundColor: colors.secondary,
       marginHorizontal: 16,
-      marginTop: 24,
-      marginBottom: 32,
-      paddingVertical: 16,
-      borderRadius: 12,
+      marginTop: 16,
+      borderRadius: 8,
+      padding: 12,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    emiBannerText: {
+      flex: 1,
+    },
+    emiBannerTitle: {
+      color: colors.white,
+      fontFamily: Fonts.SemiBold,
+      marginBottom: 4,
+    },
+    emiBannerSubtitle: {
+      color: colors.white,
+      opacity: 0.9,
+      fontSize: RFValue(10),
+    },
+    emiBannerLink: {
+      color: colors.white,
+      fontFamily: Fonts.Medium,
+      fontSize: RFValue(12),
+    },
+    gstinCard: {
+      backgroundColor: colors.cardBackground,
+      marginHorizontal: 16,
+      marginTop: 12,
+      borderRadius: 8,
+      padding: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    gstinIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    gstinContent: {
+      flex: 1,
+    },
+    gstinTitle: {
+      fontFamily: Fonts.Medium,
+      marginBottom: 4,
+    },
+    gstinSubtitle: {
+      fontSize: RFValue(10),
+      opacity: 0.7,
+    },
+    deliveryBanner: {
+      backgroundColor: '#007AFF',
+      marginHorizontal: 16,
+      marginTop: 12,
+      borderRadius: 8,
+      padding: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    deliveryBannerContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    deliveryIcon: {
+      marginRight: 8,
+    },
+    deliveryText: {
+      color: colors.white,
+      fontFamily: Fonts.Medium,
+      flex: 1,
+    },
+    deliveryCloseButton: {
+      padding: 4,
+    },
+    fixedBottomBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: colors.cardBackground,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: -2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    bottomBarLeft: {
+      flex: 1,
+    },
+    bottomBarQuantity: {
+      fontFamily: Fonts.Medium,
+      marginBottom: 4,
+    },
+    bottomBarPrice: {
+      fontFamily: Fonts.SemiBold,
+      color: colors.secondary,
+      marginBottom: 2,
+    },
+    bottomBarMrp: {
+      textDecorationLine: 'line-through',
+      opacity: 0.6,
+      fontSize: RFValue(10),
+    },
+    bottomBarDiscount: {
+      backgroundColor: '#007AFF',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 6,
+      marginLeft: 4,
+    },
+    bottomBarDiscountText: {
+      color: colors.white,
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Medium,
+    },
+    bottomBarTaxText: {
+      fontSize: RFValue(9),
+      opacity: 0.7,
+      marginTop: 2,
+    },
+    bottomBarRight: {
+      flex: 1,
+      alignItems: 'flex-end',
+    },
+    addToCartButton: {
+      backgroundColor: colors.secondary,
+      paddingHorizontal: 24,
+      paddingVertical: 14,
+      borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
+      minWidth: 120,
     },
     addToCartText: {
       color: colors.white,
       fontFamily: Fonts.SemiBold,
-      fontSize: RFValue(16),
-    },
-    brandLogo: {
-      width: 50,
-      height: 50,
-      borderRadius: 8,
-      backgroundColor: colors.backgroundSecondary,
+      fontSize: RFValue(14),
     },
   });
 
@@ -311,12 +465,12 @@ const ProductDetail: React.FC = () => {
           style={styles.content}
           showsVerticalScrollIndicator={false}>
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={RFValue(16)} color={colors.secondary} />
+            <Icon name="star" size={RFValue(16)} color="#FFD700" />
             <CustomText
               variant="h7"
               fontFamily={Fonts.Medium}
               style={styles.ratingText}>
-              {product.rating || 4.1} ({product.reviewCount || 32921})
+              {product.rating || 4} ({product.reviewCount || 34})
             </CustomText>
           </View>
 
@@ -336,6 +490,33 @@ const ProductDetail: React.FC = () => {
             </Pressable>
           </View>
 
+          {product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
+            <View style={styles.stockBadge}>
+              <CustomText
+                variant="h7"
+                fontFamily={Fonts.Medium}
+                style={styles.stockText}>
+                Only {product.stock} left
+              </CustomText>
+            </View>
+          )}
+
+          <View style={[styles.priceContainer, {paddingTop: 8}]}>
+            {product.offers && product.offers.length > 0 ? (
+              <View style={styles.offerTag}>
+                <CustomText style={styles.offerTagText}>
+                  {product.offers[0].title}
+                </CustomText>
+              </View>
+            ) : (
+              <View style={styles.offerTag}>
+                <CustomText style={styles.offerTagText}>
+                  No cost EMI offer
+                </CustomText>
+              </View>
+            )}
+          </View>
+
           {product.quantity && (
             <CustomText
               variant="h7"
@@ -345,121 +526,76 @@ const ProductDetail: React.FC = () => {
             </CustomText>
           )}
 
-          <View style={styles.priceContainer}>
-            <View style={styles.currentPrice}>
-              <CustomText
-                variant="h5"
-                fontFamily={Fonts.SemiBold}
-                style={styles.currentPriceText}>
-                ₹{product.price.toLocaleString()}
-              </CustomText>
-            </View>
-            {product.originalPrice && product.originalPrice > product.price && (
+          <View style={[styles.priceContainer, {paddingTop: 12}]}>
+            <CustomText
+              variant="h5"
+              fontFamily={Fonts.SemiBold}
+              style={styles.currentPrice}>
+              ₹{product.price.toLocaleString()}
+            </CustomText>
+            {hasDiscount && (
               <>
                 <CustomText
                   variant="h6"
                   fontFamily={Fonts.Medium}
                   style={styles.originalPrice}>
-                  ₹{product.originalPrice.toLocaleString()}
+                  ₹{product.originalPrice?.toLocaleString()}
                 </CustomText>
-                <CustomText
-                  variant="h7"
-                  fontFamily={Fonts.Medium}
-                  style={styles.discountText}>
-                  ₹{discountAmount} OFF
-                </CustomText>
+                <View style={styles.discountBadge}>
+                  <CustomText style={styles.discountBadgeText}>
+                    {discountPercentage}% OFF
+                  </CustomText>
+                </View>
               </>
             )}
           </View>
 
-          <View style={styles.card}>
-            <View
-              style={[
-                styles.brandLogo,
-                {backgroundColor: colors.backgroundSecondary},
-              ]}
+          <Pressable style={styles.viewDetailsLink}>
+            <CustomText
+              variant="h7"
+              fontFamily={Fonts.Medium}
+              style={styles.viewDetailsText}>
+              View product details
+            </CustomText>
+            <Icon
+              name="chevron-up"
+              size={RFValue(14)}
+              color={colors.secondary}
             />
-            <View style={styles.cardContent}>
-              <CustomText
-                variant="h6"
-                fontFamily={Fonts.Medium}
-                style={styles.cardTitle}>
-                Get at ₹{Math.round(product.price * 0.89)} with coupon offers
-              </CustomText>
-              <Pressable style={styles.cardLink}>
-                <CustomText
-                  variant="h7"
-                  fontFamily={Fonts.Medium}
-                  style={styles.cardLinkText}>
-                  View all offers
-                </CustomText>
-                <Icon
-                  name="chevron-forward"
-                  size={RFValue(14)}
-                  color={colors.secondary}
-                />
-              </Pressable>
-            </View>
-          </View>
+          </Pressable>
 
-          <View style={styles.card}>
-            {product.brand && (
-              <View
-                style={[
-                  styles.brandLogo,
-                  {backgroundColor: colors.backgroundSecondary},
-                ]}
-              />
-            )}
-            <View style={styles.cardContent}>
-              <CustomText
-                variant="h6"
-                fontFamily={Fonts.Medium}
-                style={styles.cardTitle}>
-                {product.brand ? `View all ${product.brand} products` : 'View brand products'}
-              </CustomText>
-              <Pressable style={styles.cardLink}>
-                <Icon
-                  name="chevron-forward"
-                  size={RFValue(14)}
-                  color={colors.text}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={styles.policyCardsContainer}>
-            <View style={styles.policyCard}>
+          <View style={styles.serviceHighlightsContainer}>
+            <View style={styles.serviceCard}>
               <Icon
-                name="close-circle-outline"
+                name="people-outline"
                 size={RFValue(24)}
                 color={colors.text}
-                style={styles.policyIcon}
+                style={styles.serviceIcon}
               />
               <CustomText
                 variant="h8"
                 fontFamily={Fonts.Medium}
-                style={styles.policyText}>
-                No Return Or Exchange
+                style={styles.serviceText}>
+                24/7 Support
               </CustomText>
             </View>
-            <View style={styles.policyCard}>
+            <View style={styles.serviceCard}>
               <Icon
-                name="flash-outline"
+                name="bicycle-outline"
                 size={RFValue(24)}
                 color={colors.text}
-                style={styles.policyIcon}
+                style={styles.serviceIcon}
               />
               <CustomText
                 variant="h8"
                 fontFamily={Fonts.Medium}
-                style={styles.policyText}>
+                style={styles.serviceText}>
                 Fast Delivery
               </CustomText>
             </View>
           </View>
 
-          <CollapsibleSection title="Highlights" defaultExpanded={false}>
+          <CollapsibleSection title="Highlights" defaultExpanded={true}>
             <View style={styles.highlightsContent}>
               {product.brand && (
                 <View style={styles.highlightRow}>
@@ -493,6 +629,26 @@ const ProductDetail: React.FC = () => {
                   </CustomText>
                 </View>
               )}
+              {product.specifications && Object.keys(product.specifications).length > 0 && (
+                <>
+                  {Object.entries(product.specifications).slice(0, 3).map(([key, value]) => (
+                    <View key={key} style={styles.highlightRow}>
+                      <CustomText
+                        variant="h7"
+                        fontFamily={Fonts.Regular}
+                        style={styles.highlightLabel}>
+                        {key}
+                      </CustomText>
+                      <CustomText
+                        variant="h7"
+                        fontFamily={Fonts.Medium}
+                        style={styles.highlightValue}>
+                        {String(value)}
+                      </CustomText>
+                    </View>
+                  ))}
+                </>
+              )}
               <Pressable style={styles.viewMoreLink}>
                 <CustomText
                   variant="h7"
@@ -509,7 +665,7 @@ const ProductDetail: React.FC = () => {
             </View>
           </CollapsibleSection>
 
-          <CollapsibleSection title="Information" defaultExpanded={false}>
+          <CollapsibleSection title="Info" defaultExpanded={false}>
             <View style={styles.informationContent}>
               <CustomText
                 variant="h7"
@@ -526,14 +682,93 @@ const ProductDetail: React.FC = () => {
             </View>
           </CollapsibleSection>
 
+          <View style={styles.emiBanner}>
+            <View style={styles.emiBannerText}>
+              <CustomText style={styles.emiBannerTitle}>
+                No Cost EMI Plans at ₹{Math.round(product.price / 3)}/month
+              </CustomText>
+              <CustomText style={styles.emiBannerSubtitle}>
+                Applicable only on credit card payments
+              </CustomText>
+            </View>
+            <Pressable>
+              <CustomText style={styles.emiBannerLink}>View plans</CustomText>
+            </Pressable>
+          </View>
+
+          <View style={styles.gstinCard}>
+            <View style={styles.gstinIcon}>
+              <Icon name="percent" size={RFValue(20)} color={colors.white} />
+            </View>
+            <View style={styles.gstinContent}>
+              <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.gstinTitle}>
+                Add GSTIN
+              </CustomText>
+              <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.gstinSubtitle}>
+                Claim GST credit of 18% on this product.
+              </CustomText>
+            </View>
+            <Icon name="chevron-forward" size={RFValue(16)} color={colors.text} />
+          </View>
+
+          {showDeliveryBanner && (
+            <View style={styles.deliveryBanner}>
+              <View style={styles.deliveryBannerContent}>
+                <Icon
+                  name="bicycle-outline"
+                  size={RFValue(20)}
+                  color={colors.white}
+                  style={styles.deliveryIcon}
+                />
+                <CustomText style={styles.deliveryText}>
+                  Get FREE delivery on your order above ₹149
+                </CustomText>
+              </View>
+              <Pressable
+                onPress={() => setShowDeliveryBanner(false)}
+                style={styles.deliveryCloseButton}>
+                <Icon name="close" size={RFValue(18)} color={colors.white} />
+              </Pressable>
+            </View>
+          )}
+        </CollapsibleScrollView>
+      </CollapsibleContainer>
+      
+      <View style={[styles.fixedBottomBar, {paddingBottom: Math.max(insets.bottom, 12)}]}>
+        <View style={styles.bottomBarLeft}>
+          <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarQuantity}>
+            {quantity} {product.quantity || 'set'}
+          </CustomText>
+          <View style={{flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4}}>
+            <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.bottomBarPrice}>
+              ₹{product.price.toLocaleString()}
+            </CustomText>
+            {hasDiscount && (
+              <>
+                <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarMrp}>
+                  {' '}MRP ₹{product.originalPrice?.toLocaleString()}
+                </CustomText>
+                <View style={styles.bottomBarDiscount}>
+                  <CustomText style={styles.bottomBarDiscountText}>
+                    {discountPercentage}% OFF
+                  </CustomText>
+                </View>
+              </>
+            )}
+          </View>
+          <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.bottomBarTaxText}>
+            Inclusive of all taxes
+          </CustomText>
+        </View>
+        <View style={styles.bottomBarRight}>
           <TouchableOpacity
             onPress={handleAddToCart}
             style={styles.addToCartButton}
             activeOpacity={0.8}>
             <CustomText style={styles.addToCartText}>Add to cart</CustomText>
           </TouchableOpacity>
-        </CollapsibleScrollView>
-      </CollapsibleContainer>
+        </View>
+      </View>
     </View>
   );
 };

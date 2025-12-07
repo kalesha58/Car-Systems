@@ -44,6 +44,14 @@ const SplashScreen: FC = () => {
     return null;
   };
 
+  const performRoleCheckAndNavigate = () => {
+    const currentUser = useAuthStore.getState().user;
+    if (currentUser && currentUser.role) {
+      const userRole = checkUserRole(currentUser.role);
+      navigateByRole(userRole);
+    }
+  };
+
   const navigateByRole = (userRole: string | null) => {
     if (userRole === 'user') {
       resetAndNavigate('MainTabs');
@@ -157,6 +165,15 @@ const SplashScreen: FC = () => {
       clearTimeout(fallbackTimeout);
     };
   }, []);
+
+  useEffect(() => {
+    if (user && user.role) {
+      const userRole = checkUserRole(user.role);
+      if (userRole) {
+        navigateByRole(userRole);
+      }
+    }
+  }, [user]);
 
   return (
     <View style={styles.container}>
