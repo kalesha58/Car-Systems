@@ -1,7 +1,9 @@
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
+import {getDealerById} from '@service/dealerService';
+import {getProductById} from '@service/productService';
 import {SOCKET_URL} from '@service/config';
 import {Colors, Fonts} from '@utils/Constants';
 import LiveHeader from './LiveHeader';
@@ -13,10 +15,12 @@ import DeliveryDetails from './DeliveryDetails';
 import LiveMap from './LiveMap';
 import {getOrderStatusDisplay, isOrderAccepted, isOrderPickedUp} from '@utils/orderStatusUtils';
 import {io, Socket} from 'socket.io-client';
+import {IDealer} from '../../types/dealer/IDealer';
 
 const LiveTracking = () => {
   const {currentOrder, setCurrentOrder} = useAuthStore();
   const socketRef = useRef<Socket | null>(null);
+  const [dealer, setDealer] = useState<IDealer | null>(null);
 
   const fetchOrderDetails = async () => {
     if (!currentOrder?._id && !currentOrder?.id) {
@@ -37,6 +41,74 @@ const LiveTracking = () => {
   useEffect(() => {
     fetchOrderDetails();
   }, []);
+
+  useEffect(() => {
+    const fetchDealerInfo = async () => {
+      let dealerIdToFetch: string | null = null;
+
+      if (currentOrder?.dealerId) {
+        dealerIdToFetch = currentOrder.dealerId;
+      } else if (currentOrder?.items && currentOrder.items.length > 0) {
+        try {
+          const firstItem = currentOrder.items[0];
+          if (firstItem?.productId) {
+            const productResponse = await getProductById(firstItem.productId);
+            if (productResponse.success && productResponse.Response) {
+              const productData = (productResponse.Response as any).products
+                ? (productResponse.Response as any).products[0]
+                : Array.isArray(productResponse.Response)
+                ? productResponse.Response[0]
+                : productResponse.Response;
+              
+              if (productData?.dealerId) {
+                dealerIdToFetch = productData.dealerId;
+              } else if (productData?.dealer?.id) {
+                dealerIdToFetch = productData.dealer.id;
+              }
+            }
+          }
+        } catch (error) {
+          setDealer(null);
+          return;
+        }
+      }
+
+      if (!dealerIdToFetch) {
+        setDealer(null);
+        return;
+      }
+
+      try {
+        const response = await getDealerById(dealerIdToFetch);
+        if (response.success && response.Response) {
+          const dealerData = (response.Response as any).dealers
+            ? (response.Response as any).dealers[0]
+            : Array.isArray(response.Response)
+            ? response.Response[0]
+            : response.Response;
+          
+          if (dealerData && dealerData.id) {
+            setDealer({
+              id: dealerData.id,
+              name: dealerData.name || '',
+              businessName: dealerData.businessName || '',
+              email: dealerData.email || '',
+              phone: dealerData.phone || '',
+              status: dealerData.status || '',
+              location: dealerData.location,
+              address: dealerData.address,
+              documents: dealerData.documents,
+              createdAt: dealerData.createdAt || new Date().toISOString(),
+            });
+          }
+        }
+      } catch (error) {
+        setDealer(null);
+      }
+    };
+
+    fetchDealerInfo();
+  }, [currentOrder?.dealerId, currentOrder?.items]);
 
   useEffect(() => {
     if (currentOrder) {
@@ -133,6 +205,13 @@ const LiveTracking = () => {
           details={currentOrder?.customer}
           shippingAddress={currentOrder?.shippingAddress}
           deliveryLocation={currentOrder?.deliveryLocation}
+          dealer={dealer ? {
+            id: dealer.id,
+            name: dealer.name,
+            businessName: dealer.businessName,
+            phone: dealer.phone,
+            address: dealer.address,
+          } : undefined}
         />
 
         <OrderSummary order={currentOrder} />

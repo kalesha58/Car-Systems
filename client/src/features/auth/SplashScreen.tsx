@@ -48,7 +48,7 @@ const SplashScreen: FC = () => {
     if (userRole === 'user') {
       resetAndNavigate('MainTabs');
     } else if (userRole === 'dealer') {
-      resetAndNavigate('MainTabs');
+      resetAndNavigate('DealerTabs');
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     } else {
