@@ -68,14 +68,27 @@ export interface IGetDealerOrdersRequest {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface IDealerOrdersResponse {
+  success: boolean;
+  Response: {
+    orders: IOrderData[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+}
+
 export const getDealerOrders = async (
   query?: IGetDealerOrdersRequest,
 ): Promise<IOrderData[]> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IOrdersListResponse>('/dealer/orders', {params});
-    if (response.data.success && response.data.data) {
-      return response.data.data;
+    const response = await appAxios.get<IDealerOrdersResponse>('/dealer/orders', {params});
+    if (response.data.success && response.data.Response && response.data.Response.orders) {
+      return response.data.Response.orders;
     }
     return [];
   } catch (error) {

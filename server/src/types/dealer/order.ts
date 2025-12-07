@@ -28,6 +28,18 @@ export interface IDealerOrder {
   cancellationReason?: string;
   createdAt: string;
   updatedAt: string;
+  customer?: {
+    name: string;
+    phone: string;
+    address?: string;
+  };
+  dealer?: {
+    id: string;
+    name: string;
+    businessName: string;
+    phone: string;
+    address?: string;
+  };
 }
 
 export interface IGetDealerOrdersRequest {

@@ -61,7 +61,7 @@ export interface IOrderData {
   customer?: {
     name: string;
     phone: string;
-    address: string;
+    address?: string;
   };
   dealer?: {
     id: string;

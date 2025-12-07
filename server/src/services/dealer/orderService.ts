@@ -10,6 +10,7 @@ import { OrderStatusLog } from '../../models/OrderStatusLog';
 import { OrderDocument } from '../../models/OrderDocument';
 import { SignUp } from '../../models/SignUp';
 import { Product } from '../../models/Product';
+import { Dealer } from '../../models/Dealer';
 import {
   IDealerOrder,
   IGetDealerOrdersRequest,
@@ -36,6 +37,8 @@ import { emitToOrderRoom } from '../socket/socketService';
 const orderToDealerOrder = (
   orderDoc: IOrderDocument,
   dealerProductIds?: string[],
+  customer?: { name: string; phone: string; address?: string },
+  dealer?: { id: string; name: string; businessName: string; phone: string; address?: string },
 ): IDealerOrder => {
   let items = orderDoc.items;
   let subtotal = orderDoc.subtotal;
@@ -69,6 +72,11 @@ const orderToDealerOrder = (
     totalAmount = subtotal + tax + shipping;
   }
 
+  const customerAddress = customer?.address || 
+    (orderDoc.shippingAddress 
+      ? `${orderDoc.shippingAddress.street || ''}, ${orderDoc.shippingAddress.city || ''}, ${orderDoc.shippingAddress.state || ''}`.trim()
+      : undefined);
+
   return {
     id: (orderDoc._id as any).toString(),
     orderNumber: orderDoc.orderNumber,
@@ -96,6 +104,18 @@ const orderToDealerOrder = (
     cancellationReason: orderDoc.cancellationReason,
     createdAt: orderDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: orderDoc.updatedAt?.toISOString() || new Date().toISOString(),
+    customer: customer ? {
+      name: customer.name,
+      phone: customer.phone,
+      address: customerAddress,
+    } : undefined,
+    dealer: dealer ? {
+      id: dealer.id,
+      name: dealer.name,
+      businessName: dealer.businessName,
+      phone: dealer.phone,
+      address: dealer.address,
+    } : undefined,
   };
 };
 
@@ -206,13 +226,48 @@ export const getDealerOrders = async (
     // Fetch orders
     const orders = await Order.find(filter).sort(sort).skip(skip).limit(limit);
 
+    // Get unique user IDs from orders (for customers)
+    const userIds = [...new Set(orders.map((order) => order.userId))];
+
+    // Fetch user data for all orders (customers)
+    const users = await SignUp.find({ _id: { $in: userIds } }).select('name phone').lean();
+    const userMap = new Map(
+      users.map((user) => [
+        (user._id as any).toString(),
+        {
+          name: user.name,
+          phone: user.phone,
+        },
+      ]),
+    );
+
+    // Fetch current dealer information
+    const currentDealerUser = await SignUp.findById(dealerId).select('email').lean();
+    let currentDealerInfo: { id: string; name: string; businessName: string; phone: string; address?: string } | undefined;
+    
+    if (currentDealerUser) {
+      const dealerDoc = await Dealer.findOne({ email: currentDealerUser.email }).lean();
+      if (dealerDoc) {
+        currentDealerInfo = {
+          id: (dealerDoc._id as any).toString(),
+          name: dealerDoc.name,
+          businessName: dealerDoc.businessName,
+          phone: dealerDoc.phone,
+          address: dealerDoc.address,
+        };
+      }
+    }
+
     // Filter items and recalculate totals for each order
     const filteredOrders: IDealerOrder[] = [];
     for (const order of orders) {
       try {
+        const customer = userMap.get(order.userId);
         const dealerOrder = orderToDealerOrder(
           order,
           dealerProductIds.length > 0 ? dealerProductIds : undefined,
+          customer,
+          currentDealerInfo,
         );
         filteredOrders.push(dealerOrder);
       } catch (error) {
@@ -273,10 +328,38 @@ export const getDealerOrderById = async (
       throw new ForbiddenError('Unauthorized to access this order');
     }
 
+    // Fetch customer data
+    const user = await SignUp.findById(order.userId).select('name phone').lean();
+    const customer = user
+      ? {
+          name: user.name,
+          phone: user.phone,
+        }
+      : undefined;
+
+    // Fetch dealer information
+    const dealerUser = await SignUp.findById(dealerId).select('email').lean();
+    let dealerInfo: { id: string; name: string; businessName: string; phone: string; address?: string } | undefined;
+    
+    if (dealerUser) {
+      const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
+      if (dealerDoc) {
+        dealerInfo = {
+          id: (dealerDoc._id as any).toString(),
+          name: dealerDoc.name,
+          businessName: dealerDoc.businessName,
+          phone: dealerDoc.phone,
+          address: dealerDoc.address,
+        };
+      }
+    }
+
     // Filter items to show only dealer's products and recalculate totals
     return orderToDealerOrder(
       order,
       dealerProductIds.length > 0 ? dealerProductIds : undefined,
+      customer,
+      dealerInfo,
     );
   } catch (error) {
     logger.error('Error getting dealer order by ID:', error);
@@ -352,9 +435,36 @@ export const updateOrderStatus = async (
       logger.info(`Order status updated: ${order.orderNumber} - ${data.status}`);
     }
 
+    const user = await SignUp.findById(order.userId).select('name phone').lean();
+    const customer = user
+      ? {
+          name: user.name,
+          phone: user.phone,
+        }
+      : undefined;
+
+    // Fetch dealer information
+    const dealerUser = await SignUp.findById(dealerId).select('email').lean();
+    let dealerInfo: { id: string; name: string; businessName: string; phone: string; address?: string } | undefined;
+    
+    if (dealerUser) {
+      const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
+      if (dealerDoc) {
+        dealerInfo = {
+          id: (dealerDoc._id as any).toString(),
+          name: dealerDoc.name,
+          businessName: dealerDoc.businessName,
+          phone: dealerDoc.phone,
+          address: dealerDoc.address,
+        };
+      }
+    }
+
     return orderToDealerOrder(
       order,
       dealerProductIds.length > 0 ? dealerProductIds : undefined,
+      customer,
+      dealerInfo,
     );
   } catch (error) {
     logger.error('Error updating order status:', error);
@@ -421,9 +531,36 @@ export const cancelOrder = async (
 
     logger.info(`Order cancelled by dealer: ${order.orderNumber}`);
 
+    const user = await SignUp.findById(order.userId).select('name phone').lean();
+    const customer = user
+      ? {
+          name: user.name,
+          phone: user.phone,
+        }
+      : undefined;
+
+    // Fetch dealer information
+    const dealerUser = await SignUp.findById(dealerId).select('email').lean();
+    let dealerInfo: { id: string; name: string; businessName: string; phone: string; address?: string } | undefined;
+    
+    if (dealerUser) {
+      const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
+      if (dealerDoc) {
+        dealerInfo = {
+          id: (dealerDoc._id as any).toString(),
+          name: dealerDoc.name,
+          businessName: dealerDoc.businessName,
+          phone: dealerDoc.phone,
+          address: dealerDoc.address,
+        };
+      }
+    }
+
     return orderToDealerOrder(
       order,
       dealerProductIds.length > 0 ? dealerProductIds : undefined,
+      customer,
+      dealerInfo,
     );
   } catch (error) {
     logger.error('Error cancelling order:', error);

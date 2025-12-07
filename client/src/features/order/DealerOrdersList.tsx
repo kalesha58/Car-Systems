@@ -12,11 +12,10 @@ import {getDealerOrders} from '@service/dealerService';
 import {IOrderData} from '../../types/order/IOrder';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import {formatISOToCustom} from '@utils/DateUtils';
 import {navigate} from '@utils/NavigationUtils';
 import {useTheme} from '@hooks/useTheme';
-import {getOrderStatusDisplay} from '@utils/orderStatusUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useTranslation} from 'react-i18next';
@@ -134,7 +133,7 @@ const DealerOrdersList: React.FC = () => {
     navigate('LiveTracking');
   };
 
-  const renderOrderItem = ({item, index}: {item: IOrderData; index: number}) => {
+  const renderOrderItem = ({item}: {item: IOrderData}) => {
     const statusColor = getStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
     const totalItems = item.items?.reduce((sum, i) => sum + (i.quantity || 0), 0) || 0;
@@ -155,7 +154,7 @@ const DealerOrdersList: React.FC = () => {
         <View style={styles.orderHeader}>
           <View style={styles.orderNumberSection}>
             <View style={[styles.orderIconContainer, {backgroundColor: colors.backgroundSecondary}]}>
-              <Icon name="receipt-outline" size={RFValue(14)} color={colors.text} />
+              <Icon name="receipt-outline" size={RFValue(12)} color={colors.text} />
             </View>
             <View style={styles.orderNumberTextContainer}>
               <CustomText variant="h9" fontFamily={Fonts.Medium} style={styles.orderIdLabel}>
@@ -167,7 +166,7 @@ const DealerOrdersList: React.FC = () => {
             </View>
           </View>
           <View style={[styles.statusBadge, {backgroundColor: statusColor + '15'}]}>
-            <Icon name={statusIcon} size={RFValue(10)} color={statusColor} />
+            <Icon name={statusIcon} size={RFValue(9)} color={statusColor} />
             <CustomText
               variant="h9"
               fontFamily={Fonts.Medium}
@@ -178,10 +177,46 @@ const DealerOrdersList: React.FC = () => {
           </View>
         </View>
 
+        {item.customer && (
+          <View style={[styles.customerSection, {borderTopColor: colors.border}]}>
+            <View style={styles.customerInfo}>
+              <Icon name="person-outline" size={RFValue(10)} color={colors.disabled} />
+              <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.customerName} numberOfLines={1}>
+                {item.customer.name}
+              </CustomText>
+            </View>
+            <View style={styles.customerInfo}>
+              <Icon name="call-outline" size={RFValue(10)} color={colors.disabled} />
+              <CustomText variant="h8" style={styles.customerPhone} numberOfLines={1}>
+                {item.customer.phone}
+              </CustomText>
+            </View>
+          </View>
+        )}
+
+        {item.dealer && (
+          <View style={[styles.dealerSection, {borderTopColor: colors.border}]}>
+            <View style={styles.dealerInfo}>
+              <Icon name="storefront-outline" size={RFValue(10)} color={colors.disabled} />
+              <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.dealerName} numberOfLines={1}>
+                {item.dealer.businessName || item.dealer.name}
+              </CustomText>
+            </View>
+            {item.dealer.phone && (
+              <View style={styles.dealerInfo}>
+                <Icon name="call-outline" size={RFValue(10)} color={colors.disabled} />
+                <CustomText variant="h8" style={styles.dealerPhone} numberOfLines={1}>
+                  {item.dealer.phone}
+                </CustomText>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={[styles.orderContent, {borderTopColor: colors.border}]}>
           <View style={styles.orderItemsSection}>
             <View style={styles.itemsHeader}>
-              <Icon name="cube-outline" size={RFValue(12)} color={colors.disabled} />
+              <Icon name="cube-outline" size={RFValue(10)} color={colors.disabled} />
               <CustomText variant="h9" fontFamily={Fonts.Medium} style={styles.itemsCountText}>
                 {totalItems} {totalItems === 1 ? 'item' : 'items'}
               </CustomText>
@@ -198,11 +233,11 @@ const DealerOrdersList: React.FC = () => {
             )}
           </View>
           <View style={styles.orderDetailsSection}>
-            <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.priceText}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.priceText}>
               ₹{item.totalAmount}
             </CustomText>
             <View style={styles.dateContainer}>
-              <Icon name="calendar-outline" size={RFValue(9)} color={colors.disabled} />
+              <Icon name="calendar-outline" size={RFValue(8)} color={colors.disabled} />
               <CustomText variant="h9" style={styles.dateText} numberOfLines={1}>
                 {formatISOToCustom(item.createdAt)}
               </CustomText>
@@ -218,13 +253,13 @@ const DealerOrdersList: React.FC = () => {
       flex: 1,
     },
     content: {
-      padding: 12,
+      padding: 10,
       paddingBottom: 100,
     },
     orderItem: {
-      borderRadius: 12,
-      marginBottom: 10,
-      padding: 12,
+      borderRadius: 10,
+      marginBottom: 8,
+      padding: 10,
       borderWidth: 1,
       ...Platform.select({
         ios: {
@@ -241,7 +276,7 @@ const DealerOrdersList: React.FC = () => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 10,
+      marginBottom: 8,
     },
     orderNumberSection: {
       flexDirection: 'row',
@@ -250,12 +285,12 @@ const DealerOrdersList: React.FC = () => {
       minWidth: 0,
     },
     orderIconContainer: {
-      width: 28,
-      height: 28,
-      borderRadius: 7,
+      width: 24,
+      height: 24,
+      borderRadius: 6,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 8,
+      marginRight: 6,
     },
     orderNumberTextContainer: {
       flex: 1,
@@ -264,70 +299,116 @@ const DealerOrdersList: React.FC = () => {
     orderIdLabel: {
       opacity: 0.6,
       fontSize: RFValue(9),
-      marginBottom: 2,
+      marginBottom: 1,
     },
     statusBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-      borderRadius: 8,
-      gap: 3,
-      maxWidth: 110,
-      marginLeft: 8,
+      paddingHorizontal: 5,
+      paddingVertical: 2,
+      borderRadius: 6,
+      gap: 2,
+      maxWidth: 100,
+      marginLeft: 6,
     },
     statusText: {
       fontSize: RFValue(9),
       lineHeight: RFValue(11),
     },
+    customerSection: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingTop: 6,
+      paddingBottom: 6,
+      borderTopWidth: 0.5,
+      marginBottom: 6,
+      gap: 8,
+    },
+    customerInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 4,
+    },
+    customerName: {
+      opacity: 0.85,
+      fontSize: RFValue(10),
+    },
+    customerPhone: {
+      opacity: 0.7,
+      fontSize: RFValue(10),
+    },
+    dealerSection: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingTop: 6,
+      paddingBottom: 6,
+      borderTopWidth: 0.5,
+      marginBottom: 6,
+      gap: 8,
+    },
+    dealerInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 4,
+    },
+    dealerName: {
+      opacity: 0.85,
+      fontSize: RFValue(10),
+    },
+    dealerPhone: {
+      opacity: 0.7,
+      fontSize: RFValue(10),
+    },
     orderContent: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      paddingTop: 10,
+      paddingTop: 8,
       borderTopWidth: 0.5,
     },
     orderItemsSection: {
       flex: 1,
-      paddingRight: 10,
+      paddingRight: 8,
       minWidth: 0,
     },
     itemsHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 5,
+      marginBottom: 4,
     },
     itemsCountText: {
       opacity: 0.6,
-      marginLeft: 4,
-      fontSize: RFValue(10),
+      marginLeft: 3,
+      fontSize: RFValue(9),
     },
     itemText: {
-      marginBottom: 3,
+      marginBottom: 2,
       opacity: 0.85,
-      fontSize: RFValue(10),
+      fontSize: RFValue(9),
     },
     moreItemsText: {
       opacity: 0.5,
-      marginTop: 2,
+      marginTop: 1,
       fontSize: RFValue(9),
       fontStyle: 'italic',
     },
     orderDetailsSection: {
       alignItems: 'flex-end',
-      minWidth: 95,
+      minWidth: 90,
     },
     priceText: {
-      marginBottom: 5,
+      marginBottom: 4,
     },
     dateContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 3,
+      gap: 2,
     },
     dateText: {
       opacity: 0.6,
       fontSize: RFValue(9),
-      maxWidth: 90,
+      maxWidth: 85,
     },
     emptyContainer: {
       flex: 1,
