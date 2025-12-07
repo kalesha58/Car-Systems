@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { IAuthRequest } from '../../types/express';
+import { IAuthRequest } from '../../middleware/authMiddleware';
 import {
   requestToJoinGroup,
   getJoinRequestsForGroup,
@@ -8,8 +8,7 @@ import {
   getUserJoinRequests,
   getPendingRequestCount,
 } from '../../services/user/joinRequestService';
-import { errorHandler } from '../../utils/errorHandler';
-import { IAppError } from '../../types/error';
+import { errorHandler, IAppError } from '../../utils/errorHandler';
 
 /**
  * Request to join a public group
