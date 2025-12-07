@@ -29,6 +29,9 @@ import OrdersList from '@features/order/OrdersList';
 import DealerOrdersList from '@features/order/DealerOrdersList';
 import DeliveryMap from '@features/delivery/DeliveryMap';
 import InventoryScreen from '@features/inventory/InventoryScreen';
+import AddEditProductScreen from '@features/inventory/AddEditProductScreen';
+import AddEditVehicleScreen from '@features/inventory/AddEditVehicleScreen';
+import AddEditServiceScreen from '@features/inventory/AddEditServiceScreen';
 import ChatScreen from '@features/chat/ChatScreen';
 import UserSelectionScreen from '@features/chat/UserSelectionScreen';
 import ChatMessageScreen from '@features/chat/ChatMessageScreen';
@@ -232,7 +235,19 @@ const Navigation: FC = () => {
           const currentRoute = navigationRef.getCurrentRoute();
           if (currentRoute) {
             const currentRouteName = currentRoute.name;
-            if (userRole === 'dealer' && currentRouteName !== 'DealerTabs' && !currentRouteName.includes('Dealer')) {
+            // Exclude dealer-related screens from auto-navigation
+            const dealerScreens = [
+              'DealerTabs',
+              'DealerDashboard',
+              'InventoryScreen',
+              'DealerOrdersList',
+              'AddEditProduct',
+              'AddEditVehicle',
+              'AddEditService',
+            ];
+            const isDealerScreen = dealerScreens.includes(currentRouteName) || currentRouteName.includes('Dealer');
+            
+            if (userRole === 'dealer' && !isDealerScreen) {
               navigateByRole(userRole);
             } else if (userRole === 'user' && currentRouteName === 'DealerTabs') {
               navigateByRole(userRole);
@@ -265,6 +280,27 @@ const Navigation: FC = () => {
           <Stack.Screen name="DealerTabs" component={DealerTabs} />
           <Stack.Screen name="DealerDashboard" component={DealerDashboard} />
           <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
+          <Stack.Screen
+            name="AddEditProduct"
+            component={AddEditProductScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="AddEditVehicle"
+            component={AddEditVehicleScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="AddEditService"
+            component={AddEditServiceScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
           <Stack.Screen name="DealerOrdersList" component={DealerOrdersList} />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="SavedAddresses" component={SavedAddresses} />

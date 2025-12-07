@@ -1,9 +1,9 @@
 import {appAxios} from './apiInterceptors';
 import {IDealersResponse, IGetDealersRequest} from '../types/dealer/IDealer';
 import {IOrderData, IOrdersListResponse} from '../types/order/IOrder';
-import {IProductsResponse, IGetProductsRequest} from '../types/product/IProduct';
-import {IVehiclesResponse, IGetVehiclesRequest} from '../types/vehicle/IVehicle';
-import {IServicesResponse, IGetServicesRequest} from '../types/service/IService';
+import {IProductsResponse, IGetProductsRequest, IProduct} from '../types/product/IProduct';
+import {IVehiclesResponse, IGetVehiclesRequest, IDealerVehicle} from '../types/vehicle/IVehicle';
+import {IServicesResponse, IGetServicesRequest, IService} from '../types/service/IService';
 
 export const getDealers = async (
   query?: IGetDealersRequest,
@@ -226,6 +226,230 @@ export const getDealerServices = async (
     const params = query || {};
     const response = await appAxios.get<IServicesResponse>('/dealer/services', {params});
     return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Product CRUD operations
+export interface ICreateDealerProductRequest {
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  images: string[];
+  category?: string;
+  vehicleType?: 'Car' | 'Bike';
+  description?: string;
+  specifications?: Record<string, any>;
+  returnPolicy?: string;
+  tags?: string[];
+}
+
+export interface IUpdateDealerProductRequest {
+  name?: string;
+  brand?: string;
+  price?: number;
+  stock?: number;
+  images?: string[];
+  category?: string;
+  vehicleType?: 'Car' | 'Bike';
+  description?: string;
+  specifications?: Record<string, any>;
+  returnPolicy?: string;
+  tags?: string[];
+  status?: string;
+}
+
+export interface IDealerProductResponse {
+  success: boolean;
+  Response: IProduct;
+}
+
+export const createDealerProduct = async (
+  data: ICreateDealerProductRequest,
+): Promise<IProduct> => {
+  try {
+    const response = await appAxios.post<IDealerProductResponse>('/dealer/products', data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to create product');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateDealerProduct = async (
+  productId: string,
+  data: IUpdateDealerProductRequest,
+): Promise<IProduct> => {
+  try {
+    const response = await appAxios.put<IDealerProductResponse>(`/dealer/products/${productId}`, data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update product');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDealerProduct = async (productId: string): Promise<void> => {
+  try {
+    await appAxios.delete(`/dealer/products/${productId}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Vehicle CRUD operations
+export interface ICreateDealerVehicleRequest {
+  vehicleType: 'Car' | 'Bike';
+  brand: string;
+  vehicleModel: string;
+  year: number;
+  price: number;
+  availability: 'available' | 'sold' | 'reserved';
+  images: string[];
+  numberPlate?: string;
+  mileage?: number;
+  color?: string;
+  fuelType?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
+  transmission?: 'Manual' | 'Automatic';
+  description?: string;
+  features?: string[];
+  condition?: 'New' | 'Used' | 'Certified Pre-owned';
+}
+
+export interface IUpdateDealerVehicleRequest {
+  vehicleType?: 'Car' | 'Bike';
+  brand?: string;
+  vehicleModel?: string;
+  year?: number;
+  price?: number;
+  availability?: 'available' | 'sold' | 'reserved';
+  images?: string[];
+  numberPlate?: string;
+  mileage?: number;
+  color?: string;
+  fuelType?: 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid';
+  transmission?: 'Manual' | 'Automatic';
+  description?: string;
+  features?: string[];
+  condition?: 'New' | 'Used' | 'Certified Pre-owned';
+}
+
+export interface IDealerVehicleResponse {
+  success: boolean;
+  Response: IDealerVehicle;
+}
+
+export const createDealerVehicle = async (
+  data: ICreateDealerVehicleRequest,
+): Promise<IDealerVehicle> => {
+  try {
+    const response = await appAxios.post<IDealerVehicleResponse>('/dealer/vehicles', data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to create vehicle');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateDealerVehicle = async (
+  vehicleId: string,
+  data: IUpdateDealerVehicleRequest,
+): Promise<IDealerVehicle> => {
+  try {
+    const response = await appAxios.put<IDealerVehicleResponse>(`/dealer/vehicles/${vehicleId}`, data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update vehicle');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDealerVehicle = async (vehicleId: string): Promise<void> => {
+  try {
+    await appAxios.delete(`/dealer/vehicles/${vehicleId}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Service CRUD operations
+export interface ICreateDealerServiceRequest {
+  name: string;
+  price: number;
+  durationMinutes: number;
+  homeService: boolean;
+  description?: string;
+  category?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+  images?: string[];
+}
+
+export interface IUpdateDealerServiceRequest {
+  name?: string;
+  price?: number;
+  durationMinutes?: number;
+  homeService?: boolean;
+  description?: string;
+  category?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+  images?: string[];
+}
+
+export interface IDealerServiceResponse {
+  success: boolean;
+  Response: IService;
+}
+
+export const createDealerService = async (
+  data: ICreateDealerServiceRequest,
+): Promise<IService> => {
+  try {
+    const response = await appAxios.post<IDealerServiceResponse>('/dealer/services', data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to create service');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateDealerService = async (
+  serviceId: string,
+  data: IUpdateDealerServiceRequest,
+): Promise<IService> => {
+  try {
+    const response = await appAxios.put<IDealerServiceResponse>(`/dealer/services/${serviceId}`, data);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update service');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDealerService = async (serviceId: string): Promise<void> => {
+  try {
+    await appAxios.delete(`/dealer/services/${serviceId}`);
   } catch (error) {
     throw error;
   }

@@ -17,9 +17,10 @@ interface IStatCardProps {
   label: string;
   trend?: ITrend;
   updateDate?: string;
+  style?: any;
 }
 
-const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate}) => {
+const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate, style}) => {
   const {colors, isDark} = useTheme();
 
   const styles = StyleSheet.create({
@@ -27,8 +28,8 @@ const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate}) =
       width: '48%',
       backgroundColor: colors.cardBackground,
       borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
+      padding: 12,
+      marginBottom: 8,
       ...(isDark
         ? {}
         : {
@@ -40,23 +41,23 @@ const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate}) =
           }),
     },
     iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       backgroundColor: colors.primary + '20',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 12,
+      marginBottom: 8,
     },
     value: {
-      fontSize: RFValue(20),
+      fontSize: RFValue(18),
       fontWeight: '700',
-      marginBottom: 4,
+      marginBottom: 2,
     },
     label: {
-      fontSize: RFValue(12),
+      fontSize: RFValue(11),
       color: colors.textSecondary,
-      marginBottom: 8,
+      marginBottom: 4,
     },
     trendContainer: {
       flexDirection: 'row',
@@ -75,7 +76,7 @@ const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate}) =
   });
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, style]}>
       <View style={styles.iconContainer}>
         <Icon name={icon} size={20} color={colors.primary} />
       </View>

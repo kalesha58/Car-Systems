@@ -25,18 +25,13 @@ import Loader from '@components/common/Loader/Loader';
 import SkeletonLoader, {DashboardSkeleton} from '@components/common/Skeleton/SkeletonLoader';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import StatCard from '@components/common/StatCard/StatCard';
-import OrderStatusCard from '@components/common/OrderStatusCard/OrderStatusCard';
 import ProfitCard from '@components/common/ProfitCard/ProfitCard';
 import WelcomeHeader from '@components/common/WelcomeHeader/WelcomeHeader';
 import FloatingChatButton from '@components/common/FloatingChatButton/FloatingChatButton';
 import {useTranslation} from 'react-i18next';
-import Icon from 'react-native-vector-icons/Feather';
 import {
   formatCurrency,
   calculateGrowth,
-  calculateAverageOrderValue,
-  calculateConversionRate,
-  calculateCancellationRate,
 } from '@utils/analytics';
 import AnimatedHeader from './AnimatedHeader';
 import StickySearchBar from './StickySearchBar';
@@ -197,25 +192,6 @@ const DealerDashboard: React.FC = () => {
   );
 
   const totalProducts = useMemo(() => products?.length || 0, [products]);
-  const totalVehicles = useMemo(() => vehicles?.length || 0, [vehicles]);
-
-  const productCategoriesCount = useMemo(() => {
-    if (!products || products.length === 0) return 0;
-    const uniqueCategories = new Set(products.filter((p) => p.category).map((p) => p.category));
-    return uniqueCategories.size;
-  }, [products]);
-
-  const availableVehicles = useMemo(
-    () => vehicles?.filter((v) => v.availability === 'available').length || 0,
-    [vehicles],
-  );
-
-  const soldVehicles = useMemo(
-    () => vehicles?.filter((v) => v.availability === 'sold').length || 0,
-    [vehicles],
-  );
-
-  const totalSold = useMemo(() => soldVehicles || orderStats?.total || 0, [soldVehicles, orderStats]);
   const totalRevenue = useMemo(() => orderStats?.totalRevenue || 0, [orderStats]);
 
   const monthlyRevenue = useMemo(() => {
@@ -246,37 +222,6 @@ const DealerDashboard: React.FC = () => {
   const revenueGrowth = useMemo(
     () => calculateGrowth(monthlyRevenue, previousMonthRevenue),
     [monthlyRevenue, previousMonthRevenue],
-  );
-
-  const averageOrderValue = useMemo(
-    () => calculateAverageOrderValue(dealerOrders, totalRevenue),
-    [dealerOrders, totalRevenue],
-  );
-
-  const conversionRate = useMemo(
-    () => calculateConversionRate(dealerOrders.length, dealerBookings.length),
-    [dealerOrders.length, dealerBookings.length],
-  );
-
-  const cancellationRate = useMemo(
-    () => calculateCancellationRate(orderStats?.cancelled || 0, orderStats?.total || 0),
-    [orderStats],
-  );
-
-  const recentOrders = useMemo(
-    () =>
-      dealerOrders
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5),
-    [dealerOrders],
-  );
-
-  const recentBookings = useMemo(
-    () =>
-      dealerBookings
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5),
-    [dealerBookings],
   );
 
   const pendingOrdersCount = useMemo(() => orderStats?.pending || 0, [orderStats]);
@@ -369,10 +314,11 @@ const DealerDashboard: React.FC = () => {
 
             {isLoading ? (
               <View style={styles.skeletonContainer}>
-                <SkeletonLoader width="100%" height={120} borderRadius={12} style={{marginBottom: 16}} />
+                <SkeletonLoader width="100%" height={120} borderRadius={12} style={{marginBottom: 12}} />
                 <View style={styles.statsGrid}>
-                  <SkeletonLoader width="48%" height={120} borderRadius={12} />
-                  <SkeletonLoader width="48%" height={120} borderRadius={12} />
+                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
+                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
+                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
                 </View>
               </View>
             ) : (
@@ -396,31 +342,7 @@ const DealerDashboard: React.FC = () => {
                       icon="package"
                       value={totalProducts}
                       label={t('totalProducts')}
-                      trend={{
-                        value: 15,
-                        isPositive: true,
-                      }}
-                      updateDate={currentDate}
-                    />
-                    <StatCard
-                      icon="layers"
-                      value={productCategoriesCount}
-                      label={t('productCategory')}
-                      trend={{
-                        value: 15,
-                        isPositive: true,
-                      }}
-                      updateDate={currentDate}
-                    />
-                    <StatCard
-                      icon="shopping-bag"
-                      value={totalSold.toLocaleString()}
-                      label={t('totalSold')}
-                      trend={{
-                        value: 15,
-                        isPositive: true,
-                      }}
-                      updateDate={currentDate}
+                      style={{width: '31%'}}
                     />
                     <StatCard
                       icon="trending-up"
@@ -430,151 +352,16 @@ const DealerDashboard: React.FC = () => {
                         value: revenueGrowth,
                         isPositive: revenueGrowth >= 0,
                       }}
-                      updateDate={currentDate}
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.section}>
-                  <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                    {t('orders')}
-                  </CustomText>
-                  <View style={styles.statsGrid}>
-                    <StatCard icon="shopping-bag" value={orderStats?.total || 0} label={t('totalOrders')} />
-                    <StatCard
-                      icon="dollar-sign"
-                      value={formatCurrency(averageOrderValue)}
-                      label={t('averageOrderValue')}
+                      style={{width: '31%'}}
                     />
                     <StatCard
-                      icon="percent"
-                      value={`${conversionRate.toFixed(1)}%`}
-                      label={t('conversionRate')}
-                    />
-                    <StatCard
-                      icon="x-circle"
-                      value={`${cancellationRate.toFixed(1)}%`}
-                      label={t('cancellationRate')}
+                      icon="shopping-bag"
+                      value={orderStats?.total || 0}
+                      label={t('totalOrders')}
+                      style={{width: '31%'}}
                     />
                   </View>
                 </View>
-
-                {orderStats && orderStats.total > 0 && (
-                  <View style={styles.section}>
-                    <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                      {t('ordersByStatus')}
-                    </CustomText>
-                    <OrderStatusCard status="pending" count={orderStats.pending || 0} total={orderStats.total} />
-                    <OrderStatusCard status="confirmed" count={orderStats.confirmed || 0} total={orderStats.total} />
-                    <OrderStatusCard
-                      status="processing"
-                      count={orderStats.processing || 0}
-                      total={orderStats.total}
-                    />
-                    <OrderStatusCard status="shipped" count={orderStats.shipped || 0} total={orderStats.total} />
-                    <OrderStatusCard status="delivered" count={orderStats.delivered || 0} total={orderStats.total} />
-                    <OrderStatusCard status="cancelled" count={orderStats.cancelled || 0} total={orderStats.total} />
-                  </View>
-                )}
-
-                <View style={styles.section}>
-                  <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                    {t('inventory')}
-                  </CustomText>
-                  <View style={styles.statsGrid}>
-                    <StatCard icon="package" value={totalProducts} label={t('totalProducts')} />
-                    <StatCard icon="truck" value={totalVehicles} label={t('totalVehicles')} />
-                    <StatCard icon="check-circle" value={availableVehicles} label={t('availableVehicles')} />
-                    <StatCard icon="x-circle" value={soldVehicles} label={t('soldVehicles')} />
-                  </View>
-                </View>
-
-                <View style={styles.section}>
-                  <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                    {t('bookings')}
-                  </CustomText>
-                  <View style={styles.statsGrid}>
-                    <StatCard icon="calendar" value={dealerBookings.length} label={t('totalBookings')} />
-                  </View>
-                </View>
-
-                {(recentOrders.length > 0 || recentBookings.length > 0) && (
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                        {t('recentActivity')}
-                      </CustomText>
-                      <TouchableOpacity onPress={handleViewAllOrders}>
-                        <CustomText variant="h6" style={[styles.viewAllText, {color: theme.primary}]}>
-                          {t('viewAll')}
-                        </CustomText>
-                      </TouchableOpacity>
-                    </View>
-                    {recentOrders.length > 0 && (
-                      <View style={styles.recentSection}>
-                        <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.subsectionTitle}>
-                          {t('recentOrders')}
-                        </CustomText>
-                        {recentOrders.map((order) => (
-                          <View
-                            key={order.id}
-                            style={[styles.recentItem, {backgroundColor: theme.cardBackground}]}>
-                            <View style={styles.recentItemContent}>
-                              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.recentItemTitle}>
-                                {t('orderNumber')}: {order.id.slice(0, 8)}
-                              </CustomText>
-                              <CustomText variant="h8" style={styles.recentItemSubtitle}>
-                                {formatCurrency(order.totalAmount)} • {order.status}
-                              </CustomText>
-                            </View>
-                            <Icon name="chevron-right" size={20} color={theme.textSecondary} />
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                    {recentBookings.length > 0 && (
-                      <View style={styles.recentSection}>
-                        <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.subsectionTitle}>
-                          {t('recentBookings')}
-                        </CustomText>
-                        {recentBookings.map((booking) => (
-                          <View
-                            key={booking.id}
-                            style={[styles.recentItem, {backgroundColor: theme.cardBackground}]}>
-                            <View style={styles.recentItemContent}>
-                              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.recentItemTitle}>
-                                {booking.serviceName || 'Service Booking'}
-                              </CustomText>
-                              <CustomText variant="h8" style={styles.recentItemSubtitle}>
-                                {new Date(booking.createdAt).toLocaleDateString()} • {booking.status}
-                              </CustomText>
-                            </View>
-                            <Icon name="chevron-right" size={20} color={theme.textSecondary} />
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {pendingOrdersCount > 0 && (
-                  <View style={styles.section}>
-                    <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                      {t('quickInsights')}
-                    </CustomText>
-                    <View style={[styles.insightCard, {backgroundColor: theme.warning + '20'}]}>
-                      <Icon name="alert-circle" size={24} color={theme.warning} />
-                      <View style={styles.insightContent}>
-                        <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.insightTitle}>
-                          {t('pendingActions')}
-                        </CustomText>
-                        <CustomText variant="h8" style={styles.insightText}>
-                          {pendingOrdersCount} {t('pendingOrders')} require your attention
-                        </CustomText>
-                      </View>
-                    </View>
-                  </View>
-                )}
               </>
             )}
           </View>
@@ -594,11 +381,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   contentContainer: {
-    padding: 16,
+    padding: 12,
     paddingTop: 0,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -607,9 +394,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: RFValue(18),
+    fontSize: RFValue(16),
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   subsectionTitle: {
     fontSize: RFValue(14),
@@ -620,7 +407,7 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
   recentSection: {
     marginTop: 8,

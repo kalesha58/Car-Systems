@@ -1,28 +1,51 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image} from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {getDealerProducts, getDealerVehicles, getDealerServices} from '@service/dealerService';
 import {IProduct} from '../../types/product/IProduct';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {IService} from '../../types/service/IService';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import {Fonts, Colors} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {screenWidth, screenHeight} from '@utils/Scaling';
 import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import {formatCurrency} from '@utils/analytics';
 
 const InventoryScreen: React.FC = () => {
+  const navigation = useNavigation();
   const {colors: theme} = useTheme();
-  const {t} = useTranslation('dealer');
+  const {t} = useTranslation();
   const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>('products');
   const [products, setProducts] = useState<IProduct[]>([]);
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
   const [services, setServices] = useState<IService[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleAddPress = () => {
+    if (activeTab === 'products') {
+      (navigation as any).navigate('AddEditProduct');
+    } else if (activeTab === 'vehicles') {
+      (navigation as any).navigate('AddEditVehicle');
+    } else if (activeTab === 'services') {
+      (navigation as any).navigate('AddEditService');
+    }
+  };
+
+  const handleItemPress = (item: IProduct | IDealerVehicle | IService) => {
+    if (activeTab === 'products') {
+      (navigation as any).navigate('AddEditProduct', {product: item as IProduct});
+    } else if (activeTab === 'vehicles') {
+      (navigation as any).navigate('AddEditVehicle', {vehicle: item as IDealerVehicle});
+    } else if (activeTab === 'services') {
+      (navigation as any).navigate('AddEditService', {service: item as IService});
+    }
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -46,6 +69,12 @@ const InventoryScreen: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData]),
+  );
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
@@ -53,43 +82,86 @@ const InventoryScreen: React.FC = () => {
   }, [fetchData]);
 
   const renderProductItem = ({item}: {item: IProduct}) => {
+    const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
+    const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+    const discountPercent = hasDiscount
+      ? Math.round(((item.originalPrice! - item.price) / item.originalPrice!) * 100)
+      : 0;
+
     return (
       <TouchableOpacity
-        style={[styles.itemCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
-        activeOpacity={0.7}>
-        <View style={styles.itemContent}>
-          <View style={styles.itemInfo}>
-            <CustomText variant="h5" fontFamily={Fonts.SemiBold} numberOfLines={1}>
+        style={[styles.productCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}>
+        {/* Left Side - Product Info */}
+        <View style={styles.productInfo}>
+          {/* Header */}
+          <View style={styles.productHeader}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} numberOfLines={1} style={styles.productName}>
               {item.name}
             </CustomText>
-            <CustomText variant="h8" style={styles.brandText} numberOfLines={1}>
+            <CustomText variant="h9" style={[styles.brandText, {color: theme.textSecondary}]} numberOfLines={1}>
               {item.brand}
             </CustomText>
-            <View style={styles.priceRow}>
-              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{color: theme.secondary}}>
-                {formatCurrency(item.price)}
-              </CustomText>
-              {item.originalPrice && item.originalPrice > item.price && (
-                <CustomText variant="h9" style={[styles.originalPrice, {color: theme.disabled}]}>
-                  {formatCurrency(item.originalPrice)}
-                </CustomText>
-              )}
-            </View>
-            <View style={styles.stockRow}>
-              <Icon name="cube-outline" size={RFValue(12)} color={theme.textSecondary} />
-              <CustomText variant="h9" style={styles.stockText}>
-                Stock: {item.stock}
-              </CustomText>
-            </View>
           </View>
-          <View style={[styles.statusBadge, {backgroundColor: item.status === 'active' ? '#10b98115' : '#f59e0b15'}]}>
-            <CustomText
-              variant="h9"
-              fontFamily={Fonts.Medium}
-              style={[styles.statusText, {color: item.status === 'active' ? '#10b981' : '#f59e0b'}]}>
-              {item.status}
+
+          {/* Price Row */}
+          <View style={styles.priceRow}>
+            <CustomText variant="h6" fontFamily={Fonts.Bold} style={{color: theme.secondary}}>
+              {formatCurrency(item.price)}
             </CustomText>
+            {hasDiscount && (
+              <>
+                <CustomText variant="h9" style={[styles.originalPrice, {color: theme.disabled}]}>
+                  {formatCurrency(item.originalPrice!)}
+                </CustomText>
+                <View style={styles.discountBadge}>
+                  <CustomText style={styles.discountText}>-{discountPercent}%</CustomText>
+                </View>
+              </>
+            )}
           </View>
+
+          {/* Meta Row */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Icon name="cube-outline" size={RFValue(12)} color={theme.textSecondary} />
+              <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]}>
+                {item.stock}
+              </CustomText>
+            </View>
+            {item.category && (
+              <View style={styles.metaItem}>
+                <Icon name="pricetag-outline" size={RFValue(12)} color={theme.textSecondary} />
+                <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]} numberOfLines={1}>
+                  {item.category}
+                </CustomText>
+              </View>
+            )}
+            <View
+              style={[
+                styles.statusBadge,
+                {backgroundColor: item.status === 'active' ? '#10b98115' : '#f59e0b15'},
+              ]}>
+              <CustomText
+                variant="h9"
+                fontFamily={Fonts.Medium}
+                style={[styles.statusText, {color: item.status === 'active' ? '#10b981' : '#f59e0b'}]}>
+                {item.status}
+              </CustomText>
+            </View>
+          </View>
+        </View>
+
+        {/* Right Side - Image Thumbnail */}
+        <View style={styles.productImageContainer}>
+          {firstImage ? (
+            <Image source={{uri: firstImage}} style={styles.productImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.productImagePlaceholder, {backgroundColor: theme.border}]}>
+              <Icon name="image-outline" size={RFValue(24)} color={theme.textSecondary} />
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -99,7 +171,8 @@ const InventoryScreen: React.FC = () => {
     return (
       <TouchableOpacity
         style={[styles.itemCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}>
         <View style={styles.itemContent}>
           <View style={styles.itemInfo}>
             <CustomText variant="h5" fontFamily={Fonts.SemiBold} numberOfLines={1}>
@@ -154,7 +227,8 @@ const InventoryScreen: React.FC = () => {
     return (
       <TouchableOpacity
         style={[styles.itemCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+        onPress={() => handleItemPress(item)}>
         <View style={styles.itemContent}>
           <View style={styles.itemInfo}>
             <CustomText variant="h5" fontFamily={Fonts.SemiBold} numberOfLines={1}>
@@ -173,13 +247,13 @@ const InventoryScreen: React.FC = () => {
             <View style={styles.stockRow}>
               <Icon name="time-outline" size={RFValue(12)} color={theme.textSecondary} />
               <CustomText variant="h9" style={styles.stockText}>
-                {item.durationMinutes} {item.durationMinutes === 1 ? 'min' : 'mins'}
+                {item.durationMinutes} {item.durationMinutes === 1 ? t('dealer.minute') : t('dealer.minutes')}
               </CustomText>
               {item.homeService && (
                 <>
                   <Icon name="home-outline" size={RFValue(12)} color={theme.textSecondary} style={{marginLeft: 8}} />
                   <CustomText variant="h9" style={styles.stockText}>
-                    Home Service
+                    {t('dealer.homeService')}
                   </CustomText>
                 </>
               )}
@@ -187,7 +261,7 @@ const InventoryScreen: React.FC = () => {
           </View>
           <View style={[styles.statusBadge, {backgroundColor: '#10b98115'}]}>
             <CustomText variant="h9" fontFamily={Fonts.Medium} style={[styles.statusText, {color: '#10b981'}]}>
-              Active
+              {t('dealer.active')}
             </CustomText>
           </View>
         </View>
@@ -199,8 +273,8 @@ const InventoryScreen: React.FC = () => {
     if (activeTab === 'products') {
       return (
         <EmptyState
-          title={t('noProducts')}
-          message={t('noProductsMessage')}
+          title={t('dealer.noProducts')}
+          message={t('dealer.noProductsMessage')}
           icon="cube-outline"
         />
       );
@@ -208,16 +282,16 @@ const InventoryScreen: React.FC = () => {
     if (activeTab === 'vehicles') {
       return (
         <EmptyState
-          title={t('noVehicles')}
-          message={t('noVehiclesMessage')}
+          title={t('dealer.noVehicles')}
+          message={t('dealer.noVehiclesMessage')}
           icon="car-outline"
         />
       );
     }
     return (
       <EmptyState
-        title={t('noServices')}
-        message={t('noServicesMessage')}
+        title={t('dealer.noServices')}
+        message={t('dealer.noServicesMessage')}
         icon="construct-outline"
       />
     );
@@ -226,7 +300,7 @@ const InventoryScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={[styles.container, {backgroundColor: theme.background}]}>
-        <CustomHeader title={t('inventory')} />
+        <CustomHeader title={t('dealer.inventory')} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.secondary} />
         </View>
@@ -236,7 +310,7 @@ const InventoryScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, {backgroundColor: theme.background}]}>
-      <CustomHeader title={t('inventory')} />
+      <CustomHeader title={t('dealer.inventory')} />
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
@@ -254,7 +328,7 @@ const InventoryScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{color: activeTab === 'products' ? theme.secondary : theme.textSecondary}}
             numberOfLines={1}>
-            {t('products')}
+            {t('dealer.products')}
           </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -273,7 +347,7 @@ const InventoryScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{color: activeTab === 'vehicles' ? theme.secondary : theme.textSecondary}}
             numberOfLines={1}>
-            {t('vehicles')}
+            {t('dealer.vehicles')}
           </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -292,7 +366,7 @@ const InventoryScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{color: activeTab === 'services' ? theme.secondary : theme.textSecondary}}
             numberOfLines={1}>
-            {t('services')}
+            {t('dealer.services')}
           </CustomText>
         </TouchableOpacity>
       </View>
@@ -333,6 +407,9 @@ const InventoryScreen: React.FC = () => {
           }
         />
       )}
+      <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
+        <Icon name="add" size={RFValue(24)} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -365,7 +442,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   listContent: {
-    padding: 16,
+    padding: 12,
     paddingTop: 0,
   },
   itemCard: {
@@ -373,6 +450,104 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
     borderWidth: 1,
+  },
+  productCard: {
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    padding: 12,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  productInfo: {
+    flex: 1,
+    justifyContent: 'space-between',
+    gap: 8,
+    minWidth: 0,
+  },
+  productHeader: {
+    marginBottom: 0,
+  },
+  productName: {
+    marginBottom: 2,
+    fontSize: RFValue(14),
+  },
+  brandText: {
+    fontSize: RFValue(10),
+    opacity: 0.7,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginBottom: 0,
+  },
+  originalPrice: {
+    textDecorationLine: 'line-through',
+    fontSize: RFValue(10),
+  },
+  discountBadge: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  discountText: {
+    color: '#fff',
+    fontSize: RFValue(9),
+    fontFamily: Fonts.Bold,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 0,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: RFValue(10),
+  },
+  statusBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  statusText: {
+    fontSize: RFValue(9),
+    textTransform: 'capitalize',
+  },
+  productImageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#f5f5f5',
+    flexShrink: 0,
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  productImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemContent: {
     flexDirection: 'row',
@@ -383,20 +558,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  brandText: {
-    marginTop: 4,
-    marginBottom: 8,
-    opacity: 0.7,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  originalPrice: {
-    textDecorationLine: 'line-through',
-  },
   stockRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -405,14 +566,24 @@ const styles = StyleSheet.create({
   stockText: {
     opacity: 0.6,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: RFValue(10),
-    textTransform: 'capitalize',
+  fab: {
+    position: 'absolute',
+    right: screenWidth * 0.04,
+    bottom: screenHeight * 0.1,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
 });
 
