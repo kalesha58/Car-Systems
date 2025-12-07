@@ -360,11 +360,22 @@ export const sendImageMessageController = async (
       return;
     }
 
-    // Upload to Cloudinary
-    const uploadResult = await uploadToCloudinary(file.path, 'chat-images');
+    // Upload to Cloudinary - handle both path and buffer
+    const filePathOrBuffer = file.path || file.buffer;
+    if (!filePathOrBuffer) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Invalid file format',
+        },
+      });
+      return;
+    }
+
+    const uploadResult = await uploadToCloudinary(filePathOrBuffer, 'chat-images');
     
-    // Clean up temporary file
-    if (fs.existsSync(file.path)) {
+    // Clean up temporary file if it was disk storage
+    if (file.path && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
     }
 
@@ -372,8 +383,8 @@ export const sendImageMessageController = async (
       text: req.body.text || 'Image',
       messageType: 'image',
       image: {
-        url: uploadResult.secure_url,
-        publicId: uploadResult.public_id,
+        url: uploadResult.url,
+        publicId: uploadResult.publicId,
       },
     };
 
@@ -385,7 +396,7 @@ export const sendImageMessageController = async (
     });
   } catch (error) {
     // Clean up file on error
-    if (req.file && fs.existsSync(req.file.path)) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
     errorHandler(error as IAppError, res);
