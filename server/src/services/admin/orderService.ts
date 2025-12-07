@@ -285,7 +285,7 @@ export const updateOrderStatus = async (
 
       // Emit socket event for real-time updates
       try {
-        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+        emitToOrderRoom(orderId, 'liveTrackingUpdates', {
           orderId,
           status: newStatus,
           previousStatus,

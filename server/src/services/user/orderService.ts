@@ -211,7 +211,7 @@ export const createUserOrder = async (
     // Emit socket event for order creation
     try {
       const orderId = (order._id as any).toString();
-      await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+      emitToOrderRoom(orderId, 'liveTrackingUpdates', {
         orderId,
         status: 'ORDER_PLACED',
         timestamp: new Date().toISOString(),
@@ -254,7 +254,7 @@ export const createUserOrder = async (
       // Emit socket event for payment confirmation
       try {
         const orderId = (order._id as any).toString();
-        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+        emitToOrderRoom(orderId, 'liveTrackingUpdates', {
           orderId,
           status: 'PAYMENT_CONFIRMED',
           previousStatus,

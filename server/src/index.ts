@@ -33,7 +33,6 @@ import { logger } from './utils/logger';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const isServerless = process.env.VERCEL === '1';
 
 // CORS configuration
 app.use(
@@ -160,42 +159,37 @@ const initializeDatabase = async (): Promise<void> => {
     await connectDatabase();
   } catch (error) {
     logger.error('Failed to initialize database', error);
-    if (!isServerless) {
-      process.exit(1);
-    }
+    process.exit(1);
   }
 };
 
-if (!isServerless) {
-  initializeDatabase()
-    .then(() => {
-      // Create HTTP server from Express app
-      const httpServer = http.createServer(app);
+initializeDatabase()
+  .then(() => {
+    // Create HTTP server from Express app
+    const httpServer = http.createServer(app);
 
-      // Initialize Socket.io
-      initializeSocket(httpServer);
+    // Initialize Socket.io
+    initializeSocket(httpServer);
 
-      // Start server
-      httpServer.listen(PORT, () => {
-        logger.info(`Server is running on port ${PORT}`);
-        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      });
-
-      httpServer.on('error', (error: NodeJS.ErrnoException) => {
-        if (error.code === 'EADDRINUSE') {
-          logger.error(`Port ${PORT} is already in use. Please stop the other process or change the PORT in .env file`);
-          process.exit(1);
-        } else {
-          logger.error('Server error:', error);
-          process.exit(1);
-        }
-      });
-    })
-    .catch((error) => {
-      logger.error('Failed to start server', error);
-      process.exit(1);
+    // Start server
+    httpServer.listen(PORT, () => {
+      logger.info(`Server is running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
-}
 
-// Export app for serverless use
+    httpServer.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.error(`Port ${PORT} is already in use. Please stop the other process or change the PORT in .env file`);
+        process.exit(1);
+      } else {
+        logger.error('Server error:', error);
+        process.exit(1);
+      }
+    });
+  })
+  .catch((error) => {
+    logger.error('Failed to start server', error);
+    process.exit(1);
+  });
+
 export default app;

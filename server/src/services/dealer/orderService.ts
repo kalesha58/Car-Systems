@@ -339,7 +339,7 @@ export const updateOrderStatus = async (
 
       // Emit socket event for real-time updates
       try {
-        await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+        emitToOrderRoom(orderId, 'liveTrackingUpdates', {
           orderId,
           status: data.status,
           previousStatus,
@@ -767,12 +767,12 @@ export const acceptOrder = async (
 
     // Emit socket event for order confirmation
     try {
-      await emitToOrderRoom(orderId, 'orderConfirmed', {
+      emitToOrderRoom(orderId, 'orderConfirmed', {
         orderId,
         status: 'ORDER_CONFIRMED',
         timestamp: new Date().toISOString(),
       });
-      await emitToOrderRoom(orderId, 'liveTrackingUpdates', {
+      emitToOrderRoom(orderId, 'liveTrackingUpdates', {
         orderId,
         status: 'ORDER_CONFIRMED',
         previousStatus,

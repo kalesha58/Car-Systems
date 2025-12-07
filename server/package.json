@@ -8,8 +8,6 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "start:dev": "npm run dev",
-    "start:socket": "node dist/socket-server.js",
-    "dev:socket": "ts-node src/socket-server.ts",
     "seed:chat": "ts-node src/scripts/seedChatData.ts"
   },
   "keywords": [],
@@ -43,7 +41,6 @@
     "@types/socket.io": "^3.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "@vercel/node": "^3.0.0",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"

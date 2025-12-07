@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
 
 /**
- * Cached connection to prevent multiple connections in serverless environment
+ * Cached connection to prevent multiple connections
  */
 let cachedConnection: typeof mongoose | null = null;
 
@@ -53,13 +53,13 @@ const waitForConnection = (timeoutMs: number = 10000): Promise<void> => {
 
 /**
  * Connects to MongoDB database
- * Uses connection caching for serverless environments (Vercel)
+ * Uses connection caching to prevent multiple connections
  * Handles concurrent connection attempts and connection state properly
  * @returns Promise<typeof mongoose>
  */
 export const connectDatabase = async (): Promise<typeof mongoose> => {
   try {
-    // Return cached connection if available and fully connected (serverless optimization)
+    // Return cached connection if available and fully connected
     if (cachedConnection && mongoose.connection.readyState === 1) {
       logger.info('Using cached MongoDB connection');
       return cachedConnection;
@@ -159,10 +159,7 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
     cachedConnection = null;
     connectionPromise = null;
     
-    // Only exit process in non-serverless environments
-    if (process.env.VERCEL !== '1') {
-      process.exit(1);
-    }
+    process.exit(1);
     
     throw error;
   }

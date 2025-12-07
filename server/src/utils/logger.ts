@@ -7,25 +7,9 @@ const getEnvVar = (key: string, defaultValue: string = ''): string => {
   return process.env[key] || defaultValue;
 };
 
-// Function to check if we're in a serverless environment
-const isServerlessEnvironment = (): boolean => {
-  // Check for common serverless environment indicators
-  return (
-    !!process.env.AWS_LAMBDA_FUNCTION_NAME ||
-    !!process.env.VERCEL ||
-    !!process.env.NETLIFY ||
-    process.cwd() === '/var/task' ||
-    process.cwd().startsWith('/var/task')
-  );
-};
-
 // Function to get the logs directory path
 const getLogsDirectory = (): string => {
-  if (isServerlessEnvironment()) {
-    // In serverless environments, use /tmp (the only writable directory)
-    return '/tmp/logs';
-  }
-  // In regular environments, use logs directory in project root
+  // Use logs directory in project root
   return path.join(process.cwd(), 'logs');
 };
 

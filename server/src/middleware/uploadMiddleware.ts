@@ -3,33 +3,21 @@ import path from 'path';
 import fs from 'fs';
 import { IMulterFile } from './authMiddleware';
 
-const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
-
-// Configure storage based on environment
-// Use memory storage for serverless (Vercel, AWS Lambda) to avoid filesystem issues
-// Use disk storage for local development
-let storage: multer.StorageEngine;
-
-if (isServerless) {
-  // Memory storage for serverless environments
-  storage = multer.memoryStorage();
-} else {
-  // Disk storage for local development
-  const uploadsDir = path.join(__dirname, '../../uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-  
-  storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, uploadsDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    },
-  });
+// Configure disk storage for file uploads
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
 
 // File filter
 const fileFilter = (req: any, file: IMulterFile, cb: multer.FileFilterCallback) => {

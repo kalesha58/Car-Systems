@@ -22,8 +22,8 @@ const swaggerDefinition: SwaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: 'https://car-systems.vercel.app',
-      description: 'Production server',
+      url: process.env.PRODUCTION_URL || 'https://your-backend.onrender.com',
+      description: 'Production server (Render)',
     },
   ],
   components: {
