@@ -24,7 +24,7 @@ export const validateDealerRoleOnlyMiddleware = async (
     const user = await SignUp.findById(userId);
 
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError(`User not found: ${userId}`);
     }
 
     if (!user.role.includes('dealer')) {
@@ -60,7 +60,7 @@ export const validateDealerUserIdMiddleware = async (
     const user = await SignUp.findById(userId);
 
     if (!user) {
-      throw new NotFoundError('User not found');
+      throw new NotFoundError(`User not found: ${userId}`);
     }
 
     if (!user.role.includes('dealer')) {
