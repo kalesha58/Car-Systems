@@ -78,6 +78,7 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
   let groupName: string | undefined;
   let isMember: boolean | undefined;
   let canFollow: boolean | undefined;
+  let isOwner: boolean | undefined;
 
   if (chatDoc.type === 'group' && chatDoc.groupId) {
     const group = await Group.findById(chatDoc.groupId);
@@ -94,6 +95,9 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
         
         // Can follow if group is public and user is not a member
         canFollow = group.privacy === 'public' && !isMember;
+        
+        // Check if user is the group owner
+        isOwner = group.ownerId === userId;
       }
     }
   }
@@ -110,6 +114,7 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
     unreadCount,
     isMember,
     canFollow,
+    isOwner,
     createdAt: chatDoc.createdAt.toISOString(),
     updatedAt: chatDoc.updatedAt.toISOString(),
   };
@@ -239,9 +244,24 @@ export const getChatById = async (chatId: string, userId: string): Promise<IChat
   if (!chat.participants.includes(userId)) {
     if (chat.type === 'group') {
       // For group chats, check if user is a member
-      const member = await GroupMember.findOne({ groupId: chat.groupId, userId, status: 'active' });
-      if (!member) {
-        throw new AppError('You are not a member of this group chat', 403);
+      if (chat.groupId) {
+        const group = await Group.findById(chat.groupId);
+        if (group) {
+          // For public groups, non-members cannot view messages
+          if (group.privacy === 'public') {
+            throw new AppError('You must follow this public group to view its content', 403);
+          } else {
+            // For private groups, check if user is a member
+            const member = await GroupMember.findOne({ groupId: chat.groupId, userId, status: 'active' });
+            if (!member) {
+              throw new AppError('You are not a member of this group chat', 403);
+            }
+          }
+        } else {
+          throw new NotFoundError('Group not found');
+        }
+      } else {
+        throw new AppError('Invalid group chat', 400);
       }
     } else {
       throw new AppError('You are not a participant of this chat', 403);
@@ -513,9 +533,25 @@ export const getChatMessages = async (
 
   if (!chat.participants.includes(userId)) {
     if (chat.type === 'group') {
-      const member = await GroupMember.findOne({ groupId: chat.groupId, userId, status: 'active' });
-      if (!member) {
-        throw new AppError('You are not a member of this group chat', 403);
+      // For group chats, check if user is a member
+      if (chat.groupId) {
+        const group = await Group.findById(chat.groupId);
+        if (group) {
+          // For public groups, non-members cannot view messages
+          if (group.privacy === 'public') {
+            throw new AppError('You must follow this public group to view its content', 403);
+          } else {
+            // For private groups, check if user is a member
+            const member = await GroupMember.findOne({ groupId: chat.groupId, userId, status: 'active' });
+            if (!member) {
+              throw new AppError('You are not a member of this group chat', 403);
+            }
+          }
+        } else {
+          throw new NotFoundError('Group not found');
+        }
+      } else {
+        throw new AppError('Invalid group chat', 400);
       }
     } else {
       throw new AppError('You are not a participant of this chat', 403);

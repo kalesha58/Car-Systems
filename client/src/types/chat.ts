@@ -36,6 +36,7 @@ export interface IChat {
   unreadCount?: number;
   isMember?: boolean;
   canFollow?: boolean;
+  isOwner?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,3 +76,19 @@ export interface IUserListItem {
   profileImage?: string;
 }
 
+export interface IGroupJoinRequest {
+  id: string;
+  groupId: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  userAvatar?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  respondedAt?: string;
+  respondedBy?: string;
+}
+
+export interface IPendingRequestCount {
+  count: number;
+}

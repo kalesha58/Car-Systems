@@ -34,6 +34,7 @@ import UserSelectionScreen from '@features/chat/UserSelectionScreen';
 import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
+import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
 import {ToastProvider} from '@context/ToastContext';
@@ -353,6 +354,13 @@ const Navigation: FC = () => {
             }}
             name="EditGroup"
             component={EditGroupScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="JoinRequests"
+            component={JoinRequestsScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>

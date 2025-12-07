@@ -30,6 +30,7 @@ import {
   startLiveLocation,
   stopLiveLocation,
 } from '@service/chatService';
+import {getPendingRequestCount} from '@service/chatService';
 import {
   initializeSocket,
   joinChatRoom,
@@ -43,6 +44,7 @@ import {
 } from '@service/socketService';
 import {IChat, IMessage} from '../../types/chat';
 import {useToast} from '@hooks/useToast';
+import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 
 const ChatMessageScreen: React.FC = () => {
   const route = useRoute();
@@ -59,8 +61,10 @@ const ChatMessageScreen: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [isLiveLocationActive, setIsLiveLocationActive] = useState(false);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
   useEffect(() => {
     initializeSocket();
@@ -75,6 +79,16 @@ const ChatMessageScreen: React.FC = () => {
       }
     };
   }, [chatId]);
+
+  // Refresh pending count when screen is focused
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (chat?.type === 'group' && chat.isOwner && chat.groupId) {
+        loadPendingRequestCount(chat.groupId);
+      }
+    });
+    return unsubscribe;
+  }, [navigation, chat]);
 
   useEffect(() => {
     if (chatId) {
@@ -111,8 +125,41 @@ const ChatMessageScreen: React.FC = () => {
       navigation.setOptions({
         headerTitle: data.type === 'group' ? data.groupName || 'Group' : data.participantNames?.find(n => n !== user?.name) || 'Chat',
       });
+      
+      // Check if user is not a member of a public group
+      if (data.type === 'group' && !data.isMember && data.canFollow) {
+        Alert.alert(
+          'Join Request Required',
+          'You must follow this group first to view its messages. Please go back and click the Follow button.',
+          [{text: 'OK', onPress: () => navigation.goBack()}],
+        );
+        return;
+      }
+      
+      // Load pending request count if user is owner
+      if (data.type === 'group' && data.isOwner && data.groupId) {
+        loadPendingRequestCount(data.groupId);
+      }
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to load chat');
+      const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || 'Failed to load chat';
+      if (errorMessage.includes('must follow') || errorMessage.includes('not a member')) {
+        Alert.alert(
+          'Access Denied',
+          'You must follow this group first to view its messages. Please go back and click the Follow button.',
+          [{text: 'OK', onPress: () => navigation.goBack()}],
+        );
+      } else {
+        showError(errorMessage);
+      }
+    }
+  };
+
+  const loadPendingRequestCount = async (groupId: string) => {
+    try {
+      const count = await getPendingRequestCount(groupId);
+      setPendingRequestCount(count);
+    } catch (error) {
+      // Silently fail - not critical
     }
   };
 
@@ -122,7 +169,16 @@ const ChatMessageScreen: React.FC = () => {
       setMessages(data);
       setTimeout(() => scrollToBottom(), 100);
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to load messages');
+      const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || 'Failed to load messages';
+      if (errorMessage.includes('must follow') || errorMessage.includes('not a member')) {
+        Alert.alert(
+          'Access Denied',
+          'You must follow this group first to view its messages. Please go back and click the Follow button.',
+          [{text: 'OK', onPress: () => navigation.goBack()}],
+        );
+      } else {
+        showError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -185,7 +241,7 @@ const ChatMessageScreen: React.FC = () => {
           });
         },
         error => {
-          showToast('Failed to get location', 'error');
+          showError('Failed to get location');
         },
         {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
       );
@@ -325,6 +381,7 @@ const ChatMessageScreen: React.FC = () => {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           alignItems: 'center',
+          paddingBottom: 12,
         },
         input: {
           flex: 1,
@@ -429,16 +486,34 @@ const ChatMessageScreen: React.FC = () => {
 
   const headerRight = () => {
     if (chat?.type === 'group') {
-      if (chat.canFollow) {
+      if (chat.isOwner && chat.groupId) {
         return (
-          <TouchableOpacity onPress={handleFollowGroup} style={{marginRight: 16}}>
-            <CustomText style={{color: colors.secondary, fontFamily: Fonts.SemiBold}}>
-              Follow
-            </CustomText>
+          <TouchableOpacity
+            onPress={() => (navigation as any).navigate('JoinRequests', {groupId: chat.groupId})}
+            style={{marginRight: 16, position: 'relative'}}>
+            <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
+            {pendingRequestCount > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  backgroundColor: colors.secondary,
+                  borderRadius: 10,
+                  minWidth: 20,
+                  height: 20,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: 4,
+                }}>
+                <CustomText style={{color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold}}>
+                  {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
+                </CustomText>
+              </View>
+            )}
           </TouchableOpacity>
         );
       }
-      // Add edit button logic here if user is owner
     }
     return null;
   };
@@ -461,7 +536,10 @@ const ChatMessageScreen: React.FC = () => {
         data={messages}
         renderItem={renderMessage}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.messagesContainer}
+        contentContainerStyle={[
+          styles.messagesContainer,
+          {paddingBottom: keyboardOffsetHeight > 0 ? keyboardOffsetHeight + 20 : 0},
+        ]}
         onContentSizeChange={scrollToBottom}
         ListFooterComponent={
           typingUsers.size > 0 ? (
@@ -471,7 +549,7 @@ const ChatMessageScreen: React.FC = () => {
           ) : null
         }
       />
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, {paddingBottom: 12 + keyboardOffsetHeight}]}>
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleImagePicker}

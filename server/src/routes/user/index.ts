@@ -6,6 +6,7 @@ import profileRoutes from './profileRoutes';
 import productRoutes from './productRoutes';
 import groupRoutes from './groupRoutes';
 import chatRoutes from './chatRoutes';
+import joinRequestRoutes from './joinRequestRoutes';
 import orderRoutes from './orderRoutes';
 import addressRoutes from './addressRoutes';
 
@@ -19,6 +20,7 @@ router.use('/profile', profileRoutes);
 router.use('/products', productRoutes);
 router.use('/groups', groupRoutes);
 router.use('/chats', chatRoutes);
+router.use('/join-requests', joinRequestRoutes);
 router.use('/orders', orderRoutes);
 router.use('/addresses', addressRoutes);
 

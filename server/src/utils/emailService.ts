@@ -133,3 +133,47 @@ export const sendPasswordResetSuccessEmail = async (email: string): Promise<void
   await sendEmail(email, subject, html);
 };
 
+/**
+ * Send group join request email to group owner
+ */
+export const sendGroupJoinRequestEmail = async (
+  ownerEmail: string,
+  requesterName: string,
+  requesterEmail: string,
+  groupName: string,
+): Promise<void> => {
+  const subject = `New Join Request for Group: ${groupName} - Car Connect`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Group Join Request</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+        <h2 style="color: #2c3e50; margin-top: 0;">New Group Join Request</h2>
+        <p>Hello,</p>
+        <p>You have received a new join request for your group <strong>"${groupName}"</strong>.</p>
+        <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #3498db;">
+          <p style="margin: 0;"><strong>Requester Name:</strong> ${requesterName}</p>
+          <p style="margin: 5px 0;"><strong>Requester Email:</strong> ${requesterEmail}</p>
+          <p style="margin: 5px 0;"><strong>Group:</strong> ${groupName}</p>
+        </div>
+        <p>Please open the Car Connect app to review and respond to this join request.</p>
+        <p>You can accept or reject the request from the group chat screen.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+          This is an automated message, please do not reply to this email.
+        </p>
+        <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+          © ${new Date().getFullYear()} Car Connect. All rights reserved.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendEmail(ownerEmail, subject, html);
+};

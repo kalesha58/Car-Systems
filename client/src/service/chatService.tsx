@@ -7,6 +7,7 @@ import {
   ICreateGroupChatRequest,
   IEditGroupChatRequest,
   IUserListItem,
+  IGroupJoinRequest,
 } from '../types/chat';
 
 export const getChats = async (): Promise<IChat[]> => {
@@ -153,6 +154,52 @@ export const startLiveLocation = async (
 export const stopLiveLocation = async (chatId: string): Promise<void> => {
   try {
     await appAxios.delete(`/chats/${chatId}/live-location`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Join Request APIs
+export const requestToJoinGroup = async (groupId: string): Promise<IGroupJoinRequest> => {
+  try {
+    const response = await appAxios.post(`/join-requests/group/${groupId}`);
+    return response.data.Response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getJoinRequestsForGroup = async (groupId: string): Promise<IGroupJoinRequest[]> => {
+  try {
+    const response = await appAxios.get(`/join-requests/group/${groupId}`);
+    return response.data.Response || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const approveJoinRequest = async (requestId: string): Promise<IGroupJoinRequest> => {
+  try {
+    const response = await appAxios.post(`/join-requests/${requestId}/approve`);
+    return response.data.Response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rejectJoinRequest = async (requestId: string): Promise<IGroupJoinRequest> => {
+  try {
+    const response = await appAxios.post(`/join-requests/${requestId}/reject`);
+    return response.data.Response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPendingRequestCount = async (groupId: string): Promise<number> => {
+  try {
+    const response = await appAxios.get(`/join-requests/group/${groupId}/count`);
+    return response.data.Response.count || 0;
   } catch (error) {
     throw error;
   }

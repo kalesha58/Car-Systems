@@ -15,7 +15,7 @@ import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
-import {getChats} from '@service/chatService';
+import {getChats, requestToJoinGroup} from '@service/chatService';
 import {IChat} from '../../types/chat';
 import {useToast} from '@hooks/useToast';
 
@@ -24,10 +24,12 @@ const ChatScreen: React.FC = () => {
   const [chats, setChats] = useState<IChat[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [requestingGroups, setRequestingGroups] = useState<Set<string>>(new Set());
+  const [requestedGroups, setRequestedGroups] = useState<Set<string>>(new Set());
   const {user} = useAuthStore();
   const {colors} = useTheme();
   const navigation = useNavigation();
-  const {showError} = useToast();
+  const {showError, showSuccess} = useToast();
 
   const loadChats = async () => {
     try {
@@ -145,6 +147,30 @@ const ChatScreen: React.FC = () => {
           fontSize: RFValue(10),
           fontFamily: Fonts.SemiBold,
         },
+        followButton: {
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+          backgroundColor: colors.secondary,
+          marginTop: 4,
+        },
+        followButtonText: {
+          color: colors.white,
+          fontSize: RFValue(12),
+          fontFamily: Fonts.SemiBold,
+        },
+        requestedButton: {
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+          backgroundColor: colors.border,
+          marginTop: 4,
+        },
+        requestedButtonText: {
+          color: colors.disabled,
+          fontSize: RFValue(12),
+          fontFamily: Fonts.Medium,
+        },
         emptyContainer: {
           flex: 1,
           justifyContent: 'center',
@@ -177,6 +203,37 @@ const ChatScreen: React.FC = () => {
     [colors],
   );
 
+  const handleFollowGroup = async (chatId: string, groupId?: string, e?: any) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    if (!groupId) {
+      showError('Group ID not found');
+      return;
+    }
+
+    if (requestingGroups.has(groupId) || requestedGroups.has(groupId)) {
+      return;
+    }
+
+    try {
+      setRequestingGroups(prev => new Set(prev).add(groupId));
+      await requestToJoinGroup(groupId);
+      setRequestedGroups(prev => new Set(prev).add(groupId));
+      showSuccess('Join request sent successfully');
+      loadChats();
+    } catch (error: any) {
+      showError(error?.response?.data?.Response?.ReturnMessage || 'Failed to send join request');
+    } finally {
+      setRequestingGroups(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(groupId);
+        return newSet;
+      });
+    }
+  };
+
   const renderChatItem = ({item}: {item: IChat}) => {
     const chatName =
       item.type === 'group'
@@ -202,6 +259,10 @@ const ChatScreen: React.FC = () => {
       return date.toLocaleDateString();
     };
 
+    const isRequested = item.groupId ? requestedGroups.has(item.groupId) : false;
+    const isRequesting = item.groupId ? requestingGroups.has(item.groupId) : false;
+    const showFollowButton = item.type === 'group' && item.canFollow && !item.isMember;
+
     return (
       <TouchableOpacity
         style={styles.chatItem}
@@ -225,6 +286,17 @@ const ChatScreen: React.FC = () => {
                 : item.lastMessage.text}
             </CustomText>
           )}
+          {showFollowButton && (
+            <TouchableOpacity
+              style={isRequested ? styles.requestedButton : styles.followButton}
+              onPress={(e) => handleFollowGroup(item.id, item.groupId, e)}
+              disabled={isRequesting || isRequested}
+              activeOpacity={0.7}>
+              <CustomText style={isRequested ? styles.requestedButtonText : styles.followButtonText}>
+                {isRequesting ? 'Requesting...' : isRequested ? 'Requested' : 'Follow'}
+              </CustomText>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.timeContainer}>
           {item.lastMessage && (
@@ -235,7 +307,7 @@ const ChatScreen: React.FC = () => {
           {item.unreadCount && item.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <CustomText style={styles.unreadText}>
-                {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
               </CustomText>
             </View>
           )}

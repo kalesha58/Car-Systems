@@ -5,7 +5,6 @@ import {
   getChatById,
   createGroupChat,
   editGroupChat,
-  followGroupChat,
   getOrCreateGroupChat,
   getChatMessages,
   sendMessage,
@@ -13,6 +12,10 @@ import {
   stopLiveLocation,
   getLiveLocations,
 } from '../../services/user/chatService';
+import { requestToJoinGroup } from '../../services/user/joinRequestService';
+import { Chat } from '../../models/Chat';
+import { Group } from '../../models/Group';
+import { NotFoundError } from '../../utils/errorHandler';
 import {
   ICreateDirectChatRequest,
   ICreateMessageRequest,
@@ -193,7 +196,7 @@ export const editGroupChatController = async (
 };
 
 /**
- * Follow/join public group chat controller
+ * Follow/join public group chat controller - creates a join request
  */
 export const followGroupChatController = async (
   req: IAuthRequest,
@@ -214,9 +217,32 @@ export const followGroupChatController = async (
       return;
     }
 
-    const result = await followGroupChat(chatId, userId);
+    // Get chat to find groupId
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      res.status(404).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Chat not found',
+        },
+      });
+      return;
+    }
 
-    res.status(200).json({
+    if (chat.type !== 'group' || !chat.groupId) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'This endpoint is only for group chats',
+        },
+      });
+      return;
+    }
+
+    // Create join request
+    const result = await requestToJoinGroup(chat.groupId, userId);
+
+    res.status(201).json({
       success: true,
       ...result,
     });

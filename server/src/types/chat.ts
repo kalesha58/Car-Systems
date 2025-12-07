@@ -36,6 +36,7 @@ export interface IChat {
   unreadCount?: number;
   isMember?: boolean;
   canFollow?: boolean;
+  isOwner?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -106,6 +107,33 @@ export interface IEditGroupChatRequest {
   userIdsToAdd?: string[];
   userIdsToRemove?: string[];
   privacy?: 'public' | 'private';
+}
+
+export interface IGroupJoinRequest {
+  id: string;
+  groupId: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  userAvatar?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  respondedAt?: string;
+  respondedBy?: string;
+}
+
+export interface IJoinRequestResponse {
+  Response: IGroupJoinRequest;
+}
+
+export interface IJoinRequestsResponse {
+  Response: IGroupJoinRequest[];
+}
+
+export interface IPendingRequestCountResponse {
+  Response: {
+    count: number;
+  };
 }
 
 
