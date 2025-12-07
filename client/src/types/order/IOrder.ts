@@ -63,6 +63,13 @@ export interface IOrderData {
     phone: string;
     address: string;
   };
+  dealer?: {
+    id: string;
+    name: string;
+    businessName: string;
+    phone: string;
+    address?: string;
+  };
 }
 
 export interface IOrderResponse {

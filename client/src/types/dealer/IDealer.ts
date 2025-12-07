@@ -22,6 +22,27 @@ export interface IDealer {
     other?: string[];
   };
   createdAt: string;
+  approvalCode?: string;
+}
+
+export interface IOrderStats {
+  total: number;
+  pending?: number;
+  confirmed?: number;
+  processing?: number;
+  shipped?: number;
+  delivered?: number;
+  cancelled?: number;
+  totalRevenue: number;
+}
+
+export interface IBooking {
+  id: string;
+  dealerId: string;
+  serviceName: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IPaginationResponse {

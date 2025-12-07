@@ -16,12 +16,20 @@ interface IDeliveryDetailsProps {
   deliveryLocation?: {
     address?: string;
   };
+  dealer?: {
+    id: string;
+    name: string;
+    businessName: string;
+    phone: string;
+    address?: string;
+  };
 }
 
 const DeliveryDetails: FC<IDeliveryDetailsProps> = ({
   details,
   shippingAddress,
   deliveryLocation,
+  dealer,
 }) => {
   const formatAddress = (): string => {
     if (deliveryLocation?.address) {
@@ -89,13 +97,36 @@ const DeliveryDetails: FC<IDeliveryDetailsProps> = ({
         </View>
         <View style={{width: '80%'}}>
           <CustomText variant="h8" fontFamily={Fonts.Medium}>
-            {details?.name || 'Anonymous'} {details?.phone || 'XXXXXXXX'}
+            {details?.name || dealer?.businessName || dealer?.name || 'Anonymous'}{' '}
+            {details?.phone || dealer?.phone || 'XXXXXXXX'}
           </CustomText>
           <CustomText variant="h8" numberOfLines={2} fontFamily={Fonts.Regular}>
-            Receiver's contact no.
+            {dealer && !details?.name
+              ? 'Dealer contact no.'
+              : "Receiver's contact no."}
           </CustomText>
         </View>
       </View>
+
+      {dealer && (
+        <View style={styles.flexRow2}>
+          <View style={styles.iconContainer}>
+            <Icon
+              name="store"
+              color={Colors.disabled}
+              size={RFValue(20)}
+            />
+          </View>
+          <View style={{width: '80%'}}>
+            <CustomText variant="h8" fontFamily={Fonts.Medium}>
+              {dealer.businessName || dealer.name} {dealer.phone}
+            </CustomText>
+            <CustomText variant="h8" numberOfLines={2} fontFamily={Fonts.Regular}>
+              Dealer for this order
+            </CustomText>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

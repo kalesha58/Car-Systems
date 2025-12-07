@@ -12,6 +12,7 @@ import SplashScreen from '@features/auth/SplashScreen';
 import DeliveryLogin from '@features/auth/DeliveryLogin';
 import CustomerLogin from '@features/auth/CustomerLogin';
 import ProductDashboard from '@features/dashboard/ProductDashboard';
+import DealerDashboard from '@features/dashboard/DealerDashboard';
 import PlayScreen from '@features/play/PlayScreen';
 import ProductCategories from '@features/category/ProductCategories';
 import CartScreen from '@features/cart/CartScreen';
@@ -24,9 +25,12 @@ import ProductDetail from '@features/product/ProductDetail';
 import CreateNewPost from '@features/play/CreateNewPost';
 import LiveTracking from '@features/map/LiveTracking';
 import OrdersList from '@features/order/OrdersList';
+import DealerOrdersList from '@features/order/DealerOrdersList';
+import InventoryScreen from '@features/inventory/InventoryScreen';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
 import {ToastProvider} from '@context/ToastContext';
+import {useTranslation} from 'react-i18next';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -122,6 +126,63 @@ const MainTabs: FC = () => {
   );
 };
 
+const DealerTabs: FC = () => {
+  const {colors} = useTheme();
+  const {t} = useTranslation('dealer');
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.secondary,
+        tabBarInactiveTintColor: colors.disabled,
+        tabBarStyle: {
+          backgroundColor: colors.cardBackground,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: RFValue(10),
+          fontFamily: Fonts.Medium,
+        },
+      }}>
+      <Tab.Screen
+        name="Home"
+        component={DealerDashboard}
+        options={{
+          tabBarIcon: ({color, size}) => (
+            <Icon name="home-outline" size={size} color={color} />
+          ),
+          tabBarLabel: t('dashboard'),
+        }}
+      />
+      <Tab.Screen
+        name="Inventory"
+        component={InventoryScreen}
+        options={{
+          tabBarIcon: ({color, size}) => (
+            <Icon name="cube-outline" size={size} color={color} />
+          ),
+          tabBarLabel: t('inventory'),
+        }}
+      />
+      <Tab.Screen
+        name="Orders"
+        component={DealerOrdersList}
+        options={{
+          tabBarIcon: ({color, size}) => (
+            <Icon name="receipt-outline" size={size} color={color} />
+          ),
+          tabBarLabel: t('orders'),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
 const Navigation: FC = () => {
   return (
     <ToastProvider>
@@ -137,6 +198,10 @@ const Navigation: FC = () => {
           }}>
           <Stack.Screen name="SplashScreen" component={SplashScreen} />
           <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="DealerTabs" component={DealerTabs} />
+          <Stack.Screen name="DealerDashboard" component={DealerDashboard} />
+          <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
+          <Stack.Screen name="DealerOrdersList" component={DealerOrdersList} />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
           <Stack.Screen name="AddNewAddress" component={AddNewAddress} />
