@@ -205,3 +205,12 @@ export const getPendingRequestCount = async (groupId: string): Promise<number> =
   }
 };
 
+export const getUserJoinRequests = async (): Promise<IGroupJoinRequest[]> => {
+  try {
+    const response = await appAxios.get('/join-requests/user');
+    return response.data.Response || [];
+  } catch (error) {
+    throw error;
+  }
+};
+

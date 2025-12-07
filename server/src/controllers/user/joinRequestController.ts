@@ -9,6 +9,7 @@ import {
   getPendingRequestCount,
 } from '../../services/user/joinRequestService';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
+import { logger } from '../../utils/logger';
 
 /**
  * Request to join a public group
@@ -22,7 +23,10 @@ export const requestToJoinGroupController = async (
     const userId = req.user?.userId;
     const { groupId } = req.params;
 
+    logger.info(`[Join Request] Received request - userId: ${userId}, groupId: ${groupId}`);
+
     if (!userId) {
+      logger.warn('[Join Request] Unauthorized - no userId');
       res.status(401).json({
         success: false,
         Response: {
@@ -33,6 +37,7 @@ export const requestToJoinGroupController = async (
     }
 
     if (!groupId) {
+      logger.warn('[Join Request] Bad request - no groupId');
       res.status(400).json({
         success: false,
         Response: {

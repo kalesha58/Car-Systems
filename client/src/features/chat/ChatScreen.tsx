@@ -15,8 +15,8 @@ import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
-import {getChats, requestToJoinGroup} from '@service/chatService';
-import {IChat} from '../../types/chat';
+import {getChats, requestToJoinGroup, getUserJoinRequests, getPendingRequestCount} from '@service/chatService';
+import {IChat, IGroupJoinRequest} from '../../types/chat';
 import {useToast} from '@hooks/useToast';
 
 const ChatScreen: React.FC = () => {
@@ -25,7 +25,10 @@ const ChatScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [requestingGroups, setRequestingGroups] = useState<Set<string>>(new Set());
-  const [requestedGroups, setRequestedGroups] = useState<Set<string>>(new Set());
+  const [pendingRequestMap, setPendingRequestMap] = useState<Map<string, string>>(new Map()); // groupId -> requestId
+  const [pendingRequestCounts, setPendingRequestCounts] = useState<Map<string, number>>(new Map()); // groupId -> count
+  const [totalPendingRequests, setTotalPendingRequests] = useState<number>(0);
+  const [firstGroupWithRequests, setFirstGroupWithRequests] = useState<string | null>(null);
   const {user} = useAuthStore();
   const {colors} = useTheme();
   const navigation = useNavigation();
@@ -43,13 +46,93 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  const loadPendingRequests = async () => {
+    try {
+      const requests = await getUserJoinRequests();
+      // Create a map of groupId -> requestId for pending requests
+      const pendingMap = new Map<string, string>();
+      requests
+        .filter((req: IGroupJoinRequest) => req.status === 'pending')
+        .forEach((req: IGroupJoinRequest) => {
+          pendingMap.set(req.groupId, req.id);
+        });
+      setPendingRequestMap(pendingMap);
+    } catch (error: any) {
+      // Silently fail - don't show error to user
+    }
+  };
+
+  const loadPendingRequestCountsForOwnedGroups = async () => {
+    try {
+      // Filter chats to get groups where user is owner
+      const ownedGroups = chats.filter(
+        chat => chat.type === 'group' && chat.isOwner && chat.groupId
+      );
+
+      if (ownedGroups.length === 0) {
+        setPendingRequestCounts(new Map());
+        setTotalPendingRequests(0);
+        setFirstGroupWithRequests(null);
+        return;
+      }
+
+      // Fetch pending request counts for each owned group
+      const countsMap = new Map<string, number>();
+      let total = 0;
+      let firstGroupId: string | null = null;
+
+      await Promise.all(
+        ownedGroups.map(async (chat) => {
+          if (!chat.groupId) return;
+          try {
+            const count = await getPendingRequestCount(chat.groupId);
+            countsMap.set(chat.groupId, count);
+            total += count;
+            if (count > 0 && !firstGroupId) {
+              firstGroupId = chat.groupId;
+            }
+          } catch (error) {
+            // Silently fail for individual groups
+            countsMap.set(chat.groupId, 0);
+          }
+        })
+      );
+
+      setPendingRequestCounts(countsMap);
+      setTotalPendingRequests(total);
+      setFirstGroupWithRequests(firstGroupId);
+    } catch (error: any) {
+      // Silently fail - don't show error to user
+    }
+  };
+
   useEffect(() => {
     loadChats();
+    loadPendingRequests();
   }, []);
+
+  // Load pending request counts after chats are loaded
+  useEffect(() => {
+    if (chats.length > 0) {
+      loadPendingRequestCountsForOwnedGroups();
+    }
+  }, [chats]);
+
+  // Refresh when screen comes into focus (e.g., after admin approves request)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadChats();
+      loadPendingRequests();
+      // loadPendingRequestCountsForOwnedGroups will be called after chats load
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = () => {
     setRefreshing(true);
     loadChats();
+    loadPendingRequests();
+    // loadPendingRequestCountsForOwnedGroups will be called after chats load
   };
 
   const directChats = useMemo(() => chats.filter(chat => chat.type === 'direct'), [chats]);
@@ -199,6 +282,27 @@ const ChatScreen: React.FC = () => {
           shadowOpacity: 0.25,
           shadowRadius: 3.84,
         },
+        notificationIcon: {
+          marginRight: 16,
+          position: 'relative',
+        },
+        notificationBadge: {
+          position: 'absolute',
+          top: -4,
+          right: -4,
+          backgroundColor: colors.secondary,
+          borderRadius: 10,
+          minWidth: 20,
+          height: 20,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 4,
+        },
+        notificationBadgeText: {
+          color: colors.white,
+          fontSize: RFValue(10),
+          fontFamily: Fonts.SemiBold,
+        },
       }),
     [colors],
   );
@@ -213,18 +317,37 @@ const ChatScreen: React.FC = () => {
       return;
     }
 
-    if (requestingGroups.has(groupId) || requestedGroups.has(groupId)) {
+    // Check if already has pending request
+    if (pendingRequestMap.has(groupId)) {
+      return;
+    }
+
+    if (requestingGroups.has(groupId)) {
       return;
     }
 
     try {
       setRequestingGroups(prev => new Set(prev).add(groupId));
-      await requestToJoinGroup(groupId);
-      setRequestedGroups(prev => new Set(prev).add(groupId));
+      
+      const response = await requestToJoinGroup(groupId);
+      
+      // Add to pending requests map
+      setPendingRequestMap(prev => new Map(prev).set(groupId, response.id));
       showSuccess('Join request sent successfully');
+      
+      // Reload chats to update isMember status if admin approved quickly
       loadChats();
+      loadPendingRequests();
     } catch (error: any) {
-      showError(error?.response?.data?.Response?.ReturnMessage || 'Failed to send join request');
+      // If error is "already have pending request", update the map
+      const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || '';
+      if (errorMessage.includes('already have a pending join request') || errorMessage.includes('pending join request')) {
+        // Try to load pending requests to sync state
+        loadPendingRequests();
+        // Don't show error, just update state
+      } else {
+        showError(errorMessage || 'Failed to send join request');
+      }
     } finally {
       setRequestingGroups(prev => {
         const newSet = new Set(prev);
@@ -259,9 +382,10 @@ const ChatScreen: React.FC = () => {
       return date.toLocaleDateString();
     };
 
-    const isRequested = item.groupId ? requestedGroups.has(item.groupId) : false;
+    const hasPendingRequest = item.groupId ? pendingRequestMap.has(item.groupId) : false;
     const isRequesting = item.groupId ? requestingGroups.has(item.groupId) : false;
-    const showFollowButton = item.type === 'group' && item.canFollow && !item.isMember;
+    // Show follow button only if: it's a group, user can follow, user is not a member, and no pending request
+    const showFollowButton = item.type === 'group' && item.canFollow && !item.isMember && !hasPendingRequest;
 
     return (
       <TouchableOpacity
@@ -286,14 +410,19 @@ const ChatScreen: React.FC = () => {
                 : item.lastMessage.text}
             </CustomText>
           )}
+          {hasPendingRequest && (
+            <View style={styles.requestedButton}>
+              <CustomText style={styles.requestedButtonText}>Pending</CustomText>
+            </View>
+          )}
           {showFollowButton && (
             <TouchableOpacity
-              style={isRequested ? styles.requestedButton : styles.followButton}
+              style={styles.followButton}
               onPress={(e) => handleFollowGroup(item.id, item.groupId, e)}
-              disabled={isRequesting || isRequested}
+              disabled={isRequesting}
               activeOpacity={0.7}>
-              <CustomText style={isRequested ? styles.requestedButtonText : styles.followButtonText}>
-                {isRequesting ? 'Requesting...' : isRequested ? 'Requested' : 'Follow'}
+              <CustomText style={styles.followButtonText}>
+                {isRequesting ? 'Requesting...' : 'Follow'}
               </CustomText>
             </TouchableOpacity>
           )}
@@ -327,9 +456,31 @@ const ChatScreen: React.FC = () => {
     </View>
   );
 
+  const renderNotificationIcon = () => {
+    if (totalPendingRequests === 0 || !firstGroupWithRequests) {
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={() => (navigation as any).navigate('JoinRequests', {groupId: firstGroupWithRequests})}
+        style={styles.notificationIcon}
+        activeOpacity={0.7}>
+        <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
+        {totalPendingRequests > 0 && (
+          <View style={styles.notificationBadge}>
+            <CustomText style={styles.notificationBadgeText}>
+              {totalPendingRequests > 99 ? '99+' : String(totalPendingRequests)}
+            </CustomText>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <CustomHeader title="Chat" />
+      <CustomHeader title="Chat" rightComponent={renderNotificationIcon()} />
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, selectedTab === 'messages' && styles.activeTab]}
