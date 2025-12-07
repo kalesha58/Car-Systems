@@ -5,7 +5,8 @@ import {
   getSalesReportController,
   getUsersReportController,
   getProductsReportController,
-  exportReportController,
+  exportReportController, 
+  getRevenueByCategoryController
 } from '../../controllers/admin/reportController';
 
 const router = Router();
@@ -83,6 +84,52 @@ router.get('/users', getUsersReportController);
  *         description: Forbidden - Admin access required
  */
 router.get('/products', getProductsReportController);
+
+/**
+ * @swagger
+ * /admin/reports/revenue-by-category:
+ *   get:
+ *     summary: Get revenue by category report
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date (optional)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date (optional)
+ *     responses:
+ *       200:
+ *         description: Revenue by category report retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   category:
+ *                     type: string
+ *                   totalRevenue:
+ *                     type: number
+ *                   orderCount:
+ *                     type: number
+ *                   averageOrderValue:
+ *                     type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/revenue-by-category', getRevenueByCategoryController);
 
 /**
  * @swagger

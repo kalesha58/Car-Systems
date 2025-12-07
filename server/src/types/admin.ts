@@ -103,6 +103,11 @@ export interface IDealer {
   orders?: any[];
   reviews?: any[];
   createdAt: string;
+  dealerType?: string;
+  suspensionReason?: string;
+  registrationDate?: string;
+  approvalDate?: string;
+
 }
 
 export interface IGetDealersRequest {
@@ -111,6 +116,7 @@ export interface IGetDealersRequest {
   search?: string;
   status?: string;
   location?: string;
+  dealerType?: string;  
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

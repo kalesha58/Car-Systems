@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { IAuthRequest } from '../../middleware/authMiddleware';
-import { getSalesReport, getUsersReport, getProductsReport } from '../../services/admin/reportService';
+import { getSalesReport, getUsersReport, getProductsReport, getRevenueByCategoryReport  } from '../../services/admin/reportService';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
 
 export const getSalesReportController = async (
@@ -46,6 +46,19 @@ export const exportReportController = async (req: IAuthRequest, res: Response, n
   try {
     // TODO: Implement export functionality (Excel/PDF)
     res.status(501).json({ success: false, message: 'Export functionality not yet implemented' });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const getRevenueByCategoryController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const report = await getRevenueByCategoryReport(req.query as any);
+    res.status(200).json(report);
   } catch (error) {
     errorHandler(error as IAppError, res);
   }

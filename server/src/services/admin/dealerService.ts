@@ -21,18 +21,19 @@ import {
 import {
   ICreateBusinessRegistrationRequest,
   IBusinessRegistration,
+  IUpdateBusinessRegistrationRequest
 } from '../../types/dealer/businessRegistration';
 import { createDealerProduct, updateDealerProduct } from '../dealer/productService';
 import { createDealerVehicle, updateDealerVehicle } from '../dealer/vehicleService';
 import { DealerVehicle } from '../../models/DealerVehicle';
-import { createBusinessRegistration } from '../dealer/businessRegistrationService';
+import { createBusinessRegistration, businessRegistrationToInterface } from '../dealer/businessRegistrationService';
 import { NotFoundError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 
 /**
  * Convert dealer document to IDealer interface
  */
-const dealerToIDealer = (dealerDoc: IDealerDocument): IDealer => {
+const dealerToIDealer = (dealerDoc: IDealerDocument,  businessRegistration?: any): IDealer => {
   return {
     id: (dealerDoc._id as any).toString(),
     name: dealerDoc.name,
@@ -43,6 +44,10 @@ const dealerToIDealer = (dealerDoc: IDealerDocument): IDealer => {
     location: dealerDoc.location,
     address: dealerDoc.address,
     documents: dealerDoc.documents,
+    suspensionReason: dealerDoc.suspensionReason,
+    dealerType: businessRegistration?.type,
+    registrationDate: businessRegistration?.createdAt?.toISOString(),
+    approvalDate: businessRegistration?.status === 'approved' ? businessRegistration?.updatedAt?.toISOString() : undefined,
     createdAt: dealerDoc.createdAt?.toISOString() || new Date().toISOString(),
   };
 };
@@ -60,20 +65,19 @@ export const getDealers = async (
 
     const filter: any = {};
 
-    if (query.search) {
-      filter.$or = [
-        { name: { $regex: query.search, $options: 'i' } },
-        { businessName: { $regex: query.search, $options: 'i' } },
-        { email: { $regex: query.search, $options: 'i' } },
-      ];
-    }
-
-    if (query.status) {
-      filter.status = query.status;
-    }
-
-    if (query.location) {
-      filter.location = { $regex: query.location, $options: 'i' };
+    
+    let matchingUserIds: string[] = [];
+    if (query.dealerType) {
+      const matchingRegs = await BusinessRegistration.find({ type: query.dealerType });
+      matchingUserIds = matchingRegs.map((reg: any) => reg.userId);
+      
+      // Get users with these userIds to get their emails
+      const { SignUp } = await import('../../models/SignUp');
+      const users = await SignUp.find({ _id: { $in: matchingUserIds } });
+      const matchingEmails = users.map((u: any) => u.email);
+      
+      // Filter dealers by email
+      filter.email = { $in: matchingEmails };
     }
 
     const sortBy = query.sortBy || 'createdAt';
@@ -85,8 +89,39 @@ export const getDealers = async (
       Dealer.countDocuments(filter),
     ]);
 
+     // Get users to match with dealers by email
+     const { SignUp } = await import('../../models/SignUp');
+     const dealerEmails = dealers.map((d: any) => d.email);
+     const users = await SignUp.find({ email: { $in: dealerEmails } });
+ 
+     // Create a map of email to userId (_id from SignUp)
+     const emailToUserIdMap = new Map();
+     users.forEach((user: any) => {
+       emailToUserIdMap.set(user.email, (user._id as any).toString());
+     });
+ 
+     // Get business registrations for these users
+     const userIds = Array.from(emailToUserIdMap.values());
+     const businessRegistrations = await BusinessRegistration.find({
+       userId: { $in: userIds }
+     });
+ 
+     // Create a map of userId to business registration
+     const registrationMap = new Map();
+     businessRegistrations.forEach((reg: any) => {
+       registrationMap.set(reg.userId, reg);
+     });
+ 
+     // Map dealers with their business registrations
+     const dealersWithRegistrations = dealers.map((dealer: any) => {
+       const userId = emailToUserIdMap.get(dealer.email);
+       const businessReg = userId ? registrationMap.get(userId) : null;
+       return dealerToIDealer(dealer, businessReg);
+     });
+ 
+
     return {
-      dealers: dealers.map(dealerToIDealer),
+      dealers: dealersWithRegistrations,
       pagination: {
         page,
         limit,
@@ -111,7 +146,18 @@ export const getDealerById = async (dealerId: string): Promise<IDealer> => {
       throw new NotFoundError('Dealer not found');
     }
 
-    const dealerData = dealerToIDealer(dealer);
+    // Get user by email to find userId
+    const { SignUp } = await import('../../models/SignUp');
+    const user = await SignUp.findOne({ email: dealer.email });
+
+    // Get business registration for this user
+    let businessReg = null;
+    if (user) {
+      const userId = (user._id as any).toString();
+      businessReg = await BusinessRegistration.findOne({ userId });
+    }
+
+    const dealerData = dealerToIDealer(dealer, businessReg);
 
     // Get dealer orders
     const orders = await Order.find({ dealerId: dealerId }).limit(10);
@@ -129,25 +175,8 @@ export const getDealerById = async (dealerId: string): Promise<IDealer> => {
  */
 export const createDealer = async (data: ICreateDealerRequest): Promise<IDealer> => {
   try {
-    const existingDealer = await Dealer.findOne({ email: data.email });
-
-    if (existingDealer) {
-      throw new ConflictError('Dealer with this email already exists');
-    }
-
-    const dealer = new Dealer({
-      name: data.name,
-      businessName: data.businessName,
-      email: data.email,
-      phone: data.phone,
-      location: data.location,
-      address: data.address,
-      status: 'pending',
-    });
-
+    const dealer = new Dealer(data);
     await dealer.save();
-
-    logger.info(`New dealer created: ${dealer.email}`);
 
     return dealerToIDealer(dealer);
   } catch (error) {
@@ -167,10 +196,22 @@ export const updateDealer = async (dealerId: string, data: IUpdateDealerRequest)
       throw new NotFoundError('Dealer not found');
     }
 
-    if (data.name !== undefined) dealer.name = data.name;
-    if (data.businessName !== undefined) dealer.businessName = data.businessName;
-    if (data.phone !== undefined) dealer.phone = data.phone;
-    if (data.location !== undefined) dealer.location = data.location;
+    if (data.name !== undefined) {
+      dealer.name = data.name;
+    }
+
+    if (data.businessName !== undefined) {
+      dealer.businessName = data.businessName;
+    }
+
+    if (data.phone !== undefined) {
+      dealer.phone = data.phone;
+    }
+
+    if (data.location !== undefined) {
+      dealer.location = data.location;
+    }
+
 
     await dealer.save();
 
@@ -194,7 +235,7 @@ export const deleteDealer = async (dealerId: string): Promise<void> => {
       throw new NotFoundError('Dealer not found');
     }
 
-    await Dealer.findByIdAndDelete(dealerId);
+    await dealer.deleteOne();
 
     logger.info(`Dealer deleted: ${dealer.email}`);
   } catch (error) {
@@ -215,7 +256,6 @@ export const approveDealer = async (dealerId: string): Promise<IDealer> => {
     }
 
     dealer.status = 'approved';
-    dealer.rejectionReason = undefined;
     await dealer.save();
 
     logger.info(`Dealer approved: ${dealer.email}`);
@@ -490,6 +530,62 @@ export const updateVehicleForDealer = async (
     return vehicle;
   } catch (error) {
     logger.error('Error updating vehicle for dealer:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update business registration for dealer (admin can update any registration)
+ */
+export const updateBusinessRegistrationForDealer = async (
+  userId: string,
+  data: IUpdateBusinessRegistrationRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    // Find business registration by userId
+    const registration = await BusinessRegistration.findOne({ userId });
+
+    if (!registration) {
+      throw new NotFoundError('Business registration not found for this user');
+    }
+
+    // Admin can update any field without ownership checks or status restrictions
+    if (data.businessName !== undefined) {
+      if (!data.businessName.trim()) {
+        throw new NotFoundError('Business name cannot be empty');
+      }
+      registration.businessName = data.businessName.trim();
+    }
+
+    if (data.type !== undefined) {
+      registration.type = data.type;
+    }
+
+    if (data.address !== undefined) {
+      if (!data.address.trim()) {
+        throw new NotFoundError('Address cannot be empty');
+      }
+      registration.address = data.address.trim();
+    }
+
+    if (data.phone !== undefined) {
+      if (!data.phone.trim()) {
+        throw new NotFoundError('Phone number cannot be empty');
+      }
+      registration.phone = data.phone.trim();
+    }
+
+    if (data.gst !== undefined) {
+      registration.gst = data.gst?.trim() || undefined;
+    }
+
+    await registration.save();
+
+    logger.info(`Business registration updated for dealer (userId: ${userId}) by admin`);
+
+    return businessRegistrationToInterface(registration);
+  } catch (error) {
+    logger.error('Error updating business registration for dealer:', error);
     throw error;
   }
 };

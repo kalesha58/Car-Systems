@@ -113,6 +113,7 @@ export const getDealerVehicles = async (
  */
 export const getAllDealerVehicles = async (
   query: IGetDealerVehiclesRequest,
+  includeDealerInfo: boolean = false,
 ): Promise<{ vehicles: IDealerVehicle[]; pagination: IPaginationResponse }> => {
   try {
     const page = query.page || 1;
@@ -167,8 +168,66 @@ export const getAllDealerVehicles = async (
       DealerVehicle.countDocuments(filter),
     ]);
 
+    let vehiclesWithDealer = vehicles.map(vehicleToInterface);
+
+    // If dealer info is requested, populate dealer information
+    if (includeDealerInfo) {
+      const { BusinessRegistration } = await import('../../models/BusinessRegistration');
+      const { SignUp } = await import('../../models/SignUp');
+      const { Dealer } = await import('../../models/Dealer');
+
+      const dealerIds = [...new Set(vehicles.map((v: any) => v.dealerId))];
+      const businessRegs = await BusinessRegistration.find({
+        _id: { $in: dealerIds }
+      });
+
+      const userIds = businessRegs.map((br: any) => br.userId);
+      const users = await SignUp.find({ _id: { $in: userIds } });
+      const userEmails = users.map((u: any) => u.email);
+      const dealers = await Dealer.find({ email: { $in: userEmails } });
+
+      const dealerMap = new Map();
+      dealers.forEach((dealer: any) => {
+        dealerMap.set(dealer.email, dealer);
+      });
+
+      const userMap = new Map();
+      users.forEach((user: any) => {
+        userMap.set((user._id as any).toString(), user);
+      });
+
+      const regMap = new Map();
+      businessRegs.forEach((reg: any) => {
+        regMap.set((reg._id as any).toString(), reg);
+      });
+
+      vehiclesWithDealer = vehicles.map((vehicle: any) => {
+        const vehicleData: any = vehicleToInterface(vehicle);
+        const businessReg = regMap.get(vehicle.dealerId);
+        if (businessReg) {
+          const user = userMap.get(businessReg.userId);
+          if (user) {
+            const dealer = dealerMap.get(user.email);
+            if (dealer) {
+              vehicleData.dealer = {
+                id: (dealer._id as any).toString(),
+                name: dealer.name,
+                location: dealer.location,
+                place: dealer.location, // Assuming place is same as location
+                address: dealer.address,
+                phone: dealer.phone,
+                email: dealer.email,
+              };
+            }
+          }
+        }
+        return vehicleData;
+      });
+    }
+
+
     return {
-      vehicles: vehicles.map(vehicleToInterface),
+      vehicles: vehiclesWithDealer,
       pagination: {
         page,
         limit,

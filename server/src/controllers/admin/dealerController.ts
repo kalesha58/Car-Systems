@@ -16,6 +16,7 @@ import {
   updateProductForDealer,
   updateVehicleForDealer,
   getDealerVehicleByIdForAdmin,
+  updateBusinessRegistrationForDealer
 } from '../../services/admin/dealerService';
 import { getDealerVehicles, getAllDealerVehicles } from '../../services/dealer/vehicleService';
 import { getBusinessRegistrationByUserId } from '../../services/dealer/businessRegistrationService';
@@ -132,7 +133,7 @@ export const getAllDealerVehiclesController = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const result = await getAllDealerVehicles(req.query as any);
+    const result = await getAllDealerVehicles(req.query as any, true);
     res.status(200).json({
       success: true,
       Response: result,
@@ -273,6 +274,25 @@ export const getBusinessRegistrationByUserIdController = async (
     res.status(200).json({
       success: true,
       Response: businessRegistration,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+
+export const updateDealerBusinessRegistrationController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.params.userId;
+    const registration = await updateBusinessRegistrationForDealer(userId, req.body);
+
+    res.status(200).json({
+      success: true,
+      Response: registration,
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

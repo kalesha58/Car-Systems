@@ -3,6 +3,7 @@ import { SignUp } from '../../models/SignUp';
 import { Product } from '../../models/Product';
 import { IGetSalesReportRequest, IGetUsersReportRequest, IGetProductsReportRequest } from '../../types/admin';
 import { logger } from '../../utils/logger';
+import { Category } from '../../models/Category';
 
 /**
  * Get sales report
@@ -21,7 +22,7 @@ export const getSalesReport = async (query: IGetSalesReportRequest) => {
       match.dealerId = query.dealerId;
     }
 
-    match.status = 'delivered';
+    match.status = 'DELIVERED';
     match.paymentStatus = 'paid';
 
     const groupBy = query.groupBy || 'day';
@@ -227,3 +228,100 @@ export const getProductsReport = async (query: IGetProductsReportRequest) => {
   }
 };
 
+/**
+ * Get revenue by category report
+ */
+export const getRevenueByCategoryReport = async (query: { startDate?: string; endDate?: string }) => {
+  try {
+    const match: any = {
+      status: 'DELIVERED',
+      paymentStatus: 'paid',
+    };
+
+    if (query.startDate || query.endDate) {
+      match.createdAt = {};
+      if (query.startDate) match.createdAt.$gte = new Date(query.startDate);
+      if (query.endDate) match.createdAt.$lte = new Date(query.endDate);
+    }
+
+    // Get orders with items and populate product categories
+    const orders = await Order.find(match).lean();
+    
+    // Get all product IDs from orders
+    const productIds = new Set<string>();
+    orders.forEach((order: any) => {
+      order.items.forEach((item: any) => {
+        productIds.add(item.productId);
+      });
+    });
+
+    // Get products with categories
+    const products = await Product.find({
+      _id: { $in: Array.from(productIds) }
+    }).lean();
+
+    // Get all unique category IDs
+    const categoryIds = new Set<string>();
+    products.forEach((product: any) => {
+      if (product.categoryId) {
+        categoryIds.add(product.categoryId);
+      }
+    });
+
+    // Get category names
+    const categories = await Category.find({
+      _id: { $in: Array.from(categoryIds) }
+    }).lean();
+
+    const categoryNameMap = new Map();
+    categories.forEach((category: any) => {
+      categoryNameMap.set((category._id as any).toString(), category.name);
+    });
+
+    const productCategoryMap = new Map();
+    products.forEach((product: any) => {
+      const categoryId = product.categoryId;
+      const categoryName = categoryId && categoryNameMap.has(categoryId) 
+        ? categoryNameMap.get(categoryId) 
+        : 'Uncategorized';
+      productCategoryMap.set((product._id as any).toString(), categoryName);
+    });
+
+    // Aggregate revenue by category
+    const categoryRevenue = new Map<string, { totalRevenue: number; orderCount: number; orderIds: Set<string> }>();
+    
+    orders.forEach((order: any) => {
+      order.items.forEach((item: any) => {
+        const categoryName = productCategoryMap.get(item.productId) || 'Uncategorized';
+        
+        if (!categoryRevenue.has(categoryName)) {
+          categoryRevenue.set(categoryName, {
+            totalRevenue: 0,
+            orderCount: 0,
+            orderIds: new Set(),
+          });
+        }
+        
+        const categoryData = categoryRevenue.get(categoryName)!;
+        categoryData.totalRevenue += item.total;
+        categoryData.orderIds.add((order._id as any).toString());
+      });
+    });
+
+    // Convert to array format
+    const result = Array.from(categoryRevenue.entries()).map(([category, data]) => ({
+      category,
+      totalRevenue: data.totalRevenue,
+      orderCount: data.orderIds.size,
+      averageOrderValue: data.totalRevenue / data.orderIds.size,
+    }));
+
+    // Sort by total revenue descending
+    result.sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    return result;
+  } catch (error) {
+    logger.error('Error getting revenue by category report:', error);
+    throw error;
+  }
+};

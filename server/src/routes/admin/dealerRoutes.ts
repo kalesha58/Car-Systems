@@ -21,6 +21,7 @@ import {
   getAllDealerVehiclesController,
   getDealerVehicleByIdController,
   getBusinessRegistrationByUserIdController,
+  updateDealerBusinessRegistrationController
 } from '../../controllers/admin/dealerController';
 import { getUserByBusinessRegistrationIdController } from '../../controllers/admin/userController';
 
@@ -48,11 +49,12 @@ router.use(adminMiddleware);
  *         schema:
  *           type: integer
  *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [pending, approved, rejected, suspended]
- *     responses:
+     *         name: dealerType
+     *         schema:
+     *           type: string
+     *           enum: [Automobile Showroom, Vehicle Wash Station, Detailing Center, Mechanic Workshop, Spare Parts Dealer, Riding Gear Store]
+     *         description: Filter by dealer type
+     *     responses:
  *       200:
  *         description: Dealers retrieved successfully
  *       401:
@@ -961,6 +963,55 @@ router.get('/:id/orders', getDealerOrdersController);
  *         description: Forbidden - Admin access required
  */
 router.get('/business-registration/:businessRegistrationId', getUserByBusinessRegistrationIdController);
+
+
+/**
+ * @swagger
+ * /admin/dealers/{userId}/business-registration:
+ *   put:
+ *     summary: Update business registration for a dealer
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID (must have dealer role)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               businessName:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [Automobile Showroom, Vehicle Wash Station, Detailing Center, Mechanic Workshop, Spare Parts Dealer, Riding Gear Store]
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               gst:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Business registration updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Business registration not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.put('/:userId/business-registration', validateDealerRoleOnlyMiddleware, updateDealerBusinessRegistrationController);
+
 
 export default router;
 

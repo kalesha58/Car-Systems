@@ -11,7 +11,7 @@ import { logger } from '../../utils/logger';
 /**
  * Convert business registration document to interface
  */
-const businessRegistrationToInterface = (
+export const businessRegistrationToInterface = (
   doc: IBusinessRegistrationDocument,
 ): IBusinessRegistration => {
   return {
@@ -145,9 +145,7 @@ export const updateBusinessRegistration = async (
     }
 
     // Can only update if status is pending or rejected
-    if (registration.status === 'approved') {
-      throw new AppError('Cannot update approved registration', 400);
-    }
+   
 
     if (data.businessName !== undefined) {
       if (!data.businessName.trim()) {
