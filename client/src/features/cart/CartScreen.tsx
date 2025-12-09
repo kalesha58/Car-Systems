@@ -41,8 +41,7 @@ const CartScreen: React.FC = () => {
   const couponDiscount = getCouponDiscount(totalItemPrice);
   const deliveryCharge = 29;
   const handlingCharge = 2;
-  const surgeCharge = 3;
-  const otherCharges = deliveryCharge + handlingCharge + surgeCharge;
+  const otherCharges = deliveryCharge + handlingCharge;
   const grandTotal = totalItemPrice - couponDiscount + otherCharges;
   const route = useRoute();
   const navigation = useNavigation();

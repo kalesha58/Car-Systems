@@ -48,8 +48,7 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
   const {colors} = useTheme();
   const deliveryCharge = 29;
   const handlingCharge = 2;
-  const surgeCharge = 3;
-  const otherCharges = deliveryCharge + handlingCharge + surgeCharge;
+  const otherCharges = deliveryCharge + handlingCharge;
   
   const couponDiscount = getCouponDiscount(totalItemPrice);
   const subtotal = totalItemPrice;
@@ -78,7 +77,6 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
         )}
         <ReportItem iconName="pedal-bike" title="Delivery charge" price={deliveryCharge} />
         <ReportItem iconName="shopping-bag" title="Handling charge" price={handlingCharge} />
-        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={surgeCharge} />
       </View>
 
       <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
