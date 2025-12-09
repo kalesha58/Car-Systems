@@ -27,15 +27,23 @@ import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
 import {IAddress} from '../../types/address/IAddress';
 import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
+import CouponModal from '@components/coupon/CouponModal';
+import {ICoupon} from '@types/coupon/ICoupon';
 
 interface RouteParams {
   selectedAddress?: IAddress;
 }
 
 const CartScreen: React.FC = () => {
-  const {getTotalPrice, cart, clearCart} = useCartStore();
+  const {getTotalPrice, cart, clearCart, selectedCoupon, getCouponDiscount, setSelectedCoupon} = useCartStore();
   const {user, setCurrentOrder, currentOrder} = useAuthStore();
   const totalItemPrice = getTotalPrice();
+  const couponDiscount = getCouponDiscount(totalItemPrice);
+  const deliveryCharge = 29;
+  const handlingCharge = 2;
+  const surgeCharge = 3;
+  const otherCharges = deliveryCharge + handlingCharge + surgeCharge;
+  const grandTotal = totalItemPrice - couponDiscount + otherCharges;
   const route = useRoute();
   const navigation = useNavigation();
   const {t} = useTranslation();
@@ -43,6 +51,7 @@ const CartScreen: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
+  const [couponModalVisible, setCouponModalVisible] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -254,18 +263,31 @@ const CartScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <OrderList />
 
-        <View style={styles.flexRowBetween}>
+        <TouchableOpacity
+          style={styles.flexRowBetween}
+          onPress={() => setCouponModalVisible(true)}
+          activeOpacity={0.7}>
           <View style={styles.flexRow}>
             <Image
               source={require('@assets/icons/coupon.png')}
               style={{width: 25, height: 25}}
             />
-            <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
-              Use Coupons
-            </CustomText>
+            <View style={{flex: 1, marginLeft: 10}}>
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+                {selectedCoupon ? `Coupon Applied: ${selectedCoupon.code}` : 'Use Coupons'}
+              </CustomText>
+              {selectedCoupon && (
+                <CustomText
+                  variant="h9"
+                  style={{color: colors.secondary, marginTop: 2}}
+                  fontFamily={Fonts.Regular}>
+                  Save ₹{getCouponDiscount(totalItemPrice).toFixed(0)}
+                </CustomText>
+              )}
+            </View>
           </View>
           <Icon name="chevron-right" size={RFValue(16)} color={colors.text} />
-        </View>
+        </TouchableOpacity>
 
         <BillDetails totalItemPrice={totalItemPrice} />
 
@@ -365,7 +387,7 @@ const CartScreen: React.FC = () => {
             <View style={{width: '70%'}}>
               <ArrowButton
                 loading={loading}
-                price={totalItemPrice}
+                price={grandTotal}
                 title="Place Order"
                 onPress={handlePlaceOrder}
                 disabled={!selectedAddress}
@@ -374,6 +396,15 @@ const CartScreen: React.FC = () => {
           </View>
         </View>
       </View>
+
+      <CouponModal
+        visible={couponModalVisible}
+        onClose={() => setCouponModalVisible(false)}
+        onApplyCoupon={(coupon: ICoupon | null) => {
+          setSelectedCoupon(coupon);
+          setCouponModalVisible(false);
+        }}
+      />
     </View>
   );
 };

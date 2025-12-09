@@ -3,6 +3,9 @@ import React, {FC} from 'react';
 import ProductItem from './ProductItem';
 import VehicleItem from './VehicleItem';
 import ServiceItem from './ServiceItem';
+import ProductItemSkeleton from './ProductItemSkeleton';
+import VehicleItemSkeleton from './VehicleItemSkeleton';
+import ServiceItemSkeleton from './ServiceItemSkeleton';
 import {IProduct} from '@types/product/IProduct';
 import {IDealerVehicle} from '@types/vehicle/IVehicle';
 import {IService} from '@types/service/IService';
@@ -13,9 +16,10 @@ type ItemType = IProduct | IDealerVehicle | IService;
 interface ProductListProps {
   data: ItemType[];
   itemType?: 'products' | 'vehicles' | 'services';
+  loading?: boolean;
 }
 
-const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
+const ProductList: FC<ProductListProps> = ({data, itemType = 'products', loading = false}) => {
   const {colors} = useTheme();
 
   const styles = StyleSheet.create({
@@ -25,6 +29,12 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
       backgroundColor: colors.backgroundSecondary,
     },
     content: {
+      paddingVertical: 10,
+      paddingBottom: 100,
+    },
+    skeletonContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       paddingVertical: 10,
       paddingBottom: 100,
     },
@@ -64,6 +74,32 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products'}) => {
     }
     return <ProductItem item={item as IProduct} index={index} />;
   };
+
+  const renderSkeleton = ({index}: {index: number}) => {
+    if (itemType === 'vehicles') {
+      return <VehicleItemSkeleton index={index} />;
+    }
+    if (itemType === 'services') {
+      return <ServiceItemSkeleton index={index} />;
+    }
+    return <ProductItemSkeleton index={index} />;
+  };
+
+  if (loading) {
+    // Show 6 skeleton items
+    const skeletonData = Array.from({length: 6}, (_, i) => ({id: `skeleton-${i}`, index: i}));
+    return (
+      <View style={styles.container}>
+        <View style={styles.skeletonContainer}>
+          {skeletonData.map((item, index) => (
+            <React.Fragment key={item.id}>
+              {renderSkeleton({index})}
+            </React.Fragment>
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <FlatList

@@ -7,7 +7,11 @@ import RollingBar from 'react-native-rolling-bar';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 
-const SearchBar: FC = () => {
+interface SearchBarProps {
+  onPress?: () => void;
+}
+
+const SearchBar: FC<SearchBarProps> = ({onPress}) => {
   const {colors} = useTheme();
 
   const styles = StyleSheet.create({
@@ -23,6 +27,7 @@ const SearchBar: FC = () => {
       overflow: 'hidden',
       marginHorizontal: 10,
       paddingHorizontal: 10,
+      minHeight: 50,
     },
     textContainer: {
       width: '90%',
@@ -38,7 +43,10 @@ const SearchBar: FC = () => {
   });
 
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.8}>
+    <TouchableOpacity 
+      style={styles.container} 
+      activeOpacity={0.8}
+      onPress={onPress}>
       <Icon name="search" color={colors.text} size={RFValue(20)} />
       <RollingBar
         interval={3000}

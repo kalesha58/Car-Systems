@@ -8,13 +8,18 @@ interface CartItem {
   count: number;
 }
 
+import {ICoupon} from '@types/coupon/ICoupon';
+
 interface CartStore {
   cart: CartItem[];
+  selectedCoupon: ICoupon | null;
   addItem: (item: any) => void;
   removeItem: (id: string | number) => void;
   clearCart: () => void;
   getItemCount: (id: string | number) => number;
   getTotalPrice: () => number;
+  setSelectedCoupon: (coupon: ICoupon | null) => void;
+  getCouponDiscount: (subtotal: number) => number;
 }
 
 /**
@@ -33,6 +38,46 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       cart: [],
+      selectedCoupon: null,
+      setSelectedCoupon: (coupon: ICoupon | null) => {
+        set({selectedCoupon: coupon});
+      },
+      getCouponDiscount: (subtotal: number) => {
+        const coupon = get().selectedCoupon;
+        if (!coupon || !coupon.isActive) {
+          return 0;
+        }
+
+        // Check if coupon is valid
+        const now = new Date();
+        const validFrom = new Date(coupon.validFrom);
+        const validUntil = new Date(coupon.validUntil);
+
+        if (now < validFrom || now > validUntil) {
+          return 0;
+        }
+
+        // Check minimum order amount
+        if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
+          return 0;
+        }
+
+        let discount = 0;
+
+        if (coupon.discountType === 'percentage') {
+          discount = (subtotal * coupon.discountValue) / 100;
+          // Apply max discount limit if specified
+          if (coupon.maxDiscountAmount && discount > coupon.maxDiscountAmount) {
+            discount = coupon.maxDiscountAmount;
+          }
+        } else {
+          // Fixed discount
+          discount = coupon.discountValue;
+        }
+
+        // Don't allow discount to exceed subtotal
+        return Math.min(discount, subtotal);
+      },
       addItem: item => {
         const currentCart = get().cart;
         const normalizedId = normalizeId(item);
@@ -54,7 +99,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      clearCart: () => set({cart: []}),
+      clearCart: () => set({cart: [], selectedCoupon: null}),
 
       removeItem: id => {
         const currentCart = get().cart;

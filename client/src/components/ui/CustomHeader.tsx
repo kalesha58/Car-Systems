@@ -8,10 +8,18 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from './CustomText';
 import {useTheme} from '@hooks/useTheme';
 
-const CustomHeader: FC<{title: string; search?: boolean; rightComponent?: ReactNode}> = ({
+interface CustomHeaderProps {
+  title: string;
+  search?: boolean;
+  rightComponent?: ReactNode;
+  onSearchPress?: () => void;
+}
+
+const CustomHeader: FC<CustomHeaderProps> = ({
   title,
   search,
   rightComponent,
+  onSearchPress,
 }) => {
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
@@ -29,6 +37,10 @@ const CustomHeader: FC<{title: string; search?: boolean; rightComponent?: ReactN
     },
     text: {
       textAlign: 'center',
+      flex: 1,
+    },
+    iconButton: {
+      padding: 4,
     },
   });
 
@@ -47,7 +59,9 @@ const CustomHeader: FC<{title: string; search?: boolean; rightComponent?: ReactN
 
         <View>
           {rightComponent || (search && (
-            <Icon name="search" color={colors.text} size={RFValue(16)} />
+            <Pressable onPress={onSearchPress} style={styles.iconButton}>
+              <Icon name="search" color={colors.text} size={RFValue(20)} />
+            </Pressable>
           ))}
         </View>
       </View>

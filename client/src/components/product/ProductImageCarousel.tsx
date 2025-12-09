@@ -7,6 +7,8 @@ import {
   ScrollView,
   Pressable,
   TouchableOpacity,
+  Share,
+  Platform,
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Colors, Fonts} from '@utils/Constants';
@@ -23,17 +25,64 @@ import {useCollapsibleContext} from '@r0b0t3d/react-native-collapsible';
 interface IProductImageCarouselProps {
   images: string[];
   scrollY?: Animated.SharedValue<number>;
+  productName?: string;
+  productPrice?: number;
+  productId?: string;
 }
 
 const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
   images,
+  productName,
+  productPrice,
+  productId,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const screenWidth = Dimensions.get('window').width;
-  const carouselHeight = Dimensions.get('window').height * 0.5;
+  const screenHeight = Dimensions.get('window').height;
+  const isTablet = screenWidth >= 768;
+  const isDesktop = screenWidth >= 1024;
+  
+  // Responsive carousel height
+  const carouselHeight = isDesktop 
+    ? screenHeight * 0.6 
+    : isTablet 
+    ? screenHeight * 0.55 
+    : screenHeight * 0.5;
+  
   const {colors} = useTheme();
   const {scrollY} = useCollapsibleContext();
+
+  const handleShare = async () => {
+    try {
+      const shareMessage = `Check out this product: ${productName || 'Product'}\nPrice: ₹${productPrice?.toLocaleString() || 'N/A'}\n\nView more details in the app!`;
+      const shareUrl = productId ? `https://carconnect.app/product/${productId}` : '';
+      
+      const shareOptions: any = {
+        message: shareMessage,
+        ...(shareUrl && { url: shareUrl }),
+        title: productName || 'Product',
+      };
+
+      if (Platform.OS === 'android') {
+        shareOptions.dialogTitle = 'Share Product';
+      }
+
+      const result = await Share.share(shareOptions);
+      
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Shared with activity type of result.activityType
+        } else {
+          // Shared
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Dismissed
+      }
+    } catch (error) {
+      console.error('Error sharing product:', error);
+    }
+  };
 
   if (!images || images.length === 0) {
     return null;
@@ -59,6 +108,12 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
     };
   });
 
+  const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) => {
+    if (isDesktop && desktop !== undefined) return desktop;
+    if (isTablet && tablet !== undefined) return tablet;
+    return mobile;
+  };
+
   const styles = StyleSheet.create({
     container: {
       position: 'relative',
@@ -68,34 +123,35 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
     image: {
       width: screenWidth,
       height: carouselHeight,
+      resizeMode: 'cover',
     },
     pagination: {
       position: 'absolute',
-      bottom: 16,
+      bottom: getResponsiveValue(16, 20, 24),
       left: 0,
       right: 0,
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      gap: 6,
+      gap: getResponsiveValue(6, 8, 10),
     },
     dot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
+      width: getResponsiveValue(6, 8, 10),
+      height: getResponsiveValue(6, 8, 10),
+      borderRadius: getResponsiveValue(3, 4, 5),
       backgroundColor: 'rgba(255, 255, 255, 0.5)',
     },
     activeDot: {
-      width: 20,
+      width: getResponsiveValue(20, 24, 28),
       backgroundColor: Colors.secondary,
     },
     backButton: {
       position: 'absolute',
-      top: 50,
-      left: 16,
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      top: getResponsiveValue(50, 60, 70),
+      left: getResponsiveValue(16, 24, 32),
+      width: getResponsiveValue(40, 48, 52),
+      height: getResponsiveValue(40, 48, 52),
+      borderRadius: getResponsiveValue(20, 24, 26),
       backgroundColor: 'rgba(255, 255, 255, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
@@ -103,33 +159,33 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
     },
     actionButton: {
       position: 'absolute',
-      bottom: 80,
-      width: 40,
-      height: 40,
-      borderRadius: 8,
+      bottom: getResponsiveValue(80, 100, 120),
+      width: getResponsiveValue(40, 48, 52),
+      height: getResponsiveValue(40, 48, 52),
+      borderRadius: getResponsiveValue(8, 10, 12),
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 10,
     },
     actionButtonLeft: {
-      left: 16,
+      left: getResponsiveValue(16, 24, 32),
     },
     actionButtonRight: {
-      right: 16,
+      right: getResponsiveValue(16, 24, 32),
     },
     topRightIcons: {
       position: 'absolute',
-      top: 50,
-      right: 16,
+      top: getResponsiveValue(50, 60, 70),
+      right: getResponsiveValue(16, 24, 32),
       flexDirection: 'row',
-      gap: 12,
+      gap: getResponsiveValue(12, 16, 20),
       zIndex: 10,
     },
     iconButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: getResponsiveValue(40, 48, 52),
+      height: getResponsiveValue(40, 48, 52),
+      borderRadius: getResponsiveValue(20, 24, 26),
       backgroundColor: 'rgba(255, 255, 255, 0.9)',
       justifyContent: 'center',
       alignItems: 'center',
@@ -142,26 +198,23 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
         <Image
           source={{uri: images[0]}}
           style={styles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
         <Pressable onPress={() => goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
+          <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
         </Pressable>
         <View style={styles.topRightIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="search" size={RFValue(20)} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="share-outline" size={RFValue(20)} color={colors.text} />
+          <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
+            <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity
           style={[styles.actionButton, styles.actionButtonLeft]}>
-          <Icon name="star" size={RFValue(20)} color="#fff" />
+          <Icon name="star" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, styles.actionButtonRight]}>
-          <Icon name="restaurant-outline" size={RFValue(20)} color="#fff" />
+          <Icon name="restaurant-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
     );
@@ -184,26 +237,23 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
             key={index}
             source={{uri: imageUri}}
             style={styles.image}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         ))}
       </ScrollView>
       <Pressable onPress={() => goBack()} style={styles.backButton}>
-        <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
+        <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
       </Pressable>
       <View style={styles.topRightIcons}>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="search" size={RFValue(20)} color={colors.text} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="share-outline" size={RFValue(20)} color={colors.text} />
+        <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
+          <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
         </TouchableOpacity>
       </View>
       <TouchableOpacity style={[styles.actionButton, styles.actionButtonLeft]}>
-        <Icon name="star" size={RFValue(20)} color="#fff" />
+        <Icon name="star" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
       </TouchableOpacity>
       <TouchableOpacity style={[styles.actionButton, styles.actionButtonRight]}>
-        <Icon name="restaurant-outline" size={RFValue(20)} color="#fff" />
+        <Icon name="restaurant-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
       </TouchableOpacity>
       <View style={styles.pagination}>
         {images.map((_, index) => (

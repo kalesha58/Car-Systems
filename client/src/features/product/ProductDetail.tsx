@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -25,6 +26,9 @@ import {
   withCollapsibleContext,
 } from '@r0b0t3d/react-native-collapsible';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useToast} from '@hooks/useToast';
+import {navigate} from '@utils/NavigationUtils';
+import {useNavigation} from '@react-navigation/native';
 
 type ProductDetailRouteParams = {
   ProductDetail: {
@@ -44,6 +48,8 @@ const ProductDetail: React.FC = () => {
   const {colors} = useTheme();
   const {addItem, getItemCount} = useCartStore();
   const insets = useSafeAreaInsets();
+  const {showSuccess} = useToast();
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -84,6 +90,29 @@ const ProductDetail: React.FC = () => {
       for (let i = 0; i < quantity; i++) {
         addItem(productWithId);
       }
+      
+      // Show success toast
+      showSuccess('Product added to cart successfully', 2000);
+      
+      // Navigate to cart after a short delay to show the toast
+      setTimeout(() => {
+        try {
+          // Navigate to MainTabs and then to Cart tab
+          (navigation as any).navigate('MainTabs', {
+            screen: 'Cart',
+          });
+        } catch (error) {
+          // Fallback: navigate to MainTabs first, then Cart
+          try {
+            (navigation as any).navigate('MainTabs');
+            setTimeout(() => {
+              (navigation as any).navigate('Cart');
+            }, 100);
+          } catch (err) {
+            console.error('Error navigating to cart:', err);
+          }
+        }
+      }, 500);
     }
   };
 
@@ -97,6 +126,20 @@ const ProductDetail: React.FC = () => {
       : 0;
   
   const hasDiscount = product && product.originalPrice && product.originalPrice > product.price;
+
+  // Responsive calculations
+  const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
+  const isTablet = screenWidth >= 768;
+  const isDesktop = screenWidth >= 1024;
+  const isSmallMobile = screenWidth < 360;
+  
+  // Responsive values
+  const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) => {
+    if (isDesktop && desktop !== undefined) return desktop;
+    if (isTablet && tablet !== undefined) return tablet;
+    return mobile;
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -361,8 +404,8 @@ const ProductDetail: React.FC = () => {
       backgroundColor: colors.cardBackground,
       borderTopWidth: 1,
       borderTopColor: colors.border,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: getResponsiveValue(isSmallMobile ? 12 : 16, 24, 32),
+      paddingVertical: getResponsiveValue(12, 16, 20),
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -374,58 +417,74 @@ const ProductDetail: React.FC = () => {
       shadowOpacity: 0.1,
       shadowRadius: 4,
       elevation: 5,
+      ...(isDesktop && {
+        maxWidth: 1200,
+        alignSelf: 'center',
+        left: 'auto',
+        right: 'auto',
+        width: '100%',
+      }),
     },
     bottomBarLeft: {
       flex: 1,
+      marginRight: getResponsiveValue(8, 12, 16),
+      minWidth: 0, // Allow shrinking
     },
     bottomBarQuantity: {
       fontFamily: Fonts.Medium,
-      marginBottom: 4,
+      marginBottom: getResponsiveValue(4, 6, 8),
+      fontSize: RFValue(getResponsiveValue(12, 14, 16)),
     },
     bottomBarPrice: {
       fontFamily: Fonts.SemiBold,
       color: colors.secondary,
-      marginBottom: 2,
+      marginBottom: getResponsiveValue(2, 4, 6),
+      fontSize: RFValue(getResponsiveValue(16, 18, 20)),
     },
     bottomBarMrp: {
       textDecorationLine: 'line-through',
       opacity: 0.6,
-      fontSize: RFValue(10),
+      fontSize: RFValue(getResponsiveValue(10, 12, 14)),
+      marginLeft: getResponsiveValue(4, 6, 8),
     },
     bottomBarDiscount: {
       backgroundColor: '#007AFF',
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 6,
-      marginLeft: 4,
+      paddingHorizontal: getResponsiveValue(6, 8, 10),
+      paddingVertical: getResponsiveValue(2, 4, 6),
+      borderRadius: getResponsiveValue(6, 8, 10),
+      marginLeft: getResponsiveValue(4, 6, 8),
     },
     bottomBarDiscountText: {
       color: colors.white,
-      fontSize: RFValue(8),
+      fontSize: RFValue(getResponsiveValue(8, 10, 12)),
       fontFamily: Fonts.Medium,
     },
     bottomBarTaxText: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(getResponsiveValue(9, 11, 13)),
       opacity: 0.7,
-      marginTop: 2,
+      marginTop: getResponsiveValue(2, 4, 6),
     },
     bottomBarRight: {
-      flex: 1,
+      flex: isTablet ? 0 : 0, // Don't take flex space, use minWidth instead
       alignItems: 'flex-end',
+      minWidth: getResponsiveValue(isSmallMobile ? 90 : 100, 140, 180),
+      flexShrink: 0, // Don't shrink button
     },
     addToCartButton: {
       backgroundColor: colors.secondary,
-      paddingHorizontal: 24,
-      paddingVertical: 14,
-      borderRadius: 8,
+      paddingHorizontal: getResponsiveValue(isSmallMobile ? 16 : 20, 32, 40),
+      paddingVertical: getResponsiveValue(12, 16, 18),
+      borderRadius: getResponsiveValue(8, 10, 12),
       alignItems: 'center',
       justifyContent: 'center',
-      minWidth: 120,
+      minWidth: getResponsiveValue(isSmallMobile ? 80 : 100, 140, 180),
+      flexDirection: 'row',
+      gap: getResponsiveValue(4, 8, 10),
     },
     addToCartText: {
       color: colors.white,
       fontFamily: Fonts.SemiBold,
-      fontSize: RFValue(14),
+      fontSize: RFValue(getResponsiveValue(12, 16, 18)),
     },
   });
 
@@ -452,12 +511,18 @@ const ProductDetail: React.FC = () => {
       <CollapsibleContainer
         style={[styles.container, {marginTop: insets.top || 0}]}>
         <CollapsibleHeaderContainer containerStyle={{backgroundColor: 'transparent'}}>
-          <ProductImageCarousel images={product.images || []} />
+          <ProductImageCarousel 
+            images={product.images || []}
+            productName={product.name}
+            productPrice={product.price}
+            productId={product.id}
+          />
           <AnimatedProductHeader
             productName={product.name}
             price={product.price}
             originalPrice={product.originalPrice}
             imageUrl={product.images?.[0]}
+            productId={product.id}
           />
         </CollapsibleHeaderContainer>
 
@@ -736,27 +801,27 @@ const ProductDetail: React.FC = () => {
       
       <View style={[styles.fixedBottomBar, {paddingBottom: Math.max(insets.bottom, 12)}]}>
         <View style={styles.bottomBarLeft}>
-          <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarQuantity}>
+          <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarQuantity} numberOfLines={1}>
             {quantity} {product.quantity || 'set'}
           </CustomText>
-          <View style={{flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 4}}>
-            <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.bottomBarPrice}>
+          <View style={{flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: getResponsiveValue(4, 6, 8), gap: getResponsiveValue(4, 6, 8), flexShrink: 1}}>
+            <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={[styles.bottomBarPrice, {flexShrink: 0}]}>
               ₹{product.price.toLocaleString()}
             </CustomText>
             {hasDiscount && (
               <>
-                <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarMrp}>
-                  {' '}MRP ₹{product.originalPrice?.toLocaleString()}
+                <CustomText variant="h7" fontFamily={Fonts.Medium} style={[styles.bottomBarMrp, {flexShrink: 1}]} numberOfLines={1}>
+                  MRP ₹{product.originalPrice?.toLocaleString()}
                 </CustomText>
                 <View style={styles.bottomBarDiscount}>
-                  <CustomText style={styles.bottomBarDiscountText}>
+                  <CustomText style={styles.bottomBarDiscountText} numberOfLines={1}>
                     {discountPercentage}% OFF
                   </CustomText>
                 </View>
               </>
             )}
           </View>
-          <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.bottomBarTaxText}>
+          <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.bottomBarTaxText} numberOfLines={1}>
             Inclusive of all taxes
           </CustomText>
         </View>

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, Image, Pressable, TouchableOpacity} from 'react-native';
+import {View, StyleSheet, Image, Pressable, TouchableOpacity, Share, Platform} from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,6 +18,7 @@ interface IAnimatedProductHeaderProps {
   price: number;
   originalPrice?: number;
   imageUrl?: string;
+  productId?: string;
 }
 
 const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
@@ -25,9 +26,41 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
   price,
   originalPrice,
   imageUrl,
+  productId,
 }) => {
   const {colors} = useTheme();
   const {scrollY} = useCollapsibleContext();
+
+  const handleShare = async () => {
+    try {
+      const shareMessage = `Check out this product: ${productName}\nPrice: ₹${price.toLocaleString()}${originalPrice && originalPrice > price ? ` (Was ₹${originalPrice.toLocaleString()})` : ''}\n\nView more details in the app!`;
+      const shareUrl = productId ? `https://carconnect.app/product/${productId}` : '';
+      
+      const shareOptions: any = {
+        message: shareMessage,
+        ...(shareUrl && { url: shareUrl }),
+        title: productName,
+      };
+
+      if (Platform.OS === 'android') {
+        shareOptions.dialogTitle = 'Share Product';
+      }
+
+      const result = await Share.share(shareOptions);
+      
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Shared with activity type of result.activityType
+        } else {
+          // Shared
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Dismissed
+      }
+    } catch (error) {
+      console.error('Error sharing product:', error);
+    }
+  };
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -157,10 +190,7 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
           </View>
         </View>
         <View style={styles.rightIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="search" size={RFValue(18)} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
             <Icon name="share-outline" size={RFValue(18)} color={colors.text} />
           </TouchableOpacity>
         </View>

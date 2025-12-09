@@ -4,13 +4,17 @@ import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {useCartStore} from '@state/cartStore';
+import {useTheme} from '@hooks/useTheme';
 
 const ReportItem: FC<{
   iconName: string;
   underline?: boolean;
   title: string;
   price: number;
-}> = ({iconName, underline, title, price}) => {
+  isDiscount?: boolean;
+}> = ({iconName, underline, title, price, isDiscount}) => {
+  const {colors} = useTheme();
   return (
     <View style={[styles.flexRowBetween, {marginBottom: 10}]}>
       <View style={styles.flexRow}>
@@ -18,23 +22,40 @@ const ReportItem: FC<{
           name={iconName}
           style={{opacity: 0.7}}
           size={RFValue(12)}
-          color={Colors.text}
+          color={isDiscount ? colors.secondary : Colors.text}
         />
         <CustomText
           style={{
             textDecorationLine: underline ? 'underline' : 'none',
             textDecorationStyle: 'dashed',
+            color: isDiscount ? colors.secondary : undefined,
           }}
           variant="h8">
           {title}
         </CustomText>
       </View>
-      <CustomText variant="h8">₹{price}</CustomText>
+      <CustomText
+        variant="h8"
+        style={isDiscount ? {color: colors.secondary} : undefined}>
+        {isDiscount ? '-' : ''}₹{price}
+      </CustomText>
     </View>
   );
 };
 
 const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
+  const {selectedCoupon, getCouponDiscount} = useCartStore();
+  const {colors} = useTheme();
+  const deliveryCharge = 29;
+  const handlingCharge = 2;
+  const surgeCharge = 3;
+  const otherCharges = deliveryCharge + handlingCharge + surgeCharge;
+  
+  const couponDiscount = getCouponDiscount(totalItemPrice);
+  const subtotal = totalItemPrice;
+  const totalAfterDiscount = subtotal - couponDiscount;
+  const grandTotal = totalAfterDiscount + otherCharges;
+
   return (
     <View style={styles.container}>
       <CustomText style={styles.text} fontFamily={Fonts.SemiBold}>
@@ -47,9 +68,17 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
           title="Items total"
           price={totalItemPrice}
         />
-        <ReportItem iconName="pedal-bike" title="Delivery charge" price={29} />
-        <ReportItem iconName="shopping-bag" title="Handling charge" price={2} />
-        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={3} />
+        {selectedCoupon && couponDiscount > 0 && (
+          <ReportItem
+            iconName="local-offer"
+            title={`Coupon Discount (${selectedCoupon.code})`}
+            price={couponDiscount}
+            isDiscount={true}
+          />
+        )}
+        <ReportItem iconName="pedal-bike" title="Delivery charge" price={deliveryCharge} />
+        <ReportItem iconName="shopping-bag" title="Handling charge" price={handlingCharge} />
+        <ReportItem iconName="cloudy-snowing" title="Surge charge" price={surgeCharge} />
       </View>
 
       <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
@@ -60,7 +89,7 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
           Grand Total
         </CustomText>
         <CustomText style={styles.text} fontFamily={Fonts.SemiBold}>
-          ₹{totalItemPrice + 34}
+          ₹{grandTotal}
         </CustomText>
       </View>
       

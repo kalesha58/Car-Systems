@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions} from 'react-native';
 import React, {FC} from 'react';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Colors, Fonts} from '@utils/Constants';
@@ -13,6 +13,105 @@ interface CartSummaryProps {
 }
 
 const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
+  // Responsive calculations
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+  const isTablet = windowWidth >= 768;
+  const isDesktop = windowWidth >= 1024;
+  const isSmallMobile = windowWidth < 360;
+  
+  // Responsive values
+  const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) => {
+    if (isDesktop && desktop !== undefined) return desktop;
+    if (isTablet && tablet !== undefined) return tablet;
+    return mobile;
+  };
+
+  // Mobile-optimized padding (reduced for small screens)
+  const containerPadding = getResponsiveValue(
+    isSmallMobile ? 12 : 16,
+    windowWidth * 0.04,
+    Math.min(windowWidth * 0.03, 48)
+  );
+  
+  // Smaller image on mobile
+  const imageSize = getResponsiveValue(
+    isSmallMobile ? 32 : Math.min(windowWidth * 0.1, 40),
+    windowWidth * 0.08,
+    Math.min(windowWidth * 0.06, 60)
+  );
+  
+  // Reduced gap on mobile
+  const gapSize = getResponsiveValue(
+    isSmallMobile ? 6 : 8,
+    windowWidth * 0.025,
+    16
+  );
+  
+  // Much smaller button padding on mobile
+  const buttonPaddingH = getResponsiveValue(
+    isSmallMobile ? 16 : 20,
+    windowWidth * 0.08,
+    Math.min(windowWidth * 0.06, 80)
+  );
+  
+  const buttonPaddingV = getResponsiveValue(
+    windowHeight * 0.01,
+    windowHeight * 0.012,
+    windowHeight * 0.014
+  );
+
+  const styles = StyleSheet.create({
+    container: {
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexDirection: 'row',
+      paddingHorizontal: containerPadding,
+      paddingBottom: getResponsiveValue(windowHeight * 0.03, windowHeight * 0.025, windowHeight * 0.02),
+      paddingTop: getResponsiveValue(windowHeight * 0.014, windowHeight * 0.016, windowHeight * 0.018),
+      ...(isDesktop && {
+        maxWidth: 1200,
+        alignSelf: 'center',
+        width: '100%',
+      }),
+    },
+    flexRowGap: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: gapSize,
+      flex: 1,
+      marginRight: getResponsiveValue(8, 12, 16),
+      minWidth: 0, // Allow shrinking
+    },
+    image: {
+      width: imageSize,
+      height: imageSize,
+      borderRadius: imageSize * 0.25,
+      borderColor: Colors.border,
+      borderWidth: 1,
+    },
+    cartText: {
+      fontSize: RFValue(getResponsiveValue(12, 16, 18)),
+      flexShrink: 1, // Allow text to shrink
+    },
+    btn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: buttonPaddingV,
+      borderRadius: getResponsiveValue(8, windowWidth * 0.02, 12),
+      backgroundColor: Colors.secondary,
+      paddingHorizontal: buttonPaddingH,
+      minWidth: getResponsiveValue(70, 120, 140), // Reduced min width on mobile
+      flexShrink: 0, // Don't shrink button
+    },
+    btnText: {
+      marginRight: getResponsiveValue(4, windowWidth * 0.015, 8),
+      color: '#fff',
+      fontSize: RFValue(getResponsiveValue(12, 16, 18)),
+    },
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.flexRowGap}>
@@ -26,13 +125,13 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
           }
           style={styles.image}
         />
-        <CustomText fontFamily={Fonts.SemiBold}>
+        <CustomText fontFamily={Fonts.SemiBold} style={styles.cartText}>
           {cartCount} ITEM{cartCount > 1 ? 'S' : ''}
         </CustomText>
         <Icon
           name="arrow-drop-up"
           color={Colors.secondary}
-          size={RFValue(25)}
+          size={RFValue(getResponsiveValue(20, 28, 32))}
         />
       </View>
 
@@ -43,46 +142,11 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
         <CustomText style={styles.btnText} fontFamily={Fonts.Medium}>
           Next
         </CustomText>
-        <Icon name="arrow-right" color="#fff" size={RFValue(25)} />
+        <Icon name="arrow-right" color="#fff" size={RFValue(getResponsiveValue(18, 28, 32))} />
       </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingHorizontal: screenWidth * 0.05,
-    paddingBottom: screenHeight * 0.03,
-    paddingTop: screenHeight * 0.014,
-  },
-  flexRowGap: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: screenWidth * 0.03,
-  },
-  image: {
-    width: screenWidth * 0.1,
-    height: screenWidth * 0.1,
-    borderRadius: screenWidth * 0.025,
-    borderColor: Colors.border,
-    borderWidth: 1,
-  },
-  btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: screenHeight * 0.01,
-    borderRadius: screenWidth * 0.025,
-    backgroundColor: Colors.secondary,
-    paddingHorizontal: screenWidth * 0.1,
-  },
-  btnText: {
-    marginLeft: screenWidth * 0.02,
-    color: '#fff',
-  },
-});
 
 export default CartSummary;

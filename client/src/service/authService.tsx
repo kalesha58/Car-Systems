@@ -9,6 +9,10 @@ export const customerLogin = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/auth/login`, { email, password });
     const { token, Response } = response.data;
+    console.log({
+        response: response.data,
+        responseData: response
+    })
     tokenStorage.set('accessToken', token);
     tokenStorage.set('refreshToken', token);
     const { setUser } = useAuthStore.getState();
