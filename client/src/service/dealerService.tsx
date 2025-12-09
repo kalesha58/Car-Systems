@@ -455,3 +455,18 @@ export const deleteDealerService = async (serviceId: string): Promise<void> => {
   }
 };
 
+export const getDealerOrderById = async (orderId: string): Promise<IOrderData | null> => {
+  try {
+    const response = await appAxios.get<{
+      success: boolean;
+      Response: IOrderData;
+    }>(`/dealer/orders/${orderId}`);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    return null;
+  } catch (error) {
+    throw error;
+  }
+};
+

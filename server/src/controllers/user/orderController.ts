@@ -30,6 +30,11 @@ export interface ICreateUserOrderRequest {
   };
   paymentMethod: 'credit_card' | 'debit_card' | 'upi' | 'cash_on_delivery';
   dealerId?: string;
+  deliveryLocation?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
 }
 
 export interface IVerifyPaymentRequest {

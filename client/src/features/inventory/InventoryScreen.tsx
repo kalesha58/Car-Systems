@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image} from 'react-native';
+import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Pressable} from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -15,6 +15,7 @@ import {screenWidth, screenHeight} from '@utils/Scaling';
 import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import {formatCurrency} from '@utils/analytics';
+import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreviewModal';
 
 const InventoryScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -26,6 +27,8 @@ const InventoryScreen: React.FC = () => {
   const [services, setServices] = useState<IService[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isImagePreviewVisible, setIsImagePreviewVisible] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
 
   const handleAddPress = () => {
     if (activeTab === 'products') {
@@ -80,6 +83,13 @@ const InventoryScreen: React.FC = () => {
     await fetchData();
     setRefreshing(false);
   }, [fetchData]);
+
+  const handleImagePress = (images: string[]) => {
+    if (images && images.length > 0) {
+      setPreviewImages(images);
+      setIsImagePreviewVisible(true);
+    }
+  };
 
   const renderProductItem = ({item}: {item: IProduct}) => {
     const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
@@ -154,7 +164,12 @@ const InventoryScreen: React.FC = () => {
         </View>
 
         {/* Right Side - Image Thumbnail */}
-        <View style={styles.productImageContainer}>
+        <Pressable 
+          style={styles.productImageContainer}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleImagePress(item.images || []);
+          }}>
           {firstImage ? (
             <Image source={{uri: firstImage}} style={styles.productImage} resizeMode="cover" />
           ) : (
@@ -162,109 +177,161 @@ const InventoryScreen: React.FC = () => {
               <Icon name="image-outline" size={RFValue(24)} color={theme.textSecondary} />
             </View>
           )}
-        </View>
+        </Pressable>
       </TouchableOpacity>
     );
   };
 
   const renderVehicleItem = ({item}: {item: IDealerVehicle}) => {
+    const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
+
     return (
       <TouchableOpacity
-        style={[styles.itemCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
+        style={[styles.productCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
         activeOpacity={0.7}
         onPress={() => handleItemPress(item)}>
-        <View style={styles.itemContent}>
-          <View style={styles.itemInfo}>
-            <CustomText variant="h5" fontFamily={Fonts.SemiBold} numberOfLines={1}>
+        {/* Left Side - Vehicle Info */}
+        <View style={styles.productInfo}>
+          {/* Header */}
+          <View style={styles.productHeader}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} numberOfLines={1} style={styles.productName}>
               {item.brand} {item.vehicleModel}
             </CustomText>
-            <CustomText variant="h8" style={styles.brandText} numberOfLines={1}>
+            <CustomText variant="h9" style={[styles.brandText, {color: theme.textSecondary}]} numberOfLines={1}>
               {item.year} • {item.vehicleType}
             </CustomText>
-            <View style={styles.priceRow}>
-              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{color: theme.secondary}}>
-                {formatCurrency(item.price)}
-              </CustomText>
-            </View>
-            <View style={styles.stockRow}>
+          </View>
+
+          {/* Price Row */}
+          <View style={styles.priceRow}>
+            <CustomText variant="h6" fontFamily={Fonts.Bold} style={{color: theme.secondary}}>
+              {formatCurrency(item.price)}
+            </CustomText>
+          </View>
+
+          {/* Meta Row */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
               <Icon
                 name={item.availability === 'available' ? 'checkmark-circle-outline' : 'close-circle-outline'}
                 size={RFValue(12)}
                 color={item.availability === 'available' ? '#10b981' : '#ef4444'}
               />
-              <CustomText variant="h9" style={styles.stockText}>
+              <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]}>
                 {item.availability.charAt(0).toUpperCase() + item.availability.slice(1)}
               </CustomText>
             </View>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor:
-                  item.availability === 'available' ? '#10b98115' : item.availability === 'sold' ? '#ef444415' : '#f59e0b15',
-              },
-            ]}>
-            <CustomText
-              variant="h9"
-              fontFamily={Fonts.Medium}
+            <View
               style={[
-                styles.statusText,
+                styles.statusBadge,
                 {
-                  color:
-                    item.availability === 'available' ? '#10b981' : item.availability === 'sold' ? '#ef4444' : '#f59e0b',
+                  backgroundColor:
+                    item.availability === 'available' ? '#10b98115' : item.availability === 'sold' ? '#ef444415' : '#f59e0b15',
                 },
               ]}>
-              {item.availability}
-            </CustomText>
+              <CustomText
+                variant="h9"
+                fontFamily={Fonts.Medium}
+                style={[
+                  styles.statusText,
+                  {
+                    color:
+                      item.availability === 'available' ? '#10b981' : item.availability === 'sold' ? '#ef4444' : '#f59e0b',
+                  },
+                ]}>
+                {item.availability}
+              </CustomText>
+            </View>
           </View>
         </View>
+
+        {/* Right Side - Image Thumbnail */}
+        <Pressable 
+          style={styles.productImageContainer}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleImagePress(item.images || []);
+          }}>
+          {firstImage ? (
+            <Image source={{uri: firstImage}} style={styles.productImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.productImagePlaceholder, {backgroundColor: theme.border}]}>
+              <Icon name="car-outline" size={RFValue(24)} color={theme.textSecondary} />
+            </View>
+          )}
+        </Pressable>
       </TouchableOpacity>
     );
   };
 
   const renderServiceItem = ({item}: {item: IService}) => {
+    const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
+
     return (
       <TouchableOpacity
-        style={[styles.itemCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
+        style={[styles.productCard, {backgroundColor: theme.cardBackground, borderColor: theme.border}]}
         activeOpacity={0.7}
         onPress={() => handleItemPress(item)}>
-        <View style={styles.itemContent}>
-          <View style={styles.itemInfo}>
-            <CustomText variant="h5" fontFamily={Fonts.SemiBold} numberOfLines={1}>
+        {/* Left Side - Service Info */}
+        <View style={styles.productInfo}>
+          {/* Header */}
+          <View style={styles.productHeader}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} numberOfLines={1} style={styles.productName}>
               {item.name}
             </CustomText>
             {item.category && (
-              <CustomText variant="h8" style={styles.brandText} numberOfLines={1}>
+              <CustomText variant="h9" style={[styles.brandText, {color: theme.textSecondary}]} numberOfLines={1}>
                 {item.category}
               </CustomText>
             )}
-            <View style={styles.priceRow}>
-              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{color: theme.secondary}}>
-                {formatCurrency(item.price)}
-              </CustomText>
-            </View>
-            <View style={styles.stockRow}>
-              <Icon name="time-outline" size={RFValue(12)} color={theme.textSecondary} />
-              <CustomText variant="h9" style={styles.stockText}>
-                {item.durationMinutes} {item.durationMinutes === 1 ? t('dealer.minute') : t('dealer.minutes')}
-              </CustomText>
-              {item.homeService && (
-                <>
-                  <Icon name="home-outline" size={RFValue(12)} color={theme.textSecondary} style={{marginLeft: 8}} />
-                  <CustomText variant="h9" style={styles.stockText}>
-                    {t('dealer.homeService')}
-                  </CustomText>
-                </>
-              )}
-            </View>
           </View>
-          <View style={[styles.statusBadge, {backgroundColor: '#10b98115'}]}>
-            <CustomText variant="h9" fontFamily={Fonts.Medium} style={[styles.statusText, {color: '#10b981'}]}>
-              {t('dealer.active')}
+
+          {/* Price Row */}
+          <View style={styles.priceRow}>
+            <CustomText variant="h6" fontFamily={Fonts.Bold} style={{color: theme.secondary}}>
+              {formatCurrency(item.price)}
             </CustomText>
           </View>
+
+          {/* Meta Row */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaItem}>
+              <Icon name="time-outline" size={RFValue(12)} color={theme.textSecondary} />
+              <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]}>
+                {item.durationMinutes} {item.durationMinutes === 1 ? t('dealer.minute') : t('dealer.minutes')}
+              </CustomText>
+            </View>
+            {item.homeService && (
+              <View style={styles.metaItem}>
+                <Icon name="home-outline" size={RFValue(12)} color={theme.textSecondary} />
+                <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]}>
+                  {t('dealer.homeService')}
+                </CustomText>
+              </View>
+            )}
+            <View style={[styles.statusBadge, {backgroundColor: '#10b98115'}]}>
+              <CustomText variant="h9" fontFamily={Fonts.Medium} style={[styles.statusText, {color: '#10b981'}]}>
+                {t('dealer.active')}
+              </CustomText>
+            </View>
+          </View>
         </View>
+
+        {/* Right Side - Image Thumbnail */}
+        <Pressable 
+          style={styles.productImageContainer}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleImagePress(item.images || []);
+          }}>
+          {firstImage ? (
+            <Image source={{uri: firstImage}} style={styles.productImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.productImagePlaceholder, {backgroundColor: theme.border}]}>
+              <Icon name="construct-outline" size={RFValue(24)} color={theme.textSecondary} />
+            </View>
+          )}
+        </Pressable>
       </TouchableOpacity>
     );
   };
@@ -410,6 +477,12 @@ const InventoryScreen: React.FC = () => {
       <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
         <Icon name="add" size={RFValue(24)} color="#fff" />
       </TouchableOpacity>
+
+      <ImagePreviewModal
+        visible={isImagePreviewVisible}
+        images={previewImages}
+        onClose={() => setIsImagePreviewVisible(false)}
+      />
     </View>
   );
 };

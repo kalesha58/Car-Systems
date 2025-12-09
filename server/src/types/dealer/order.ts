@@ -61,6 +61,7 @@ export interface IUpdateOrderStatusRequest {
   status: OrderStatus;
   notes?: string;
   deliveryPersonLocation?: ILocation;
+  pickupLocation?: ILocation;
 }
 
 export interface ICancelOrderRequest {

@@ -19,6 +19,7 @@ import type {IService} from '../../types/service/IService';
 import type {ICategoryItem, CategoryType} from '../../types/category/ICategoryItem';
 import {Fonts} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
+import {useTranslation} from 'react-i18next';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -27,6 +28,7 @@ const allVehiclesImage = require('@assets/images/All-Vehicles.jpeg');
 const allServicesImage = require('@assets/images/AutoMobile-Services.jpeg');
 
 const ProductCategories = () => {
+  const {t} = useTranslation();
   const [categories, setCategories] = useState<ICategoryItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ICategoryItem | null>(null);
   const [items, setItems] = useState<ItemType[]>([]);
@@ -66,25 +68,25 @@ const ProductCategories = () => {
         const allCategories: ICategoryItem[] = [
           {
             _id: 'all-categories',
-            name: 'All Categories',
+            name: t('categories.allCategories'),
             image: allProductsImage,
             type: 'all' as CategoryType,
           },
           {
             _id: 'all-products',
-            name: 'All Products',
+            name: t('categories.allProducts'),
             image: allProductsImage,
             type: 'products' as CategoryType,
           },
           {
             _id: 'all-vehicles',
-            name: 'All Vehicles',
+            name: t('categories.allVehicles'),
             image: allVehiclesImage,
             type: 'vehicles' as CategoryType,
           },
           {
             _id: 'all-services',
-            name: 'All Services',
+            name: t('categories.allServices'),
             image: allServicesImage,
             type: 'services' as CategoryType,
           },
@@ -99,25 +101,25 @@ const ProductCategories = () => {
         const defaultCategories: ICategoryItem[] = [
           {
             _id: 'all-categories',
-            name: 'All Categories',
+            name: t('categories.allCategories'),
             image: allProductsImage,
             type: 'all' as CategoryType,
           },
           {
             _id: 'all-products',
-            name: 'All Products',
+            name: t('categories.allProducts'),
             image: allProductsImage,
             type: 'products' as CategoryType,
           },
           {
             _id: 'all-vehicles',
-            name: 'All Vehicles',
+            name: t('categories.allVehicles'),
             image: allVehiclesImage,
             type: 'vehicles' as CategoryType,
           },
           {
             _id: 'all-services',
-            name: 'All Services',
+            name: t('categories.allServices'),
             image: allServicesImage,
             type: 'services' as CategoryType,
           },

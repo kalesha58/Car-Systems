@@ -1,4 +1,17 @@
-import {ICoupon} from '@types/coupon/ICoupon';
+export interface ICoupon {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscountAmount?: number;
+  validFrom: string;
+  validUntil: string;
+  isActive: boolean;
+  applicableOn: 'all' | 'products' | 'services';
+}
 
 export const dummyCoupons: ICoupon[] = [
   {

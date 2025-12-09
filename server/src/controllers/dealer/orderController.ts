@@ -226,7 +226,8 @@ export const acceptOrderController = async (
 ): Promise<void> => {
   try {
     const dealerId = (req as any).dealerId;
-    const order = await acceptOrder(req.params.id, dealerId);
+    const pickupLocation = req.body.pickupLocation;
+    const order = await acceptOrder(req.params.id, dealerId, pickupLocation);
 
     res.status(200).json({
       success: true,

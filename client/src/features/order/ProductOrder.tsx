@@ -22,6 +22,7 @@ import ArrowButton from '@components/ui/ArrowButton';
 import {createOrder} from '@service/orderService';
 import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
 import {navigate} from '@utils/NavigationUtils';
+import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 
 const ProductOrder = () => {
   const {getTotalPrice, cart, clearCart} = useCartStore();
@@ -69,13 +70,30 @@ const ProductOrder = () => {
       total: item.count * (item.item?.price || 0),
     }));
 
+    setLoading(true);
+    
+    // Get user's current location for delivery location
+    let deliveryLocation;
+    try {
+      const locationData = await getCurrentLocationWithAddress();
+      if (locationData) {
+        deliveryLocation = {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          address: locationData.address,
+        };
+      }
+    } catch (error) {
+      // Location permission denied or unavailable - continue without it
+      console.log('Could not get current location:', error);
+    }
+
     const orderData: ICreateOrderRequest = {
       items: orderItems,
       shippingAddress,
       paymentMethod: 'cash_on_delivery',
+      deliveryLocation,
     };
-
-    setLoading(true);
     try {
       const data = await createOrder(orderData);
 
@@ -84,10 +102,16 @@ const ProductOrder = () => {
         clearCart();
         navigate('OrderSuccess', {...data});
       } else {
-        Alert.alert('There was an error');
+        Alert.alert('Error', 'There was an error creating your order. Please try again.');
       }
-    } catch (error) {
-      Alert.alert('Failed to create order');
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      const errorMessage =
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to create order. Please check your connection and try again.';
+      Alert.alert('Order Failed', errorMessage);
     } finally {
       setLoading(false);
     }

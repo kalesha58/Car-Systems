@@ -1,5 +1,5 @@
 import {View, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {useRoute, useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
@@ -12,6 +12,7 @@ import {saveAddress, updateAddress} from '@service/addressService';
 import {ILocationData, IAddressFormData, IAddress} from '../../types/address/IAddress';
 import {useTranslation} from 'react-i18next';
 import {useToast} from '@hooks/useToast';
+import {useTheme} from '@hooks/useTheme';
 
 interface RouteParams {
   location?: ILocationData;
@@ -25,6 +26,7 @@ const AddressForm = () => {
   const navigation = useNavigation();
   const {t} = useTranslation();
   const {showSuccess, showError} = useToast();
+  const {colors} = useTheme();
   const {location, address, isEdit, selectMode} = (route.params as RouteParams) || {};
 
   const [name, setName] = useState('');
@@ -182,6 +184,103 @@ const AddressForm = () => {
       }
     : location;
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        scrollView: {
+          flex: 1,
+        },
+        scrollContent: {
+          padding: 15,
+          paddingBottom: 30,
+        },
+        addressPreview: {
+          backgroundColor: colors.backgroundSecondary,
+          padding: 15,
+          borderRadius: 8,
+          marginBottom: 20,
+        },
+        addressRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 8,
+        },
+        addressText: {
+          color: colors.text,
+          flex: 1,
+        },
+        fullAddress: {
+          color: colors.text,
+          opacity: 0.8,
+          marginLeft: 24,
+        },
+        addressTypeContainer: {
+          marginBottom: 20,
+        },
+        label: {
+          color: colors.text,
+          marginBottom: 12,
+        },
+        typeButtons: {
+          flexDirection: 'row',
+          gap: 10,
+        },
+        typeButton: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.cardBackground,
+        },
+        typeButtonActive: {
+          backgroundColor: colors.secondary,
+          borderColor: colors.secondary,
+        },
+        typeButtonText: {
+          color: colors.text,
+        },
+        typeButtonTextActive: {
+          color: colors.white,
+        },
+        additionalDetailsContainer: {
+          marginBottom: 20,
+        },
+        textAreaContainer: {
+          minHeight: 100,
+        },
+        saveButton: {
+          backgroundColor: colors.secondary,
+          paddingVertical: 15,
+          borderRadius: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 10,
+        },
+        saveButtonDisabled: {
+          backgroundColor: colors.disabled,
+          opacity: 0.6,
+        },
+        saveButtonText: {
+          color: colors.white,
+        },
+        saveButtonTextDisabled: {
+          opacity: 0.7,
+        },
+      }),
+    [colors],
+  );
+
   return (
     <View style={styles.container}>
       <CustomHeader title={isEdit ? 'Edit address details' : 'Add address details'} />
@@ -193,7 +292,7 @@ const AddressForm = () => {
         {currentLocation && (
           <View style={styles.addressPreview}>
             <View style={styles.addressRow}>
-              <Icon name="location" size={RFValue(16)} color={Colors.secondary} />
+              <Icon name="location" size={RFValue(16)} color={colors.secondary} />
               <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={styles.addressText}>
                 {currentLocation.address.split(',')[0]}
               </CustomText>
@@ -259,7 +358,7 @@ const AddressForm = () => {
                       : 'location-outline'
                   }
                   size={RFValue(18)}
-                  color={addressType === type ? '#fff' : Colors.text}
+                  color={addressType === type ? colors.white : colors.text}
                 />
                 <CustomText
                   variant="h8"
@@ -329,98 +428,6 @@ const AddressForm = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 15,
-    paddingBottom: 30,
-  },
-  addressPreview: {
-    backgroundColor: Colors.backgroundSecondary,
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  addressText: {
-    color: Colors.text,
-    flex: 1,
-  },
-  fullAddress: {
-    color: Colors.text,
-    opacity: 0.8,
-    marginLeft: 24,
-  },
-  addressTypeContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  typeButtons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  typeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: '#fff',
-  },
-  typeButtonActive: {
-    backgroundColor: Colors.secondary,
-    borderColor: Colors.secondary,
-  },
-  typeButtonText: {
-    color: Colors.text,
-  },
-  typeButtonTextActive: {
-    color: '#fff',
-  },
-  additionalDetailsContainer: {
-    marginBottom: 20,
-  },
-  textAreaContainer: {
-    minHeight: 100,
-  },
-  saveButton: {
-    backgroundColor: Colors.secondary,
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  saveButtonDisabled: {
-    backgroundColor: Colors.disabled,
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: '#fff',
-  },
-  saveButtonTextDisabled: {
-    opacity: 0.7,
-  },
-});
 
 export default AddressForm;
 

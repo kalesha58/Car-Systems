@@ -19,6 +19,7 @@ export interface ICreateOrderRequest {
   shippingAddress: IShippingAddress;
   paymentMethod: 'credit_card' | 'debit_card' | 'upi' | 'cash_on_delivery';
   dealerId?: string;
+  deliveryLocation?: ILocation;
 }
 
 export interface ILocation {

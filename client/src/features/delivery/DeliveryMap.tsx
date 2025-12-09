@@ -12,6 +12,7 @@ import {
   getOrderById,
   sendLiveOrderUpdates,
 } from '@service/orderService';
+import {getDealerOrderById} from '@service/dealerService';
 import {Colors, Fonts} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -28,24 +29,44 @@ import {IOrderData, ILocation} from '../../types/order/IOrder';
 
 const DeliveryMap = () => {
   const user = useAuthStore(state => state.user);
-
-  const [orderData, setOrderData] = useState<IOrderData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [myLocation, setMyLocation] = useState<ILocation | null>(null);
   const route = useRoute();
-
   const orderDetails = route?.params as IOrderData | undefined;
+  
+  // Initialize with order data from navigation params
+  const [orderData, setOrderData] = useState<IOrderData | null>(orderDetails || null);
+  const [loading, setLoading] = useState<boolean>(!orderDetails);
+  const [myLocation, setMyLocation] = useState<ILocation | null>(null);
   const {setCurrentOrder} = useAuthStore();
 
   const fetchOrderDetails = async () => {
     try {
       const orderId = orderDetails?.id || (orderDetails as any)?._id;
       if (orderId) {
-        const data = await getOrderById(orderId);
-        setOrderData(data);
+        // Check if user is a dealer and use appropriate endpoint
+        const isDealer = user?.role === 'dealer' || 
+          (Array.isArray(user?.role) && user?.role.includes('dealer'));
+        
+        const data = isDealer 
+          ? await getDealerOrderById(orderId)
+          : await getOrderById(orderId);
+        
+        // Update orderData if we got fresh data from API
+        if (data) {
+          setOrderData(data);
+        } else if (!orderData && orderDetails) {
+          // Fallback: use params data if API returns null
+          setOrderData(orderDetails);
+        }
+      } else if (orderDetails && !orderData) {
+        // No orderId but we have orderDetails, use it
+        setOrderData(orderDetails);
       }
     } catch (error) {
       // Error handling - order fetch failed
+      // Fallback: keep using params data if API fails
+      if (!orderData && orderDetails) {
+        setOrderData(orderDetails);
+      }
     } finally {
       setLoading(false);
     }
@@ -219,7 +240,7 @@ const DeliveryMap = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {orderData?.deliveryLocation && orderData?.pickupLocation && (
+        {(orderData?.deliveryLocation || orderData?.pickupLocation || myLocation) && (
           <LiveMap
             deliveryPersonLocation={
               orderData?.deliveryPersonLocation || myLocation

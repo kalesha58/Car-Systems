@@ -12,6 +12,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
+import {useTranslation} from 'react-i18next';
 import {getProductById} from '@service/productService';
 import {IProduct} from '@types/product/IProduct';
 import ProductImageCarousel from '@components/product/ProductImageCarousel';
@@ -39,6 +40,7 @@ type ProductDetailRouteParams = {
 const ProductDetail: React.FC = () => {
   const route = useRoute<RouteProp<ProductDetailRouteParams, 'ProductDetail'>>();
   const {productId} = route.params;
+  const {t} = useTranslation();
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -641,7 +643,7 @@ const ProductDetail: React.FC = () => {
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={styles.serviceText}>
-                24/7 Support
+                {t('product.support247')}
               </CustomText>
             </View>
             <View style={styles.serviceCard}>
@@ -655,12 +657,12 @@ const ProductDetail: React.FC = () => {
                 variant="h8"
                 fontFamily={Fonts.Medium}
                 style={styles.serviceText}>
-                Fast Delivery
+                {t('product.fastDelivery')}
               </CustomText>
             </View>
           </View>
 
-          <CollapsibleSection title="Highlights" defaultExpanded={true}>
+          <CollapsibleSection title={t('product.highlights')} defaultExpanded={true}>
             <View style={styles.highlightsContent}>
               {product.brand && (
                 <View style={styles.highlightRow}>
@@ -668,7 +670,7 @@ const ProductDetail: React.FC = () => {
                     variant="h7"
                     fontFamily={Fonts.Regular}
                     style={styles.highlightLabel}>
-                    Brand
+                    {t('product.brand')}
                   </CustomText>
                   <CustomText
                     variant="h7"
@@ -684,7 +686,7 @@ const ProductDetail: React.FC = () => {
                     variant="h7"
                     fontFamily={Fonts.Regular}
                     style={styles.highlightLabel}>
-                    Product Type
+                    {t('product.productType')}
                   </CustomText>
                   <CustomText
                     variant="h7"

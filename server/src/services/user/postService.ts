@@ -69,10 +69,15 @@ export const createPost = async (
     throw new AppError('Post text is required', 400);
   }
 
+  // Validate images are required
+  if (!images || !Array.isArray(images) || images.length === 0) {
+    throw new AppError('At least one image is required to create a post', 400);
+  }
+
   const post = new Post({
     userId,
     text: text.trim(),
-    images: images || [],
+    images: images,
     location: location
       ? {
           latitude: location.latitude,

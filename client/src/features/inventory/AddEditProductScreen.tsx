@@ -71,6 +71,17 @@ const AddEditProductScreen: React.FC = () => {
     fetchDropdownOptions();
   }, []);
 
+  // Map category name to category ID when categories are loaded in edit mode
+  useEffect(() => {
+    if (isEditMode && product?.category && categories.length > 0) {
+      // Find category option by label (name) matching product.category
+      const matchedCategory = categories.find(cat => cat.label === product.category);
+      if (matchedCategory && category !== matchedCategory.value) {
+        setCategory(matchedCategory.value);
+      }
+    }
+  }, [categories, isEditMode, product?.category]);
+
   const fetchDropdownOptions = async () => {
     try {
       setDropdownsLoading(true);
@@ -142,17 +153,29 @@ const AddEditProductScreen: React.FC = () => {
     const uploadedUrls: string[] = [];
 
     try {
-      for (const uri of imageUris) {
-        if (uri.startsWith('http')) {
+      for (let i = 0; i < imageUris.length; i++) {
+        const uri = imageUris[i];
+        // Check if it's already a URL (http:// or https://) - skip upload
+        if (uri.startsWith('http://') || uri.startsWith('https://')) {
           uploadedUrls.push(uri);
         } else {
-          const url = await uploadImage(uri);
-          uploadedUrls.push(url);
+          // It's a local file, upload it
+          try {
+            const url = await uploadImage(uri);
+            uploadedUrls.push(url);
+          } catch (uploadError: any) {
+            console.error(`Failed to upload image ${i + 1}:`, uploadError);
+            // Provide more specific error message
+            const errorMessage = uploadError?.message || 'Failed to upload image';
+            throw new Error(`${errorMessage}. Please check the image and try again.`);
+          }
         }
       }
       return uploadedUrls;
-    } catch (error) {
-      throw new Error('Failed to upload images. Please try again.');
+    } catch (error: any) {
+      console.error('Error in uploadImages:', error);
+      // Re-throw with the original error message if available
+      throw error instanceof Error ? error : new Error(error?.message || 'Failed to upload images. Please try again.');
     } finally {
       setIsUploadingImages(false);
     }
@@ -272,7 +295,18 @@ const AddEditProductScreen: React.FC = () => {
 
   const getSelectedLabel = () => {
     if (dropdownType === 'category') {
-      return categories.find(c => c.value === category)?.label || category || t('dealer.selectCategory');
+      // First try to find by value (ID)
+      const foundByValue = categories.find(c => c.value === category);
+      if (foundByValue) {
+        return foundByValue.label;
+      }
+      // Fallback: try to find by label (name) in case category is still a name
+      const foundByLabel = categories.find(c => c.label === category);
+      if (foundByLabel) {
+        return foundByLabel.label;
+      }
+      // Final fallback
+      return category || t('dealer.selectCategory');
     } else {
       return vehicleTypes.find(v => v.value === vehicleType)?.label || vehicleType || t('dealer.selectVehicleType');
     }

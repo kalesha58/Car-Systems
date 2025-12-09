@@ -67,6 +67,19 @@
     "sakuraFall": "Sakura Fall",
     "christmasSleigh": "Christmas Sleigh"
   },
+  "categories": {
+    "allCategories": "All Categories",
+    "allProducts": "All Products",
+    "allVehicles": "All Vehicles",
+    "allServices": "All Services"
+  },
+  "product": {
+    "brand": "Brand",
+    "productType": "Product Type",
+    "highlights": "Highlights",
+    "fastDelivery": "Fast Delivery",
+    "support247": "24/7 Support"
+  },
   "dealer": {
     "dashboard": "Dashboard",
     "profitAmount": "Total Profit",

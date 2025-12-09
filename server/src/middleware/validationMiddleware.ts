@@ -210,7 +210,7 @@ export const validateCreatePost = (
   next: NextFunction,
 ): void => {
   try {
-    const { text } = req.body;
+    const { text, images } = req.body;
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return next(new ValidationError('Post text is required'));
@@ -218,6 +218,22 @@ export const validateCreatePost = (
 
     if (text.trim().length > 5000) {
       return next(new ValidationError('Post text must be less than 5000 characters'));
+    }
+
+    // Validate images - now required
+    if (!images || !Array.isArray(images)) {
+      return next(new ValidationError('Images are required and must be an array'));
+    }
+
+    if (images.length === 0) {
+      return next(new ValidationError('At least one image is required to create a post'));
+    }
+
+    // Validate each image URL is a string
+    for (const image of images) {
+      if (typeof image !== 'string' || !image.trim()) {
+        return next(new ValidationError('Each image must be a valid URL string'));
+      }
     }
 
     if (req.body.location) {

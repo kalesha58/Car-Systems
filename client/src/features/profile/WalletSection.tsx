@@ -1,13 +1,26 @@
 import {View, Text, StyleSheet} from 'react-native';
 import React from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {Colors} from '@utils/Constants';
 import WalletItem from './WalletItem';
 import {useTranslation} from 'react-i18next';
+import {useTheme} from '@hooks/useTheme';
 
 const WalletSection = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
+  const {colors} = useTheme();
+
+  const styles = StyleSheet.create({
+    walletContainer: {
+      justifyContent: 'space-around',
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      paddingVertical: 15,
+      borderRadius: 15,
+      marginVertical: 20,
+    },
+  });
 
   return (
     <View style={styles.walletContainer}>
@@ -24,15 +37,4 @@ const WalletSection = () => {
   );
 };
 
-const styles = StyleSheet.create({
-    walletContainer: {
-        justifyContent: 'space-around',
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.backgroundSecondary,
-        paddingVertical: 15,
-        borderRadius: 15,
-        marginVertical: 20
-    }
-})
-export default WalletSection
+export default WalletSection;

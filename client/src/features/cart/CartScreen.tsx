@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useFocusEffect, useRoute, useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import {Fonts} from '@utils/Constants';
@@ -29,6 +29,7 @@ import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
 import CouponModal from '@components/coupon/CouponModal';
 import {ICoupon} from '@types/coupon/ICoupon';
+import {getSavedAddresses} from '@service/addressService';
 
 interface RouteParams {
   selectedAddress?: IAddress;
@@ -51,6 +52,28 @@ const CartScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
   const [couponModalVisible, setCouponModalVisible] = useState(false);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+
+  // Fetch latest address on mount
+  useEffect(() => {
+    const fetchLatestAddress = async () => {
+      try {
+        setIsLoadingAddress(true);
+        const addresses = await getSavedAddresses();
+        // Addresses are sorted by createdAt descending (newest first)
+        if (addresses && addresses.length > 0) {
+          setSelectedAddress(addresses[0]); // Set the latest address as default
+        }
+      } catch (error) {
+        // Error handling - no fallback per rules
+        console.log('Failed to fetch addresses:', error);
+      } finally {
+        setIsLoadingAddress(false);
+      }
+    };
+
+    fetchLatestAddress();
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -306,7 +329,7 @@ const CartScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      <View style={hocStyles.cartContainer}>
+      <View style={[hocStyles.cartContainer, {backgroundColor: colors.cardBackground || colors.background}]}>
         <View style={styles.absoluteContainer}>
           <View style={styles.addressContainer}>
             {selectedAddress ? (

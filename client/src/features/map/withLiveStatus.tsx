@@ -6,19 +6,35 @@ import {useAuthStore} from '@state/authStore';
 import {hocStyles} from '@styles/GlobalStyles';
 import {Colors, Fonts} from '@utils/Constants';
 import {navigate} from '@utils/NavigationUtils';
-import {FC, useEffect, useRef} from 'react';
+import {FC, useEffect, useRef, useMemo} from 'react';
 import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {io, Socket} from 'socket.io-client';
+import {useTheme} from '@hooks/useTheme';
 
 const withLiveStatus = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
 ): FC<P> => {
   const WithLiveStatusComponent: FC<P> = props => {
     const {currentOrder, setCurrentOrder} = useAuthStore();
+    const {colors} = useTheme();
     const routeName = useNavigationState(
       state => state.routes[state.index]?.name,
     );
     const socketRef = useRef<Socket | null>(null);
+
+    const dynamicStyles = useMemo(
+      () =>
+        StyleSheet.create({
+          img: {
+            backgroundColor: colors.backgroundSecondary,
+            borderRadius: 100,
+            padding: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        }),
+      [colors.backgroundSecondary],
+    );
 
     const fetchOrderDetails = async () => {
       if (!currentOrder?._id && !currentOrder?.id) {
@@ -80,10 +96,14 @@ const withLiveStatus = <P extends object>(
           <View
             style={[
               hocStyles.cartContainer,
-              {flexDirection: 'row', alignItems: 'center'},
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.cardBackground || colors.background,
+              },
             ]}>
             <View style={styles.flexRow}>
-              <View style={styles.img}>
+              <View style={dynamicStyles.img}>
                 <Image
                   source={require('@assets/icons/bucket.png')}
                   style={{width: 20, height: 20}}

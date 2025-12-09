@@ -21,8 +21,11 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {useTranslation} from 'react-i18next';
 import {useAuthStore} from '@state/authStore';
 
+type TabType = 'delivered' | 'available';
+
 const DealerOrdersList: React.FC = () => {
   const [orders, setOrders] = useState<IOrderData[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('delivered');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const {setCurrentOrder} = useAuthStore();
@@ -132,6 +135,36 @@ const DealerOrdersList: React.FC = () => {
     setCurrentOrder(order);
     navigate('DeliveryMap', order);
   };
+
+  // Filter orders based on active tab
+  const getFilteredOrders = (): IOrderData[] => {
+    if (activeTab === 'available') {
+      // Available tab: Show only ORDER_PLACED and PAYMENT_CONFIRMED
+      return orders.filter(order => {
+        const normalizedStatus = order.status?.toUpperCase() || '';
+        return normalizedStatus === 'ORDER_PLACED' || normalizedStatus === 'PAYMENT_CONFIRMED';
+      });
+    } else {
+      // Delivered tab: Show only DELIVERED orders
+      return orders.filter(order => {
+        const normalizedStatus = order.status?.toUpperCase() || '';
+        return normalizedStatus === 'DELIVERED';
+      });
+    }
+  };
+
+  const filteredOrders = getFilteredOrders();
+
+  // Get counts for tabs
+  const availableCount = orders.filter(order => {
+    const normalizedStatus = order.status?.toUpperCase() || '';
+    return normalizedStatus === 'ORDER_PLACED' || normalizedStatus === 'PAYMENT_CONFIRMED';
+  }).length;
+
+  const deliveredCount = orders.filter(order => {
+    const normalizedStatus = order.status?.toUpperCase() || '';
+    return normalizedStatus === 'DELIVERED';
+  }).length;
 
   const renderOrderItem = ({item}: {item: IOrderData}) => {
     const statusColor = getStatusColor(item.status);
@@ -431,6 +464,41 @@ const DealerOrdersList: React.FC = () => {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    tabContainer: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: '#e5e7eb',
+      paddingHorizontal: 10,
+    },
+    tab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+      gap: 6,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+    },
+    tabText: {
+      fontSize: RFValue(14),
+    },
+    badge: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    badgeText: {
+      color: '#fff',
+      fontSize: RFValue(10),
+      fontFamily: Fonts.SemiBold,
+    },
   });
 
   if (loading) {
@@ -447,19 +515,77 @@ const DealerOrdersList: React.FC = () => {
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
       <CustomHeader title={t('orders')} />
-      {orders.length === 0 ? (
+      
+      {/* Tab Bar */}
+      <View style={[styles.tabContainer, {backgroundColor: colors.cardBackground}]}>
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'delivered' && styles.activeTab,
+            activeTab === 'delivered' && {borderBottomColor: colors.secondary},
+          ]}
+          onPress={() => setActiveTab('delivered')}
+          activeOpacity={0.7}>
+          <CustomText
+            variant="h7"
+            fontFamily={Fonts.SemiBold}
+            style={[
+              styles.tabText,
+              {color: activeTab === 'delivered' ? colors.secondary : colors.disabled},
+            ]}>
+            Delivered
+          </CustomText>
+          {deliveredCount > 0 && (
+            <View style={[styles.badge, {backgroundColor: activeTab === 'delivered' ? colors.secondary : colors.disabled}]}>
+              <CustomText variant="h9" style={styles.badgeText}>
+                {deliveredCount}
+              </CustomText>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'available' && styles.activeTab,
+            activeTab === 'available' && {borderBottomColor: colors.secondary},
+          ]}
+          onPress={() => setActiveTab('available')}
+          activeOpacity={0.7}>
+          <CustomText
+            variant="h7"
+            fontFamily={Fonts.SemiBold}
+            style={[
+              styles.tabText,
+              {color: activeTab === 'available' ? colors.secondary : colors.disabled},
+            ]}>
+            Available
+          </CustomText>
+          {availableCount > 0 && (
+            <View style={[styles.badge, {backgroundColor: activeTab === 'available' ? colors.secondary : colors.disabled}]}>
+              <CustomText variant="h9" style={styles.badgeText}>
+                {availableCount}
+              </CustomText>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {filteredOrders.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Icon name="bag-outline" size={RFValue(64)} color={colors.disabled} style={styles.emptyIcon} />
           <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-            {t('noOrders')}
+            {activeTab === 'available' ? 'No Available Orders' : 'No Delivered Orders'}
           </CustomText>
           <CustomText variant="h8" style={styles.emptyText}>
-            {t('noOrdersMessage')}
+            {activeTab === 'available' 
+              ? 'No orders are waiting for acceptance' 
+              : 'No orders have been delivered yet'}
           </CustomText>
         </View>
       ) : (
         <FlatList
-          data={orders}
+          data={filteredOrders}
           renderItem={renderOrderItem}
           keyExtractor={item => item.id || item.orderNumber}
           contentContainerStyle={styles.content}

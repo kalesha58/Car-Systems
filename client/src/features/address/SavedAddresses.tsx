@@ -11,6 +11,7 @@ import AddressItem from './AddressItem';
 import {IAddress} from '../../types/address/IAddress';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useToast} from '@hooks/useToast';
+import {useTheme} from '@hooks/useTheme';
 
 interface RouteParams {
   selectMode?: boolean;
@@ -21,6 +22,7 @@ const SavedAddresses = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const {showSuccess, showError} = useToast();
+  const {colors} = useTheme();
   const {selectMode, preselectedAddressId} = (route.params as RouteParams) || {};
   const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -135,7 +137,7 @@ const SavedAddresses = () => {
   const renderEmptyState = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Icon name="location-outline" size={RFValue(60)} color={Colors.disabled} />
+        <Icon name="location-outline" size={RFValue(60)} color={colors.disabled} />
         <CustomText variant="h6" fontFamily={Fonts.Medium} style={styles.emptyText}>
           No saved addresses
         </CustomText>
@@ -153,7 +155,7 @@ const SavedAddresses = () => {
           navigate('AddNewAddress', selectMode ? {selectMode: true} : undefined)
         }>
         <View style={styles.headerAddButton}>
-          <Icon name="add" size={RFValue(16)} color={Colors.secondary} />
+          <Icon name="add" size={RFValue(16)} color={colors.secondary} />
           <CustomText
             variant="h8"
             fontFamily={Fonts.Medium}
@@ -165,6 +167,53 @@ const SavedAddresses = () => {
     );
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    headerAddButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: colors.secondary,
+    },
+    headerAddButtonText: {
+      color: colors.secondary,
+      fontSize: RFValue(11),
+    },
+    listContainer: {
+      paddingBottom: 20,
+    },
+    emptyListContainer: {
+      flexGrow: 1,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 60,
+    },
+    emptyText: {
+      marginTop: 20,
+      color: colors.text,
+    },
+    emptySubText: {
+      marginTop: 8,
+      color: colors.disabled,
+      textAlign: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });
+
   if (loading && addresses.length === 0) {
     return (
       <View style={styles.container}>
@@ -173,7 +222,7 @@ const SavedAddresses = () => {
           rightComponent={renderHeaderButton()}
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.secondary} />
+          <ActivityIndicator size="large" color={colors.secondary} />
         </View>
       </View>
     );
@@ -200,53 +249,6 @@ const SavedAddresses = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  headerAddButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: Colors.secondary,
-  },
-  headerAddButtonText: {
-    color: Colors.secondary,
-    fontSize: RFValue(11),
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-  emptyListContainer: {
-    flexGrow: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    marginTop: 20,
-    color: Colors.text,
-  },
-  emptySubText: {
-    marginTop: 8,
-    color: Colors.disabled,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default SavedAddresses;
 

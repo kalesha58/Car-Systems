@@ -1,4 +1,4 @@
-import { Order, IOrderDocument, OrderStatus, TimelineActor } from '../../models/Order';
+import { Order, IOrderDocument, OrderStatus, TimelineActor, ILocation } from '../../models/Order';
 import { OrderStatusLog } from '../../models/OrderStatusLog';
 import { ReturnRequest } from '../../models/ReturnRequest';
 import { SignUp } from '../../models/SignUp';
@@ -56,6 +56,7 @@ export interface ICreateUserOrderRequest {
   };
   paymentMethod: 'credit_card' | 'debit_card' | 'upi' | 'cash_on_delivery';
   dealerId?: string;
+  deliveryLocation?: ILocation;
 }
 
 export interface IGetUserOrdersRequest {
@@ -184,6 +185,7 @@ export const createUserOrder = async (
       paymentMethod: data.paymentMethod,
       shippingAddress: data.shippingAddress,
       billingAddress: data.shippingAddress,
+      deliveryLocation: data.deliveryLocation,
       status: 'ORDER_PLACED',
       paymentStatus: 'pending',
       timeline: [

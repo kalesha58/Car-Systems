@@ -5,6 +5,7 @@ import {
   PaymentStatus,
   ITimelineEvent,
   TimelineActor,
+  ILocation,
 } from '../../models/Order';
 import { OrderStatusLog } from '../../models/OrderStatusLog';
 import { OrderDocument } from '../../models/OrderDocument';
@@ -398,6 +399,11 @@ export const updateOrderStatus = async (
     // Update delivery person location if provided
     if (data.deliveryPersonLocation) {
       order.deliveryPersonLocation = data.deliveryPersonLocation;
+    }
+
+    // Update pickup location if provided
+    if (data.pickupLocation) {
+      order.pickupLocation = data.pickupLocation;
     }
 
     // Validate status transition
@@ -862,6 +868,7 @@ export const getDealerOrderStats = async (dealerId: string): Promise<IOrderStats
 export const acceptOrder = async (
   orderId: string,
   dealerId: string,
+  pickupLocation?: ILocation,
 ): Promise<IDealerOrder> => {
   try {
     const order = await Order.findById(orderId);
@@ -887,6 +894,11 @@ export const acceptOrder = async (
     const previousStatus = order.status;
     order.dealerId = dealerId;
     order.status = 'ORDER_CONFIRMED';
+    
+    // Set pickup location if provided
+    if (pickupLocation) {
+      order.pickupLocation = pickupLocation;
+    }
 
     order.timeline.push({
       status: 'ORDER_CONFIRMED',

@@ -5,19 +5,35 @@ import {useAuthStore} from '@state/authStore';
 import {hocStyles} from '@styles/GlobalStyles';
 import {Colors, Fonts} from '@utils/Constants';
 import {navigate} from '@utils/NavigationUtils';
-import {FC, useEffect, useState} from 'react';
+import {FC, useEffect, useState, useMemo} from 'react';
 import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {ILocation, IOrderData} from '../../types/order/IOrder';
 import {useNavigationState} from '@react-navigation/native';
+import {useTheme} from '@hooks/useTheme';
 
 const withLiveOrder = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
 ): FC<P> => {
   const WithLiveOrder: FC<P> = props => {
     const {currentOrder, user} = useAuthStore();
+    const {colors} = useTheme();
     const [myLocation, setMyLocation] = useState<ILocation | null>(null);
     const routeName = useNavigationState(
       state => state.routes[state.index]?.name,
+    );
+
+    const dynamicStyles = useMemo(
+      () =>
+        StyleSheet.create({
+          img: {
+            backgroundColor: colors.backgroundSecondary,
+            borderRadius: 100,
+            padding: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        }),
+      [colors.backgroundSecondary],
     );
 
     useEffect(() => {
@@ -78,10 +94,11 @@ const withLiveOrder = <P extends object>(
                   flexDirection: 'row',
                   alignItems: 'center',
                   paddingHorizontal: 20,
+                  backgroundColor: colors.cardBackground || colors.background,
                 },
               ]}>
               <View style={styles.flexRow}>
-                <View style={styles.img}>
+                <View style={dynamicStyles.img}>
                   <Image
                     source={require('../../assets/icons/bucket.png')}
                     style={{width: 20, height: 20}}
@@ -134,13 +151,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingVertical: 10,
     padding: 10,
-  },
-  img: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 100,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   btn: {
     paddingHorizontal: 10,

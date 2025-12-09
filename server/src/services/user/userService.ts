@@ -30,7 +30,32 @@ export const getUsers = async (
   try {
     const skip = (page - 1) * limit;
 
-    // Build filter - exclude current user and only show active users
+    // Build filter - exclude current user, only show active users, and exclude dealers
+    const andConditions: any[] = [
+      // Exclude users with dealer role (handle both string and array roles)
+      {
+        $or: [
+          { role: { $exists: false } },
+          { role: null },
+          { role: { $ne: 'dealer' } },
+          { role: { $not: { $in: ['dealer'] } } },
+          // Handle role as array - exclude if array contains 'dealer'
+          { role: { $not: { $elemMatch: { $eq: 'dealer' } } } },
+        ],
+      },
+    ];
+
+    // Add search filter if provided
+    if (search) {
+      andConditions.push({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } },
+        ],
+      });
+    }
+
     const filter: any = {
       _id: { $ne: currentUserId },
       $or: [
@@ -38,20 +63,8 @@ export const getUsers = async (
         { status: { $exists: false } },
         { status: null },
       ],
+      $and: andConditions,
     };
-
-    // Add search filter if provided
-    if (search) {
-      filter.$and = [
-        {
-          $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-            { phone: { $regex: search, $options: 'i' } },
-          ],
-        },
-      ];
-    }
 
     const [users, total] = await Promise.all([
       SignUp.find(filter)

@@ -93,7 +93,9 @@ export const confirmOrder = async (
     const response = await appAxios.post<{
       success: boolean;
       Response: IOrderData;
-    }>(`/dealer/orders/${orderId}/accept`);
+    }>(`/dealer/orders/${orderId}/accept`, {
+      pickupLocation: location,
+    });
 
     if (response.data.success && response.data.Response) {
       const acceptedOrder = response.data.Response;

@@ -280,18 +280,25 @@ const CreateNewPost: React.FC = () => {
       return;
     }
 
+    if (imageUris.length === 0) {
+      showError('Please add at least one image to create a post.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      let uploadedImageUrls: string[] = [];
+      const uploadedImageUrls = await uploadImages();
 
-      if (imageUris.length > 0) {
-        uploadedImageUrls = await uploadImages();
+      if (uploadedImageUrls.length === 0) {
+        showError('Failed to upload images. Please try again.');
+        setIsLoading(false);
+        return;
       }
 
       const postData: ICreatePostRequest = {
         text: text.trim(),
-        images: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
+        images: uploadedImageUrls,
         location: location
           ? {
               latitude: location.latitude,
@@ -350,7 +357,7 @@ const CreateNewPost: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>Images (Optional)</CustomText>
+          <CustomText style={styles.label}>Images *</CustomText>
           <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
             <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>
