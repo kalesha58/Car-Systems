@@ -1,5 +1,4 @@
 import {useToastContext} from '@context/ToastContext';
-import {IToastConfig} from '@types/toast/IToast';
 
 export const useToast = () => {
   const {showToast} = useToastContext();
