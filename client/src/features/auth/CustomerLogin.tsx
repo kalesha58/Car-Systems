@@ -8,6 +8,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  Dimensions,
 } from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {
@@ -33,6 +34,17 @@ import {useToast} from '@hooks/useToast';
 import {useAuthStore} from '@state/authStore';
 
 const bottomColors = [...lightColors].reverse();
+
+// Define responsive helper at module level (before component)
+const screenWidth = Dimensions.get('window').width;
+const isTablet = screenWidth >= 768;
+const isDesktop = screenWidth >= 1024;
+
+const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) => {
+  if (isDesktop && desktop !== undefined) return desktop;
+  if (isTablet && tablet !== undefined) return tablet;
+  return mobile;
+};
 
 const CustomerLogin = () => {
   const [email, setEmail] = useState('');
@@ -289,13 +301,18 @@ const CustomerLogin = () => {
                   rightIcon={
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
-                      style={{ padding: 8 }}
+                      style={{ 
+                        padding: getResponsiveValue(8, 10, 12),
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.7}
                     >
                       <Ionicons
                         name={showPassword ? "eye-off" : "eye"}
                         color="#F8890E"
-                        size={RFValue(22)}
+                        size={RFValue(getResponsiveValue(22, 24, 26))}
                       />
                     </TouchableOpacity>
                   }
@@ -331,8 +348,10 @@ const CustomerLogin = () => {
           <SafeAreaView />
         </View>
 
-        <TouchableOpacity style={styles.absoluteSwitch} onPress={()=>resetAndNavigate('DeliveryLogin')}>
-          <Icon name='bike-fast' color="#000" size={RFValue(18)}/>
+        <TouchableOpacity 
+          style={styles.absoluteSwitch} 
+          onPress={()=>resetAndNavigate('DeliveryLogin')}>
+          <Icon name='bike-fast' color="#000" size={RFValue(getResponsiveValue(18, 20, 22))}/>
         </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
@@ -345,50 +364,50 @@ const styles = StyleSheet.create({
   },
   absoluteSwitch:{
     position:'absolute',
-    top:Platform.OS==='ios' ? 50:30,
+    top:Platform.OS==='ios' ? getResponsiveValue(50, 60, 70) : getResponsiveValue(30, 40, 50),
     backgroundColor:"#fff",
     shadowColor:"#000",
     shadowOffset:{width:1,height:1},
     shadowOpacity:0.5,
     shadowRadius:12,
     elevation:10,
-    padding:10,
-    height:55,
+    padding:getResponsiveValue(10, 12, 14),
+    height:getResponsiveValue(55, 60, 65),
     justifyContent:"center",
     alignItems:'center',
-    width:55,
+    width:getResponsiveValue(55, 60, 65),
     borderRadius:50,
-    right:10,
+    right:getResponsiveValue(10, 16, 20),
     zIndex:99
   },
   text: {
-    marginTop: 2,
-    marginBottom: 25,
+    marginTop: getResponsiveValue(2, 4, 6),
+    marginBottom: getResponsiveValue(25, 30, 35),
     opacity: 0.8,
   },
   logo: {
-    height: 50,
-    width: 50,
-    borderRadius: 20,
+    height: getResponsiveValue(50, 60, 70),
+    width: getResponsiveValue(50, 60, 70),
+    borderRadius: getResponsiveValue(20, 24, 28),
     marginTop: 0,
-    marginBottom: 10,
+    marginBottom: getResponsiveValue(10, 12, 14),
   },
   subContainer: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: getResponsiveValue(20, 24, 28),
   },
   footer: {
     borderTopWidth: 0.8,
     borderColor: Colors.border,
-    paddingBottom: 10,
+    paddingBottom: getResponsiveValue(10, 12, 14),
     zIndex: 22,
     position: 'absolute',
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
+    padding: getResponsiveValue(10, 12, 14),
     backgroundColor: '#f8f9fc',
     width: '100%',
   },
@@ -400,14 +419,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    maxWidth: isDesktop ? 500 : isTablet ? 450 : '100%',
+    alignSelf: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: 20,
+    paddingHorizontal: isDesktop ? 40 : isTablet ? 32 : 20,
     paddingTop: 0,
-    paddingBottom: 20,
+    paddingBottom: isDesktop ? 28 : isTablet ? 24 : 20,
   },
   signupButton: {
-    marginTop: 10,
-    paddingVertical: 10,
+    marginTop: getResponsiveValue(10, 12, 14),
+    paddingVertical: getResponsiveValue(10, 12, 14),
   },
   signupButtonText: {
     color: Colors.secondary,
