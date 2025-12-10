@@ -19,76 +19,91 @@ const ProfitCard: FC<IProfitCardProps> = ({amount, label, growth, growthLabel}) 
 
   const styles = StyleSheet.create({
     card: {
-      backgroundColor: colors.primary + '15',
+      backgroundColor: colors.backgroundSecondary || colors.background,
       borderRadius: 12,
       padding: 20,
       marginBottom: 16,
+      position: 'relative',
       ...(isDark
         ? {}
         : {
             shadowColor: '#000000',
             shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 2,
           }),
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 8,
     },
     label: {
       fontSize: RFValue(12),
       color: colors.textSecondary,
-      marginBottom: 8,
-    },
-    amount: {
-      fontSize: RFValue(28),
-      fontWeight: '700',
-      marginBottom: 12,
     },
     growthContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    growthIcon: {
-      marginRight: 4,
+      alignItems: 'flex-end',
     },
     growthText: {
-      fontSize: RFValue(12),
+      fontSize: RFValue(14),
+      fontFamily: Fonts.SemiBold,
       color: growth !== undefined && growth >= 0 ? colors.success : colors.error,
+      marginBottom: 4,
+    },
+    growthLabelContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    growthIcon: {
+      marginRight: 2,
     },
     growthLabel: {
       fontSize: RFValue(10),
-      color: colors.textSecondary,
-      marginLeft: 4,
+      color: colors.success,
+    },
+    amount: {
+      fontSize: RFValue(32),
+      fontWeight: '700',
+      color: colors.text,
+      marginTop: 4,
     },
   });
 
   return (
     <View style={styles.card}>
-      <CustomText variant="h8" style={styles.label}>
-        {label}
-      </CustomText>
+      <View style={styles.headerRow}>
+        <CustomText variant="h8" style={styles.label}>
+          {label}
+        </CustomText>
+        {growth !== undefined && (
+          <View style={styles.growthContainer}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.growthText}>
+              {growth >= 0 ? '+' : ''}
+              {growth}%
+            </CustomText>
+            {growthLabel && (
+              <View style={styles.growthLabelContainer}>
+                <Icon
+                  name={growth >= 0 ? 'trending-up' : 'trending-down'}
+                  size={12}
+                  color={colors.success}
+                  style={styles.growthIcon}
+                />
+                <CustomText variant="h9" style={styles.growthLabel}>
+                  {growthLabel}
+                </CustomText>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
       <CustomText variant="h1" fontFamily={Fonts.Bold} style={styles.amount}>
         {formatCurrency(amount)}
       </CustomText>
-      {growth !== undefined && (
-        <View style={styles.growthContainer}>
-          <Icon
-            name={growth >= 0 ? 'trending-up' : 'trending-down'}
-            size={16}
-            color={growth >= 0 ? colors.success : colors.error}
-            style={styles.growthIcon}
-          />
-          <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.growthText}>
-            {growth >= 0 ? '+' : ''}
-            {growth}%
-          </CustomText>
-          {growthLabel && (
-            <CustomText variant="h9" style={styles.growthLabel}>
-              {growthLabel}
-            </CustomText>
-          )}
-        </View>
-      )}
     </View>
   );
 };

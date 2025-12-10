@@ -183,6 +183,31 @@ export const getBusinessRegistrationByUserId = async (
   }
 };
 
+export interface ICreateBusinessRegistrationRequest {
+  businessName: string;
+  type: string;
+  address: string;
+  phone: string;
+  gst?: string;
+}
+
+export const createBusinessRegistration = async (
+  data: ICreateBusinessRegistrationRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    const response = await appAxios.post<IBusinessRegistrationResponse>(
+      '/dealer/business-registration',
+      data,
+    );
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to create business registration');
+  } catch (error) {
+    throw error;
+  }
+};
+
 export interface IBooking {
   id: string;
   dealerId: string;

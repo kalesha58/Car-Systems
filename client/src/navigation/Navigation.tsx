@@ -18,6 +18,7 @@ import PlayScreen from '@features/play/PlayScreen';
 import ProductCategories from '@features/category/ProductCategories';
 import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
+import BusinessRegistrationScreen from '@features/profile/BusinessRegistrationScreen';
 import SavedAddresses from '@features/address/SavedAddresses';
 import AddNewAddress from '@features/address/AddNewAddress';
 import AddressForm from '@features/address/AddressForm';
@@ -303,6 +304,13 @@ const Navigation: FC = () => {
           />
           <Stack.Screen name="DealerOrdersList" component={DealerOrdersList} />
           <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen
+            name="BusinessRegistration"
+            component={BusinessRegistrationScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
           <Stack.Screen name="SavedAddresses" component={SavedAddresses} />
           <Stack.Screen name="AddNewAddress" component={AddNewAddress} />
           <Stack.Screen name="AddressForm" component={AddressForm} />

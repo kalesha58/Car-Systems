@@ -21,7 +21,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {useTranslation} from 'react-i18next';
 import {useAuthStore} from '@state/authStore';
 
-type TabType = 'delivered' | 'available';
+type TabType = 'delivered' | 'available' | 'inProgress';
 
 const DealerOrdersList: React.FC = () => {
   const [orders, setOrders] = useState<IOrderData[]>([]);
@@ -144,6 +144,12 @@ const DealerOrdersList: React.FC = () => {
         const normalizedStatus = order.status?.toUpperCase() || '';
         return normalizedStatus === 'ORDER_PLACED' || normalizedStatus === 'PAYMENT_CONFIRMED';
       });
+    } else if (activeTab === 'inProgress') {
+      // In Progress tab: Show ORDER_CONFIRMED and OUT_FOR_DELIVERY
+      return orders.filter(order => {
+        const normalizedStatus = order.status?.toUpperCase() || '';
+        return normalizedStatus === 'ORDER_CONFIRMED' || normalizedStatus === 'OUT_FOR_DELIVERY';
+      });
     } else {
       // Delivered tab: Show only DELIVERED orders
       return orders.filter(order => {
@@ -159,6 +165,11 @@ const DealerOrdersList: React.FC = () => {
   const availableCount = orders.filter(order => {
     const normalizedStatus = order.status?.toUpperCase() || '';
     return normalizedStatus === 'ORDER_PLACED' || normalizedStatus === 'PAYMENT_CONFIRMED';
+  }).length;
+
+  const inProgressCount = orders.filter(order => {
+    const normalizedStatus = order.status?.toUpperCase() || '';
+    return normalizedStatus === 'ORDER_CONFIRMED' || normalizedStatus === 'OUT_FOR_DELIVERY';
   }).length;
 
   const deliveredCount = orders.filter(order => {
@@ -466,25 +477,21 @@ const DealerOrdersList: React.FC = () => {
     },
     tabContainer: {
       flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderBottomColor: '#e5e7eb',
-      paddingHorizontal: 10,
+      paddingHorizontal: 8,
+      paddingVertical: 12,
+      gap: 4,
     },
     tab: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 12,
+      gap: 4,
+      paddingVertical: 10,
+      paddingHorizontal: 4,
+      borderRadius: 8,
       borderBottomWidth: 2,
       borderBottomColor: 'transparent',
-      gap: 6,
-    },
-    activeTab: {
-      borderBottomWidth: 2,
-    },
-    tabText: {
-      fontSize: RFValue(14),
     },
     badge: {
       minWidth: 20,
@@ -517,22 +524,24 @@ const DealerOrdersList: React.FC = () => {
       <CustomHeader title={t('orders')} />
       
       {/* Tab Bar */}
-      <View style={[styles.tabContainer, {backgroundColor: colors.cardBackground}]}>
+      <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'delivered' && styles.activeTab,
-            activeTab === 'delivered' && {borderBottomColor: colors.secondary},
+            activeTab === 'delivered' && {backgroundColor: colors.secondary + '20', borderBottomColor: colors.secondary},
           ]}
           onPress={() => setActiveTab('delivered')}
           activeOpacity={0.7}>
+          <Icon
+            name="checkmark-circle"
+            size={RFValue(16)}
+            color={activeTab === 'delivered' ? colors.secondary : (colors.textSecondary || colors.disabled)}
+          />
           <CustomText
-            variant="h7"
+            variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={[
-              styles.tabText,
-              {color: activeTab === 'delivered' ? colors.secondary : colors.disabled},
-            ]}>
+            style={{color: activeTab === 'delivered' ? colors.secondary : (colors.textSecondary || colors.disabled)}}
+            numberOfLines={1}>
             Delivered
           </CustomText>
           {deliveredCount > 0 && (
@@ -547,18 +556,48 @@ const DealerOrdersList: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'available' && styles.activeTab,
-            activeTab === 'available' && {borderBottomColor: colors.secondary},
+            activeTab === 'inProgress' && {backgroundColor: colors.secondary + '20', borderBottomColor: colors.secondary},
+          ]}
+          onPress={() => setActiveTab('inProgress')}
+          activeOpacity={0.7}>
+          <Icon
+            name="bicycle"
+            size={RFValue(16)}
+            color={activeTab === 'inProgress' ? colors.secondary : (colors.textSecondary || colors.disabled)}
+          />
+          <CustomText
+            variant="h6"
+            fontFamily={Fonts.SemiBold}
+            style={{color: activeTab === 'inProgress' ? colors.secondary : (colors.textSecondary || colors.disabled)}}
+            numberOfLines={1}>
+            In Progress
+          </CustomText>
+          {inProgressCount > 0 && (
+            <View style={[styles.badge, {backgroundColor: activeTab === 'inProgress' ? colors.secondary : colors.disabled}]}>
+              <CustomText variant="h9" style={styles.badgeText}>
+                {inProgressCount}
+              </CustomText>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'available' && {backgroundColor: colors.secondary + '20', borderBottomColor: colors.secondary},
           ]}
           onPress={() => setActiveTab('available')}
           activeOpacity={0.7}>
+          <Icon
+            name="time-outline"
+            size={RFValue(16)}
+            color={activeTab === 'available' ? colors.secondary : (colors.textSecondary || colors.disabled)}
+          />
           <CustomText
-            variant="h7"
+            variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={[
-              styles.tabText,
-              {color: activeTab === 'available' ? colors.secondary : colors.disabled},
-            ]}>
+            style={{color: activeTab === 'available' ? colors.secondary : (colors.textSecondary || colors.disabled)}}
+            numberOfLines={1}>
             Available
           </CustomText>
           {availableCount > 0 && (
@@ -575,11 +614,17 @@ const DealerOrdersList: React.FC = () => {
         <View style={styles.emptyContainer}>
           <Icon name="bag-outline" size={RFValue(64)} color={colors.disabled} style={styles.emptyIcon} />
           <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
-            {activeTab === 'available' ? 'No Available Orders' : 'No Delivered Orders'}
+            {activeTab === 'available' 
+              ? 'No Available Orders' 
+              : activeTab === 'inProgress'
+              ? 'No In Progress Orders'
+              : 'No Delivered Orders'}
           </CustomText>
           <CustomText variant="h8" style={styles.emptyText}>
             {activeTab === 'available' 
               ? 'No orders are waiting for acceptance' 
+              : activeTab === 'inProgress'
+              ? 'No orders are currently being processed'
               : 'No orders have been delivered yet'}
           </CustomText>
         </View>

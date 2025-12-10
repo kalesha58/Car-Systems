@@ -8,21 +8,22 @@ import { useTheme } from '@hooks/useTheme';
 interface InputProps {
     left: React.ReactNode;
     onClear?: () => void;
-    right?: boolean
+    right?: boolean;
+    rightIcon?: React.ReactNode;
 }
 
-const CustomInput:FC<InputProps & React.ComponentProps<typeof TextInput>> = ({left,onClear,right,...props}) => {
+const CustomInput:FC<InputProps & React.ComponentProps<typeof TextInput>> = ({left,onClear,right,rightIcon,...props}) => {
   const {colors} = useTheme();
 
   const styles = StyleSheet.create({
     icon: {
-        width: '5%',
+        width: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10
+        paddingRight: 10
     },
     inputContainer: {
-        width: '70%',
+        flex: 1,
         fontFamily: Fonts.SemiBold,
         fontSize: RFValue(12),
         paddingVertical: 14,
@@ -61,7 +62,8 @@ const CustomInput:FC<InputProps & React.ComponentProps<typeof TextInput>> = ({le
         placeholderTextColor={colors.disabled}
         />
         <View style={styles.icon}>
-            {props?.value?.length !=0 && right && 
+            {rightIcon && rightIcon}
+            {props?.value?.length !=0 && right && !rightIcon && 
             <TouchableOpacity onPress={onClear}>
                 <Icon name='close-circle-sharp' size={RFValue(16)} color={colors.disabled} />
             </TouchableOpacity>

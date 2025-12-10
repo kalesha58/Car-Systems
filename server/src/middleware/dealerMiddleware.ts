@@ -34,11 +34,10 @@ export const dealerMiddleware = async (
       throw new NotFoundError('Business registration not found. Please complete business registration.');
     }
 
-    // TODO: Re-enable status check once admin approval panel is implemented
     // Check if business registration is approved
-    // if (businessRegistration.status !== 'approved') {
-    //   throw new ForbiddenError(`Business registration is ${businessRegistration.status}. Please wait for admin approval.`);
-    // }
+    if (businessRegistration.status !== 'approved') {
+      throw new ForbiddenError(`Business registration is ${businessRegistration.status}. Please wait for admin approval.`);
+    }
 
     // Attach businessRegistrationId as dealerId to request
     // This is used for products, services, orders, etc.

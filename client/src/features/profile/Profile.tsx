@@ -10,6 +10,7 @@ import {storage, tokenStorage} from '@state/storage';
 import {resetAndNavigate} from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
 import ProfileHeader from './sections/ProfileHeader';
+import DealershipRequestSection from './sections/DealershipRequestSection';
 import LanguageSection from './sections/LanguageSection';
 import AccountSettingsSection from './sections/AccountSettingsSection';
 import ActivitySection from './sections/ActivitySection';
@@ -65,6 +66,7 @@ const Profile = () => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
         <ProfileHeader />
+        <DealershipRequestSection />
         <WalletSection />
         <LanguageSection />
         <AccountSettingsSection />

@@ -1,9 +1,10 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Pressable} from 'react-native';
+import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Pressable, Alert} from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {getDealerProducts, getDealerVehicles, getDealerServices} from '@service/dealerService';
+import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/dealerService';
+import {useAuthStore} from '@state/authStore';
 import {IProduct} from '../../types/product/IProduct';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {IService} from '../../types/service/IService';
@@ -21,6 +22,7 @@ const InventoryScreen: React.FC = () => {
   const navigation = useNavigation();
   const {colors: theme} = useTheme();
   const {t} = useTranslation();
+  const {user} = useAuthStore();
   const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>('products');
   const [products, setProducts] = useState<IProduct[]>([]);
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
@@ -29,8 +31,33 @@ const InventoryScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isImagePreviewVisible, setIsImagePreviewVisible] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
+  const [loadingRegistration, setLoadingRegistration] = useState(true);
+
+  const isApproved = businessRegistration?.status === 'approved';
+  const canAddItems = isApproved;
 
   const handleAddPress = () => {
+    if (!canAddItems) {
+      Alert.alert(
+        t('dealer.registrationRequired') || 'Registration Required',
+        t('dealer.completeRegistrationToAdd') || 'Please complete business registration to add products to inventory',
+        [
+          {
+            text: t('dealer.cancel') || 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: t('dealer.goToRegistration') || 'Go to Registration',
+            onPress: () => {
+              (navigation as any).navigate('BusinessRegistration');
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     if (activeTab === 'products') {
       (navigation as any).navigate('AddEditProduct');
     } else if (activeTab === 'vehicles') {
@@ -68,14 +95,33 @@ const InventoryScreen: React.FC = () => {
     }
   }, []);
 
+  const fetchBusinessRegistration = useCallback(async () => {
+    if (!user?.id) {
+      setLoadingRegistration(false);
+      return;
+    }
+    try {
+      setLoadingRegistration(true);
+      const registration = await getBusinessRegistrationByUserId(user.id);
+      setBusinessRegistration(registration);
+    } catch (error) {
+      console.error('Error fetching business registration:', error);
+      setBusinessRegistration(null);
+    } finally {
+      setLoadingRegistration(false);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchBusinessRegistration();
+  }, [fetchData, fetchBusinessRegistration]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData]),
+      fetchBusinessRegistration();
+    }, [fetchData, fetchBusinessRegistration]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -375,9 +421,66 @@ const InventoryScreen: React.FC = () => {
     );
   }
 
+  const renderBanner = () => {
+    if (loadingRegistration || isApproved) {
+      return null;
+    }
+
+    let bannerMessage = '';
+    let bannerColor = '#f59e0b';
+    let bannerIcon = 'information-circle-outline';
+    let showButton = false;
+
+    if (!businessRegistration) {
+      bannerMessage = t('dealer.completeRegistrationToAdd') || 'Complete business registration to add products to inventory';
+      bannerColor = '#3b82f6';
+      bannerIcon = 'business-outline';
+      showButton = true;
+    } else if (businessRegistration.status === 'pending') {
+      bannerMessage = t('dealer.pendingApprovalMessage') || "Your dealership request is pending approval. You'll be able to add products once approved.";
+      bannerColor = '#f59e0b';
+      bannerIcon = 'time-outline';
+    } else if (businessRegistration.status === 'rejected') {
+      bannerMessage = t('dealer.rejectedMessage') || 'Your dealership request was rejected. Please update your registration to reapply.';
+      bannerColor = '#ef4444';
+      bannerIcon = 'close-circle-outline';
+      showButton = true;
+    }
+
+    if (!bannerMessage) {
+      return null;
+    }
+
+    return (
+      <View style={[styles.banner, {backgroundColor: bannerColor + '20', borderLeftColor: bannerColor}]}>
+        <Icon name={bannerIcon} size={RFValue(20)} color={bannerColor} />
+        <View style={styles.bannerContent}>
+          <CustomText style={[styles.bannerText, {color: bannerColor}]} numberOfLines={2}>
+            {bannerMessage}
+          </CustomText>
+          {showButton && (
+            <TouchableOpacity
+              style={[styles.bannerButton, {backgroundColor: bannerColor}]}
+              onPress={() => {
+                (navigation as any).navigate('BusinessRegistration');
+              }}
+              activeOpacity={0.8}>
+              <CustomText style={styles.bannerButtonText}>
+                {!businessRegistration
+                  ? t('dealer.completeRegistration') || 'Complete Registration'
+                  : t('dealer.updateRegistration') || 'Update Registration'}
+              </CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, {backgroundColor: theme.background}]}>
       <CustomHeader title={t('dealer.inventory')} />
+      {renderBanner()}
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[
@@ -474,8 +577,12 @@ const InventoryScreen: React.FC = () => {
           }
         />
       )}
-      <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
-        <Icon name="add" size={RFValue(24)} color="#fff" />
+      <TouchableOpacity
+        style={[styles.fab, !canAddItems && styles.fabDisabled]}
+        onPress={handleAddPress}
+        activeOpacity={canAddItems ? 0.8 : 1}
+        disabled={!canAddItems}>
+        <Icon name="add" size={RFValue(24)} color={canAddItems ? '#fff' : theme.disabled} />
       </TouchableOpacity>
 
       <ImagePreviewModal
@@ -657,6 +764,41 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
     elevation: 8,
+  },
+  fabDisabled: {
+    backgroundColor: '#e5e7eb',
+    shadowOpacity: 0.1,
+  },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 12,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    gap: 12,
+  },
+  bannerContent: {
+    flex: 1,
+    gap: 8,
+  },
+  bannerText: {
+    fontSize: RFValue(12),
+    fontFamily: Fonts.Medium,
+    lineHeight: RFValue(16),
+  },
+  bannerButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  bannerButtonText: {
+    fontSize: RFValue(11),
+    fontFamily: Fonts.SemiBold,
+    color: '#fff',
   },
 });
 

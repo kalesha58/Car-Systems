@@ -100,17 +100,25 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     throw new AppError('Password is required', 400);
   }
 
+  // Trim email to handle any whitespace issues
+  const trimmedEmail = email.trim().toLowerCase();
+  const trimmedPassword = password.trim();
+
+  logger.info(`Login attempt for email: ${trimmedEmail}, password length: ${trimmedPassword.length}`);
+
   // Find user by email and explicitly select password field (since it has select: false)
-  const signUpUser = await SignUp.findOne({ email: email.toLowerCase() }).select('+password');
+  const signUpUser = await SignUp.findOne({ email: trimmedEmail }).select('+password');
 
   if (!signUpUser) {
+    logger.warn(`Login failed: User not found for email: ${trimmedEmail}`);
     throw new UnauthorizedError('Invalid credentials');
   }
 
   // Compare provided password with hashed password
-  const isPasswordValid = await bcrypt.compare(password, signUpUser.password);
+  const isPasswordValid = await bcrypt.compare(trimmedPassword, signUpUser.password);
 
   if (!isPasswordValid) {
+    logger.warn(`Login failed: Invalid password for email: ${trimmedEmail}`);
     throw new UnauthorizedError('Invalid credentials');
   }
 

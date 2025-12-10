@@ -40,6 +40,7 @@ const CustomerLogin = () => {
   const [phone, setPhone] = useState('');
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
@@ -159,8 +160,21 @@ const CustomerLogin = () => {
         resetAndNavigate('MainTabs');
       }
     } catch (error: any) {
+      // Extract error message from server response
+      // Server returns: { success: false, Response: { ReturnMessage: "..." } }
       const errorMessage =
-        error?.response?.data?.message || 'Invalid email or password. Please try again.';
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Invalid email or password. Please try again.';
+      
+      console.error('Login failed:', {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: errorMessage
+      });
+      
       Alert.alert('Login Failed', errorMessage);
     } finally {
       setLoading(false);
@@ -262,7 +276,7 @@ const CustomerLogin = () => {
                   onClear={() => setPassword('')}
                   value={password}
                   placeholder={t('auth.password')}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   left={
                     <Ionicons
                       name="key-sharp"
@@ -272,6 +286,19 @@ const CustomerLogin = () => {
                     />
                   }
                   right={false}
+                  rightIcon={
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={{ padding: 8 }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye-off" : "eye"}
+                        color="#F8890E"
+                        size={RFValue(22)}
+                      />
+                    </TouchableOpacity>
+                  }
                 />
 
                 <CustomButton

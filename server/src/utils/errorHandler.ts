@@ -31,6 +31,7 @@ export const errorHandler = (err: IAppError, res: Response): void => {
     if (!res.headersSent) {
       res.status(statusCode).json({
         success: false,
+        message: message, // Add message field for better client compatibility
         Response: Response
       });
     }

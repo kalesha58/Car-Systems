@@ -101,21 +101,20 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
-    // TODO: Change status to 'pending' and implement admin approval workflow once admin panel is ready
-    // For now, auto-approve business registrations
+    // Create business registration with pending status - requires admin approval
     const registration = new BusinessRegistration({
       businessName: data.businessName.trim(),
       type: data.type,
       address: data.address.trim(),
       phone: data.phone.trim(),
       gst: data.gst?.trim() || undefined,
-      status: 'approved', // Auto-approved for now - will be 'pending' once admin panel is implemented
+      status: 'pending', // Requires admin approval
       userId,
     });
 
     await registration.save();
 
-    logger.info(`Business registration created and auto-approved for user: ${userId}`);
+    logger.info(`Business registration created with pending status for user: ${userId}`);
 
     return businessRegistrationToInterface(registration);
   } catch (error) {

@@ -7,7 +7,14 @@ import { appAxios } from './apiInterceptors'
 
 export const customerLogin = async (email: string, password: string) => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/login`, { email, password });
+    // Trim email and password to remove any whitespace that might cause authentication issues
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    
+    const response = await axios.post(`${BASE_URL}/auth/login`, { 
+      email: trimmedEmail, 
+      password: trimmedPassword 
+    });
     const { token, Response } = response.data;
     console.log({
         response: response.data,
@@ -17,14 +24,30 @@ export const customerLogin = async (email: string, password: string) => {
     tokenStorage.set('refreshToken', token);
     const { setUser } = useAuthStore.getState();
     setUser(Response);
-  } catch (error) {
+  } catch (error: any) {
+    // Log error details for debugging
+    console.error('Login error:', {
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message
+    });
+    
+    // Re-throw with proper error structure
     throw error;
   }
 };
 
 export const customerSignup = async (email: string, phone: string, password: string) => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/signup`, { email, phone, password });
+    // Trim email and password to remove any whitespace
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    
+    const response = await axios.post(`${BASE_URL}/auth/signup`, { 
+      email: trimmedEmail, 
+      phone, 
+      password: trimmedPassword 
+    });
     const { Response } = response.data;
     const { setUser } = useAuthStore.getState();
     setUser(Response);
@@ -35,7 +58,14 @@ export const customerSignup = async (email: string, phone: string, password: str
 
 export const deliveryLogin = async(email: string, password: string)=>{
     try {
-        const response = await axios.post(`${BASE_URL}/delivery/login`, { email, password })
+        // Trim email and password to remove any whitespace
+        const trimmedEmail = email.trim();
+        const trimmedPassword = password.trim();
+        
+        const response = await axios.post(`${BASE_URL}/delivery/login`, { 
+            email: trimmedEmail, 
+            password: trimmedPassword 
+        })
         const { accessToken,refreshToken,deliveryPartner}=response.data
         tokenStorage.set("accessToken", accessToken)
         tokenStorage.set("refreshToken", refreshToken)

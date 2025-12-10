@@ -21,6 +21,7 @@ import LiveHeader from '@features/map/LiveHeader';
 import LiveMap from '@features/map/LiveMap';
 import DeliveryDetails from '@features/map/DeliveryDetails';
 import OrderSummary from '@features/map/OrderSummary';
+import OrderWorkflow from '@features/map/OrderWorkflow';
 import {useRoute} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
 import CustomButton from '@components/ui/CustomButton';
@@ -240,24 +241,24 @@ const DeliveryMap = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
-        {(orderData?.deliveryLocation || orderData?.pickupLocation || myLocation) && (
-          <LiveMap
-            deliveryPersonLocation={
-              orderData?.deliveryPersonLocation || myLocation
-            }
-            deliveryLocation={orderData?.deliveryLocation || null}
-            hasAccepted={
-              orderData?.deliveryPartner?._id === user?._id &&
-              (orderData?.status?.toUpperCase() === 'ORDER_CONFIRMED' ||
-                orderData?.status === 'confirmed')
-            }
-            hasPickedUp={
-              orderData?.status?.toUpperCase() === 'OUT_FOR_DELIVERY' ||
-              orderData?.status === 'arriving'
-            }
-            pickupLocation={orderData?.pickupLocation || null}
-          />
-        )}
+        <LiveMap
+          deliveryPersonLocation={
+            orderData?.deliveryPersonLocation || myLocation
+          }
+          deliveryLocation={orderData?.deliveryLocation || null}
+          hasAccepted={
+            orderData?.deliveryPartner?._id === user?._id &&
+            (orderData?.status?.toUpperCase() === 'ORDER_CONFIRMED' ||
+              orderData?.status === 'confirmed')
+          }
+          hasPickedUp={
+            orderData?.status?.toUpperCase() === 'OUT_FOR_DELIVERY' ||
+            orderData?.status === 'arriving'
+          }
+          pickupLocation={orderData?.pickupLocation || null}
+        />
+
+        <OrderWorkflow status={orderData?.status} timeline={orderData?.timeline} />
 
         <DeliveryDetails details={orderData?.customer} />
         <OrderSummary order={orderData} />

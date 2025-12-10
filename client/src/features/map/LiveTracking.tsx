@@ -13,6 +13,7 @@ import CustomText from '@components/ui/CustomText';
 import OrderSummary from './OrderSummary';
 import DeliveryDetails from './DeliveryDetails';
 import LiveMap from './LiveMap';
+import OrderWorkflow from './OrderWorkflow';
 import {getOrderStatusDisplay, isOrderAccepted, isOrderPickedUp} from '@utils/orderStatusUtils';
 import {io, Socket} from 'socket.io-client';
 import {IDealer} from '../../types/dealer/IDealer';
@@ -168,6 +169,8 @@ const LiveTracking = () => {
           hasAccepted={isOrderAccepted(currentOrder?.status || '')}
           hasPickedUp={isOrderPickedUp(currentOrder?.status || '')}
         />
+
+        <OrderWorkflow status={currentOrder?.status} timeline={currentOrder?.timeline} />
 
         <View style={styles.flexRow}>
           <View style={styles.iconContainer}>

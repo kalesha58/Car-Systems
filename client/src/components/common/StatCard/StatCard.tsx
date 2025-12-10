@@ -1,4 +1,4 @@
-import React, {FC} from 'react';
+import React, {FC, useMemo} from 'react';
 import {View, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import CustomText from '@components/ui/CustomText';
@@ -17,56 +17,81 @@ interface IStatCardProps {
   label: string;
   trend?: ITrend;
   updateDate?: string;
+  iconColor?: string;
   style?: any;
 }
 
-const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate, style}) => {
+const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate, iconColor, style}) => {
   const {colors, isDark} = useTheme();
+
+  // Determine icon background color based on icon name or use provided color
+  const iconBgColor = useMemo(() => {
+    if (iconColor) return iconColor;
+    
+    // Default colors based on common icon names
+    if (icon === 'package' || icon === 'box') {
+      return '#4A90E2'; // Blue
+    }
+    if (icon === 'trending-up' || icon === 'trending-down') {
+      return colors.success; // Green
+    }
+    if (icon === 'shopping-bag' || icon === 'shopping-cart') {
+      return '#9B59B6'; // Purple
+    }
+    // Default to primary color
+    return colors.primary;
+  }, [icon, iconColor, colors.primary, colors.success]);
+
+  const iconTextColor = '#FFFFFF';
 
   const styles = StyleSheet.create({
     card: {
-      width: '48%',
       backgroundColor: colors.cardBackground,
       borderRadius: 12,
-      padding: 12,
+      padding: 16,
       marginBottom: 8,
       ...(isDark
         ? {}
         : {
             shadowColor: '#000000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
+            shadowOffset: {width: 0, height: 1},
+            shadowOpacity: 0.05,
+            shadowRadius: 3,
+            elevation: 2,
           }),
     },
     iconContainer: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.primary + '20',
+      width: 48,
+      height: 48,
+      minWidth: 48,
+      minHeight: 48,
+      borderRadius: 10,
+      backgroundColor: iconBgColor,
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 8,
+      marginBottom: 12,
     },
     value: {
-      fontSize: RFValue(18),
+      fontSize: RFValue(20),
       fontWeight: '700',
-      marginBottom: 2,
+      color: colors.text,
+      marginBottom: 4,
     },
     label: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(12),
       color: colors.textSecondary,
-      marginBottom: 4,
+      marginBottom: trend ? 6 : 0,
     },
     trendContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+      marginTop: 4,
     },
     trendText: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       color: trend?.isPositive ? colors.success : colors.error,
+      fontFamily: Fonts.SemiBold,
     },
     updateDate: {
       fontSize: RFValue(9),
@@ -78,7 +103,12 @@ const StatCard: FC<IStatCardProps> = ({icon, value, label, trend, updateDate, st
   return (
     <View style={[styles.card, style]}>
       <View style={styles.iconContainer}>
-        <Icon name={icon} size={20} color={colors.primary} />
+        <Icon 
+          name={icon} 
+          size={24} 
+          color={iconTextColor}
+          style={{textAlign: 'center'}}
+        />
       </View>
       <CustomText variant="h3" fontFamily={Fonts.Bold} style={styles.value}>
         {value}
