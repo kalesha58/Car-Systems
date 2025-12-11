@@ -6,8 +6,10 @@ import {
   getOrderByIdController,
   cancelOrderController,
   requestReturnController,
+  getOrderStatusController,
 } from '../../controllers/user/orderController';
 import { authMiddleware } from '../../middleware/authMiddleware';
+import { idempotencyMiddleware } from '../../middleware/idempotencyMiddleware';
 
 const router = Router();
 
@@ -25,7 +27,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/', authMiddleware, createOrderController);
+router.post('/', authMiddleware, idempotencyMiddleware, createOrderController);
 
 /**
  * @swagger
@@ -60,6 +62,30 @@ router.get('/', authMiddleware, getUserOrdersController);
  *         description: Order not found
  */
 router.get('/:id', authMiddleware, getOrderByIdController);
+
+/**
+ * @swagger
+ * /api/user/orders/{id}/status:
+ *   get:
+ *     summary: Get order status and payment status
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order status retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Order not found
+ */
+router.get('/:id/status', authMiddleware, getOrderStatusController);
 
 /**
  * @swagger

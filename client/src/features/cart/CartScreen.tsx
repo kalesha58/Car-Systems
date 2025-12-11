@@ -22,6 +22,7 @@ import {useAuthStore} from '@state/authStore';
 import {hocStyles} from '@styles/GlobalStyles';
 import ArrowButton from '@components/ui/ArrowButton';
 import {createOrder} from '@service/orderService';
+import {appAxios} from '@service/apiInterceptors';
 import {navigate} from '@utils/NavigationUtils';
 import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
 import {IAddress} from '../../types/address/IAddress';
@@ -30,6 +31,12 @@ import {useTheme} from '@hooks/useTheme';
 import CouponModal from '@components/coupon/CouponModal';
 import {ICoupon} from '@types/coupon/ICoupon';
 import {getSavedAddresses} from '@service/addressService';
+import {getDealerById} from '@service/dealerService';
+
+// Generate idempotency key
+const generateIdempotencyKey = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
+};
 
 interface RouteParams {
   selectedAddress?: IAddress;
@@ -43,7 +50,8 @@ const CartScreen: React.FC = () => {
   const deliveryCharge = 29;
   const handlingCharge = 2;
   const otherCharges = deliveryCharge + handlingCharge;
-  const grandTotal = totalItemPrice - couponDiscount + otherCharges;
+  const codCharge = selectedPaymentMethod === 'cash_on_delivery' ? 5 : 0;
+  const grandTotal = totalItemPrice - couponDiscount + otherCharges + codCharge;
   const route = useRoute();
   const navigation = useNavigation();
   const {t} = useTranslation();
@@ -53,6 +61,9 @@ const CartScreen: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
   const [couponModalVisible, setCouponModalVisible] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'upi' | 'cash_on_delivery' | null>(null);
+  const [dealerInfo, setDealerInfo] = useState<{name: string; businessName: string; hasPayout: boolean} | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Fetch latest address on mount
   useEffect(() => {
@@ -74,6 +85,39 @@ const CartScreen: React.FC = () => {
 
     fetchLatestAddress();
   }, []);
+
+  // Fetch dealer info if cart has items
+  useEffect(() => {
+    const fetchDealerInfo = async () => {
+      if (cart.length === 0) {
+        setDealerInfo(null);
+        return;
+      }
+
+      try {
+        // Get dealerId from first cart item
+        const firstItem = cart[0];
+        const dealerId = firstItem?.item?.dealerId;
+        
+        if (dealerId) {
+          const response = await getDealerById(dealerId);
+          if (response.success && response.Response) {
+            const dealer = Array.isArray(response.Response) ? response.Response[0] : response.Response;
+            setDealerInfo({
+              name: dealer.name || '',
+              businessName: dealer.businessName || '',
+              hasPayout: !!(dealer.payout && (dealer.payout.upiId || dealer.payout.bank)),
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Failed to fetch dealer info:', error);
+        setDealerInfo(null);
+      }
+    };
+
+    fetchDealerInfo();
+  }, [cart]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -162,25 +206,66 @@ const CartScreen: React.FC = () => {
       total: item.count * (item.item?.price || 0),
     }));
 
+    if (!selectedPaymentMethod) {
+      Alert.alert('Please select a payment method');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      Alert.alert('Please accept the terms and conditions');
+      return;
+    }
+
+    // Validate UPI selection
+    if (selectedPaymentMethod === 'upi' && dealerInfo && !dealerInfo.hasPayout) {
+      Alert.alert(
+        'UPI Payment Unavailable',
+        'Dealer has no UPI/bank configured. Please choose COD or contact dealer.',
+      );
+      return;
+    }
+
     const orderData: ICreateOrderRequest = {
       items: orderItems,
       shippingAddress,
-      paymentMethod: 'cash_on_delivery',
+      paymentMethod: selectedPaymentMethod,
+      dealerId: cart[0]?.item?.dealerId,
     };
+
+    // Generate idempotency key
+    const idempotencyKey = generateIdempotencyKey();
 
     setLoading(true);
     try {
-      const data = await createOrder(orderData);
+      // Create order with idempotency key
+      const headers = {
+        'Idempotency-Key': idempotencyKey,
+      };
+      
+      const response = await appAxios.post('/user/orders', orderData, {headers});
+      const data = response.data?.data;
 
       if (data !== null) {
         setCurrentOrder(data);
-        clearCart();
-        navigate('OrderSuccess', {...data});
+        
+        // Handle UPI payment flow
+        if (selectedPaymentMethod === 'upi' && data.paymentAction) {
+          // Navigate to payment status screen
+          navigate('PaymentStatus', {
+            orderId: data.id,
+            paymentAction: data.paymentAction,
+          });
+        } else {
+          // COD - navigate to success
+          clearCart();
+          navigate('OrderSuccess', {...data});
+        }
       } else {
         Alert.alert('There was an error');
       }
-    } catch (error) {
-      Alert.alert('Failed to create order');
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.message || 'Failed to create order';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -250,6 +335,23 @@ const CartScreen: React.FC = () => {
       marginTop: 6,
       textAlign: 'center',
     },
+    paymentOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 12,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+    },
+    paymentOptionSelected: {
+      borderColor: colors.secondary,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    paymentOptionDisabled: {
+      opacity: 0.5,
+    },
   });
 
   if (cart.length === 0) {
@@ -311,7 +413,97 @@ const CartScreen: React.FC = () => {
           <Icon name="chevron-right" size={RFValue(16)} color={colors.text} />
         </TouchableOpacity>
 
-        <BillDetails totalItemPrice={totalItemPrice} />
+        <BillDetails totalItemPrice={totalItemPrice} codCharge={codCharge} />
+
+        {/* Payment Method Selection */}
+        <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
+          <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={{marginBottom: 10}}>
+            Payment Method
+          </CustomText>
+          
+          {/* UPI Option */}
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              selectedPaymentMethod === 'upi' && styles.paymentOptionSelected,
+              !dealerInfo?.hasPayout && styles.paymentOptionDisabled,
+            ]}
+            onPress={() => {
+              if (dealerInfo?.hasPayout) {
+                setSelectedPaymentMethod('upi');
+              } else {
+                Alert.alert(
+                  'UPI Unavailable',
+                  'Dealer has no UPI/bank configured. Please choose COD or contact dealer.',
+                );
+              }
+            }}
+            disabled={!dealerInfo?.hasPayout}>
+            <View style={styles.flexRow}>
+              <Icon name="wallet" size={RFValue(20)} color={selectedPaymentMethod === 'upi' ? colors.secondary : colors.text} />
+              <View style={{marginLeft: 10, flex: 1}}>
+                <CustomText variant="h7" fontFamily={Fonts.Medium}>
+                  Pay now (UPI)
+                </CustomText>
+                {!dealerInfo?.hasPayout && (
+                  <CustomText variant="h9" style={{color: colors.disabled, marginTop: 2}}>
+                    Dealer has no UPI/bank configured
+                  </CustomText>
+                )}
+              </View>
+            </View>
+            {selectedPaymentMethod === 'upi' && (
+              <Icon name="check-circle" size={RFValue(20)} color={colors.secondary} />
+            )}
+          </TouchableOpacity>
+
+          {/* COD Option */}
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              selectedPaymentMethod === 'cash_on_delivery' && styles.paymentOptionSelected,
+              {marginTop: 10},
+            ]}
+            onPress={() => setSelectedPaymentMethod('cash_on_delivery')}>
+            <View style={styles.flexRow}>
+              <Icon name="cash" size={RFValue(20)} color={selectedPaymentMethod === 'cash_on_delivery' ? colors.secondary : colors.text} />
+              <View style={{marginLeft: 10, flex: 1}}>
+                <CustomText variant="h7" fontFamily={Fonts.Medium}>
+                  Cash on Delivery
+                </CustomText>
+                <CustomText variant="h9" style={{color: colors.secondary, marginTop: 2}}>
+                  ₹5 extra charge
+                </CustomText>
+              </View>
+            </View>
+            {selectedPaymentMethod === 'cash_on_delivery' && (
+              <Icon name="check-circle" size={RFValue(20)} color={colors.secondary} />
+            )}
+          </TouchableOpacity>
+
+          {/* Dealer Info */}
+          {dealerInfo && (
+            <View style={{marginTop: 10, padding: 10, backgroundColor: colors.backgroundSecondary, borderRadius: 8}}>
+              <CustomText variant="h9" style={{opacity: 0.7}}>
+                Payment will go to: {dealerInfo.name} ({dealerInfo.businessName})
+              </CustomText>
+            </View>
+          )}
+
+          {/* Terms & Conditions */}
+          <TouchableOpacity
+            style={[styles.flexRow, {marginTop: 15}]}
+            onPress={() => setAcceptedTerms(!acceptedTerms)}>
+            <Icon
+              name={acceptedTerms ? 'checkbox-marked' : 'checkbox-blank-outline'}
+              size={RFValue(20)}
+              color={acceptedTerms ? colors.secondary : colors.text}
+            />
+            <CustomText variant="h9" style={{marginLeft: 8, flex: 1}}>
+              I accept the terms and conditions
+            </CustomText>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.flexRowBetween}>
           <View>
@@ -412,7 +604,7 @@ const CartScreen: React.FC = () => {
                 price={grandTotal}
                 title="Place Order"
                 onPress={handlePlaceOrder}
-                disabled={!selectedAddress}
+                disabled={!selectedAddress || !selectedPaymentMethod || !acceptedTerms}
               />
             </View>
           </View>

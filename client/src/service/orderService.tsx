@@ -33,6 +33,24 @@ export const getOrderById = async (orderId: string): Promise<IOrderData | null> 
   }
 };
 
+export const getOrderStatus = async (orderId: string): Promise<{
+  orderId: string;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  paymentDetails?: any;
+} | null> => {
+  try {
+    const response = await appAxios.get(`/user/orders/${orderId}/status`);
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getUserOrders = async (
   page?: number,
   limit?: number,

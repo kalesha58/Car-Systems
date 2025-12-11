@@ -30,6 +30,7 @@ import userRoutes from './routes/user/userRoutes';
 import addressRoutes from './routes/user/addressRoutes';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 import cors from 'cors';
 import { logger } from './utils/logger';
 
@@ -140,6 +141,10 @@ app.use('/api/support', supportChatRoutes);
 logger.info('[Routes] Support chat route mounted at /api/support');
 app.use('/api/users', userRoutes);
 logger.info('[Routes] Users route mounted at /api/users');
+
+// Webhook Routes (no auth required - called by payment gateway)
+app.use('/api/webhooks', webhookRoutes);
+logger.info('[Routes] Webhook routes mounted at /api/webhooks');
 
 // Admin Routes (all prefixed with /admin)
 app.use('/admin', adminRoutes);

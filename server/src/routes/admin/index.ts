@@ -9,6 +9,7 @@ import reportRoutes from './reportRoutes';
 import settingsRoutes from './settingsRoutes';
 import serviceRoutes from './serviceRoutes';
 import addressRoutes from './addressRoutes';
+import payoutRoutes from './payoutRoutes';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use('/reports', reportRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/services', serviceRoutes);
 router.use('/addresses', addressRoutes);
+router.use('/payouts', payoutRoutes);
 
 export default router;
 

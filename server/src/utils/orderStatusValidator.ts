@@ -17,7 +17,37 @@ const validTransitions: Record<
       'CANCELLED_BY_USER',
       'CANCELLED_BY_DEALER',
     ],
-    system: ['PAYMENT_CONFIRMED'],
+    system: ['PAYMENT_CONFIRMED', 'PENDING_COD', 'PENDING_PAYMENT'],
+  },
+  PENDING_COD: {
+    user: ['CANCELLED_BY_USER'],
+    dealer: ['ORDER_CONFIRMED', 'CANCELLED_BY_DEALER'],
+    admin: [
+      'PAYMENT_CONFIRMED',
+      'ORDER_CONFIRMED',
+      'CANCELLED_BY_USER',
+      'CANCELLED_BY_DEALER',
+      'COD_NOT_COLLECTED',
+    ],
+    system: ['PAYMENT_CONFIRMED', 'COD_NOT_COLLECTED'],
+  },
+  PENDING_PAYMENT: {
+    user: ['CANCELLED_BY_USER'],
+    dealer: ['CANCELLED_BY_DEALER'],
+    admin: ['CANCELLED_BY_USER', 'CANCELLED_BY_DEALER', 'PAYMENT_FAILED'],
+    system: ['PAYMENT_CONFIRMED', 'PAYMENT_FAILED'],
+  },
+  PAYMENT_FAILED: {
+    user: ['CANCELLED_BY_USER'],
+    dealer: ['CANCELLED_BY_DEALER'],
+    admin: ['CANCELLED_BY_USER', 'CANCELLED_BY_DEALER'],
+    system: ['CANCELLED_BY_USER'],
+  },
+  COD_NOT_COLLECTED: {
+    user: ['CANCELLED_BY_USER'],
+    dealer: ['CANCELLED_BY_DEALER'],
+    admin: ['CANCELLED_BY_USER', 'CANCELLED_BY_DEALER'],
+    system: ['CANCELLED_BY_USER'],
   },
   PAYMENT_CONFIRMED: {
     user: ['CANCELLED_BY_USER'],
@@ -135,14 +165,30 @@ export const validateStatusTransitionOrThrow = (
  * Check if a status allows cancellation by user
  */
 export const canUserCancel = (status: OrderStatus): boolean => {
-  return ['ORDER_PLACED', 'PAYMENT_CONFIRMED', 'ORDER_CONFIRMED', 'PACKED'].includes(status);
+  return [
+    'ORDER_PLACED',
+    'PENDING_COD',
+    'PENDING_PAYMENT',
+    'PAYMENT_FAILED',
+    'PAYMENT_CONFIRMED',
+    'ORDER_CONFIRMED',
+    'PACKED',
+  ].includes(status);
 };
 
 /**
  * Check if a status allows cancellation by dealer
  */
 export const canDealerCancel = (status: OrderStatus): boolean => {
-  return ['ORDER_PLACED', 'PAYMENT_CONFIRMED', 'ORDER_CONFIRMED'].includes(status);
+  return [
+    'ORDER_PLACED',
+    'PENDING_COD',
+    'PENDING_PAYMENT',
+    'PAYMENT_FAILED',
+    'PAYMENT_CONFIRMED',
+    'ORDER_CONFIRMED',
+    'COD_NOT_COLLECTED',
+  ].includes(status);
 };
 
 /**
@@ -160,6 +206,8 @@ export const isTerminalStatus = (status: OrderStatus): boolean => {
     'CANCELLED_BY_USER',
     'CANCELLED_BY_DEALER',
     'REFUND_COMPLETED',
+    'PAYMENT_FAILED',
+    'COD_NOT_COLLECTED',
   ].includes(status);
 };
 

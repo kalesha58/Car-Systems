@@ -4,6 +4,7 @@ import orderRoutes from './orderRoutes';
 import vehicleRoutes from './vehicleRoutes';
 import productRoutes from './productRoutes';
 import serviceRoutes from './serviceRoutes';
+import payoutRoutes from './payoutRoutes';
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use('/orders', orderRoutes);
 router.use('/vehicles', vehicleRoutes);
 router.use('/products', productRoutes);
 router.use('/services', serviceRoutes);
+router.use('/payout', payoutRoutes);
 
 export default router;
 

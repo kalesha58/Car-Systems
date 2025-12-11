@@ -2,7 +2,10 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type OrderStatus =
   | 'ORDER_PLACED'
+  | 'PENDING_COD'
+  | 'PENDING_PAYMENT'
   | 'PAYMENT_CONFIRMED'
+  | 'PAYMENT_FAILED'
   | 'ORDER_CONFIRMED'
   | 'PACKED'
   | 'SHIPPED'
@@ -10,6 +13,7 @@ export type OrderStatus =
   | 'DELIVERED'
   | 'CANCELLED_BY_USER'
   | 'CANCELLED_BY_DEALER'
+  | 'COD_NOT_COLLECTED'
   | 'RETURN_REQUESTED'
   | 'RETURN_PICKED'
   | 'REFUND_INITIATED'
@@ -82,10 +86,13 @@ export interface IOrderDocument extends Document {
   subtotal: number;
   tax: number;
   shipping: number;
+  codCharge: number;
   totalAmount: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
+  paymentIntentId?: string;
+  expiresAt?: Date;
   shippingAddress: IAddress;
   billingAddress: IAddress;
   tracking?: ITracking;
@@ -220,16 +227,31 @@ const orderSchema = new Schema<IOrderDocument>(
       min: 0,
       default: 0,
     },
+    codCharge: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
     totalAmount: {
       type: Number,
       required: true,
       min: 0,
     },
+    paymentIntentId: {
+      type: String,
+    },
+    expiresAt: {
+      type: Date,
+    },
     status: {
       type: String,
       enum: [
         'ORDER_PLACED',
+        'PENDING_COD',
+        'PENDING_PAYMENT',
         'PAYMENT_CONFIRMED',
+        'PAYMENT_FAILED',
         'ORDER_CONFIRMED',
         'PACKED',
         'SHIPPED',
@@ -237,6 +259,7 @@ const orderSchema = new Schema<IOrderDocument>(
         'DELIVERED',
         'CANCELLED_BY_USER',
         'CANCELLED_BY_DEALER',
+        'COD_NOT_COLLECTED',
         'RETURN_REQUESTED',
         'RETURN_PICKED',
         'REFUND_INITIATED',
@@ -302,6 +325,7 @@ orderSchema.index({ userId: 1 });
 orderSchema.index({ dealerId: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ paymentStatus: 1 });
+orderSchema.index({ paymentIntentId: 1 });
 orderSchema.index({ createdAt: -1 });
 
 export const Order = mongoose.model<IOrderDocument>('Order', orderSchema);

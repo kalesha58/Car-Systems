@@ -2,6 +2,16 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type DealerStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
+export interface IPayoutCredentials {
+  type: 'UPI' | 'BANK';
+  upiId?: string;
+  bank?: {
+    accountNumber: string;
+    ifsc: string;
+    accountName: string;
+  };
+}
+
 export interface IDealerDocument extends Document {
   name: string;
   businessName: string;
@@ -15,6 +25,7 @@ export interface IDealerDocument extends Document {
     taxId?: string;
     other?: string[];
   };
+  payout?: IPayoutCredentials;
   rejectionReason?: string;
   suspensionReason?: string;
   createdAt: Date;
@@ -62,6 +73,27 @@ const dealerSchema = new Schema<IDealerDocument>(
       businessLicense: { type: String },
       taxId: { type: String },
       other: { type: [String], default: [] },
+    },
+    payout: {
+      type: {
+        type: String,
+        enum: ['UPI', 'BANK'],
+      },
+      upiId: {
+        type: String,
+        trim: true,
+        match: [/^[\w.-]+@[\w]+$/, 'Invalid UPI ID format'],
+      },
+      bank: {
+        accountNumber: { type: String, trim: true },
+        ifsc: {
+          type: String,
+          trim: true,
+          uppercase: true,
+          match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC code format'],
+        },
+        accountName: { type: String, trim: true },
+      },
     },
     rejectionReason: {
       type: String,

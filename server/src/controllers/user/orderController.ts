@@ -354,3 +354,46 @@ export const requestReturnController = async (
   }
 };
 
+/**
+ * Get order status controller
+ */
+export const getOrderStatusController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const orderId = req.params.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const order = await getUserOrderById(orderId, userId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        paymentDetails: {
+          // Include payment intent ID if UPI
+          paymentIntentId: (order as any).paymentIntentId,
+        },
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+

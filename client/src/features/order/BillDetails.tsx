@@ -43,7 +43,7 @@ const ReportItem: FC<{
   );
 };
 
-const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
+const BillDetails: FC<{totalItemPrice: number; codCharge?: number}> = ({totalItemPrice, codCharge = 0}) => {
   const {selectedCoupon, getCouponDiscount} = useCartStore();
   const {colors} = useTheme();
   const deliveryCharge = 29;
@@ -53,7 +53,7 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
   const couponDiscount = getCouponDiscount(totalItemPrice);
   const subtotal = totalItemPrice;
   const totalAfterDiscount = subtotal - couponDiscount;
-  const grandTotal = totalAfterDiscount + otherCharges;
+  const grandTotal = totalAfterDiscount + otherCharges + codCharge;
 
   return (
     <View style={styles.container}>
@@ -77,6 +77,9 @@ const BillDetails: FC<{totalItemPrice: number}> = ({totalItemPrice}) => {
         )}
         <ReportItem iconName="pedal-bike" title="Delivery charge" price={deliveryCharge} />
         <ReportItem iconName="shopping-bag" title="Handling charge" price={handlingCharge} />
+        {codCharge > 0 && (
+          <ReportItem iconName="cash" title="COD charge" price={codCharge} />
+        )}
       </View>
 
       <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
