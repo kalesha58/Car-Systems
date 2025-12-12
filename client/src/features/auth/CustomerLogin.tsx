@@ -27,6 +27,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
 import { customerLogin, customerSignup } from '@service/authService';
+import { getBusinessRegistrationByUserId } from '@service/dealerService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useTranslation} from 'react-i18next';
@@ -167,7 +168,47 @@ const CustomerLogin = () => {
       const currentUser = useAuthStore.getState().user;
       if (currentUser && currentUser.role) {
         const userRole = checkUserRole(currentUser.role);
-        navigateByRole(userRole);
+        
+        // For dealers, check if they have business registration
+        if (userRole === 'dealer' && currentUser.id) {
+          try {
+            const businessRegistration = await getBusinessRegistrationByUserId(currentUser.id);
+            console.log('Business registration check:', { 
+              hasRegistration: !!businessRegistration, 
+              status: businessRegistration?.status 
+            });
+            
+            // Only redirect to registration if no registration exists OR status is rejected
+            // Allow access if registration exists (even if pending)
+            if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
+              // No registration or rejected - navigate to business registration screen
+              console.log('Navigating to BusinessRegistration - no registration or rejected');
+              resetAndNavigate('BusinessRegistration');
+            } else {
+              // Has registration (pending/approved) - navigate to dealer tabs
+              console.log('Navigating to DealerTabs - registration exists with status:', businessRegistration.status);
+              resetAndNavigate('DealerTabs');
+            }
+          } catch (error: any) {
+            // Handle network errors or other unexpected errors
+            // For network errors, allow access to dealer tabs (will show appropriate messages)
+            console.error('Error checking business registration:', error);
+            const errorStatus = error?.response?.status;
+            // If it's a network error (no status) or server error (5xx), allow access
+            // The dealer dashboard will handle showing appropriate messages
+            if (!errorStatus || (errorStatus >= 500)) {
+              console.log('Network/server error - navigating to DealerTabs');
+              resetAndNavigate('DealerTabs');
+            } else {
+              // For other errors (like 403), redirect to registration
+              console.log('Other error - navigating to BusinessRegistration');
+              resetAndNavigate('BusinessRegistration');
+            }
+          }
+        } else {
+          // Not a dealer, use normal navigation
+          navigateByRole(userRole);
+        }
       } else {
         resetAndNavigate('MainTabs');
       }

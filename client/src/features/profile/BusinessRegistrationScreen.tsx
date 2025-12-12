@@ -19,6 +19,7 @@ import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {useTranslation} from 'react-i18next';
 import {createBusinessRegistration, ICreateBusinessRegistrationRequest} from '@service/dealerService';
+import {resetAndNavigate} from '@utils/NavigationUtils';
 
 const BUSINESS_TYPES: IDropdownOption[] = [
   {label: 'Automobile Showroom', value: 'Automobile Showroom'},
@@ -33,7 +34,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
   const {colors} = useTheme();
   const {showSuccess, showError} = useToast();
-  const {t} = useTranslation();
+  const {t} = useTranslation('dealer');
 
   const [businessName, setBusinessName] = useState('');
   const [type, setType] = useState('');
@@ -83,9 +84,17 @@ const BusinessRegistrationScreen: React.FC = () => {
         gst: gst.trim() || undefined,
       };
 
-      await createBusinessRegistration(data);
-      showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully');
-      navigation.goBack();
+      const registration = await createBusinessRegistration(data);
+      console.log('Business registration created successfully:', { 
+        id: registration.id, 
+        status: registration.status 
+      });
+      showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
+      // Navigate to DealerTabs after a short delay to ensure success message is shown
+      setTimeout(() => {
+        console.log('Navigating to DealerTabs after business registration submission');
+        resetAndNavigate('DealerTabs');
+      }, 500);
     } catch (error: any) {
       console.error('Error creating business registration:', error);
       const errorMessage =

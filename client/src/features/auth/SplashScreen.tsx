@@ -9,6 +9,7 @@ import {useAuthStore} from '@state/authStore';
 import {tokenStorage} from '@state/storage';
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_tokens} from '@service/authService';
+import {getBusinessRegistrationByUserId} from '@service/dealerService';
 
 GeoLocation.setRNConfiguration({
   skipPermissionRequests: false,
@@ -44,19 +45,46 @@ const SplashScreen: FC = () => {
     return null;
   };
 
-  const performRoleCheckAndNavigate = () => {
+  const performRoleCheckAndNavigate = async () => {
     const currentUser = useAuthStore.getState().user;
     if (currentUser && currentUser.role) {
       const userRole = checkUserRole(currentUser.role);
-      navigateByRole(userRole);
+      await navigateByRole(userRole, currentUser.id);
     }
   };
 
-  const navigateByRole = (userRole: string | null) => {
+  const navigateByRole = async (userRole: string | null, userId?: string) => {
     if (userRole === 'user') {
       resetAndNavigate('MainTabs');
     } else if (userRole === 'dealer') {
-      resetAndNavigate('DealerTabs');
+      // Check if dealer has business registration
+      if (userId) {
+        try {
+          const businessRegistration = await getBusinessRegistrationByUserId(userId);
+          // Only redirect to registration if no registration exists OR status is rejected
+          // Allow access if registration exists (even if pending)
+          if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
+            // No registration or rejected - navigate to business registration screen
+            resetAndNavigate('BusinessRegistration');
+          } else {
+            // Has registration (pending/approved) - navigate to dealer tabs
+            resetAndNavigate('DealerTabs');
+          }
+        } catch (error: any) {
+          // If check fails with 404, redirect to registration
+          // Otherwise allow access (might be network error)
+          const errorStatus = error?.response?.status;
+          if (errorStatus === 404) {
+            resetAndNavigate('BusinessRegistration');
+          } else {
+            // Network error or other - navigate to tabs, will be handled there
+            console.error('Error checking business registration:', error);
+            resetAndNavigate('DealerTabs');
+          }
+        }
+      } else {
+        resetAndNavigate('DealerTabs');
+      }
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     } else {
@@ -119,7 +147,7 @@ const SplashScreen: FC = () => {
 
         if (currentUser) {
           const userRole = checkUserRole(currentUser.role);
-          navigateByRole(userRole);
+          await navigateByRole(userRole, currentUser.id);
         } else {
           resetAndNavigate('CustomerLogin');
         }
@@ -170,7 +198,7 @@ const SplashScreen: FC = () => {
     if (user && user.role) {
       const userRole = checkUserRole(user.role);
       if (userRole) {
-        navigateByRole(userRole);
+        navigateByRole(userRole, user.id);
       }
     }
   }, [user]);

@@ -14,6 +14,8 @@ appAxios.interceptors.request.use(async config => {
     if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
     }
+    // Add ngrok-skip-browser-warning header for ngrok URLs
+    config.headers['ngrok-skip-browser-warning'] = 'true';
     return config;
 });
 

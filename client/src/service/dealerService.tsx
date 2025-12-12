@@ -174,11 +174,16 @@ export const getBusinessRegistrationByUserId = async (
     const response = await appAxios.get<IBusinessRegistrationResponse>(
       `/dealer/business-registration/user/${userId}`,
     );
-    if (response.data.success && response.data.Response) {
+    if (response.data && response.data.success && response.data.Response) {
       return response.data.Response;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    // Handle 404 errors (business registration not found) - this is expected
+    if (error?.response?.status === 404) {
+      return null;
+    }
+    // For other errors, re-throw to be handled by the caller
     throw error;
   }
 };

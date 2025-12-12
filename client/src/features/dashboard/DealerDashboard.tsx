@@ -3,6 +3,7 @@ import {View, StyleSheet, ScrollView, TouchableOpacity, Animated as RNAnimated, 
 import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '@hooks/useTheme';
 import {useAuthStore} from '@state/authStore';
+import {resetAndNavigate} from '@utils/NavigationUtils';
 import {NoticeHeight, screenHeight} from '@utils/Scaling';
 import NoticeAnimation from './NoticeAnimation';
 import Visuals from './Visuals';
@@ -15,6 +16,7 @@ import {
   getDealerVehicles,
   getBusinessRegistrationByUserId,
   getBookings,
+  IBusinessRegistration,
 } from '@service/dealerService';
 import {IDealer, IBooking} from '../../types/dealer/IDealer';
 import {IOrderData} from '../../types/order/IOrder';
@@ -63,6 +65,7 @@ const DealerDashboard: React.FC = () => {
   const previousScroll = useRef<number>(0);
 
   const [dealer, setDealer] = useState<IDealer | undefined>(undefined);
+  const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
   const [isLoadingDealer, setIsLoadingDealer] = useState(true);
   const [dealerError, setDealerError] = useState<Error | null>(null);
   const [orders, setOrders] = useState<IOrderData[]>([]);
@@ -132,11 +135,17 @@ const DealerDashboard: React.FC = () => {
           createdAt: response.createdAt,
         };
         setDealer(dealerData);
+        setBusinessRegistration(response);
       } else {
-        setDealerError(new Error('Business registration not found'));
+        // No registration found - allow dashboard to render with empty states
+        setDealer(undefined);
+        setBusinessRegistration(null);
       }
     } catch (error) {
+      // Handle error but don't block dashboard rendering
       setDealerError(error instanceof Error ? error : new Error('Failed to fetch dealer data'));
+      setDealer(undefined);
+      setBusinessRegistration(null);
     } finally {
       setIsLoadingDealer(false);
     }
@@ -159,7 +168,13 @@ const DealerDashboard: React.FC = () => {
       setVehicles(vehiclesData.Response?.vehicles || []);
       setBookings(bookingsData);
     } catch (error) {
-      // Error handling - no fallback per rules
+      // Handle API errors gracefully - APIs will fail without approved registration
+      // Set empty defaults so UI can still render with appropriate messages
+      setOrderStats({total: 0, totalRevenue: 0});
+      setOrders([]);
+      setProducts([]);
+      setVehicles([]);
+      setBookings([]);
     } finally {
       setIsLoading(false);
     }
@@ -170,10 +185,18 @@ const DealerDashboard: React.FC = () => {
   }, [fetchDealerData]);
 
   useEffect(() => {
-    if (dealer) {
+    // Fetch dashboard data after dealer loading completes, but only if registration exists
+    if (!isLoadingDealer && businessRegistration) {
       fetchDashboardData();
     }
-  }, [dealer, fetchDashboardData]);
+  }, [isLoadingDealer, businessRegistration, fetchDashboardData]);
+
+  // Redirect to business registration if no registration exists
+  useEffect(() => {
+    if (!isLoadingDealer && !businessRegistration && user?.id) {
+      resetAndNavigate('BusinessRegistration');
+    }
+  }, [isLoadingDealer, businessRegistration, user?.id]);
 
   const dealerProductIds = useMemo(
     () => products?.filter((product) => product.dealerId === dealer?.id).map((p) => p.id) || [],
@@ -226,6 +249,16 @@ const DealerDashboard: React.FC = () => {
 
   const pendingOrdersCount = useMemo(() => orderStats?.pending || 0, [orderStats]);
 
+  // Redirect to business registration only if no registration exists OR status is rejected
+  // Allow access if registration exists (even if pending)
+  useEffect(() => {
+    if (!isLoadingDealer && user?.id) {
+      if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
+        resetAndNavigate('BusinessRegistration');
+      }
+    }
+  }, [isLoadingDealer, businessRegistration, user?.id]);
+
   const handleMessagesPress = () => {
     // Navigate to messages screen
   };
@@ -238,14 +271,16 @@ const DealerDashboard: React.FC = () => {
     return <DashboardSkeleton />;
   }
 
-  if (dealerError || !dealer) {
-    return (
-      <View style={{flex: 1, backgroundColor: theme.background}}>
-        <Header title={t('dashboard')} />
-        <EmptyState title={t('errorLoadingDealer')} message={t('pleaseTryAgain')} icon="alert-circle" />
-      </View>
-    );
+  // Don't render dashboard if no registration or rejected - will redirect
+  if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
+    return <DashboardSkeleton />;
   }
+
+  // Determine registration status for displaying appropriate messages
+  const registrationStatus = businessRegistration?.status || 'none';
+  const showPendingMessage = registrationStatus === 'pending';
+  const showRejectedMessage = registrationStatus === 'rejected';
+  const isApproved = registrationStatus === 'approved';
 
   const currentDate = new Date().toISOString();
 
@@ -323,8 +358,32 @@ const DealerDashboard: React.FC = () => {
               </View>
             ) : (
               <>
+                {/* Show registration status messages */}
+                {showPendingMessage && (
+                  <View style={[styles.statusBanner, {backgroundColor: '#dbeafe', borderColor: '#3b82f6'}]}>
+                    <CustomText style={[styles.statusBannerText, {color: '#1e40af'}]}>
+                      {t('dealer.pendingApproval') || 'Your business registration is pending admin approval. You can view your dashboard, but some features will be limited until approved.'}
+                    </CustomText>
+                  </View>
+                )}
+
+                {showRejectedMessage && (
+                  <View style={[styles.statusBanner, {backgroundColor: '#fee2e2', borderColor: '#ef4444'}]}>
+                    <CustomText style={[styles.statusBannerText, {color: '#991b1b'}]}>
+                      {t('dealer.dealershipRejected') || 'Your business registration was rejected. Please update your registration to reapply.'}
+                    </CustomText>
+                    <TouchableOpacity
+                      style={[styles.statusBannerButton, {backgroundColor: '#ef4444'}]}
+                      onPress={() => (navigation as any).navigate('BusinessRegistration')}>
+                      <CustomText style={styles.statusBannerButtonText}>
+                        {t('dealer.updateRegistration') || 'Update Registration'}
+                      </CustomText>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 <WelcomeHeader
-                  businessName={dealer.businessName}
+                  businessName={dealer?.businessName || user?.name || 'Dealer'}
                   onMessagePress={handleMessagesPress}
                   hasNotifications={pendingOrdersCount > 0}
                 />
@@ -408,6 +467,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  statusBanner: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  statusBannerText: {
+    fontSize: RFValue(13),
+    fontFamily: Fonts.Medium,
+    marginBottom: 12,
+    lineHeight: RFValue(18),
+  },
+  statusBannerButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  statusBannerButtonText: {
+    color: '#fff',
+    fontSize: RFValue(13),
+    fontFamily: Fonts.SemiBold,
   },
   recentSection: {
     marginTop: 8,

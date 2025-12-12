@@ -1,5 +1,5 @@
-import React, {FC, useEffect} from 'react';
-import {View, AppState} from 'react-native';
+import React, {FC, useEffect, useState} from 'react';
+import {View, AppState, ActivityIndicator} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
@@ -141,6 +141,57 @@ const MainTabs: FC = () => {
 const DealerTabs: FC = () => {
   const {colors} = useTheme();
   const {t} = useTranslation('dealer');
+  const {user} = useAuthStore();
+  const [businessRegistration, setBusinessRegistration] = useState<any>(null);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    const checkBusinessRegistration = async () => {
+      if (!user?.id) {
+        setIsChecking(false);
+        return;
+      }
+
+      try {
+        const {getBusinessRegistrationByUserId} = await import('@service/dealerService');
+        const registration = await getBusinessRegistrationByUserId(user.id);
+        setBusinessRegistration(registration);
+        
+        // Only redirect if no registration exists OR status is rejected
+        // Allow access if registration exists (even if pending or approved)
+        if (!registration || (registration && registration.status === 'rejected')) {
+          resetAndNavigate('BusinessRegistration');
+        }
+      } catch (error) {
+        console.error('Error checking business registration:', error);
+        // On error, check if it's a 404 (no registration) - redirect to registration
+        // Otherwise allow access (might be network error)
+        const errorStatus = (error as any)?.response?.status;
+        if (errorStatus === 404) {
+          resetAndNavigate('BusinessRegistration');
+        } else {
+          // Network error or other - allow access, will be handled by dashboard
+          setIsChecking(false);
+        }
+        return;
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkBusinessRegistration();
+  }, [user?.id]);
+
+  // Show loading while checking registration
+  // Only block if checking OR if registration doesn't exist or is rejected
+  const shouldBlock = isChecking || !businessRegistration || (businessRegistration && businessRegistration.status === 'rejected');
+  if (shouldBlock) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background}}>
+        <ActivityIndicator size="large" color={colors.secondary} />
+      </View>
+    );
+  }
 
   return (
     <Tab.Navigator

@@ -11,46 +11,12 @@ export const customerLogin = async (email: string, password: string) => {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const response = await appAxios.post('/auth/login', {
+      email: trimmedEmail,
+      password: trimmedPassword,
+    });
 
-    try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password: trimmedPassword,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      // Check if response is ok
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
-        }
-        
-        const error: any = {
-          response: {
-            status: response.status,
-            statusText: response.statusText,
-            data: errorData,
-          },
-          message: errorData?.message || errorData?.Response?.ReturnMessage || `HTTP error! status: ${response.status}`,
-        };
-        throw error;
-      }
-
-      const data = await response.json();
+      const data = response.data;
       console.log({
         response: data,
         responseData: response,
@@ -85,30 +51,6 @@ export const customerLogin = async (email: string, password: string) => {
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId);
-      
-      // Handle AbortError (timeout)
-      if (fetchError.name === 'AbortError') {
-        const timeoutError: any = {
-          response: undefined,
-          message: 'Request timeout - please check your connection',
-        };
-        throw timeoutError;
-      }
-      
-      // Re-throw if it's already formatted
-      if (fetchError.response) {
-        throw fetchError;
-      }
-      
-      // Handle network errors
-      const networkError: any = {
-        response: undefined,
-        message: fetchError.message || 'Network error - please check your connection',
-      };
-      throw networkError;
-    }
   } catch (error: any) {
     // Log error details for debugging
     console.error('Login error:', {
