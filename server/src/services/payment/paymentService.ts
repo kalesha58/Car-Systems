@@ -1,7 +1,7 @@
 import { Order, IOrderDocument, OrderStatus } from '../../models/Order';
 import { Payment, IPaymentDocument } from '../../models/Payment';
 import { WebhookEvent } from '../../models/WebhookEvent';
-import { Dealer } from '../../models/Dealer';
+import { BusinessRegistration } from '../../models/BusinessRegistration';
 import {
   createPaymentIntent,
   getPaymentStatus,
@@ -75,12 +75,12 @@ export const processUPIPayment = async (
 
     // Validate dealer has payout credentials if dealerId exists
     if (dealerId) {
-      const dealer = await Dealer.findById(dealerId);
-      if (!dealer) {
+      const businessRegistration = await BusinessRegistration.findById(dealerId);
+      if (!businessRegistration) {
         throw new NotFoundError('Dealer not found');
       }
 
-      if (!dealer.payout || (!dealer.payout.upiId && !dealer.payout.bank)) {
+      if (!businessRegistration.payout || (!businessRegistration.payout.upiId && !businessRegistration.payout.bank)) {
         throw new AppError(
           'Dealer does not have payout credentials configured. Please contact dealer or choose COD.',
           400,
@@ -408,8 +408,8 @@ export const initiateDealerPayout = async (orderId: string): Promise<void> => {
       throw new NotFoundError('Order or dealer not found');
     }
 
-    const dealer = await Dealer.findById(order.dealerId);
-    if (!dealer || !dealer.payout) {
+    const businessRegistration = await BusinessRegistration.findById(order.dealerId);
+    if (!businessRegistration || !businessRegistration.payout) {
       throw new AppError('Dealer payout credentials not configured', 400);
     }
 
@@ -432,33 +432,33 @@ export const initiateDealerPayout = async (orderId: string): Promise<void> => {
     const payoutRequest: IPayoutRequest = {
       amount: payoutAmount,
       currency: 'INR',
-      mode: dealer.payout.type === 'UPI' ? 'UPI' : 'NEFT',
+      mode: businessRegistration.payout.type === 'UPI' ? 'UPI' : 'NEFT',
       purpose: 'payout',
       queueIfLowBalance: true,
       referenceId: `payout_${order.orderNumber}`,
       notes: {
         orderId: orderId,
         orderNumber: order.orderNumber,
-        dealerId: String(dealer._id),
+        dealerId: String(businessRegistration._id),
       },
     };
 
-    if (dealer.payout.type === 'UPI' && dealer.payout.upiId) {
+    if (businessRegistration.payout.type === 'UPI' && businessRegistration.payout.upiId) {
       payoutRequest.fundAccount = {
         account_type: 'vpa',
         vpa: {
-          address: dealer.payout.upiId,
+          address: businessRegistration.payout.upiId,
         },
       };
-    } else if (dealer.payout.bank) {
-      payoutRequest.accountNumber = dealer.payout.bank.accountNumber;
-      payoutRequest.ifsc = dealer.payout.bank.ifsc;
+    } else if (businessRegistration.payout.bank) {
+      payoutRequest.accountNumber = businessRegistration.payout.bank.accountNumber;
+      payoutRequest.ifsc = businessRegistration.payout.bank.ifsc;
       payoutRequest.fundAccount = {
         account_type: 'bank_account',
         bank_account: {
-          name: dealer.payout.bank.accountName,
-          ifsc: dealer.payout.bank.ifsc,
-          account_number: dealer.payout.bank.accountNumber,
+          name: businessRegistration.payout.bank.accountName,
+          ifsc: businessRegistration.payout.bank.ifsc,
+          account_number: businessRegistration.payout.bank.accountNumber,
         },
       };
     }

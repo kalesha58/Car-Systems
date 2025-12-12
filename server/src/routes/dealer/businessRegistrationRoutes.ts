@@ -63,6 +63,31 @@ router.use(dealerMiddleware);
  *                 type: string
  *               gst:
  *                 type: string
+ *               payout:
+ *                 type: object
+ *                 description: Payout credentials (optional)
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [UPI, BANK]
+ *                   upiId:
+ *                     type: string
+ *                     description: Required if type is UPI. Format: username@paymentprovider
+ *                     example: "user@paytm"
+ *                   bank:
+ *                     type: object
+ *                     description: Required if type is BANK
+ *                     properties:
+ *                       accountNumber:
+ *                         type: string
+ *                         description: Bank account number
+ *                       ifsc:
+ *                         type: string
+ *                         description: IFSC code (format: XXXX0XXXXX)
+ *                         example: "HDFC0001234"
+ *                       accountName:
+ *                         type: string
+ *                         description: Account holder name
  *     responses:
  *       201:
  *         description: Business registration created successfully
@@ -157,6 +182,27 @@ router.get('/user/:userId', getBusinessRegistrationByUserIdController);
  *                 type: string
  *               gst:
  *                 type: string
+ *               payout:
+ *                 type: object
+ *                 description: Payout credentials (optional)
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [UPI, BANK]
+ *                   upiId:
+ *                     type: string
+ *                     description: Required if type is UPI. Format: username@paymentprovider
+ *                   bank:
+ *                     type: object
+ *                     description: Required if type is BANK
+ *                     properties:
+ *                       accountNumber:
+ *                         type: string
+ *                       ifsc:
+ *                         type: string
+ *                         description: IFSC code (format: XXXX0XXXXX)
+ *                       accountName:
+ *                         type: string
  *     responses:
  *       200:
  *         description: Business registration updated successfully

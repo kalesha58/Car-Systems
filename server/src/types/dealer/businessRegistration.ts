@@ -1,4 +1,4 @@
-import { DealerType, BusinessRegistrationStatus } from '../../models/BusinessRegistration';
+import { DealerType, BusinessRegistrationStatus, IPayoutCredentials } from '../../models/BusinessRegistration';
 
 export interface IBusinessRegistration {
   id: string;
@@ -7,6 +7,7 @@ export interface IBusinessRegistration {
   address: string;
   phone: string;
   gst?: string;
+  payout?: IPayoutCredentials;
   status: BusinessRegistrationStatus;
   approvalCode?: string;
   userId: string;
@@ -20,6 +21,7 @@ export interface ICreateBusinessRegistrationRequest {
   address: string;
   phone: string;
   gst?: string;
+  payout?: IPayoutCredentials;
 }
 
 export interface IUpdateBusinessRegistrationRequest {
@@ -28,6 +30,7 @@ export interface IUpdateBusinessRegistrationRequest {
   address?: string;
   phone?: string;
   gst?: string;
+  payout?: IPayoutCredentials;
 }
 
 export interface IUpdateBusinessRegistrationStatusRequest {

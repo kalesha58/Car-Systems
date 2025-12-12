@@ -21,6 +21,7 @@ export const businessRegistrationToInterface = (
     address: doc.address,
     phone: doc.phone,
     gst: doc.gst,
+    payout: doc.payout,
     status: doc.status,
     approvalCode: doc.approvalCode,
     userId: doc.userId,
@@ -101,6 +102,62 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
+    // Validate payout information if provided
+    if (data.payout) {
+      if (!data.payout.type || !['UPI', 'BANK'].includes(data.payout.type)) {
+        throw new AppError('Invalid payout type. Must be UPI or BANK', 400);
+      }
+
+      if (data.payout.type === 'UPI') {
+        if (!data.payout.upiId?.trim()) {
+          throw new AppError('UPI ID is required when payout type is UPI', 400);
+        }
+        // Validate UPI ID format: username@paymentprovider
+        const upiRegex = /^[\w.-]+@[\w]+$/;
+        if (!upiRegex.test(data.payout.upiId.trim())) {
+          throw new AppError('Invalid UPI ID format. Expected format: username@paymentprovider', 400);
+        }
+      } else if (data.payout.type === 'BANK') {
+        if (!data.payout.bank) {
+          throw new AppError('Bank details are required when payout type is BANK', 400);
+        }
+        if (!data.payout.bank.accountNumber?.trim()) {
+          throw new AppError('Account number is required', 400);
+        }
+        if (!data.payout.bank.ifsc?.trim()) {
+          throw new AppError('IFSC code is required', 400);
+        }
+        if (!data.payout.bank.accountName?.trim()) {
+          throw new AppError('Account holder name is required', 400);
+        }
+        // Validate IFSC format: XXXX0XXXXX
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        if (!ifscRegex.test(data.payout.bank.ifsc.trim().toUpperCase())) {
+          throw new AppError('Invalid IFSC code format. Expected format: XXXX0XXXXX', 400);
+        }
+      }
+    }
+
+    // Prepare payout object for saving
+    let payoutData: any = undefined;
+    if (data.payout) {
+      if (data.payout.type === 'UPI') {
+        payoutData = {
+          type: 'UPI',
+          upiId: data.payout.upiId?.trim(),
+        };
+      } else if (data.payout.type === 'BANK' && data.payout.bank) {
+        payoutData = {
+          type: 'BANK',
+          bank: {
+            accountNumber: data.payout.bank.accountNumber.trim(),
+            ifsc: data.payout.bank.ifsc.trim().toUpperCase(),
+            accountName: data.payout.bank.accountName.trim(),
+          },
+        };
+      }
+    }
+
     // Create business registration with pending status - requires admin approval
     const registration = new BusinessRegistration({
       businessName: data.businessName.trim(),
@@ -108,6 +165,7 @@ export const createBusinessRegistration = async (
       address: data.address.trim(),
       phone: data.phone.trim(),
       gst: data.gst?.trim() || undefined,
+      payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
     });
@@ -173,6 +231,60 @@ export const updateBusinessRegistration = async (
 
     if (data.gst !== undefined) {
       registration.gst = data.gst?.trim() || undefined;
+    }
+
+    // Handle payout update
+    if (data.payout !== undefined) {
+      if (data.payout === null) {
+        // Remove payout if explicitly set to null
+        registration.payout = undefined;
+      } else {
+        // Validate payout information
+        if (!data.payout.type || !['UPI', 'BANK'].includes(data.payout.type)) {
+          throw new AppError('Invalid payout type. Must be UPI or BANK', 400);
+        }
+
+        if (data.payout.type === 'UPI') {
+          if (!data.payout.upiId?.trim()) {
+            throw new AppError('UPI ID is required when payout type is UPI', 400);
+          }
+          // Validate UPI ID format
+          const upiRegex = /^[\w.-]+@[\w]+$/;
+          if (!upiRegex.test(data.payout.upiId.trim())) {
+            throw new AppError('Invalid UPI ID format. Expected format: username@paymentprovider', 400);
+          }
+          registration.payout = {
+            type: 'UPI',
+            upiId: data.payout.upiId.trim(),
+          };
+        } else if (data.payout.type === 'BANK') {
+          if (!data.payout.bank) {
+            throw new AppError('Bank details are required when payout type is BANK', 400);
+          }
+          if (!data.payout.bank.accountNumber?.trim()) {
+            throw new AppError('Account number is required', 400);
+          }
+          if (!data.payout.bank.ifsc?.trim()) {
+            throw new AppError('IFSC code is required', 400);
+          }
+          if (!data.payout.bank.accountName?.trim()) {
+            throw new AppError('Account holder name is required', 400);
+          }
+          // Validate IFSC format
+          const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+          if (!ifscRegex.test(data.payout.bank.ifsc.trim().toUpperCase())) {
+            throw new AppError('Invalid IFSC code format. Expected format: XXXX0XXXXX', 400);
+          }
+          registration.payout = {
+            type: 'BANK',
+            bank: {
+              accountNumber: data.payout.bank.accountNumber.trim(),
+              ifsc: data.payout.bank.ifsc.trim().toUpperCase(),
+              accountName: data.payout.bank.accountName.trim(),
+            },
+          };
+        }
+      }
     }
 
     await registration.save();

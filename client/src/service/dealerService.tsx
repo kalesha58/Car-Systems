@@ -148,6 +148,16 @@ export const getDealerVehicles = async (
   }
 };
 
+export interface IPayoutCredentials {
+  type: 'UPI' | 'BANK';
+  upiId?: string;
+  bank?: {
+    accountNumber: string;
+    ifsc: string;
+    accountName: string;
+  };
+}
+
 export interface IBusinessRegistration {
   id: string;
   businessName: string;
@@ -155,6 +165,7 @@ export interface IBusinessRegistration {
   address: string;
   phone: string;
   gst?: string;
+  payout?: IPayoutCredentials;
   status: string;
   approvalCode?: string;
   userId: string;
@@ -194,6 +205,7 @@ export interface ICreateBusinessRegistrationRequest {
   address: string;
   phone: string;
   gst?: string;
+  payout?: IPayoutCredentials;
 }
 
 export const createBusinessRegistration = async (

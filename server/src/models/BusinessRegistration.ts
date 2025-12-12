@@ -10,12 +10,23 @@ export type DealerType =
 
 export type BusinessRegistrationStatus = 'pending' | 'approved' | 'rejected';
 
+export interface IPayoutCredentials {
+  type: 'UPI' | 'BANK';
+  upiId?: string;
+  bank?: {
+    accountNumber: string;
+    ifsc: string;
+    accountName: string;
+  };
+}
+
 export interface IBusinessRegistrationDocument extends Document {
   businessName: string;
   type: DealerType;
   address: string;
   phone: string;
   gst?: string;
+  payout?: IPayoutCredentials;
   status: BusinessRegistrationStatus;
   approvalCode?: string;
   userId: string;
@@ -55,6 +66,27 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
     gst: {
       type: String,
       trim: true,
+    },
+    payout: {
+      type: {
+        type: String,
+        enum: ['UPI', 'BANK'],
+      },
+      upiId: {
+        type: String,
+        trim: true,
+        match: [/^[\w.-]+@[\w]+$/, 'Invalid UPI ID format'],
+      },
+      bank: {
+        accountNumber: { type: String, trim: true },
+        ifsc: {
+          type: String,
+          trim: true,
+          uppercase: true,
+          match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC code format'],
+        },
+        accountName: { type: String, trim: true },
+      },
     },
     status: {
       type: String,
