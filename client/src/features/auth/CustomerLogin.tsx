@@ -10,7 +10,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   GestureHandlerRootView,
   PanGestureHandler,
@@ -18,10 +18,10 @@ import {
 } from 'react-native-gesture-handler';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import ProductSlider from '@components/login/ProductSlider';
-import {Colors, Fonts, lightColors} from '@utils/Constants';
+import { Colors, Fonts, lightColors } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {resetAndNavigate} from '@utils/NavigationUtils';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { resetAndNavigate } from '@utils/NavigationUtils';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
@@ -30,9 +30,9 @@ import { customerLogin, customerSignup } from '@service/authService';
 import { getBusinessRegistrationByUserId } from '@service/dealerService';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useTranslation} from 'react-i18next';
-import {useToast} from '@hooks/useToast';
-import {useAuthStore} from '@state/authStore';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '@hooks/useToast';
+import { useAuthStore } from '@state/authStore';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -57,16 +57,16 @@ const CustomerLogin = () => {
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
-  const {t} = useTranslation();
-  const {showSuccess} = useToast();
+  const { t } = useTranslation();
+  const { showSuccess } = useToast();
 
   const checkUserRole = (role: string | string[] | undefined): string | null => {
     if (!role) {
       return null;
     }
-    
+
     const roleArray = Array.isArray(role) ? role : [role];
-    
+
     if (roleArray.includes('admin')) {
       return 'admin';
     }
@@ -76,7 +76,7 @@ const CustomerLogin = () => {
     if (roleArray.includes('user')) {
       return 'user';
     }
-    
+
     return null;
   };
 
@@ -108,9 +108,9 @@ const CustomerLogin = () => {
     }
   }, [keyboardOffsetHeight]);
 
-  const handleGesture = ({nativeEvent}: any) => {
+  const handleGesture = ({ nativeEvent }: any) => {
     if (nativeEvent.state === State.END) {
-      const {translationX, translationY} = nativeEvent;
+      const { translationX, translationY } = nativeEvent;
       let direction = '';
       if (Math.abs(translationX) > Math.abs(translationY)) {
         direction = translationX > 0 ? 'right' : 'left';
@@ -164,44 +164,46 @@ const CustomerLogin = () => {
     try {
       await customerLogin(email, password);
       showSuccess(t('auth.loginSuccess'));
-      
+
       const currentUser = useAuthStore.getState().user;
       if (currentUser && currentUser.role) {
         const userRole = checkUserRole(currentUser.role);
-        
+
         // For dealers, check if they have business registration
-        if (userRole === 'dealer' && currentUser.id) {
+        // Try both 'id' and '_id' fields as the user object might have either
+        const userId = currentUser.id || currentUser._id;
+        if (userRole === 'dealer' && userId) {
           try {
-            const businessRegistration = await getBusinessRegistrationByUserId(currentUser.id);
-            console.log('Business registration check:', { 
-              hasRegistration: !!businessRegistration, 
-              status: businessRegistration?.status 
-            });
-            
-            // Only redirect to registration if no registration exists OR status is rejected
-            // Allow access if registration exists (even if pending)
-            if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
-              // No registration or rejected - navigate to business registration screen
-              console.log('Navigating to BusinessRegistration - no registration or rejected');
+            // Ensure userId is a string to avoid type mismatches
+            const userIdString = String(userId);
+            const businessRegistration = await getBusinessRegistrationByUserId(userIdString);
+
+            // Check if dealer has business registration
+            // Navigate to BusinessRegistration if: no registration exists OR status is rejected
+            // Navigate to DealerTabs if: registration exists AND (status is pending OR approved)
+            if (!businessRegistration) {
+              // No registration exists - navigate to business registration screen
               resetAndNavigate('BusinessRegistration');
-            } else {
-              // Has registration (pending/approved) - navigate to dealer tabs
-              console.log('Navigating to DealerTabs - registration exists with status:', businessRegistration.status);
+            } else if (businessRegistration.status === 'rejected') {
+              // Registration was rejected - navigate to business registration screen to resubmit
+              resetAndNavigate('BusinessRegistration');
+            } else if (businessRegistration.status === 'pending' || businessRegistration.status === 'approved') {
+              // Has registration with status pending or approved - navigate to dealer dashboard
               resetAndNavigate('DealerTabs');
+            } else {
+              // Unknown status - navigate to registration
+              resetAndNavigate('BusinessRegistration');
             }
           } catch (error: any) {
             // Handle network errors or other unexpected errors
             // For network errors, allow access to dealer tabs (will show appropriate messages)
-            console.error('Error checking business registration:', error);
             const errorStatus = error?.response?.status;
             // If it's a network error (no status) or server error (5xx), allow access
             // The dealer dashboard will handle showing appropriate messages
             if (!errorStatus || (errorStatus >= 500)) {
-              console.log('Network/server error - navigating to DealerTabs');
               resetAndNavigate('DealerTabs');
             } else {
               // For other errors (like 403), redirect to registration
-              console.log('Other error - navigating to BusinessRegistration');
               resetAndNavigate('BusinessRegistration');
             }
           }
@@ -220,14 +222,9 @@ const CustomerLogin = () => {
         error?.response?.data?.message ||
         error?.message ||
         'Invalid email or password. Please try again.';
-      
-      console.error('Login failed:', {
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        data: error?.response?.data,
-        message: errorMessage
-      });
-      
+
+      console.error('Login failed:', errorMessage);
+
       Alert.alert('Login Failed', errorMessage);
     } finally {
       setLoading(false);
@@ -263,13 +260,13 @@ const CustomerLogin = () => {
           <PanGestureHandler onHandlerStateChange={handleGesture}>
             <Animated.ScrollView
               bounces={false}
-              style={{transform: [{translateY: animatedValue}]}}
+              style={{ transform: [{ translateY: animatedValue }] }}
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.subContainer}>
 
               <LinearGradient colors={bottomColors} style={styles.gradient} />
-              
+
               <View style={styles.content}>
                 <Image
                   source={require('@assets/images/logo.jpeg')}
@@ -277,7 +274,7 @@ const CustomerLogin = () => {
                 />
 
                 <CustomText variant="h2" fontFamily={Fonts.Bold}>
-                 Car Connect App
+                  Car Connect App
                 </CustomText>
                 <CustomText
                   variant="h5"
@@ -342,7 +339,7 @@ const CustomerLogin = () => {
                   rightIcon={
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
-                      style={{ 
+                      style={{
                         padding: getResponsiveValue(8, 10, 12),
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -389,10 +386,10 @@ const CustomerLogin = () => {
           <SafeAreaView />
         </View>
 
-        <TouchableOpacity 
-          style={styles.absoluteSwitch} 
-          onPress={()=>resetAndNavigate('DeliveryLogin')}>
-          <Icon name='bike-fast' color="#000" size={RFValue(getResponsiveValue(18, 20, 22))}/>
+        <TouchableOpacity
+          style={styles.absoluteSwitch}
+          onPress={() => resetAndNavigate('DeliveryLogin')}>
+          <Icon name='bike-fast' color="#000" size={RFValue(getResponsiveValue(18, 20, 22))} />
         </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
@@ -403,23 +400,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  absoluteSwitch:{
-    position:'absolute',
-    top:Platform.OS==='ios' ? getResponsiveValue(50, 60, 70) : getResponsiveValue(30, 40, 50),
-    backgroundColor:"#fff",
-    shadowColor:"#000",
-    shadowOffset:{width:1,height:1},
-    shadowOpacity:0.5,
-    shadowRadius:12,
-    elevation:10,
-    padding:getResponsiveValue(10, 12, 14),
-    height:getResponsiveValue(55, 60, 65),
-    justifyContent:"center",
-    alignItems:'center',
-    width:getResponsiveValue(55, 60, 65),
-    borderRadius:50,
-    right:getResponsiveValue(10, 16, 20),
-    zIndex:99
+  absoluteSwitch: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? getResponsiveValue(50, 60, 70) : getResponsiveValue(30, 40, 50),
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 10,
+    padding: getResponsiveValue(10, 12, 14),
+    height: getResponsiveValue(55, 60, 65),
+    justifyContent: "center",
+    alignItems: 'center',
+    width: getResponsiveValue(55, 60, 65),
+    borderRadius: 50,
+    right: getResponsiveValue(10, 16, 20),
+    zIndex: 99
   },
   text: {
     marginTop: getResponsiveValue(2, 4, 6),

@@ -32,6 +32,31 @@ const checkDealerRole = (req: IAuthRequest, res: Response, next: NextFunction): 
 
 // POST route - only needs auth + dealer role, NOT existing business registration
 router.post('/', checkDealerRole, createBusinessRegistrationController);
+/**
+ * @swagger
+ * /api/dealer/business-registration/user/{userId}:
+ *   get:
+ *     summary: Get business registration by user ID
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Business registration retrieved successfully
+ *       404:
+ *         description: Business registration not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Dealer access required
+ */
+router.get('/user/:userId', getBusinessRegistrationByUserIdController);
 
 // All other routes require approved business registration
 router.use(dealerMiddleware);
@@ -126,31 +151,7 @@ router.post('/', createBusinessRegistrationController);
  */
 router.get('/:id', getBusinessRegistrationByIdController);
 
-/**
- * @swagger
- * /api/dealer/business-registration/user/{userId}:
- *   get:
- *     summary: Get business registration by user ID
- *     tags: [Dealer]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Business registration retrieved successfully
- *       404:
- *         description: Business registration not found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Dealer access required
- */
-router.get('/user/:userId', getBusinessRegistrationByUserIdController);
+
 
 /**
  * @swagger

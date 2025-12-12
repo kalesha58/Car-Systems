@@ -1,16 +1,16 @@
-import {appAxios} from './apiInterceptors';
-import {IDealersResponse, IGetDealersRequest} from '../types/dealer/IDealer';
-import {IOrderData, IOrdersListResponse} from '../types/order/IOrder';
-import {IProductsResponse, IGetProductsRequest, IProduct} from '../types/product/IProduct';
-import {IVehiclesResponse, IGetVehiclesRequest, IDealerVehicle} from '../types/vehicle/IVehicle';
-import {IServicesResponse, IGetServicesRequest, IService} from '../types/service/IService';
+import { appAxios } from './apiInterceptors';
+import { IDealersResponse, IGetDealersRequest } from '../types/dealer/IDealer';
+import { IOrderData, IOrdersListResponse } from '../types/order/IOrder';
+import { IProductsResponse, IGetProductsRequest, IProduct } from '../types/product/IProduct';
+import { IVehiclesResponse, IGetVehiclesRequest, IDealerVehicle } from '../types/vehicle/IVehicle';
+import { IServicesResponse, IGetServicesRequest, IService } from '../types/service/IService';
 
 export const getDealers = async (
   query?: IGetDealersRequest,
 ): Promise<IDealersResponse> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IDealersResponse>('/dealers', {params});
+    const response = await appAxios.get<IDealersResponse>('/dealers', { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -86,7 +86,7 @@ export const getDealerOrders = async (
 ): Promise<IOrderData[]> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IDealerOrdersResponse>('/dealer/orders', {params});
+    const response = await appAxios.get<IDealerOrdersResponse>('/dealer/orders', { params });
     if (response.data.success && response.data.Response && response.data.Response.orders) {
       return response.data.Response.orders;
     }
@@ -114,7 +114,7 @@ export const getDealerProducts = async (
 ): Promise<IProductsResponse> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IProductsResponse>('/dealer/products', {params});
+    const response = await appAxios.get<IProductsResponse>('/dealer/products', { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -141,7 +141,7 @@ export const getDealerVehicles = async (
 ): Promise<IVehiclesResponse> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IVehiclesResponse>('/dealer/vehicles', {params});
+    const response = await appAxios.get<IVehiclesResponse>('/dealer/vehicles', { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -185,15 +185,37 @@ export const getBusinessRegistrationByUserId = async (
     const response = await appAxios.get<IBusinessRegistrationResponse>(
       `/dealer/business-registration/user/${userId}`,
     );
+
     if (response.data && response.data.success && response.data.Response) {
       return response.data.Response;
     }
+
     return null;
   } catch (error: any) {
     // Handle 404 errors (business registration not found) - this is expected
     if (error?.response?.status === 404) {
       return null;
     }
+
+    // Handle 403 errors (permission denied - userId mismatch)
+    // This might happen if the userId doesn't match the authenticated user
+    if (error?.response?.status === 403) {
+      console.warn('Permission denied (403) when fetching business registration. UserId mismatch?', {
+        requestedUserId: userId,
+        errorMessage: error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message,
+      });
+      // Return null to indicate no registration found (or can't access)
+      return null;
+    }
+
+    // Log other errors for debugging
+    console.error('Error in getBusinessRegistrationByUserId:', {
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+      message: error?.message,
+    });
+
     // For other errors, re-throw to be handled by the caller
     throw error;
   }
@@ -266,7 +288,7 @@ export const getDealerServices = async (
 ): Promise<IServicesResponse> => {
   try {
     const params = query || {};
-    const response = await appAxios.get<IServicesResponse>('/dealer/services', {params});
+    const response = await appAxios.get<IServicesResponse>('/dealer/services', { params });
     return response.data;
   } catch (error) {
     throw error;

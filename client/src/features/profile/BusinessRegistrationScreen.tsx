@@ -237,11 +237,18 @@ const BusinessRegistrationScreen: React.FC = () => {
         id: registration.id, 
         status: registration.status 
       });
+      
+      // Verify status is pending
+      if (registration.status !== 'pending') {
+        console.warn('Warning: Business registration status is not pending:', registration.status);
+      }
+      
       showSuccess(t('businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
+      
       // Navigate to DealerTabs after a short delay to ensure success message is shown
-      setTimeout(() => {
+      setTimeout(async () => {
         console.log('Navigating to DealerTabs after business registration submission');
-        resetAndNavigate('DealerTabs');
+        await resetAndNavigate('DealerTabs');
       }, 500);
     } catch (error: any) {
       console.error('Error creating business registration:', error);

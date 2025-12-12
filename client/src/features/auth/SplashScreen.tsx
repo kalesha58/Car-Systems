@@ -60,15 +60,35 @@ const SplashScreen: FC = () => {
       // Check if dealer has business registration
       if (userId) {
         try {
-          const businessRegistration = await getBusinessRegistrationByUserId(userId);
-          // Only redirect to registration if no registration exists OR status is rejected
-          // Allow access if registration exists (even if pending)
-          if (!businessRegistration || (businessRegistration && businessRegistration.status === 'rejected')) {
-            // No registration or rejected - navigate to business registration screen
+          console.log('SplashScreen: Checking business registration for dealer userId:', userId);
+          // Ensure userId is a string
+          const userIdString = String(userId);
+          const businessRegistration = await getBusinessRegistrationByUserId(userIdString);
+          console.log('SplashScreen: Business registration check result:', { 
+            hasRegistration: !!businessRegistration, 
+            status: businessRegistration?.status,
+            registration: businessRegistration
+          });
+          
+          // Check if dealer has business registration
+          // Navigate to BusinessRegistration if: no registration exists OR status is rejected
+          // Navigate to DealerTabs if: registration exists AND (status is pending OR approved)
+          if (!businessRegistration) {
+            // No registration exists - navigate to business registration screen
+            console.log('SplashScreen: ❌ No business registration found - Navigating to BusinessRegistration');
             resetAndNavigate('BusinessRegistration');
-          } else {
-            // Has registration (pending/approved) - navigate to dealer tabs
+          } else if (businessRegistration.status === 'rejected') {
+            // Registration was rejected - navigate to business registration screen to resubmit
+            console.log('SplashScreen: ❌ Business registration rejected - Navigating to BusinessRegistration');
+            resetAndNavigate('BusinessRegistration');
+          } else if (businessRegistration.status === 'pending' || businessRegistration.status === 'approved') {
+            // Has registration with status pending or approved - navigate to dealer dashboard
+            console.log('SplashScreen: ✅ Business registration found with status:', businessRegistration.status, '- Navigating to DealerTabs');
             resetAndNavigate('DealerTabs');
+          } else {
+            // Unknown status - log and navigate to registration
+            console.warn('SplashScreen: ⚠️ Unknown business registration status:', businessRegistration.status, '- Navigating to BusinessRegistration');
+            resetAndNavigate('BusinessRegistration');
           }
         } catch (error: any) {
           // If check fails with 404, redirect to registration

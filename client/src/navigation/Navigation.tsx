@@ -1,13 +1,13 @@
-import React, {FC, useEffect, useState} from 'react';
-import {View, AppState, ActivityIndicator} from 'react-native';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {NavigationContainer} from '@react-navigation/native';
-import {navigationRef, resetAndNavigate} from '@utils/NavigationUtils';
-import {useAuthStore} from '@state/authStore';
+import React, { FC, useEffect, useState } from 'react';
+import { View, AppState, ActivityIndicator } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef, resetAndNavigate } from '@utils/NavigationUtils';
+import { useAuthStore } from '@state/authStore';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import SplashScreen from '@features/auth/SplashScreen';
 import DeliveryLogin from '@features/auth/DeliveryLogin';
@@ -39,17 +39,17 @@ import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
-import {useCartStore} from '@state/cartStore';
-import {useTheme} from '@hooks/useTheme';
-import {ToastProvider} from '@context/ToastContext';
-import {useTranslation} from 'react-i18next';
+import { useCartStore } from '@state/cartStore';
+import { useTheme } from '@hooks/useTheme';
+import { ToastProvider } from '@context/ToastContext';
+import { useTranslation } from 'react-i18next';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs: FC = () => {
-  const {cart} = useCartStore();
-  const {colors} = useTheme();
+  const { cart } = useCartStore();
+  const { colors } = useTheme();
   const cartCount = cart.reduce((sum, item) => sum + item.count, 0);
 
   return (
@@ -75,7 +75,7 @@ const MainTabs: FC = () => {
         name="Home"
         component={ProductDashboard}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="home-outline" size={size} color={color} />
           ),
           tabBarLabel: 'Home',
@@ -85,7 +85,7 @@ const MainTabs: FC = () => {
         name="Play"
         component={PlayScreen}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="play-circle-outline" size={size} color={color} />
           ),
           tabBarLabel: 'Play',
@@ -95,7 +95,7 @@ const MainTabs: FC = () => {
         name="Category"
         component={ProductCategories}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="grid-outline" size={size} color={color} />
           ),
           tabBarLabel: 'Categories',
@@ -105,7 +105,7 @@ const MainTabs: FC = () => {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <View>
               <Icon name="bag-outline" size={size} color={color} />
               {cartCount > 0 && (
@@ -124,7 +124,7 @@ const MainTabs: FC = () => {
                   <CustomText
                     fontSize={RFValue(8)}
                     fontFamily={Fonts.Bold}
-                    style={{color: '#fff'}}>
+                    style={{ color: '#fff' }}>
                     {cartCount > 9 ? '9+' : cartCount}
                   </CustomText>
                 </View>
@@ -139,24 +139,25 @@ const MainTabs: FC = () => {
 };
 
 const DealerTabs: FC = () => {
-  const {colors} = useTheme();
-  const {t} = useTranslation('dealer');
-  const {user} = useAuthStore();
+  const { colors } = useTheme();
+  const { t } = useTranslation('dealer');
+  const { user } = useAuthStore();
   const [businessRegistration, setBusinessRegistration] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const checkBusinessRegistration = async () => {
-      if (!user?.id) {
+      const userId = user?.id || user?._id;
+      if (!userId) {
         setIsChecking(false);
         return;
       }
 
       try {
-        const {getBusinessRegistrationByUserId} = await import('@service/dealerService');
-        const registration = await getBusinessRegistrationByUserId(user.id);
+        const { getBusinessRegistrationByUserId } = await import('@service/dealerService');
+        const registration = await getBusinessRegistrationByUserId(userId);
         setBusinessRegistration(registration);
-        
+
         // Only redirect if no registration exists OR status is rejected
         // Allow access if registration exists (even if pending or approved)
         if (!registration || (registration && registration.status === 'rejected')) {
@@ -180,14 +181,14 @@ const DealerTabs: FC = () => {
     };
 
     checkBusinessRegistration();
-  }, [user?.id]);
+  }, [user?.id, user?._id]);
 
   // Show loading while checking registration
   // Only block if checking OR if registration doesn't exist or is rejected
   const shouldBlock = isChecking || !businessRegistration || (businessRegistration && businessRegistration.status === 'rejected');
   if (shouldBlock) {
     return (
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.secondary} />
       </View>
     );
@@ -216,7 +217,7 @@ const DealerTabs: FC = () => {
         name="Home"
         component={DealerDashboard}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="home-outline" size={size} color={color} />
           ),
           tabBarLabel: t('dashboard'),
@@ -226,7 +227,7 @@ const DealerTabs: FC = () => {
         name="Inventory"
         component={InventoryScreen}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="cube-outline" size={size} color={color} />
           ),
           tabBarLabel: t('inventory'),
@@ -236,7 +237,7 @@ const DealerTabs: FC = () => {
         name="Orders"
         component={DealerOrdersList}
         options={{
-          tabBarIcon: ({color, size}) => (
+          tabBarIcon: ({ color, size }) => (
             <Icon name="receipt-outline" size={size} color={color} />
           ),
           tabBarLabel: t('orders'),
@@ -247,15 +248,15 @@ const DealerTabs: FC = () => {
 };
 
 const Navigation: FC = () => {
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   const checkUserRole = (role: string | string[] | undefined): string | null => {
     if (!role) {
       return null;
     }
-    
+
     const roleArray = Array.isArray(role) ? role : [role];
-    
+
     if (roleArray.includes('admin')) {
       return 'admin';
     }
@@ -265,7 +266,7 @@ const Navigation: FC = () => {
     if (roleArray.includes('user')) {
       return 'user';
     }
-    
+
     return null;
   };
 
@@ -298,7 +299,7 @@ const Navigation: FC = () => {
               'AddEditService',
             ];
             const isDealerScreen = dealerScreens.includes(currentRouteName) || currentRouteName.includes('Dealer');
-            
+
             if (userRole === 'dealer' && !isDealerScreen) {
               navigateByRole(userRole);
             } else if (userRole === 'user' && currentRouteName === 'DealerTabs') {
