@@ -233,9 +233,7 @@
     "address": "Address",
     "enterAddress": "Enter business address",
     "useCurrentLocation": "Use Current Location",
-    "gettingLocation": "Getting location...",
     "locationSet": "Location Set",
-    "locationFailed": "Failed to get location. Please try again.",
     "phone": "Phone",
     "enterPhone": "Enter phone number",
     "gst": "GST Number",
@@ -266,7 +264,10 @@
     "invalidIFSC": "Invalid IFSC code format (e.g., HDFC0001234)",
     "submitRegistration": "Submit Registration",
     "businessRegistrationSubmitted": "Business registration submitted successfully. Your request is pending admin approval.",
-    "failedToSubmitRegistration": "Failed to submit business registration. Please try again."
+    "failedToSubmitRegistration": "Failed to submit business registration. Please try again.",
+    "payoutDetails": "Payout Details",
+    "registeredOn": "Registered On",
+    "noRegistration": "No business registration found",
+    "registerBusiness": "Register Business"
   }
 }
-

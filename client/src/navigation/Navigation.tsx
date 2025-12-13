@@ -39,6 +39,7 @@ import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
+import LocationPickerScreen from '@features/chat/LocationPickerScreen';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
@@ -140,7 +141,7 @@ const MainTabs: FC = () => {
 
 const DealerTabs: FC = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation('dealer');
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [businessRegistration, setBusinessRegistration] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -220,7 +221,7 @@ const DealerTabs: FC = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="home-outline" size={size} color={color} />
           ),
-          tabBarLabel: t('dashboard'),
+          tabBarLabel: t('dealer.dashboard'),
         }}
       />
       <Tab.Screen
@@ -230,7 +231,7 @@ const DealerTabs: FC = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="cube-outline" size={size} color={color} />
           ),
-          tabBarLabel: t('inventory'),
+          tabBarLabel: t('dealer.inventory'),
         }}
       />
       <Tab.Screen
@@ -240,7 +241,7 @@ const DealerTabs: FC = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="receipt-outline" size={size} color={color} />
           ),
-          tabBarLabel: t('orders'),
+          tabBarLabel: t('dealer.orders'),
         }}
       />
     </Tab.Navigator>
@@ -332,6 +333,7 @@ const Navigation: FC = () => {
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="DealerTabs" component={DealerTabs} />
           <Stack.Screen name="DealerDashboard" component={DealerDashboard} />
+          <Stack.Screen name="Analytics" component={require('@features/dashboard/AnalyticsScreen').default} />
           <Stack.Screen name="InventoryScreen" component={InventoryScreen} />
           <Stack.Screen
             name="AddEditProduct"
@@ -359,6 +361,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="BusinessRegistration"
             component={BusinessRegistrationScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="BusinessRegistrationDetails"
+            getComponent={() => require('@features/profile/BusinessRegistrationDetailsScreen').default}
             options={{
               animation: 'slide_from_right',
             }}
@@ -457,6 +466,13 @@ const Navigation: FC = () => {
             }}
             name="JoinRequests"
             component={JoinRequestsScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="LocationPicker"
+            component={LocationPickerScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>

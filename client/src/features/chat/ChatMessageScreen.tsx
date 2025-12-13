@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useMemo} from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,17 +10,18 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  PermissionsAndroid,
 } from 'react-native';
-import {useRoute, useNavigation} from '@react-navigation/native';
-import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import Geolocation from '@react-native-community/geolocation';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {useTheme} from '@hooks/useTheme';
-import {useAuthStore} from '@state/authStore';
+import { useTheme } from '@hooks/useTheme';
+import { useAuthStore } from '@state/authStore';
 import {
   getChatById,
   getChatMessages,
@@ -30,7 +31,7 @@ import {
   startLiveLocation,
   stopLiveLocation,
 } from '@service/chatService';
-import {getPendingRequestCount} from '@service/chatService';
+import { getPendingRequestCount } from '@service/chatService';
 import {
   initializeSocket,
   joinChatRoom,
@@ -42,17 +43,18 @@ import {
   emitTyping,
   emitStopTyping,
 } from '@service/socketService';
-import {IChat, IMessage} from '../../types/chat';
-import {useToast} from '@hooks/useToast';
+import { IChat, IMessage } from '../../types/chat';
+import { useToast } from '@hooks/useToast';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
+import AttachmentModal from '@components/common/AttachmentModal';
 
 const ChatMessageScreen: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const {chatId} = route.params as {chatId: string};
-  const {user} = useAuthStore();
-  const {colors} = useTheme();
-  const {showError, showSuccess} = useToast();
+  const { chatId } = route.params as { chatId: string };
+  const { user } = useAuthStore();
+  const { colors } = useTheme();
+  const { showError, showSuccess } = useToast();
 
   const [chat, setChat] = useState<IChat | null>(null);
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -62,8 +64,9 @@ const ChatMessageScreen: React.FC = () => {
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [isLiveLocationActive, setIsLiveLocationActive] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<any>(null);
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
   useEffect(() => {
@@ -103,7 +106,7 @@ const ChatMessageScreen: React.FC = () => {
         }
       });
 
-      onUserTyping((data: {chatId: string; userId: string; userName?: string}) => {
+      onUserTyping((data: { chatId: string; userId: string; userName?: string }) => {
         if (data.chatId === chatId && data.userId !== user?.id) {
           setTypingUsers(prev => new Set([...prev, data.userId]));
           setTimeout(() => {
@@ -125,17 +128,17 @@ const ChatMessageScreen: React.FC = () => {
       navigation.setOptions({
         headerTitle: data.type === 'group' ? data.groupName || 'Group' : data.participantNames?.find(n => n !== user?.name) || 'Chat',
       });
-      
+
       // Check if user is not a member of a public group
       if (data.type === 'group' && !data.isMember && data.canFollow) {
         Alert.alert(
           'Join Request Required',
           'You must follow this group first to view its messages. Please go back and click the Follow button.',
-          [{text: 'OK', onPress: () => navigation.goBack()}],
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
         return;
       }
-      
+
       // Load pending request count if user is owner
       if (data.type === 'group' && data.isOwner && data.groupId) {
         loadPendingRequestCount(data.groupId);
@@ -146,7 +149,7 @@ const ChatMessageScreen: React.FC = () => {
         Alert.alert(
           'Access Denied',
           'You must follow this group first to view its messages. Please go back and click the Follow button.',
-          [{text: 'OK', onPress: () => navigation.goBack()}],
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
       } else {
         showError(errorMessage);
@@ -174,7 +177,7 @@ const ChatMessageScreen: React.FC = () => {
         Alert.alert(
           'Access Denied',
           'You must follow this group first to view its messages. Please go back and click the Follow button.',
-          [{text: 'OK', onPress: () => navigation.goBack()}],
+          [{ text: 'OK', onPress: () => navigation.goBack() }],
         );
       } else {
         showError(errorMessage);
@@ -192,7 +195,7 @@ const ChatMessageScreen: React.FC = () => {
     setSending(true);
 
     try {
-      await sendMessage(chatId, {text, messageType: 'text'});
+      await sendMessage(chatId, { text, messageType: 'text' });
       emitStopTyping(chatId, user?.id || '');
     } catch (error: any) {
       showError(error?.response?.data?.message || 'Failed to send message');
@@ -214,10 +217,30 @@ const ChatMessageScreen: React.FC = () => {
         const imageUri = response.assets[0].uri;
         if (!imageUri) return;
 
+        // Create temporary loading message
+        const tempMessage: IMessage & { isUploading?: boolean } = {
+          id: `temp-${Date.now()}`,
+          chatId,
+          from: user?.id || '',
+          text: 'Image',
+          messageType: 'image',
+          imageUrl: imageUri, // Show local image while uploading
+          createdAt: new Date().toISOString(),
+          isUploading: true, // Custom flag for loading state
+        };
+
+        // Add temporary message to UI
+        setMessages(prev => [...prev, tempMessage]);
+        scrollToBottom();
+
         setSending(true);
         try {
           await sendImageMessage(chatId, imageUri);
+          // Reload messages to get the actual message from server
+          await loadMessages();
         } catch (error: any) {
+          // Remove temporary message on error
+          setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
           showError(error?.response?.data?.message || 'Failed to send image');
         } finally {
           setSending(false);
@@ -226,28 +249,116 @@ const ChatMessageScreen: React.FC = () => {
     );
   };
 
-  const handleShareLocation = async () => {
+  const handleCameraCapture = () => {
+    launchCamera(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        cameraType: 'back',
+        saveToPhotos: false,
+      },
+      async (response: ImagePickerResponse) => {
+        if (response.didCancel || !response.assets?.[0]) return;
+
+        const imageUri = response.assets[0].uri;
+        if (!imageUri) return;
+
+        // Create temporary loading message
+        const tempMessage: IMessage & { isUploading?: boolean } = {
+          id: `temp-${Date.now()}`,
+          chatId,
+          from: user?.id || '',
+          text: 'Image',
+          messageType: 'image',
+          imageUrl: imageUri, // Show local image while uploading
+          createdAt: new Date().toISOString(),
+          isUploading: true, // Custom flag for loading state
+        };
+
+        // Add temporary message to UI
+        setMessages(prev => [...prev, tempMessage]);
+        scrollToBottom();
+
+        setSending(true);
+        try {
+          await sendImageMessage(chatId, imageUri);
+          // Reload messages to get the actual message from server
+          await loadMessages();
+        } catch (error: any) {
+          // Remove temporary message on error
+          setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+          showError(error?.response?.data?.message || 'Failed to send image');
+        } finally {
+          setSending(false);
+        }
+      },
+    );
+  };
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      return true;
+    }
     try {
-      Geolocation.getCurrentPosition(
-        async position => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'This app needs access to your location to share it in chat.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        return true;
+      } else {
+        showError('Location permission denied');
+        return false;
+      }
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  };
+
+  const handleShareLocation = () => {
+    (navigation as any).navigate('LocationPicker', {
+      onLocationSelect: async (location: { latitude: number; longitude: number }) => {
+        // Create temporary loading message
+        const tempMessage: IMessage & { isUploading?: boolean } = {
+          id: `temp-${Date.now()}`,
+          chatId,
+          from: user?.id || '',
+          text: '📍 Location',
+          messageType: 'location',
+          location,
+          createdAt: new Date().toISOString(),
+          isUploading: true, // Custom flag for loading state
+        };
+
+        // Add temporary message to UI
+        setMessages(prev => [...prev, tempMessage]);
+        scrollToBottom();
+
+        setSending(true);
+        try {
           await sendMessage(chatId, {
             text: '📍 Location',
             messageType: 'location',
             location,
           });
-        },
-        error => {
-          showError('Failed to get location');
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
-    } catch (error) {
-      showError('Failed to share location');
-    }
+          // Reload messages to get the actual message from server
+          await loadMessages();
+        } catch (error: any) {
+          // Remove temporary message on error
+          setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+          showError(error?.response?.data?.message || 'Failed to send location');
+        } finally {
+          setSending(false);
+        }
+      },
+    });
   };
 
   const handleLiveLocation = async () => {
@@ -260,6 +371,9 @@ const ChatMessageScreen: React.FC = () => {
         showError(error?.response?.data?.message || 'Failed to stop live location');
       }
     } else {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
+
       try {
         Geolocation.getCurrentPosition(
           async position => {
@@ -272,9 +386,9 @@ const ChatMessageScreen: React.FC = () => {
             showSuccess('Live location started');
           },
           error => {
-            showError('Failed to get location');
+            showError('Failed to get location: ' + error.message);
           },
-          {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
         );
       } catch (error) {
         showError('Failed to start live location');
@@ -294,13 +408,13 @@ const ChatMessageScreen: React.FC = () => {
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      flatListRef.current?.scrollToEnd({animated: true});
+      flatListRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   const handleFollowGroup = async () => {
@@ -318,98 +432,133 @@ const ChatMessageScreen: React.FC = () => {
       StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: colors.background,
+          backgroundColor: colors.chatBackground,
+        },
+        backgroundPattern: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.05,
         },
         messagesContainer: {
-          flex: 1,
-          padding: 16,
+          paddingHorizontal: 10,
+          paddingTop: 16,
         },
         messageBubble: {
-          maxWidth: '75%',
-          padding: 12,
-          borderRadius: 16,
-          marginBottom: 8,
+          maxWidth: '80%',
+          padding: 6,
+          paddingHorizontal: 10,
+          borderRadius: 12,
+          marginBottom: 4,
+          elevation: 1,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 1,
         },
         sentMessage: {
           backgroundColor: colors.secondary,
           alignSelf: 'flex-end',
-          borderBottomRightRadius: 4,
+          borderBottomRightRadius: 2,
+          marginLeft: 40,
         },
         receivedMessage: {
           backgroundColor: colors.cardBackground,
           alignSelf: 'flex-start',
-          borderBottomLeftRadius: 4,
+          borderBottomLeftRadius: 2,
+          marginRight: 40,
         },
         messageText: {
           fontSize: RFValue(14),
           fontFamily: Fonts.Regular,
           color: colors.white,
+          marginBottom: 2,
         },
         receivedMessageText: {
           color: colors.text,
         },
         messageImage: {
-          width: 200,
-          height: 200,
-          borderRadius: 12,
-          marginBottom: 8,
+          width: 220,
+          height: 220,
+          borderRadius: 8,
+          marginBottom: 4,
         },
         messageLocation: {
-          padding: 12,
+          padding: 8,
           backgroundColor: colors.background,
           borderRadius: 8,
-          marginTop: 8,
+          marginTop: 4,
         },
         locationText: {
           fontSize: RFValue(12),
           fontFamily: Fonts.Regular,
           color: colors.text,
         },
+        messageDataContainer: {
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          justifyContent: 'flex-end',
+          flexWrap: 'wrap',
+          minWidth: 50,
+        },
         messageTime: {
-          fontSize: RFValue(10),
+          fontSize: RFValue(9),
           fontFamily: Fonts.Regular,
           color: 'rgba(255,255,255,0.7)',
-          marginTop: 4,
+          marginLeft: 4,
+          alignSelf: 'flex-end',
         },
         receivedMessageTime: {
           color: colors.disabled,
         },
         inputContainer: {
           flexDirection: 'row',
-          padding: 12,
+          paddingHorizontal: 8,
+          paddingVertical: 8,
           backgroundColor: colors.cardBackground,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          alignItems: 'center',
-          paddingBottom: 12,
+          alignItems: 'flex-end',
         },
         input: {
           flex: 1,
           backgroundColor: colors.background,
-          borderRadius: 20,
+          borderRadius: 24,
           paddingHorizontal: 16,
           paddingVertical: 10,
           fontSize: RFValue(14),
           fontFamily: Fonts.Regular,
           color: colors.text,
-          marginRight: 8,
+          marginHorizontal: 8,
           maxHeight: 100,
+          minHeight: 40,
         },
         sendButton: {
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
           backgroundColor: colors.secondary,
           justifyContent: 'center',
           alignItems: 'center',
         },
-        actionButton: {
+        attachButton: {
           width: 40,
           height: 40,
-          borderRadius: 20,
           justifyContent: 'center',
           alignItems: 'center',
-          marginRight: 8,
+        },
+        emojiButton: {
+          width: 40,
+          height: 40,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginRight: 4,
+        },
+        cameraButton: {
+          width: 40,
+          height: 40,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         typingIndicator: {
           paddingHorizontal: 16,
@@ -430,7 +579,7 @@ const ChatMessageScreen: React.FC = () => {
     [colors],
   );
 
-  const renderMessage = ({item}: {item: IMessage}) => {
+  const renderMessage = ({ item }: { item: IMessage }) => {
     const isSent = item.from === user?.id;
     const showTime = true;
 
@@ -441,34 +590,77 @@ const ChatMessageScreen: React.FC = () => {
           isSent ? styles.sentMessage : styles.receivedMessage,
         ]}>
         {item.messageType === 'image' && item.imageUrl && (
-          <Image source={{uri: item.imageUrl}} style={styles.messageImage} />
-        )}
-        {item.messageType === 'location' && item.location && (
-          <View style={styles.messageLocation}>
-            <Icon name="location" size={RFValue(16)} color={colors.secondary} />
-            <CustomText style={styles.locationText}>
-              {item.location.address || 'Location shared'}
-            </CustomText>
+          <View style={{ position: 'relative' }}>
+            <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
+            {(item as any).isUploading && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <ActivityIndicator size="large" color={colors.white} />
+              </View>
+            )}
           </View>
         )}
-        {item.text && (
-          <CustomText
-            style={[
-              styles.messageText,
-              !isSent && styles.receivedMessageText,
-            ]}>
-            {item.text}
-          </CustomText>
+        {item.messageType === 'location' && item.location && (
+          <View style={{ position: 'relative' }}>
+            <View style={styles.messageLocation}>
+              <Icon name="location" size={RFValue(16)} color={colors.secondary} />
+              <CustomText style={styles.locationText}>
+                {item.location.address || 'Location shared'}
+              </CustomText>
+            </View>
+            {(item as any).isUploading && (
+              <View style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <ActivityIndicator size="small" color={colors.white} />
+              </View>
+            )}
+          </View>
         )}
-        {showTime && (
+
+        <View style={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end'
+        }}>
+          {item.text && (item.messageType !== 'image' || item.text !== 'Image') && (
+            <CustomText
+              style={[
+                styles.messageText,
+                !isSent ? styles.receivedMessageText : undefined,
+                { marginRight: 8, maxWidth: '85%' } // Leave space for time
+              ]}>
+              {item.text}
+            </CustomText>
+          )}
+
           <CustomText
             style={[
               styles.messageTime,
-              !isSent && styles.receivedMessageTime,
+              !isSent ? styles.receivedMessageTime : undefined,
+              (!item.text || (item.messageType === 'image' && item.text === 'Image')) ? { marginLeft: 'auto' } : undefined // Push to right if no text or just image
             ]}>
             {formatTime(item.createdAt)}
           </CustomText>
-        )}
+        </View>
       </View>
     );
   };
@@ -489,8 +681,8 @@ const ChatMessageScreen: React.FC = () => {
       if (chat.isOwner && chat.groupId) {
         return (
           <TouchableOpacity
-            onPress={() => (navigation as any).navigate('JoinRequests', {groupId: chat.groupId})}
-            style={{marginRight: 16, position: 'relative'}}>
+            onPress={() => (navigation as any).navigate('JoinRequests', { groupId: chat.groupId })}
+            style={{ marginRight: 16, position: 'relative' }}>
             <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
             {pendingRequestCount > 0 && (
               <View
@@ -506,7 +698,7 @@ const ChatMessageScreen: React.FC = () => {
                   alignItems: 'center',
                   paddingHorizontal: 4,
                 }}>
-                <CustomText style={{color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold}}>
+                <CustomText style={{ color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold }}>
                   {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
                 </CustomText>
               </View>
@@ -536,11 +728,14 @@ const ChatMessageScreen: React.FC = () => {
         data={messages}
         renderItem={renderMessage}
         keyExtractor={item => item.id}
+        style={{ flex: 1 }}
         contentContainerStyle={[
           styles.messagesContainer,
-          {paddingBottom: keyboardOffsetHeight > 0 ? keyboardOffsetHeight + 20 : 0},
+          { paddingBottom: keyboardOffsetHeight > 0 ? keyboardOffsetHeight + 20 : 20 },
         ]}
         onContentSizeChange={scrollToBottom}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         ListFooterComponent={
           typingUsers.size > 0 ? (
             <View style={styles.typingIndicator}>
@@ -549,30 +744,11 @@ const ChatMessageScreen: React.FC = () => {
           ) : null
         }
       />
-      <View style={[styles.inputContainer, {paddingBottom: 12 + keyboardOffsetHeight}]}>
+      <View style={[styles.inputContainer, { paddingBottom: 8 + keyboardOffsetHeight }]}>
         <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleImagePicker}
+          style={styles.emojiButton}
           activeOpacity={0.7}>
-          <Icon name="image-outline" size={RFValue(24)} color={colors.text} />
-        </TouchableOpacity>
-        {chat?.type === 'group' && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleLiveLocation}
-            activeOpacity={0.7}>
-            <Icon
-              name={isLiveLocationActive ? 'location' : 'location-outline'}
-              size={RFValue(24)}
-              color={isLiveLocationActive ? colors.secondary : colors.text}
-            />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleShareLocation}
-          activeOpacity={0.7}>
-          <Icon name="navigate-outline" size={RFValue(24)} color={colors.text} />
+          <Icon name="happy-outline" size={RFValue(26)} color={colors.disabled} />
         </TouchableOpacity>
         <TextInput
           style={styles.input}
@@ -581,23 +757,73 @@ const ChatMessageScreen: React.FC = () => {
             setMessageText(text);
             handleTyping();
           }}
-          placeholder="Type a message..."
+          placeholder="Message"
           placeholderTextColor={colors.disabled}
           multiline
-          onSubmitEditing={handleSendMessage}
         />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={handleSendMessage}
-          disabled={sending || !messageText.trim()}
-          activeOpacity={0.7}>
-          {sending ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Icon name="send" size={RFValue(20)} color={colors.white} />
-          )}
-        </TouchableOpacity>
+        {!messageText.trim() && (
+          <TouchableOpacity
+            style={styles.attachButton}
+            onPress={() => setShowAttachmentModal(true)}
+            activeOpacity={0.7}>
+            <Icon name="attach" size={RFValue(26)} color={colors.disabled} />
+          </TouchableOpacity>
+        )}
+        {messageText.trim() ? (
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleSendMessage}
+            disabled={sending}
+            activeOpacity={0.7}>
+            {sending ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Icon name="send" size={RFValue(20)} color={colors.white} />
+            )}
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.sendButton}
+            activeOpacity={0.7}>
+            <Icon name="mic" size={RFValue(24)} color={colors.white} />
+          </TouchableOpacity>
+        )}
       </View>
+
+      <AttachmentModal
+        visible={showAttachmentModal}
+        onClose={() => setShowAttachmentModal(false)}
+        options={[
+          {
+            id: 'gallery',
+            label: 'Gallery',
+            icon: 'images',
+            color: '#7C4DFF',
+            onPress: handleImagePicker,
+          },
+          {
+            id: 'camera',
+            label: 'Camera',
+            icon: 'camera',
+            color: '#EC407A',
+            onPress: handleCameraCapture,
+          },
+          {
+            id: 'location',
+            label: 'Location',
+            icon: 'location',
+            color: '#00C853',
+            onPress: handleShareLocation,
+          },
+          {
+            id: 'document',
+            label: 'Document',
+            icon: 'document-text',
+            color: '#5E35B1',
+            onPress: () => { },
+          },
+        ]}
+      />
     </KeyboardAvoidingView>
   );
 };

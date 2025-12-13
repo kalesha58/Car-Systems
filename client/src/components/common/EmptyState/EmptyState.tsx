@@ -1,10 +1,10 @@
-import React, {FC} from 'react';
-import {View, StyleSheet} from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import React, { FC } from 'react';
+import { View, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {useTheme} from '@hooks/useTheme';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
+import { useTheme } from '@hooks/useTheme';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 interface IEmptyStateProps {
   title: string;
@@ -12,8 +12,8 @@ interface IEmptyStateProps {
   icon?: string;
 }
 
-const EmptyState: FC<IEmptyStateProps> = ({title, message, icon = 'inbox'}) => {
-  const {colors} = useTheme();
+const EmptyState: FC<IEmptyStateProps> = ({ title, message, icon = 'cube-outline' }) => {
+  const { colors } = useTheme();
 
   const styles = StyleSheet.create({
     container: {

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,17 +7,18 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {useAuthStore} from '@state/authStore';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@state/authStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {useTheme} from '@hooks/useTheme';
-import {getChats, requestToJoinGroup, getUserJoinRequests, getPendingRequestCount} from '@service/chatService';
-import {IChat, IGroupJoinRequest} from '../../types/chat';
-import {useToast} from '@hooks/useToast';
+import { useTheme } from '@hooks/useTheme';
+import { getChats, requestToJoinGroup, getUserJoinRequests, getPendingRequestCount } from '@service/chatService';
+import { IChat, IGroupJoinRequest } from '../../types/chat';
+import { useToast } from '@hooks/useToast';
+import { ChatListSkeleton } from '@components/common/Skeleton/SkeletonLoader';
 
 const ChatScreen: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<'messages' | 'groups'>('messages');
@@ -29,10 +30,10 @@ const ChatScreen: React.FC = () => {
   const [pendingRequestCounts, setPendingRequestCounts] = useState<Map<string, number>>(new Map()); // groupId -> count
   const [totalPendingRequests, setTotalPendingRequests] = useState<number>(0);
   const [firstGroupWithRequests, setFirstGroupWithRequests] = useState<string | null>(null);
-  const {user} = useAuthStore();
-  const {colors} = useTheme();
+  const { user } = useAuthStore();
+  const { colors } = useTheme();
   const navigation = useNavigation();
-  const {showError, showSuccess} = useToast();
+  const { showError, showSuccess } = useToast();
 
   const loadChats = async () => {
     try {
@@ -121,6 +122,7 @@ const ChatScreen: React.FC = () => {
   // Refresh when screen comes into focus (e.g., after admin approves request)
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      setLoading(true);
       loadChats();
       loadPendingRequests();
       // loadPendingRequestCountsForOwnedGroups will be called after chats load
@@ -278,7 +280,7 @@ const ChatScreen: React.FC = () => {
           alignItems: 'center',
           elevation: 4,
           shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
+          shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.25,
           shadowRadius: 3.84,
         },
@@ -311,7 +313,7 @@ const ChatScreen: React.FC = () => {
     if (e) {
       e.stopPropagation();
     }
-    
+
     if (!groupId) {
       showError('Group ID not found');
       return;
@@ -328,13 +330,13 @@ const ChatScreen: React.FC = () => {
 
     try {
       setRequestingGroups(prev => new Set(prev).add(groupId));
-      
+
       const response = await requestToJoinGroup(groupId);
-      
+
       // Add to pending requests map
       setPendingRequestMap(prev => new Map(prev).set(groupId, response.id));
       showSuccess('Join request sent successfully');
-      
+
       // Reload chats to update isMember status if admin approved quickly
       loadChats();
       loadPendingRequests();
@@ -357,7 +359,7 @@ const ChatScreen: React.FC = () => {
     }
   };
 
-  const renderChatItem = ({item}: {item: IChat}) => {
+  const renderChatItem = ({ item }: { item: IChat }) => {
     const chatName =
       item.type === 'group'
         ? item.groupName || 'Group Chat'
@@ -390,10 +392,10 @@ const ChatScreen: React.FC = () => {
     return (
       <TouchableOpacity
         style={styles.chatItem}
-        onPress={() => (navigation as any).navigate('ChatMessage', {chatId: item.id})}
+        onPress={() => (navigation as any).navigate('ChatMessage', { chatId: item.id })}
         activeOpacity={0.7}>
         {avatar ? (
-          <Image source={{uri: avatar}} style={styles.avatarImage} />
+          <Image source={{ uri: avatar }} style={styles.avatarImage} />
         ) : (
           <View style={styles.avatar}>
             <Icon name="person" size={RFValue(24)} color={colors.disabled} />
@@ -406,8 +408,8 @@ const ChatScreen: React.FC = () => {
               {item.lastMessage.messageType === 'image'
                 ? '📷 Image'
                 : item.lastMessage.messageType === 'location'
-                ? '📍 Location'
-                : item.lastMessage.text}
+                  ? '📍 Location'
+                  : item.lastMessage.text}
             </CustomText>
           )}
           {hasPendingRequest && (
@@ -433,7 +435,7 @@ const ChatScreen: React.FC = () => {
               {formatTime(item.lastMessage.createdAt)}
             </CustomText>
           )}
-          {item.unreadCount && item.unreadCount > 0 && (
+          {(item.unreadCount || 0) > 0 && (
             <View style={styles.unreadBadge}>
               <CustomText style={styles.unreadText}>
                 {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
@@ -448,7 +450,7 @@ const ChatScreen: React.FC = () => {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Icon name="chatbubbles-outline" size={RFValue(64)} color={colors.disabled} />
-      <CustomText style={[styles.emptyText, {marginTop: 16}]}>
+      <CustomText style={[styles.emptyText, { marginTop: 16 }]}>
         {selectedTab === 'messages'
           ? 'No messages yet'
           : 'No groups yet\nCreate a group to get started'}
@@ -463,7 +465,7 @@ const ChatScreen: React.FC = () => {
 
     return (
       <TouchableOpacity
-        onPress={() => (navigation as any).navigate('JoinRequests', {groupId: firstGroupWithRequests})}
+        onPress={() => (navigation as any).navigate('JoinRequests', { groupId: firstGroupWithRequests })}
         style={styles.notificationIcon}
         activeOpacity={0.7}>
         <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
@@ -508,16 +510,22 @@ const ChatScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={selectedTab === 'messages' ? directChats : groupChats}
-        renderItem={renderChatItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={renderEmpty}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.secondary} />
-        }
-      />
+      {loading ? (
+        <View style={styles.listContent}>
+          <ChatListSkeleton />
+        </View>
+      ) : (
+        <FlatList
+          data={selectedTab === 'messages' ? directChats : groupChats}
+          renderItem={renderChatItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={renderEmpty}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.secondary} />
+          }
+        />
+      )}
 
       {selectedTab === 'messages' && (
         <TouchableOpacity

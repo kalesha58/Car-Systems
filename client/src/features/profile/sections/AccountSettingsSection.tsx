@@ -1,17 +1,20 @@
-import {View, StyleSheet, Switch} from 'react-native';
-import React, {FC} from 'react';
-import {Fonts} from '@utils/Constants';
+import { View, StyleSheet, Switch } from 'react-native';
+import React, { FC } from 'react';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import ProfileMenuItem from './ProfileMenuItem';
-import {navigate} from '@utils/NavigationUtils';
-import {useTranslation} from 'react-i18next';
-import {useThemeStore} from '@state/themeStore';
-import {useTheme} from '@hooks/useTheme';
+import { navigate } from '@utils/NavigationUtils';
+import { useTranslation } from 'react-i18next';
+import { useThemeStore } from '@state/themeStore';
+import { useTheme } from '@hooks/useTheme';
+import { useAuthStore } from '@state/authStore';
 
 const AccountSettingsSection: FC = () => {
-  const {t} = useTranslation();
-  const {themeMode, toggleTheme} = useThemeStore();
-  const {colors} = useTheme();
+  const { t } = useTranslation();
+  const { themeMode, toggleTheme } = useThemeStore();
+  const { colors } = useTheme();
+  const { user } = useAuthStore();
+  const isDealer = user?.role?.includes('dealer');
 
   const styles = StyleSheet.create({
     container: {
@@ -36,32 +39,49 @@ const AccountSettingsSection: FC = () => {
       </CustomText>
 
       <View style={styles.menuContainer}>
-        <ProfileMenuItem
-          icon="person-outline"
-          label={t('profile.editProfile')}
-          onPress={() => {
-            // TODO: Navigate to edit profile screen when implemented
-          }}
-        />
-        <ProfileMenuItem
-          icon="location-outline"
-          label={t('profile.savedAddresses')}
-          onPress={() => navigate('SavedAddresses')}
-        />
-        <ProfileMenuItem
-          icon="card-outline"
-          label={t('profile.savedCards')}
-          onPress={() => {
-            // TODO: Navigate to saved cards screen when implemented
-          }}
-        />
-        <ProfileMenuItem
-          icon="notifications-outline"
-          label={t('profile.notificationSettings')}
-          onPress={() => {
-            // TODO: Navigate to notification settings when implemented
-          }}
-        />
+        {!isDealer && (
+          <ProfileMenuItem
+            icon="person-outline"
+            label={t('profile.editProfile')}
+            onPress={() => {
+              // TODO: Navigate to edit profile screen when implemented
+            }}
+          />
+        )}
+        {/* Dealership Menu Item - Only for Dealers */}
+        {isDealer && (
+          <ProfileMenuItem
+            icon="business-outline"
+            label={t('dealer.dealership') || 'Dealership'}
+            onPress={() => navigate('BusinessRegistrationDetails')}
+          />
+        )}
+
+        {/* Consumer Specific Items - Hidden for Dealers */}
+        {!isDealer && (
+          <>
+            <ProfileMenuItem
+              icon="location-outline"
+              label={t('profile.savedAddresses')}
+              onPress={() => navigate('SavedAddresses')}
+            />
+            <ProfileMenuItem
+              icon="card-outline"
+              label={t('profile.savedCards')}
+              onPress={() => {
+                // TODO: Navigate to saved cards screen when implemented
+              }}
+            />
+            <ProfileMenuItem
+              icon="notifications-outline"
+              label={t('profile.notificationSettings')}
+              onPress={() => {
+                // TODO: Navigate to notification settings when implemented
+              }}
+            />
+          </>
+        )}
+
         <ProfileMenuItem
           icon="moon-outline"
           label={t('profile.darkMode')}
@@ -69,20 +89,23 @@ const AccountSettingsSection: FC = () => {
             <Switch
               value={themeMode === 'dark'}
               onValueChange={toggleTheme}
-              trackColor={{false: colors.border, true: colors.secondary}}
+              trackColor={{ false: colors.border, true: colors.secondary }}
               thumbColor={colors.white}
               ios_backgroundColor={colors.border}
             />
           }
           showChevron={false}
         />
-        <ProfileMenuItem
-          icon="lock-closed-outline"
-          label={t('profile.privacyCenter')}
-          onPress={() => {
-            // TODO: Navigate to privacy center when implemented
-          }}
-        />
+
+        {!isDealer && (
+          <ProfileMenuItem
+            icon="lock-closed-outline"
+            label={t('profile.privacyCenter')}
+            onPress={() => {
+              // TODO: Navigate to privacy center when implemented
+            }}
+          />
+        )}
       </View>
     </View>
   );

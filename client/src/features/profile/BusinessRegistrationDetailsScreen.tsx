@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { screenHeight, screenWidth } from '@utils/Scaling';
+import { Fonts, Colors } from '@utils/Constants';
+import CustomText from '@components/ui/CustomText';
+import CustomHeader from '@components/ui/CustomHeader';
+import { useTheme } from '@hooks/useTheme';
+import { useAuthStore } from '@state/authStore';
+import { getBusinessRegistrationByUserId, IBusinessRegistration } from '@service/dealerService';
+import { formatCurrency } from '@utils/analytics';
+import { useTranslation } from 'react-i18next';
+
+const BusinessRegistrationDetailsScreen: React.FC = () => {
+    const navigation = useNavigation();
+    const { colors } = useTheme();
+    const { t } = useTranslation();
+    const { user } = useAuthStore();
+
+    const [registration, setRegistration] = useState<IBusinessRegistration | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchRegistration();
+    }, [user?.id]);
+
+    const fetchRegistration = async () => {
+        if (!user?.id) return;
+        try {
+            setLoading(true);
+            const data = await getBusinessRegistrationByUserId(user.id);
+            setRegistration(data);
+        } catch (error) {
+            console.error('Error fetching registration details:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEditPress = () => {
+        if (registration) {
+            // Navigate to BusinessRegistrationScreen with registration data for editing
+            (navigation as any).navigate('BusinessRegistration', {
+                isEdit: true,
+                registrationData: registration
+            });
+        }
+    };
+
+    const handleAddPress = () => {
+        // Navigate to BusinessRegistrationScreen for new registration
+        (navigation as any).navigate('BusinessRegistration', {
+            isEdit: false,
+            registrationData: null
+        });
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'approved': return '#10b981';
+            case 'pending': return '#f59e0b';
+            case 'rejected': return '#ef4444';
+            default: return colors.textSecondary;
+        }
+    };
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors.background,
+        },
+        content: {
+            padding: 16,
+        },
+        card: {
+            backgroundColor: colors.cardBackground,
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        headerRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        title: {
+            fontSize: RFValue(14),
+            fontFamily: Fonts.Bold,
+            color: colors.text,
+            flex: 1,
+        },
+        statusBadge: {
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 6,
+        },
+        statusText: {
+            fontSize: RFValue(10),
+            fontFamily: Fonts.SemiBold,
+            color: '#fff',
+            textTransform: 'capitalize',
+        },
+        detailRow: {
+            marginBottom: 12,
+        },
+        label: {
+            fontSize: RFValue(10),
+            fontFamily: Fonts.Medium,
+            color: colors.textSecondary,
+            marginBottom: 4,
+        },
+        value: {
+            fontSize: RFValue(12),
+            fontFamily: Fonts.Regular,
+            color: colors.text,
+        },
+        divider: {
+            height: 1,
+            backgroundColor: colors.border,
+            marginVertical: 12,
+        },
+        emptyContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 40,
+        },
+        headerButtons: {
+            flexDirection: 'row',
+            gap: 12,
+        },
+        headerButton: {
+            padding: 8,
+        }
+    });
+
+    const RightHeaderComponent = () => (
+        <View style={styles.headerButtons}>
+            {/* Plus Icon - Add New */}
+            <TouchableOpacity onPress={handleAddPress} style={styles.headerButton}>
+                <Icon name="add-circle-outline" size={RFValue(20)} color={colors.text} />
+            </TouchableOpacity>
+
+            {/* Edit Icon - Edit Current */}
+            {registration && (
+                <TouchableOpacity onPress={handleEditPress} style={styles.headerButton}>
+                    <Icon name="create-outline" size={RFValue(20)} color={colors.text} />
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+
+    if (loading) {
+        return (
+            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={colors.secondary} />
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <CustomHeader
+                title={t('dealer.businessRegistration') || 'Business Registration'}
+                rightComponent={<RightHeaderComponent />}
+            />
+
+            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+                {registration ? (
+                    <View style={styles.card}>
+                        <View style={styles.headerRow}>
+                            <CustomText style={styles.title}>{registration.businessName}</CustomText>
+                            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(registration.status) }]}>
+                                <CustomText style={styles.statusText}>{registration.status}</CustomText>
+                            </View>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <CustomText style={styles.label}>{t('dealer.businessType') || 'Business Type'}</CustomText>
+                            <CustomText style={styles.value}>{registration.type}</CustomText>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'}</CustomText>
+                            <CustomText style={styles.value}>{registration.phone}</CustomText>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <CustomText style={styles.label}>{t('dealer.address') || 'Address'}</CustomText>
+                            <CustomText style={styles.value}>{registration.address}</CustomText>
+                        </View>
+
+                        {registration.gst && (
+                            <View style={styles.detailRow}>
+                                <CustomText style={styles.label}>{t('dealer.gst') || 'GST'}</CustomText>
+                                <CustomText style={styles.value}>{registration.gst}</CustomText>
+                            </View>
+                        )}
+
+                        {registration.payout && (
+                            <>
+                                <View style={styles.divider} />
+                                <CustomText style={[styles.title, { marginBottom: 12 }]}>{t('dealer.payoutDetails') || 'Payout Details'}</CustomText>
+
+                                <View style={styles.detailRow}>
+                                    <CustomText style={styles.label}>{t('dealer.payoutType') || 'Type'}</CustomText>
+                                    <CustomText style={styles.value}>{registration.payout.type}</CustomText>
+                                </View>
+
+                                {registration.payout.type === 'UPI' && registration.payout.upiId && (
+                                    <View style={styles.detailRow}>
+                                        <CustomText style={styles.label}>{t('dealer.upiId') || 'UPI ID'}</CustomText>
+                                        <CustomText style={styles.value}>{registration.payout.upiId}</CustomText>
+                                    </View>
+                                )}
+
+                                {registration.payout.type === 'BANK' && registration.payout.bank && (
+                                    <>
+                                        <View style={styles.detailRow}>
+                                            <CustomText style={styles.label}>{t('dealer.accountName') || 'Account Name'}</CustomText>
+                                            <CustomText style={styles.value}>{registration.payout.bank.accountName}</CustomText>
+                                        </View>
+                                        <View style={styles.detailRow}>
+                                            <CustomText style={styles.label}>{t('dealer.accountNumber') || 'Account Number'}</CustomText>
+                                            <CustomText style={styles.value}>{registration.payout.bank.accountNumber}</CustomText>
+                                        </View>
+                                        <View style={styles.detailRow}>
+                                            <CustomText style={styles.label}>{t('dealer.ifsc') || 'IFSC'}</CustomText>
+                                            <CustomText style={styles.value}>{registration.payout.bank.ifsc}</CustomText>
+                                        </View>
+                                    </>
+                                )}
+                            </>
+                        )}
+
+                        <View style={styles.divider} />
+                        <View style={styles.detailRow}>
+                            <CustomText style={styles.label}>{t('dealer.registeredOn') || 'Registered On'}</CustomText>
+                            <CustomText style={styles.value}>{new Date(registration.createdAt).toLocaleDateString()}</CustomText>
+                        </View>
+                    </View>
+                ) : (
+                    <View style={styles.emptyContainer}>
+                        <Icon name="business-outline" size={RFValue(40)} color={colors.disabled} />
+                        <CustomText style={[styles.label, { marginTop: 12, textAlign: 'center' }]}>
+                            {t('dealer.noRegistration') || 'No business registration found'}
+                        </CustomText>
+                        <TouchableOpacity
+                            style={{ marginTop: 16, padding: 12, backgroundColor: colors.secondary, borderRadius: 8 }}
+                            onPress={handleAddPress}
+                        >
+                            <CustomText style={[styles.statusText, { fontSize: RFValue(12) }]}>
+                                {t('dealer.registerBusiness') || 'Register Business'}
+                            </CustomText>
+                        </TouchableOpacity>
+                    </View>
+                )
+                }
+            </ScrollView >
+        </View >
+    );
+};
+
+export default BusinessRegistrationDetailsScreen;

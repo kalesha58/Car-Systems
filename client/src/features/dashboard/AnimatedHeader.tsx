@@ -4,7 +4,7 @@ import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated
 import Header from '@components/dashboard/Header'
 
 
-const AnimatedHeader: FC<{ showNotice: () => void }> = ({ showNotice }) => {
+const AnimatedHeader: FC<{ showNotice: () => void; title?: string; subtitle?: string }> = ({ showNotice, title, subtitle }) => {
 
     const { scrollY } = useCollapsibleContext()
 
@@ -19,7 +19,7 @@ const AnimatedHeader: FC<{ showNotice: () => void }> = ({ showNotice }) => {
 
     return (
         <Animated.View style={headerAnimatedStyle}>
-            <Header showNotice={showNotice} />
+            <Header showNotice={showNotice} title={title} subtitle={subtitle} />
         </Animated.View>
     )
 }

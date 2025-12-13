@@ -1,14 +1,18 @@
-import {View, Text, StyleSheet} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import React from 'react';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import WalletItem from './WalletItem';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '@hooks/useTheme';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@hooks/useTheme';
+import { useAuthStore } from '@state/authStore';
 
 const WalletSection = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation();
-  const {colors} = useTheme();
+  const { colors } = useTheme();
+  const { user } = useAuthStore();
+
+  const isDealer = user?.role?.includes('dealer');
 
   const styles = StyleSheet.create({
     walletContainer: {
@@ -24,15 +28,27 @@ const WalletSection = () => {
 
   return (
     <View style={styles.walletContainer}>
-      <WalletItem icon="wallet-outline" label={t('common.wallet')} />
+      {isDealer && (
+        <WalletItem
+          icon="wallet-outline"
+          label={t('common.wallet')}
+          onPress={() => {
+            navigation.navigate('Analytics' as never);
+          }}
+        />
+      )}
+
       <WalletItem icon="chatbubble-ellipses-outline" label={t('common.support')} />
-      <WalletItem
-        icon="bag-outline"
-        label={t('profile.myOrders')}
-        onPress={() => {
-          navigation.navigate('OrdersList' as never);
-        }}
-      />
+
+      {!isDealer && (
+        <WalletItem
+          icon="bag-outline"
+          label={t('profile.myOrders')}
+          onPress={() => {
+            navigation.navigate('OrdersList' as never);
+          }}
+        />
+      )}
     </View>
   );
 };

@@ -1,28 +1,27 @@
-import {View, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
-import React, {useMemo} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {useAuthStore} from '@state/authStore';
-import {useCartStore} from '@state/cartStore';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@state/authStore';
+import { useCartStore } from '@state/cartStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {storage, tokenStorage} from '@state/storage';
-import {resetAndNavigate} from '@utils/NavigationUtils';
+import { Fonts } from '@utils/Constants';
+import { storage, tokenStorage } from '@state/storage';
+import { resetAndNavigate } from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
 import ProfileHeader from './sections/ProfileHeader';
-import DealershipRequestSection from './sections/DealershipRequestSection';
 import LanguageSection from './sections/LanguageSection';
 import AccountSettingsSection from './sections/AccountSettingsSection';
 import ActivitySection from './sections/ActivitySection';
 import FeedbackSection from './sections/FeedbackSection';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '@hooks/useTheme';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@hooks/useTheme';
 
 const Profile = () => {
-  const {logout} = useAuthStore();
-  const {clearCart} = useCartStore();
-  const {t} = useTranslation();
-  const {colors} = useTheme();
+  const { logout } = useAuthStore();
+  const { clearCart } = useCartStore();
+  const { t } = useTranslation();
+  const { colors } = useTheme();
 
   const handleLogout = () => {
     clearCart();
@@ -66,7 +65,7 @@ const Profile = () => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
         <ProfileHeader />
-        <DealershipRequestSection />
+
         <WalletSection />
         <LanguageSection />
         <AccountSettingsSection />

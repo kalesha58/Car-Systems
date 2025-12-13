@@ -1,4 +1,4 @@
-import {ThemeMode} from '@state/themeStore';
+import { ThemeMode } from '@state/themeStore';
 
 export interface IThemeColors {
   primary: string;
@@ -17,6 +17,7 @@ export interface IThemeColors {
   warning: string;
   white: string;
   black: string;
+  chatBackground: string;
 }
 
 const lightColors: IThemeColors = {
@@ -36,6 +37,7 @@ const lightColors: IThemeColors = {
   warning: '#f39c12',
   white: '#ffffff',
   black: '#000000',
+  chatBackground: '#f0f2f5',
 };
 
 const darkColors: IThemeColors = {
@@ -55,6 +57,7 @@ const darkColors: IThemeColors = {
   warning: '#F59E0B',
   white: '#ffffff',
   black: '#000000',
+  chatBackground: '#0b0b0b',
 };
 
 export const getThemeColors = (themeMode: ThemeMode): IThemeColors => {

@@ -1,14 +1,14 @@
-import React, {useState, useEffect, useCallback, useMemo, useRef} from 'react';
-import {View, StyleSheet, ScrollView, TouchableOpacity, Animated as RNAnimated, Platform} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {useTheme} from '@hooks/useTheme';
-import {useAuthStore} from '@state/authStore';
-import {resetAndNavigate} from '@utils/NavigationUtils';
-import {NoticeHeight, screenHeight} from '@utils/Scaling';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated as RNAnimated, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '@hooks/useTheme';
+import { useAuthStore } from '@state/authStore';
+import { resetAndNavigate } from '@utils/NavigationUtils';
+import { NoticeHeight, screenHeight } from '@utils/Scaling';
 import NoticeAnimation from './NoticeAnimation';
 import Visuals from './Visuals';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
-import Animated, {useAnimatedStyle, withTiming} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import {
   getDealerOrderStats,
   getDealerOrders,
@@ -18,19 +18,19 @@ import {
   getBookings,
   IBusinessRegistration,
 } from '@service/dealerService';
-import {IDealer, IBooking} from '../../types/dealer/IDealer';
-import {IOrderData} from '../../types/order/IOrder';
-import {IProduct} from '../../types/product/IProduct';
-import {IDealerVehicle} from '../../types/vehicle/IVehicle';
+import { IDealer, IBooking } from '../../types/dealer/IDealer';
+import { IOrderData } from '../../types/order/IOrder';
+import { IProduct } from '../../types/product/IProduct';
+import { IDealerVehicle } from '../../types/vehicle/IVehicle';
 import Header from '@components/common/Header/Header';
 import Loader from '@components/common/Loader/Loader';
-import SkeletonLoader, {DashboardSkeleton} from '@components/common/Skeleton/SkeletonLoader';
+import SkeletonLoader, { DashboardSkeleton, DashboardContentSkeleton } from '@components/common/Skeleton/SkeletonLoader';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import StatCard from '@components/common/StatCard/StatCard';
 import ProfitCard from '@components/common/ProfitCard/ProfitCard';
 import WelcomeHeader from '@components/common/WelcomeHeader/WelcomeHeader';
 import FloatingChatButton from '@components/common/FloatingChatButton/FloatingChatButton';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import {
   formatCurrency,
   calculateGrowth,
@@ -38,7 +38,7 @@ import {
 import AnimatedHeader from './AnimatedHeader';
 import StickySearchBar from './StickySearchBar';
 import AdCarousal from '@components/dashboard/AdCarousal';
-import {adData} from '@utils/dummyData';
+import { adData } from '@utils/dummyData';
 import {
   CollapsibleContainer,
   CollapsibleScrollView,
@@ -46,22 +46,22 @@ import {
   CollapsibleHeaderContainer,
   withCollapsibleContext,
 } from '@r0b0t3d/react-native-collapsible';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import withLiveOrder from '@features/delivery/withLiveOrder';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
 const DealerDashboard: React.FC = () => {
-  const {colors: theme, isDark} = useTheme();
-  const {t} = useTranslation('dealer');
+  const { colors: theme, isDark } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation();
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
   const noticePosition = useRef(new RNAnimated.Value(NOTICE_HEIGHT)).current;
-  const {scrollY, expand} = useCollapsibleContext();
+  const { scrollY, expand } = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
 
   const [dealer, setDealer] = useState<IDealer | undefined>(undefined);
@@ -78,14 +78,14 @@ const DealerDashboard: React.FC = () => {
   const backToTopStyle = useAnimatedStyle(() => {
     const isScrollingUp =
       scrollY.value < previousScroll.current && scrollY.value > 180;
-    const opacity = withTiming(isScrollingUp ? 1 : 0, {duration: 300});
-    const translateY = withTiming(isScrollingUp ? 0 : 10, {duration: 300});
+    const opacity = withTiming(isScrollingUp ? 1 : 0, { duration: 300 });
+    const translateY = withTiming(isScrollingUp ? 0 : 10, { duration: 300 });
 
     previousScroll.current = scrollY.value;
 
     return {
       opacity,
-      transform: [{translateY}],
+      transform: [{ translateY }],
     };
   });
 
@@ -156,9 +156,9 @@ const DealerDashboard: React.FC = () => {
       setIsLoading(true);
       const [statsData, ordersData, productsData, vehiclesData, bookingsData] = await Promise.all([
         getDealerOrderStats(),
-        getDealerOrders({limit: 1000}),
-        getDealerProducts({limit: 1000}),
-        getDealerVehicles({limit: 1000}),
+        getDealerOrders({ limit: 1000 }),
+        getDealerProducts({ limit: 1000 }),
+        getDealerVehicles({ limit: 1000 }),
         getBookings(),
       ]);
 
@@ -170,7 +170,7 @@ const DealerDashboard: React.FC = () => {
     } catch (error) {
       // Handle API errors gracefully - APIs will fail without approved registration
       // Set empty defaults so UI can still render with appropriate messages
-      setOrderStats({total: 0, totalRevenue: 0});
+      setOrderStats({ total: 0, totalRevenue: 0 });
       setOrders([]);
       setProducts([]);
       setVehicles([]);
@@ -311,7 +311,7 @@ const DealerDashboard: React.FC = () => {
               scrollY.value = 0;
               expand();
             }}
-            style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <IconIonicons
               name="arrow-up-circle-outline"
               color={theme.text}
@@ -319,14 +319,14 @@ const DealerDashboard: React.FC = () => {
             />
             <CustomText
               variant="h9"
-              style={{color: theme.text}}
+              style={{ color: theme.text }}
               fontFamily={Fonts.SemiBold}>
               Back to top
             </CustomText>
           </TouchableOpacity>
         </Animated.View>
 
-        <CollapsibleContainer style={[styles.panelContainer, {marginTop: insets.top || 20}]}>
+        <CollapsibleContainer style={[styles.panelContainer, { marginTop: insets.top || 20 }]}>
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {
@@ -336,6 +336,8 @@ const DealerDashboard: React.FC = () => {
                 }, 3500);
                 return () => clearTimeout(timeoutId);
               }}
+              title={dealer?.businessName || user?.name || ''}
+              subtitle={dealer?.address || ''}
             />
             <StickySearchBar />
           </CollapsibleHeaderContainer>
@@ -347,86 +349,77 @@ const DealerDashboard: React.FC = () => {
             <View style={styles.contentContainer}>
               <AdCarousal adData={adData} />
 
-            {isLoading ? (
-              <View style={styles.skeletonContainer}>
-                <SkeletonLoader width="100%" height={120} borderRadius={12} style={{marginBottom: 12}} />
-                <View style={styles.statsGrid}>
-                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
-                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
-                  <SkeletonLoader width="31%" height={100} borderRadius={12} />
+              {isLoading ? (
+                <View style={styles.skeletonContainer}>
+                  <DashboardContentSkeleton />
                 </View>
-              </View>
-            ) : (
-              <>
-                {/* Show registration status messages */}
-                {showPendingMessage && (
-                  <View style={[styles.statusBanner, {backgroundColor: '#dbeafe', borderColor: '#3b82f6'}]}>
-                    <CustomText style={[styles.statusBannerText, {color: '#1e40af'}]}>
-                      {t('dealer.pendingApproval') || 'Your business registration is pending admin approval. You can view your dashboard, but some features will be limited until approved.'}
-                    </CustomText>
-                  </View>
-                )}
-
-                {showRejectedMessage && (
-                  <View style={[styles.statusBanner, {backgroundColor: '#fee2e2', borderColor: '#ef4444'}]}>
-                    <CustomText style={[styles.statusBannerText, {color: '#991b1b'}]}>
-                      {t('dealer.dealershipRejected') || 'Your business registration was rejected. Please update your registration to reapply.'}
-                    </CustomText>
-                    <TouchableOpacity
-                      style={[styles.statusBannerButton, {backgroundColor: '#ef4444'}]}
-                      onPress={() => (navigation as any).navigate('BusinessRegistration')}>
-                      <CustomText style={styles.statusBannerButtonText}>
-                        {t('dealer.updateRegistration') || 'Update Registration'}
+              ) : (
+                <>
+                  {/* Show registration status messages */}
+                  {showPendingMessage && (
+                    <View style={[styles.statusBanner, { backgroundColor: '#dbeafe', borderColor: '#3b82f6' }]}>
+                      <CustomText style={[styles.statusBannerText, { color: '#1e40af' }]}>
+                        {t('dealer.pendingApproval') || 'Your business registration is pending admin approval. You can view your dashboard, but some features will be limited until approved.'}
                       </CustomText>
-                    </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {showRejectedMessage && (
+                    <View style={[styles.statusBanner, { backgroundColor: '#fee2e2', borderColor: '#ef4444' }]}>
+                      <CustomText style={[styles.statusBannerText, { color: '#991b1b' }]}>
+                        {t('dealer.dealershipRejected') || 'Your business registration was rejected. Please update your registration to reapply.'}
+                      </CustomText>
+                      <TouchableOpacity
+                        style={[styles.statusBannerButton, { backgroundColor: '#ef4444' }]}
+                        onPress={() => (navigation as any).navigate('BusinessRegistration')}>
+                        <CustomText style={styles.statusBannerButtonText}>
+                          {t('dealer.updateRegistration') || 'Update Registration'}
+                        </CustomText>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <View style={{ height: 12 }} />
+
+                  <ProfitCard
+                    amount={totalRevenue}
+                    label={t('dealer.profitAmount')}
+                    growth={revenueGrowth}
+                    growthLabel={t('dealer.fromPreviousWeek')}
+                  />
+
+                  <View style={styles.section}>
+                    <View style={styles.statsGrid}>
+                      <StatCard
+                        icon="cube-outline"
+                        value={totalProducts}
+                        label={t('dealer.totalProducts')}
+                        style={{ width: '31%' }}
+                      />
+                      <StatCard
+                        icon="trending-up-outline"
+                        value={formatCurrency(monthlyRevenue)}
+                        label={t('dealer.monthlyIncome')}
+                        trend={{
+                          value: revenueGrowth,
+                          isPositive: revenueGrowth >= 0,
+                        }}
+                        style={{ width: '31%' }}
+                      />
+                      <StatCard
+                        icon="receipt-outline"
+                        value={orderStats?.total || 0}
+                        label={t('dealer.totalOrders')}
+                        style={{ width: '31%' }}
+                      />
+                    </View>
                   </View>
-                )}
-
-                <WelcomeHeader
-                  businessName={dealer?.businessName || user?.name || 'Dealer'}
-                  onMessagePress={handleMessagesPress}
-                  hasNotifications={pendingOrdersCount > 0}
-                />
-
-                <ProfitCard
-                  amount={totalRevenue}
-                  label={t('profitAmount')}
-                  growth={revenueGrowth}
-                  growthLabel={t('fromPreviousWeek')}
-                />
-
-                <View style={styles.section}>
-                  <View style={styles.statsGrid}>
-                    <StatCard
-                      icon="package"
-                      value={totalProducts}
-                      label={t('totalProducts')}
-                      style={{width: '31%'}}
-                    />
-                    <StatCard
-                      icon="trending-up"
-                      value={formatCurrency(monthlyRevenue)}
-                      label={t('monthlyIncome')}
-                      trend={{
-                        value: revenueGrowth,
-                        isPositive: revenueGrowth >= 0,
-                      }}
-                      style={{width: '31%'}}
-                    />
-                    <StatCard
-                      icon="shopping-bag"
-                      value={orderStats?.total || 0}
-                      label={t('totalOrders')}
-                      style={{width: '31%'}}
-                    />
-                  </View>
-                </View>
-              </>
-            )}
-          </View>
-        </CollapsibleScrollView>
-      </CollapsibleContainer>
-      <FloatingChatButton />
+                </>
+              )}
+            </View>
+          </CollapsibleScrollView>
+        </CollapsibleContainer>
+        <FloatingChatButton />
       </>
     </NoticeAnimation>
   );

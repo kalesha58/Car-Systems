@@ -247,6 +247,24 @@ export const createBusinessRegistration = async (
   }
 };
 
+export const updateBusinessRegistration = async (
+  registrationId: string,
+  data: Partial<ICreateBusinessRegistrationRequest>,
+): Promise<IBusinessRegistration> => {
+  try {
+    const response = await appAxios.put<IBusinessRegistrationResponse>(
+      `/dealer/business-registration/${registrationId}`,
+      data,
+    );
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update business registration');
+  } catch (error) {
+    throw error;
+  }
+};
+
 export interface IBooking {
   id: string;
   dealerId: string;

@@ -1,25 +1,31 @@
-import {View, Text, StyleSheet, Platform, TouchableOpacity, Image} from 'react-native';
-import React, {FC, useEffect, useState} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
-import {useAuthStore} from '@state/authStore';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Image } from 'react-native';
+import React, { FC, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuthStore } from '@state/authStore';
 import Geolocation from '@react-native-community/geolocation';
-import {reverseGeocode} from '@service/mapService';
+import { reverseGeocode } from '@service/mapService';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {navigate} from '@utils/NavigationUtils';
-import {getSavedAddresses} from '@service/addressService';
-import type {IAddress} from '../../types/address/IAddress';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '@hooks/useTheme';
+import { navigate } from '@utils/NavigationUtils';
+import { getSavedAddresses } from '@service/addressService';
+import type { IAddress } from '../../types/address/IAddress';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@hooks/useTheme';
 
-const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
-  const {setUser, user} = useAuthStore();
-  const {t} = useTranslation();
+interface HeaderProps {
+  showNotice: () => void;
+  title?: string;
+  subtitle?: string;
+}
+
+const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
+  const { setUser, user } = useAuthStore();
+  const { t } = useTranslation();
   const [savedAddress, setSavedAddress] = useState<IAddress | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState<boolean>(false);
-  const {colors} = useTheme();
+  const { colors } = useTheme();
 
   const fetchSavedAddresses = async () => {
     try {
@@ -42,7 +48,7 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
     Geolocation.requestAuthorization();
     Geolocation.getCurrentPosition(
       position => {
-        const {latitude, longitude} = position.coords;
+        const { latitude, longitude } = position.coords;
         reverseGeocode(latitude, longitude, setUser);
       },
       () => {
@@ -74,26 +80,44 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
 
   return (
     <View style={styles.subContainer}>
-      <TouchableOpacity activeOpacity={0.8}>
-        <CustomText fontFamily={Fonts.Bold} variant="h8" style={styles.text}>
-          {t('dashboard.deliveryIn')}
-        </CustomText>
-        <View style={styles.flexRowGap}>
-          <CustomText
-            fontFamily={Fonts.SemiBold}
-            variant="h2"
-            style={styles.text}>
-            15 {t('dashboard.minutes')}
-          </CustomText>
-          <TouchableOpacity style={[styles.noticeBtn, {backgroundColor: colors.backgroundSecondary}]} onPress={showNotice}>
-            <CustomText
-              fontSize={RFValue(5)}
-              fontFamily={Fonts.SemiBold}
-              style={{color: colors.text}}>
-              ⛈️ Rain
+      <TouchableOpacity activeOpacity={0.8} style={title ? styles.titleContainer : undefined}>
+        {title ? (
+          <View style={styles.flexRowGap}>
+            <CustomText fontFamily={Fonts.SemiBold} variant="h4" style={styles.text} numberOfLines={1}>
+              {title}
             </CustomText>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={[styles.noticeBtn, { backgroundColor: colors.backgroundSecondary }]} onPress={showNotice}>
+              <CustomText
+                fontSize={RFValue(5)}
+                fontFamily={Fonts.SemiBold}
+                style={{ color: colors.text }}>
+                ⛈️ Rain
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <CustomText fontFamily={Fonts.Bold} variant="h8" style={styles.text}>
+              {t('dashboard.deliveryIn')}
+            </CustomText>
+            <View style={styles.flexRowGap}>
+              <CustomText
+                fontFamily={Fonts.SemiBold}
+                variant="h2"
+                style={styles.text}>
+                15 {t('dashboard.minutes')}
+              </CustomText>
+              <TouchableOpacity style={[styles.noticeBtn, { backgroundColor: colors.backgroundSecondary }]} onPress={showNotice}>
+                <CustomText
+                  fontSize={RFValue(5)}
+                  fontFamily={Fonts.SemiBold}
+                  style={{ color: colors.text }}>
+                  ⛈️ Rain
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
         <View style={styles.flexRow}>
           <CustomText
@@ -101,29 +125,31 @@ const Header: FC<{showNotice: () => void}> = ({showNotice}) => {
             numberOfLines={1}
             fontFamily={Fonts.Medium}
             style={styles.text2}>
-            {savedAddress?.fullAddress || user?.address || 'Knowhere, Somewhere 😅'}
+            {subtitle || savedAddress?.fullAddress || user?.address || 'Knowhere, Somewhere 😅'}
           </CustomText>
-          <Icon
-            name="menu-down"
-            color={colors.white}
-            size={RFValue(20)}
-            style={{bottom: -1}}
-          />
+          {!subtitle && (
+            <Icon
+              name="menu-down"
+              color={colors.white}
+              size={RFValue(20)}
+              style={{ bottom: -1 }}
+            />
+          )}
         </View>
       </TouchableOpacity>
 
       <TouchableOpacity
         onPress={() => navigate('Profile')}
         activeOpacity={0.8}
-        style={[styles.profileImageContainer, {borderColor: colors.white}]}>
+        style={[styles.profileImageContainer, { borderColor: colors.white }]}>
         {user?.profileImage ? (
           <Image
-            source={{uri: user.profileImage}}
+            source={{ uri: user.profileImage }}
             style={styles.profileImage}
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.placeholderContainer, {backgroundColor: colors.primary}]}>
+          <View style={[styles.placeholderContainer, { backgroundColor: colors.primary }]}>
             <CustomText
               variant="h8"
               fontFamily={Fonts.Bold}
@@ -147,11 +173,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   flexRow: {
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     flexDirection: 'row',
     gap: 2,
     width: '70%',
+  },
+  titleContainer: {
+    marginTop: 10,
   },
   subContainer: {
     flexDirection: 'row',

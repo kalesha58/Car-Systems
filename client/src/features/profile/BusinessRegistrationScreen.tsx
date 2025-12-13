@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,52 +7,62 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts, Colors} from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { screenHeight, screenWidth } from '@utils/Scaling';
+import { Fonts, Colors } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
-import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
-import {useTheme} from '@hooks/useTheme';
-import {useToast} from '@hooks/useToast';
-import {useTranslation} from 'react-i18next';
-import {createBusinessRegistration, ICreateBusinessRegistrationRequest} from '@service/dealerService';
-import {resetAndNavigate} from '@utils/NavigationUtils';
-import {getCurrentLocationWithAddress} from '@utils/addressUtils';
-import {ILocationData} from '../../types/address/IAddress';
+import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
+import { useTheme } from '@hooks/useTheme';
+import { useToast } from '@hooks/useToast';
+import { useTranslation } from 'react-i18next';
+import { createBusinessRegistration, updateBusinessRegistration, ICreateBusinessRegistrationRequest, IBusinessRegistration } from '@service/dealerService';
+import { resetAndNavigate, goBack } from '@utils/NavigationUtils';
+import { getCurrentLocationWithAddress } from '@utils/addressUtils';
+import { ILocationData } from '../../types/address/IAddress';
+import { useRoute, RouteProp } from '@react-navigation/native';
 
 const BUSINESS_TYPES: IDropdownOption[] = [
-  {label: 'Automobile Showroom', value: 'Automobile Showroom'},
-  {label: 'Vehicle Wash Station', value: 'Vehicle Wash Station'},
-  {label: 'Detailing Center', value: 'Detailing Center'},
-  {label: 'Mechanic Workshop', value: 'Mechanic Workshop'},
-  {label: 'Spare Parts Dealer', value: 'Spare Parts Dealer'},
-  {label: 'Riding Gear Store', value: 'Riding Gear Store'},
+  { label: 'Automobile Showroom', value: 'Automobile Showroom' },
+  { label: 'Vehicle Wash Station', value: 'Vehicle Wash Station' },
+  { label: 'Detailing Center', value: 'Detailing Center' },
+  { label: 'Mechanic Workshop', value: 'Mechanic Workshop' },
+  { label: 'Spare Parts Dealer', value: 'Spare Parts Dealer' },
+  { label: 'Riding Gear Store', value: 'Riding Gear Store' },
 ];
 
 const PAYOUT_TYPES: IDropdownOption[] = [
-  {label: 'UPI', value: 'UPI'},
-  {label: 'Bank Account', value: 'BANK'},
+  { label: 'UPI', value: 'UPI' },
+  { label: 'Bank Account', value: 'BANK' },
 ];
 
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
-  const {colors} = useTheme();
-  const {showSuccess, showError} = useToast();
-  const {t} = useTranslation('dealer');
+  const route = useRoute<RouteProp<{ params: { isEdit?: boolean; registrationData?: IBusinessRegistration } }, 'params'>>();
+  const { colors } = useTheme();
+  const { showSuccess, showError } = useToast();
+  const { t } = useTranslation();
 
-  const [businessName, setBusinessName] = useState('');
-  const [type, setType] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [gst, setGst] = useState('');
-  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>('');
-  const [upiId, setUpiId] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [ifsc, setIfsc] = useState('');
-  const [accountName, setAccountName] = useState('');
+  const { isEdit, registrationData } = route.params || {};
+
+  const [businessName, setBusinessName] = useState(registrationData?.businessName || '');
+  const [type, setType] = useState(registrationData?.type || '');
+  const [address, setAddress] = useState(registrationData?.address || '');
+  const [phone, setPhone] = useState(registrationData?.phone || '');
+  const [gst, setGst] = useState(registrationData?.gst || '');
+
+  // Initialize payout details
+  const initialPayoutType = registrationData?.payout?.type || '';
+  const initialUpiId = registrationData?.payout?.upiId || '';
+  const initialBank = registrationData?.payout?.bank;
+
+  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>((initialPayoutType as any) || '');
+  const [upiId, setUpiId] = useState(initialUpiId);
+  const [accountNumber, setAccountNumber] = useState(initialBank?.accountNumber || '');
+  const [ifsc, setIfsc] = useState(initialBank?.ifsc || '');
+  const [accountName, setAccountName] = useState(initialBank?.accountName || '');
   const [location, setLocation] = useState<ILocationData | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,7 +70,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [payoutTypeModalVisible, setPayoutTypeModalVisible] = useState(false);
 
   const getSelectedTypeLabel = () => {
-    if (!type) return t('selectBusinessType') || 'Select Business Type';
+    if (!type) return t('dealer.selectBusinessType') || 'Select Business Type';
     return type;
   };
 
@@ -80,8 +90,8 @@ const BusinessRegistrationScreen: React.FC = () => {
   };
 
   const getSelectedPayoutTypeLabel = () => {
-    if (!payoutType) return t('selectPayoutType') || 'Select Payout Type';
-    return payoutType === 'UPI' ? (t('upi') || 'UPI') : (t('bank') || 'Bank Account');
+    if (!payoutType) return t('dealer.selectPayoutType') || 'Select Payout Type';
+    return payoutType === 'UPI' ? (t('dealer.upi') || 'UPI') : (t('dealer.bank') || 'Bank Account');
   };
 
   const handleLocationPicker = async () => {
@@ -92,10 +102,10 @@ const BusinessRegistrationScreen: React.FC = () => {
         setLocation(locationData);
         setAddress(locationData.address || locationData.formattedAddress);
       } else {
-        showError(t('locationFailed') || 'Failed to get location. Please try again.');
+        showError(t('dealer.locationFailed') || 'Failed to get location. Please try again.');
       }
     } catch (error) {
-      showError(t('locationFailed') || 'Failed to get location. Please try again.');
+      showError(t('dealer.locationFailed') || 'Failed to get location. Please try again.');
     } finally {
       setIsGettingLocation(false);
     }
@@ -141,33 +151,33 @@ const BusinessRegistrationScreen: React.FC = () => {
     return true;
   };
 
-  const isFormValid = 
-    businessName.trim() && 
-    type && 
-    address.trim() && 
-    phone.trim() && 
+  const isFormValid =
+    businessName.trim() &&
+    type &&
+    address.trim() &&
+    phone.trim() &&
     isValidPhone(phone) &&
     isPayoutValid();
 
   const handleSubmit = async () => {
     if (!businessName.trim()) {
-      showError(t('businessNameRequired') || 'Business name is required');
+      showError(t('dealer.businessNameRequired') || 'Business name is required');
       return;
     }
     if (!type) {
-      showError(t('businessTypeRequired') || 'Business type is required');
+      showError(t('dealer.businessTypeRequired') || 'Business type is required');
       return;
     }
     if (!address.trim()) {
-      showError(t('addressRequired') || 'Address is required');
+      showError(t('dealer.addressRequired') || 'Address is required');
       return;
     }
     if (!phone.trim()) {
-      showError(t('phoneRequired') || 'Phone number is required');
+      showError(t('dealer.phoneRequired') || 'Phone number is required');
       return;
     }
     if (!isValidPhone(phone)) {
-      showError(t('phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)');
+      showError(t('dealer.phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)');
       return;
     }
 
@@ -175,28 +185,28 @@ const BusinessRegistrationScreen: React.FC = () => {
     if (payoutType) {
       if (payoutType === 'UPI') {
         if (!upiId.trim()) {
-          showError(t('upiIdRequired') || 'UPI ID is required');
+          showError(t('dealer.upiIdRequired') || 'UPI ID is required');
           return;
         }
         if (!isValidUPIId(upiId)) {
-          showError(t('invalidUPIId') || 'Invalid UPI ID format (e.g., user@paytm)');
+          showError(t('dealer.invalidUPIId') || 'Invalid UPI ID format (e.g., user@paytm)');
           return;
         }
       } else if (payoutType === 'BANK') {
         if (!accountNumber.trim()) {
-          showError(t('accountNumberRequired') || 'Account number is required');
+          showError(t('dealer.accountNumberRequired') || 'Account number is required');
           return;
         }
         if (!ifsc.trim()) {
-          showError(t('ifscRequired') || 'IFSC code is required');
+          showError(t('dealer.ifscRequired') || 'IFSC code is required');
           return;
         }
         if (!accountName.trim()) {
-          showError(t('accountNameRequired') || 'Account holder name is required');
+          showError(t('dealer.accountNameRequired') || 'Account holder name is required');
           return;
         }
         if (!isValidIFSC(ifsc)) {
-          showError(t('invalidIFSC') || 'Invalid IFSC code format (e.g., HDFC0001234)');
+          showError(t('dealer.invalidIFSC') || 'Invalid IFSC code format (e.g., HDFC0001234)');
           return;
         }
       }
@@ -204,7 +214,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       // Prepare payout object if payout type is selected
       let payoutData: any = undefined;
       if (payoutType === 'UPI') {
@@ -232,32 +242,37 @@ const BusinessRegistrationScreen: React.FC = () => {
         payout: payoutData,
       };
 
-      const registration = await createBusinessRegistration(data);
-      console.log('Business registration created successfully:', { 
-        id: registration.id, 
-        status: registration.status 
-      });
-      
-      // Verify status is pending
-      if (registration.status !== 'pending') {
-        console.warn('Warning: Business registration status is not pending:', registration.status);
+      if (isEdit && registrationData?.id) {
+        await updateBusinessRegistration(registrationData.id, data);
+        showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
+        goBack();
+      } else {
+        const registration = await createBusinessRegistration(data);
+        console.log('Business registration created successfully:', {
+          id: registration.id,
+          status: registration.status
+        });
+        showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
+
+        // Navigate based on context
+        if (registration.status === 'pending' || registration.status === 'approved') {
+          setTimeout(async () => {
+            console.log('Navigating to DealerTabs after business registration submission');
+            await resetAndNavigate('DealerTabs');
+          }, 500);
+        } else {
+          // If manually coming here to add, just go back or to details
+          goBack();
+        }
       }
-      
-      showSuccess(t('businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
-      
-      // Navigate to DealerTabs after a short delay to ensure success message is shown
-      setTimeout(async () => {
-        console.log('Navigating to DealerTabs after business registration submission');
-        await resetAndNavigate('DealerTabs');
-      }, 500);
     } catch (error: any) {
-      console.error('Error creating business registration:', error);
+      console.error('Error submitting business registration:', error);
       const errorMessage =
         error?.response?.data?.Response?.ReturnMessage ||
         error?.response?.data?.message ||
         error?.message ||
-        t('failedToSubmitRegistration') ||
-        'Failed to submit business registration. Please try again.';
+        t('dealer.operationFailed') ||
+        'Operation failed. Please try again.';
       showError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -421,19 +436,19 @@ const BusinessRegistrationScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={t('businessRegistration') || 'Business Registration'} />
+      <CustomHeader title={isEdit ? (t('dealer.updateRegistration') || 'Update Registration') : (t('dealer.businessRegistration') || 'Business Registration')} />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: screenHeight * 0.12 }]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <CustomText style={styles.label}>
-            {t('businessName') || 'Business Name'} *
+            {t('dealer.businessName') || 'Business Name'} *
           </CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder={t('enterBusinessName') || 'Enter business name'}
+              placeholder={t('dealer.enterBusinessName') || 'Enter business name'}
               placeholderTextColor={colors.disabled}
               value={businessName}
               onChangeText={setBusinessName}
@@ -443,7 +458,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <CustomText style={styles.label}>
-            {t('businessType') || 'Business Type'} *
+            {t('dealer.businessType') || 'Business Type'} *
           </CustomText>
           <TouchableOpacity
             style={styles.dropdownButton}
@@ -455,7 +470,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <CustomText style={styles.label}>{t('address') || 'Address'} *</CustomText>
+            <CustomText style={styles.label}>{t('dealer.address') || 'Address'} *</CustomText>
             {!location ? (
               <TouchableOpacity
                 style={styles.locationButton}
@@ -467,7 +482,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                   <Icon name="location-outline" size={RFValue(12)} color={colors.text} />
                 )}
                 <CustomText style={styles.locationButtonText}>
-                  {isGettingLocation ? (t('gettingLocation') || 'Getting location...') : (t('useCurrentLocation') || 'Use Current Location')}
+                  {isGettingLocation ? (t('dealer.gettingLocation') || 'Getting location...') : (t('dealer.useCurrentLocation') || 'Use Current Location')}
                 </CustomText>
               </TouchableOpacity>
             ) : (
@@ -476,7 +491,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                 onPress={removeLocation}>
                 <Icon name="location" size={RFValue(12)} color={Colors.secondary} />
                 <CustomText style={styles.locationButtonText}>
-                  {t('locationSet') || 'Location Set'}
+                  {t('dealer.locationSet') || 'Location Set'}
                 </CustomText>
                 <Icon name="close-circle" size={RFValue(14)} color={colors.error} style={styles.removeLocationIcon} />
               </TouchableOpacity>
@@ -485,7 +500,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           <View style={styles.textInputContainer}>
             <TextInput
               style={[styles.textInput, styles.textInputMultiline]}
-              placeholder={t('enterAddress') || 'Enter business address'}
+              placeholder={t('dealer.enterAddress') || 'Enter business address'}
               placeholderTextColor={colors.disabled}
               value={address}
               onChangeText={setAddress}
@@ -495,11 +510,11 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('phone') || 'Phone'} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder={t('enterPhone') || 'Enter phone number'}
+              placeholder={t('dealer.enterPhone') || 'Enter phone number'}
               placeholderTextColor={colors.disabled}
               value={phone}
               onChangeText={setPhone}
@@ -509,11 +524,11 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('gst') || 'GST Number'}</CustomText>
+          <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'}</CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder={t('enterGST') || 'Enter GST number (optional)'}
+              placeholder={t('dealer.enterGST') || 'Enter GST number (optional)'}
               placeholderTextColor={colors.disabled}
               value={gst}
               onChangeText={setGst}
@@ -524,7 +539,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         {/* Payout Section */}
         <View style={styles.section}>
           <CustomText style={styles.label}>
-            {t('payoutType') || 'Payout Type'} ({t('optional') || 'Optional'})
+            {t('dealer.payoutType') || 'Payout Type'} ({t('dealer.optional') || 'Optional'})
           </CustomText>
           <TouchableOpacity
             style={styles.dropdownButton}
@@ -538,12 +553,12 @@ const BusinessRegistrationScreen: React.FC = () => {
         {payoutType === 'UPI' && (
           <View style={styles.section}>
             <CustomText style={styles.label}>
-              {t('upiId') || 'UPI ID'} *
+              {t('dealer.upiId') || 'UPI ID'} *
             </CustomText>
             <View style={styles.textInputContainer}>
               <TextInput
                 style={styles.textInput}
-                placeholder={t('enterUPIId') || 'Enter UPI ID (e.g., user@paytm)'}
+                placeholder={t('dealer.enterUPIId') || 'Enter UPI ID (e.g., user@paytm)'}
                 placeholderTextColor={colors.disabled}
                 value={upiId}
                 onChangeText={setUpiId}
@@ -559,12 +574,12 @@ const BusinessRegistrationScreen: React.FC = () => {
           <>
             <View style={styles.section}>
               <CustomText style={styles.label}>
-                {t('accountNumber') || 'Account Number'} *
+                {t('dealer.accountNumber') || 'Account Number'} *
               </CustomText>
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('enterAccountNumber') || 'Enter account number'}
+                  placeholder={t('dealer.enterAccountNumber') || 'Enter account number'}
                   placeholderTextColor={colors.disabled}
                   value={accountNumber}
                   onChangeText={setAccountNumber}
@@ -575,12 +590,12 @@ const BusinessRegistrationScreen: React.FC = () => {
 
             <View style={styles.section}>
               <CustomText style={styles.label}>
-                {t('ifsc') || 'IFSC Code'} *
+                {t('dealer.ifsc') || 'IFSC Code'} *
               </CustomText>
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('enterIFSC') || 'Enter IFSC code (e.g., HDFC0001234)'}
+                  placeholder={t('dealer.enterIFSC') || 'Enter IFSC code (e.g., HDFC0001234)'}
                   placeholderTextColor={colors.disabled}
                   value={ifsc}
                   onChangeText={(text) => setIfsc(text.toUpperCase())}
@@ -592,12 +607,12 @@ const BusinessRegistrationScreen: React.FC = () => {
 
             <View style={styles.section}>
               <CustomText style={styles.label}>
-                {t('accountName') || 'Account Holder Name'} *
+                {t('dealer.accountName') || 'Account Holder Name'} *
               </CustomText>
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('enterAccountName') || 'Enter account holder name'}
+                  placeholder={t('dealer.enterAccountName') || 'Enter account holder name'}
                   placeholderTextColor={colors.disabled}
                   value={accountName}
                   onChangeText={setAccountName}
@@ -620,7 +635,7 @@ const BusinessRegistrationScreen: React.FC = () => {
             <>
               <Icon name="checkmark-circle-outline" size={RFValue(16)} color="#fff" />
               <CustomText style={styles.submitButtonText}>
-                {t('submitRegistration') || 'Submit Registration'}
+                {isEdit ? (t('dealer.updateRegistration') || 'Update Registration') : (t('dealer.submitRegistration') || 'Submit Registration')}
               </CustomText>
             </>
           )}
@@ -633,7 +648,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         options={BUSINESS_TYPES}
         selectedValue={type}
         onSelect={handleDropdownSelect}
-        title={t('selectBusinessType') || 'Select Business Type'}
+        title={t('dealer.selectBusinessType') || 'Select Business Type'}
         searchable={true}
       />
 
@@ -643,7 +658,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         options={PAYOUT_TYPES}
         selectedValue={payoutType}
         onSelect={handlePayoutTypeSelect}
-        title={t('selectPayoutType') || 'Select Payout Type'}
+        title={t('dealer.selectPayoutType') || 'Select Payout Type'}
         searchable={false}
       />
     </View>
