@@ -4,6 +4,7 @@ import { errorHandler, IAppError } from '../../utils/errorHandler';
 import { NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { Order } from '../../models/Order';
+import { Payment } from '../../models/Payment';
 import {
   createUserOrder,
   getUserOrders,
@@ -38,7 +39,10 @@ export interface ICreateUserOrderRequest {
 }
 
 export interface IVerifyPaymentRequest {
-  paymentId: string;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+  paymentId?: string; // Keep for backward compatibility
   transactionId?: string;
 }
 
@@ -111,6 +115,19 @@ export const verifyPaymentController = async (
       return;
     }
 
+    // Extract Razorpay payment response fields
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentData;
+
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Missing required payment fields: razorpay_payment_id, razorpay_order_id, razorpay_signature',
+        },
+      });
+      return;
+    }
+
     // Get order document for direct manipulation
     const orderDoc = await Order.findById(orderId);
 
@@ -135,14 +152,32 @@ export const verifyPaymentController = async (
       return;
     }
 
-    const isVerified = await verifyPayment(paymentData);
+    // Get the stored order_id from order's paymentIntentId (server-side order_id)
+    const serverOrderId = orderDoc.paymentIntentId;
+    if (!serverOrderId) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Order does not have a payment intent ID',
+        },
+      });
+      return;
+    }
+
+    // Verify payment signature
+    const isVerified = await verifyPayment({
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      order_id: serverOrderId, // Use server-side order_id from paymentIntentId
+    });
 
     if (!isVerified) {
       orderDoc.paymentStatus = 'failed';
       orderDoc.timeline.push({
         status: orderDoc.status,
         timestamp: new Date(),
-        notes: 'Payment verification failed',
+        notes: 'Payment verification failed - signature mismatch',
         actor: 'system',
         actorId: 'system',
       });
@@ -151,18 +186,53 @@ export const verifyPaymentController = async (
       res.status(400).json({
         success: false,
         Response: {
-          ReturnMessage: 'Payment verification failed',
+          ReturnMessage: 'Payment verification failed - signature mismatch',
         },
       });
       return;
     }
 
+    // Store payment response fields in Payment model
+    const orderIdString = String(orderDoc._id);
+    let payment = await Payment.findOne({ orderId: orderIdString });
+    
+    if (!payment) {
+      payment = new Payment({
+        orderId: orderIdString,
+        gatewayTxnId: razorpay_payment_id,
+        gatewayPaymentIntentId: razorpay_order_id,
+        amount: Math.round(orderDoc.totalAmount * 100), // in paise
+        currency: 'INR',
+        status: 'completed',
+        rawPayload: {
+          razorpay_payment_id,
+          razorpay_order_id,
+          razorpay_signature,
+          verifiedAt: new Date().toISOString(),
+        },
+      });
+    } else {
+      payment.gatewayTxnId = razorpay_payment_id;
+      payment.gatewayPaymentIntentId = razorpay_order_id;
+      payment.status = 'completed';
+      payment.rawPayload = {
+        ...(payment.rawPayload || {}),
+        razorpay_payment_id,
+        razorpay_order_id,
+        razorpay_signature,
+        verifiedAt: new Date().toISOString(),
+      };
+    }
+
+    await payment.save();
+
+    // Update order status only after successful verification
     orderDoc.paymentStatus = 'paid';
     orderDoc.status = 'PAYMENT_CONFIRMED';
     orderDoc.timeline.push({
       status: 'PAYMENT_CONFIRMED',
       timestamp: new Date(),
-      notes: 'Payment verified',
+      notes: `Payment verified. Payment ID: ${razorpay_payment_id}`,
       actor: 'system',
       actorId: 'system',
     });
@@ -170,7 +240,9 @@ export const verifyPaymentController = async (
     await orderDoc.save();
 
     logger.info(`Payment verified for order: ${orderDoc.orderNumber}`, {
-      paymentId: paymentData.paymentId,
+      razorpay_payment_id,
+      razorpay_order_id,
+      orderId: orderIdString,
     });
 
     res.status(200).json({

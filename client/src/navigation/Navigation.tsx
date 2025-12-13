@@ -40,6 +40,7 @@ import CreateGroupScreen from '@features/chat/CreateGroupScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
 import LocationPickerScreen from '@features/chat/LocationPickerScreen';
+import PaymentStatusScreen from '@features/payment/PaymentStatusScreen';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
@@ -473,6 +474,13 @@ const Navigation: FC = () => {
             }}
             name="LocationPicker"
             component={LocationPickerScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="PaymentStatus"
+            component={PaymentStatusScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>

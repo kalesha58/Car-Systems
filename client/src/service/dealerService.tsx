@@ -178,6 +178,7 @@ export interface IBusinessRegistrationResponse {
   Response: IBusinessRegistration;
 }
 
+
 export const getBusinessRegistrationByUserId = async (
   userId: string,
 ): Promise<IBusinessRegistration | null> => {
@@ -220,6 +221,41 @@ export const getBusinessRegistrationByUserId = async (
     throw error;
   }
 };
+
+export const getBusinessRegistrationById = async (
+  registrationId: string,
+): Promise<IBusinessRegistration | null> => {
+  try {
+    const response = await appAxios.get<IBusinessRegistrationResponse>(
+      `/dealer/business-registration/${registrationId}`,
+    );
+
+    if (response.data && response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+
+    return null;
+  } catch (error: any) {
+    // Handle 404 errors (business registration not found)
+    if (error?.response?.status === 404) {
+      console.log('Business registration not found for ID:', registrationId);
+      return null;
+    }
+
+    // Log other errors for debugging
+    console.error('Error in getBusinessRegistrationById:', {
+      registrationId,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+      message: error?.message,
+    });
+
+    // For other errors, re-throw to be handled by the caller
+    throw error;
+  }
+};
+
 
 export interface ICreateBusinessRegistrationRequest {
   businessName: string;

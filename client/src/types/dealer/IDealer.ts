@@ -16,6 +16,15 @@ export interface IDealer {
   status: string;
   location?: string;
   address?: string;
+  payout?: {
+    type: 'UPI' | 'BANK';
+    upiId?: string;
+    bank?: {
+      accountNumber: string;
+      ifsc: string;
+      accountName: string;
+    };
+  };
   documents?: {
     businessLicense?: string;
     taxId?: string;

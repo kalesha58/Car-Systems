@@ -2,7 +2,7 @@ import Razorpay from 'razorpay';
 import { logger } from '../utils/logger';
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+export const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 const RAZORPAY_ENV = process.env.RAZORPAY_ENV || 'sandbox';
 
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
