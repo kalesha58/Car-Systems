@@ -18,6 +18,10 @@ export interface IThemeColors {
   white: string;
   black: string;
   chatBackground: string;
+  winterBlue: string;
+  winterBlueLight: string;
+  winterBlueDark: string;
+  iceBlue: string;
 }
 
 const lightColors: IThemeColors = {
@@ -38,6 +42,10 @@ const lightColors: IThemeColors = {
   white: '#ffffff',
   black: '#000000',
   chatBackground: '#f0f2f5',
+  winterBlue: '#4A90E2',
+  winterBlueLight: '#6DB3F2',
+  winterBlueDark: '#2E5C8A',
+  iceBlue: '#E3F2FD',
 };
 
 const darkColors: IThemeColors = {
@@ -58,6 +66,10 @@ const darkColors: IThemeColors = {
   white: '#ffffff',
   black: '#000000',
   chatBackground: '#0b0b0b',
+  winterBlue: '#5BA3F5',
+  winterBlueLight: '#7EC4FF',
+  winterBlueDark: '#3A6BA8',
+  iceBlue: '#1A2942',
 };
 
 export const getThemeColors = (themeMode: ThemeMode): IThemeColors => {

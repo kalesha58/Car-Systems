@@ -1,18 +1,20 @@
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import React, {FC} from 'react';
-import {Fonts} from '@utils/Constants';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { FC } from 'react';
+import { Fonts } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { RFValue } from 'react-native-responsive-fontsize';
 import RollingBar from 'react-native-rolling-bar';
 import CustomText from '@components/ui/CustomText';
-import {useTheme} from '@hooks/useTheme';
+import { useTheme } from '@hooks/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
   onPress?: () => void;
 }
 
-const SearchBar: FC<SearchBarProps> = ({onPress}) => {
-  const {colors} = useTheme();
+const SearchBar: FC<SearchBarProps> = ({ onPress }) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const styles = StyleSheet.create({
     container: {
@@ -43,8 +45,8 @@ const SearchBar: FC<SearchBarProps> = ({onPress}) => {
   });
 
   return (
-    <TouchableOpacity 
-      style={styles.container} 
+    <TouchableOpacity
+      style={styles.container}
       activeOpacity={0.8}
       onPress={onPress}>
       <Icon name="search" color={colors.text} size={RFValue(20)} />
@@ -53,19 +55,19 @@ const SearchBar: FC<SearchBarProps> = ({onPress}) => {
         defaultStyle={false}
         customStyle={styles.textContainer}>
         <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          Search "sweets"
+          {t('search.engineOil')}
         </CustomText>
         <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          Search "milk"
+          {t('search.brakePads')}
         </CustomText>
         <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          Search for ata, dal, coke
+          {t('search.tiresAndMore')}
         </CustomText>
         <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          Search "chips"
+          {t('search.carWash')}
         </CustomText>
         <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          Search "pooja thali"
+          {t('search.carService')}
         </CustomText>
       </RollingBar>
 

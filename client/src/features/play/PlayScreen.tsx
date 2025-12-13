@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,22 +7,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useFocusEffect} from '@react-navigation/native';
-import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Colors, Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { screenHeight, screenWidth } from '@utils/Scaling';
+import { Colors, Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {getPosts} from '@service/postService';
-import {IPost} from '../../types/post/IPost';
+import { getPosts } from '@service/postService';
+import { IPost } from '../../types/post/IPost';
 import ImagePostItem from './ImagePostItem';
-import {navigate} from '@utils/NavigationUtils';
-
-const TABS = ['For You', 'Beauty Binge', 'Trends for him', 'Trends for her'];
+import { navigate } from '@utils/NavigationUtils';
+import { useTheme } from '@hooks/useTheme';
 
 const PlayScreen: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState(0);
+  const { colors } = useTheme();
   const [posts, setPosts] = useState<IPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,63 +49,38 @@ const PlayScreen: React.FC = () => {
     }
   };
 
-  const renderPostItem = ({item}: {item: IPost}) => {
+  const renderPostItem = ({ item }: { item: IPost }) => {
     return <ImagePostItem post={item} />;
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.secondary} />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerRow}>
-          <CustomText fontSize={RFValue(18)} fontFamily={Fonts.Bold} style={styles.title}>
+          <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
             Play
           </CustomText>
           <View style={styles.headerButtons}>
             <TouchableOpacity
-              style={styles.messageButton}
+              style={[styles.iconButton, { backgroundColor: colors.backgroundSecondary }]}
               onPress={() => navigate('Chat')}>
-              <Icon name="chatbubble-outline" size={RFValue(24)} color="#fff" />
+              <Icon name="chatbubble-outline" size={RFValue(18)} color={colors.text} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.iconButton, styles.primaryButton, { backgroundColor: colors.primary }]}
               onPress={() => navigate('CreateNewPost')}>
-              <Icon name="add-circle-outline" size={RFValue(24)} color="#fff" />
+              <Icon name="add" size={RFValue(20)} color={colors.white} />
             </TouchableOpacity>
           </View>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabsContainer}>
-          {TABS.map((tab, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.tab,
-                selectedTab === index && styles.activeTab,
-              ]}
-              onPress={() => setSelectedTab(index)}>
-              <CustomText
-                fontSize={RFValue(10)}
-                fontFamily={Fonts.Medium}
-                style={
-                  selectedTab === index
-                    ? [styles.tabText, styles.activeTabText]
-                    : styles.tabText
-                }>
-                {tab}
-              </CustomText>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       <FlatList
@@ -116,64 +90,48 @@ const PlayScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
   },
   header: {
     paddingHorizontal: screenWidth * 0.04,
-    paddingTop: screenHeight * 0.01,
-    paddingBottom: screenHeight * 0.01,
-    backgroundColor: '#000',
+    paddingVertical: screenHeight * 0.012,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: screenHeight * 0.01,
-  },
-  title: {
-    color: '#fff',
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  messageButton: {
-    padding: 4,
-  },
-  addButton: {
-    padding: 4,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: screenWidth * 0.04,
-  },
-  tab: {
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.008,
+  iconButton: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  activeTab: {
-    backgroundColor: Colors.secondary,
-  },
-  tabText: {
-    color: '#fff',
-  },
-  activeTabText: {
-    color: '#fff',
+  primaryButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   listContent: {
     paddingBottom: screenHeight * 0.02,
