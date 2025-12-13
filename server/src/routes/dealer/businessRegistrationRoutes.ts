@@ -59,6 +59,11 @@ router.post('/', checkDealerRole, createBusinessRegistrationController);
 router.get('/user/:userId', getBusinessRegistrationByUserIdController);
 
 // All other routes require approved business registration
+// Publicly accessible route (authenticated users) to get registration details
+// Needed for customers to validate dealer status in cart
+router.get('/:id', getBusinessRegistrationByIdController);
+
+// All other routes require approved business registration
 router.use(dealerMiddleware);
 
 /**
@@ -149,7 +154,7 @@ router.post('/', createBusinessRegistrationController);
  *       403:
  *         description: Forbidden - Dealer access required
  */
-router.get('/:id', getBusinessRegistrationByIdController);
+
 
 
 
