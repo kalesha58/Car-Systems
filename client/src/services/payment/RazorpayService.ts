@@ -7,7 +7,7 @@ interface RazorpayPaymentOptions extends Omit<CheckoutOptions, 'key'> {
 class RazorpayService {
     private static instance: RazorpayService;
     // TODO: Move to environment variable or config file
-    private defaultKeyId: string = 'MGBJFMEsaHTT34GQpUU1XNtv';
+    private defaultKeyId: string = 'rzp_test_Rq1SVXAeLdbM98';
 
     private constructor() { }
 
@@ -34,6 +34,14 @@ class RazorpayService {
                 currency: options.currency || 'INR',
                 name: options.name || 'Car Connect',
                 theme: options.theme || { color: '#53a20e' },
+                // Configure modal options for better UX
+                modal: {
+                    backdropclose: false, // Prevent accidental dismissal
+                    escape: false, // Prevent escape key dismissal
+                    handleback: true, // Handle back button
+                    confirm_close: true, // Confirm before closing
+                    ...options.modal,
+                },
             } as CheckoutOptions;
 
             RazorpayCheckout.open(checkoutOptions)
