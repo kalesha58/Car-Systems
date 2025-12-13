@@ -1,19 +1,21 @@
 import { View, Text, StyleSheet } from 'react-native'
 import React, { FC, useMemo } from 'react'
-import { adData, categories } from '@utils/dummyData'
-import AdCarousal from './AdCarousal'
+import { categories } from '@utils/dummyData'
 import { Fonts } from '@utils/Constants'
 import CustomText from '@components/ui/CustomText'
 import CategoryContainer from './CategoryContainer'
 import { useTheme } from '@hooks/useTheme'
+import TopProductsSection from './TopProductsSection'
 
-const Content:FC = () => {
-  const {colors} = useTheme();
+const Content: FC = () => {
+  const { colors } = useTheme();
 
   const styles = StyleSheet.create({
-    container:{
-        paddingHorizontal:20,
-        backgroundColor: colors.background
+    container: {
+      backgroundColor: colors.background
+    },
+    section: {
+      paddingHorizontal: 20,
     }
   });
 
@@ -35,15 +37,17 @@ const Content:FC = () => {
 
   return (
     <View style={styles.container}>
-      <AdCarousal adData={adData} />
-      <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Products</CustomText>
-      <CategoryContainer data={productsCategories} />
-      <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Bestsellers</CustomText>
-      <CategoryContainer data={bestsellersCategories} />
-      <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Vehicles</CustomText>
-      <CategoryContainer data={vehiclesCategories} />
-      <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Services</CustomText>
-      <CategoryContainer data={servicesCategories} />
+      <TopProductsSection />
+      <View style={styles.section}>
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Products</CustomText>
+        <CategoryContainer data={productsCategories} />
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Bestsellers</CustomText>
+        <CategoryContainer data={bestsellersCategories} />
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Vehicles</CustomText>
+        <CategoryContainer data={vehiclesCategories} />
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Services</CustomText>
+        <CategoryContainer data={servicesCategories} />
+      </View>
     </View>
   )
 }

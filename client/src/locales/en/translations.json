@@ -269,5 +269,12 @@
     "registeredOn": "Registered On",
     "noRegistration": "No business registration found",
     "registerBusiness": "Register Business"
+  },
+  "search": {
+    "engineOil": "Search \"engine oil\"",
+    "brakePads": "Search \"brake pads\"",
+    "tiresAndMore": "Search for tires, batteries, filters",
+    "carWash": "Search \"car wash\"",
+    "carService": "Search \"car service\""
   }
 }
