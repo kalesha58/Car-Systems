@@ -65,19 +65,19 @@ const PlayScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <View style={styles.headerRow}>
-          <CustomText fontSize={RFValue(18)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
+          <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
             Play
           </CustomText>
           <View style={styles.headerButtons}>
             <TouchableOpacity
-              style={styles.messageButton}
+              style={[styles.iconButton, { backgroundColor: colors.backgroundSecondary }]}
               onPress={() => navigate('Chat')}>
-              <Icon name="chatbubble-outline" size={RFValue(24)} color={colors.text} />
+              <Icon name="chatbubble-outline" size={RFValue(18)} color={colors.text} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.iconButton, styles.primaryButton, { backgroundColor: colors.primary }]}
               onPress={() => navigate('CreateNewPost')}>
-              <Icon name="add-circle-outline" size={RFValue(24)} color={colors.text} />
+              <Icon name="add" size={RFValue(20)} color={colors.white} />
             </TouchableOpacity>
           </View>
         </View>
@@ -105,25 +105,33 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: screenWidth * 0.04,
-    paddingTop: screenHeight * 0.01,
-    paddingBottom: screenHeight * 0.02,
+    paddingVertical: screenHeight * 0.012,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: screenHeight * 0.01,
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  messageButton: {
-    padding: 4,
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  addButton: {
-    padding: 4,
+  primaryButton: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   listContent: {
     paddingBottom: screenHeight * 0.02,
