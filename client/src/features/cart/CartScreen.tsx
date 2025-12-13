@@ -50,8 +50,6 @@ const CartScreen: React.FC = () => {
   const deliveryCharge = 29;
   const handlingCharge = 2;
   const otherCharges = deliveryCharge + handlingCharge;
-  const codCharge = selectedPaymentMethod === 'cash_on_delivery' ? 5 : 0;
-  const grandTotal = totalItemPrice - couponDiscount + otherCharges + codCharge;
   const route = useRoute();
   const navigation = useNavigation();
   const {t} = useTranslation();
@@ -64,6 +62,11 @@ const CartScreen: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'upi' | 'cash_on_delivery' | null>(null);
   const [dealerInfo, setDealerInfo] = useState<{name: string; businessName: string; hasPayout: boolean} | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  
+  // COD charge will be added by backend - we show estimated total here
+  // Final total will come from backend response
+  const estimatedCodCharge = selectedPaymentMethod === 'cash_on_delivery' ? 5 : 0;
+  const estimatedGrandTotal = totalItemPrice - couponDiscount + otherCharges + estimatedCodCharge;
 
   // Fetch latest address on mount
   useEffect(() => {
@@ -98,21 +101,35 @@ const CartScreen: React.FC = () => {
         // Get dealerId from first cart item
         const firstItem = cart[0];
         const dealerId = firstItem?.item?.dealerId;
+
+        console.log(dealerId, "swarop")
         
         if (dealerId) {
           const response = await getDealerById(dealerId);
+          console.log(response, 'swarop')
           if (response.success && response.Response) {
             const dealer = Array.isArray(response.Response) ? response.Response[0] : response.Response;
+            const hasPayout = !!(dealer.payout && (dealer.payout.upiId || dealer.payout.bank));
             setDealerInfo({
               name: dealer.name || '',
               businessName: dealer.businessName || '',
-              hasPayout: !!(dealer.payout && (dealer.payout.upiId || dealer.payout.bank)),
+              hasPayout,
             });
+            
+            // Auto-select COD if UPI is not available
+            if (!hasPayout) {
+              setSelectedPaymentMethod('cash_on_delivery');
+            }
           }
+        } else {
+          // No dealer ID - default to COD
+          setSelectedPaymentMethod('cash_on_delivery');
         }
       } catch (error) {
         console.log('Failed to fetch dealer info:', error);
         setDealerInfo(null);
+        // Default to COD if dealer info fetch fails
+        setSelectedPaymentMethod('cash_on_delivery');
       }
     };
 
@@ -339,18 +356,51 @@ const CartScreen: React.FC = () => {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: 12,
-      borderRadius: 10,
-      borderWidth: 1.5,
+      padding: 15,
+      borderRadius: 12,
+      borderWidth: 2,
       borderColor: colors.border,
       backgroundColor: colors.cardBackground,
     },
     paymentOptionSelected: {
       borderColor: colors.secondary,
       backgroundColor: colors.backgroundSecondary,
+      borderWidth: 2,
     },
     paymentOptionDisabled: {
       opacity: 0.5,
+    },
+    paymentIconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.backgroundSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    radioButton: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: 'transparent',
+    },
+    radioButtonSelected: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: colors.secondary,
+      backgroundColor: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    radioButtonInner: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: colors.secondary,
     },
   });
 
@@ -413,11 +463,11 @@ const CartScreen: React.FC = () => {
           <Icon name="chevron-right" size={RFValue(16)} color={colors.text} />
         </TouchableOpacity>
 
-        <BillDetails totalItemPrice={totalItemPrice} codCharge={codCharge} />
+        <BillDetails totalItemPrice={totalItemPrice} codCharge={estimatedCodCharge} />
 
         {/* Payment Method Selection */}
-        <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
-          <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={{marginBottom: 10}}>
+        <View style={{marginBottom: 15}}>
+          <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={{marginBottom: 15}}>
             Payment Method
           </CustomText>
           
@@ -427,6 +477,7 @@ const CartScreen: React.FC = () => {
               styles.paymentOption,
               selectedPaymentMethod === 'upi' && styles.paymentOptionSelected,
               !dealerInfo?.hasPayout && styles.paymentOptionDisabled,
+              {marginBottom: 12},
             ]}
             onPress={() => {
               if (dealerInfo?.hasPayout) {
@@ -438,22 +489,60 @@ const CartScreen: React.FC = () => {
                 );
               }
             }}
-            disabled={!dealerInfo?.hasPayout}>
+            disabled={!dealerInfo?.hasPayout}
+            activeOpacity={0.7}>
             <View style={styles.flexRow}>
-              <Icon name="wallet" size={RFValue(20)} color={selectedPaymentMethod === 'upi' ? colors.secondary : colors.text} />
-              <View style={{marginLeft: 10, flex: 1}}>
-                <CustomText variant="h7" fontFamily={Fonts.Medium}>
+              <View
+                style={[
+                  styles.paymentIconContainer,
+                  selectedPaymentMethod === 'upi' && {
+                    backgroundColor: colors.secondary + '20',
+                  },
+                ]}>
+                <Icon
+                  name="wallet"
+                  size={RFValue(22)}
+                  color={
+                    !dealerInfo?.hasPayout
+                      ? colors.disabled || '#999'
+                      : selectedPaymentMethod === 'upi'
+                      ? colors.secondary
+                      : colors.text
+                  }
+                />
+              </View>
+              <View style={{marginLeft: 12, flex: 1}}>
+                <CustomText
+                  variant="h7"
+                  fontFamily={Fonts.Medium}
+                  style={{
+                    color:
+                      !dealerInfo?.hasPayout
+                        ? colors.disabled || '#999'
+                        : selectedPaymentMethod === 'upi'
+                        ? colors.secondary
+                        : colors.text,
+                  }}>
                   Pay now (UPI)
                 </CustomText>
-                {!dealerInfo?.hasPayout && (
-                  <CustomText variant="h9" style={{color: colors.disabled, marginTop: 2}}>
+                {!dealerInfo?.hasPayout ? (
+                  <CustomText variant="h9" style={{color: colors.disabled || '#999', marginTop: 2}}>
                     Dealer has no UPI/bank configured
+                  </CustomText>
+                ) : (
+                  <CustomText variant="h9" style={{opacity: 0.6, marginTop: 2}}>
+                    Pay instantly via UPI
                   </CustomText>
                 )}
               </View>
             </View>
             {selectedPaymentMethod === 'upi' && (
-              <Icon name="check-circle" size={RFValue(20)} color={colors.secondary} />
+              <View style={styles.radioButtonSelected}>
+                <View style={styles.radioButtonInner} />
+              </View>
+            )}
+            {selectedPaymentMethod !== 'upi' && dealerInfo?.hasPayout && (
+              <View style={styles.radioButton} />
             )}
           </TouchableOpacity>
 
@@ -462,13 +551,37 @@ const CartScreen: React.FC = () => {
             style={[
               styles.paymentOption,
               selectedPaymentMethod === 'cash_on_delivery' && styles.paymentOptionSelected,
-              {marginTop: 10},
             ]}
-            onPress={() => setSelectedPaymentMethod('cash_on_delivery')}>
+            onPress={() => setSelectedPaymentMethod('cash_on_delivery')}
+            activeOpacity={0.7}>
             <View style={styles.flexRow}>
-              <Icon name="cash" size={RFValue(20)} color={selectedPaymentMethod === 'cash_on_delivery' ? colors.secondary : colors.text} />
-              <View style={{marginLeft: 10, flex: 1}}>
-                <CustomText variant="h7" fontFamily={Fonts.Medium}>
+              <View
+                style={[
+                  styles.paymentIconContainer,
+                  selectedPaymentMethod === 'cash_on_delivery' && {
+                    backgroundColor: colors.secondary + '20',
+                  },
+                ]}>
+                <Icon
+                  name="cash"
+                  size={RFValue(22)}
+                  color={
+                    selectedPaymentMethod === 'cash_on_delivery'
+                      ? colors.secondary
+                      : colors.text
+                  }
+                />
+              </View>
+              <View style={{marginLeft: 12, flex: 1}}>
+                <CustomText
+                  variant="h7"
+                  fontFamily={Fonts.Medium}
+                  style={{
+                    color:
+                      selectedPaymentMethod === 'cash_on_delivery'
+                        ? colors.secondary
+                        : colors.text,
+                  }}>
                   Cash on Delivery
                 </CustomText>
                 <CustomText variant="h9" style={{color: colors.secondary, marginTop: 2}}>
@@ -477,7 +590,12 @@ const CartScreen: React.FC = () => {
               </View>
             </View>
             {selectedPaymentMethod === 'cash_on_delivery' && (
-              <Icon name="check-circle" size={RFValue(20)} color={colors.secondary} />
+              <View style={styles.radioButtonSelected}>
+                <View style={styles.radioButtonInner} />
+              </View>
+            )}
+            {selectedPaymentMethod !== 'cash_on_delivery' && (
+              <View style={styles.radioButton} />
             )}
           </TouchableOpacity>
 
@@ -594,14 +712,18 @@ const CartScreen: React.FC = () => {
                 fontFamily={Fonts.Regular}
                 variant="h9"
                 style={{marginTop: 2}}>
-                Cash on Delivery
+                {selectedPaymentMethod === 'upi' 
+                  ? 'Pay now (UPI)' 
+                  : selectedPaymentMethod === 'cash_on_delivery'
+                  ? 'Cash on Delivery'
+                  : 'Select Payment'}
               </CustomText>
             </View>
 
             <View style={{width: '70%'}}>
               <ArrowButton
                 loading={loading}
-                price={grandTotal}
+                price={estimatedGrandTotal}
                 title="Place Order"
                 onPress={handlePlaceOrder}
                 disabled={!selectedAddress || !selectedPaymentMethod || !acceptedTerms}

@@ -11,6 +11,16 @@ import {
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
 
+export interface IPaymentAction {
+  type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+  deeplink?: string;
+  qrCode?: string;
+  expiresAt?: string;
+}
+
 export interface IUserOrder {
   id: string;
   orderNumber: string;
@@ -37,6 +47,7 @@ export interface IUserOrder {
   deliveryPersonLocation?: { latitude: number; longitude: number; address?: string };
   createdAt: string;
   updatedAt: string;
+  paymentAction?: IPaymentAction;
 }
 
 export interface ICreateUserOrderRequest {
@@ -122,6 +133,8 @@ const orderToUserOrder = (orderDoc: IOrderDocument): IUserOrder => {
     deliveryPersonLocation: orderDoc.deliveryPersonLocation,
     createdAt: orderDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: orderDoc.updatedAt?.toISOString() || new Date().toISOString(),
+    // Include codCharge if present (for COD orders)
+    ...(orderDoc.codCharge > 0 && { codCharge: orderDoc.codCharge }),
   };
 };
 
@@ -159,6 +172,24 @@ export const createUserOrder = async (
   data: ICreateUserOrderRequest,
 ): Promise<IUserOrder> => {
   try {
+    // Validate input
+    if (!data.items || data.items.length === 0) {
+      throw new AppError('Order must contain at least one item', 400);
+    }
+
+    if (!data.shippingAddress) {
+      throw new AppError('Shipping address is required', 400);
+    }
+
+    if (!data.paymentMethod) {
+      throw new AppError('Payment method is required', 400);
+    }
+
+    const validPaymentMethods = ['credit_card', 'debit_card', 'upi', 'cash_on_delivery'];
+    if (!validPaymentMethods.includes(data.paymentMethod)) {
+      throw new AppError(`Invalid payment method: ${data.paymentMethod}`, 400);
+    }
+
     const user = await SignUp.findById(userId);
 
     if (!user) {
@@ -168,10 +199,36 @@ export const createUserOrder = async (
     const { Settings } = await import('../../models/Settings');
     const settings = await Settings.findOne() || (await Settings.create({}));
 
+    // Validate items and check stock
+    const { Product } = await import('../../models/Product');
+    for (const item of data.items) {
+      if (!item.productId || !item.quantity || item.quantity <= 0) {
+        throw new AppError('Invalid item data', 400);
+      }
+
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new NotFoundError(`Product not found: ${item.productId}`);
+      }
+
+      // Check stock availability (for UPI, we'll reserve stock; for COD, we check but don't reserve yet)
+      if (data.paymentMethod === 'upi' && product.stock !== undefined && product.stock < item.quantity) {
+        throw new AppError(
+          `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
+          400,
+        );
+      }
+    }
+
     const subtotal = data.items.reduce((sum, item) => sum + item.total, 0);
     const tax = (subtotal * settings.taxRate) / 100;
     const shipping = settings.shippingCost;
     const totalAmount = subtotal + tax + shipping;
+
+    // Validate total amount
+    if (totalAmount <= 0) {
+      throw new AppError('Order total must be greater than zero', 400);
+    }
 
     const order = new Order({
       orderNumber: generateOrderNumber(),
@@ -222,56 +279,162 @@ export const createUserOrder = async (
       logger.error('Error emitting socket event for order creation:', socketError);
     }
 
-    // TESTING: Auto-confirm payment for UPI/COD (Remove when implementing real payment gateway)
-    // TODO: Remove this block when implementing actual payment gateway integration
-    if (data.paymentMethod === 'upi' || data.paymentMethod === 'cash_on_delivery') {
+    // Process payment based on payment method
+    let paymentAction: IPaymentAction | undefined;
+    const orderId = (order._id as any).toString();
+
+    try {
+      if (data.paymentMethod === 'upi') {
+        // Reserve stock for UPI orders (will be restored if payment fails)
+        try {
+          const { Product } = await import('../../models/Product');
+          for (const item of order.items) {
+            const product = await Product.findById(item.productId);
+            if (product && product.stock !== undefined) {
+              product.stock = (product.stock || 0) - item.quantity;
+              if (product.stock < 0) {
+                // Rollback previous stock updates
+                for (const prevItem of order.items) {
+                  const prevProduct = await Product.findById(prevItem.productId);
+                  if (prevProduct && String(prevProduct._id) !== String(product._id)) {
+                    prevProduct.stock = (prevProduct.stock || 0) + prevItem.quantity;
+                    await prevProduct.save();
+                  }
+                }
+                throw new AppError(
+                  `Insufficient stock for ${product.name}. Available: ${(product.stock || 0) + item.quantity}, Requested: ${item.quantity}`,
+                  400,
+                );
+              }
+              await product.save();
+            }
+          }
+        } catch (stockError: any) {
+          logger.error('Error reserving stock for UPI order:', stockError);
+          throw stockError;
+        }
+
+        // Process UPI payment - create payment intent
+        const { processUPIPayment } = await import('../payment/paymentService');
+        const { order: updatedOrder, paymentIntent } = await processUPIPayment(
+          orderId,
+          data.dealerId,
+        );
+
+        // Create payment action for frontend
+        paymentAction = {
+          type: 'UPI_INTENT',
+          paymentIntentId: paymentIntent.id,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency || 'INR',
+          deeplink: `razorpay://pay?amount=${paymentIntent.amount}&currency=${paymentIntent.currency || 'INR'}&order_id=${paymentIntent.id}`,
+          expiresAt: updatedOrder.expiresAt?.toISOString(),
+        };
+
+        // Reload order from database to get latest state
+        const refreshedOrder = await Order.findById(orderId);
+        if (refreshedOrder) {
+          Object.assign(order, refreshedOrder.toObject());
+        }
+
+        logger.info(`UPI payment intent created for order: ${order.orderNumber}`, {
+          paymentIntentId: paymentIntent.id,
+        });
+      } else if (data.paymentMethod === 'cash_on_delivery') {
+        // Process COD order - add COD charge
+        const { processCODOrder } = await import('../payment/paymentService');
+        await processCODOrder(orderId);
+
+        // Reload order from database to get latest state
+        const refreshedOrder = await Order.findById(orderId);
+        if (refreshedOrder) {
+          Object.assign(order, refreshedOrder.toObject());
+        }
+
+        logger.info(`COD order processed: ${order.orderNumber}`, {
+          codCharge: order.codCharge,
+          totalAmount: order.totalAmount,
+        });
+      }
+      // For credit_card and debit_card, order remains in ORDER_PLACED status
+      // Payment processing will be handled separately
+    } catch (paymentError: any) {
+      logger.error('Error processing payment:', paymentError);
+
+      // If payment processing fails, mark order as failed
       const previousStatus = order.status;
-      order.paymentStatus = 'paid';
-      order.status = 'PAYMENT_CONFIRMED';
-      
-      const paymentNote = data.paymentMethod === 'upi' 
-        ? 'Payment auto-confirmed for testing (UPI)' 
-        : 'Payment auto-confirmed for testing (COD)';
-      
+      order.status = 'PAYMENT_FAILED';
+      order.paymentStatus = 'failed';
       order.timeline.push({
-        status: 'PAYMENT_CONFIRMED',
+        status: 'PAYMENT_FAILED',
         timestamp: new Date(),
-        notes: paymentNote,
+        notes: `Payment processing failed: ${paymentError.message || 'Unknown error'}`,
         actor: 'system',
         actorId: 'system',
         previousStatus,
       });
-      
+
       await order.save();
-      
+
       await logStatusChange(
-        (order._id as any).toString(),
+        orderId,
         previousStatus,
-        'PAYMENT_CONFIRMED',
+        'PAYMENT_FAILED',
         'system',
         'system',
-        paymentNote,
+        paymentError.message || 'Payment processing failed',
       );
-      
-      // Emit socket event for payment confirmation
+
+      // Emit socket event for payment failure
       try {
-        const orderId = (order._id as any).toString();
         emitToOrderRoom(orderId, 'liveTrackingUpdates', {
           orderId,
-          status: 'PAYMENT_CONFIRMED',
+          status: 'PAYMENT_FAILED',
           previousStatus,
           timestamp: new Date().toISOString(),
         });
       } catch (socketError) {
-        logger.error('Error emitting socket event for payment confirmation:', socketError);
+        logger.error('Error emitting socket event for payment failure:', socketError);
       }
-      
-      logger.info(`Payment auto-confirmed for testing: ${order.orderNumber} (${data.paymentMethod})`);
+
+      // Restore stock if payment fails (for UPI orders that reserved stock)
+      if (data.paymentMethod === 'upi') {
+        try {
+          const { Product } = await import('../../models/Product');
+          for (const item of order.items) {
+            const product = await Product.findById(item.productId);
+            if (product) {
+              product.stock = (product.stock || 0) + item.quantity;
+              await product.save();
+              logger.info(`Stock restored for product: ${item.productId}`, {
+                quantity: item.quantity,
+              });
+            }
+          }
+        } catch (stockError) {
+          logger.error('Error restoring stock after payment failure:', stockError);
+          // Don't throw - stock restoration failure shouldn't block error response
+        }
+      }
+
+      // Re-throw error to be handled by controller
+      throw new AppError(
+        paymentError.message || 'Failed to process payment. Please try again.',
+        paymentError.statusCode || 500,
+      );
     }
 
-    logger.info(`New order created: ${order.orderNumber}`);
+    logger.info(`New order created: ${order.orderNumber}`, {
+      paymentMethod: data.paymentMethod,
+      status: order.status,
+    });
 
-    return orderToUserOrder(order);
+    const userOrder = orderToUserOrder(order);
+    if (paymentAction) {
+      (userOrder as any).paymentAction = paymentAction;
+    }
+
+    return userOrder;
   } catch (error) {
     logger.error('Error creating user order:', error);
     throw error;

@@ -28,6 +28,16 @@ export interface ILocation {
   address?: string;
 }
 
+export interface IPaymentAction {
+  type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+  deeplink?: string;
+  qrCode?: string;
+  expiresAt?: string;
+}
+
 export interface IOrderData {
   id: string;
   orderNumber: string;
@@ -38,9 +48,11 @@ export interface IOrderData {
   tax: number;
   shipping: number;
   totalAmount: number;
+  codCharge?: number; // COD charge if applicable
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  paymentAction?: IPaymentAction; // Payment action for UPI payments
   shippingAddress: IShippingAddress;
   billingAddress: IShippingAddress;
   tracking?: any;
