@@ -17,7 +17,6 @@ import {getProductById} from '@service/productService';
 import {IProduct} from '@types/product/IProduct';
 import ProductImageCarousel from '@components/product/ProductImageCarousel';
 import AnimatedProductHeader from '@components/product/AnimatedProductHeader';
-import CollapsibleSection from '@components/ui/CollapsibleSection';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useCartStore} from '@state/cartStore';
 import {
@@ -299,14 +298,16 @@ const ProductDetail: React.FC = () => {
       flex: 1,
       textAlign: 'right',
     },
-    viewMoreLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 12,
-      gap: 4,
+    sectionContainer: {
+      marginHorizontal: 16,
+      marginTop: 20,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
-    viewMoreText: {
-      color: colors.secondary,
+    sectionTitle: {
+      marginBottom: 12,
+      paddingBottom: 8,
     },
     informationContent: {
       paddingTop: 8,
@@ -314,63 +315,6 @@ const ProductDetail: React.FC = () => {
     disclaimerText: {
       opacity: 0.7,
       lineHeight: 20,
-    },
-    emiBanner: {
-      backgroundColor: colors.secondary,
-      marginHorizontal: 16,
-      marginTop: 16,
-      borderRadius: 8,
-      padding: 12,
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    emiBannerText: {
-      flex: 1,
-    },
-    emiBannerTitle: {
-      color: colors.white,
-      fontFamily: Fonts.SemiBold,
-      marginBottom: 4,
-    },
-    emiBannerSubtitle: {
-      color: colors.white,
-      opacity: 0.9,
-      fontSize: RFValue(10),
-    },
-    emiBannerLink: {
-      color: colors.white,
-      fontFamily: Fonts.Medium,
-      fontSize: RFValue(12),
-    },
-    gstinCard: {
-      backgroundColor: colors.cardBackground,
-      marginHorizontal: 16,
-      marginTop: 12,
-      borderRadius: 8,
-      padding: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    gstinIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: '#007AFF',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 12,
-    },
-    gstinContent: {
-      flex: 1,
-    },
-    gstinTitle: {
-      fontFamily: Fonts.Medium,
-      marginBottom: 4,
-    },
-    gstinSubtitle: {
-      fontSize: RFValue(10),
-      opacity: 0.7,
     },
     deliveryBanner: {
       backgroundColor: '#007AFF',
@@ -662,7 +606,13 @@ const ProductDetail: React.FC = () => {
             </View>
           </View>
 
-          <CollapsibleSection title={t('product.highlights')} defaultExpanded={true}>
+          <View style={styles.sectionContainer}>
+            <CustomText
+              variant="h6"
+              fontFamily={Fonts.SemiBold}
+              style={styles.sectionTitle}>
+              {t('product.highlights')}
+            </CustomText>
             <View style={styles.highlightsContent}>
               {product.brand && (
                 <View style={styles.highlightRow}>
@@ -698,7 +648,7 @@ const ProductDetail: React.FC = () => {
               )}
               {product.specifications && Object.keys(product.specifications).length > 0 && (
                 <>
-                  {Object.entries(product.specifications).slice(0, 3).map(([key, value]) => (
+                  {Object.entries(product.specifications).map(([key, value]) => (
                     <View key={key} style={styles.highlightRow}>
                       <CustomText
                         variant="h7"
@@ -716,23 +666,16 @@ const ProductDetail: React.FC = () => {
                   ))}
                 </>
               )}
-              <Pressable style={styles.viewMoreLink}>
-                <CustomText
-                  variant="h7"
-                  fontFamily={Fonts.Medium}
-                  style={styles.viewMoreText}>
-                  View more
-                </CustomText>
-                <Icon
-                  name="chevron-down"
-                  size={RFValue(14)}
-                  color={colors.secondary}
-                />
-              </Pressable>
             </View>
-          </CollapsibleSection>
+          </View>
 
-          <CollapsibleSection title="Info" defaultExpanded={false}>
+          <View style={styles.sectionContainer}>
+            <CustomText
+              variant="h6"
+              fontFamily={Fonts.SemiBold}
+              style={styles.sectionTitle}>
+              Info
+            </CustomText>
             <View style={styles.informationContent}>
               <CustomText
                 variant="h7"
@@ -747,36 +690,8 @@ const ProductDetail: React.FC = () => {
                 All images are for representational purposes
               </CustomText>
             </View>
-          </CollapsibleSection>
-
-          <View style={styles.emiBanner}>
-            <View style={styles.emiBannerText}>
-              <CustomText style={styles.emiBannerTitle}>
-                No Cost EMI Plans at ₹{Math.round(product.price / 3)}/month
-              </CustomText>
-              <CustomText style={styles.emiBannerSubtitle}>
-                Applicable only on credit card payments
-              </CustomText>
-            </View>
-            <Pressable>
-              <CustomText style={styles.emiBannerLink}>View plans</CustomText>
-            </Pressable>
           </View>
 
-          <View style={styles.gstinCard}>
-            <View style={styles.gstinIcon}>
-              <Icon name="percent" size={RFValue(20)} color={colors.white} />
-            </View>
-            <View style={styles.gstinContent}>
-              <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.gstinTitle}>
-                Add GSTIN
-              </CustomText>
-              <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.gstinSubtitle}>
-                Claim GST credit of 18% on this product.
-              </CustomText>
-            </View>
-            <Icon name="chevron-forward" size={RFValue(16)} color={colors.text} />
-          </View>
 
           {showDeliveryBanner && (
             <View style={styles.deliveryBanner}>

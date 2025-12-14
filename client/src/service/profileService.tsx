@@ -69,3 +69,20 @@ export const updateProfileImage = async (
   );
 };
 
+/**
+ * Update profile information (name, etc.)
+ * @param data - Profile data to update
+ */
+export const updateProfile = async (data: {name?: string}): Promise<IUserProfile> => {
+  const response = await appAxios.put('/profile', data);
+
+  if (response.data && response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  throw new Error(
+    response.data?.Response?.ReturnMessage ||
+      response.data?.message ||
+      'Failed to update profile',
+  );
+};
+

@@ -26,7 +26,16 @@
     "cancel": "Cancel",
     "error": "Error",
     "uploadFailed": "Failed to upload profile image. Please try again.",
-    "darkMode": "Dark Mode"
+    "darkMode": "Dark Mode",
+    "name": "Name",
+    "email": "Email",
+    "enterName": "Enter your name",
+    "nameRequired": "Name is required",
+    "changePhoto": "Change Photo",
+    "save": "Save Changes",
+    "profileUpdated": "Profile updated successfully",
+    "updateFailed": "Failed to update profile. Please try again.",
+    "emailReadOnly": "Email cannot be changed"
   },
   "common": {
     "wallet": "Wallet",

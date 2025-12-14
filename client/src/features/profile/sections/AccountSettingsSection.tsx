@@ -78,7 +78,7 @@ const AccountSettingsSection: FC = () => {
             icon="person-outline"
             label={t('profile.editProfile')}
             onPress={() => {
-              // TODO: Navigate to edit profile screen when implemented
+              navigate('EditProfile');
             }}
           />
         )}
