@@ -45,6 +45,7 @@ import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
 import { useTranslation } from 'react-i18next';
+import LiquidTabBar from '@components/navigation/LiquidTabBar';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -60,19 +61,8 @@ const MainTabs: FC = () => {
         headerShown: false,
         tabBarActiveTintColor: colors.secondary,
         tabBarInactiveTintColor: colors.disabled,
-        tabBarStyle: {
-          backgroundColor: colors.cardBackground,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
-        },
-      }}>
+      }}
+      tabBar={(props) => <LiquidTabBar {...props} />}>
       <Tab.Screen
         name="Home"
         component={ProductDashboard}
@@ -202,19 +192,8 @@ const DealerTabs: FC = () => {
         headerShown: false,
         tabBarActiveTintColor: colors.secondary,
         tabBarInactiveTintColor: colors.disabled,
-        tabBarStyle: {
-          backgroundColor: colors.cardBackground,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
-        },
-      }}>
+      }}
+      tabBar={(props) => <LiquidTabBar {...props} />}>
       <Tab.Screen
         name="Home"
         component={DealerDashboard}

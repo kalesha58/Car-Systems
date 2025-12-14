@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "817823365644",
+    "project_id": "motonode-d7ed1",
+    "storage_bucket": "motonode-d7ed1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:817823365644:android:1db47879671e7081bd4c29",
+        "android_client_info": {
+          "package_name": "com.carconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDni1oF3WllMujBDs04KK44N4WM9SWLkMA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

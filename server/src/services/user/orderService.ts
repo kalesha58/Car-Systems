@@ -10,6 +10,7 @@ import {
   canRequestReturn,
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
+import { sendPushNotification } from '../notificationService';
 
 export interface IPaymentAction {
   type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
@@ -277,6 +278,22 @@ export const createUserOrder = async (
       });
     } catch (socketError) {
       logger.error('Error emitting socket event for order creation:', socketError);
+    }
+
+    // Send push notification for order creation
+    try {
+      await sendPushNotification(userId, {
+        title: 'Order Placed Successfully',
+        body: `Your order ${order.orderNumber} has been placed. We'll keep you updated on its status.`,
+        data: {
+          type: 'order_update',
+          orderId: (order._id as any).toString(),
+          status: 'ORDER_PLACED',
+        },
+      });
+    } catch (notificationError) {
+      logger.error('Error sending push notification for order creation:', notificationError);
+      // Don't throw - notification failure shouldn't block order creation
     }
 
     // Process payment based on payment method

@@ -477,6 +477,49 @@ export const updateOrderStatus = async (
       logger.error('Error emitting socket event for order update:', socketError);
     }
 
+    // Send push notification for order status update
+    if (data.status && data.status !== order.status) {
+      try {
+        const { sendPushNotification } = await import('../notificationService');
+        const statusMessages: { [key: string]: { title: string; body: string } } = {
+          ORDER_CONFIRMED: {
+            title: 'Order Confirmed',
+            body: `Your order ${order.orderNumber} has been confirmed and is being prepared.`,
+          },
+          OUT_FOR_DELIVERY: {
+            title: 'Order Out for Delivery',
+            body: `Your order ${order.orderNumber} is on its way to you!`,
+          },
+          DELIVERED: {
+            title: 'Order Delivered',
+            body: `Your order ${order.orderNumber} has been delivered. Thank you for shopping with us!`,
+          },
+          CANCELLED: {
+            title: 'Order Cancelled',
+            body: `Your order ${order.orderNumber} has been cancelled.`,
+          },
+        };
+
+        const message = statusMessages[data.status] || {
+          title: 'Order Status Updated',
+          body: `Your order ${order.orderNumber} status has been updated.`,
+        };
+
+        await sendPushNotification(order.userId, {
+          title: message.title,
+          body: message.body,
+          data: {
+            type: 'order_update',
+            orderId,
+            status: data.status,
+          },
+        });
+      } catch (notificationError) {
+        logger.error('Error sending push notification for order status update:', notificationError);
+        // Don't throw - notification failure shouldn't block status update
+      }
+    }
+
     return dealerOrder;
   } catch (error) {
     logger.error('Error updating order status:', error);

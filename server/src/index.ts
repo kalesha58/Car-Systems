@@ -8,6 +8,7 @@ import http from 'http';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database';
+import { initializeFirebase } from './config/firebase';
 import { errorHandler, IAppError } from './utils/errorHandler';
 import { swaggerSpec } from './config/swagger';
 import { initializeSocket } from './services/socket/socketService';
@@ -174,8 +175,21 @@ const initializeDatabase = async (): Promise<void> => {
   }
 };
 
+const initializeServices = (): void => {
+  try {
+    initializeFirebase();
+    logger.info('Firebase Admin SDK initialized');
+  } catch (error) {
+    logger.error('Failed to initialize Firebase', error);
+    // Don't exit - Firebase is not critical for server startup
+  }
+};
+
 initializeDatabase()
   .then(() => {
+    // Initialize Firebase
+    initializeServices();
+
     // Create HTTP server from Express app
     const httpServer = http.createServer(app);
 

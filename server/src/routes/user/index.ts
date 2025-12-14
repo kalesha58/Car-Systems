@@ -9,6 +9,7 @@ import chatRoutes from './chatRoutes';
 import joinRequestRoutes from './joinRequestRoutes';
 import orderRoutes from './orderRoutes';
 import addressRoutes from './addressRoutes';
+import notificationRoutes from './notificationRoutes';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.use('/chats', chatRoutes);
 router.use('/join-requests', joinRequestRoutes);
 router.use('/orders', orderRoutes);
 router.use('/addresses', addressRoutes);
+router.use('/', notificationRoutes);
 
 export default router;
 

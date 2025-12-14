@@ -15,6 +15,7 @@ export interface ISignUpDocument extends Document {
   resetPasswordCode?: string;
   resetPasswordCodeExpires?: Date;
   googleId?: string;
+  fcmToken?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -73,6 +74,11 @@ const signUpSchema = new Schema<ISignUpDocument>(
       sparse: true,
       trim: true,
     },
+    fcmToken: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -83,6 +89,7 @@ const signUpSchema = new Schema<ISignUpDocument>(
 signUpSchema.index({ email: 1 }, { unique: true });
 signUpSchema.index({ phone: 1 }, { unique: true });
 signUpSchema.index({ googleId: 1 }, { unique: true, sparse: true });
+signUpSchema.index({ fcmToken: 1 }, { sparse: true });
 
 // Hash password before saving
 signUpSchema.pre('save', async function (next) {

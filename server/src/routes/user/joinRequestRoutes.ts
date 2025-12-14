@@ -117,3 +117,4 @@ router.get('/user', authMiddleware, getUserJoinRequestsController);
 
 export default router;
 
+
