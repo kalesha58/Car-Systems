@@ -6,8 +6,9 @@ import * as admin from 'firebase-admin';
 export interface INotificationPayload {
   title: string;
   body: string;
+  imageUrl?: string;
   data?: {
-    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request';
+    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request' | 'greeting';
     orderId?: string;
     status?: string;
     chatId?: string;
@@ -61,6 +62,7 @@ export const sendPushNotificationToToken = async (
       notification: {
         title: payload.title,
         body: payload.body,
+        imageUrl: payload.imageUrl,
       },
       data: payload.data
         ? Object.entries(payload.data).reduce((acc, [key, value]) => {
@@ -74,6 +76,7 @@ export const sendPushNotificationToToken = async (
           channelId: 'carconnect_notifications',
           sound: 'default',
           priority: 'high' as const,
+          imageUrl: payload.imageUrl,
         },
       },
       apns: {
@@ -83,6 +86,11 @@ export const sendPushNotificationToToken = async (
             badge: 1,
           },
         },
+        fcmOptions: payload.imageUrl
+          ? {
+              imageUrl: payload.imageUrl,
+            }
+          : undefined,
       },
     };
 
@@ -126,6 +134,30 @@ export const sendPushNotificationToUsers = async (
 
   logger.info(`Bulk notification sent: ${success} success, ${failed} failed`);
   return { success, failed };
+};
+
+/**
+ * Send greeting notification after login
+ */
+export const sendGreetingNotification = async (userId: string): Promise<void> => {
+  try {
+    const imageUrl = process.env.GREETING_NOTIFICATION_IMAGE_URL || 
+      'https://res.cloudinary.com/dzguxkrky/image/upload/v1765692021/All-Vehicles_oiikhd.jpg';
+    
+    await sendPushNotification(userId, {
+      title: 'Welcome to Car Connect!',
+      body: 'Explore our amazing collection of vehicles and connect with dealers.',
+      imageUrl,
+      data: {
+        type: 'greeting',
+      },
+    });
+    
+    logger.info(`Greeting notification sent to user: ${userId}`);
+  } catch (error) {
+    logger.error('Error sending greeting notification:', error);
+    // Don't throw - greeting notification failure shouldn't affect login
+  }
 };
 
 /**

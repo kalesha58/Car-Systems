@@ -250,6 +250,9 @@ const handleNotificationNavigation = (data: any) => {
     // Navigate to join requests screen for the group
     console.log('Navigate to join requests for group:', data.groupId);
     // You can emit an event here to navigate to JoinRequestsScreen with groupId
+  } else if (data.type === 'greeting') {
+    // Greeting notification - no navigation needed, just display
+    console.log('Greeting notification received');
   }
 };
 
