@@ -2,6 +2,7 @@ import messaging from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
+import { tokenStorage } from '@state/storage';
 
 /**
  * Create Notifee notification channel for Android
@@ -77,6 +78,13 @@ export const getFCMToken = async (): Promise<string | null> => {
  */
 export const registerFCMToken = async (token: string): Promise<boolean> => {
   try {
+    // Check if user is authenticated before attempting registration
+    const accessToken = tokenStorage.getString('accessToken');
+    if (!accessToken) {
+      console.log('User not authenticated, skipping FCM token registration');
+      return false;
+    }
+
     const response = await appAxios.post('/user/fcm-token', { fcmToken: token });
     console.log('FCM token registered successfully', response.data);
     return true;
@@ -90,6 +98,12 @@ export const registerFCMToken = async (token: string): Promise<boolean> => {
       const statusText = error.response.statusText || 'Unknown';
       const errorData = error.response.data;
       const errorMessage = errorData?.message || errorData?.Response?.ReturnMessage || 'Unknown error';
+      
+      // Don't log errors for unauthenticated users (expected behavior)
+      if (status === 401) {
+        console.log('FCM token registration skipped: User not authenticated');
+        return false;
+      }
       
       console.error('FCM Registration API Error:', {
         status,
@@ -214,16 +228,27 @@ export const initializeNotifications = async (): Promise<void> => {
     // Create notification channel
     await createNotifeeChannel();
 
-    // Get and register token
+    // Get FCM token (works without auth)
     const token = await getFCMToken();
     if (token) {
-      await registerFCMToken(token);
+      // Only register token if user is authenticated
+      // Token will be registered after login via authService
+      const accessToken = tokenStorage.getString('accessToken');
+      if (accessToken) {
+        await registerFCMToken(token);
+      } else {
+        console.log('FCM token obtained but not registered: User not authenticated');
+      }
     }
 
     // Setup token refresh listener
     messaging().onTokenRefresh(async (newToken) => {
       console.log('FCM token refreshed:', newToken);
-      await registerFCMToken(newToken);
+      // Only register if authenticated
+      const accessToken = tokenStorage.getString('accessToken');
+      if (accessToken) {
+        await registerFCMToken(newToken);
+      }
     });
 
     // Setup foreground message handler - Use Notifee to display

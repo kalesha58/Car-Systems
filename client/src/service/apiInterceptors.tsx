@@ -23,6 +23,15 @@ appAxios.interceptors.response.use(
     response=>response,
     async error=>{
         if(error.response && error.response.status === 401){
+            // Check if refresh token exists before attempting refresh
+            const refreshToken = tokenStorage.getString('refreshToken');
+            
+            if (!refreshToken) {
+                // No refresh token available, reject immediately without trying to refresh
+                console.log('No refresh token available, skipping token refresh');
+                return Promise.reject(error);
+            }
+            
             try {
                 const newAccessToken = await refresh_tokens()
                 if (newAccessToken) {
