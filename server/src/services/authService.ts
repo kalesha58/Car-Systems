@@ -421,3 +421,46 @@ export const googleAuth = async (data: IGoogleAuthRequest): Promise<ILoginRespon
   }
 };
 
+/**
+ * Refresh access token using refresh token
+ */
+export const refreshToken = async (refreshTokenString: string): Promise<{ accessToken: string; refreshToken: string }> => {
+  try {
+    if (!refreshTokenString) {
+      throw new AppError('Refresh token is required', 400);
+    }
+
+    // Verify the refresh token
+    const decoded = jwt.verify(refreshTokenString, JWT_SECRET) as IJwtPayload;
+
+    // Check if user still exists
+    const user = await SignUp.findById(decoded.userId);
+
+    if (!user) {
+      throw new UnauthorizedError('User no longer exists');
+    }
+
+    // Generate new tokens with the same payload
+    const newToken = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+    });
+
+    logger.info(`Token refreshed for user: ${user.email}`);
+
+    // Return both accessToken and refreshToken (using same token for now)
+    // In a production system, you might want separate refresh tokens with longer expiry
+    return {
+      accessToken: newToken,
+      refreshToken: newToken,
+    };
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      throw new UnauthorizedError('Invalid or expired refresh token');
+    }
+    throw error;
+  }
+};
+

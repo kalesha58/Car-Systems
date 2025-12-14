@@ -30,6 +30,7 @@ import supportChatRoutes from './routes/user/supportChatRoutes';
 import userRoutes from './routes/user/userRoutes';
 import addressRoutes from './routes/user/addressRoutes';
 import notificationRoutes from './routes/user/notificationRoutes';
+import { refreshTokenController } from './controllers/authController';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
 import webhookRoutes from './routes/webhookRoutes';
@@ -116,6 +117,8 @@ app.get('/api/api-docs/', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Routes
 app.use('/api/auth', authRoutes);
+// Mount refresh-token at root level to match client expectation (/api/refresh-token)
+app.post('/api/refresh-token', refreshTokenController);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/upload', uploadRoutes);

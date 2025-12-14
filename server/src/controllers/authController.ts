@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { signup, login, forgotPassword, resetPassword, googleAuth } from '../services/authService';
+import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken } from '../services/authService';
 import { ISignupRequest, ILoginRequest, IForgotPasswordRequest, IResetPasswordRequest, IGoogleAuthRequest } from '../types/auth';
 import { logger } from '../utils/logger';
 
@@ -122,5 +122,34 @@ export const googleAuthController = async (
   }
 };
 
+/**
+ * Refresh token controller
+ */
+export const refreshTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    // Handle both typo (refershToken) and correct spelling (refreshToken) from client
+    const refreshTokenString = req.body.refreshToken || req.body.refershToken;
 
+    if (!refreshTokenString) {
+      res.status(400).json({
+        success: false,
+        message: 'Refresh token is required',
+      });
+      return;
+    }
+
+    logger.info('Token refresh request');
+
+    const result = await refreshToken(refreshTokenString);
+
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error('Refresh token controller error:', error);
+    next(error);
+  }
+};
 
