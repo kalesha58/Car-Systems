@@ -3,6 +3,7 @@ import { IAuthRequest } from '../../middleware/authMiddleware';
 import { SignUp } from '../../models/SignUp';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../utils/errorHandler';
+import { sendGreetingNotification } from '../../services/notificationService';
 
 /**
  * Register/Update FCM token for authenticated user
@@ -36,10 +37,27 @@ export const registerFCMTokenController = async (
       throw new AppError('Invalid FCM token format', 400);
     }
 
+    // Check if user had an FCM token before (to determine if this is first registration)
+    const user = await SignUp.findById(userId).select('fcmToken').lean();
+    const isFirstTimeRegistration = !user || !user.fcmToken;
+
     // Update user's FCM token
     await SignUp.findByIdAndUpdate(userId, { fcmToken: fcmToken.trim() });
 
     logger.info(`FCM token registered for user: ${userId}`);
+
+    // Send greeting notification if this is the first time registering a token
+    if (isFirstTimeRegistration) {
+      try {
+        // Send asynchronously without awaiting to not block the response
+        sendGreetingNotification(userId).catch((error) => {
+          logger.error('Failed to send greeting notification after token registration:', error);
+        });
+      } catch (error) {
+        logger.error('Error sending greeting notification:', error);
+        // Don't fail token registration if notification fails
+      }
+    }
 
     res.status(200).json({
       success: true,

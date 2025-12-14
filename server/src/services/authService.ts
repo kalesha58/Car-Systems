@@ -132,17 +132,8 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     phone: signUpUser.phone,
   });
 
-  // Send greeting notification (non-blocking)
-  try {
-    const { sendGreetingNotification } = await import('../services/notificationService');
-    // Send asynchronously without awaiting to not block login response
-    sendGreetingNotification(signUpUser.id).catch((error) => {
-      logger.error('Failed to send greeting notification:', error);
-    });
-  } catch (error) {
-    logger.error('Error importing notification service for greeting:', error);
-    // Don't block login if notification fails
-  }
+  // Note: Greeting notification is now sent after FCM token registration
+  // This ensures the token is available before sending the notification
 
   return ({
     Response: userToIUser(signUpUser),

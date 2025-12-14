@@ -93,27 +93,47 @@ export const displayNotifeeNotification = async (
   title: string,
   body: string,
   data?: any,
+  imageUrl?: string,
 ): Promise<string | undefined> => {
   try {
     // Create channel (Android)
     const channelId = await createNotifeeChannel();
 
     // Display notification
+    const androidConfig: any = {
+      channelId,
+      smallIcon: 'ic_launcher',
+      largeIcon: imageUrl,
+      pressAction: {
+        id: 'default',
+      },
+      importance: AndroidImportance.HIGH,
+      sound: 'default',
+    };
+
+    // Add image style for Android if image URL is provided
+    if (imageUrl) {
+      androidConfig.style = {
+        type: 1, // BigPictureStyle
+        picture: imageUrl,
+      };
+    }
+
     const notificationId = await notifee.displayNotification({
       title,
       body,
       data: data || {},
-      android: {
-        channelId,
-        smallIcon: 'ic_launcher',
-        pressAction: {
-          id: 'default',
-        },
-        importance: AndroidImportance.HIGH,
-        sound: 'default',
-      },
+      android: androidConfig,
       ios: {
         sound: 'default',
+        attachments: imageUrl
+          ? [
+              {
+                url: imageUrl,
+                thumbnailHidden: false,
+              },
+            ]
+          : undefined,
       },
     });
 
@@ -182,10 +202,15 @@ export const initializeNotifications = async (): Promise<void> => {
       console.log('Foreground message received:', remoteMessage);
       
       if (remoteMessage.notification) {
+        // Extract image URL from notification (FCM sends it in notification.imageUrl)
+        const imageUrl = (remoteMessage.notification as any).imageUrl || 
+                         remoteMessage.data?.imageUrl;
+        
         await displayNotifeeNotification(
           remoteMessage.notification.title || 'Car Connect',
           remoteMessage.notification.body || '',
           remoteMessage.data,
+          imageUrl,
         );
       }
     });
