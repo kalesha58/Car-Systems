@@ -77,11 +77,40 @@ export const getFCMToken = async (): Promise<string | null> => {
  */
 export const registerFCMToken = async (token: string): Promise<boolean> => {
   try {
-    await appAxios.post('/user/fcm-token', { fcmToken: token });
-    console.log('FCM token registered successfully');
+    const response = await appAxios.post('/user/fcm-token', { fcmToken: token });
+    console.log('FCM token registered successfully', response.data);
     return true;
   } catch (error: any) {
     console.error('Error registering FCM token:', error);
+    
+    // Log detailed error information for debugging
+    if (error.response) {
+      // API responded with error status
+      const status = error.response.status;
+      const statusText = error.response.statusText || 'Unknown';
+      const errorData = error.response.data;
+      const errorMessage = errorData?.message || errorData?.Response?.ReturnMessage || 'Unknown error';
+      
+      console.error('FCM Registration API Error:', {
+        status,
+        statusText,
+        message: errorMessage,
+        data: errorData,
+      });
+    } else if (error.request) {
+      // Request made but no response received
+      console.error('FCM Registration Network Error: No response received from server', {
+        message: error.message,
+        code: error.code,
+      });
+    } else {
+      // Error setting up request
+      console.error('FCM Registration Request Error:', {
+        message: error.message,
+        stack: error.stack,
+      });
+    }
+    
     return false;
   }
 };

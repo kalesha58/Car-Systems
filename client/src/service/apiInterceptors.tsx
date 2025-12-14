@@ -31,14 +31,18 @@ appAxios.interceptors.response.use(
                 }
             } catch (error) {
                 console.log("ERROR REFRESHING TOKEN")
+                // Reject 401 errors if token refresh fails
+                return Promise.reject(error)
             }
         }
 
-        if (error.response && error.response.status != 401) {
-            const errorMessage = error.response.data.message || 'something went wrong'
-            console.log(errorMessage)
+        // Log non-401 errors for debugging
+        if (error.response && error.response.status !== 401) {
+            const errorMessage = error.response.data?.message || error.response.data?.Response?.ReturnMessage || 'something went wrong'
+            console.log('API Error:', errorMessage, 'Status:', error.response.status)
         }
 
-        return Promise.resolve(error)
+        // Reject errors so they can be properly handled by calling code
+        return Promise.reject(error)
     }
 )
