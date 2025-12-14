@@ -188,6 +188,20 @@ export const displayNotifeeNotification = async (
 };
 
 /**
+ * Test greeting notification - sends greeting notification from server
+ */
+export const testGreetingNotification = async (): Promise<boolean> => {
+  try {
+    const response = await appAxios.post('/user/test-greeting-notification');
+    console.log('Test greeting notification sent successfully', response.data);
+    return true;
+  } catch (error: any) {
+    console.error('Error sending test greeting notification:', error);
+    return false;
+  }
+};
+
+/**
  * Test notification function - displays a test notification
  */
 export const testNotification = async (): Promise<void> => {

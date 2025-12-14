@@ -128,14 +128,27 @@ const ProfileHeader: FC = () => {
           <Icon name="pencil" size={RFValue(18)} color={colors.white} />
         </View>
       </TouchableOpacity>
+      
+      <CustomText variant="h3" fontFamily={Fonts.Bold} style={styles.accountTitle}>
+        {t('profile.yourAccount') || 'Your account'}
+      </CustomText>
+      
+      {user?.phone && (
+        <CustomText variant="h6" fontFamily={Fonts.Medium} style={styles.phoneNumber}>
+          {user.phone}
+        </CustomText>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
     alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   profileImageContainer: {
     width: 100,
@@ -143,6 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     position: 'relative',
     overflow: 'hidden',
+    marginBottom: 16,
   },
   profileImage: {
     width: '100%',
@@ -189,6 +203,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 50,
+  },
+  accountTitle: {
+    color: '#000',
+    marginBottom: 8,
+  },
+  phoneNumber: {
+    color: '#000',
+    opacity: 0.8,
   },
 });
 

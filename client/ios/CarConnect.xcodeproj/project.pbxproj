@@ -16,6 +16,11 @@
 		B2EB4DE0EAA24170BCDD3839 /* Okra-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 091D3637D9E64D08B6E693F8 /* Okra-Medium.ttf */; };
 		B56789F6CE0740A6B9D46787 /* Okra-MediumLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 301F3173E4284CA8BE022448 /* Okra-MediumLight.ttf */; };
 		DEDC569D3A604153B2B81108 /* Okra-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 19AD504CF773473FAFFEF745 /* Okra-Regular.ttf */; };
+		CF00118B927441DCAF5BEF89 /* Gilroy-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9872EA5C4ABA48A38C9B9BAF /* Gilroy-Bold.ttf */; };
+		E2DFE8279A46447093F4A8A4 /* Gilroy-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD6AAA856B014170BF38EF0A /* Gilroy-Heavy.ttf */; };
+		369B251B3DE74BA2B329C82E /* Gilroy-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BE5BAD1FE77C4B46931A2DCE /* Gilroy-Light.ttf */; };
+		7B4FC1457EBA415F9E8E94E6 /* Gilroy-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 939A73A1489540B6A60A8151 /* Gilroy-Medium.ttf */; };
+		97E7C10F08124C798A003A80 /* Gilroy-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 56FF2E4E392A4ADDA52596A3 /* Gilroy-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +39,11 @@
 		091D3637D9E64D08B6E693F8 /* Okra-Medium.ttf */ = {isa = PBXFileReference; name = "Okra-Medium.ttf"; path = "../src/assets/fonts/Okra-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		301F3173E4284CA8BE022448 /* Okra-MediumLight.ttf */ = {isa = PBXFileReference; name = "Okra-MediumLight.ttf"; path = "../src/assets/fonts/Okra-MediumLight.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 		19AD504CF773473FAFFEF745 /* Okra-Regular.ttf */ = {isa = PBXFileReference; name = "Okra-Regular.ttf"; path = "../src/assets/fonts/Okra-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		9872EA5C4ABA48A38C9B9BAF /* Gilroy-Bold.ttf */ = {isa = PBXFileReference; name = "Gilroy-Bold.ttf"; path = "../src/assets/fonts/Gilroy-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		DD6AAA856B014170BF38EF0A /* Gilroy-Heavy.ttf */ = {isa = PBXFileReference; name = "Gilroy-Heavy.ttf"; path = "../src/assets/fonts/Gilroy-Heavy.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		BE5BAD1FE77C4B46931A2DCE /* Gilroy-Light.ttf */ = {isa = PBXFileReference; name = "Gilroy-Light.ttf"; path = "../src/assets/fonts/Gilroy-Light.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		939A73A1489540B6A60A8151 /* Gilroy-Medium.ttf */ = {isa = PBXFileReference; name = "Gilroy-Medium.ttf"; path = "../src/assets/fonts/Gilroy-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		56FF2E4E392A4ADDA52596A3 /* Gilroy-Regular.ttf */ = {isa = PBXFileReference; name = "Gilroy-Regular.ttf"; path = "../src/assets/fonts/Gilroy-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +126,11 @@
 				091D3637D9E64D08B6E693F8 /* Okra-Medium.ttf */,
 				301F3173E4284CA8BE022448 /* Okra-MediumLight.ttf */,
 				19AD504CF773473FAFFEF745 /* Okra-Regular.ttf */,
+				9872EA5C4ABA48A38C9B9BAF /* Gilroy-Bold.ttf */,
+				DD6AAA856B014170BF38EF0A /* Gilroy-Heavy.ttf */,
+				BE5BAD1FE77C4B46931A2DCE /* Gilroy-Light.ttf */,
+				939A73A1489540B6A60A8151 /* Gilroy-Medium.ttf */,
+				56FF2E4E392A4ADDA52596A3 /* Gilroy-Regular.ttf */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -188,6 +203,11 @@
 				B2EB4DE0EAA24170BCDD3839 /* Okra-Medium.ttf in Resources */,
 				B56789F6CE0740A6B9D46787 /* Okra-MediumLight.ttf in Resources */,
 				DEDC569D3A604153B2B81108 /* Okra-Regular.ttf in Resources */,
+				CF00118B927441DCAF5BEF89 /* Gilroy-Bold.ttf in Resources */,
+				E2DFE8279A46447093F4A8A4 /* Gilroy-Heavy.ttf in Resources */,
+				369B251B3DE74BA2B329C82E /* Gilroy-Light.ttf in Resources */,
+				7B4FC1457EBA415F9E8E94E6 /* Gilroy-Medium.ttf in Resources */,
+				97E7C10F08124C798A003A80 /* Gilroy-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,29 +16,33 @@ const WalletSection = () => {
 
   const styles = StyleSheet.create({
     walletContainer: {
-      justifyContent: 'space-around',
       flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.backgroundSecondary,
-      paddingVertical: 15,
-      borderRadius: 15,
-      marginVertical: 20,
+      alignItems: 'stretch',
+      gap: 12,
+      marginBottom: 20,
+      marginTop: 20,
     },
   });
 
   return (
     <View style={styles.walletContainer}>
-      {isDealer && (
+      {!isDealer && (
         <WalletItem
           icon="wallet-outline"
           label={t('common.wallet')}
           onPress={() => {
-            navigation.navigate('Analytics' as never);
+            // TODO: Navigate to wallet screen when implemented
           }}
         />
       )}
 
-      <WalletItem icon="chatbubble-ellipses-outline" label={t('common.support')} />
+      <WalletItem 
+        icon="chatbubble-ellipses-outline" 
+        label={t('common.support')}
+        onPress={() => {
+          // TODO: Navigate to support screen when implemented
+        }}
+      />
 
       {!isDealer && (
         <WalletItem

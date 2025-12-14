@@ -48,7 +48,15 @@ appAxios.interceptors.response.use(
         // Log non-401 errors for debugging
         if (error.response && error.response.status !== 401) {
             const errorMessage = error.response.data?.message || error.response.data?.Response?.ReturnMessage || 'something went wrong'
-            console.log('API Error:', errorMessage, 'Status:', error.response.status)
+            const url = error.config?.url || 'unknown';
+            const method = error.config?.method?.toUpperCase() || 'unknown';
+            console.log('API Error:', {
+                message: errorMessage,
+                status: error.response.status,
+                method: method,
+                endpoint: url,
+                fullUrl: error.config?.baseURL ? `${error.config.baseURL}${url}` : url
+            })
         }
 
         // Reject errors so they can be properly handled by calling code

@@ -124,6 +124,7 @@ backend/
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name (for file uploads)
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
+- `GREETING_NOTIFICATION_IMAGE_URL` - URL for greeting notification image (optional, has default fallback)
 
 
 

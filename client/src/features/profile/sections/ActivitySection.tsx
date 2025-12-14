@@ -1,4 +1,4 @@
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Platform} from 'react-native';
 import React, {FC} from 'react';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
@@ -8,7 +8,7 @@ import {useTheme} from '@hooks/useTheme';
 
 const ActivitySection: FC = () => {
   const {t} = useTranslation();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
 
   const styles = StyleSheet.create({
     container: {
@@ -23,6 +23,20 @@ const ActivitySection: FC = () => {
       backgroundColor: colors.cardBackground,
       borderRadius: 12,
       paddingHorizontal: 12,
+      ...(isDark
+        ? {}
+        : {
+            ...(Platform.OS === 'ios'
+              ? {
+                  shadowColor: '#000',
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: 0.08,
+                  shadowRadius: 4,
+                }
+              : {
+                  elevation: 2,
+                }),
+          }),
     },
   });
 

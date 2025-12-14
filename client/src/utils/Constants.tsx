@@ -9,11 +9,11 @@ export enum Colors {
 }
 
 export enum Fonts {
-    Regular = 'Okra-Regular',
-    Medium = 'Okra-Medium',
-    Light = 'Okra-MediumLight',
-    SemiBold = 'Okra-Bold',
-    Bold = 'Okra-ExtraBold',
+    Regular = 'Gilroy-Regular',
+    Medium = 'Gilroy-Medium',
+    Light = 'Gilroy-Light',
+    SemiBold = 'Gilroy-Heavy',
+    Bold = 'Gilroy-Bold',
 }
 
 export const lightColors = [

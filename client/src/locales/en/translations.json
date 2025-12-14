@@ -35,6 +35,7 @@
   },
   "auth": {
     "login": "Login",
+    "name": "Name",
     "email": "Email",
     "password": "Password",
     "phone": "Phone number",

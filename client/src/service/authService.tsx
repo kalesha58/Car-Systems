@@ -76,13 +76,15 @@ export const customerLogin = async (email: string, password: string) => {
   }
 };
 
-export const customerSignup = async (email: string, phone: string, password: string) => {
+export const customerSignup = async (name: string, email: string, phone: string, password: string) => {
   try {
-    // Trim email and password to remove any whitespace
+    // Trim all fields to remove any whitespace
+    const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     
     const response = await axios.post(`${BASE_URL}/auth/signup`, { 
+      name: trimmedName,
       email: trimmedEmail, 
       phone, 
       password: trimmedPassword 

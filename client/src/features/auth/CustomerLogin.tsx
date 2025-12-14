@@ -48,6 +48,7 @@ const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) =
 };
 
 const CustomerLogin = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
@@ -149,6 +150,7 @@ const CustomerLogin = () => {
     if (isSignupMode) {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
       return (
+        name.trim().length >= 2 &&
         email.trim().length > 0 &&
         isValidEmail(email.trim()) &&
         cleanPhone.length === 10 &&
@@ -236,9 +238,10 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
-      await customerSignup(email, cleanPhone, password);
+      await customerSignup(name, email, cleanPhone, password);
       showSuccess(t('auth.signupSuccess'));
       setIsSignupMode(false);
+      setName('');
       setEmail('');
       setPassword('');
       setPhone('');
@@ -282,6 +285,25 @@ const CustomerLogin = () => {
                   style={styles.text}>
                   {t('auth.loginOrSignUp')}
                 </CustomText>
+
+                {isSignupMode && (
+                  <CustomInput
+                    onChangeText={setName}
+                    onClear={() => setName('')}
+                    value={name}
+                    placeholder={t('auth.name')}
+                    inputMode="text"
+                    left={
+                      <Ionicons
+                        name="person"
+                        color="#F8890E"
+                        style={{ marginLeft: 10 }}
+                        size={RFValue(18)}
+                      />
+                    }
+                    right={false}
+                  />
+                )}
 
                 <CustomInput
                   onChangeText={setEmail}

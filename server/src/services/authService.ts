@@ -49,7 +49,7 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
  * Signup a new user
  */
 export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
-  const { email, phone, password } = data;
+  const { name, email, phone, password } = data;
 
   // Check if user already exists with email or phone
   const existingUser = await SignUp.findOne({
@@ -65,12 +65,9 @@ export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
     }
   }
 
-  // Create user name from email (before @)
-  const name = email.split('@')[0];
-
   // Create new user
   const signUpUser = new SignUp({
-    name,
+    name: name.trim(),
     email: email.toLowerCase(),
     phone,
     password,

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { registerFCMTokenController } from '../../controllers/user/notificationController';
+import { registerFCMTokenController, testGreetingNotificationController } from '../../controllers/user/notificationController';
 import { authMiddleware } from '../../middleware/authMiddleware';
 
 const router = Router();
@@ -48,6 +48,24 @@ const router = Router();
  *         description: Unauthorized
  */
 router.post('/fcm-token', authMiddleware, registerFCMTokenController);
+
+/**
+ * @swagger
+ * /api/user/test-greeting-notification:
+ *   post:
+ *     summary: Test greeting notification (for development/testing)
+ *     tags: [User Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Greeting notification sent successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to send notification
+ */
+router.post('/test-greeting-notification', authMiddleware, testGreetingNotificationController);
 
 export default router;
 

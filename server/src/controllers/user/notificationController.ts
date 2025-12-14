@@ -85,4 +85,63 @@ export const registerFCMTokenController = async (
   }
 };
 
+/**
+ * Test greeting notification controller
+ */
+export const testGreetingNotificationController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    // Send greeting notification
+    try {
+      await sendGreetingNotification(userId);
+      res.status(200).json({
+        success: true,
+        Response: {
+          ReturnMessage: 'Greeting notification sent successfully',
+        },
+      });
+    } catch (error) {
+      logger.error('Error sending test greeting notification:', error);
+      res.status(500).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Failed to send greeting notification',
+        },
+      });
+    }
+  } catch (error: any) {
+    logger.error('Error in test greeting notification controller:', error);
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        Response: {
+          ReturnMessage: error.message,
+        },
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Failed to send test greeting notification',
+        },
+      });
+    }
+  }
+};
+
 

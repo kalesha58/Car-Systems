@@ -1,5 +1,5 @@
-import { View, StyleSheet, Switch } from 'react-native';
-import React, { FC } from 'react';
+import { View, StyleSheet, Switch, Platform } from 'react-native';
+import React, { FC, useState } from 'react';
 import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import ProfileMenuItem from './ProfileMenuItem';
@@ -8,13 +8,33 @@ import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@state/themeStore';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
+import { testGreetingNotification } from '@service/notificationService';
+import { useToast } from '@hooks/useToast';
 
 const AccountSettingsSection: FC = () => {
   const { t } = useTranslation();
   const { themeMode, toggleTheme } = useThemeStore();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
+  const { showSuccess, showError } = useToast();
+  const [isTestingNotification, setIsTestingNotification] = useState(false);
   const isDealer = user?.role?.includes('dealer');
+
+  const handleTestGreetingNotification = async () => {
+    setIsTestingNotification(true);
+    try {
+      const success = await testGreetingNotification();
+      if (success) {
+        showSuccess('Greeting notification sent! Check your device for the notification.');
+      } else {
+        showError('Failed to send greeting notification. Please try again.');
+      }
+    } catch (error) {
+      showError('An error occurred while sending the notification.');
+    } finally {
+      setIsTestingNotification(false);
+    }
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -29,6 +49,20 @@ const AccountSettingsSection: FC = () => {
       backgroundColor: colors.cardBackground,
       borderRadius: 12,
       paddingHorizontal: 12,
+      ...(isDark
+        ? {}
+        : {
+            ...(Platform.OS === 'ios'
+              ? {
+                  shadowColor: '#000',
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: 0.08,
+                  shadowRadius: 4,
+                }
+              : {
+                  elevation: 2,
+                }),
+          }),
     },
   });
 
@@ -81,6 +115,13 @@ const AccountSettingsSection: FC = () => {
             />
           </>
         )}
+
+        <ProfileMenuItem
+          icon="mail-outline"
+          label={isTestingNotification ? "Sending..." : "Test Greeting Notification"}
+          onPress={isTestingNotification ? undefined : handleTestGreetingNotification}
+          showChevron={false}
+        />
 
         <ProfileMenuItem
           icon="moon-outline"

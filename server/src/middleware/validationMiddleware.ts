@@ -26,7 +26,15 @@ export const validateSignup = (
   next: NextFunction,
 ): void => {
   try {
-    const { email, phone, password } = req.body;
+    const { name, email, phone, password } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return next(new ValidationError('Name is required'));
+    }
+
+    if (name.trim().length < 2) {
+      return next(new ValidationError('Name must be at least 2 characters'));
+    }
 
     if (!email || typeof email !== 'string' || !email.trim()) {
       return next(new ValidationError('Email is required'));

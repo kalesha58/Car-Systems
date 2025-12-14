@@ -13,6 +13,7 @@ interface CustomHeaderProps {
   search?: boolean;
   rightComponent?: ReactNode;
   onSearchPress?: () => void;
+  transparent?: boolean;
 }
 
 const CustomHeader: FC<CustomHeaderProps> = ({
@@ -20,6 +21,7 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   search,
   rightComponent,
   onSearchPress,
+  transparent = false,
 }) => {
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
@@ -31,8 +33,8 @@ const CustomHeader: FC<CustomHeaderProps> = ({
       height: 60,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.cardBackground,
-      borderBottomWidth: 0.6,
+      backgroundColor: transparent ? 'transparent' : colors.cardBackground,
+      borderBottomWidth: transparent ? 0 : 0.6,
       borderColor: colors.border,
     },
     text: {
@@ -45,7 +47,7 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   });
 
   return (
-    <View style={{paddingTop: insets.top, backgroundColor: colors.cardBackground}}>
+    <View style={{paddingTop: transparent ? insets.top : insets.top, backgroundColor: transparent ? 'transparent' : colors.cardBackground}}>
       <View style={styles.flexRow}>
         <Pressable onPress={() => goBack()}>
           <Icon name="chevron-back" color={colors.text} size={RFValue(16)} />
