@@ -7,10 +7,14 @@ export interface INotificationPayload {
   title: string;
   body: string;
   data?: {
-    type?: 'order_update' | 'payment' | 'chat' | 'general';
+    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request';
     orderId?: string;
     status?: string;
     chatId?: string;
+    groupId?: string;
+    requestId?: string;
+    userId?: string;
+    userName?: string;
     [key: string]: any;
   };
 }

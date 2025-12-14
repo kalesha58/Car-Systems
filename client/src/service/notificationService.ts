@@ -246,6 +246,10 @@ const handleNotificationNavigation = (data: any) => {
   } else if (data.type === 'chat' && data.chatId) {
     // Navigate to chat (ChatMessage screen)
     console.log('Navigate to chat:', data.chatId);
+  } else if (data.type === 'group_join_request' && data.groupId) {
+    // Navigate to join requests screen for the group
+    console.log('Navigate to join requests for group:', data.groupId);
+    // You can emit an event here to navigate to JoinRequestsScreen with groupId
   }
 };
 

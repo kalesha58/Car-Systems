@@ -6,6 +6,7 @@ import { SignUp } from '../../models/SignUp';
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { sendGroupJoinRequestEmail } from '../../utils/emailService';
+import { sendPushNotification } from '../notificationService';
 
 export interface IGroupJoinRequest {
   id: string;
@@ -94,6 +95,24 @@ export const requestToJoinGroup = async (
   } catch (error) {
     logger.error('Failed to send join request email:', error);
     // Don't fail the request if email fails
+  }
+
+  // Send push notification to group owner
+  try {
+    await sendPushNotification(group.ownerId, {
+      title: 'New Join Request',
+      body: `${requestingUser.name} requested to join ${group.name}`,
+      data: {
+        type: 'group_join_request',
+        groupId: group.id,
+        requestId: joinRequest.id,
+        userId: userId,
+        userName: requestingUser.name,
+      },
+    });
+  } catch (error) {
+    logger.error('Failed to send push notification for join request:', error);
+    // Don't fail the request if notification fails
   }
 
   logger.info(`Join request created: ${joinRequest.id} for group: ${groupId} by user: ${userId}`);
