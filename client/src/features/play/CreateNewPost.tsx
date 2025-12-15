@@ -44,69 +44,77 @@ const CreateNewPost: React.FC = () => {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      padding: screenWidth * 0.04,
-      paddingBottom: screenHeight * 0.05,
+      padding: screenWidth * 0.05,
+      paddingBottom: screenHeight * 0.1,
     },
     section: {
-      marginBottom: screenHeight * 0.02,
+      marginBottom: screenHeight * 0.025,
     },
     label: {
-      fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+      fontSize: RFValue(13),
+      fontFamily: Fonts.SemiBold,
       color: colors.text,
-      marginBottom: screenHeight * 0.008,
-      opacity: 0.8,
+      marginBottom: screenHeight * 0.012,
+    },
+    requiredLabel: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.Regular,
+      color: colors.error,
+      marginLeft: 4,
     },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      borderWidth: 1,
+      borderRadius: 12,
+      borderWidth: 1.5,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.01,
-      minHeight: screenHeight * 0.12,
-      shadowColor: colors.black,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingVertical: screenHeight * 0.015,
+      minHeight: screenHeight * 0.15,
+      shadowColor: '#000',
       shadowOffset: {
         width: 0,
-        height: 1,
+        height: 2,
       },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 3,
     },
     textInput: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(14),
       fontFamily: Fonts.Regular,
       color: colors.text,
       textAlignVertical: 'top',
+      lineHeight: RFValue(20),
     },
     characterCount: {
-      fontSize: RFValue(7),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.disabled,
-      marginTop: screenHeight * 0.005,
+      marginTop: screenHeight * 0.008,
       textAlign: 'right',
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'center',
       backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      borderWidth: 1,
+      borderRadius: 12,
+      borderWidth: 1.5,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
-      shadowColor: colors.black,
+      borderStyle: 'dashed',
+      paddingHorizontal: screenWidth * 0.04,
+      paddingVertical: screenHeight * 0.018,
+      shadowColor: '#000',
       shadowOffset: {
         width: 0,
-        height: 1,
+        height: 2,
       },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 3,
     },
     buttonText: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(14),
       fontFamily: Fonts.Medium,
       color: colors.text,
       marginLeft: screenWidth * 0.02,
@@ -114,15 +122,23 @@ const CreateNewPost: React.FC = () => {
     imagesContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.02,
-      marginTop: screenHeight * 0.01,
+      gap: screenWidth * 0.03,
+      marginTop: screenHeight * 0.015,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.25,
-      height: screenWidth * 0.25,
-      borderRadius: 8,
+      width: screenWidth * 0.28,
+      height: screenWidth * 0.28,
+      borderRadius: 12,
       overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      elevation: 4,
     },
     image: {
       width: '100%',
@@ -131,69 +147,78 @@ const CreateNewPost: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 4,
-      right: 4,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      borderRadius: 12,
-      width: 24,
-      height: 24,
+      top: 6,
+      right: 6,
+      backgroundColor: 'rgba(231, 76, 60, 0.9)',
+      borderRadius: 14,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.3,
+      shadowRadius: 3,
+      elevation: 4,
     },
     locationContainer: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: Colors.secondary,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingVertical: screenHeight * 0.015,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: screenHeight * 0.01,
-      shadowColor: colors.black,
+      marginTop: screenHeight * 0.015,
+      shadowColor: '#000',
       shadowOffset: {
         width: 0,
-        height: 1,
+        height: 2,
       },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 3,
     },
     locationText: {
       flex: 1,
-      fontSize: RFValue(9),
+      fontSize: RFValue(13),
       fontFamily: Fonts.Regular,
       color: colors.text,
       marginLeft: screenWidth * 0.02,
     },
     removeLocationButton: {
-      padding: 4,
+      padding: 6,
     },
     submitButton: {
       backgroundColor: Colors.secondary,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+      borderRadius: 12,
+      paddingVertical: screenHeight * 0.018,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: screenHeight * 0.02,
-      shadowColor: colors.black,
+      marginTop: screenHeight * 0.03,
+      shadowColor: '#000',
       shadowOffset: {
         width: 0,
-        height: 2,
+        height: 4,
       },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 4,
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      elevation: 6,
     },
     submitButtonDisabled: {
       backgroundColor: colors.disabled,
-      opacity: 0.6,
+      opacity: 0.5,
     },
     submitButtonText: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(16),
+      fontFamily: Fonts.Bold,
       color: '#fff',
+      letterSpacing: 0.5,
     },
   });
 
@@ -339,11 +364,14 @@ const CreateNewPost: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <CustomText style={styles.label}>Post Text *</CustomText>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <CustomText style={styles.label}>Post Text</CustomText>
+            <CustomText style={styles.requiredLabel}>*</CustomText>
+          </View>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder="What's on your mind?"
+              placeholder="What's on your mind? Share your thoughts..."
               placeholderTextColor={colors.disabled}
               value={text}
               onChangeText={setText}
@@ -352,16 +380,21 @@ const CreateNewPost: React.FC = () => {
             />
           </View>
           <CustomText style={styles.characterCount}>
-            {text.length}/{MAX_TEXT_LENGTH}
+            {text.length} / {MAX_TEXT_LENGTH} characters
           </CustomText>
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>Images *</CustomText>
-          <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
-            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
+          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+            <CustomText style={styles.label}>Images</CustomText>
+            <CustomText style={styles.requiredLabel}>*</CustomText>
+          </View>
+          <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.7}>
+            <Icon name="image-outline" size={RFValue(20)} color={colors.text} />
             <CustomText style={styles.buttonText}>
-              Add Images ({imageUris.length}/{MAX_IMAGES})
+              {imageUris.length === 0 
+                ? `Add Images (up to ${MAX_IMAGES})` 
+                : `Add More Images (${imageUris.length}/${MAX_IMAGES})`}
             </CustomText>
           </TouchableOpacity>
           {imageUris.length > 0 && (
@@ -371,8 +404,9 @@ const CreateNewPost: React.FC = () => {
                   <Image source={{uri}} style={styles.image} />
                   <TouchableOpacity
                     style={styles.removeImageButton}
-                    onPress={() => removeImage(index)}>
-                    <Icon name="close" size={RFValue(12)} color="#fff" />
+                    onPress={() => removeImage(index)}
+                    activeOpacity={0.8}>
+                    <Icon name="close" size={RFValue(14)} color="#fff" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -386,11 +420,12 @@ const CreateNewPost: React.FC = () => {
             <TouchableOpacity
               style={styles.button}
               onPress={handleLocationPicker}
-              disabled={isGettingLocation}>
+              disabled={isGettingLocation}
+              activeOpacity={0.7}>
               {isGettingLocation ? (
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
-                <Icon name="location-outline" size={RFValue(16)} color={colors.text} />
+                <Icon name="location-outline" size={RFValue(20)} color={colors.text} />
               )}
               <CustomText style={styles.buttonText}>
                 {isGettingLocation ? 'Getting location...' : 'Add Location'}
@@ -404,8 +439,9 @@ const CreateNewPost: React.FC = () => {
               </CustomText>
               <TouchableOpacity
                 style={styles.removeLocationButton}
-                onPress={removeLocation}>
-                <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                onPress={removeLocation}
+                activeOpacity={0.7}>
+                <Icon name="close-circle" size={RFValue(22)} color={colors.error} />
               </TouchableOpacity>
             </View>
           )}
@@ -414,7 +450,8 @@ const CreateNewPost: React.FC = () => {
         <TouchableOpacity
           style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
           onPress={handleSubmit}
-          disabled={!isFormValid}>
+          disabled={!isFormValid}
+          activeOpacity={0.8}>
           {isSubmitting ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (

@@ -1,7 +1,5 @@
 import { View, Text, StyleSheet, Image } from 'react-native'
 import React, { FC } from 'react'
-import ScalePress from '@components/ui/ScalePress'
-import { navigate } from '@utils/NavigationUtils'
 import CustomText from '@components/ui/CustomText'
 import { Fonts } from '@utils/Constants'
 import { useTheme } from '@hooks/useTheme'
@@ -49,12 +47,12 @@ const CategoryContainer: FC<{ data: any }> = ({ data }) => {
         <>
         {items?.map((item,index)=>{
             return(
-                <ScalePress key={index} style={styles.item} onPress={()=>navigate("ProductCategories")}>
+                <View key={index} style={styles.item}>
                     <View style={styles.imageContainer}>
                         <Image source={item?.image} style={styles.image} />
                     </View>
                     <CustomText style={styles.text} variant='h8' fontFamily={Fonts.Medium}>{item?.name}</CustomText>
-                </ScalePress>
+                </View>
             )
         })}
         </>

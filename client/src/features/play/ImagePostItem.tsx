@@ -20,37 +20,21 @@ interface IImagePostItemProps {
 }
 
 const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
-  const [isLiked, setIsLiked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const { colors } = useTheme();
   const screenHeight = Dimensions.get('window').height;
   const imageHeight = screenHeight * 0.5;
 
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
-    }
-    return num.toString();
-  };
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-  };
-
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
   };
 
-  const handleShare = () => {
-    // Handle share functionality
-  };
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.userInfoContainer}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+      {/* User Header Section */}
+      <View style={[styles.userInfoContainer, { borderBottomColor: colors.backgroundSecondary }]}>
+        <View style={styles.userInfoLeft}>
+          <View style={[styles.avatarContainer, { borderColor: colors.backgroundSecondary }]}>
         <Image
           source={
             post.userAvatar
@@ -59,70 +43,76 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
           }
           style={styles.avatar}
         />
+          </View>
+          <View style={styles.userNameContainer}>
         <CustomText
-          fontSize={RFValue(10)}
-          fontFamily={Fonts.Medium}
+              fontSize={RFValue(13)}
+              fontFamily={Fonts.SemiBold}
           style={{ color: colors.text }}>
           {post.userName || `User ${post.userId.substring(0, 8)}`}
         </CustomText>
+            {post.createdAt && (
+              <CustomText
+                fontSize={RFValue(10)}
+                fontFamily={Fonts.Regular}
+                style={{ color: colors.disabled, marginTop: 2 }}>
+                {new Date(post.createdAt).toLocaleDateString()}
+              </CustomText>
+            )}
+          </View>
+        </View>
         <TouchableOpacity
           style={[
             styles.followButton,
             isFollowing && styles.followingButton,
+            { backgroundColor: isFollowing ? colors.backgroundSecondary : (colors.primary || Colors.secondary) },
           ]}
-          onPress={handleFollow}>
+          onPress={handleFollow}
+          activeOpacity={0.7}>
           <CustomText
-            fontSize={RFValue(8)}
-            fontFamily={Fonts.Medium}
-            style={styles.followButtonText}>
+            fontSize={RFValue(11)}
+            fontFamily={Fonts.SemiBold}
+            style={[styles.followButtonText, { color: isFollowing ? colors.text : '#fff' }]}>
             {isFollowing ? 'Following' : 'Follow'}
           </CustomText>
         </TouchableOpacity>
       </View>
 
+      {/* Image/Content Section */}
       <View style={styles.imageContainer}>
         {post.images && post.images.length > 0 ? (
           <ImageCarousel images={post.images} height={imageHeight} />
         ) : (
-          <View style={[styles.placeholder, { height: imageHeight }]}>
-            <Icon name="image-outline" size={RFValue(40)} color={Colors.disabled} />
+          <View style={[styles.placeholder, { height: imageHeight, backgroundColor: colors.backgroundSecondary }]}>
+            <Icon name="image-outline" size={RFValue(48)} color={colors.disabled} />
+            <CustomText
+              fontSize={RFValue(12)}
+              fontFamily={Fonts.Regular}
+              style={{ color: colors.disabled, marginTop: 12 }}>
+              No image available
+            </CustomText>
           </View>
         )}
       </View>
 
-      <View style={styles.actionsContainer}>
+      {/* Description Section */}
+      {post.text && (
         <View style={styles.descriptionContainer}>
           <CustomText
-            fontSize={RFValue(9)}
+            fontSize={RFValue(13)}
             fontFamily={Fonts.Regular}
             style={{ color: colors.text }}
-            numberOfLines={2}>
+            numberOfLines={3}>
+            <CustomText
+              fontSize={RFValue(13)}
+              fontFamily={Fonts.SemiBold}
+              style={{ color: colors.text }}>
+              {post.userName || `User ${post.userId.substring(0, 8)}`}{' '}
+            </CustomText>
             {post.text}
           </CustomText>
         </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleLike}>
-            <Icon
-              name={isLiked ? 'heart' : 'heart-outline'}
-              size={RFValue(16)}
-              color={isLiked ? '#ff3040' : '#fff'}
-            />
-            <CustomText
-              fontSize={RFValue(8)}
-              fontFamily={Fonts.Medium}
-              style={{ color: colors.text }}>
-              {formatNumber(post.likes + (isLiked ? 1 : 0))}
-            </CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleShare}>
-            <Icon name="share-outline" size={RFValue(16)} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -130,65 +120,71 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 const styles = StyleSheet.create({
   container: {
     width: screenWidth,
-    marginBottom: screenHeight * 0.02,
-    paddingBottom: screenHeight * 0.01,
+    marginBottom: screenHeight * 0.025,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   userInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.008,
-    gap: screenWidth * 0.02,
+    paddingVertical: screenHeight * 0.015,
+    borderBottomWidth: 1,
+  },
+  userInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: screenWidth * 0.03,
+  },
+  avatarContainer: {
+    width: screenWidth * 0.1,
+    height: screenWidth * 0.1,
+    borderRadius: screenWidth * 0.05,
+    borderWidth: 2,
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatar: {
-    width: screenWidth * 0.06,
-    height: screenWidth * 0.06,
-    borderRadius: screenWidth * 0.03,
+    width: '100%',
+    height: '100%',
+    borderRadius: screenWidth * 0.05,
   },
-
+  userNameContainer: {
+    flex: 1,
+  },
   followButton: {
-    paddingHorizontal: screenWidth * 0.03,
-    paddingVertical: screenHeight * 0.004,
-    borderRadius: 12,
-    backgroundColor: Colors.secondary,
+    paddingHorizontal: screenWidth * 0.05,
+    paddingVertical: screenHeight * 0.01,
+    borderRadius: 20,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   followingButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
   },
   followButtonText: {
     color: '#fff',
   },
   imageContainer: {
     position: 'relative',
-    marginVertical: screenHeight * 0.005,
+    width: '100%',
   },
   placeholder: {
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-  },
-  actionsContainer: {
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.008,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
   },
   descriptionContainer: {
-    flex: 1,
-    marginRight: screenWidth * 0.03,
+    paddingHorizontal: screenWidth * 0.04,
+    paddingBottom: screenHeight * 0.015,
   },
-
-  actionButtons: {
-    flexDirection: 'row',
-    gap: screenWidth * 0.03,
-  },
-  actionButton: {
-    alignItems: 'center',
-    gap: 2,
-  },
-
 });
 
 export default ImagePostItem;

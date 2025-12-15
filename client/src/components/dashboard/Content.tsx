@@ -39,13 +39,13 @@ const Content: FC = () => {
     <View style={styles.container}>
       <TopProductsSection />
       <View style={styles.section}>
-        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Products</CustomText>
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold} style={{ marginTop: 20, marginBottom: 10 }}>Product Categories</CustomText>
         <CategoryContainer data={productsCategories} />
-        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Bestsellers</CustomText>
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold} style={{ marginTop: 20, marginBottom: 10 }}>Bestseller Categories</CustomText>
         <CategoryContainer data={bestsellersCategories} />
-        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Vehicles</CustomText>
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold} style={{ marginTop: 20, marginBottom: 10 }}>Vehicle Categories</CustomText>
         <CategoryContainer data={vehiclesCategories} />
-        <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Services</CustomText>
+        <CustomText variant='h5' fontFamily={Fonts.SemiBold} style={{ marginTop: 20, marginBottom: 10 }}>Service Categories</CustomText>
         <CategoryContainer data={servicesCategories} />
       </View>
     </View>

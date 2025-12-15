@@ -1,8 +1,11 @@
-import {View, Text, StyleSheet, FlatList} from 'react-native';
+import {View, Text, StyleSheet, FlatList, RefreshControl} from 'react-native';
 import React, {FC} from 'react';
 import ProductItem from './ProductItem';
 import VehicleItem from './VehicleItem';
 import ServiceItem from './ServiceItem';
+import ProductListItem from './ProductListItem';
+import VehicleListItem from './VehicleListItem';
+import ServiceListItem from './ServiceListItem';
 import ProductItemSkeleton from './ProductItemSkeleton';
 import VehicleItemSkeleton from './VehicleItemSkeleton';
 import ServiceItemSkeleton from './ServiceItemSkeleton';
@@ -10,6 +13,7 @@ import {IProduct} from '@types/product/IProduct';
 import {IDealerVehicle} from '@types/vehicle/IVehicle';
 import {IService} from '@types/service/IService';
 import {useTheme} from '@hooks/useTheme';
+import {ViewMode} from './ViewToggle';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -17,9 +21,19 @@ interface ProductListProps {
   data: ItemType[];
   itemType?: 'products' | 'vehicles' | 'services';
   loading?: boolean;
+  viewMode?: ViewMode;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
-const ProductList: FC<ProductListProps> = ({data, itemType = 'products', loading = false}) => {
+const ProductList: FC<ProductListProps> = ({
+  data,
+  itemType = 'products',
+  loading = false,
+  viewMode = 'grid',
+  onRefresh,
+  refreshing = false,
+}) => {
   const {colors} = useTheme();
 
   const styles = StyleSheet.create({
@@ -30,6 +44,9 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products', loading
     },
     content: {
       paddingVertical: 10,
+      paddingBottom: 100,
+    },
+    listContent: {
       paddingBottom: 100,
     },
     skeletonContainer: {
@@ -66,6 +83,20 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products', loading
   const renderItem = ({item, index}: {item: ItemType; index: number}) => {
     const detectedType = getItemType(item);
     
+    // For list view, use list components
+    if (viewMode === 'list') {
+      if (detectedType === 'products') {
+        return <ProductListItem item={item as IProduct} />;
+      }
+      if (detectedType === 'vehicles') {
+        return <VehicleListItem item={item as IDealerVehicle} />;
+      }
+      if (detectedType === 'services') {
+        return <ServiceListItem item={item as IService} />;
+      }
+    }
+    
+    // Grid view for all types
     if (detectedType === 'vehicles') {
       return <VehicleItem item={item as IDealerVehicle} index={index} />;
     }
@@ -103,12 +134,22 @@ const ProductList: FC<ProductListProps> = ({data, itemType = 'products', loading
 
   return (
     <FlatList
+      key={viewMode === 'list' ? 'list-view' : 'grid-view'}
       data={data}
       keyExtractor={item => item.id || (item as any)._id}
       renderItem={renderItem}
       style={styles.container}
-      contentContainerStyle={styles.content}
-      numColumns={2}
+      contentContainerStyle={viewMode === 'list' ? styles.listContent : styles.content}
+      numColumns={viewMode === 'list' ? 1 : 2}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.secondary}
+          />
+        ) : undefined
+      }
     />
   );
 };

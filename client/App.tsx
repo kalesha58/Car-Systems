@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import { AppState, AppStateStatus } from 'react-native';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import './src/config/i18n';
 import Navigation from '@navigation/Navigation';
 import { initializeNotifications, getFCMToken, registerFCMToken } from '@service/notificationService';
@@ -31,9 +32,11 @@ const App = () => {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <Navigation />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <SafeAreaProvider>
+        <Navigation />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 };
 

@@ -443,7 +443,7 @@ const FilterModal: FC<IFilterModalProps> = ({
       fontSize: RFValue(13),
     },
     applyButtonText: {
-      color: colors.white,
+      color: '#fff',
       fontSize: RFValue(13),
     },
   });

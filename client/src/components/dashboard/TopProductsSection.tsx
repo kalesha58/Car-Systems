@@ -1,4 +1,4 @@
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import React, { FC } from 'react';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
@@ -7,7 +7,6 @@ import { useTheme } from '@hooks/useTheme';
 import { productsList } from '@utils/dummyData';
 import LottieView from 'lottie-react-native';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
-import { navigate } from '@utils/NavigationUtils';
 
 const TopProductsSection: FC = () => {
     const seasonalTheme = useSeasonalTheme();
@@ -121,22 +120,21 @@ const TopProductsSection: FC = () => {
                 <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
                     Top Picks
                 </CustomText>
-                <TouchableOpacity onPress={() => navigate('Category')}>
+                <View>
                     <CustomText
                         variant="h8"
                         fontFamily={Fonts.Medium}
                         style={{ color: colors.white }}>
                         View All →
                     </CustomText>
-                </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.cardsContainer}>
                 {topProducts.map((product: { id: number; name: string; image: string; price: number; discountPrice: number; quantity: string }) => (
-                    <TouchableOpacity
+                    <View
                         key={product.id}
-                        style={styles.productCard}
-                        activeOpacity={0.7}>
+                        style={styles.productCard}>
                         <Image
                             source={{ uri: product.image }}
                             style={styles.productImage}
@@ -166,7 +164,7 @@ const TopProductsSection: FC = () => {
                                 </CustomText>
                             )}
                         </View>
-                    </TouchableOpacity>
+                    </View>
                 ))}
             </View>
         </View>

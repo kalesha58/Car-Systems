@@ -10,9 +10,13 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import CustomText from '@components/ui/CustomText';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {Fonts, Colors} from '@utils/Constants';
+import {screenWidth, screenHeight} from '@utils/Scaling';
 import type {ICategoryItem} from '../../types/category/ICategoryItem';
 import type {SharedValue} from 'react-native-reanimated';
 import {useTheme} from '@hooks/useTheme';
@@ -21,6 +25,7 @@ interface SidebarProps {
   selectedCategory: ICategoryItem | null;
   categories: ICategoryItem[];
   onCategoryPress: (category: ICategoryItem) => void;
+  categoryCounts?: Record<string, number>;
 }
 
 interface CategoryItemProps {
@@ -29,6 +34,7 @@ interface CategoryItemProps {
   isSelected: boolean;
   animatedValue: SharedValue<number>;
   onPress: () => void;
+  categoryCounts?: Record<string, number>;
 }
 
 const CategoryItem: FC<CategoryItemProps> = ({
@@ -37,83 +43,172 @@ const CategoryItem: FC<CategoryItemProps> = ({
   isSelected,
   animatedValue,
   onPress,
+  categoryCounts = {},
 }) => {
   const {colors} = useTheme();
+  const scale = useSharedValue(isSelected ? 1.1 : 1);
+  const opacity = useSharedValue(isSelected ? 1 : 0.7);
+
+  useEffect(() => {
+    scale.value = withSpring(isSelected ? 1.1 : 1, {damping: 15});
+    opacity.value = withTiming(isSelected ? 1 : 0.7, {duration: 200});
+  }, [isSelected]);
+
   const animatedStyle = useAnimatedStyle(() => ({
-    bottom: animatedValue?.value ?? -15,
+    transform: [{scale: scale.value}],
+    opacity: opacity.value,
   }));
+
+  const getCategoryIcon = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    if (name.includes('all categories') || name.includes('all')) return 'apps';
+    if (name.includes('product')) return 'cube';
+    if (name.includes('vehicle') || name.includes('car')) return 'car-sport';
+    if (name.includes('service')) return 'construct';
+    if (name.includes('accessor')) return 'sparkles';
+    return 'grid';
+  };
 
   const itemStyles = StyleSheet.create({
     categoryButton: {
-      padding: 10,
-      height: 100,
-      paddingVertical: 0,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      marginVertical: 4,
+      marginHorizontal: 6,
+      borderRadius: 16,
       justifyContent: 'center',
       alignItems: 'center',
       width: '100%',
+      minHeight: 90,
+      backgroundColor: isSelected ? Colors.secondary + '15' : 'transparent',
+      borderWidth: isSelected ? 2 : 0,
+      borderColor: isSelected ? Colors.secondary : 'transparent',
+      shadowColor: isSelected ? Colors.secondary : '#000',
+      shadowOffset: {width: 0, height: isSelected ? 4 : 2},
+      shadowOpacity: isSelected ? 0.3 : 0.1,
+      shadowRadius: isSelected ? 8 : 4,
+      elevation: isSelected ? 6 : 2,
     },
     imageContainer: {
-      borderRadius: 100,
-      height: '50%',
-      marginBottom: 10,
-      width: '75%',
+      width: screenWidth * 0.12,
+      height: screenWidth * 0.12,
+      borderRadius: screenWidth * 0.06,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: isSelected
+        ? Colors.secondary + '25'
+        : colors.backgroundSecondary,
+      marginBottom: 8,
       overflow: 'hidden',
-    },
-    selectedImageContainer: {
-      backgroundColor: colors.backgroundTertiary,
+      borderWidth: isSelected ? 2 : 0,
+      borderColor: Colors.secondary,
     },
     image: {
-      width: '80%',
-      height: '80%',
+      width: '85%',
+      height: '85%',
       resizeMode: 'contain',
     },
-    placeholderIcon: {
-      width: '60%',
-      height: '60%',
-      backgroundColor: colors.disabled,
-      borderRadius: 50,
+    iconContainer: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    textContainer: {
+      alignItems: 'center',
+      width: '100%',
+    },
+    categoryName: {
+      fontSize: RFValue(9),
+      textAlign: 'center',
+      marginBottom: 4,
+      maxWidth: '100%',
+    },
+    countBadge: {
+      minWidth: 24,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: isSelected ? Colors.secondary : colors.backgroundSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 6,
+      borderWidth: isSelected ? 1 : 0,
+      borderColor: Colors.secondary,
+    },
+    countText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Bold,
     },
   });
 
   return (
     <TouchableOpacity
-      activeOpacity={1}
+      activeOpacity={0.8}
       style={itemStyles.categoryButton}
       onPress={onPress}>
-      <View
-        style={[
-          itemStyles.imageContainer,
-          isSelected && itemStyles.selectedImageContainer,
-        ]}>
+      <Animated.View style={[itemStyles.imageContainer, animatedStyle]}>
         {category?.image ? (
           typeof category.image === 'number' ? (
             <Animated.Image
               source={category.image}
-              style={[itemStyles.image, animatedStyle]}
+              style={itemStyles.image}
               resizeMode="contain"
             />
           ) : typeof category.image === 'string' && category.image.trim() !== '' ? (
             <Animated.Image
               source={{uri: category.image}}
-              style={[itemStyles.image, animatedStyle]}
-              resizeMode="contain"
+              style={itemStyles.image}
+              resizeMode="cover"
             />
           ) : (
-            <Animated.View style={[itemStyles.placeholderIcon, animatedStyle]} />
+            <View style={itemStyles.iconContainer}>
+              <Icon
+                name={getCategoryIcon(category.name)}
+                size={RFValue(24)}
+                color={isSelected ? Colors.secondary : colors.text}
+              />
+            </View>
           )
         ) : (
-          <Animated.View style={[itemStyles.placeholderIcon, animatedStyle]} />
+          <View style={itemStyles.iconContainer}>
+            <Icon
+              name={getCategoryIcon(category.name)}
+              size={RFValue(24)}
+              color={isSelected ? Colors.secondary : colors.text}
+            />
+          </View>
+        )}
+      </Animated.View>
+
+      <View style={itemStyles.textContainer}>
+        <CustomText
+          fontSize={RFValue(9)}
+          fontFamily={isSelected ? Fonts.SemiBold : Fonts.Medium}
+          numberOfLines={2}
+          style={[
+            itemStyles.categoryName,
+            {
+              color: isSelected ? Colors.secondary : colors.text,
+            },
+          ]}>
+          {category?.name}
+        </CustomText>
+        {categoryCounts[category._id] !== undefined && (
+          <View style={itemStyles.countBadge}>
+            <CustomText
+              fontSize={RFValue(8)}
+              fontFamily={Fonts.Bold}
+              style={[
+                itemStyles.countText,
+                {
+                  color: isSelected ? '#fff' : colors.text,
+                },
+              ]}>
+              {categoryCounts[category._id]}
+            </CustomText>
+          </View>
         )}
       </View>
-
-      <CustomText
-        fontSize={RFValue(7)}
-        style={{textAlign: 'center', color: isSelected ? colors.secondary : colors.text}}>
-        {category?.name}
-      </CustomText>
     </TouchableOpacity>
   );
 };
@@ -122,6 +217,7 @@ const Sidebar: FC<SidebarProps> = ({
   selectedCategory,
   categories,
   onCategoryPress,
+  categoryCounts = {},
 }) => {
   const {colors} = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -189,10 +285,11 @@ const Sidebar: FC<SidebarProps> = ({
     });
 
     if (targetIndex !== -1) {
-      indicatorPosition.value = withTiming(targetIndex * 100, {duration: 500});
+      const itemHeight = 98; // Updated height based on new design
+      indicatorPosition.value = withTiming(targetIndex * itemHeight, {duration: 500});
       runOnJS(() => {
         scrollViewRef.current?.scrollTo({
-          y: targetIndex * 100,
+          y: targetIndex * itemHeight,
           animated: true,
         });
       });
@@ -205,54 +302,31 @@ const Sidebar: FC<SidebarProps> = ({
 
   const styles = StyleSheet.create({
     sideBar: {
-      width: '24%',
+      width: screenWidth * 0.22,
+      maxWidth: 90,
       backgroundColor: colors.cardBackground,
-      borderRightWidth: 0.8,
-      borderRightColor: colors.border,
+      borderRightWidth: 1,
+      borderRightColor: colors.border + '40',
       position: 'relative',
-    },
-    categoryButton: {
-      padding: 10,
-      height: 100,
-      paddingVertical: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
+      shadowColor: '#000',
+      shadowOffset: {width: 2, height: 0},
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 3,
     },
     indicator: {
       position: 'absolute',
       right: 0,
       width: 4,
-      height: 80,
-      top: 10,
-      alignSelf: 'center',
-      backgroundColor: colors.secondary,
-      borderTopLeftRadius: 15,
-      borderBottomLeftRadius: 15,
-    },
-    image: {
-      width: '80%',
-      height: '80%',
-      resizeMode: 'contain',
-    },
-    imageContainer: {
-      borderRadius: 100,
-      height: '50%',
-      marginBottom: 10,
-      width: '75%',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: colors.backgroundSecondary,
-      overflow: 'hidden',
-    },
-    selectedImageContainer: {
-      backgroundColor: colors.backgroundTertiary,
-    },
-    placeholderIcon: {
-      width: '60%',
-      height: '60%',
-      backgroundColor: colors.disabled,
-      borderRadius: 50,
+      height: 90,
+      backgroundColor: Colors.secondary,
+      borderTopLeftRadius: 8,
+      borderBottomLeftRadius: 8,
+      shadowColor: Colors.secondary,
+      shadowOffset: {width: -2, height: 0},
+      shadowOpacity: 0.5,
+      shadowRadius: 4,
+      elevation: 4,
     },
   });
 
@@ -260,7 +334,10 @@ const Sidebar: FC<SidebarProps> = ({
     <View style={styles.sideBar}>
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={{paddingBottom: 50}}
+        contentContainerStyle={{
+          paddingVertical: 8,
+          paddingBottom: screenHeight * 0.1,
+        }}
         showsVerticalScrollIndicator={false}>
         <Animated.View style={[styles.indicator, indicatorStyle]} />
 
@@ -273,6 +350,7 @@ const Sidebar: FC<SidebarProps> = ({
               isSelected={selectedCategory?._id === category?._id}
               animatedValue={animatedValues[index]}
               onPress={() => onCategoryPress(category)}
+              categoryCounts={categoryCounts}
             />
           ))}
         </View>

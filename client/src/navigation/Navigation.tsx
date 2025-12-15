@@ -16,6 +16,7 @@ import ProductDashboard from '@features/dashboard/ProductDashboard';
 import DealerDashboard from '@features/dashboard/DealerDashboard';
 import PlayScreen from '@features/play/PlayScreen';
 import ProductCategories from '@features/category/ProductCategories';
+import CompareScreen from '@features/category/CompareScreen';
 import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
 import EditProfile from '@features/profile/EditProfile';
@@ -468,6 +469,13 @@ const Navigation: FC = () => {
             }}
             name="PaymentStatus"
             component={PaymentStatusScreen}
+          />
+          <Stack.Screen
+            options={{
+              animation: 'slide_from_right',
+            }}
+            name="CompareScreen"
+            component={CompareScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>
