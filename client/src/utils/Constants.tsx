@@ -12,7 +12,7 @@ export enum Fonts {
     Regular = 'Gilroy-Regular',
     Medium = 'Gilroy-Medium',
     Light = 'Gilroy-Light',
-    SemiBold = 'Gilroy-Heavy',
+    SemiBold = 'Gilroy-Medium',
     Bold = 'Gilroy-Bold',
 }
 
