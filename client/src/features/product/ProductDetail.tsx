@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   Pressable,
   Dimensions,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import {Fonts, Colors} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
@@ -29,6 +31,9 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
 import {useNavigation} from '@react-navigation/native';
+import {getDealerById} from '@service/dealerService';
+import {IDealer} from '@types/dealer/IDealer';
+import RelatedProducts from '@features/cart/RelatedProducts';
 
 type ProductDetailRouteParams = {
   ProductDetail: {
@@ -46,10 +51,13 @@ const ProductDetail: React.FC = () => {
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [showDeliveryBanner, setShowDeliveryBanner] = useState<boolean>(true);
   const [quantity, setQuantity] = useState<number>(1);
+  const [showProductDetails, setShowProductDetails] = useState<boolean>(false);
+  const [dealer, setDealer] = useState<IDealer | null>(null);
+  const [loadingDealer, setLoadingDealer] = useState<boolean>(false);
   const {colors} = useTheme();
   const {addItem, getItemCount} = useCartStore();
   const insets = useSafeAreaInsets();
-  const {showSuccess} = useToast();
+  const {showSuccess, showError} = useToast();
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -67,6 +75,10 @@ const ProductDetail: React.FC = () => {
           }
           if (productData) {
             setProduct(productData);
+            // Fetch dealer information if dealerId is available
+            if (productData.dealerId) {
+              fetchDealerInfo(productData.dealerId);
+            }
           } else {
             setError('Product not found');
           }
@@ -85,36 +97,103 @@ const ProductDetail: React.FC = () => {
     }
   }, [productId]);
 
-  const handleAddToCart = () => {
-    if (product) {
-      const productWithId = {...product, _id: product.id};
-      for (let i = 0; i < quantity; i++) {
-        addItem(productWithId);
-      }
-      
-      // Show success toast
-      showSuccess('Product added to cart successfully', 2000);
-      
-      // Navigate to cart after a short delay to show the toast
-      setTimeout(() => {
-        try {
-          // Navigate to MainTabs and then to Cart tab
-          (navigation as any).navigate('MainTabs', {
-            screen: 'Cart',
-          });
-        } catch (error) {
-          // Fallback: navigate to MainTabs first, then Cart
-          try {
-            (navigation as any).navigate('MainTabs');
-            setTimeout(() => {
-              (navigation as any).navigate('Cart');
-            }, 100);
-          } catch (err) {
-            console.error('Error navigating to cart:', err);
-          }
+  const fetchDealerInfo = async (dealerId: string) => {
+    try {
+      setLoadingDealer(true);
+      const response = await getDealerById(dealerId);
+      if (response.success && response.Response) {
+        // Handle both single dealer and dealer list response
+        const dealerData = Array.isArray(response.Response.dealers) 
+          ? response.Response.dealers[0] 
+          : (response.Response as any);
+        if (dealerData) {
+          setDealer(dealerData as IDealer);
         }
-      }, 500);
+      }
+    } catch (err) {
+      console.log('Error fetching dealer info:', err);
+    } finally {
+      setLoadingDealer(false);
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    // Check stock availability
+    if (product.stock === 0) {
+      showError('Product is out of stock');
+      return;
+    }
+    
+    if (quantity > product.stock) {
+      showError(`Only ${product.stock} items available in stock`);
+      return;
+    }
+
+    const productWithId = {...product, _id: product.id};
+    for (let i = 0; i < quantity; i++) {
+      addItem(productWithId);
+    }
+    
+    // Show success toast
+    showSuccess('Product added to cart successfully', 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    
+    // Check stock availability
+    if (product.stock === 0) {
+      showError('Product is out of stock');
+      return;
+    }
+    
+    if (quantity > product.stock) {
+      showError(`Only ${product.stock} items available in stock`);
+      return;
+    }
+
+    // Add to cart first
+    const productWithId = {...product, _id: product.id};
+    for (let i = 0; i < quantity; i++) {
+      addItem(productWithId);
+    }
+    
+    // Navigate to cart immediately
+    setTimeout(() => {
+      try {
+        (navigation as any).navigate('MainTabs', {
+          screen: 'Cart',
+        });
+      } catch (error) {
+        try {
+          (navigation as any).navigate('MainTabs');
+          setTimeout(() => {
+            (navigation as any).navigate('Cart');
+          }, 100);
+        } catch (err) {
+          console.error('Error navigating to cart:', err);
+        }
+      }
+    }, 300);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (!product) return;
+    
+    if (newQuantity < 1) {
+      setQuantity(1);
+      return;
+    }
+    
+    if (newQuantity > product.stock) {
+      showError(`Only ${product.stock} items available in stock`);
+      setQuantity(product.stock);
+      return;
+    }
+    
+    setQuantity(newQuantity);
   };
 
   const handleWishlist = () => {
@@ -192,8 +271,11 @@ const ProductDetail: React.FC = () => {
       alignItems: 'center',
     },
     stockBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: 16,
       paddingTop: 8,
+      gap: 6,
     },
     stockText: {
       color: '#FF6B35',
@@ -411,26 +493,133 @@ const ProductDetail: React.FC = () => {
       marginTop: getResponsiveValue(2, 4, 6),
     },
     bottomBarRight: {
-      flex: isTablet ? 0 : 0, // Don't take flex space, use minWidth instead
       alignItems: 'flex-end',
-      minWidth: getResponsiveValue(isSmallMobile ? 90 : 100, 140, 180),
-      flexShrink: 0, // Don't shrink button
+      flexShrink: 0,
+    },
+    actionButtonsContainer: {
+      flexDirection: 'row',
+      gap: getResponsiveValue(8, 12, 16),
+      alignItems: 'center',
+      flexWrap: 'wrap',
     },
     addToCartButton: {
       backgroundColor: colors.secondary,
-      paddingHorizontal: getResponsiveValue(isSmallMobile ? 16 : 20, 32, 40),
+      paddingHorizontal: getResponsiveValue(isSmallMobile ? 14 : 18, 24, 28),
       paddingVertical: getResponsiveValue(12, 16, 18),
       borderRadius: getResponsiveValue(8, 10, 12),
       alignItems: 'center',
       justifyContent: 'center',
-      minWidth: getResponsiveValue(isSmallMobile ? 80 : 100, 140, 180),
       flexDirection: 'row',
-      gap: getResponsiveValue(4, 8, 10),
+      gap: getResponsiveValue(4, 6, 8),
+      minWidth: getResponsiveValue(isSmallMobile ? 90 : 100, 120, 140),
+    },
+    secondaryButton: {
+      backgroundColor: colors.backgroundSecondary || '#f5f5f5',
+      borderWidth: 1,
+      borderColor: colors.secondary,
+    },
+    buyNowButton: {
+      backgroundColor: colors.secondary,
+      paddingHorizontal: getResponsiveValue(isSmallMobile ? 16 : 20, 28, 32),
+      paddingVertical: getResponsiveValue(12, 16, 18),
+      borderRadius: getResponsiveValue(8, 10, 12),
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: getResponsiveValue(isSmallMobile ? 80 : 90, 110, 130),
+    },
+    disabledButton: {
+      backgroundColor: colors.disabled || '#cccccc',
+      opacity: 0.6,
     },
     addToCartText: {
       color: colors.white,
       fontFamily: Fonts.SemiBold,
-      fontSize: RFValue(getResponsiveValue(12, 16, 18)),
+      fontSize: RFValue(getResponsiveValue(12, 14, 16)),
+    },
+    buyNowText: {
+      color: colors.white,
+      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(getResponsiveValue(12, 14, 16)),
+    },
+    quantitySelectorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    quantityLabel: {
+      color: colors.text,
+    },
+    quantityControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      borderRadius: 8,
+      padding: 4,
+      gap: 16,
+    },
+    quantityButton: {
+      padding: 8,
+      borderRadius: 4,
+    },
+    quantityButtonDisabled: {
+      opacity: 0.4,
+    },
+    quantityValue: {
+      minWidth: 30,
+      textAlign: 'center',
+      color: colors.text,
+    },
+    descriptionText: {
+      lineHeight: 22,
+      opacity: 0.8,
+      marginTop: 8,
+    },
+    productDetailsContent: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 16,
+    },
+    specsContainer: {
+      gap: 12,
+    },
+    specRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    specLabel: {
+      flex: 1,
+      opacity: 0.7,
+    },
+    specValue: {
+      flex: 1,
+      textAlign: 'right',
+    },
+    dealerInfo: {
+      marginTop: 12,
+      gap: 10,
+    },
+    dealerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    dealerText: {
+      flex: 1,
+      color: colors.text,
+    },
+    deliveryInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    deliveryTextContainer: {
+      flex: 1,
     },
   });
 
@@ -501,8 +690,20 @@ const ProductDetail: React.FC = () => {
             </Pressable>
           </View>
 
-          {product.stock !== undefined && product.stock > 0 && product.stock <= 5 && (
+          {/* Stock Status */}
+          {product.stock === 0 ? (
+            <View style={[styles.stockBadge, {backgroundColor: colors.error + '20'}]}>
+              <Icon name="close-circle" size={RFValue(16)} color={colors.error} />
+              <CustomText
+                variant="h7"
+                fontFamily={Fonts.Medium}
+                style={[styles.stockText, {color: colors.error}]}>
+                Out of stock
+              </CustomText>
+            </View>
+          ) : product.stock > 0 && product.stock <= 5 ? (
             <View style={styles.stockBadge}>
+              <Icon name="warning" size={RFValue(16)} color="#FF6B35" />
               <CustomText
                 variant="h7"
                 fontFamily={Fonts.Medium}
@@ -510,7 +711,17 @@ const ProductDetail: React.FC = () => {
                 Only {product.stock} left
               </CustomText>
             </View>
-          )}
+          ) : product.stock > 5 ? (
+            <View style={[styles.stockBadge, {backgroundColor: colors.success + '20'}]}>
+              <Icon name="checkmark-circle" size={RFValue(16)} color={colors.success || '#4CAF50'} />
+              <CustomText
+                variant="h7"
+                fontFamily={Fonts.Medium}
+                style={[styles.stockText, {color: colors.success || '#4CAF50'}]}>
+                In stock
+              </CustomText>
+            </View>
+          ) : null}
 
           <View style={[styles.priceContainer, {paddingTop: 8}]}>
             {product.offers && product.offers.length > 0 ? (
@@ -561,7 +772,54 @@ const ProductDetail: React.FC = () => {
             )}
           </View>
 
-          <Pressable style={styles.viewDetailsLink}>
+          {/* Quantity Selector */}
+          <View style={styles.quantitySelectorContainer}>
+            <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.quantityLabel}>
+              Quantity
+            </CustomText>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity
+                style={[styles.quantityButton, quantity === 1 && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity === 1 || product.stock === 0}>
+                <Icon
+                  name="remove"
+                  size={RFValue(18)}
+                  color={quantity === 1 || product.stock === 0 ? colors.disabled : colors.text}
+                />
+              </TouchableOpacity>
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.quantityValue}>
+                {quantity}
+              </CustomText>
+              <TouchableOpacity
+                style={[styles.quantityButton, quantity >= product.stock && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityChange(quantity + 1)}
+                disabled={quantity >= product.stock || product.stock === 0}>
+                <Icon
+                  name="add"
+                  size={RFValue(18)}
+                  color={quantity >= product.stock || product.stock === 0 ? colors.disabled : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Product Description */}
+          {product.description && (
+            <View style={styles.sectionContainer}>
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
+                Description
+              </CustomText>
+              <CustomText variant="h7" fontFamily={Fonts.Regular} style={styles.descriptionText}>
+                {product.description}
+              </CustomText>
+            </View>
+          )}
+
+          {/* Collapsible Product Details */}
+          <Pressable
+            style={styles.viewDetailsLink}
+            onPress={() => setShowProductDetails(!showProductDetails)}>
             <CustomText
               variant="h7"
               fontFamily={Fonts.Medium}
@@ -569,11 +827,78 @@ const ProductDetail: React.FC = () => {
               View product details
             </CustomText>
             <Icon
-              name="chevron-up"
+              name={showProductDetails ? 'chevron-down' : 'chevron-up'}
               size={RFValue(14)}
               color={colors.secondary}
             />
           </Pressable>
+          
+          {showProductDetails && (
+            <View style={styles.productDetailsContent}>
+              {product.specifications && Object.keys(product.specifications).length > 0 && (
+                <View style={styles.specsContainer}>
+                  {Object.entries(product.specifications).map(([key, value]) => (
+                    <View key={key} style={styles.specRow}>
+                      <CustomText variant="h7" fontFamily={Fonts.Regular} style={styles.specLabel}>
+                        {key}
+                      </CustomText>
+                      <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.specValue}>
+                        {String(value)}
+                      </CustomText>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Dealer Information */}
+          {dealer && (
+            <View style={styles.sectionContainer}>
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
+                Seller Information
+              </CustomText>
+              <View style={styles.dealerInfo}>
+                <View style={styles.dealerRow}>
+                  <Icon name="storefront" size={RFValue(18)} color={colors.secondary} />
+                  <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.dealerText}>
+                    {dealer.businessName || dealer.name}
+                  </CustomText>
+                </View>
+                {dealer.address && (
+                  <View style={styles.dealerRow}>
+                    <Icon name="location" size={RFValue(18)} color={colors.text} style={{opacity: 0.6}} />
+                    <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
+                      {dealer.address}
+                    </CustomText>
+                  </View>
+                )}
+                {dealer.phone && (
+                  <View style={styles.dealerRow}>
+                    <Icon name="call" size={RFValue(18)} color={colors.text} style={{opacity: 0.6}} />
+                    <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
+                      {dealer.phone}
+                    </CustomText>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Delivery Time Estimate */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.deliveryInfo}>
+              <Icon name="time-outline" size={RFValue(20)} color={colors.secondary} />
+              <View style={styles.deliveryTextContainer}>
+                <CustomText variant="h7" fontFamily={Fonts.Medium}>
+                  Estimated Delivery
+                </CustomText>
+                <CustomText variant="h8" fontFamily={Fonts.Regular} style={{opacity: 0.7, marginTop: 2}}>
+                  {product.stock > 0 ? '2-3 business days' : 'Currently unavailable'}
+                </CustomText>
+              </View>
+            </View>
+          </View>
 
           <View style={styles.serviceHighlightsContainer}>
             <View style={styles.serviceCard}>
@@ -713,22 +1038,30 @@ const ProductDetail: React.FC = () => {
               </Pressable>
             </View>
           )}
+
+          {/* Related Products */}
+          {product && (
+            <RelatedProducts
+              currentProductIds={[product.id]}
+              limit={5}
+            />
+          )}
         </CollapsibleScrollView>
       </CollapsibleContainer>
       
       <View style={[styles.fixedBottomBar, {paddingBottom: Math.max(insets.bottom, 12)}]}>
-        <View style={styles.bottomBarLeft}>
+          <View style={styles.bottomBarLeft}>
           <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.bottomBarQuantity} numberOfLines={1}>
             {quantity} {product.quantity || 'set'}
           </CustomText>
           <View style={{flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: getResponsiveValue(4, 6, 8), gap: getResponsiveValue(4, 6, 8), flexShrink: 1}}>
             <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={[styles.bottomBarPrice, {flexShrink: 0}]}>
-              ₹{product.price.toLocaleString()}
+              ₹{(product.price * quantity).toLocaleString()}
             </CustomText>
             {hasDiscount && (
               <>
                 <CustomText variant="h7" fontFamily={Fonts.Medium} style={[styles.bottomBarMrp, {flexShrink: 1}]} numberOfLines={1}>
-                  MRP ₹{product.originalPrice?.toLocaleString()}
+                  MRP ₹{((product.originalPrice || 0) * quantity).toLocaleString()}
                 </CustomText>
                 <View style={styles.bottomBarDiscount}>
                   <CustomText style={styles.bottomBarDiscountText} numberOfLines={1}>
@@ -743,12 +1076,29 @@ const ProductDetail: React.FC = () => {
           </CustomText>
         </View>
         <View style={styles.bottomBarRight}>
-          <TouchableOpacity
-            onPress={handleAddToCart}
-            style={styles.addToCartButton}
-            activeOpacity={0.8}>
-            <CustomText style={styles.addToCartText}>Add to cart</CustomText>
-          </TouchableOpacity>
+          {product.stock === 0 ? (
+            <TouchableOpacity
+              style={[styles.addToCartButton, styles.disabledButton]}
+              disabled>
+              <CustomText style={styles.addToCartText}>Out of Stock</CustomText>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                onPress={handleAddToCart}
+                style={[styles.addToCartButton, styles.secondaryButton]}
+                activeOpacity={0.8}>
+                <Icon name="cart-outline" size={RFValue(16)} color={colors.secondary} />
+                <CustomText style={[styles.addToCartText, {color: colors.secondary}]}>Add to cart</CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleBuyNow}
+                style={styles.buyNowButton}
+                activeOpacity={0.8}>
+                <CustomText style={styles.buyNowText}>Buy Now</CustomText>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </View>

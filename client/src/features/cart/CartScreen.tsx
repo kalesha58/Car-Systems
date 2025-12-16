@@ -11,12 +11,14 @@ import React, { useState, useEffect } from 'react';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import { Fonts } from '@utils/Constants';
-import OrderList from '@features/order/OrderList';
+import EnhancedOrderList from '@features/order/EnhancedOrderList';
 import CustomText from '@components/ui/CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
-import BillDetails from '@features/order/BillDetails';
+import EnhancedBillDetails from '@features/order/EnhancedBillDetails';
+import RelatedProducts from '../cart/RelatedProducts';
+import DeliveryInstructions, {DeliveryPreference} from '../cart/DeliveryInstructions';
 import { useCartStore } from '@state/cartStore';
 import { useAuthStore } from '@state/authStore';
 import { hocStyles } from '@styles/GlobalStyles';
@@ -69,6 +71,11 @@ const CartScreen: React.FC = () => {
   } | null>(null);
   const [upiDisabledReason, setUpiDisabledReason] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [deliveryInstructions, setDeliveryInstructions] = useState<string>('');
+  const [deliveryPreference, setDeliveryPreference] = useState<DeliveryPreference>({
+    leaveAtDoor: false,
+    contactBeforeDelivery: true,
+  });
 
   // COD charge will be added by backend - we show estimated total here
   // Final total will come from backend response
@@ -323,6 +330,8 @@ const CartScreen: React.FC = () => {
       shippingAddress,
       paymentMethod: selectedPaymentMethod,
       dealerId: cart[0]?.item?.dealerId,
+      ...(deliveryInstructions && {deliveryInstructions}),
+      ...(deliveryPreference && Object.keys(deliveryPreference).length > 0 && {deliveryPreference}),
     };
 
     // Generate idempotency key
@@ -382,15 +391,33 @@ const CartScreen: React.FC = () => {
       backgroundColor: colors.cardBackground,
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: 10,
+      padding: 15,
+      paddingHorizontal: 15,
       flexDirection: 'row',
       borderRadius: 15,
       marginBottom: 15,
+      marginHorizontal: 10,
+      minHeight: 60,
+    },
+    couponTextContainer: {
+      flex: 1,
+      marginLeft: 10,
+      marginRight: 8,
+      minWidth: 0, // Important for text wrapping
+    },
+    arrowContainer: {
+      marginLeft: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingRight: 4,
+      minWidth: 24,
     },
     flexRow: {
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexDirection: 'row',
       gap: 10,
+      flex: 1,
+      minWidth: 0, // Important for text wrapping
     },
     paymentGateway: {
       flexDirection: 'row',
@@ -403,10 +430,27 @@ const CartScreen: React.FC = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       flexDirection: 'row',
-      paddingHorizontal: 10,
-      paddingBottom: 10,
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      paddingBottom: 12,
       borderBottomWidth: 0.7,
       borderColor: colors.border,
+      marginHorizontal: 10,
+      backgroundColor: colors.cardBackground,
+      borderRadius: 15,
+      marginBottom: 15,
+    },
+    addressTextContainer: {
+      flex: 1,
+      marginRight: 8,
+      minWidth: 0, // Important for text wrapping
+    },
+    changeAddressButton: {
+      marginLeft: 8,
+      paddingLeft: 8,
+      paddingRight: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     absoluteContainer: {
       marginVertical: 15,
@@ -433,10 +477,14 @@ const CartScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: 15,
+      paddingHorizontal: 15,
+      paddingRight: 15,
       borderRadius: 12,
       borderWidth: 2,
       borderColor: colors.border,
       backgroundColor: colors.cardBackground,
+      marginHorizontal: 10,
+      minHeight: 70,
     },
     paymentOptionSelected: {
       borderColor: colors.secondary,
@@ -469,6 +517,17 @@ const CartScreen: React.FC = () => {
       borderWidth: 2,
       borderColor: colors.secondary,
       backgroundColor: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    paymentTextContainer: {
+      marginLeft: 12,
+      flex: 1,
+      marginRight: 8,
+      minWidth: 0, // Important for text wrapping
+    },
+    radioButtonWrapper: {
+      marginLeft: 8,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -511,7 +570,7 @@ const CartScreen: React.FC = () => {
     <View style={styles.container}>
       <CustomHeader title="Cart" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <OrderList />
+        <EnhancedOrderList />
 
         <TouchableOpacity
           style={styles.flexRowBetween}
@@ -522,24 +581,49 @@ const CartScreen: React.FC = () => {
               source={require('@assets/icons/coupon.png')}
               style={{ width: 25, height: 25 }}
             />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+            <View style={styles.couponTextContainer}>
+              <CustomText 
+                variant="h6" 
+                fontFamily={Fonts.SemiBold}
+                numberOfLines={1}>
                 {selectedCoupon ? `Coupon Applied: ${selectedCoupon.code}` : 'Use Coupons'}
               </CustomText>
               {selectedCoupon && (
                 <CustomText
                   variant="h9"
                   style={{ color: colors.secondary, marginTop: 2 }}
-                  fontFamily={Fonts.Regular}>
+                  fontFamily={Fonts.Regular}
+                  numberOfLines={1}>
                   Save ₹{getCouponDiscount(totalItemPrice).toFixed(0)}
                 </CustomText>
               )}
             </View>
           </View>
-          <Icon name="chevron-right" size={RFValue(16)} color={colors.text} />
+          <View style={styles.arrowContainer}>
+            <Icon name="chevron-right" size={RFValue(16)} color={colors.text} />
+          </View>
         </TouchableOpacity>
 
-        <BillDetails totalItemPrice={totalItemPrice} codCharge={estimatedCodCharge} />
+        <EnhancedBillDetails 
+          totalItemPrice={totalItemPrice} 
+          codCharge={estimatedCodCharge}
+          deliveryCharge={deliveryCharge}
+          handlingCharge={handlingCharge}
+          showSavings={true}
+          freeDeliveryThreshold={500}
+        />
+
+        <DeliveryInstructions
+          onInstructionsChange={setDeliveryInstructions}
+          onPreferenceChange={setDeliveryPreference}
+          initialInstructions={deliveryInstructions}
+          initialPreference={deliveryPreference}
+        />
+
+        <RelatedProducts
+          currentProductIds={cart.map(item => item.item?.id || item._id)}
+          limit={5}
+        />
 
         {/* Payment Method Selection */}
         <View style={{ marginBottom: 15 }}>
@@ -587,10 +671,11 @@ const CartScreen: React.FC = () => {
                   }
                 />
               </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={styles.paymentTextContainer}>
                 <CustomText
                   variant="h7"
                   fontFamily={Fonts.Medium}
+                  numberOfLines={1}
                   style={{
                     color:
                       !dealerInfo?.upiAvailable
@@ -602,24 +687,19 @@ const CartScreen: React.FC = () => {
                   Pay now (UPI)
                 </CustomText>
                 {!dealerInfo?.upiAvailable ? (
-                  <CustomText variant="h9" style={{ color: colors.disabled || '#999', marginTop: 2 }}>
+                  <CustomText 
+                    variant="h9" 
+                    numberOfLines={2}
+                    style={{ color: colors.disabled || '#999', marginTop: 2 }}>
                     {upiDisabledReason || 'Dealer payment setup pending'}
                   </CustomText>
                 ) : (
-                  <CustomText variant="h9" style={{ opacity: 0.6, marginTop: 2 }}>
+                  <CustomText variant="h9" style={{ opacity: 0.6, marginTop: 2 }} numberOfLines={1}>
                     Pay instantly via UPI
                   </CustomText>
                 )}
               </View>
             </View>
-            {selectedPaymentMethod === 'upi' && (
-              <View style={styles.radioButtonSelected}>
-                <View style={styles.radioButtonInner} />
-              </View>
-            )}
-            {selectedPaymentMethod !== 'upi' && dealerInfo?.upiAvailable && (
-              <View style={styles.radioButton} />
-            )}
           </TouchableOpacity>
 
           {/* COD Option */}
@@ -648,10 +728,11 @@ const CartScreen: React.FC = () => {
                   }
                 />
               </View>
-              <View style={{ marginLeft: 12, flex: 1 }}>
+              <View style={styles.paymentTextContainer}>
                 <CustomText
                   variant="h7"
                   fontFamily={Fonts.Medium}
+                  numberOfLines={1}
                   style={{
                     color:
                       selectedPaymentMethod === 'cash_on_delivery'
@@ -660,19 +741,11 @@ const CartScreen: React.FC = () => {
                   }}>
                   Cash on Delivery
                 </CustomText>
-                <CustomText variant="h9" style={{ color: colors.secondary, marginTop: 2 }}>
+                <CustomText variant="h9" style={{ color: colors.secondary, marginTop: 2 }} numberOfLines={1}>
                   ₹5 extra charge
                 </CustomText>
               </View>
             </View>
-            {selectedPaymentMethod === 'cash_on_delivery' && (
-              <View style={styles.radioButtonSelected}>
-                <View style={styles.radioButtonInner} />
-              </View>
-            )}
-            {selectedPaymentMethod !== 'cash_on_delivery' && (
-              <View style={styles.radioButton} />
-            )}
           </TouchableOpacity>
 
           {/* Dealer Info */}
@@ -730,20 +803,26 @@ const CartScreen: React.FC = () => {
                     name={getAddressIcon(selectedAddress.iconType)}
                     size={RFValue(20)}
                     color={colors.text}
+                    style={{ marginRight: 8 }}
                   />
-                  <View style={{ width: '75%' }}>
-                    <CustomText variant="h8" fontFamily={Fonts.Medium}>
+                  <View style={styles.addressTextContainer}>
+                    <CustomText 
+                      variant="h8" 
+                      fontFamily={Fonts.Medium}
+                      numberOfLines={1}>
                       Delivering to {selectedAddress.name}
                     </CustomText>
                     <CustomText
                       variant="h9"
                       numberOfLines={2}
-                      style={{ opacity: 0.6 }}>
+                      style={{ opacity: 0.6, marginTop: 4 }}>
                       {selectedAddress.fullAddress}
                     </CustomText>
                   </View>
                 </View>
-                <TouchableOpacity onPress={handleChangeAddress}>
+                <TouchableOpacity 
+                  onPress={handleChangeAddress}
+                  style={styles.changeAddressButton}>
                   <CustomText
                     variant="h8"
                     style={{ color: colors.secondary }}

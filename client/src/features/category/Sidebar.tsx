@@ -181,7 +181,7 @@ const CategoryItem: FC<CategoryItemProps> = ({
       </Animated.View>
 
       <View style={itemStyles.textContainer}>
-        <CustomText
+      <CustomText
           fontSize={RFValue(9)}
           fontFamily={isSelected ? Fonts.SemiBold : Fonts.Medium}
           numberOfLines={2}
@@ -191,8 +191,8 @@ const CategoryItem: FC<CategoryItemProps> = ({
               color: isSelected ? Colors.secondary : colors.text,
             },
           ]}>
-          {category?.name}
-        </CustomText>
+        {category?.name}
+      </CustomText>
         {categoryCounts[category._id] !== undefined && (
           <View style={itemStyles.countBadge}>
             <CustomText

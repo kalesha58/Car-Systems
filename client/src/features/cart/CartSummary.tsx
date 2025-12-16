@@ -6,6 +6,7 @@ import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {navigate} from '@utils/NavigationUtils';
+import {useNavigation} from '@react-navigation/native';
 
 interface CartSummaryProps {
   cartCount: number;
@@ -13,6 +14,8 @@ interface CartSummaryProps {
 }
 
 const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
+  const navigation = useNavigation();
+  
   // Responsive calculations
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
@@ -138,7 +141,21 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
       <TouchableOpacity
         style={styles.btn}
         activeOpacity={0.7}
-        onPress={() => navigate('ProductOrder')}>
+        onPress={() => {
+          // Navigate to Cart tab in MainTabs
+          try {
+            (navigation as any).navigate('MainTabs', {
+              screen: 'Cart',
+            });
+          } catch (error) {
+            // Fallback: try using the navigate utility
+            try {
+              navigate('MainTabs', { screen: 'Cart' });
+            } catch (err) {
+              console.error('Navigation error:', err);
+            }
+          }
+        }}>
         <CustomText style={styles.btnText} fontFamily={Fonts.Medium}>
           Next
         </CustomText>

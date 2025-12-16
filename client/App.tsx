@@ -33,9 +33,9 @@ const App = () => {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <SafeAreaProvider>
-        <Navigation />
-      </SafeAreaProvider>
+    <SafeAreaProvider>
+      <Navigation />
+    </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 };

@@ -776,17 +776,17 @@ const ProductCategories = () => {
       />
       <View style={styles.subContainer}>
         <View style={styles.contentContainer}>
-          {categoriesLoading ? (
+        {categoriesLoading ? (
             <View style={{height: 60, backgroundColor: colors.cardBackground}} />
-          ) : (
+        ) : (
             <CategoryTabs
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
               categoryCounts={categoryCounts}
-            />
-          )}
-          
+          />
+        )}
+
           <Breadcrumbs
             category={selectedCategory}
             onCategoryPress={() => setSelectedCategory(categories[0])}
@@ -894,14 +894,14 @@ const ProductCategories = () => {
                   onClearSearch={() => handleSearch('')}
                 />
               ) : (
-                <ProductList 
+              <ProductList 
                   data={sortedItems || []} 
-                  itemType={selectedCategory?.type === 'all' ? undefined : (selectedCategory?.type || 'products')}
-                  loading={false}
+                itemType={selectedCategory?.type === 'all' ? undefined : (selectedCategory?.type || 'products')}
+                loading={false}
                   viewMode={viewMode}
                   onRefresh={handleRefresh}
                   refreshing={refreshing}
-                />
+              />
               )}
             </>
           )}

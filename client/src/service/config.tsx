@@ -2,8 +2,8 @@ import { Platform } from "react-native"
 
 // TODO: Replace with your Render backend URL after deployment
 // Example: https://your-backend.onrender.com
-export const BASE_URL = 'https://car-systems.onrender.com/api';
-export const SOCKET_URL = 'https://car-systems.onrender.com';
+export const BASE_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev/api';
+export const SOCKET_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev';
 // export const BASE_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev/api';
 // export const SOCKET_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev';
 // export const BASE_URL = 'http://82.29.162.228:3002/api';

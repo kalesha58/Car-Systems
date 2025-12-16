@@ -208,14 +208,6 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
             <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.actionButtonLeft]}>
-          <Icon name="star" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.actionButtonRight]}>
-          <Icon name="restaurant-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
-        </TouchableOpacity>
       </Animated.View>
     );
   }
@@ -249,12 +241,6 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
           <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={[styles.actionButton, styles.actionButtonLeft]}>
-        <Icon name="star" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionButton, styles.actionButtonRight]}>
-        <Icon name="restaurant-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color="#fff" />
-      </TouchableOpacity>
       <View style={styles.pagination}>
         {images.map((_, index) => (
           <View

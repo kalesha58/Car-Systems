@@ -20,6 +20,12 @@ export interface ICreateOrderRequest {
   paymentMethod: 'credit_card' | 'debit_card' | 'upi' | 'cash_on_delivery';
   dealerId?: string;
   deliveryLocation?: ILocation;
+  deliveryInstructions?: string;
+  deliveryPreference?: {
+    leaveAtDoor?: boolean;
+    preferredTime?: 'morning' | 'afternoon' | 'evening';
+    contactBeforeDelivery?: boolean;
+  };
 }
 
 export interface ILocation {

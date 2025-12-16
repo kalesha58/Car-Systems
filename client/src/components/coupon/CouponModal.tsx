@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -14,8 +14,8 @@ import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
 import {ICoupon} from '@types/coupon/ICoupon';
-import {dummyCoupons} from '@utils/dummyCoupons';
 import {useCartStore} from '@state/cartStore';
+import {getAllCoupons, getApplicableCoupons} from '@service/couponService';
 
 interface CouponModalProps {
   visible: boolean;
@@ -34,6 +34,9 @@ const CouponModal: React.FC<CouponModalProps> = ({
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(
     selectedCoupon?.id || null,
   );
+  const [allCoupons, setAllCoupons] = useState<ICoupon[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const screenWidth = Dimensions.get('window').width;
   const isTablet = screenWidth >= 768;
@@ -46,28 +49,89 @@ const CouponModal: React.FC<CouponModalProps> = ({
   };
 
   const subtotal = getTotalPrice();
-  const now = new Date();
+
+  // Fetch coupons from API when modal opens
+  useEffect(() => {
+    if (visible) {
+      fetchCoupons();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  const fetchCoupons = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching coupons for subtotal:', subtotal);
+      
+      // Try to get applicable coupons first (filtered by cart total)
+      let couponsLoaded = false;
+      
+      try {
+        const response = await getApplicableCoupons(subtotal);
+        console.log('Applicable coupons response:', response);
+        
+        if (response?.success && response?.data) {
+          if (response.data.length > 0) {
+            setAllCoupons(response.data);
+            couponsLoaded = true;
+          } else {
+            console.log('No applicable coupons found, trying all coupons...');
+          }
+        }
+      } catch (applicableErr: any) {
+        console.log('Error fetching applicable coupons, trying all coupons:', applicableErr?.response?.data || applicableErr?.message);
+      }
+      
+      // Fallback to all coupons if applicable coupons endpoint fails or returns empty
+      if (!couponsLoaded) {
+        try {
+          const allResponse = await getAllCoupons();
+          console.log('All coupons response:', allResponse);
+          
+          if (allResponse?.success && allResponse?.data) {
+            if (allResponse.data.length > 0) {
+              setAllCoupons(allResponse.data);
+            } else {
+              setError('No coupons available');
+              setAllCoupons([]);
+            }
+          } else {
+            setError('No coupons available');
+            setAllCoupons([]);
+          }
+        } catch (allErr: any) {
+          console.error('Error fetching all coupons:', allErr?.response?.data || allErr?.message);
+          setError('Failed to load coupons. Please try again.');
+          setAllCoupons([]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Unexpected error fetching coupons:', err);
+      setError('Failed to load coupons');
+      setAllCoupons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter available coupons based on order amount and validity
-  const availableCoupons = dummyCoupons.filter(coupon => {
-    if (!coupon.isActive) return false;
-
-    const validFrom = new Date(coupon.validFrom);
-    const validUntil = new Date(coupon.validUntil);
-
-    if (now < validFrom || now > validUntil) return false;
-
-    if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) return false;
-
+  // Note: Backend already filters by validity and minOrderAmount for applicable coupons
+  // So we only need to filter by search query if provided
+  const availableCoupons = allCoupons.filter(coupon => {
+    // If search query exists, filter by it
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
         coupon.code.toLowerCase().includes(query) ||
-        coupon.title.toLowerCase().includes(query) ||
-        coupon.description.toLowerCase().includes(query)
+        (coupon.title && coupon.title.toLowerCase().includes(query)) ||
+        (coupon.description && coupon.description.toLowerCase().includes(query))
       );
     }
 
+    // Otherwise, show all coupons returned from backend
+    // Backend already filtered by isActive, validity, and minOrderAmount
     return true;
   });
 
@@ -270,7 +334,47 @@ const CouponModal: React.FC<CouponModalProps> = ({
           <ScrollView
             style={styles.couponList}
             showsVerticalScrollIndicator={false}>
-            {availableCoupons.length === 0 ? (
+            {loading ? (
+              <View style={styles.emptyState}>
+                <Icon
+                  name="hourglass-outline"
+                  size={RFValue(getResponsiveValue(60, 70, 80))}
+                  color={colors.disabled}
+                />
+                <CustomText
+                  variant="h6"
+                  fontFamily={Fonts.Medium}
+                  style={{color: colors.disabled, marginTop: 16}}>
+                  Loading coupons...
+                </CustomText>
+              </View>
+            ) : error ? (
+              <View style={styles.emptyState}>
+                <Icon
+                  name="alert-circle-outline"
+                  size={RFValue(getResponsiveValue(60, 70, 80))}
+                  color={colors.error || '#ff4444'}
+                />
+                <CustomText
+                  variant="h6"
+                  fontFamily={Fonts.Medium}
+                  style={{color: colors.error || '#ff4444', marginTop: 16}}>
+                  {error}
+                </CustomText>
+                <TouchableOpacity
+                  style={[styles.applyButton, {marginTop: 16}]}
+                  onPress={fetchCoupons}>
+                  <CustomText
+                    style={{
+                      color: colors.white,
+                      fontSize: RFValue(getResponsiveValue(14, 16, 18)),
+                      fontFamily: Fonts.SemiBold,
+                    }}>
+                    Retry
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
+            ) : availableCoupons.length === 0 ? (
               <View style={styles.emptyState}>
                 <Icon
                   name="ticket-outline"

@@ -10,6 +10,8 @@ import joinRequestRoutes from './joinRequestRoutes';
 import orderRoutes from './orderRoutes';
 import addressRoutes from './addressRoutes';
 import notificationRoutes from './notificationRoutes';
+import cartRoutes from './cartRoutes';
+import couponRoutes from './couponRoutes';
 
 const router = Router();
 
@@ -24,6 +26,8 @@ router.use('/chats', chatRoutes);
 router.use('/join-requests', joinRequestRoutes);
 router.use('/orders', orderRoutes);
 router.use('/addresses', addressRoutes);
+router.use('/cart', cartRoutes);
+router.use('/coupons', couponRoutes);
 router.use('/', notificationRoutes);
 
 export default router;

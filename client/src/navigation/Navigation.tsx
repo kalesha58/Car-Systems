@@ -43,6 +43,7 @@ import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
 import LocationPickerScreen from '@features/chat/LocationPickerScreen';
 import PaymentStatusScreen from '@features/payment/PaymentStatusScreen';
+import ProductOrder from '@features/order/ProductOrder';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
@@ -476,6 +477,13 @@ const Navigation: FC = () => {
             }}
             name="CompareScreen"
             component={CompareScreen}
+          />
+          <Stack.Screen
+            options={{
+              animation: 'slide_from_right',
+            }}
+            name="ProductOrder"
+            component={ProductOrder}
           />
         </Stack.Navigator>
       </NavigationContainer>
