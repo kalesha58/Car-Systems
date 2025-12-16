@@ -89,6 +89,7 @@
     "cancellationRate": "रद्दीकरण दर",
     "ordersByStatus": "स्थिति के अनुसार ऑर्डर",
     "inventory": "इन्वेंटरी",
+    "inventoryOverview": "इन्वेंटरी अवलोकन",
     "totalVehicles": "कुल वाहन",
     "availableVehicles": "उपलब्ध वाहन",
     "soldVehicles": "बिके हुए वाहन",

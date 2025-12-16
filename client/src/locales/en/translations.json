@@ -105,6 +105,7 @@
     "cancellationRate": "Cancellation Rate",
     "ordersByStatus": "Orders by Status",
     "inventory": "Inventory",
+    "inventoryOverview": "Inventory Overview",
     "totalVehicles": "Total Vehicles",
     "availableVehicles": "Available Vehicles",
     "soldVehicles": "Sold Vehicles",

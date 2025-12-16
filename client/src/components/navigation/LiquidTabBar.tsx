@@ -24,8 +24,8 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
   const { colors, isDark } = useTheme();
   const seasonalTheme = useSeasonalTheme();
 
-  // Use header background color (seasonal theme primary) for active icon
-  const headerColor = seasonalTheme.colors.primary;
+  // Use green (success) color for active tab
+  const activeTabColor = colors.success;
 
 
 
@@ -72,17 +72,19 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
         };
 
         const iconSize = ICON_SIZE;
-        // Use header background color for active icon, disabled color for inactive
-        const iconColor = isFocused ? headerColor : colors.disabled;
-        const labelColor = isFocused ? headerColor : colors.disabled;
+        // Use green (success) color for active icon, disabled color for inactive
+        const iconColor = isFocused ? activeTabColor : colors.disabled;
+        const labelColor = isFocused ? activeTabColor : colors.disabled;
 
         // Icon name mapping for route names
         const getIconName = (routeName: string, focused: boolean): string => {
           const iconMap: { [key: string]: { outline: string; filled: string } } = {
-            Home: { outline: 'home-outline', filled: 'home' },
+            Home: { outline: 'speedometer-outline', filled: 'speedometer' },
             Play: { outline: 'play-circle-outline', filled: 'play-circle' },
             Category: { outline: 'grid-outline', filled: 'grid' },
             Cart: { outline: 'bag-outline', filled: 'bag' },
+            Inventory: { outline: 'cube-outline', filled: 'cube' },
+            Orders: { outline: 'receipt-outline', filled: 'receipt' },
           };
           
           const icons = iconMap[routeName] || { outline: 'home-outline', filled: 'home' };

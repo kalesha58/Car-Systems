@@ -485,18 +485,18 @@ const InventoryScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'products' && {backgroundColor: theme.secondary + '20', borderBottomColor: theme.secondary},
+            activeTab === 'products' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
           onPress={() => setActiveTab('products')}>
           <Icon
             name="cube-outline"
             size={RFValue(16)}
-            color={activeTab === 'products' ? theme.secondary : theme.textSecondary}
+            color={activeTab === 'products' ? theme.success : theme.textSecondary}
           />
           <CustomText
             variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'products' ? theme.secondary : theme.textSecondary}}
+            style={{color: activeTab === 'products' ? theme.success : theme.textSecondary}}
             numberOfLines={1}>
             {t('dealer.products')}
           </CustomText>
@@ -504,18 +504,18 @@ const InventoryScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'vehicles' && {backgroundColor: theme.secondary + '20', borderBottomColor: theme.secondary},
+            activeTab === 'vehicles' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
           onPress={() => setActiveTab('vehicles')}>
           <Icon
             name="car-outline"
             size={RFValue(16)}
-            color={activeTab === 'vehicles' ? theme.secondary : theme.textSecondary}
+            color={activeTab === 'vehicles' ? theme.success : theme.textSecondary}
           />
           <CustomText
             variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'vehicles' ? theme.secondary : theme.textSecondary}}
+            style={{color: activeTab === 'vehicles' ? theme.success : theme.textSecondary}}
             numberOfLines={1}>
             {t('dealer.vehicles')}
           </CustomText>
@@ -523,18 +523,18 @@ const InventoryScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.tab,
-            activeTab === 'services' && {backgroundColor: theme.secondary + '20', borderBottomColor: theme.secondary},
+            activeTab === 'services' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
           onPress={() => setActiveTab('services')}>
           <Icon
             name="construct-outline"
             size={RFValue(16)}
-            color={activeTab === 'services' ? theme.secondary : theme.textSecondary}
+            color={activeTab === 'services' ? theme.success : theme.textSecondary}
           />
           <CustomText
             variant="h6"
             fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'services' ? theme.secondary : theme.textSecondary}}
+            style={{color: activeTab === 'services' ? theme.success : theme.textSecondary}}
             numberOfLines={1}>
             {t('dealer.services')}
           </CustomText>

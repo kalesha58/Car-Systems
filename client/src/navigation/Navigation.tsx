@@ -202,7 +202,7 @@ const DealerTabs: FC = () => {
         component={DealerDashboard}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Icon name="home-outline" size={size} color={color} />
+            <Icon name="speedometer-outline" size={size} color={color} />
           ),
           tabBarLabel: t('dealer.dashboard'),
         }}

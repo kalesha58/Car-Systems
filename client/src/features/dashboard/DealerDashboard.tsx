@@ -34,11 +34,16 @@ import { useTranslation } from 'react-i18next';
 import {
   formatCurrency,
   calculateGrowth,
+  calculateAverageOrderValue,
+  calculateConversionRate,
+  calculateCancellationRate,
 } from '@utils/analytics';
 import AnimatedHeader from './AnimatedHeader';
 import StickySearchBar from './StickySearchBar';
 import AdCarousal from '@components/dashboard/AdCarousal';
 import { adData } from '@utils/dummyData';
+import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
+import LottieView from 'lottie-react-native';
 import {
   CollapsibleContainer,
   CollapsibleScrollView,
@@ -63,6 +68,7 @@ const DealerDashboard: React.FC = () => {
   const noticePosition = useRef(new RNAnimated.Value(NOTICE_HEIGHT)).current;
   const { scrollY, expand } = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
+  const seasonalTheme = useSeasonalTheme();
 
   const [dealer, setDealer] = useState<IDealer | undefined>(undefined);
   const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
@@ -215,7 +221,28 @@ const DealerDashboard: React.FC = () => {
   );
 
   const totalProducts = useMemo(() => products?.length || 0, [products]);
+  const totalVehicles = useMemo(() => vehicles?.length || 0, [vehicles]);
   const totalRevenue = useMemo(() => orderStats?.totalRevenue || 0, [orderStats]);
+
+  const productCategoriesCount = useMemo(() => {
+    if (!products || products.length === 0) return 0;
+    const uniqueCategories = new Set(
+      products.filter((p) => p.category).map((p) => p.category),
+    );
+    return uniqueCategories.size;
+  }, [products]);
+
+  const availableVehicles = useMemo(
+    () => vehicles?.filter((v) => v.availability === 'available').length || 0,
+    [vehicles],
+  );
+
+  const soldVehicles = useMemo(
+    () => vehicles?.filter((v) => v.availability === 'sold').length || 0,
+    [vehicles],
+  );
+
+  const totalSold = useMemo(() => soldVehicles || orderStats?.total || 0, [soldVehicles, orderStats]);
 
   const monthlyRevenue = useMemo(() => {
     const now = new Date();
@@ -247,7 +274,40 @@ const DealerDashboard: React.FC = () => {
     [monthlyRevenue, previousMonthRevenue],
   );
 
+  const averageOrderValue = useMemo(
+    () => calculateAverageOrderValue(dealerOrders, totalRevenue),
+    [dealerOrders, totalRevenue],
+  );
+
+  const conversionRate = useMemo(
+    () => calculateConversionRate(dealerOrders.length, dealerBookings.length),
+    [dealerOrders.length, dealerBookings.length],
+  );
+
+  const cancellationRate = useMemo(
+    () => calculateCancellationRate(orderStats?.cancelled || 0, orderStats?.total || 0),
+    [orderStats],
+  );
+
+  const recentOrders = useMemo(
+    () =>
+      dealerOrders
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5),
+    [dealerOrders],
+  );
+
+  const recentBookings = useMemo(
+    () =>
+      dealerBookings
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5),
+    [dealerBookings],
+  );
+
   const pendingOrdersCount = useMemo(() => orderStats?.pending || 0, [orderStats]);
+
+  const isEligibleForMarketplace = businessRegistration?.type === 'Automobile Showroom' || businessRegistration?.type === 'Spare Parts Dealer';
 
   // Redirect to business registration only if no registration exists OR status is rejected
   // Allow access if registration exists (even if pending)
@@ -260,11 +320,16 @@ const DealerDashboard: React.FC = () => {
   }, [isLoadingDealer, businessRegistration, user?.id]);
 
   const handleMessagesPress = () => {
-    // Navigate to messages screen
+    // Navigate to messages screen if available
+    // (navigation as any).navigate('Messages');
   };
 
   const handleViewAllOrders = () => {
-    // Navigate to orders screen
+    (navigation as any).navigate('DealerTabs', { screen: 'Orders' });
+  };
+
+  const handleLaunchDealerCentral = () => {
+    (navigation as any).navigate('DealerTabs', { screen: 'Inventory' });
   };
 
   if (isLoadingDealer) {
@@ -297,6 +362,27 @@ const DealerDashboard: React.FC = () => {
       paddingHorizontal: 10,
       paddingVertical: 5,
       zIndex: 999,
+    },
+    inventoryCard: {
+      flex: 1,
+      backgroundColor: theme.iceBlue,
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: theme.winterBlueLight,
+      alignItems: 'center',
+    },
+    inventoryCardValue: {
+      fontSize: RFValue(16),
+      fontFamily: Fonts.Bold,
+      color: theme.winterBlueDark,
+      marginBottom: 4,
+    },
+    inventoryCardLabel: {
+      fontSize: RFValue(10),
+      fontFamily: Fonts.SemiBold,
+      color: theme.text,
+      textAlign: 'center',
     },
   });
 
@@ -347,6 +433,80 @@ const DealerDashboard: React.FC = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <View style={styles.contentContainer}>
+              {/* Inventory Stats Section */}
+              <View style={[styles.inventorySection, { backgroundColor: seasonalTheme.colors.primary }]}>
+                {/* Train Effect Overlay */}
+                {seasonalTheme.animations.overlay && (
+                  <View style={styles.trainContainer}>
+                    <LottieView
+                      autoPlay
+                      loop
+                      speed={1}
+                      style={styles.trainAnimation}
+                      source={seasonalTheme.animations.overlay}
+                    />
+                  </View>
+                )}
+
+                {/* Header */}
+                <View style={styles.inventoryHeader}>
+                  <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: theme.white }}>
+                    {t('dealer.inventoryOverview') || 'Inventory Overview'}
+                  </CustomText>
+                </View>
+
+                {/* Stats Cards */}
+                <View style={styles.inventoryCardsContainer}>
+                  {/* Total Products Card */}
+                  <View style={dynamicStyles.inventoryCard}>
+                    <IconIonicons
+                      name="cube-outline"
+                      size={RFValue(24)}
+                      color={theme.winterBlueDark}
+                      style={styles.inventoryCardIcon}
+                    />
+                    <CustomText style={dynamicStyles.inventoryCardValue}>
+                      {totalProducts}
+                    </CustomText>
+                    <CustomText style={dynamicStyles.inventoryCardLabel}>
+                      {t('dealer.totalProducts') || 'Total Products'}
+                    </CustomText>
+                  </View>
+
+                  {/* Monthly Income Card */}
+                  <View style={dynamicStyles.inventoryCard}>
+                    <IconIonicons
+                      name="trending-up-outline"
+                      size={RFValue(24)}
+                      color={theme.winterBlueDark}
+                      style={styles.inventoryCardIcon}
+                    />
+                    <CustomText style={dynamicStyles.inventoryCardValue}>
+                      {formatCurrency(monthlyRevenue)}
+                    </CustomText>
+                    <CustomText style={dynamicStyles.inventoryCardLabel}>
+                      {t('dealer.monthlyIncome') || 'Monthly Income'}
+                    </CustomText>
+                  </View>
+
+                  {/* Total Orders Card */}
+                  <View style={dynamicStyles.inventoryCard}>
+                    <IconIonicons
+                      name="receipt-outline"
+                      size={RFValue(24)}
+                      color={theme.winterBlueDark}
+                      style={styles.inventoryCardIcon}
+                    />
+                    <CustomText style={dynamicStyles.inventoryCardValue}>
+                      {orderStats?.total || 0}
+                    </CustomText>
+                    <CustomText style={dynamicStyles.inventoryCardLabel}>
+                      {t('dealer.totalOrders') || 'Total Orders'}
+                    </CustomText>
+                  </View>
+                </View>
+              </View>
+
               <AdCarousal adData={adData} />
 
               {isLoading ? (
@@ -388,32 +548,145 @@ const DealerDashboard: React.FC = () => {
                     growthLabel={t('dealer.fromPreviousWeek')}
                   />
 
+                  {/* Order Statistics */}
                   <View style={styles.section}>
+                    <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
+                      {t('dealer.orders') || 'Orders'}
+                    </CustomText>
                     <View style={styles.statsGrid}>
-                      <StatCard
-                        icon="cube-outline"
-                        value={totalProducts}
-                        label={t('dealer.totalProducts')}
-                        style={{ width: '31%' }}
-                      />
-                      <StatCard
-                        icon="trending-up-outline"
-                        value={formatCurrency(monthlyRevenue)}
-                        label={t('dealer.monthlyIncome')}
-                        trend={{
-                          value: revenueGrowth,
-                          isPositive: revenueGrowth >= 0,
-                        }}
-                        style={{ width: '31%' }}
-                      />
                       <StatCard
                         icon="receipt-outline"
                         value={orderStats?.total || 0}
-                        label={t('dealer.totalOrders')}
-                        style={{ width: '31%' }}
+                        label={t('dealer.totalOrders') || 'Total Orders'}
+                        style={{ width: '48%' }}
+                      />
+                      <StatCard
+                        icon="cash-outline"
+                        value={formatCurrency(averageOrderValue)}
+                        label={t('dealer.averageOrderValue') || 'Average Order Value'}
+                        style={{ width: '48%' }}
+                      />
+                      <StatCard
+                        icon="trending-up-outline"
+                        value={`${conversionRate.toFixed(1)}%`}
+                        label={t('dealer.conversionRate') || 'Conversion Rate'}
+                        style={{ width: '48%' }}
+                      />
+                      <StatCard
+                        icon="close-circle-outline"
+                        value={`${cancellationRate.toFixed(1)}%`}
+                        label={t('dealer.cancellationRate') || 'Cancellation Rate'}
+                        style={{ width: '48%' }}
                       />
                     </View>
                   </View>
+
+                  {/* Recent Activity */}
+                  {(recentOrders.length > 0 || recentBookings.length > 0) && (
+                    <View style={styles.section}>
+                      <View style={styles.sectionHeader}>
+                        <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
+                          {t('dealer.recentActivity') || 'Recent Activity'}
+                        </CustomText>
+                        <TouchableOpacity onPress={handleViewAllOrders}>
+                          <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={[styles.viewAllText, { color: theme.secondary }]}>
+                            {t('dealer.viewAll') || 'View All'}
+                          </CustomText>
+                        </TouchableOpacity>
+                      </View>
+
+                      {recentOrders.length > 0 && (
+                        <View style={styles.recentSection}>
+                          <CustomText variant="h6" fontFamily={Fonts.Medium} style={[styles.subsectionTitle, { color: theme.textSecondary }]}>
+                            {t('dealer.recentOrders') || 'Recent Orders'}
+                          </CustomText>
+                          {recentOrders.map((order) => (
+                            <TouchableOpacity
+                              key={order.id}
+                              style={[styles.recentItem, { backgroundColor: theme.cardBackground }]}
+                              onPress={handleViewAllOrders}>
+                              <View style={styles.recentItemContent}>
+                                <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={[styles.recentItemTitle, { color: theme.text }]}>
+                                  {t('dealer.orderNumber') || 'Order'}: {order.id.slice(0, 8)}
+                                </CustomText>
+                                <CustomText variant="h8" style={[styles.recentItemSubtitle, { color: theme.textSecondary }]}>
+                                  {formatCurrency(order.totalAmount)} • {order.status}
+                                </CustomText>
+                              </View>
+                              <IconIonicons name="chevron-forward" size={20} color={theme.textSecondary} />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+
+                      {recentBookings.length > 0 && (
+                        <View style={styles.recentSection}>
+                          <CustomText variant="h6" fontFamily={Fonts.Medium} style={[styles.subsectionTitle, { color: theme.textSecondary }]}>
+                            {t('dealer.recentBookings') || 'Recent Bookings'}
+                          </CustomText>
+                          {recentBookings.map((booking) => (
+                            <TouchableOpacity
+                              key={booking.id}
+                              style={[styles.recentItem, { backgroundColor: theme.cardBackground }]}>
+                              <View style={styles.recentItemContent}>
+                                <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={[styles.recentItemTitle, { color: theme.text }]}>
+                                  {booking.serviceName || 'Service Booking'}
+                                </CustomText>
+                                <CustomText variant="h8" style={[styles.recentItemSubtitle, { color: theme.textSecondary }]}>
+                                  {new Date(booking.createdAt).toLocaleDateString()} • {booking.status}
+                                </CustomText>
+                              </View>
+                              <IconIonicons name="chevron-forward" size={20} color={theme.textSecondary} />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Quick Insights */}
+                  {pendingOrdersCount > 0 && (
+                    <View style={styles.section}>
+                      <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
+                        {t('dealer.quickInsights') || 'Quick Insights'}
+                      </CustomText>
+                      <View style={[styles.insightCard, { backgroundColor: theme.warning + '20' }]}>
+                        <IconIonicons name="alert-circle" size={24} color={theme.warning} />
+                        <View style={styles.insightContent}>
+                          <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={[styles.insightTitle, { color: theme.text }]}>
+                            {t('dealer.pendingActions') || 'Pending Actions'}
+                          </CustomText>
+                          <CustomText variant="h8" style={[styles.insightText, { color: theme.textSecondary }]}>
+                            {pendingOrdersCount} {t('dealer.pendingOrders') || 'pending orders'} require your attention
+                          </CustomText>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Dealer Central Marketplace Link */}
+                  {isEligibleForMarketplace && (
+                    <View style={[styles.dealerCentralSection, { backgroundColor: theme.secondary + '15' }]}>
+                      <View style={styles.dealerCentralHeader}>
+                        <IconIonicons name="storefront-outline" size={32} color={theme.secondary} />
+                        <View style={styles.dealerCentralInfo}>
+                          <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.dealerCentralTitle, { color: theme.text }]}>
+                            {t('dealer.dealerCentral') || 'Dealer Central'}
+                          </CustomText>
+                          <CustomText variant="h8" style={[styles.dealerCentralSubtitle, { color: theme.textSecondary }]}>
+                            {t('dealer.dealerCentralDescription') || 'Manage your inventory and products from one place'}
+                          </CustomText>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.dealerCentralButton, { backgroundColor: theme.secondary }]}
+                        onPress={handleLaunchDealerCentral}>
+                        <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: theme.white, textAlign: 'center' }}>
+                          {t('dealer.launchDealerCentral') || 'Launch Dealer Central'}
+                        </CustomText>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </>
               )}
             </View>
@@ -531,6 +804,76 @@ const styles = StyleSheet.create({
   },
   skeletonContainer: {
     marginBottom: 24,
+  },
+  trainEffectContainer: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    marginTop: -5,
+    marginBottom: 0,
+    position: 'relative',
+  },
+  trainContainer: {
+    width: '100%',
+    height: 100,
+    position: 'absolute',
+    top: -50,
+    zIndex: 10,
+  },
+  trainAnimation: {
+    width: '100%',
+    height: '100%',
+  },
+  inventorySection: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    marginTop: -5,
+    marginBottom: 0,
+    position: 'relative',
+  },
+  inventoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 15,
+  },
+  inventoryCardsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  inventoryCardIcon: {
+    marginBottom: 8,
+  },
+  dealerCentralSection: {
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 12,
+  },
+  dealerCentralHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dealerCentralInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  dealerCentralTitle: {
+    fontSize: RFValue(18),
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  dealerCentralSubtitle: {
+    fontSize: RFValue(14),
+  },
+  dealerCentralButton: {
+    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
 });
 
