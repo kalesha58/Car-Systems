@@ -1,6 +1,7 @@
 import {Linking, Alert} from 'react-native';
 import {getOrderById} from '../orderService';
 import {appAxios} from '../apiInterceptors';
+import {useAuthStore} from '../../state/authStore';
 
 export interface IPaymentAction {
   type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
@@ -120,9 +121,22 @@ export const pollPaymentStatus = async (
 /**
  * Handle payment success
  */
-export const handlePaymentSuccess = (orderId: string, navigation: any) => {
-  // Navigate to order success screen
-  navigation.navigate('OrderSuccess', {orderId});
+export const handlePaymentSuccess = async (orderId: string, navigation: any) => {
+  try {
+    // Fetch updated order from server after payment verification
+    const orderData = await getOrderById(orderId);
+    if (orderData) {
+      // Set in auth store so LiveTracking can access it
+      const { setCurrentOrder } = useAuthStore.getState();
+      setCurrentOrder(orderData);
+    }
+    // Navigate to order success screen
+    navigation.navigate('OrderSuccess', {orderId});
+  } catch (error) {
+    console.error('Error fetching order after payment:', error);
+    // Still navigate even if fetch fails
+    navigation.navigate('OrderSuccess', {orderId});
+  }
 };
 
 /**

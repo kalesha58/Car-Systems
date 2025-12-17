@@ -44,11 +44,24 @@ class RazorpayService {
                 },
             } as CheckoutOptions;
 
+            console.log('🔧 [RazorpayService] Opening checkout with options:', JSON.stringify(checkoutOptions, null, 2));
+            console.log('🔑 [RazorpayService] Using Razorpay Key:', checkoutOptions.key);
+            console.log('💰 [RazorpayService] Amount (paise):', checkoutOptions.amount);
+            console.log('💰 [RazorpayService] Amount (₹):', checkoutOptions.amount / 100);
+            console.log('📋 [RazorpayService] Order ID:', checkoutOptions.order_id);
+            console.log('👤 [RazorpayService] Prefill data:', JSON.stringify(checkoutOptions.prefill, null, 2));
+
             RazorpayCheckout.open(checkoutOptions)
                 .then((data: PaymentSuccessResponse) => {
+                    console.log('✅ [RazorpayService] Payment success response received:', JSON.stringify(data, null, 2));
                     // Validate response has required fields
                     if (!data.razorpay_payment_id || !data.razorpay_order_id || !data.razorpay_signature) {
-                        console.error('Invalid payment response:', data);
+                        console.error('❌ [RazorpayService] Invalid payment response - missing required fields:', {
+                            hasPaymentId: !!data.razorpay_payment_id,
+                            hasOrderId: !!data.razorpay_order_id,
+                            hasSignature: !!data.razorpay_signature,
+                            fullResponse: JSON.stringify(data, null, 2),
+                        });
                         reject({
                             code: 500,
                             description: 'Invalid payment response from Razorpay',
@@ -59,12 +72,20 @@ class RazorpayService {
                         } as PaymentFailureResponse);
                         return;
                     }
-                    console.log(`Payment successful: ${data.razorpay_payment_id}`);
+                    console.log(`✅ [RazorpayService] Payment successful - Payment ID: ${data.razorpay_payment_id}`);
                     resolve(data);
                 })
                 .catch((error: PaymentFailureResponse) => {
                     // handle failure
-                    console.error(`Payment failed: ${error.code} | ${error.description}`);
+                    console.error('❌ [RazorpayService] Payment failed:', {
+                        code: error?.code,
+                        description: error?.description,
+                        reason: error?.reason,
+                        source: error?.source,
+                        step: error?.step,
+                        metadata: error?.metadata,
+                        fullError: JSON.stringify(error, null, 2),
+                    });
                     reject(error);
                 });
         });

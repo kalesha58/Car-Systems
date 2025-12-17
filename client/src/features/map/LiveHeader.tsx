@@ -25,7 +25,14 @@ const LiveHeader: FC<{
           onPress={() => {
             if (isCustomer) {
               navigate('MainTabs');
-              if (currentOrder?.status == 'delivered') {
+              // Clear currentOrder if order is delivered or cancelled
+              const orderStatus = currentOrder?.status?.toUpperCase() || '';
+              if (
+                orderStatus === 'DELIVERED' || 
+                orderStatus === 'CANCELLED_BY_USER' || 
+                orderStatus === 'CANCELLED_BY_DEALER' ||
+                orderStatus === 'REFUND_COMPLETED'
+              ) {
                 setCurrentOrder(null);
               }
               return;
