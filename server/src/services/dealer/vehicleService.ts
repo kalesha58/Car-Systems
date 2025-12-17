@@ -33,6 +33,7 @@ const vehicleToInterface = (doc: IDealerVehicleDocument): IDealerVehicle => {
     description: doc.description,
     features: doc.features,
     condition: doc.condition,
+    allowTestDrive: doc.allowTestDrive,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -326,6 +327,7 @@ export const createDealerVehicle = async (
       description: data.description?.trim(),
       features: data.features || [],
       condition: data.condition,
+      allowTestDrive: data.allowTestDrive,
     });
 
     await vehicle.save();
@@ -433,6 +435,10 @@ export const updateDealerVehicle = async (
 
     if (data.condition !== undefined) {
       vehicle.condition = data.condition;
+    }
+
+    if (data.allowTestDrive !== undefined) {
+      vehicle.allowTestDrive = data.allowTestDrive;
     }
 
     await vehicle.save();
