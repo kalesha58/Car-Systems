@@ -171,6 +171,7 @@
     "selectTransmission": "ट्रांसमिशन चुनें",
     "condition": "स्थिति",
     "selectCondition": "स्थिति चुनें",
+    "allowTestDrive": "टेस्ट ड्राइव की अनुमति दें",
     "createVehicle": "वाहन बनाएं",
     "updateVehicle": "वाहन अपडेट करें",
     "deleteVehicle": "वाहन हटाएं",

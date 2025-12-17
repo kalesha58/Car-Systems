@@ -17,6 +17,7 @@ import RazorpayService from '@services/payment/RazorpayService';
 import { verifyRazorpayPayment } from '@services/payment/paymentService';
 import { useAuthStore } from '@state/authStore';
 import { appAxios } from '@service/apiInterceptors';
+import { getOrderById } from '@service/orderService';
 
 type PaymentStatusRouteParams = {
   PaymentStatus: {
@@ -29,7 +30,7 @@ const PaymentStatusScreen: React.FC = () => {
   const route = useRoute<RouteProp<PaymentStatusRouteParams, 'PaymentStatus'>>();
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const { user } = useAuthStore();
+  const { user, setCurrentOrder } = useAuthStore();
   const { orderId, paymentAction } = route.params;
 
   const [status, setStatus] = useState<'processing' | 'success' | 'failed'>('processing');
@@ -133,6 +134,15 @@ const PaymentStatusScreen: React.FC = () => {
           orderId,
           paymentIntentId: paymentAction.paymentIntentId,
           amount: paymentAction.amount,
+          currency: paymentAction.currency,
+          type: paymentAction.type,
+          deeplink: paymentAction.deeplink,
+          fullPaymentAction: JSON.stringify(paymentAction, null, 2),
+        });
+        console.log('👤 [Payment] User info:', {
+          email: user?.email,
+          phone: user?.phone,
+          name: user?.name,
         });
 
         // Start a backup polling mechanism in case Razorpay callback doesn't fire
@@ -163,8 +173,8 @@ const PaymentStatusScreen: React.FC = () => {
           }
         }, 10000); // Start backup polling after 10 seconds
 
-        // Open Razorpay Checkout
-        razorpayPromiseRef.current = RazorpayService.openCheckout({
+        // Prepare Razorpay checkout options
+        const checkoutOptions = {
           description: `Payment for Order #${orderId.slice(-6)}`,
           image: 'https://i.imgur.com/3g7nmJC.png', // Placeholder logo
           currency: paymentAction.currency,
@@ -180,7 +190,22 @@ const PaymentStatusScreen: React.FC = () => {
             orderId: orderId,
             orderNumber: `ORDER-${orderId.slice(-6)}`,
           },
-        });
+        };
+
+        console.log('📤 [Payment] Sending to Razorpay:', JSON.stringify(checkoutOptions, null, 2));
+        console.log('🔑 [Payment] Payment Intent ID:', paymentAction.paymentIntentId);
+        console.log('💰 [Payment] Amount (paise):', paymentAction.amount);
+        console.log('💰 [Payment] Amount (₹):', paymentAction.amount / 100);
+
+        // Open Razorpay Checkout
+        razorpayPromiseRef.current = RazorpayService.openCheckout(checkoutOptions);
+
+        console.log('⏳ [Payment] Waiting for Razorpay response...');
+
+        // Await the payment response
+        const paymentResponse = await razorpayPromiseRef.current;
+
+        console.log('📥 [Payment] Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
 
         // Clear backup polling since we got the callback
         clearTimeout(backupPolling);
@@ -191,44 +216,90 @@ const PaymentStatusScreen: React.FC = () => {
         // Extract payment response fields (already validated in RazorpayService)
         const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentResponse;
 
-        // Verify payment with server
-        const verificationResult = await verifyRazorpayPayment(orderId, {
+        console.log('🔍 [Payment] Extracted payment data:', {
           razorpay_payment_id,
           razorpay_order_id,
-          razorpay_signature,
+          razorpay_signature: razorpay_signature ? `${razorpay_signature.substring(0, 20)}...` : 'missing',
+        });
+
+        // Verify payment with server
+        console.log('🔐 [Payment] Verifying payment with server...');
+        console.log('🔐 [Payment] Order ID for verification:', orderId);
+        
+        let verificationResult;
+        try {
+          verificationResult = await verifyRazorpayPayment(orderId, {
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature,
+          });
+        } catch (verifyError) {
+          console.error('❌ [Payment] Verification threw an error:', verifyError);
+          setStatus('failed');
+          setError('Payment verification failed. Please contact support.');
+          return;
+        }
+
+        console.log('✅ [Payment] Verification result:', {
+          success: verificationResult.success,
+          error: verificationResult.error,
+          data: verificationResult.data,
         });
 
         if (!verificationResult.success) {
+          console.error('❌ [Payment] Verification failed:', verificationResult.error);
           setStatus('failed');
           setError(verificationResult.error || 'Payment verification failed');
           return;
         }
 
+        console.log('✅ [Payment] Verification successful! Proceeding to fetch order...');
+
+        // After successful verification, fetch updated order and set in store
+        try {
+          const updatedOrder = await getOrderById(orderId);
+          if (updatedOrder) {
+            setCurrentOrder(updatedOrder);
+            console.log('✅ [Payment] Order updated in store after payment verification');
+          }
+        } catch (orderError) {
+          console.error('⚠️ [Payment] Error fetching order after verification:', orderError);
+          // Continue even if order fetch fails - handlePaymentSuccess will try again
+        }
+
         // If verification succeeds, poll for final status update
+        console.log('🔄 [Payment] Starting payment status polling...');
         try {
           await pollPaymentStatus(
             orderId,
             (newStatus: string, newPaymentStatus: string) => {
+              console.log('📊 [Payment] Status update:', { newStatus, newPaymentStatus });
               setPaymentStatus(newPaymentStatus);
               if (newPaymentStatus === 'paid') {
+                console.log('✅ [Payment] Payment status is paid!');
                 setStatus('success');
               } else if (newPaymentStatus === 'failed') {
+                console.log('❌ [Payment] Payment status is failed!');
                 setStatus('failed');
               }
             },
             120000, // 2 minutes max
           );
 
+          console.log('✅ [Payment] Polling completed successfully');
           // Payment successful
           setStatus('success');
           setTimeout(() => {
+            console.log('🚀 [Payment] Navigating to success screen...');
             handlePaymentSuccess(orderId, navigation);
           }, 2000);
         } catch (pollError: any) {
+          console.error('⚠️ [Payment] Polling failed, but verification succeeded:', pollError);
           // Even if polling fails, if verification succeeded, payment is likely successful
           // But we'll show success since verification passed
           setStatus('success');
           setTimeout(() => {
+            console.log('🚀 [Payment] Navigating to success screen (polling failed but verification passed)...');
             handlePaymentSuccess(orderId, navigation);
           }, 2000);
         }
@@ -236,6 +307,16 @@ const PaymentStatusScreen: React.FC = () => {
         // Payment cancelled or failed at Razorpay level
         paymentInProgress.current = false;
         console.error('❌ [Payment] Razorpay error:', error);
+        console.error('❌ [Payment] Error details:', {
+          code: error?.code,
+          description: error?.description,
+          reason: error?.reason,
+          source: error?.source,
+          step: error?.step,
+          metadata: error?.metadata,
+          fullError: JSON.stringify(error, null, 2),
+        });
+        console.error('❌ [Payment] Error stack:', error?.stack);
         
         // Check if payment actually succeeded on server (in case callback failed but payment went through)
         const serverStatus = await checkPaymentStatusFromServer();
@@ -276,7 +357,8 @@ const PaymentStatusScreen: React.FC = () => {
     // Re-initiate payment
     const retryPayment = async () => {
       try {
-        const paymentResponse = await RazorpayService.openCheckout({
+        console.log('🔄 [Payment] Retry payment - Opening Razorpay checkout');
+        const retryCheckoutOptions = {
           description: `Payment for Order #${orderId.slice(-6)}`,
           image: 'https://i.imgur.com/3g7nmJC.png',
           currency: paymentAction.currency,
@@ -288,10 +370,21 @@ const PaymentStatusScreen: React.FC = () => {
             name: user?.name || undefined,
           },
           theme: { color: colors.secondary },
-        });
+        };
+        console.log('📤 [Payment] Retry - Sending to Razorpay:', JSON.stringify(retryCheckoutOptions, null, 2));
+        
+        const paymentResponse = await RazorpayService.openCheckout(retryCheckoutOptions);
+        
+        console.log('📥 [Payment] Retry - Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
 
         // Extract payment response fields (already validated in RazorpayService)
         const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentResponse;
+        
+        console.log('🔍 [Payment] Retry - Extracted payment data:', {
+          razorpay_payment_id,
+          razorpay_order_id,
+          razorpay_signature: razorpay_signature ? `${razorpay_signature.substring(0, 20)}...` : 'missing',
+        });
 
         // Verify payment with server
         const verificationResult = await verifyRazorpayPayment(orderId, {
@@ -304,6 +397,18 @@ const PaymentStatusScreen: React.FC = () => {
           setStatus('failed');
           setError(verificationResult.error || 'Payment verification failed');
           return;
+        }
+
+        // After successful verification, fetch updated order and set in store
+        try {
+          const updatedOrder = await getOrderById(orderId);
+          if (updatedOrder) {
+            setCurrentOrder(updatedOrder);
+            console.log('✅ [Payment] Order updated in store after retry payment verification');
+          }
+        } catch (orderError) {
+          console.error('⚠️ [Payment] Error fetching order after retry verification:', orderError);
+          // Continue even if order fetch fails - handlePaymentSuccess will try again
         }
 
         // Poll again for final status

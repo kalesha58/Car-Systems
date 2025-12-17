@@ -187,6 +187,7 @@
     "selectTransmission": "Select Transmission",
     "condition": "Condition",
     "selectCondition": "Select Condition",
+    "allowTestDrive": "Allow Test Drive",
     "createVehicle": "Create Vehicle",
     "updateVehicle": "Update Vehicle",
     "deleteVehicle": "Delete Vehicle",

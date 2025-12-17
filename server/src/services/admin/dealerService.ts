@@ -412,6 +412,7 @@ export const getDealerVehicleByIdForAdmin = async (
       description: vehicle.description,
       features: vehicle.features,
       condition: vehicle.condition,
+      allowTestDrive: vehicle.allowTestDrive,
       createdAt: vehicle.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: vehicle.updatedAt?.toISOString() || new Date().toISOString(),
     };

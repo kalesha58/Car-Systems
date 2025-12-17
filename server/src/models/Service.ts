@@ -12,6 +12,7 @@ export interface IServiceDocument extends Document {
   location?: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -61,6 +62,10 @@ const serviceSchema = new Schema<IServiceDocument>(
       },
       longitude: {
         type: Number,
+      },
+      address: {
+        type: String,
+        trim: true,
       },
     },
   },

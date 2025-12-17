@@ -45,9 +45,22 @@ const ProductOrder = () => {
   };
 
   const handlePlaceOrder = async () => {
+    // Check if there's an active order (not delivered or cancelled)
     if (currentOrder !== null) {
-      Alert.alert('Let your first order to be delivered');
-      return;
+      const orderStatus = currentOrder.status?.toUpperCase() || '';
+      const isOrderCompleted = 
+        orderStatus === 'DELIVERED' || 
+        orderStatus === 'CANCELLED_BY_USER' || 
+        orderStatus === 'CANCELLED_BY_DEALER' ||
+        orderStatus === 'REFUND_COMPLETED';
+      
+      if (!isOrderCompleted) {
+        Alert.alert('Order in Progress', 'Please wait for your current order to be delivered before placing a new order.');
+        return;
+      } else {
+        // Clear completed order to allow new order
+        setCurrentOrder(null);
+      }
     }
 
     if (cart.length === 0) {

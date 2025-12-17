@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Switch,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
@@ -70,6 +71,7 @@ const AddEditVehicleScreen: React.FC = () => {
   const [condition, setCondition] = useState<'New' | 'Used' | 'Certified Pre-owned' | ''>(
     vehicle?.condition || '',
   );
+  const [allowTestDrive, setAllowTestDrive] = useState(vehicle?.allowTestDrive || false);
   const [imageUris, setImageUris] = useState<string[]>(vehicle?.images || []);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -231,6 +233,7 @@ const AddEditVehicleScreen: React.FC = () => {
           transmission: transmission || undefined,
           description: description.trim() || undefined,
           condition: condition || undefined,
+          allowTestDrive: allowTestDrive,
         };
 
         await updateDealerVehicle(vehicle.id, updateData);
@@ -251,6 +254,7 @@ const AddEditVehicleScreen: React.FC = () => {
           transmission: transmission || undefined,
           description: description.trim() || undefined,
           condition: condition || undefined,
+          allowTestDrive: allowTestDrive,
         };
 
         await createDealerVehicle(createData);
@@ -320,8 +324,9 @@ const AddEditVehicleScreen: React.FC = () => {
     }
   };
 
-  const getSelectedLabel = () => {
-    switch (dropdownType) {
+  const getSelectedLabel = (type?: 'vehicleType' | 'availability' | 'fuelType' | 'transmission' | 'condition') => {
+    const currentType = type || dropdownType;
+    switch (currentType) {
       case 'vehicleType':
         return vehicleTypes.find(v => v.value === vehicleType)?.label || vehicleType || t('dealer.selectVehicleType');
       case 'availability':
@@ -460,6 +465,22 @@ const AddEditVehicleScreen: React.FC = () => {
       fontFamily: Fonts.Regular,
       color: colors.text,
     },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.cardBackground,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.012,
+    },
+    switchLabel: {
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Regular,
+      color: colors.text,
+    },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -581,7 +602,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('vehicleType')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('vehicleType')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -645,7 +666,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('availability')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('availability')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -693,7 +714,7 @@ const AddEditVehicleScreen: React.FC = () => {
         <View style={styles.section}>
           <CustomText style={styles.label}>{t('dealer.fuelType')}</CustomText>
           <TouchableOpacity style={styles.dropdownButton} onPress={() => openDropdown('fuelType')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('fuelType')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -703,7 +724,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('transmission')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('transmission')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -711,9 +732,21 @@ const AddEditVehicleScreen: React.FC = () => {
         <View style={styles.section}>
           <CustomText style={styles.label}>{t('dealer.condition')}</CustomText>
           <TouchableOpacity style={styles.dropdownButton} onPress={() => openDropdown('condition')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('condition')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.switchContainer}>
+            <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
+            <Switch
+              value={allowTestDrive}
+              onValueChange={setAllowTestDrive}
+              trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+              thumbColor={allowTestDrive ? colors.secondary : colors.disabled}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>

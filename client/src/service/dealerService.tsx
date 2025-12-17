@@ -438,6 +438,7 @@ export interface ICreateDealerVehicleRequest {
   description?: string;
   features?: string[];
   condition?: 'New' | 'Used' | 'Certified Pre-owned';
+  allowTestDrive?: boolean;
 }
 
 export interface IUpdateDealerVehicleRequest {
@@ -456,6 +457,7 @@ export interface IUpdateDealerVehicleRequest {
   description?: string;
   features?: string[];
   condition?: 'New' | 'Used' | 'Certified Pre-owned';
+  allowTestDrive?: boolean;
 }
 
 export interface IDealerVehicleResponse {

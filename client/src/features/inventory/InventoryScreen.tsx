@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Pressable, Alert} from 'react-native';
+import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Image, Pressable, Alert} from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import {formatCurrency} from '@utils/analytics';
 import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreviewModal';
+import InventoryItemSkeleton from './InventoryItemSkeleton';
 
 const InventoryScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -410,16 +411,18 @@ const InventoryScreen: React.FC = () => {
     );
   };
 
-  if (loading) {
+  const renderSkeletonList = () => {
+    const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
     return (
-      <View style={[styles.container, {backgroundColor: theme.background}]}>
-        <CustomHeader title={t('dealer.inventory')} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.secondary} />
-        </View>
-      </View>
+      <FlatList
+        data={skeletonData}
+        renderItem={() => <InventoryItemSkeleton type={activeTab === 'products' ? 'product' : activeTab === 'vehicles' ? 'vehicle' : 'service'} />}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
     );
-  }
+  };
 
   const renderBanner = () => {
     if (loadingRegistration || isApproved) {
@@ -540,7 +543,9 @@ const InventoryScreen: React.FC = () => {
           </CustomText>
         </TouchableOpacity>
       </View>
-      {activeTab === 'products' ? (
+      {loading ? (
+        renderSkeletonList()
+      ) : activeTab === 'products' ? (
         <FlatList
           data={products}
           renderItem={renderProductItem}
@@ -597,11 +602,6 @@ const InventoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
