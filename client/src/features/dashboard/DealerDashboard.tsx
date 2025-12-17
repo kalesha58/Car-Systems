@@ -389,7 +389,7 @@ const DealerDashboard: React.FC = () => {
   return (
     <NoticeAnimation noticePosition={noticePosition}>
       <>
-        <Visuals />
+        <Visuals showOverlay={false} />
 
         <Animated.View style={[dynamicStyles.backToTopButton, backToTopStyle]}>
           <TouchableOpacity
@@ -426,6 +426,73 @@ const DealerDashboard: React.FC = () => {
               subtitle={dealer?.address || ''}
             />
             <StickySearchBar />
+            
+            {/* Train Effect Below Search Bar */}
+            {seasonalTheme.animations.overlay && (
+              <View style={styles.trainEffectBelow}>
+                <LottieView
+                  autoPlay
+                  loop
+                  speed={1}
+                  style={styles.trainAnimation}
+                  source={seasonalTheme.animations.overlay}
+                />
+              </View>
+            )}
+            
+            {/* Inventory Stats Section - Now in Header */}
+            <View style={styles.inventorySection}>
+              {/* Stats Cards */}
+              <View style={styles.inventoryCardsContainer}>
+                {/* Total Products Card */}
+                <View style={dynamicStyles.inventoryCard}>
+                  <IconIonicons
+                    name="cube-outline"
+                    size={RFValue(24)}
+                    color={theme.winterBlueDark}
+                    style={styles.inventoryCardIcon}
+                  />
+                  <CustomText style={dynamicStyles.inventoryCardValue}>
+                    {totalProducts}
+                  </CustomText>
+                  <CustomText style={dynamicStyles.inventoryCardLabel}>
+                    {t('dealer.totalProducts') || 'Total Products'}
+                  </CustomText>
+                </View>
+
+                {/* Monthly Income Card */}
+                <View style={dynamicStyles.inventoryCard}>
+                  <IconIonicons
+                    name="trending-up-outline"
+                    size={RFValue(24)}
+                    color={theme.winterBlueDark}
+                    style={styles.inventoryCardIcon}
+                  />
+                  <CustomText style={dynamicStyles.inventoryCardValue}>
+                    {formatCurrency(monthlyRevenue)}
+                  </CustomText>
+                  <CustomText style={dynamicStyles.inventoryCardLabel}>
+                    {t('dealer.monthlyIncome') || 'Monthly Income'}
+                  </CustomText>
+                </View>
+
+                {/* Total Orders Card */}
+                <View style={dynamicStyles.inventoryCard}>
+                  <IconIonicons
+                    name="receipt-outline"
+                    size={RFValue(24)}
+                    color={theme.winterBlueDark}
+                    style={styles.inventoryCardIcon}
+                  />
+                  <CustomText style={dynamicStyles.inventoryCardValue}>
+                    {orderStats?.total || 0}
+                  </CustomText>
+                  <CustomText style={dynamicStyles.inventoryCardLabel}>
+                    {t('dealer.totalOrders') || 'Total Orders'}
+                  </CustomText>
+                </View>
+              </View>
+            </View>
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView
@@ -433,80 +500,6 @@ const DealerDashboard: React.FC = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <View style={styles.contentContainer}>
-              {/* Inventory Stats Section */}
-              <View style={[styles.inventorySection, { backgroundColor: seasonalTheme.colors.primary }]}>
-                {/* Train Effect Overlay */}
-                {seasonalTheme.animations.overlay && (
-                  <View style={styles.trainContainer}>
-                    <LottieView
-                      autoPlay
-                      loop
-                      speed={1}
-                      style={styles.trainAnimation}
-                      source={seasonalTheme.animations.overlay}
-                    />
-                  </View>
-                )}
-
-                {/* Header */}
-                <View style={styles.inventoryHeader}>
-                  <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: theme.white }}>
-                    {t('dealer.inventoryOverview') || 'Inventory Overview'}
-                  </CustomText>
-                </View>
-
-                {/* Stats Cards */}
-                <View style={styles.inventoryCardsContainer}>
-                  {/* Total Products Card */}
-                  <View style={dynamicStyles.inventoryCard}>
-                    <IconIonicons
-                      name="cube-outline"
-                      size={RFValue(24)}
-                      color={theme.winterBlueDark}
-                      style={styles.inventoryCardIcon}
-                    />
-                    <CustomText style={dynamicStyles.inventoryCardValue}>
-                      {totalProducts}
-                    </CustomText>
-                    <CustomText style={dynamicStyles.inventoryCardLabel}>
-                      {t('dealer.totalProducts') || 'Total Products'}
-                    </CustomText>
-                  </View>
-
-                  {/* Monthly Income Card */}
-                  <View style={dynamicStyles.inventoryCard}>
-                    <IconIonicons
-                      name="trending-up-outline"
-                      size={RFValue(24)}
-                      color={theme.winterBlueDark}
-                      style={styles.inventoryCardIcon}
-                    />
-                    <CustomText style={dynamicStyles.inventoryCardValue}>
-                      {formatCurrency(monthlyRevenue)}
-                    </CustomText>
-                    <CustomText style={dynamicStyles.inventoryCardLabel}>
-                      {t('dealer.monthlyIncome') || 'Monthly Income'}
-                    </CustomText>
-                  </View>
-
-                  {/* Total Orders Card */}
-                  <View style={dynamicStyles.inventoryCard}>
-                    <IconIonicons
-                      name="receipt-outline"
-                      size={RFValue(24)}
-                      color={theme.winterBlueDark}
-                      style={styles.inventoryCardIcon}
-                    />
-                    <CustomText style={dynamicStyles.inventoryCardValue}>
-                      {orderStats?.total || 0}
-                    </CustomText>
-                    <CustomText style={dynamicStyles.inventoryCardLabel}>
-                      {t('dealer.totalOrders') || 'Total Orders'}
-                    </CustomText>
-                  </View>
-                </View>
-              </View>
-
               <AdCarousal adData={adData} />
 
               {isLoading ? (
@@ -805,39 +798,25 @@ const styles = StyleSheet.create({
   skeletonContainer: {
     marginBottom: 24,
   },
-  trainEffectContainer: {
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    marginTop: -5,
-    marginBottom: 0,
-    position: 'relative',
-  },
-  trainContainer: {
+  trainEffectBelow: {
     width: '100%',
-    height: 100,
-    position: 'absolute',
-    top: -50,
-    zIndex: 10,
+    height: 150,
+    position: 'relative',
+    marginTop: -20,
+    marginBottom: -16,
+    zIndex: 3,
   },
   trainAnimation: {
     width: '100%',
     height: '100%',
   },
   inventorySection: {
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    marginTop: -5,
+    marginTop: 0,
     marginBottom: 0,
     position: 'relative',
-  },
-  inventoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 15,
   },
   inventoryCardsContainer: {
     flexDirection: 'row',

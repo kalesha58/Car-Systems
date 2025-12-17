@@ -7,7 +7,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 
-const Visuals = () => {
+const Visuals: React.FC<{ showOverlay?: boolean }> = ({ showOverlay = true }) => {
   const { scrollY } = useCollapsibleContext();
   const seasonalTheme = useSeasonalTheme();
 
@@ -30,7 +30,7 @@ const Visuals = () => {
       </View>
 
       {/* Overlay animation (train, sleigh, etc.) - if available */}
-      {seasonalTheme.animations.overlay && (
+      {showOverlay && seasonalTheme.animations.overlay && (
         <View style={styles.overlayContainer}>
           <LottieView
             autoPlay

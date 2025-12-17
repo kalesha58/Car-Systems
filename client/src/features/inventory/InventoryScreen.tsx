@@ -1,5 +1,17 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Image, Pressable, Alert} from 'react-native';
+import React, {useState, useEffect, useCallback, useMemo, useRef} from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  Image,
+  Pressable,
+  Alert,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -34,6 +46,10 @@ const InventoryScreen: React.FC = () => {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
   const [loadingRegistration, setLoadingRegistration] = useState(true);
+  const pagerRef = useRef<ScrollView>(null);
+
+  const tabOrder = useMemo(() => ['products', 'vehicles', 'services'] as const, []);
+  const activeIndex = useMemo(() => tabOrder.indexOf(activeTab), [activeTab, tabOrder]);
 
   const isApproved = businessRegistration?.status === 'approved';
   const canAddItems = isApproved;
@@ -130,6 +146,26 @@ const InventoryScreen: React.FC = () => {
     await fetchData();
     setRefreshing(false);
   }, [fetchData]);
+
+  const scrollToTab = useCallback(
+    (tab: (typeof tabOrder)[number]) => {
+      const index = tabOrder.indexOf(tab);
+      if (index < 0) return;
+      setActiveTab(tab);
+      pagerRef.current?.scrollTo({x: index * screenWidth, y: 0, animated: true});
+    },
+    [tabOrder],
+  );
+
+  const onPagerMomentumEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const x = e.nativeEvent.contentOffset.x;
+      const index = Math.round(x / screenWidth);
+      const nextTab = tabOrder[index] ?? 'products';
+      if (nextTab !== activeTab) setActiveTab(nextTab);
+    },
+    [activeTab, tabOrder],
+  );
 
   const handleImagePress = (images: string[]) => {
     if (images && images.length > 0) {
@@ -490,7 +526,7 @@ const InventoryScreen: React.FC = () => {
             styles.tab,
             activeTab === 'products' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
-          onPress={() => setActiveTab('products')}>
+          onPress={() => scrollToTab('products')}>
           <Icon
             name="cube-outline"
             size={RFValue(16)}
@@ -509,7 +545,7 @@ const InventoryScreen: React.FC = () => {
             styles.tab,
             activeTab === 'vehicles' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
-          onPress={() => setActiveTab('vehicles')}>
+          onPress={() => scrollToTab('vehicles')}>
           <Icon
             name="car-outline"
             size={RFValue(16)}
@@ -528,7 +564,7 @@ const InventoryScreen: React.FC = () => {
             styles.tab,
             activeTab === 'services' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
           ]}
-          onPress={() => setActiveTab('services')}>
+          onPress={() => scrollToTab('services')}>
           <Icon
             name="construct-outline"
             size={RFValue(16)}
@@ -545,42 +581,55 @@ const InventoryScreen: React.FC = () => {
       </View>
       {loading ? (
         renderSkeletonList()
-      ) : activeTab === 'products' ? (
-        <FlatList
-          data={products}
-          renderItem={renderProductItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-          }
-        />
-      ) : activeTab === 'vehicles' ? (
-        <FlatList
-          data={vehicles}
-          renderItem={renderVehicleItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-          }
-        />
       ) : (
-        <FlatList
-          data={services}
-          renderItem={renderServiceItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-          }
-        />
+        <ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onPagerMomentumEnd}
+          contentOffset={{x: activeIndex * screenWidth, y: 0}}
+          keyboardShouldPersistTaps="handled">
+          <View style={{width: screenWidth}}>
+            <FlatList
+              data={products}
+              renderItem={renderProductItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={activeTab === 'products' ? renderEmptyState : null}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+              }
+            />
+          </View>
+          <View style={{width: screenWidth}}>
+            <FlatList
+              data={vehicles}
+              renderItem={renderVehicleItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={activeTab === 'vehicles' ? renderEmptyState : null}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+              }
+            />
+          </View>
+          <View style={{width: screenWidth}}>
+            <FlatList
+              data={services}
+              renderItem={renderServiceItem}
+              keyExtractor={item => item.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={activeTab === 'services' ? renderEmptyState : null}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+              }
+            />
+          </View>
+        </ScrollView>
       )}
       <TouchableOpacity
         style={[styles.fab, !canAddItems && styles.fabDisabled]}
