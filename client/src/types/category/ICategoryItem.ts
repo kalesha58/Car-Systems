@@ -1,4 +1,4 @@
-export type CategoryType = 'all' | 'products' | 'vehicles' | 'services';
+export type CategoryType = 'products' | 'vehicles' | 'services';
 
 export interface ICategoryItem {
   _id: string;

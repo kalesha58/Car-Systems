@@ -1,5 +1,5 @@
 import {View, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Alert} from 'react-native';
-import React, {useEffect, useState, useMemo, useCallback} from 'react';
+import React, {useEffect, useState, useMemo, useCallback, useRef} from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Sidebar from './Sidebar';
@@ -71,6 +71,13 @@ const ProductCategories = () => {
     brands: [],
   });
 
+  // API response cache
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  const apiCacheRef = useRef<Map<string, {
+    data: ItemType[];
+    timestamp: number;
+  }>>(new Map());
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -90,12 +97,6 @@ const ProductCategories = () => {
           })) || [];
 
         const allCategories: ICategoryItem[] = [
-          {
-            _id: 'all-categories',
-            name: t('categories.allCategories'),
-            image: allProductsImage,
-            type: 'all' as CategoryType,
-          },
           {
             _id: 'all-products',
             name: t('categories.allProducts'),
@@ -123,12 +124,6 @@ const ProductCategories = () => {
         }
       } catch (error) {
         const defaultCategories: ICategoryItem[] = [
-          {
-            _id: 'all-categories',
-            name: t('categories.allCategories'),
-            image: allProductsImage,
-            type: 'all' as CategoryType,
-          },
           {
             _id: 'all-products',
             name: t('categories.allProducts'),
@@ -164,24 +159,19 @@ const ProductCategories = () => {
       const counts: Record<string, number> = {};
       for (const category of categories) {
         try {
-          if (category.type === 'all') {
-            const [productsRes, vehiclesRes, servicesRes] = await Promise.all([
-              getProducts().catch(() => ({Response: {products: []}})),
-              getDealerVehicles().catch(() => ({Response: {vehicles: []}})),
-              getServices().catch(() => ({Response: {services: []}})),
-            ]);
-            counts[category._id] =
-              (productsRes.Response?.products?.length || 0) +
-              (vehiclesRes.Response?.vehicles?.length || 0) +
-              (servicesRes.Response?.services?.length || 0);
-          } else if (category.type === 'products') {
+          if (category.type === 'products') {
             const response = await getProducts(
               category._id !== 'all-products' ? {category: category.name} : {},
             ).catch(() => ({Response: {products: []}}));
             counts[category._id] = response.Response?.products?.length || 0;
           } else if (category.type === 'vehicles') {
-            const response = await getDealerVehicles().catch(() => ({Response: {vehicles: []}}));
+            console.log('[Category Counts] Fetching vehicle count for:', category._id);
+            const response = await getDealerVehicles({limit: 1000}).catch((err) => {
+              console.error('[Category Counts] Error fetching vehicles:', err);
+              return {Response: {vehicles: []}};
+            });
             counts[category._id] = response.Response?.vehicles?.length || 0;
+            console.log('[Category Counts] Vehicle count for', category._id, ':', counts[category._id]);
           } else if (category.type === 'services') {
             const response = await getServices().catch(() => ({Response: {services: []}}));
             counts[category._id] = response.Response?.services?.length || 0;
@@ -203,66 +193,131 @@ const ProductCategories = () => {
     }
   }, [categories.length, categoriesLoading, updateCategoryCounts]);
 
+  // Memoized fetch function with caching
+  const fetchItemsMemoized = useCallback(async (
+    category: ICategoryItem,
+    queryFilters: IFilterState,
+    forceRefresh: boolean = false
+  ) => {
+    if (!category || !category.type) {
+      return [];
+    }
+
+    const categoryType = category.type;
+
+    // Build query params
+    const queryParams: any = {};
+    
+    // Set high limit to fetch all items for "all" categories
+    if (category._id === 'all-products' || category._id === 'all-vehicles' || category._id === 'all-services') {
+      queryParams.limit = 1000;
+    }
+    
+    if (queryFilters.type) {
+      queryParams.vehicleType = queryFilters.type;
+    }
+    if (queryFilters.brand) {
+      queryParams.brand = queryFilters.brand;
+    }
+    if (queryFilters.minPrice !== undefined) {
+      queryParams.minPrice = queryFilters.minPrice;
+    }
+    if (queryFilters.maxPrice !== undefined) {
+      queryParams.maxPrice = queryFilters.maxPrice;
+    }
+    if (categoryType === 'products' && category._id !== 'all-products') {
+      queryParams.category = category.name;
+    }
+
+    // Generate cache key
+    const sortedParams = Object.keys(queryParams).sort().reduce((acc, key) => {
+      acc[key] = queryParams[key];
+      return acc;
+    }, {} as any);
+    const cacheKey = `${categoryType}_${category._id}_${JSON.stringify(sortedParams)}`;
+
+    // Check cache first
+    console.log(`[${categoryType}] Checking cache for category:`, category._id, 'Cache key:', cacheKey);
+    if (!forceRefresh) {
+      const cached = apiCacheRef.current.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        console.log(`[${categoryType}] Using cached data for category:`, category._id, 'Items:', cached.data.length);
+        return cached.data;
+      } else if (cached) {
+        console.log(`[${categoryType}] Cache expired for category:`, category._id);
+      } else {
+        console.log(`[${categoryType}] No cache found for category:`, category._id);
+      }
+    } else {
+      console.log(`[${categoryType}] Force refresh requested for category:`, category._id);
+    }
+
+    // Fetch from API
+    try {
+      let fetchedItems: ItemType[] = [];
+      
+      if (categoryType === 'products') {
+        const response = await getProducts(queryParams);
+        fetchedItems = response.Response?.products || [];
+      } else if (categoryType === 'vehicles') {
+        console.log('[All Vehicles] Fetching vehicles with params:', queryParams);
+        const response = await getDealerVehicles(queryParams);
+        console.log('[All Vehicles] API Response:', response);
+        console.log('[All Vehicles] Response structure:', {
+          success: response?.success,
+          hasResponse: !!response?.Response,
+          vehiclesCount: response?.Response?.vehicles?.length || 0,
+          pagination: response?.Response?.pagination,
+        });
+        // Handle both response structures: Response.vehicles or Response.vehicles (nested)
+        fetchedItems = response.Response?.vehicles || [];
+        console.log('[All Vehicles] Extracted vehicles:', fetchedItems.length);
+      } else if (categoryType === 'services') {
+        const response = await getServices(queryParams);
+        fetchedItems = response.Response?.services || [];
+      }
+
+      // Cache the result
+      apiCacheRef.current.set(cacheKey, {
+        data: fetchedItems,
+        timestamp: Date.now(),
+      });
+
+      console.log(`[${categoryType}] Fetched ${fetchedItems.length} items for category:`, category._id);
+      return fetchedItems;
+    } catch (error) {
+      console.error(`[${categoryType}] Error fetching items for category ${category._id}:`, error);
+      // Return cached data if available, even if expired
+      const cached = apiCacheRef.current.get(cacheKey);
+      if (cached) {
+        console.log(`[${categoryType}] Using cached data for category:`, category._id);
+        return cached.data;
+      }
+      console.warn(`[${categoryType}] No cached data available, returning empty array for category:`, category._id);
+      return [];
+    }
+  }, []);
+
   useEffect(() => {
     const fetchItems = async () => {
-      if (!selectedCategory || !selectedCategory.type) {
+      if (!selectedCategory) {
         return;
       }
 
       try {
         setItemsLoading(true);
         setItems([]); // Clear items immediately when category changes
-        const categoryType = selectedCategory.type;
 
-        const queryParams: any = {};
-        if (filters.type) {
-          queryParams.vehicleType = filters.type;
-        }
-        if (filters.brand) {
-          queryParams.brand = filters.brand;
-        }
-        if (filters.minPrice !== undefined) {
-          queryParams.minPrice = filters.minPrice;
-        }
-        if (filters.maxPrice !== undefined) {
-          queryParams.maxPrice = filters.maxPrice;
-        }
-        if (selectedCategory.type === 'products' && selectedCategory._id !== 'all-products') {
-          queryParams.category = selectedCategory.name;
-        }
-
-        if (categoryType === 'all') {
-          const [productsResponse, vehiclesResponse, servicesResponse] = await Promise.all([
-            getProducts(queryParams),
-            getDealerVehicles(queryParams),
-            getServices(queryParams),
-          ]);
-
-          const allItems: ItemType[] = [
-            ...(productsResponse.Response?.products || []),
-            ...(vehiclesResponse.Response?.vehicles || []),
-            ...(servicesResponse.Response?.services || []),
-          ];
-
-          setItems(allItems);
-          setProductCount(allItems.length);
-        } else if (categoryType === 'products') {
-          const response = await getProducts(queryParams);
-          const products = response.Response?.products || [];
-          setItems(products);
-          setProductCount(products.length);
-        } else if (categoryType === 'vehicles') {
-          const response = await getDealerVehicles(queryParams);
-          const vehicles = response.Response?.vehicles || [];
-          setItems(vehicles);
-          setProductCount(vehicles.length);
-        } else if (categoryType === 'services') {
-          const response = await getServices(queryParams);
-          const services = response.Response?.services || [];
-          setItems(services);
-          setProductCount(services.length);
-        }
+        const fetchedItems = await fetchItemsMemoized(selectedCategory, filters, false);
+        console.log('[ProductCategories] Setting items:', {
+          category: selectedCategory._id,
+          categoryType: selectedCategory.type,
+          itemsCount: fetchedItems.length,
+        });
+        setItems(fetchedItems);
+        setProductCount(fetchedItems.length);
       } catch (error) {
+        console.error('[ProductCategories] Error in fetchItems:', error);
         setItems([]);
         setProductCount(0);
       } finally {
@@ -273,7 +328,7 @@ const ProductCategories = () => {
     if (selectedCategory) {
       fetchItems();
     }
-  }, [selectedCategory, filters]);
+  }, [selectedCategory, filters, fetchItemsMemoized]);
 
   const getHeaderTitle = () => {
     if (selectedCategory?.name) {
@@ -288,8 +343,6 @@ const ProductCategories = () => {
     }
     
     switch (selectedCategory.type) {
-      case 'all':
-        return 'Search all categories...';
       case 'products':
         return selectedCategory._id === 'all-products' 
           ? 'Search all products...' 
@@ -359,8 +412,8 @@ const ProductCategories = () => {
       const isProduct = !isVehicle && !isService;
 
       // Common search fields
-      const descriptionMatch = 'description' in item && item.description?.toLowerCase().includes(query);
-      const priceMatch = 'price' in item && String(item.price)?.includes(query);
+      const descriptionMatch = !!('description' in item && item.description?.toLowerCase().includes(query));
+      const priceMatch = !!('price' in item && String(item.price)?.includes(query));
       
       // Product-specific search fields
       let nameMatch = false;
@@ -370,12 +423,12 @@ const ProductCategories = () => {
       let originalPriceMatch = false;
       
       if (isProduct) {
-        nameMatch = 'name' in item && item.name?.toLowerCase().includes(query);
-        brandMatch = 'brand' in item && item.brand?.toLowerCase().includes(query);
-        categoryMatch = 'category' in item && item.category?.toLowerCase().includes(query);
-        productTypeMatch = 'productType' in item && (item as any).productType?.toLowerCase().includes(query);
-        originalPriceMatch = 'originalPrice' in item && item.originalPrice && 
-          String(item.originalPrice)?.includes(query);
+        nameMatch = !!('name' in item && item.name?.toLowerCase().includes(query));
+        brandMatch = !!('brand' in item && item.brand?.toLowerCase().includes(query));
+        categoryMatch = !!('category' in item && item.category?.toLowerCase().includes(query));
+        productTypeMatch = !!('productType' in item && (item as any).productType?.toLowerCase().includes(query));
+        originalPriceMatch = !!('originalPrice' in item && item.originalPrice && 
+          String(item.originalPrice)?.includes(query));
       }
       
       // Vehicle-specific search fields
@@ -394,19 +447,19 @@ const ProductCategories = () => {
       
       if (isVehicle) {
         const vehicle = item as IDealerVehicle;
-        vehicleBrandMatch = vehicle.brand?.toLowerCase().includes(query);
-        vehicleModelMatch = vehicle.vehicleModel?.toLowerCase().includes(query);
-        vehicleYearMatch = String(vehicle.year)?.includes(query);
-        vehicleTypeMatch = vehicle.vehicleType?.toLowerCase().includes(query);
-        vehicleMakeMatch = 'make' in vehicle && (vehicle as any).make?.toLowerCase().includes(query);
-        vehicleColorMatch = vehicle.color?.toLowerCase().includes(query);
-        vehicleFuelTypeMatch = vehicle.fuelType?.toLowerCase().includes(query);
-        vehicleTransmissionMatch = vehicle.transmission?.toLowerCase().includes(query);
-        vehicleConditionMatch = vehicle.condition?.toLowerCase().includes(query);
-        vehicleMileageMatch = vehicle.mileage && String(vehicle.mileage)?.includes(query);
-        vehicleNumberPlateMatch = vehicle.numberPlate?.toLowerCase().includes(query);
-        vehicleDealerMatch = vehicle.dealer?.businessName?.toLowerCase().includes(query) ||
-          vehicle.dealer?.address?.toLowerCase().includes(query);
+        vehicleBrandMatch = !!vehicle.brand?.toLowerCase().includes(query);
+        vehicleModelMatch = !!vehicle.vehicleModel?.toLowerCase().includes(query);
+        vehicleYearMatch = !!String(vehicle.year)?.includes(query);
+        vehicleTypeMatch = !!vehicle.vehicleType?.toLowerCase().includes(query);
+        vehicleMakeMatch = !!('make' in vehicle && (vehicle as any).make?.toLowerCase().includes(query));
+        vehicleColorMatch = !!vehicle.color?.toLowerCase().includes(query);
+        vehicleFuelTypeMatch = !!vehicle.fuelType?.toLowerCase().includes(query);
+        vehicleTransmissionMatch = !!vehicle.transmission?.toLowerCase().includes(query);
+        vehicleConditionMatch = !!vehicle.condition?.toLowerCase().includes(query);
+        vehicleMileageMatch = !!(vehicle.mileage && String(vehicle.mileage)?.includes(query));
+        vehicleNumberPlateMatch = !!vehicle.numberPlate?.toLowerCase().includes(query);
+        vehicleDealerMatch = !!(vehicle.dealer?.businessName?.toLowerCase().includes(query) ||
+          vehicle.dealer?.address?.toLowerCase().includes(query));
         
         // Also search in combined brand + model
         const brandModelMatch = `${vehicle.brand} ${vehicle.vehicleModel}`.toLowerCase().includes(query);
@@ -414,18 +467,16 @@ const ProductCategories = () => {
       }
       
       // Service-specific search fields
-      let serviceTypeMatch = false;
       let serviceNameMatch = false;
       let durationMatch = false;
       let homeServiceMatch = false;
       
       if (isService) {
         const service = item as IService;
-        serviceNameMatch = 'name' in service && service.name?.toLowerCase().includes(query);
-        serviceTypeMatch = service.serviceType?.toLowerCase().includes(query);
-        durationMatch = service.durationMinutes && String(service.durationMinutes)?.includes(query);
-        homeServiceMatch = service.homeService !== undefined && 
-          (service.homeService ? 'home service' : 'shop service').includes(query);
+        serviceNameMatch = !!('name' in service && service.name?.toLowerCase().includes(query));
+        durationMatch = !!(service.durationMinutes && String(service.durationMinutes)?.includes(query));
+        homeServiceMatch = !!(service.homeService !== undefined && 
+          (service.homeService ? 'home service' : 'shop service').includes(query));
       }
       
       // Search in all relevant fields
@@ -454,7 +505,6 @@ const ProductCategories = () => {
         vehicleDealerMatch ||
         // Service fields
         serviceNameMatch ||
-        serviceTypeMatch ||
         durationMatch ||
         homeServiceMatch
       );
@@ -597,47 +647,11 @@ const ProductCategories = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      // Re-fetch items
+      // Re-fetch items with force refresh
       if (selectedCategory) {
-        const categoryType = selectedCategory.type;
-        const queryParams: any = {};
-        if (filters.type) queryParams.vehicleType = filters.type;
-        if (filters.brand) queryParams.brand = filters.brand;
-        if (filters.minPrice !== undefined) queryParams.minPrice = filters.minPrice;
-        if (filters.maxPrice !== undefined) queryParams.maxPrice = filters.maxPrice;
-        if (selectedCategory.type === 'products' && selectedCategory._id !== 'all-products') {
-          queryParams.category = selectedCategory.name;
-        }
-
-        if (categoryType === 'all') {
-          const [productsResponse, vehiclesResponse, servicesResponse] = await Promise.all([
-            getProducts(queryParams),
-            getDealerVehicles(queryParams),
-            getServices(queryParams),
-          ]);
-          const allItems: ItemType[] = [
-            ...(productsResponse.Response?.products || []),
-            ...(vehiclesResponse.Response?.vehicles || []),
-            ...(servicesResponse.Response?.services || []),
-          ];
-          setItems(allItems);
-          setProductCount(allItems.length);
-        } else if (categoryType === 'products') {
-          const response = await getProducts(queryParams);
-          const products = response.Response?.products || [];
-          setItems(products);
-          setProductCount(products.length);
-        } else if (categoryType === 'vehicles') {
-          const response = await getDealerVehicles(queryParams);
-          const vehicles = response.Response?.vehicles || [];
-          setItems(vehicles);
-          setProductCount(vehicles.length);
-        } else if (categoryType === 'services') {
-          const response = await getServices(queryParams);
-          const services = response.Response?.services || [];
-          setItems(services);
-          setProductCount(services.length);
-        }
+        const fetchedItems = await fetchItemsMemoized(selectedCategory, filters, true);
+        setItems(fetchedItems);
+        setProductCount(fetchedItems.length);
       }
       updateCategoryCounts();
     } catch (error) {
@@ -880,7 +894,7 @@ const ProductCategories = () => {
           {itemsLoading ? (
             <ProductList 
               data={[]} 
-              itemType={selectedCategory?.type === 'all' ? 'products' : (selectedCategory?.type || 'products')}
+              itemType={selectedCategory?.type || 'products'}
               loading={true}
               viewMode={viewMode}
             />
@@ -896,7 +910,7 @@ const ProductCategories = () => {
               ) : (
               <ProductList 
                   data={sortedItems || []} 
-                itemType={selectedCategory?.type === 'all' ? undefined : (selectedCategory?.type || 'products')}
+                itemType={selectedCategory?.type || 'products'}
                 loading={false}
                   viewMode={viewMode}
                   onRefresh={handleRefresh}

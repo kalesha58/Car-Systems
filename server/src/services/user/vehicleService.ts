@@ -223,7 +223,7 @@ const vehicleToInterfaceWithDealer = (doc: IDealerVehicleDocument, dealerInfo: I
 
 /**
  * Get all dealer vehicles for users with dealer information
- * Only returns available vehicles from approved dealers
+ * Returns all dealer vehicles without any restrictions
  */
 export const getAllDealerVehiclesForUsers = async (
   query: IGetUserDealerVehiclesRequest,
@@ -233,32 +233,8 @@ export const getAllDealerVehiclesForUsers = async (
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
-    // First, get all approved dealer business registrations
-    const approvedDealers = await BusinessRegistration.find({
-      status: 'approved',
-      type: 'Automobile Showroom', // Only showroom dealers have vehicles
-    });
-
-    // dealerId in DealerVehicle is the BusinessRegistration _id, not userId
-    const approvedDealerIds = approvedDealers.map((dealer) => (dealer._id as any).toString());
-
-    if (approvedDealerIds.length === 0) {
-      return {
-        vehicles: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0,
-        },
-      };
-    }
-
-    // Build filter for vehicles
-    const filter: any = {
-      dealerId: { $in: approvedDealerIds },
-      availability: 'available', // Only show available vehicles
-    };
+    // Build filter for vehicles - fetch ALL vehicles without restrictions
+    const filter: any = {};
 
     if (query.vehicleType) {
       filter.vehicleType = query.vehicleType;
@@ -292,14 +268,27 @@ export const getAllDealerVehiclesForUsers = async (
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = { [sortBy]: sortOrder };
 
+    logger.info(`[getAllDealerVehiclesForUsers] Filter:`, JSON.stringify(filter, null, 2));
+    logger.info(`[getAllDealerVehiclesForUsers] Query params: page=${page}, limit=${limit}, skip=${skip}`);
+
     const [vehicles, total] = await Promise.all([
       DealerVehicle.find(filter).sort(sort).skip(skip).limit(limit),
       DealerVehicle.countDocuments(filter),
     ]);
 
+    logger.info(`[getAllDealerVehiclesForUsers] Found ${vehicles.length} vehicles, total: ${total}`);
+
+    // Get unique dealerIds from vehicles
+    const dealerIds = [...new Set(vehicles.map((v: any) => v.dealerId))];
+    
+    // Get all business registrations for these dealers
+    const businessRegistrations = await BusinessRegistration.find({
+      _id: { $in: dealerIds },
+    });
+
     // Create a map of dealerId (BusinessRegistration _id) to dealer info for quick lookup
     const dealerInfoMap = new Map<string, IDealerInfo>();
-    approvedDealers.forEach((reg) => {
+    businessRegistrations.forEach((reg) => {
       const dealerId = (reg._id as any).toString();
       dealerInfoMap.set(dealerId, {
         id: dealerId,
@@ -315,10 +304,9 @@ export const getAllDealerVehiclesForUsers = async (
     const vehiclesWithDealer = vehicles.map((vehicleDoc) => {
       const dealerInfo = dealerInfoMap.get(vehicleDoc.dealerId);
       if (!dealerInfo) {
-        logger.warn(`Dealer info not found for vehicle ${vehicleDoc._id} with dealerId ${vehicleDoc.dealerId}`);
-        // Return a default dealer info if not found (shouldn't happen, but safety check)
+        // Return a default dealer info if not found
         const defaultDealerInfo: IDealerInfo = {
-          id: '',
+          id: vehicleDoc.dealerId,
           businessName: 'Unknown Dealer',
           type: '',
           phone: '',
