@@ -666,7 +666,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('availability')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
+            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('availability')}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
         </View>
