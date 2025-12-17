@@ -11,9 +11,9 @@
     "link:fonts": "npx react-native-asset",
     "postinstall": "npx patch-package",
     "pod-install": "cd ios && cross-env RCT_NEW_ARCH_ENABLED=1 bundle exec pod install",
-    "build:android:debug": "cd android && gradlew.bat assembleDebug",
-    "build:android:release": "cd android && gradlew.bat assembleRelease",
-    "build:android": "npm run build:android:release"
+    "android:apk": "cd android && gradlew.bat assembleRelease && cd ..",
+    "android:apk:debug": "cd android && gradlew.bat assembleDebug && cd ..",
+    "android:bundle": "react-native build-android --mode=release"
   },
   "dependencies": {
     "@homielab/react-native-auto-scroll": "^0.0.10",
