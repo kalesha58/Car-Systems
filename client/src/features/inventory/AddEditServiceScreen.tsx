@@ -61,8 +61,8 @@ const AddEditServiceScreen: React.FC = () => {
       ? {
           latitude: service.location.latitude,
           longitude: service.location.longitude,
-          address: '',
-          formattedAddress: '',
+          address: service.location.address || '',
+          formattedAddress: service.location.address || '',
         }
       : null,
   );

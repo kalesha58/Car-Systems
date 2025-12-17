@@ -11,6 +11,7 @@ export interface IService {
   location?: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -39,6 +40,7 @@ export interface ICreateServiceRequest {
   location?: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
 }
 
@@ -53,6 +55,7 @@ export interface IUpdateServiceRequest {
   location?: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
 }
 

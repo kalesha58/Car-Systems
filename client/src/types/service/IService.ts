@@ -14,6 +14,7 @@ export interface IService {
   location?: {
     latitude: number;
     longitude: number;
+    address?: string;
   };
   dealer?: IDealerInfo;
   createdAt: string;
