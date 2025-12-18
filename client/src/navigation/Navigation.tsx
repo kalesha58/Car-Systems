@@ -50,6 +50,7 @@ import { ToastProvider } from '@context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import LiquidTabBar from '@components/navigation/LiquidTabBar';
 import ForgotPassword from '@features/auth/ForgotPassword';
+import MetAIChatScreen from '@features/support/MetAIChatScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -361,6 +362,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="BusinessRegistrationDetails"
             getComponent={() => require('@features/profile/BusinessRegistrationDetailsScreen').default}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="MetAIChat"
+            component={MetAIChatScreen}
             options={{
               animation: 'slide_from_right',
             }}

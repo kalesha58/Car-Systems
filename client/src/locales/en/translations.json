@@ -35,7 +35,17 @@
     "save": "Save Changes",
     "profileUpdated": "Profile updated successfully",
     "updateFailed": "Failed to update profile. Please try again.",
-    "emailReadOnly": "Email cannot be changed"
+    "emailReadOnly": "Email cannot be changed",
+    "metAI": "MetAI",
+    "metAI_start": "Ask MetAI anything about your orders, services, or account.",
+    "metAI_placeholder": "Type your message…",
+    "metAI_error": "Something went wrong. Please try again.",
+    "metAI_noResponse": "I couldn’t generate a response. Please try again.",
+    "metAI_greeting": "Hi! I'm MetAI. Tell me what you need help with—or tap a question above.",
+    "metAI_q_orders": "Where is my order?",
+    "metAI_q_refund": "How do I get a refund?",
+    "metAI_q_account": "Help with my account",
+    "metAI_q_support": "Contact support"
   },
   "common": {
     "wallet": "Wallet",

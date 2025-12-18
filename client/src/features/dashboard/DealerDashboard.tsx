@@ -29,7 +29,6 @@ import EmptyState from '@components/common/EmptyState/EmptyState';
 import StatCard from '@components/common/StatCard/StatCard';
 import ProfitCard from '@components/common/ProfitCard/ProfitCard';
 import WelcomeHeader from '@components/common/WelcomeHeader/WelcomeHeader';
-import FloatingChatButton from '@components/common/FloatingChatButton/FloatingChatButton';
 import { useTranslation } from 'react-i18next';
 import {
   formatCurrency,
@@ -656,7 +655,6 @@ const DealerDashboard: React.FC = () => {
             </View>
           </CollapsibleScrollView>
         </CollapsibleContainer>
-        <FloatingChatButton />
       </>
     </NoticeAnimation>
   );
