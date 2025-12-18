@@ -40,6 +40,7 @@ const PaymentStatusScreen: React.FC = () => {
   const paymentInProgress = useRef(false);
   const razorpayPromiseRef = useRef<Promise<any> | null>(null);
   const checkStatusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const didStartPollingFallback = useRef(false);
 
   // Function to check payment status from server
   const checkPaymentStatusFromServer = async () => {
@@ -90,6 +91,7 @@ const PaymentStatusScreen: React.FC = () => {
               // If still processing, start polling
               console.log('📱 [Payment] Starting polling as fallback');
               try {
+                didStartPollingFallback.current = true;
                 await pollPaymentStatus(
                   orderId,
                   (newStatus: string, newPaymentStatus: string) => {
@@ -150,6 +152,7 @@ const PaymentStatusScreen: React.FC = () => {
           if (paymentInProgress.current && status === 'processing') {
             console.log('⏰ [Payment] Backup polling started - Razorpay callback may not have fired');
             try {
+              didStartPollingFallback.current = true;
               await pollPaymentStatus(
                 orderId,
                 (newStatus: string, newPaymentStatus: string) => {
@@ -305,7 +308,6 @@ const PaymentStatusScreen: React.FC = () => {
         }
       } catch (error: any) {
         // Payment cancelled or failed at Razorpay level
-        paymentInProgress.current = false;
         console.error('❌ [Payment] Razorpay error:', error);
         console.error('❌ [Payment] Error details:', {
           code: error?.code,
@@ -317,26 +319,32 @@ const PaymentStatusScreen: React.FC = () => {
           fullError: JSON.stringify(error, null, 2),
         });
         console.error('❌ [Payment] Error stack:', error?.stack);
+
+        // If user cancelled/backed out, do not show "failed" UI; just go back.
+        const isUserCancelled = error?.reason === 'user_cancelled' || error?.code === 0;
+        if (isUserCancelled) {
+          paymentInProgress.current = false;
+          setStatus('processing');
+          setError(null);
+          setTimeout(() => {
+            navigation.goBack();
+          }, 300);
+          return;
+        }
         
         // Check if payment actually succeeded on server (in case callback failed but payment went through)
         const serverStatus = await checkPaymentStatusFromServer();
         if (serverStatus) {
           // Payment succeeded on server, ignore the error
+          paymentInProgress.current = false;
           return;
         }
-        
+
+        paymentInProgress.current = false;
         setStatus('failed');
         // Razorpay error description - handle both PaymentFailureResponse and generic errors
         const errorMsg = error?.description || error?.reason || error?.message || 'Payment cancelled';
         setError(errorMsg);
-        
-        // If user cancelled, don't show as error - just go back
-        if (error?.reason === 'user_cancelled' || error?.code === 0) {
-          // User cancelled - navigate back after a short delay
-          setTimeout(() => {
-            navigation.goBack();
-          }, 1500);
-        }
       }
     };
 
@@ -455,6 +463,16 @@ const PaymentStatusScreen: React.FC = () => {
             <CustomText variant="h9" style={styles.amount}>
               Amount: ₹{paymentAction.amount / 100}
             </CustomText>
+            {RazorpayService.isTestMode() && (
+              <View style={[styles.testHintBox, { borderColor: colors.secondary }]}>
+                <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{ textAlign: 'center' }}>
+                  Test mode UPI
+                </CustomText>
+                <CustomText variant="h9" style={{ opacity: 0.8, textAlign: 'center', marginTop: 6 }}>
+                  In Razorpay checkout, enter UPI ID: success@razorpay (success) or failure@razorpay (fail)
+                </CustomText>
+              </View>
+            )}
           </>
         )}
 
@@ -523,6 +541,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: RFValue(18),
     fontFamily: Fonts.SemiBold,
+  },
+  testHintBox: {
+    marginTop: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    maxWidth: 320,
   },
   retryButton: {
     marginTop: 30,

@@ -19,6 +19,21 @@ class RazorpayService {
     }
 
     /**
+     * Returns the key id that will be used by default.
+     * Useful for UI hints (e.g., test mode instructions).
+     */
+    public getDefaultKeyId(): string {
+        return this.defaultKeyId;
+    }
+
+    /**
+     * Best-effort check for test mode based on key prefix.
+     */
+    public isTestMode(): boolean {
+        return (this.defaultKeyId || '').startsWith('rzp_test_');
+    }
+
+    /**
      * Open Razorpay checkout
      * @param options - Checkout options
      * @returns Promise resolving to payment success response
@@ -47,7 +62,7 @@ class RazorpayService {
             console.log('🔧 [RazorpayService] Opening checkout with options:', JSON.stringify(checkoutOptions, null, 2));
             console.log('🔑 [RazorpayService] Using Razorpay Key:', checkoutOptions.key);
             console.log('💰 [RazorpayService] Amount (paise):', checkoutOptions.amount);
-            console.log('💰 [RazorpayService] Amount (₹):', checkoutOptions.amount / 100);
+            console.log('💰 [RazorpayService] Amount (₹):', Number(checkoutOptions.amount) / 100);
             console.log('📋 [RazorpayService] Order ID:', checkoutOptions.order_id);
             console.log('👤 [RazorpayService] Prefill data:', JSON.stringify(checkoutOptions.prefill, null, 2));
 

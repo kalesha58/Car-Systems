@@ -141,8 +141,8 @@ export const verifyPaymentController = async (
       return;
     }
 
-    // Verify user owns the order
-    if (orderDoc.userId !== userId) {
+    // Verify user owns the order (handle ObjectId vs string safely)
+    if (String(orderDoc.userId) !== String(userId)) {
       res.status(403).json({
         success: false,
         Response: {

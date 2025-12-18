@@ -1,6 +1,6 @@
 import {Linking, Alert} from 'react-native';
-import {getOrderById} from '../orderService';
-import {appAxios} from '../apiInterceptors';
+import {getOrderById} from '../../service/orderService';
+import {appAxios} from '../../service/apiInterceptors';
 import {useAuthStore} from '../../state/authStore';
 
 export interface IPaymentAction {
@@ -130,12 +130,12 @@ export const handlePaymentSuccess = async (orderId: string, navigation: any) => 
       const { setCurrentOrder } = useAuthStore.getState();
       setCurrentOrder(orderData);
     }
-    // Navigate to order success screen
-    navigation.navigate('OrderSuccess', {orderId});
+    // Navigate to live tracking screen (uses currentOrder from store)
+    navigation.navigate('LiveTracking');
   } catch (error) {
     console.error('Error fetching order after payment:', error);
     // Still navigate even if fetch fails
-    navigation.navigate('OrderSuccess', {orderId});
+    navigation.navigate('LiveTracking');
   }
 };
 
