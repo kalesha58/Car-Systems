@@ -1,5 +1,18 @@
 import { DealerType, BusinessRegistrationStatus, IPayoutCredentials } from '../../models/BusinessRegistration';
 
+export interface IBusinessRegistrationPhoto {
+  url: string;
+  publicId?: string;
+}
+
+export interface IBusinessRegistrationDocumentFile {
+  kind: 'GST' | 'LICENSE' | 'ID' | 'PAN';
+  url: string;
+  publicId?: string;
+  mimeType?: string;
+  originalName?: string;
+}
+
 export interface IBusinessRegistration {
   id: string;
   businessName: string;
@@ -8,6 +21,8 @@ export interface IBusinessRegistration {
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos?: IBusinessRegistrationPhoto[];
+  documents?: IBusinessRegistrationDocumentFile[];
   status: BusinessRegistrationStatus;
   approvalCode?: string;
   userId: string;
@@ -22,6 +37,8 @@ export interface ICreateBusinessRegistrationRequest {
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos: IBusinessRegistrationPhoto[];
+  documents: IBusinessRegistrationDocumentFile[];
 }
 
 export interface IUpdateBusinessRegistrationRequest {
@@ -31,6 +48,8 @@ export interface IUpdateBusinessRegistrationRequest {
   phone?: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos?: IBusinessRegistrationPhoto[];
+  documents?: IBusinessRegistrationDocumentFile[];
 }
 
 export interface IUpdateBusinessRegistrationStatusRequest {

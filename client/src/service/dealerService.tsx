@@ -158,6 +158,19 @@ export interface IPayoutCredentials {
   };
 }
 
+export interface IBusinessRegistrationPhoto {
+  url: string;
+  publicId?: string;
+}
+
+export interface IBusinessRegistrationDocumentFile {
+  kind: 'GST' | 'LICENSE' | 'ID' | 'PAN';
+  url: string;
+  publicId?: string;
+  mimeType?: string;
+  originalName?: string;
+}
+
 export interface IBusinessRegistration {
   id: string;
   businessName: string;
@@ -166,6 +179,8 @@ export interface IBusinessRegistration {
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos?: IBusinessRegistrationPhoto[];
+  documents?: IBusinessRegistrationDocumentFile[];
   status: string;
   approvalCode?: string;
   userId: string;
@@ -264,6 +279,8 @@ export interface ICreateBusinessRegistrationRequest {
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos: IBusinessRegistrationPhoto[];
+  documents: IBusinessRegistrationDocumentFile[];
 }
 
 export const createBusinessRegistration = async (

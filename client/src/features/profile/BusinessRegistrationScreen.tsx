@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,7 +20,16 @@ import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropd
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
-import { createBusinessRegistration, updateBusinessRegistration, ICreateBusinessRegistrationRequest, IBusinessRegistration } from '@service/dealerService';
+import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { uploadImage } from '@service/postService';
+import {
+  createBusinessRegistration,
+  updateBusinessRegistration,
+  ICreateBusinessRegistrationRequest,
+  IBusinessRegistration,
+  IBusinessRegistrationDocumentFile,
+  IBusinessRegistrationPhoto,
+} from '@service/dealerService';
 import { resetAndNavigate, goBack } from '@utils/NavigationUtils';
 import { getCurrentLocationWithAddress } from '@utils/addressUtils';
 import { ILocationData } from '../../types/address/IAddress';
@@ -37,6 +48,8 @@ const PAYOUT_TYPES: IDropdownOption[] = [
   { label: 'UPI', value: 'UPI' },
   { label: 'Bank Account', value: 'BANK' },
 ];
+
+const MAX_SHOP_PHOTOS = 10;
 
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -68,6 +81,77 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [payoutTypeModalVisible, setPayoutTypeModalVisible] = useState(false);
+
+  const existingShopPhotos = useMemo(() => {
+    const urls = (registrationData?.shopPhotos || []).map(p => p?.url).filter(Boolean) as string[];
+    return urls;
+  }, [registrationData?.shopPhotos]);
+
+  const existingDocs = useMemo(() => {
+    const docs = registrationData?.documents || [];
+    const idDoc = docs.find(d => d.kind === 'ID')?.url || null;
+    const panDoc = docs.find(d => d.kind === 'PAN')?.url || null;
+    return { idDoc, panDoc };
+  }, [registrationData?.documents]);
+
+  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(existingShopPhotos);
+  const [idDocUri, setIdDocUri] = useState<string | null>(existingDocs.idDoc);
+  const [panDocUri, setPanDocUri] = useState<string | null>(existingDocs.panDoc);
+
+  const pickShopPhotos = () => {
+    if (shopPhotoUris.length >= MAX_SHOP_PHOTOS) {
+      Alert.alert(
+        t('dealer.limitReached') || 'Limit Reached',
+        t('dealer.maxImagesReached', { max: MAX_SHOP_PHOTOS }) ||
+          `You can add up to ${MAX_SHOP_PHOTOS} images`,
+      );
+      return;
+    }
+
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: MAX_SHOP_PHOTOS - shopPhotoUris.length,
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel || response.errorCode) return;
+        const selected = response.assets || [];
+        if (selected.length < 1) return;
+        const newUris = selected.map(a => a.uri || '').filter(Boolean);
+        if (newUris.length < 1) return;
+        setShopPhotoUris(prev => [...prev, ...newUris].slice(0, MAX_SHOP_PHOTOS));
+      },
+    );
+  };
+
+  const pickSingleDoc = (target: 'ID' | 'PAN') => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: 1,
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel || response.errorCode) return;
+        const uri = response.assets?.[0]?.uri;
+        if (!uri) return;
+        if (target === 'ID') setIdDocUri(uri);
+        if (target === 'PAN') setPanDocUri(uri);
+      },
+    );
+  };
+
+  const removeShopPhoto = (index: number) => {
+    setShopPhotoUris(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearDoc = (target: 'ID' | 'PAN') => {
+    if (target === 'ID') setIdDocUri(null);
+    if (target === 'PAN') setPanDocUri(null);
+  };
 
   const getSelectedTypeLabel = () => {
     if (!type) return t('dealer.selectBusinessType') || 'Select Business Type';
@@ -157,7 +241,10 @@ const BusinessRegistrationScreen: React.FC = () => {
     address.trim() &&
     phone.trim() &&
     isValidPhone(phone) &&
-    isPayoutValid();
+    isPayoutValid() &&
+    shopPhotoUris.length > 0 &&
+    !!idDocUri &&
+    !!panDocUri;
 
   const handleSubmit = async () => {
     if (!businessName.trim()) {
@@ -178,6 +265,19 @@ const BusinessRegistrationScreen: React.FC = () => {
     }
     if (!isValidPhone(phone)) {
       showError(t('dealer.phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)');
+      return;
+    }
+
+    if (shopPhotoUris.length < 1) {
+      showError(t('dealer.shopPhotosRequired') || 'At least one shop photo is required');
+      return;
+    }
+    if (!idDocUri) {
+      showError(t('dealer.idDocumentRequired') || 'Document ID is required');
+      return;
+    }
+    if (!panDocUri) {
+      showError(t('dealer.panCardRequired') || 'PAN card is required');
       return;
     }
 
@@ -215,6 +315,21 @@ const BusinessRegistrationScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
+      const uploadIfNeeded = async (uri: string): Promise<string> => {
+        if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
+        return await uploadImage(uri);
+      };
+
+      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = [];
+      for (const uri of shopPhotoUris) {
+        const url = await uploadIfNeeded(uri);
+        uploadedShopPhotos.push({ url });
+      }
+
+      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
+      uploadedDocuments.push({ kind: 'ID', url: await uploadIfNeeded(idDocUri) });
+      uploadedDocuments.push({ kind: 'PAN', url: await uploadIfNeeded(panDocUri) });
+
       // Prepare payout object if payout type is selected
       let payoutData: any = undefined;
       if (payoutType === 'UPI') {
@@ -240,6 +355,8 @@ const BusinessRegistrationScreen: React.FC = () => {
         phone: phone.trim(),
         gst: gst.trim() || undefined,
         payout: payoutData,
+        shopPhotos: uploadedShopPhotos,
+        documents: uploadedDocuments,
       };
 
       if (isEdit && registrationData?.id) {
@@ -432,6 +549,65 @@ const BusinessRegistrationScreen: React.FC = () => {
       flex: 1,
       opacity: 0.8,
     },
+    imagesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: screenWidth * 0.02,
+      marginTop: screenHeight * 0.01,
+    },
+    imageWrapper: {
+      position: 'relative',
+      width: screenWidth * 0.25,
+      height: screenWidth * 0.25,
+      borderRadius: 8,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    removeImageButton: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      borderRadius: 12,
+      width: 24,
+      height: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    docRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.cardBackground,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.012,
+      gap: screenWidth * 0.02,
+    },
+    docLeft: {
+      flex: 1,
+      gap: 4,
+    },
+    docTitle: {
+      fontSize: RFValue(9),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+    },
+    docSub: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.text,
+      opacity: 0.7,
+    },
   });
 
   return (
@@ -621,6 +797,104 @@ const BusinessRegistrationScreen: React.FC = () => {
             </View>
           </>
         )}
+
+        {/* Shop Photos */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            {t('dealer.shopPhotos') || 'Shop Photos'} *
+          </CustomText>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              pickShopPhotos();
+            }}
+            disabled={isSubmitting}>
+            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
+            <CustomText style={styles.buttonText}>
+              {(t('dealer.addImages') || 'Add Images') + ` (${shopPhotoUris.length}/${MAX_SHOP_PHOTOS})`}
+            </CustomText>
+          </TouchableOpacity>
+          {shopPhotoUris.length > 0 && (
+            <View style={styles.imagesContainer}>
+              {shopPhotoUris.map((uri, index) => (
+                <View key={`${uri}_${index}`} style={styles.imageWrapper}>
+                  <Image source={{ uri }} style={styles.image} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => removeShopPhoto(index)}
+                    disabled={isSubmitting}>
+                    <Icon name="close" size={RFValue(12)} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Documents */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            {t('dealer.documents') || 'Documents'} *
+          </CustomText>
+
+          <View style={{ gap: screenHeight * 0.012 }}>
+            {/* Document ID */}
+            <TouchableOpacity
+              style={styles.docRow}
+              onPress={() => pickSingleDoc('ID')}
+              disabled={isSubmitting}>
+              <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
+              <View style={styles.docLeft}>
+                <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'}</CustomText>
+                <CustomText style={styles.docSub} numberOfLines={1}>
+                  {idDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                </CustomText>
+              </View>
+              {idDocUri ? (
+                <TouchableOpacity onPress={() => clearDoc('ID')} disabled={isSubmitting}>
+                  <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                </TouchableOpacity>
+              ) : (
+                <Icon name="chevron-forward" size={RFValue(18)} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+            {idDocUri && (
+              <View style={styles.imagesContainer}>
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: idDocUri }} style={styles.image} />
+                </View>
+              </View>
+            )}
+
+            {/* PAN Card */}
+            <TouchableOpacity
+              style={styles.docRow}
+              onPress={() => pickSingleDoc('PAN')}
+              disabled={isSubmitting}>
+              <Icon name="id-card-outline" size={RFValue(16)} color={colors.text} />
+              <View style={styles.docLeft}>
+                <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'}</CustomText>
+                <CustomText style={styles.docSub} numberOfLines={1}>
+                  {panDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                </CustomText>
+              </View>
+              {panDocUri ? (
+                <TouchableOpacity onPress={() => clearDoc('PAN')} disabled={isSubmitting}>
+                  <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                </TouchableOpacity>
+              ) : (
+                <Icon name="chevron-forward" size={RFValue(18)} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+            {panDocUri && (
+              <View style={styles.imagesContainer}>
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: panDocUri }} style={styles.image} />
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
       {/* Sticky Button Container */}

@@ -260,7 +260,21 @@
     "invalidIFSC": "చెల్లని IFSC కోడ్ ఫార్మాట్ (ఉదా: HDFC0001234)",
     "submitRegistration": "నమోదును సమర్పించండి",
     "businessRegistrationSubmitted": "వ్యాపార నమోదు విజయవంతంగా సమర్పించబడింది. మీ అభ్యర్థన నిర్వాహక ఆమోదం కోసం పెండింగ్‌లో ఉంది.",
-    "failedToSubmitRegistration": "వ్యాపార నమోదును సమర్పించడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి."
+    "failedToSubmitRegistration": "వ్యాపార నమోదును సమర్పించడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+    "shopPhotos": "దుకాణం ఫోటోలు",
+    "documents": "పత్రాలు",
+    "uploadGST": "GST పత్రాన్ని అప్‌లోడ్ చేయండి",
+    "uploadLicense": "లైసెన్స్ పత్రాన్ని అప్‌లోడ్ చేయండి",
+    "uploadIdProof": "ఐడి ప్రూఫ్ అప్‌లోడ్ చేయండి",
+    "uploadPanCard": "PAN కార్డ్ అప్‌లోడ్ చేయండి",
+    "documentId": "డాక్యుమెంట్ ఐడి",
+    "panCard": "PAN కార్డ్",
+    "tapToUpload": "అప్‌లోడ్ చేయడానికి ట్యాప్ చేయండి",
+    "tapToChange": "మార్చడానికి ట్యాప్ చేయండి",
+    "shopPhotosRequired": "కనీసం ఒక దుకాణం ఫోటో అవసరం",
+    "idDocumentRequired": "డాక్యుమెంట్ ఐడి అవసరం",
+    "panCardRequired": "PAN కార్డ్ అవసరం",
+    "uploading": "అప్‌లోడ్ అవుతోంది... దయచేసి వేచి ఉండండి"
   },
   "search": {
     "engineOil": "\"ఇంజిన్ ఆయిల్\" శోధించండి",

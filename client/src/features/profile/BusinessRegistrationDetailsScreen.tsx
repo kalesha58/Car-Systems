@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -136,7 +136,59 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         headerButton: {
             padding: 8,
-        }
+        },
+        sectionTitle: {
+            fontSize: RFValue(12),
+            fontFamily: Fonts.SemiBold,
+            color: colors.text,
+            marginBottom: 10,
+        },
+        imagesContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 10,
+            marginTop: 8,
+        },
+        imageWrapper: {
+            width: screenWidth * 0.25,
+            height: screenWidth * 0.25,
+            borderRadius: 8,
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: colors.border,
+        },
+        image: {
+            width: '100%',
+            height: '100%',
+            resizeMode: 'cover',
+        },
+        docRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 10,
+            paddingHorizontal: 12,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.cardBackground,
+            marginTop: 10,
+            gap: 10,
+        },
+        docLeft: {
+            flex: 1,
+        },
+        docTitle: {
+            fontSize: RFValue(10),
+            fontFamily: Fonts.Medium,
+            color: colors.text,
+        },
+        docSub: {
+            fontSize: RFValue(8),
+            fontFamily: Fonts.Regular,
+            color: colors.textSecondary,
+            marginTop: 2,
+        },
     });
 
     const RightHeaderComponent = () => (
@@ -235,6 +287,51 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                                         </View>
                                     </>
                                 )}
+                            </>
+                        )}
+
+                        {/* Shop Photos */}
+                        {Array.isArray((registration as any).shopPhotos) && (registration as any).shopPhotos.length > 0 && (
+                            <>
+                                <View style={styles.divider} />
+                                <CustomText style={styles.sectionTitle}>{t('dealer.shopPhotos') || 'Shop Photos'}</CustomText>
+                                <View style={styles.imagesContainer}>
+                                    {(registration as any).shopPhotos.map((p: any, idx: number) => (
+                                        <View key={`${p?.url}_${idx}`} style={styles.imageWrapper}>
+                                            <Image source={{ uri: p?.url }} style={styles.image} />
+                                        </View>
+                                    ))}
+                                </View>
+                            </>
+                        )}
+
+                        {/* Documents */}
+                        {Array.isArray((registration as any).documents) && (registration as any).documents.length > 0 && (
+                            <>
+                                <View style={styles.divider} />
+                                <CustomText style={styles.sectionTitle}>{t('dealer.documents') || 'Documents'}</CustomText>
+                                {(registration as any).documents.map((d: any, idx: number) => (
+                                    <TouchableOpacity
+                                        key={`${d?.kind}_${d?.url}_${idx}`}
+                                        style={styles.docRow}
+                                        onPress={() => d?.url && Linking.openURL(d.url)}
+                                    >
+                                        <Icon
+                                            name={d?.mimeType === 'application/pdf' ? 'document-outline' : 'image-outline'}
+                                            size={RFValue(18)}
+                                            color={colors.text}
+                                        />
+                                        <View style={styles.docLeft}>
+                                            <CustomText style={styles.docTitle}>
+                                                {(d?.kind || 'DOC') + (d?.originalName ? ` — ${d.originalName}` : '')}
+                                            </CustomText>
+                                            <CustomText style={styles.docSub} numberOfLines={1}>
+                                                {d?.url}
+                                            </CustomText>
+                                        </View>
+                                        <Icon name="open-outline" size={RFValue(18)} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                ))}
                             </>
                         )}
 

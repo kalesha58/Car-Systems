@@ -22,6 +22,8 @@ export const businessRegistrationToInterface = (
     phone: doc.phone,
     gst: doc.gst,
     payout: doc.payout,
+    shopPhotos: (doc as any).shopPhotos,
+    documents: (doc as any).documents,
     status: doc.status,
     approvalCode: doc.approvalCode,
     userId: doc.userId,
@@ -102,6 +104,14 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
+    // Validate required uploads (shop photos + documents)
+    if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
+      throw new AppError('At least one shop photo is required', 400);
+    }
+    if (!Array.isArray((data as any).documents) || (data as any).documents.length < 1) {
+      throw new AppError('At least one document is required', 400);
+    }
+
     // Validate payout information if provided
     if (data.payout) {
       if (!data.payout.type || !['UPI', 'BANK'].includes(data.payout.type)) {
@@ -166,6 +176,8 @@ export const createBusinessRegistration = async (
       phone: data.phone.trim(),
       gst: data.gst?.trim() || undefined,
       payout: payoutData,
+      shopPhotos: (data as any).shopPhotos,
+      documents: (data as any).documents,
       status: 'pending', // Requires admin approval
       userId,
     });
@@ -231,6 +243,22 @@ export const updateBusinessRegistration = async (
 
     if (data.gst !== undefined) {
       registration.gst = data.gst?.trim() || undefined;
+    }
+
+    if ((data as any).shopPhotos !== undefined) {
+      const photos = (data as any).shopPhotos;
+      if (!Array.isArray(photos) || photos.length < 1) {
+        throw new AppError('At least one shop photo is required', 400);
+      }
+      (registration as any).shopPhotos = photos;
+    }
+
+    if ((data as any).documents !== undefined) {
+      const docs = (data as any).documents;
+      if (!Array.isArray(docs) || docs.length < 1) {
+        throw new AppError('At least one document is required', 400);
+      }
+      (registration as any).documents = docs;
     }
 
     // Handle payout update

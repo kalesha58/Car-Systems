@@ -280,7 +280,21 @@
     "payoutDetails": "Payout Details",
     "registeredOn": "Registered On",
     "noRegistration": "No business registration found",
-    "registerBusiness": "Register Business"
+    "registerBusiness": "Register Business",
+    "shopPhotos": "Shop Photos",
+    "documents": "Documents",
+    "uploadGST": "Upload GST Document",
+    "uploadLicense": "Upload License Document",
+    "uploadIdProof": "Upload ID Proof",
+    "uploadPanCard": "Upload PAN Card",
+    "documentId": "Document ID",
+    "panCard": "PAN Card",
+    "tapToUpload": "Tap to upload",
+    "tapToChange": "Tap to change",
+    "shopPhotosRequired": "At least one shop photo is required",
+    "idDocumentRequired": "Document ID is required",
+    "panCardRequired": "PAN card is required",
+    "uploading": "Uploading... Please wait"
   },
   "search": {
     "engineOil": "Search \"engine oil\"",
