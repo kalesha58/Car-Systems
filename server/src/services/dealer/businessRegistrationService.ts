@@ -1,4 +1,5 @@
 import { BusinessRegistration, IBusinessRegistrationDocument } from '../../models/BusinessRegistration';
+import { SignUp } from '../../models/SignUp';
 import {
   IBusinessRegistration,
   ICreateBusinessRegistrationRequest,
@@ -7,6 +8,7 @@ import {
 } from '../../types/dealer/businessRegistration';
 import { NotFoundError, ConflictError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
+import { sendBusinessRegistrationSubmittedEmail } from '../../utils/emailService';
 
 /**
  * Convert business registration document to interface
@@ -185,6 +187,34 @@ export const createBusinessRegistration = async (
     await registration.save();
 
     logger.info(`Business registration created with pending status for user: ${userId}`);
+
+    // Send confirmation email (do not fail registration if email fails)
+    try {
+      const user = await SignUp.findById(userId).select('name email');
+      // Primary recipient: configured notify email (or fallback to user email)
+      const notifyEmail =
+        process.env.BUSINESS_REGISTRATION_NOTIFY_EMAIL || 'kaleshabox8@gmail.com';
+
+      const recipients = new Set<string>();
+      if (user?.email) recipients.add(user.email);
+      if (notifyEmail) recipients.add(notifyEmail);
+
+      if (recipients.size > 0) {
+        await Promise.all(
+          Array.from(recipients).map((to) =>
+            sendBusinessRegistrationSubmittedEmail(to, {
+              name: user?.name,
+              businessName: registration.businessName,
+              submittedAt: registration.createdAt,
+            }),
+          ),
+        );
+      } else {
+        logger.warn(`Skipping business registration email: user email not found for userId=${userId}`);
+      }
+    } catch (emailError) {
+      logger.error('Failed to send business registration submitted email:', emailError);
+    }
 
     return businessRegistrationToInterface(registration);
   } catch (error) {

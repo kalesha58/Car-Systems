@@ -282,6 +282,8 @@ const Navigation: FC = () => {
               'AddEditProduct',
               'AddEditVehicle',
               'AddEditService',
+              'BusinessRegistration',
+              'BusinessRegistrationDetails',
             ];
             const isDealerScreen = dealerScreens.includes(currentRouteName) || currentRouteName.includes('Dealer');
 

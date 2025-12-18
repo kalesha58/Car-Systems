@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,6 +22,7 @@ import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
 import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { uploadImage } from '@service/postService';
+import { storage } from '@state/storage';
 import {
   createBusinessRegistration,
   updateBusinessRegistration,
@@ -50,6 +51,7 @@ const PAYOUT_TYPES: IDropdownOption[] = [
 ];
 
 const MAX_SHOP_PHOTOS = 10;
+const BR_DRAFT_STORAGE_KEY = 'business-registration:draft:v1';
 
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -59,23 +61,75 @@ const BusinessRegistrationScreen: React.FC = () => {
   const { t } = useTranslation();
 
   const { isEdit, registrationData } = route.params || {};
+  const draft = (route.params as any)?.draft as
+    | {
+        businessName?: string;
+        type?: string;
+        address?: string;
+        phone?: string;
+        gst?: string;
+        payoutType?: 'UPI' | 'BANK' | '';
+        upiId?: string;
+        accountNumber?: string;
+        ifsc?: string;
+        accountName?: string;
+        shopPhotoUris?: string[];
+        idDocUri?: string | null;
+        panDocUri?: string | null;
+      }
+    | undefined;
 
-  const [businessName, setBusinessName] = useState(registrationData?.businessName || '');
-  const [type, setType] = useState(registrationData?.type || '');
-  const [address, setAddress] = useState(registrationData?.address || '');
-  const [phone, setPhone] = useState(registrationData?.phone || '');
-  const [gst, setGst] = useState(registrationData?.gst || '');
+  // Use a ref (instead of useMemo) so Fast Refresh is less likely to complain
+  // about hook order changes while we iterate on this screen.
+  const mmkvDraftRef = useRef<any>(undefined);
+  if (mmkvDraftRef.current === undefined) {
+    try {
+      const raw = storage.getString(BR_DRAFT_STORAGE_KEY);
+      mmkvDraftRef.current = raw ? JSON.parse(raw) : null;
+    } catch {
+      mmkvDraftRef.current = null;
+    }
+  }
+
+  // Debug: track remounts & params
+  const screenInstanceIdRef = useRef(`BR_${Date.now()}_${Math.floor(Math.random() * 10000)}`);
+  useEffect(() => {
+    console.log('[BusinessRegistrationScreen] mount', {
+      instanceId: screenInstanceIdRef.current,
+      isEdit: !!isEdit,
+      hasRegistrationData: !!registrationData,
+      hasDraft: !!draft,
+      draftKeys: draft ? Object.keys(draft) : [],
+      hasMmkvDraft: !!mmkvDraftRef.current,
+      mmkvDraftKeys: mmkvDraftRef.current ? Object.keys(mmkvDraftRef.current) : [],
+    });
+    return () => {
+      console.log('[BusinessRegistrationScreen] unmount', {
+        instanceId: screenInstanceIdRef.current,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initialDraft = (draft ?? mmkvDraftRef.current ?? {}) as any;
+  const [businessName, setBusinessName] = useState(initialDraft?.businessName ?? registrationData?.businessName ?? '');
+  const [type, setType] = useState(initialDraft?.type ?? registrationData?.type ?? '');
+  const [address, setAddress] = useState(initialDraft?.address ?? registrationData?.address ?? '');
+  const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? '');
+  const [gst, setGst] = useState(initialDraft?.gst ?? registrationData?.gst ?? '');
 
   // Initialize payout details
   const initialPayoutType = registrationData?.payout?.type || '';
   const initialUpiId = registrationData?.payout?.upiId || '';
   const initialBank = registrationData?.payout?.bank;
 
-  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>((initialPayoutType as any) || '');
-  const [upiId, setUpiId] = useState(initialUpiId);
-  const [accountNumber, setAccountNumber] = useState(initialBank?.accountNumber || '');
-  const [ifsc, setIfsc] = useState(initialBank?.ifsc || '');
-  const [accountName, setAccountName] = useState(initialBank?.accountName || '');
+  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>(
+    (initialDraft?.payoutType ?? ((initialPayoutType as any) || '')) as any,
+  );
+  const [upiId, setUpiId] = useState(initialDraft?.upiId ?? initialUpiId);
+  const [accountNumber, setAccountNumber] = useState(initialDraft?.accountNumber ?? (initialBank?.accountNumber || ''));
+  const [ifsc, setIfsc] = useState(initialDraft?.ifsc ?? (initialBank?.ifsc || ''));
+  const [accountName, setAccountName] = useState(initialDraft?.accountName ?? (initialBank?.accountName || ''));
   const [location, setLocation] = useState<ILocationData | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,11 +148,80 @@ const BusinessRegistrationScreen: React.FC = () => {
     return { idDoc, panDoc };
   }, [registrationData?.documents]);
 
-  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(existingShopPhotos);
-  const [idDocUri, setIdDocUri] = useState<string | null>(existingDocs.idDoc);
-  const [panDocUri, setPanDocUri] = useState<string | null>(existingDocs.panDoc);
+  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(initialDraft?.shopPhotoUris ?? existingShopPhotos);
+  const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
+  const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
+
+  const persistDraft = () => {
+    const payload = {
+      businessName,
+      type,
+      address,
+      phone,
+      gst,
+      payoutType,
+      upiId,
+      accountNumber,
+      ifsc,
+      accountName,
+      shopPhotoUris,
+      idDocUri,
+      panDocUri,
+    };
+
+    // 1) MMKV (survives activity recreation)
+    try {
+      storage.set(BR_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
+
+    // 2) Nav params (helps within navigation state)
+    try {
+      (navigation as any).setParams({ draft: payload });
+    } catch {}
+
+    console.log('[BusinessRegistrationScreen] persistDraft', {
+      instanceId: screenInstanceIdRef.current,
+      shopPhotosCount: shopPhotoUris.length,
+      hasIdDoc: !!idDocUri,
+      hasPanDoc: !!panDocUri,
+    });
+  };
+
+  // Persist draft to navigation params so if Android recreates the activity/screen
+  // after opening the gallery, we can restore the form instead of resetting to empty.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    persistDraft();
+  }, [
+    navigation,
+    businessName,
+    type,
+    address,
+    phone,
+    gst,
+    payoutType,
+    upiId,
+    accountNumber,
+    ifsc,
+    accountName,
+    shopPhotoUris,
+    idDocUri,
+    panDocUri,
+  ]);
 
   const pickShopPhotos = () => {
+    // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
+    persistDraft();
+    console.log('[BusinessRegistrationScreen] pickShopPhotos', {
+      instanceId: screenInstanceIdRef.current,
+      currentCount: shopPhotoUris.length,
+      max: MAX_SHOP_PHOTOS,
+    });
     if (shopPhotoUris.length >= MAX_SHOP_PHOTOS) {
       Alert.alert(
         t('dealer.limitReached') || 'Limit Reached',
@@ -116,6 +239,13 @@ const BusinessRegistrationScreen: React.FC = () => {
         selectionLimit: MAX_SHOP_PHOTOS - shopPhotoUris.length,
       },
       (response: ImagePickerResponse) => {
+        console.log('[BusinessRegistrationScreen] pickShopPhotos callback', {
+          instanceId: screenInstanceIdRef.current,
+          didCancel: response.didCancel,
+          errorCode: response.errorCode,
+          errorMessage: response.errorMessage,
+          assetsCount: response.assets?.length || 0,
+        });
         if (response.didCancel || response.errorCode) return;
         const selected = response.assets || [];
         if (selected.length < 1) return;
@@ -127,6 +257,12 @@ const BusinessRegistrationScreen: React.FC = () => {
   };
 
   const pickSingleDoc = (target: 'ID' | 'PAN') => {
+    // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
+    persistDraft();
+    console.log('[BusinessRegistrationScreen] pickSingleDoc', {
+      instanceId: screenInstanceIdRef.current,
+      target,
+    });
     launchImageLibrary(
       {
         mediaType: 'photo',
@@ -135,6 +271,15 @@ const BusinessRegistrationScreen: React.FC = () => {
         selectionLimit: 1,
       },
       (response: ImagePickerResponse) => {
+        console.log('[BusinessRegistrationScreen] pickSingleDoc callback', {
+          instanceId: screenInstanceIdRef.current,
+          target,
+          didCancel: response.didCancel,
+          errorCode: response.errorCode,
+          errorMessage: response.errorMessage,
+          assetsCount: response.assets?.length || 0,
+          firstUri: response.assets?.[0]?.uri,
+        });
         if (response.didCancel || response.errorCode) return;
         const uri = response.assets?.[0]?.uri;
         if (!uri) return;
@@ -362,6 +507,9 @@ const BusinessRegistrationScreen: React.FC = () => {
       if (isEdit && registrationData?.id) {
         await updateBusinessRegistration(registrationData.id, data);
         showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
+        try {
+          storage.delete(BR_DRAFT_STORAGE_KEY);
+        } catch {}
         goBack();
       } else {
         const registration = await createBusinessRegistration(data);
@@ -370,6 +518,9 @@ const BusinessRegistrationScreen: React.FC = () => {
           status: registration.status
         });
         showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
+        try {
+          storage.delete(BR_DRAFT_STORAGE_KEY);
+        } catch {}
 
         // Navigate based on context
         if (registration.status === 'pending' || registration.status === 'approved') {
