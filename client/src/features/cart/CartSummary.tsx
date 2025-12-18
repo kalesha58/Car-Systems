@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, Image, TouchableOpacity, Dimensions} from 'react-native';
+import {View, StyleSheet, Image, TouchableOpacity, Dimensions} from 'react-native';
 import React, {FC} from 'react';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Colors, Fonts} from '@utils/Constants';
@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {navigate} from '@utils/NavigationUtils';
 import {useNavigation} from '@react-navigation/native';
+import {useTheme} from '@hooks/useTheme';
 
 interface CartSummaryProps {
   cartCount: number;
@@ -15,6 +16,7 @@ interface CartSummaryProps {
 
 const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
   const navigation = useNavigation();
+  const {colors} = useTheme();
   
   // Responsive calculations
   const windowWidth = Dimensions.get('window').width;
@@ -72,6 +74,9 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
       paddingHorizontal: containerPadding,
       paddingBottom: getResponsiveValue(windowHeight * 0.03, windowHeight * 0.025, windowHeight * 0.02),
       paddingTop: getResponsiveValue(windowHeight * 0.014, windowHeight * 0.016, windowHeight * 0.018),
+      backgroundColor: colors.cardBackground,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
       ...(isDesktop && {
         maxWidth: 1200,
         alignSelf: 'center',
