@@ -29,7 +29,6 @@ import EmptyState from '@components/common/EmptyState/EmptyState';
 import StatCard from '@components/common/StatCard/StatCard';
 import ProfitCard from '@components/common/ProfitCard/ProfitCard';
 import WelcomeHeader from '@components/common/WelcomeHeader/WelcomeHeader';
-import FloatingChatButton from '@components/common/FloatingChatButton/FloatingChatButton';
 import { useTranslation } from 'react-i18next';
 import {
   formatCurrency,
@@ -307,8 +306,6 @@ const DealerDashboard: React.FC = () => {
 
   const pendingOrdersCount = useMemo(() => orderStats?.pending || 0, [orderStats]);
 
-  const isEligibleForMarketplace = businessRegistration?.type === 'Automobile Showroom' || businessRegistration?.type === 'Spare Parts Dealer';
-
   // Redirect to business registration only if no registration exists OR status is rejected
   // Allow access if registration exists (even if pending)
   useEffect(() => {
@@ -326,10 +323,6 @@ const DealerDashboard: React.FC = () => {
 
   const handleViewAllOrders = () => {
     (navigation as any).navigate('DealerTabs', { screen: 'Orders' });
-  };
-
-  const handleLaunchDealerCentral = () => {
-    (navigation as any).navigate('DealerTabs', { screen: 'Inventory' });
   };
 
   if (isLoadingDealer) {
@@ -657,35 +650,11 @@ const DealerDashboard: React.FC = () => {
                     </View>
                   )}
 
-                  {/* Dealer Central Marketplace Link */}
-                  {isEligibleForMarketplace && (
-                    <View style={[styles.dealerCentralSection, { backgroundColor: theme.secondary + '15' }]}>
-                      <View style={styles.dealerCentralHeader}>
-                        <IconIonicons name="storefront-outline" size={32} color={theme.secondary} />
-                        <View style={styles.dealerCentralInfo}>
-                          <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.dealerCentralTitle, { color: theme.text }]}>
-                            {t('dealer.dealerCentral') || 'Dealer Central'}
-                          </CustomText>
-                          <CustomText variant="h8" style={[styles.dealerCentralSubtitle, { color: theme.textSecondary }]}>
-                            {t('dealer.dealerCentralDescription') || 'Manage your inventory and products from one place'}
-                          </CustomText>
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={[styles.dealerCentralButton, { backgroundColor: theme.secondary }]}
-                        onPress={handleLaunchDealerCentral}>
-                        <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: theme.white, textAlign: 'center' }}>
-                          {t('dealer.launchDealerCentral') || 'Launch Dealer Central'}
-                        </CustomText>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </>
               )}
             </View>
           </CollapsibleScrollView>
         </CollapsibleContainer>
-        <FloatingChatButton />
       </>
     </NoticeAnimation>
   );
@@ -825,34 +794,6 @@ const styles = StyleSheet.create({
   },
   inventoryCardIcon: {
     marginBottom: 8,
-  },
-  dealerCentralSection: {
-    marginBottom: 16,
-    padding: 20,
-    borderRadius: 12,
-  },
-  dealerCentralHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  dealerCentralInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  dealerCentralTitle: {
-    fontSize: RFValue(18),
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  dealerCentralSubtitle: {
-    fontSize: RFValue(14),
-  },
-  dealerCentralButton: {
-    marginTop: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
   },
 });
 

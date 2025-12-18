@@ -5,6 +5,7 @@ import CustomText from '@components/ui/CustomText';
 import ProfileMenuItem from './ProfileMenuItem';
 import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
+import { navigate } from '@utils/NavigationUtils';
 
 const FeedbackSection: FC = () => {
   const {t} = useTranslation();
@@ -47,6 +48,13 @@ const FeedbackSection: FC = () => {
       </CustomText>
 
       <View style={styles.menuContainer}>
+        <ProfileMenuItem
+          icon="chatbubble-ellipses-outline"
+          label={t('profile.metAI') || 'MetAI'}
+          onPress={() => {
+            navigate('MetAIChat');
+          }}
+        />
         <ProfileMenuItem
           icon="document-text-outline"
           label={t('profile.termsPolicies')}

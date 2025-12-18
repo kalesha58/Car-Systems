@@ -8,19 +8,38 @@ cloudinary.config({
 });
 
 /**
- * Upload image to Cloudinary
+ * Upload file to Cloudinary
  * @param filePathOrBuffer - Path to the file (from multer disk storage) or Buffer (from memory storage)
  * @param folder - Optional folder name in Cloudinary
+ * @param options - Upload options (e.g. resourceType)
  * @returns Promise with upload result
  */
 export const uploadToCloudinary = async (
   filePathOrBuffer: string | Buffer,
   folder: string = 'car-connect/posts',
+  options?: {
+    /**
+     * Cloudinary resource_type:
+     * - 'image' for images (enables image transformations)
+     * - 'auto' for mixed uploads (e.g. PDFs)
+     */
+    resourceType?: 'image' | 'auto';
+  },
 ): Promise<{ url: string; publicId: string }> => {
   try {
     // If it's a Buffer (memory storage), upload using upload_stream
     // If it's a string (disk storage), upload using file path
     let result;
+    const resourceType = options?.resourceType ?? 'image';
+    const transformation =
+      resourceType === 'image'
+        ? [
+            {
+              quality: 'auto',
+              fetch_format: 'auto',
+            },
+          ]
+        : undefined;
     
     if (Buffer.isBuffer(filePathOrBuffer)) {
       // Memory storage - upload from buffer
@@ -28,13 +47,8 @@ export const uploadToCloudinary = async (
         const uploadStream = cloudinary.uploader.upload_stream(
           {
             folder,
-            resource_type: 'image',
-            transformation: [
-              {
-                quality: 'auto',
-                fetch_format: 'auto',
-              },
-            ],
+            resource_type: resourceType,
+            transformation,
           },
           (error, result) => {
             if (error) reject(error);
@@ -47,13 +61,8 @@ export const uploadToCloudinary = async (
       // Disk storage - upload from file path
       result = await cloudinary.uploader.upload(filePathOrBuffer, {
         folder,
-        resource_type: 'image',
-        transformation: [
-          {
-            quality: 'auto',
-            fetch_format: 'auto',
-          },
-        ],
+        resource_type: resourceType,
+        transformation,
       });
     }
 
@@ -63,7 +72,7 @@ export const uploadToCloudinary = async (
     };
   } catch (error) {
     logger.error('Cloudinary upload error:', error);
-    throw new Error('Failed to upload image to Cloudinary');
+    throw new Error('Failed to upload file to Cloudinary');
   }
 };
 

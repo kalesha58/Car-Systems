@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -18,7 +20,17 @@ import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropd
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
-import { createBusinessRegistration, updateBusinessRegistration, ICreateBusinessRegistrationRequest, IBusinessRegistration } from '@service/dealerService';
+import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { uploadImage } from '@service/postService';
+import { storage } from '@state/storage';
+import {
+  createBusinessRegistration,
+  updateBusinessRegistration,
+  ICreateBusinessRegistrationRequest,
+  IBusinessRegistration,
+  IBusinessRegistrationDocumentFile,
+  IBusinessRegistrationPhoto,
+} from '@service/dealerService';
 import { resetAndNavigate, goBack } from '@utils/NavigationUtils';
 import { getCurrentLocationWithAddress } from '@utils/addressUtils';
 import { ILocationData } from '../../types/address/IAddress';
@@ -38,6 +50,9 @@ const PAYOUT_TYPES: IDropdownOption[] = [
   { label: 'Bank Account', value: 'BANK' },
 ];
 
+const MAX_SHOP_PHOTOS = 10;
+const BR_DRAFT_STORAGE_KEY = 'business-registration:draft:v1';
+
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{ params: { isEdit?: boolean; registrationData?: IBusinessRegistration } }, 'params'>>();
@@ -46,28 +61,242 @@ const BusinessRegistrationScreen: React.FC = () => {
   const { t } = useTranslation();
 
   const { isEdit, registrationData } = route.params || {};
+  const draft = (route.params as any)?.draft as
+    | {
+        businessName?: string;
+        type?: string;
+        address?: string;
+        phone?: string;
+        gst?: string;
+        payoutType?: 'UPI' | 'BANK' | '';
+        upiId?: string;
+        accountNumber?: string;
+        ifsc?: string;
+        accountName?: string;
+        shopPhotoUris?: string[];
+        idDocUri?: string | null;
+        panDocUri?: string | null;
+      }
+    | undefined;
 
-  const [businessName, setBusinessName] = useState(registrationData?.businessName || '');
-  const [type, setType] = useState(registrationData?.type || '');
-  const [address, setAddress] = useState(registrationData?.address || '');
-  const [phone, setPhone] = useState(registrationData?.phone || '');
-  const [gst, setGst] = useState(registrationData?.gst || '');
+  // Use a ref (instead of useMemo) so Fast Refresh is less likely to complain
+  // about hook order changes while we iterate on this screen.
+  const mmkvDraftRef = useRef<any>(undefined);
+  if (mmkvDraftRef.current === undefined) {
+    try {
+      const raw = storage.getString(BR_DRAFT_STORAGE_KEY);
+      mmkvDraftRef.current = raw ? JSON.parse(raw) : null;
+    } catch {
+      mmkvDraftRef.current = null;
+    }
+  }
+
+  // Debug: track remounts & params
+  const screenInstanceIdRef = useRef(`BR_${Date.now()}_${Math.floor(Math.random() * 10000)}`);
+  useEffect(() => {
+    console.log('[BusinessRegistrationScreen] mount', {
+      instanceId: screenInstanceIdRef.current,
+      isEdit: !!isEdit,
+      hasRegistrationData: !!registrationData,
+      hasDraft: !!draft,
+      draftKeys: draft ? Object.keys(draft) : [],
+      hasMmkvDraft: !!mmkvDraftRef.current,
+      mmkvDraftKeys: mmkvDraftRef.current ? Object.keys(mmkvDraftRef.current) : [],
+    });
+    return () => {
+      console.log('[BusinessRegistrationScreen] unmount', {
+        instanceId: screenInstanceIdRef.current,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initialDraft = (draft ?? mmkvDraftRef.current ?? {}) as any;
+  const [businessName, setBusinessName] = useState(initialDraft?.businessName ?? registrationData?.businessName ?? '');
+  const [type, setType] = useState(initialDraft?.type ?? registrationData?.type ?? '');
+  const [address, setAddress] = useState(initialDraft?.address ?? registrationData?.address ?? '');
+  const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? '');
+  const [gst, setGst] = useState(initialDraft?.gst ?? registrationData?.gst ?? '');
 
   // Initialize payout details
   const initialPayoutType = registrationData?.payout?.type || '';
   const initialUpiId = registrationData?.payout?.upiId || '';
   const initialBank = registrationData?.payout?.bank;
 
-  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>((initialPayoutType as any) || '');
-  const [upiId, setUpiId] = useState(initialUpiId);
-  const [accountNumber, setAccountNumber] = useState(initialBank?.accountNumber || '');
-  const [ifsc, setIfsc] = useState(initialBank?.ifsc || '');
-  const [accountName, setAccountName] = useState(initialBank?.accountName || '');
+  const [payoutType, setPayoutType] = useState<'UPI' | 'BANK' | ''>(
+    (initialDraft?.payoutType ?? ((initialPayoutType as any) || '')) as any,
+  );
+  const [upiId, setUpiId] = useState(initialDraft?.upiId ?? initialUpiId);
+  const [accountNumber, setAccountNumber] = useState(initialDraft?.accountNumber ?? (initialBank?.accountNumber || ''));
+  const [ifsc, setIfsc] = useState(initialDraft?.ifsc ?? (initialBank?.ifsc || ''));
+  const [accountName, setAccountName] = useState(initialDraft?.accountName ?? (initialBank?.accountName || ''));
   const [location, setLocation] = useState<ILocationData | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [payoutTypeModalVisible, setPayoutTypeModalVisible] = useState(false);
+
+  const existingShopPhotos = useMemo(() => {
+    const urls = (registrationData?.shopPhotos || []).map(p => p?.url).filter(Boolean) as string[];
+    return urls;
+  }, [registrationData?.shopPhotos]);
+
+  const existingDocs = useMemo(() => {
+    const docs = registrationData?.documents || [];
+    const idDoc = docs.find(d => d.kind === 'ID')?.url || null;
+    const panDoc = docs.find(d => d.kind === 'PAN')?.url || null;
+    return { idDoc, panDoc };
+  }, [registrationData?.documents]);
+
+  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(initialDraft?.shopPhotoUris ?? existingShopPhotos);
+  const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
+  const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
+
+  const persistDraft = () => {
+    const payload = {
+      businessName,
+      type,
+      address,
+      phone,
+      gst,
+      payoutType,
+      upiId,
+      accountNumber,
+      ifsc,
+      accountName,
+      shopPhotoUris,
+      idDocUri,
+      panDocUri,
+    };
+
+    // 1) MMKV (survives activity recreation)
+    try {
+      storage.set(BR_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {}
+
+    // 2) Nav params (helps within navigation state)
+    try {
+      (navigation as any).setParams({ draft: payload });
+    } catch {}
+
+    console.log('[BusinessRegistrationScreen] persistDraft', {
+      instanceId: screenInstanceIdRef.current,
+      shopPhotosCount: shopPhotoUris.length,
+      hasIdDoc: !!idDocUri,
+      hasPanDoc: !!panDocUri,
+    });
+  };
+
+  // Persist draft to navigation params so if Android recreates the activity/screen
+  // after opening the gallery, we can restore the form instead of resetting to empty.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    persistDraft();
+  }, [
+    navigation,
+    businessName,
+    type,
+    address,
+    phone,
+    gst,
+    payoutType,
+    upiId,
+    accountNumber,
+    ifsc,
+    accountName,
+    shopPhotoUris,
+    idDocUri,
+    panDocUri,
+  ]);
+
+  const pickShopPhotos = () => {
+    // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
+    persistDraft();
+    console.log('[BusinessRegistrationScreen] pickShopPhotos', {
+      instanceId: screenInstanceIdRef.current,
+      currentCount: shopPhotoUris.length,
+      max: MAX_SHOP_PHOTOS,
+    });
+    if (shopPhotoUris.length >= MAX_SHOP_PHOTOS) {
+      Alert.alert(
+        t('dealer.limitReached') || 'Limit Reached',
+        t('dealer.maxImagesReached', { max: MAX_SHOP_PHOTOS }) ||
+          `You can add up to ${MAX_SHOP_PHOTOS} images`,
+      );
+      return;
+    }
+
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: MAX_SHOP_PHOTOS - shopPhotoUris.length,
+      },
+      (response: ImagePickerResponse) => {
+        console.log('[BusinessRegistrationScreen] pickShopPhotos callback', {
+          instanceId: screenInstanceIdRef.current,
+          didCancel: response.didCancel,
+          errorCode: response.errorCode,
+          errorMessage: response.errorMessage,
+          assetsCount: response.assets?.length || 0,
+        });
+        if (response.didCancel || response.errorCode) return;
+        const selected = response.assets || [];
+        if (selected.length < 1) return;
+        const newUris = selected.map(a => a.uri || '').filter(Boolean);
+        if (newUris.length < 1) return;
+        setShopPhotoUris(prev => [...prev, ...newUris].slice(0, MAX_SHOP_PHOTOS));
+      },
+    );
+  };
+
+  const pickSingleDoc = (target: 'ID' | 'PAN') => {
+    // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
+    persistDraft();
+    console.log('[BusinessRegistrationScreen] pickSingleDoc', {
+      instanceId: screenInstanceIdRef.current,
+      target,
+    });
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: 1,
+      },
+      (response: ImagePickerResponse) => {
+        console.log('[BusinessRegistrationScreen] pickSingleDoc callback', {
+          instanceId: screenInstanceIdRef.current,
+          target,
+          didCancel: response.didCancel,
+          errorCode: response.errorCode,
+          errorMessage: response.errorMessage,
+          assetsCount: response.assets?.length || 0,
+          firstUri: response.assets?.[0]?.uri,
+        });
+        if (response.didCancel || response.errorCode) return;
+        const uri = response.assets?.[0]?.uri;
+        if (!uri) return;
+        if (target === 'ID') setIdDocUri(uri);
+        if (target === 'PAN') setPanDocUri(uri);
+      },
+    );
+  };
+
+  const removeShopPhoto = (index: number) => {
+    setShopPhotoUris(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearDoc = (target: 'ID' | 'PAN') => {
+    if (target === 'ID') setIdDocUri(null);
+    if (target === 'PAN') setPanDocUri(null);
+  };
 
   const getSelectedTypeLabel = () => {
     if (!type) return t('dealer.selectBusinessType') || 'Select Business Type';
@@ -157,7 +386,10 @@ const BusinessRegistrationScreen: React.FC = () => {
     address.trim() &&
     phone.trim() &&
     isValidPhone(phone) &&
-    isPayoutValid();
+    isPayoutValid() &&
+    shopPhotoUris.length > 0 &&
+    !!idDocUri &&
+    !!panDocUri;
 
   const handleSubmit = async () => {
     if (!businessName.trim()) {
@@ -178,6 +410,19 @@ const BusinessRegistrationScreen: React.FC = () => {
     }
     if (!isValidPhone(phone)) {
       showError(t('dealer.phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)');
+      return;
+    }
+
+    if (shopPhotoUris.length < 1) {
+      showError(t('dealer.shopPhotosRequired') || 'At least one shop photo is required');
+      return;
+    }
+    if (!idDocUri) {
+      showError(t('dealer.idDocumentRequired') || 'Document ID is required');
+      return;
+    }
+    if (!panDocUri) {
+      showError(t('dealer.panCardRequired') || 'PAN card is required');
       return;
     }
 
@@ -215,6 +460,21 @@ const BusinessRegistrationScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
+      const uploadIfNeeded = async (uri: string): Promise<string> => {
+        if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
+        return await uploadImage(uri);
+      };
+
+      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = [];
+      for (const uri of shopPhotoUris) {
+        const url = await uploadIfNeeded(uri);
+        uploadedShopPhotos.push({ url });
+      }
+
+      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
+      uploadedDocuments.push({ kind: 'ID', url: await uploadIfNeeded(idDocUri) });
+      uploadedDocuments.push({ kind: 'PAN', url: await uploadIfNeeded(panDocUri) });
+
       // Prepare payout object if payout type is selected
       let payoutData: any = undefined;
       if (payoutType === 'UPI') {
@@ -240,11 +500,16 @@ const BusinessRegistrationScreen: React.FC = () => {
         phone: phone.trim(),
         gst: gst.trim() || undefined,
         payout: payoutData,
+        shopPhotos: uploadedShopPhotos,
+        documents: uploadedDocuments,
       };
 
       if (isEdit && registrationData?.id) {
         await updateBusinessRegistration(registrationData.id, data);
         showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
+        try {
+          storage.delete(BR_DRAFT_STORAGE_KEY);
+        } catch {}
         goBack();
       } else {
         const registration = await createBusinessRegistration(data);
@@ -253,6 +518,9 @@ const BusinessRegistrationScreen: React.FC = () => {
           status: registration.status
         });
         showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
+        try {
+          storage.delete(BR_DRAFT_STORAGE_KEY);
+        } catch {}
 
         // Navigate based on context
         if (registration.status === 'pending' || registration.status === 'approved') {
@@ -431,6 +699,65 @@ const BusinessRegistrationScreen: React.FC = () => {
       color: colors.text,
       flex: 1,
       opacity: 0.8,
+    },
+    imagesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: screenWidth * 0.02,
+      marginTop: screenHeight * 0.01,
+    },
+    imageWrapper: {
+      position: 'relative',
+      width: screenWidth * 0.25,
+      height: screenWidth * 0.25,
+      borderRadius: 8,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    removeImageButton: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      borderRadius: 12,
+      width: 24,
+      height: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    docRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.cardBackground,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.012,
+      gap: screenWidth * 0.02,
+    },
+    docLeft: {
+      flex: 1,
+      gap: 4,
+    },
+    docTitle: {
+      fontSize: RFValue(9),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+    },
+    docSub: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.text,
+      opacity: 0.7,
     },
   });
 
@@ -621,6 +948,104 @@ const BusinessRegistrationScreen: React.FC = () => {
             </View>
           </>
         )}
+
+        {/* Shop Photos */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            {t('dealer.shopPhotos') || 'Shop Photos'} *
+          </CustomText>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              pickShopPhotos();
+            }}
+            disabled={isSubmitting}>
+            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
+            <CustomText style={styles.buttonText}>
+              {(t('dealer.addImages') || 'Add Images') + ` (${shopPhotoUris.length}/${MAX_SHOP_PHOTOS})`}
+            </CustomText>
+          </TouchableOpacity>
+          {shopPhotoUris.length > 0 && (
+            <View style={styles.imagesContainer}>
+              {shopPhotoUris.map((uri, index) => (
+                <View key={`${uri}_${index}`} style={styles.imageWrapper}>
+                  <Image source={{ uri }} style={styles.image} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => removeShopPhoto(index)}
+                    disabled={isSubmitting}>
+                    <Icon name="close" size={RFValue(12)} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Documents */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            {t('dealer.documents') || 'Documents'} *
+          </CustomText>
+
+          <View style={{ gap: screenHeight * 0.012 }}>
+            {/* Document ID */}
+            <TouchableOpacity
+              style={styles.docRow}
+              onPress={() => pickSingleDoc('ID')}
+              disabled={isSubmitting}>
+              <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
+              <View style={styles.docLeft}>
+                <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'}</CustomText>
+                <CustomText style={styles.docSub} numberOfLines={1}>
+                  {idDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                </CustomText>
+              </View>
+              {idDocUri ? (
+                <TouchableOpacity onPress={() => clearDoc('ID')} disabled={isSubmitting}>
+                  <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                </TouchableOpacity>
+              ) : (
+                <Icon name="chevron-forward" size={RFValue(18)} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+            {idDocUri && (
+              <View style={styles.imagesContainer}>
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: idDocUri }} style={styles.image} />
+                </View>
+              </View>
+            )}
+
+            {/* PAN Card */}
+            <TouchableOpacity
+              style={styles.docRow}
+              onPress={() => pickSingleDoc('PAN')}
+              disabled={isSubmitting}>
+              <Icon name="id-card-outline" size={RFValue(16)} color={colors.text} />
+              <View style={styles.docLeft}>
+                <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'}</CustomText>
+                <CustomText style={styles.docSub} numberOfLines={1}>
+                  {panDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                </CustomText>
+              </View>
+              {panDocUri ? (
+                <TouchableOpacity onPress={() => clearDoc('PAN')} disabled={isSubmitting}>
+                  <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                </TouchableOpacity>
+              ) : (
+                <Icon name="chevron-forward" size={RFValue(18)} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+            {panDocUri && (
+              <View style={styles.imagesContainer}>
+                <View style={styles.imageWrapper}>
+                  <Image source={{ uri: panDocUri }} style={styles.image} />
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
       {/* Sticky Button Container */}

@@ -27,6 +27,17 @@ export interface IBusinessRegistrationDocument extends Document {
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;
+  shopPhotos?: {
+    url: string;
+    publicId?: string;
+  }[];
+  documents?: {
+    kind: 'GST' | 'LICENSE' | 'ID' | 'PAN';
+    url: string;
+    publicId?: string;
+    mimeType?: string;
+    originalName?: string;
+  }[];
   status: BusinessRegistrationStatus;
   approvalCode?: string;
   userId: string;
@@ -88,6 +99,25 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
         accountName: { type: String, trim: true },
       },
     },
+    shopPhotos: [
+      {
+        url: { type: String, required: true, trim: true },
+        publicId: { type: String, trim: true },
+      },
+    ],
+    documents: [
+      {
+        kind: {
+          type: String,
+          required: true,
+          enum: ['GST', 'LICENSE', 'ID', 'PAN'],
+        },
+        url: { type: String, required: true, trim: true },
+        publicId: { type: String, trim: true },
+        mimeType: { type: String, trim: true },
+        originalName: { type: String, trim: true },
+      },
+    ],
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

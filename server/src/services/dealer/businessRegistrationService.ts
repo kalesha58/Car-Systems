@@ -1,4 +1,5 @@
 import { BusinessRegistration, IBusinessRegistrationDocument } from '../../models/BusinessRegistration';
+import { SignUp } from '../../models/SignUp';
 import {
   IBusinessRegistration,
   ICreateBusinessRegistrationRequest,
@@ -7,6 +8,7 @@ import {
 } from '../../types/dealer/businessRegistration';
 import { NotFoundError, ConflictError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
+import { sendBusinessRegistrationSubmittedEmail } from '../../utils/emailService';
 
 /**
  * Convert business registration document to interface
@@ -22,6 +24,8 @@ export const businessRegistrationToInterface = (
     phone: doc.phone,
     gst: doc.gst,
     payout: doc.payout,
+    shopPhotos: (doc as any).shopPhotos,
+    documents: (doc as any).documents,
     status: doc.status,
     approvalCode: doc.approvalCode,
     userId: doc.userId,
@@ -102,6 +106,14 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
+    // Validate required uploads (shop photos + documents)
+    if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
+      throw new AppError('At least one shop photo is required', 400);
+    }
+    if (!Array.isArray((data as any).documents) || (data as any).documents.length < 1) {
+      throw new AppError('At least one document is required', 400);
+    }
+
     // Validate payout information if provided
     if (data.payout) {
       if (!data.payout.type || !['UPI', 'BANK'].includes(data.payout.type)) {
@@ -166,6 +178,8 @@ export const createBusinessRegistration = async (
       phone: data.phone.trim(),
       gst: data.gst?.trim() || undefined,
       payout: payoutData,
+      shopPhotos: (data as any).shopPhotos,
+      documents: (data as any).documents,
       status: 'pending', // Requires admin approval
       userId,
     });
@@ -173,6 +187,34 @@ export const createBusinessRegistration = async (
     await registration.save();
 
     logger.info(`Business registration created with pending status for user: ${userId}`);
+
+    // Send confirmation email (do not fail registration if email fails)
+    try {
+      const user = await SignUp.findById(userId).select('name email');
+      // Primary recipient: configured notify email (or fallback to user email)
+      const notifyEmail =
+        process.env.BUSINESS_REGISTRATION_NOTIFY_EMAIL || 'kaleshabox8@gmail.com';
+
+      const recipients = new Set<string>();
+      if (user?.email) recipients.add(user.email);
+      if (notifyEmail) recipients.add(notifyEmail);
+
+      if (recipients.size > 0) {
+        await Promise.all(
+          Array.from(recipients).map((to) =>
+            sendBusinessRegistrationSubmittedEmail(to, {
+              name: user?.name,
+              businessName: registration.businessName,
+              submittedAt: registration.createdAt,
+            }),
+          ),
+        );
+      } else {
+        logger.warn(`Skipping business registration email: user email not found for userId=${userId}`);
+      }
+    } catch (emailError) {
+      logger.error('Failed to send business registration submitted email:', emailError);
+    }
 
     return businessRegistrationToInterface(registration);
   } catch (error) {
@@ -231,6 +273,22 @@ export const updateBusinessRegistration = async (
 
     if (data.gst !== undefined) {
       registration.gst = data.gst?.trim() || undefined;
+    }
+
+    if ((data as any).shopPhotos !== undefined) {
+      const photos = (data as any).shopPhotos;
+      if (!Array.isArray(photos) || photos.length < 1) {
+        throw new AppError('At least one shop photo is required', 400);
+      }
+      (registration as any).shopPhotos = photos;
+    }
+
+    if ((data as any).documents !== undefined) {
+      const docs = (data as any).documents;
+      if (!Array.isArray(docs) || docs.length < 1) {
+        throw new AppError('At least one document is required', 400);
+      }
+      (registration as any).documents = docs;
     }
 
     // Handle payout update

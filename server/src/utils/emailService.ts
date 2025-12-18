@@ -134,6 +134,57 @@ export const sendPasswordResetSuccessEmail = async (email: string): Promise<void
 };
 
 /**
+ * Send business registration submitted email (pending admin approval)
+ */
+export const sendBusinessRegistrationSubmittedEmail = async (
+  email: string,
+  params: {
+    name?: string;
+    businessName: string;
+    submittedAt?: Date;
+  },
+): Promise<void> => {
+  const subject = 'Business registration received - Pending approval (Car Connect)';
+  const submittedDate = (params.submittedAt || new Date()).toLocaleString();
+  const safeName = params.name?.trim() || 'there';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Business Registration Received</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
+        <h2 style="color: #2563eb; margin-top: 0;">We received your business registration</h2>
+        <p>Hello ${safeName},</p>
+        <p>Thanks for submitting your business registration on Car Connect.</p>
+
+        <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #2563eb;">
+          <p style="margin: 0;"><strong>Business name:</strong> ${params.businessName}</p>
+          <p style="margin: 5px 0 0 0;"><strong>Status:</strong> Pending admin approval</p>
+          <p style="margin: 5px 0 0 0;"><strong>Submitted:</strong> ${submittedDate}</p>
+        </div>
+
+        <p>Our team will review your details and documents. You’ll be notified once your registration is approved.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+        <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+          This is an automated message, please do not reply to this email.
+        </p>
+        <p style="color: #7f8c8d; font-size: 12px; margin: 0;">
+          © ${new Date().getFullYear()} Car Connect. All rights reserved.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  await sendEmail(email, subject, html);
+};
+
+/**
  * Send group join request email to group owner
  */
 export const sendGroupJoinRequestEmail = async (

@@ -181,6 +181,11 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
   }
 };
 
+export interface IUploadFileResult {
+  url: string;
+  publicId?: string;
+}
+
 /**
  * Create a new post
  * @param postData - Post data including text, images, and optional location
