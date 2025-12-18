@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,
   ActivityIndicator,
   Platform,
 } from 'react-native';
@@ -17,6 +16,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
+import AttachmentModal from '@components/common/AttachmentModal';
 import {useAuthStore} from '@state/authStore';
 import {useTranslation} from 'react-i18next';
 import {updateProfile, updateProfileImage} from '@service/profileService';
@@ -31,6 +31,7 @@ const EditProfile: FC = () => {
   const {showSuccess, showError} = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
   
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -67,43 +68,7 @@ const EditProfile: FC = () => {
   };
 
   const showImagePickerOptions = () => {
-    Alert.alert(
-      t('profile.selectImage'),
-      t('profile.chooseOption'),
-      [
-        {
-          text: t('profile.camera'),
-          onPress: () => {
-            launchCamera(
-              {
-                mediaType: 'photo',
-                quality: 0.8,
-                includeBase64: false,
-              },
-              handleImagePicker,
-            );
-          },
-        },
-        {
-          text: t('profile.gallery'),
-          onPress: () => {
-            launchImageLibrary(
-              {
-                mediaType: 'photo',
-                quality: 0.8,
-                includeBase64: false,
-              },
-              handleImagePicker,
-            );
-          },
-        },
-        {
-          text: t('profile.cancel'),
-          style: 'cancel',
-        },
-      ],
-      {cancelable: true},
-    );
+    setImagePickerVisible(true);
   };
 
   const handleSave = async () => {
@@ -262,6 +227,44 @@ const EditProfile: FC = () => {
   return (
     <View style={styles.container}>
       <CustomHeader title={t('profile.editProfile')} />
+      <AttachmentModal
+        visible={imagePickerVisible}
+        onClose={() => setImagePickerVisible(false)}
+        options={[
+          {
+            id: 'camera',
+            label: t('profile.camera'),
+            icon: 'camera-outline',
+            color: colors.secondary,
+            onPress: () => {
+              launchCamera(
+                {
+                  mediaType: 'photo',
+                  quality: 0.8,
+                  includeBase64: false,
+                },
+                handleImagePicker,
+              );
+            },
+          },
+          {
+            id: 'gallery',
+            label: t('profile.gallery'),
+            icon: 'images-outline',
+            color: colors.primary || colors.secondary,
+            onPress: () => {
+              launchImageLibrary(
+                {
+                  mediaType: 'photo',
+                  quality: 0.8,
+                  includeBase64: false,
+                },
+                handleImagePicker,
+              );
+            },
+          },
+        ]}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>

@@ -3,12 +3,11 @@ import {
   View,
   StyleSheet,
   FlatList,
-  ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { screenHeight, screenWidth } from '@utils/Scaling';
 import { Colors, Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -17,63 +16,108 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { getPosts } from '@service/postService';
 import { IPost } from '../../types/post/IPost';
 import ImagePostItem from './ImagePostItem';
+import PlayPostSkeleton from './PlayPostSkeleton';
 import { navigate } from '@utils/NavigationUtils';
 import { useTheme } from '@hooks/useTheme';
+import { useNavigation } from '@react-navigation/native';
+
+type PlayRouteParams = {
+  refresh?: boolean;
+};
 
 const PlayScreen: React.FC = () => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
+  const route = useRoute();
   const [posts, setPosts] = useState<IPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  const fetchPosts = React.useCallback(async (opts?: { showSkeleton?: boolean }) => {
+    const showSkeleton = opts?.showSkeleton ?? false;
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchPosts();
-    }, []),
-  );
-
-  const fetchPosts = async () => {
     try {
-      setLoading(true);
+      if (showSkeleton) setLoading(true);
       const response = await getPosts();
       if (response.success && response.Response) {
         setPosts(response.Response);
       }
+      setHasLoadedOnce(true);
     } catch (error) {
       // Handle error silently
+      setHasLoadedOnce(true);
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
-  };
+  }, []);
 
-  const renderPostItem = ({ item }: { item: IPost }) => {
+  // Initial load (skeleton)
+  useEffect(() => {
+    fetchPosts({ showSkeleton: true });
+  }, [fetchPosts]);
+
+  // Only refetch when explicitly requested (e.g. after creating a post)
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = (route.params || {}) as PlayRouteParams;
+      if (params.refresh) {
+        // fetch without forcing skeleton if we already have posts
+        const shouldShowSkeleton = posts.length === 0;
+        fetchPosts({ showSkeleton: shouldShowSkeleton });
+        // clear flag so it doesn't refetch on every focus
+        (navigation as any).setParams?.({ refresh: false });
+      }
+    }, [route.params, fetchPosts, posts.length]),
+  );
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchPosts({ showSkeleton: false });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchPosts]);
+
+  const renderPostItem = React.useCallback(({ item }: { item: IPost }) => {
     return <ImagePostItem post={item} />;
-  };
+  }, []);
 
-  if (loading) {
+  const renderSkeletonList = () => {
+    const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <FlatList
+        data={skeletonData}
+        renderItem={() => <PlayPostSkeleton />}
+        keyExtractor={item => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.secondary}
+            colors={[Colors.secondary]}
+          />
+        }
+      />
     );
-  }
+  };
 
   const renderEmptyState = () => (
     <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-      <Icon name="images-outline" size={RFValue(64)} color={colors.disabled} />
+      <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
       <CustomText
-        fontSize={RFValue(18)}
+        fontSize={RFValue(15)}
         fontFamily={Fonts.SemiBold}
-        style={{ color: colors.text, marginTop: 16, marginBottom: 8 }}>
+        style={{ color: colors.text, marginTop: 12, marginBottom: 6 }}>
         No Posts Yet
       </CustomText>
       <CustomText
-        fontSize={RFValue(14)}
+        fontSize={RFValue(12)}
         fontFamily={Fonts.Regular}
-        style={{ color: colors.disabled, textAlign: 'center', paddingHorizontal: 40 }}>
+        style={{ color: colors.disabled, textAlign: 'center', paddingHorizontal: 28 }}>
         Start following users to see their posts here
       </CustomText>
     </View>
@@ -83,45 +127,58 @@ const PlayScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.backgroundSecondary }]}>
         <View style={styles.headerRow}>
-          <CustomText fontSize={RFValue(24)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
+          <CustomText fontSize={RFValue(16)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
             Play
           </CustomText>
+          <View style={styles.headerActions}>
             <TouchableOpacity
-            style={[styles.chatButton, { backgroundColor: Colors.secondary }]}
-            onPress={() => navigate('Chat')}
-            activeOpacity={0.8}>
-            <Icon name="chatbubble" size={RFValue(20)} color={colors.white} />
-            <View style={styles.chatBadge}>
-              <CustomText
-                fontSize={RFValue(8)}
-                fontFamily={Fonts.Bold}
-                style={{ color: Colors.secondary }}>
-                !
-              </CustomText>
-            </View>
+              style={[styles.iconButton, { backgroundColor: colors.cardBackground, borderColor: colors.backgroundSecondary }]}
+              onPress={() => navigate('CreateNewPost')}
+              activeOpacity={0.8}>
+              <Icon name="add" size={RFValue(16)} color={colors.text} />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: Colors.secondary, borderColor: Colors.secondary }]}
+              onPress={() => navigate('Chat')}
+              activeOpacity={0.8}>
+              <Icon name="chatbubble" size={RFValue(16)} color={colors.white} />
+              <View style={styles.chatBadge}>
+                <CustomText
+                  fontSize={RFValue(7)}
+                  fontFamily={Fonts.Bold}
+                  style={{ color: Colors.secondary }}>
+                  !
+                </CustomText>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      <FlatList
-        data={posts}
-        renderItem={renderPostItem}
-        keyExtractor={item => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.listContent,
-          posts.length === 0 && styles.emptyListContent
-        ]}
-        ListEmptyComponent={!loading ? renderEmptyState : null}
-      />
-      
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={[styles.fab, { backgroundColor: Colors.secondary }]}
-        onPress={() => navigate('CreateNewPost')}
-        activeOpacity={0.8}>
-        <Icon name="add" size={RFValue(28)} color={colors.white} />
-      </TouchableOpacity>
+      {(loading && posts.length === 0) || (!hasLoadedOnce && posts.length === 0) ? (
+        renderSkeletonList()
+      ) : (
+        <FlatList
+          data={posts}
+          renderItem={renderPostItem}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.listContent,
+            posts.length === 0 && styles.emptyListContent
+          ]}
+          ListEmptyComponent={!loading ? renderEmptyState : null}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.secondary}
+              colors={[Colors.secondary]}
+            />
+          }
+        />
+      )}
     </SafeAreaView >
   );
 };
@@ -137,7 +194,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: screenWidth * 0.05,
-    paddingVertical: screenHeight * 0.018,
+    paddingVertical: screenHeight * 0.012,
     borderBottomWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -150,10 +207,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  chatButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -162,14 +224,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
+    borderWidth: 1,
   },
   chatBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    top: 3,
+    right: 3,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
@@ -187,21 +250,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: screenHeight * 0.2,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: screenHeight * 0.08,
-    right: screenWidth * 0.02,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
 });
 

@@ -1,7 +1,7 @@
-import {View, Text, Alert, StyleSheet, ScrollView} from 'react-native';
+import {View, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import React, {FC, useState} from 'react';
 import {deliveryLogin} from '@service/authService';
-import {resetAndNavigate} from '@utils/NavigationUtils';
+import {navigate, resetAndNavigate} from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import {screenHeight} from '@utils/Scaling';
 import LottieView from 'lottie-react-native';
@@ -11,19 +11,28 @@ import CustomInput from '@components/ui/CustomInput';
 import Icon from 'react-native-vector-icons/Ionicons'
 import { RFValue } from 'react-native-responsive-fontsize';
 import CustomButton from '@components/ui/CustomButton';
+import ThemedModal from '@components/ui/ThemedModal';
 
 const DeliveryLogin: FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState('');
 
   const handleLogin = async () => {
     setLoading(true);
     try {
       await deliveryLogin(email, password);
       resetAndNavigate('DeliveryDashboard');
-    } catch (error) {
-      Alert.alert('Login Failed');
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Login failed. Please try again.';
+      setErrorModalMessage(errorMessage);
+      setErrorModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -31,6 +40,14 @@ const DeliveryLogin: FC = () => {
 
   return (
     <CustomSafeAreaView>
+      <ThemedModal
+        visible={errorModalVisible}
+        title="Login Failed"
+        message={errorModalMessage}
+        variant="error"
+        primaryText="OK"
+        onClose={() => setErrorModalVisible(false)}
+      />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
@@ -80,6 +97,19 @@ const DeliveryLogin: FC = () => {
             secureTextEntry
             right={false}
           />
+
+          <TouchableOpacity
+            onPress={() =>
+              navigate('ForgotPassword', {
+                returnTo: 'DeliveryLogin',
+                prefillEmail: email,
+              })
+            }
+            style={{ alignSelf: 'flex-end', marginTop: 6 }}>
+            <CustomText variant="h6" fontFamily={Fonts.Medium} style={{ color: '#F8890E' }}>
+              Forgot password?
+            </CustomText>
+          </TouchableOpacity>
 
         <CustomButton
             disabled={email.length == 0 || password.length < 8}

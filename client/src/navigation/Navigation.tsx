@@ -49,6 +49,7 @@ import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import LiquidTabBar from '@components/navigation/LiquidTabBar';
+import ForgotPassword from '@features/auth/ForgotPassword';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -393,6 +394,13 @@ const Navigation: FC = () => {
             }}
             name="CustomerLogin"
             component={CustomerLogin}
+          />
+          <Stack.Screen
+            options={{
+              animation: 'slide_from_right',
+            }}
+            name="ForgotPassword"
+            component={ForgotPassword}
           />
           <Stack.Screen
             options={{

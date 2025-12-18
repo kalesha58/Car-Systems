@@ -138,6 +138,38 @@ export const refresh_tokens = async () => {
     }
 }
 
+export const requestPasswordReset = async (email: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+        const trimmedEmail = email.trim();
+        const response = await appAxios.post('/auth/forgot-password', {
+            email: trimmedEmail,
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const resetPasswordWithCode = async (data: {
+    email: string;
+    code: string;
+    password: string;
+    confirmPassword: string;
+}): Promise<{ success: boolean; message?: string }> => {
+    try {
+        const payload = {
+            email: data.email.trim(),
+            code: data.code.trim(),
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+        };
+        const response = await appAxios.post('/auth/reset-password', payload);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const refetchUser = async (setUser: any) => {
     try {
         const response = await appAxios.get(`/profile`);

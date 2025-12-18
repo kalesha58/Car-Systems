@@ -5,7 +5,6 @@ import {
   Animated,
   Image,
   Keyboard,
-  Alert,
   TouchableOpacity,
   Platform,
   Dimensions,
@@ -33,6 +32,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@hooks/useToast';
 import { useAuthStore } from '@state/authStore';
+import ThemedModal from '@components/ui/ThemedModal';
+import { navigate } from '@utils/NavigationUtils';
 
 const bottomColors = [...lightColors].reverse();
 
@@ -55,6 +56,9 @@ const CustomerLogin = () => {
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorModalTitle, setErrorModalTitle] = useState('Login Failed');
+  const [errorModalMessage, setErrorModalMessage] = useState('');
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
@@ -226,8 +230,9 @@ const CustomerLogin = () => {
         'Invalid email or password. Please try again.';
 
       console.error('Login failed:', errorMessage);
-
-      Alert.alert('Login Failed', errorMessage);
+      setErrorModalTitle('Login Failed');
+      setErrorModalMessage(errorMessage);
+      setErrorModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -248,7 +253,9 @@ const CustomerLogin = () => {
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || 'Signup failed. Please try again.';
-      Alert.alert('Signup Failed', errorMessage);
+      setErrorModalTitle('Signup Failed');
+      setErrorModalMessage(errorMessage);
+      setErrorModalVisible(true);
     } finally {
       setLoading(false);
     }
@@ -258,6 +265,14 @@ const CustomerLogin = () => {
     <GestureHandlerRootView style={styles.container}>
       <View style={styles.container}>
         <CustomSafeAreaView>
+          <ThemedModal
+            visible={errorModalVisible}
+            title={errorModalTitle}
+            message={errorModalMessage}
+            variant="error"
+            primaryText="OK"
+            onClose={() => setErrorModalVisible(false)}
+          />
           <ProductSlider />
 
           <PanGestureHandler onHandlerStateChange={handleGesture}>
@@ -377,6 +392,24 @@ const CustomerLogin = () => {
                     </TouchableOpacity>
                   }
                 />
+
+                {!isSignupMode && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigate('ForgotPassword', {
+                        returnTo: 'CustomerLogin',
+                        prefillEmail: email,
+                      })
+                    }
+                    style={{ alignSelf: 'flex-end', marginTop: getResponsiveValue(6, 8, 10) }}>
+                    <CustomText
+                      variant="h6"
+                      fontFamily={Fonts.Medium}
+                      style={{ color: Colors.secondary }}>
+                      Forgot password?
+                    </CustomText>
+                  </TouchableOpacity>
+                )}
 
                 <CustomButton
                   disabled={!isFormValid()}

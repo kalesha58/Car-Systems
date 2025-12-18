@@ -44,50 +44,43 @@ const CreateNewPost: React.FC = () => {
       backgroundColor: colors.background,
     },
     scrollContent: {
-      padding: screenWidth * 0.05,
-      paddingBottom: screenHeight * 0.1,
+      padding: screenWidth * 0.04,
+      paddingBottom: screenHeight * 0.12,
     },
     section: {
-      marginBottom: screenHeight * 0.025,
+      marginBottom: screenHeight * 0.02,
     },
     label: {
-      fontSize: RFValue(13),
-      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Medium,
       color: colors.text,
-      marginBottom: screenHeight * 0.012,
+      marginBottom: screenHeight * 0.008,
+      opacity: 0.8,
     },
     requiredLabel: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(8),
       fontFamily: Fonts.Regular,
       color: colors.error,
       marginLeft: 4,
     },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 12,
-      borderWidth: 1.5,
+      borderRadius: 8,
+      borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.015,
-      minHeight: screenHeight * 0.15,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 3,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.01,
+      minHeight: screenHeight * 0.12,
     },
     textInput: {
-      fontSize: RFValue(14),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
       color: colors.text,
       textAlignVertical: 'top',
-      lineHeight: RFValue(20),
+      lineHeight: RFValue(16),
     },
     characterCount: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(8),
       fontFamily: Fonts.Regular,
       color: colors.disabled,
       marginTop: screenHeight * 0.008,
@@ -98,23 +91,15 @@ const CreateNewPost: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.cardBackground,
-      borderRadius: 12,
-      borderWidth: 1.5,
+      borderRadius: 8,
+      borderWidth: 1,
       borderColor: colors.border,
       borderStyle: 'dashed',
-      paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.018,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 3,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.012,
     },
     buttonText: {
-      fontSize: RFValue(14),
+      fontSize: RFValue(9),
       fontFamily: Fonts.Medium,
       color: colors.text,
       marginLeft: screenWidth * 0.02,
@@ -122,23 +107,15 @@ const CreateNewPost: React.FC = () => {
     imagesContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.03,
-      marginTop: screenHeight * 0.015,
+      gap: screenWidth * 0.02,
+      marginTop: screenHeight * 0.01,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.28,
-      height: screenWidth * 0.28,
-      borderRadius: 12,
+      width: screenWidth * 0.25,
+      height: screenWidth * 0.25,
+      borderRadius: 8,
       overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 4,
     },
     image: {
       width: '100%',
@@ -147,46 +124,30 @@ const CreateNewPost: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 6,
-      right: 6,
-      backgroundColor: 'rgba(231, 76, 60, 0.9)',
-      borderRadius: 14,
-      width: 28,
-      height: 28,
+      top: 4,
+      right: 4,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      borderRadius: 12,
+      width: 24,
+      height: 24,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.3,
-      shadowRadius: 3,
-      elevation: 4,
     },
     locationContainer: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 12,
-      borderWidth: 1.5,
-      borderColor: Colors.secondary,
-      paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.015,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: screenWidth * 0.03,
+      paddingVertical: screenHeight * 0.012,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: screenHeight * 0.015,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 3,
+      marginTop: screenHeight * 0.01,
     },
     locationText: {
       flex: 1,
-      fontSize: RFValue(13),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
       color: colors.text,
       marginLeft: screenWidth * 0.02,
@@ -196,29 +157,20 @@ const CreateNewPost: React.FC = () => {
     },
     submitButton: {
       backgroundColor: Colors.secondary,
-      borderRadius: 12,
-      paddingVertical: screenHeight * 0.018,
+      borderRadius: 8,
+      paddingVertical: screenHeight * 0.015,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: screenHeight * 0.03,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 6,
+      marginTop: screenHeight * 0.02,
     },
     submitButtonDisabled: {
       backgroundColor: colors.disabled,
       opacity: 0.5,
     },
     submitButtonText: {
-      fontSize: RFValue(16),
-      fontFamily: Fonts.Bold,
+      fontSize: RFValue(10),
+      fontFamily: Fonts.SemiBold,
       color: '#fff',
-      letterSpacing: 0.5,
     },
   });
 
@@ -345,6 +297,7 @@ const CreateNewPost: React.FC = () => {
       setTimeout(() => {
         (navigation as any).navigate('MainTabs', {
           screen: 'Play',
+          params: { refresh: true },
         });
       }, 2500);
     } catch (error) {
@@ -390,7 +343,7 @@ const CreateNewPost: React.FC = () => {
             <CustomText style={styles.requiredLabel}>*</CustomText>
           </View>
           <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.7}>
-            <Icon name="image-outline" size={RFValue(20)} color={colors.text} />
+            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>
               {imageUris.length === 0 
                 ? `Add Images (up to ${MAX_IMAGES})` 
@@ -406,7 +359,7 @@ const CreateNewPost: React.FC = () => {
                     style={styles.removeImageButton}
                     onPress={() => removeImage(index)}
                     activeOpacity={0.8}>
-                    <Icon name="close" size={RFValue(14)} color="#fff" />
+                    <Icon name="close" size={RFValue(12)} color="#fff" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -425,7 +378,7 @@ const CreateNewPost: React.FC = () => {
               {isGettingLocation ? (
                 <ActivityIndicator size="small" color={colors.text} />
               ) : (
-                <Icon name="location-outline" size={RFValue(20)} color={colors.text} />
+                <Icon name="location-outline" size={RFValue(16)} color={colors.text} />
               )}
               <CustomText style={styles.buttonText}>
                 {isGettingLocation ? 'Getting location...' : 'Add Location'}
@@ -433,7 +386,7 @@ const CreateNewPost: React.FC = () => {
             </TouchableOpacity>
           ) : (
             <View style={styles.locationContainer}>
-              <Icon name="location" size={RFValue(16)} color={Colors.secondary} />
+              <Icon name="location" size={RFValue(14)} color={Colors.secondary} />
               <CustomText style={styles.locationText} numberOfLines={2}>
                 {location.address || location.formattedAddress}
               </CustomText>
@@ -441,7 +394,7 @@ const CreateNewPost: React.FC = () => {
                 style={styles.removeLocationButton}
                 onPress={removeLocation}
                 activeOpacity={0.7}>
-                <Icon name="close-circle" size={RFValue(22)} color={colors.error} />
+                <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
               </TouchableOpacity>
             </View>
           )}
