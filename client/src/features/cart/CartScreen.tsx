@@ -34,6 +34,7 @@ import CouponModal from '@components/coupon/CouponModal';
 import { ICoupon } from '@types/coupon/ICoupon';
 import { getSavedAddresses } from '@service/addressService';
 import { getDealerById, getBusinessRegistrationById } from '@service/dealerService';
+import ThemedModal from '@components/ui/ThemedModal';
 
 // Generate idempotency key
 const generateIdempotencyKey = (): string => {
@@ -76,6 +77,23 @@ const CartScreen: React.FC = () => {
     leaveAtDoor: false,
     contactBeforeDelivery: true,
   });
+
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState('Notice');
+  const [infoModalMessage, setInfoModalMessage] = useState('');
+  const [infoModalVariant, setInfoModalVariant] =
+    useState<React.ComponentProps<typeof ThemedModal>['variant']>('info');
+
+  const showInfoModal = (
+    title: string,
+    message: string,
+    variant: React.ComponentProps<typeof ThemedModal>['variant'] = 'info',
+  ) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVariant(variant);
+    setInfoModalVisible(true);
+  };
 
   // COD charge will be added by backend - we show estimated total here
   // Final total will come from backend response
@@ -291,7 +309,11 @@ const CartScreen: React.FC = () => {
         orderStatus === 'REFUND_COMPLETED';
       
       if (!isOrderCompleted) {
-        Alert.alert('Order in Progress', 'Please wait for your current order to be delivered before placing a new order.');
+        showInfoModal(
+          'Order in Progress',
+          'Please wait for your current order to be delivered before placing a new order.',
+          'warning',
+        );
         return;
       } else {
         // Clear completed order to allow new order
@@ -583,6 +605,14 @@ const CartScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <ThemedModal
+        visible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        variant={infoModalVariant}
+        primaryText="OK"
+        onClose={() => setInfoModalVisible(false)}
+      />
       <CustomHeader title="Cart" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <EnhancedOrderList />
