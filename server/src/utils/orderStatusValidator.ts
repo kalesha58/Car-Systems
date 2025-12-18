@@ -57,6 +57,7 @@ const validTransitions: Record<
   },
   ORDER_CONFIRMED: {
     user: ['CANCELLED_BY_USER'],
+    // Dealer workflow: ORDER_CONFIRMED -> PACKED -> SHIPPED -> OUT_FOR_DELIVERY -> DELIVERED
     dealer: ['PACKED', 'CANCELLED_BY_DEALER'],
     admin: ['PACKED', 'CANCELLED_BY_USER', 'CANCELLED_BY_DEALER'],
     system: [],

@@ -17,7 +17,6 @@ import RazorpayService from '@services/payment/RazorpayService';
 import { verifyRazorpayPayment } from '@services/payment/paymentService';
 import { useAuthStore } from '@state/authStore';
 import { appAxios } from '@service/apiInterceptors';
-import { getOrderById } from '@service/orderService';
 
 type PaymentStatusRouteParams = {
   PaymentStatus: {
@@ -38,12 +37,14 @@ const PaymentStatusScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
   const paymentInProgress = useRef(false);
-  const razorpayPromiseRef = useRef<Promise<any> | null>(null);
-  const checkStatusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const didStartPollingFallback = useRef(false);
+  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const verifyAndNavigateRef = useRef(false);
 
   // Function to check payment status from server
-  const checkPaymentStatusFromServer = async () => {
+  const checkPaymentStatusFromServer = async (): Promise<
+    | { handled: true; paid: boolean }
+    | { handled: false; paid: false }
+  > => {
     try {
       const response = await appAxios.get(`/user/orders/${orderId}/status`);
       const orderStatus = response.data?.data;
@@ -51,24 +52,34 @@ const PaymentStatusScreen: React.FC = () => {
       if (orderStatus) {
         setPaymentStatus(orderStatus.paymentStatus);
         if (orderStatus.paymentStatus === 'paid') {
-          setStatus('success');
-          paymentInProgress.current = false;
-          setTimeout(() => {
-            handlePaymentSuccess(orderId, navigation);
-          }, 2000);
-          return true;
+          return { handled: true, paid: true };
         } else if (orderStatus.paymentStatus === 'failed' || orderStatus.status === 'PAYMENT_FAILED') {
-          setStatus('failed');
-          setError('Payment failed');
-          paymentInProgress.current = false;
-          return true;
+          return { handled: true, paid: false };
         }
       }
-      return false;
+      return { handled: false, paid: false };
     } catch (error) {
       console.error('Error checking payment status:', error);
-      return false;
+      return { handled: false, paid: false };
     }
+  };
+
+  const finalizeSuccess = () => {
+    if (verifyAndNavigateRef.current) {
+      return;
+    }
+    verifyAndNavigateRef.current = true;
+    paymentInProgress.current = false;
+    setStatus('success');
+    setTimeout(() => {
+      handlePaymentSuccess(orderId, navigation);
+    }, 300);
+  };
+
+  const finalizeFailure = (msg?: string) => {
+    paymentInProgress.current = false;
+    setStatus('failed');
+    setError(msg || 'Payment failed');
   };
 
   // Listen for app state changes to detect when returning from Razorpay
@@ -80,50 +91,24 @@ const PaymentStatusScreen: React.FC = () => {
         paymentInProgress.current
       ) {
         // App came to foreground - might be returning from Razorpay
-        console.log('📱 [Payment] App returned to foreground - checking payment status');
-        
-        // Wait a bit for Razorpay callback, then check server status as fallback
+        // Do a quick server status check as a fallback (no long polling here).
         setTimeout(async () => {
-          if (paymentInProgress.current && status === 'processing') {
-            console.log('📱 [Payment] Checking payment status from server (fallback)');
-            const isPaid = await checkPaymentStatusFromServer();
-            if (!isPaid) {
-              // If still processing, start polling
-              console.log('📱 [Payment] Starting polling as fallback');
-              try {
-                didStartPollingFallback.current = true;
-                await pollPaymentStatus(
-                  orderId,
-                  (newStatus: string, newPaymentStatus: string) => {
-                    setPaymentStatus(newPaymentStatus);
-                    if (newPaymentStatus === 'paid') {
-                      setStatus('success');
-                      paymentInProgress.current = false;
-                      setTimeout(() => {
-                        handlePaymentSuccess(orderId, navigation);
-                      }, 2000);
-                    } else if (newPaymentStatus === 'failed') {
-                      setStatus('failed');
-                      paymentInProgress.current = false;
-                    }
-                  },
-                  60000, // 1 minute max for fallback polling
-                );
-              } catch (pollError) {
-                console.error('Fallback polling error:', pollError);
-              }
-            }
+          if (!paymentInProgress.current || status !== 'processing') {
+            return;
           }
-        }, 2000); // Wait 2 seconds for Razorpay callback
+          const res = await checkPaymentStatusFromServer();
+          if (res.handled && res.paid) {
+            finalizeSuccess();
+          } else if (res.handled && !res.paid) {
+            finalizeFailure('Payment failed');
+          }
+        }, 1200);
       }
       appState.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
-      if (checkStatusTimeoutRef.current) {
-        clearTimeout(checkStatusTimeoutRef.current);
-      }
     };
   }, [orderId, navigation, status]);
 
@@ -131,6 +116,7 @@ const PaymentStatusScreen: React.FC = () => {
     // Initiate Payment when screen loads
     const startPayment = async () => {
       paymentInProgress.current = true;
+      verifyAndNavigateRef.current = false;
       try {
         console.log('🚀 [Payment] Starting Razorpay checkout', {
           orderId,
@@ -147,34 +133,31 @@ const PaymentStatusScreen: React.FC = () => {
           name: user?.name,
         });
 
-        // Start a backup polling mechanism in case Razorpay callback doesn't fire
-        const backupPolling = setTimeout(async () => {
-          if (paymentInProgress.current && status === 'processing') {
-            console.log('⏰ [Payment] Backup polling started - Razorpay callback may not have fired');
-            try {
-              didStartPollingFallback.current = true;
-              await pollPaymentStatus(
-                orderId,
-                (newStatus: string, newPaymentStatus: string) => {
-                  setPaymentStatus(newPaymentStatus);
-                  if (newPaymentStatus === 'paid') {
-                    setStatus('success');
-                    paymentInProgress.current = false;
-                    setTimeout(() => {
-                      handlePaymentSuccess(orderId, navigation);
-                    }, 2000);
-                  } else if (newPaymentStatus === 'failed') {
-                    setStatus('failed');
-                    paymentInProgress.current = false;
-                  }
-                },
-                60000, // 1 minute
-              );
-            } catch (pollError) {
-              console.error('Backup polling error:', pollError);
-            }
+        // Single fallback: if callback/verification doesn't happen, start polling once after 10s.
+        if (fallbackTimerRef.current) {
+          clearTimeout(fallbackTimerRef.current);
+        }
+        fallbackTimerRef.current = setTimeout(async () => {
+          if (!paymentInProgress.current || status !== 'processing') {
+            return;
           }
-        }, 10000); // Start backup polling after 10 seconds
+          try {
+            await pollPaymentStatus(
+              orderId,
+              (_newStatus: string, newPaymentStatus: string) => {
+                setPaymentStatus(newPaymentStatus);
+                if (newPaymentStatus === 'paid') {
+                  finalizeSuccess();
+                } else if (newPaymentStatus === 'failed') {
+                  finalizeFailure('Payment failed');
+                }
+              },
+              60000,
+            );
+          } catch {
+            // If polling fails, keep user on processing; AppState fallback can still resolve.
+          }
+        }, 10000);
 
         // Prepare Razorpay checkout options
         const checkoutOptions = {
@@ -200,21 +183,18 @@ const PaymentStatusScreen: React.FC = () => {
         console.log('💰 [Payment] Amount (paise):', paymentAction.amount);
         console.log('💰 [Payment] Amount (₹):', paymentAction.amount / 100);
 
-        // Open Razorpay Checkout
-        razorpayPromiseRef.current = RazorpayService.openCheckout(checkoutOptions);
-
         console.log('⏳ [Payment] Waiting for Razorpay response...');
-
-        // Await the payment response
-        const paymentResponse = await razorpayPromiseRef.current;
+        const paymentResponse = await RazorpayService.openCheckout(checkoutOptions);
 
         console.log('📥 [Payment] Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
 
-        // Clear backup polling since we got the callback
-        clearTimeout(backupPolling);
+        // Clear fallback timer since we got the callback
+        if (fallbackTimerRef.current) {
+          clearTimeout(fallbackTimerRef.current);
+          fallbackTimerRef.current = null;
+        }
 
         console.log('✅ [Payment] Razorpay checkout successful', paymentResponse);
-        paymentInProgress.current = false;
 
         // Extract payment response fields (already validated in RazorpayService)
         const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentResponse;
@@ -251,61 +231,14 @@ const PaymentStatusScreen: React.FC = () => {
 
         if (!verificationResult.success) {
           console.error('❌ [Payment] Verification failed:', verificationResult.error);
-          setStatus('failed');
-          setError(verificationResult.error || 'Payment verification failed');
+          finalizeFailure(verificationResult.error || 'Payment verification failed');
           return;
         }
 
-        console.log('✅ [Payment] Verification successful! Proceeding to fetch order...');
-
-        // After successful verification, fetch updated order and set in store
-        try {
-          const updatedOrder = await getOrderById(orderId);
-          if (updatedOrder) {
-            setCurrentOrder(updatedOrder);
-            console.log('✅ [Payment] Order updated in store after payment verification');
-          }
-        } catch (orderError) {
-          console.error('⚠️ [Payment] Error fetching order after verification:', orderError);
-          // Continue even if order fetch fails - handlePaymentSuccess will try again
-        }
-
-        // If verification succeeds, poll for final status update
-        console.log('🔄 [Payment] Starting payment status polling...');
-        try {
-          await pollPaymentStatus(
-            orderId,
-            (newStatus: string, newPaymentStatus: string) => {
-              console.log('📊 [Payment] Status update:', { newStatus, newPaymentStatus });
-              setPaymentStatus(newPaymentStatus);
-              if (newPaymentStatus === 'paid') {
-                console.log('✅ [Payment] Payment status is paid!');
-                setStatus('success');
-              } else if (newPaymentStatus === 'failed') {
-                console.log('❌ [Payment] Payment status is failed!');
-                setStatus('failed');
-              }
-            },
-            120000, // 2 minutes max
-          );
-
-          console.log('✅ [Payment] Polling completed successfully');
-          // Payment successful
-          setStatus('success');
-          setTimeout(() => {
-            console.log('🚀 [Payment] Navigating to success screen...');
-            handlePaymentSuccess(orderId, navigation);
-          }, 2000);
-        } catch (pollError: any) {
-          console.error('⚠️ [Payment] Polling failed, but verification succeeded:', pollError);
-          // Even if polling fails, if verification succeeded, payment is likely successful
-          // But we'll show success since verification passed
-          setStatus('success');
-          setTimeout(() => {
-            console.log('🚀 [Payment] Navigating to success screen (polling failed but verification passed)...');
-            handlePaymentSuccess(orderId, navigation);
-          }, 2000);
-        }
+        // Verification succeeded; backend has marked payment as paid.
+        // Navigate immediately for a faster UX (LiveTracking will refetch order).
+        setPaymentStatus('paid');
+        finalizeSuccess();
       } catch (error: any) {
         // Payment cancelled or failed at Razorpay level
         console.error('❌ [Payment] Razorpay error:', error);
@@ -334,17 +267,18 @@ const PaymentStatusScreen: React.FC = () => {
         
         // Check if payment actually succeeded on server (in case callback failed but payment went through)
         const serverStatus = await checkPaymentStatusFromServer();
-        if (serverStatus) {
-          // Payment succeeded on server, ignore the error
-          paymentInProgress.current = false;
+        if (serverStatus.handled && serverStatus.paid) {
+          finalizeSuccess();
+          return;
+        }
+        if (serverStatus.handled && !serverStatus.paid) {
+          finalizeFailure('Payment failed');
           return;
         }
 
-        paymentInProgress.current = false;
-        setStatus('failed');
         // Razorpay error description - handle both PaymentFailureResponse and generic errors
         const errorMsg = error?.description || error?.reason || error?.message || 'Payment cancelled';
-        setError(errorMsg);
+        finalizeFailure(errorMsg);
       }
     };
 
@@ -353,8 +287,9 @@ const PaymentStatusScreen: React.FC = () => {
     // Cleanup on unmount
     return () => {
       paymentInProgress.current = false;
-      if (checkStatusTimeoutRef.current) {
-        clearTimeout(checkStatusTimeoutRef.current);
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
       }
     };
   }, [orderId, paymentAction, navigation, user, colors.secondary]);

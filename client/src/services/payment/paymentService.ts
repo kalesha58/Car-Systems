@@ -1,4 +1,4 @@
-import { appAxios } from '../apiInterceptors';
+import { appAxios } from '../../service/apiInterceptors';
 
 export interface IRazorpayPaymentResponse {
   razorpay_payment_id: string;

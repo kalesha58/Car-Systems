@@ -7,7 +7,7 @@ export interface IOrderStatusDisplay {
  * Maps order status to display message and time estimate
  * Handles both status systems:
  * - Simple: "available", "confirmed", "arriving", "delivered"
- * - Complex: "ORDER_PLACED", "ORDER_CONFIRMED", "OUT_FOR_DELIVERY", "DELIVERED"
+ * - Complex: "ORDER_PLACED", "ORDER_CONFIRMED", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"
  */
 export const getOrderStatusDisplay = (status: string): IOrderStatusDisplay => {
   const normalizedStatus = status?.toLowerCase() || '';
@@ -24,6 +24,20 @@ export const getOrderStatusDisplay = (status: string): IOrderStatusDisplay => {
     return {
       message: 'Arriving Soon',
       timeEstimate: 'Arriving in 8 minutes',
+    };
+  }
+
+  if (normalizedStatus === 'packed') {
+    return {
+      message: 'Order Packed',
+      timeEstimate: 'Preparing dispatch',
+    };
+  }
+
+  if (normalizedStatus === 'shipped') {
+    return {
+      message: 'Order Shipped',
+      timeEstimate: 'On the way',
     };
   }
 
@@ -56,6 +70,8 @@ export const isOrderAccepted = (status: string): boolean => {
   return (
     normalizedStatus === 'confirmed' ||
     normalizedStatus === 'order_confirmed' ||
+    normalizedStatus === 'packed' ||
+    normalizedStatus === 'shipped' ||
     normalizedStatus === 'arriving' ||
     normalizedStatus === 'out_for_delivery' ||
     normalizedStatus === 'delivered'
@@ -68,6 +84,8 @@ export const isOrderAccepted = (status: string): boolean => {
 export const isOrderPickedUp = (status: string): boolean => {
   const normalizedStatus = status?.toLowerCase() || '';
   return (
+    normalizedStatus === 'packed' ||
+    normalizedStatus === 'shipped' ||
     normalizedStatus === 'arriving' ||
     normalizedStatus === 'out_for_delivery' ||
     normalizedStatus === 'delivered'

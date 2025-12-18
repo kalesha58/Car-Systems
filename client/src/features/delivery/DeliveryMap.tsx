@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {Platform, PermissionsAndroid} from 'react-native';
 import {useAuthStore} from '@state/authStore';
 import {
   confirmOrder,
@@ -25,6 +26,7 @@ import OrderWorkflow from '@features/map/OrderWorkflow';
 import {useRoute} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
 import CustomButton from '@components/ui/CustomButton';
+import ThemedModal from '@components/ui/ThemedModal';
 import {hocStyles} from '@styles/GlobalStyles';
 import {IOrderData, ILocation} from '../../types/order/IOrder';
 
@@ -38,6 +40,81 @@ const DeliveryMap = () => {
   const [loading, setLoading] = useState<boolean>(!orderDetails);
   const [myLocation, setMyLocation] = useState<ILocation | null>(null);
   const {setCurrentOrder} = useAuthStore();
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const [locationModalMessage, setLocationModalMessage] = useState(
+    'Please enable location permission and wait for GPS before continuing.',
+  );
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalTitle, setInfoModalTitle] = useState('Notice');
+  const [infoModalMessage, setInfoModalMessage] = useState('');
+  const [infoModalVariant, setInfoModalVariant] =
+    useState<React.ComponentProps<typeof ThemedModal>['variant']>('info');
+  const locationRequestInFlight = React.useRef(false);
+
+  const showInfoModal = (
+    title: string,
+    message: string,
+    variant: React.ComponentProps<typeof ThemedModal>['variant'] = 'info',
+  ) => {
+    setInfoModalTitle(title);
+    setInfoModalMessage(message);
+    setInfoModalVariant(variant);
+    setInfoModalVisible(true);
+  };
+
+  const showLocationRequiredModal = (message?: string) => {
+    if (message) {
+      setLocationModalMessage(message);
+    }
+    setLocationModalVisible(true);
+  };
+
+  const requestLocationPermissionInApp = async (): Promise<boolean> => {
+    try {
+      if (Platform.OS === 'android') {
+        const alreadyGranted = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (alreadyGranted) {
+          return true;
+        }
+
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location to update delivery status.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+
+      // iOS
+      await Geolocation.requestAuthorization();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const fetchLocationOnce = async (): Promise<boolean> => {
+    return new Promise(resolve => {
+      Geolocation.getCurrentPosition(
+        position => {
+          const {latitude, longitude} = position.coords;
+          setMyLocation({latitude, longitude});
+          resolve(true);
+        },
+        () => {
+          resolve(false);
+        },
+        {enableHighAccuracy: true, timeout: 15000, maximumAge: 5000},
+      );
+    });
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -83,8 +160,23 @@ const DeliveryMap = () => {
         const {latitude, longitude} = position.coords;
         setMyLocation({latitude, longitude});
       },
-      () => {
-        // Error handling - location fetch failed
+      (err) => {
+        // If location is disabled/permission denied, guide dealer to enable it
+        if (locationRequestInFlight.current) {
+          return;
+        }
+        const code = (err as any)?.code;
+        if (code === 1) {
+          // PERMISSION_DENIED
+          showLocationRequiredModal(
+            'Location permission is denied. Please enable location permission for the app in Settings.',
+          );
+        } else if (code === 2) {
+          // POSITION_UNAVAILABLE
+          showLocationRequiredModal(
+            'Location is unavailable. Please turn on GPS/Location services and try again.',
+          );
+        }
       },
       {enableHighAccuracy: true, distanceFilter: 200},
     );
@@ -99,24 +191,101 @@ const DeliveryMap = () => {
     try {
       const orderId = orderData.id || (orderData as any)._id;
       if (!orderId) {
-        Alert.alert('Error', 'Order ID not found');
+        showInfoModal('Error', 'Order ID not found', 'error');
         return;
       }
       const data = await confirmOrder(orderId, myLocation);
       if (data) {
         setCurrentOrder(data);
         setOrderData(data);
-        Alert.alert('Order Accepted', 'Grab your package');
+        showInfoModal('Order Accepted', 'Grab your package', 'success');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to accept order');
+      showInfoModal('Error', 'Failed to accept order', 'error');
     } finally {
       fetchOrderDetails();
     }
   };
 
   const orderPickedUp = async () => {
-    if (!orderData || !myLocation) {
+    if (!orderData) {
+      Alert.alert('Error', 'Order not loaded yet. Please wait and try again.');
+      return;
+    }
+    if (!myLocation) {
+      showLocationRequiredModal(
+        'Please enable location permission and wait for GPS before marking order packed.',
+      );
+      return;
+    }
+    try {
+      const orderId = orderData.id || (orderData as any)._id;
+      if (!orderId) {
+        Alert.alert('Error', 'Order ID not found');
+        return;
+      }
+      const data = await sendLiveOrderUpdates(orderId, myLocation, 'PACKED');
+      if (data) {
+        setCurrentOrder(data);
+        setOrderData(data);
+        Alert.alert('Success', 'Order marked as packed');
+      }
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to update order status';
+      Alert.alert('Error', msg);
+    } finally {
+      fetchOrderDetails();
+    }
+  };
+
+  const orderShipped = async () => {
+    if (!orderData) {
+      Alert.alert('Error', 'Order not loaded yet. Please wait and try again.');
+      return;
+    }
+    if (!myLocation) {
+      showLocationRequiredModal(
+        'Please enable location permission and wait for GPS before marking order shipped.',
+      );
+      return;
+    }
+    try {
+      const orderId = orderData.id || (orderData as any)._id;
+      if (!orderId) {
+        Alert.alert('Error', 'Order ID not found');
+        return;
+      }
+      const data = await sendLiveOrderUpdates(orderId, myLocation, 'SHIPPED');
+      if (data) {
+        setCurrentOrder(data);
+        setOrderData(data);
+        Alert.alert('Success', 'Order marked as shipped');
+      }
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to update order status';
+      Alert.alert('Error', msg);
+    } finally {
+      fetchOrderDetails();
+    }
+  };
+
+  const outForDelivery = async () => {
+    if (!orderData) {
+      Alert.alert('Error', 'Order not loaded yet. Please wait and try again.');
+      return;
+    }
+    if (!myLocation) {
+      showLocationRequiredModal(
+        'Please enable location permission and wait for GPS before marking out for delivery.',
+      );
       return;
     }
     try {
@@ -131,8 +300,13 @@ const DeliveryMap = () => {
         setOrderData(data);
         Alert.alert('Success', "Let's deliver it as soon as possible");
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update order status');
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to update order status';
+      Alert.alert('Error', msg);
     } finally {
       fetchOrderDetails();
     }
@@ -173,6 +347,10 @@ const DeliveryMap = () => {
     if (isAssignedDeliveryPartner) {
       if (normalizedStatus === 'ORDER_CONFIRMED') {
         return 'Grab your order';
+      } else if (normalizedStatus === 'PACKED') {
+        return 'Order packed';
+      } else if (normalizedStatus === 'SHIPPED') {
+        return 'On the way';
       } else if (normalizedStatus === 'OUT_FOR_DELIVERY') {
         return 'Complete your order';
       } else if (normalizedStatus === 'DELIVERED') {
@@ -232,6 +410,47 @@ const DeliveryMap = () => {
 
   return (
     <View style={styles.container}>
+      <ThemedModal
+        visible={locationModalVisible}
+        title="Location Required"
+        message={locationModalMessage}
+        variant="warning"
+        primaryText="Allow Location"
+        onPrimaryPress={async () => {
+          locationRequestInFlight.current = true;
+          try {
+            const ok = await requestLocationPermissionInApp();
+            if (!ok) {
+              setLocationModalMessage(
+                'Location permission was not granted. Please tap Allow Location and choose Allow.',
+              );
+              return;
+            }
+
+            // After permission is granted, fetch a location immediately so buttons work right away.
+            const gotLocation = await fetchLocationOnce();
+            if (!gotLocation) {
+              setLocationModalMessage(
+                'Permission granted, but GPS location is still not available. Please turn on GPS and try again.',
+              );
+              return;
+            }
+
+            setLocationModalVisible(false);
+          } finally {
+            locationRequestInFlight.current = false;
+          }
+        }}
+        onClose={() => setLocationModalVisible(false)}
+      />
+      <ThemedModal
+        visible={infoModalVisible}
+        title={infoModalTitle}
+        message={infoModalMessage}
+        variant={infoModalVariant}
+        primaryText="OK"
+        onClose={() => setInfoModalVisible(false)}
+      />
       <LiveHeader
         type="Delivery"
         title={message}
@@ -311,8 +530,28 @@ const DeliveryMap = () => {
               orderData.deliveryPartner?._id === user?._id && (
                 <CustomButton
                   disabled={false}
-                  title="Order Picked Up"
+                  title="Packed"
                   onPress={orderPickedUp}
+                  loading={false}
+                />
+              )}
+
+            {(orderData.status?.toUpperCase() === 'PACKED') &&
+              orderData.deliveryPartner?._id === user?._id && (
+                <CustomButton
+                  disabled={false}
+                  title="Shipped"
+                  onPress={orderShipped}
+                  loading={false}
+                />
+              )}
+
+            {(orderData.status?.toUpperCase() === 'SHIPPED') &&
+              orderData.deliveryPartner?._id === user?._id && (
+                <CustomButton
+                  disabled={false}
+                  title="Out for Delivery"
+                  onPress={outForDelivery}
                   loading={false}
                 />
               )}
