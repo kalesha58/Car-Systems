@@ -607,3 +607,42 @@ export const getDealerOrderById = async (orderId: string): Promise<IOrderData | 
   }
 };
 
+/**
+ * Get dealer info by dealerId (BusinessRegistration._id)
+ * Returns userId and basic dealer information for chat purposes
+ */
+export interface IDealerInfoForChat {
+  userId: string;
+  businessName: string;
+  status: string;
+  type?: string;
+  address?: string;
+  phone?: string;
+}
+
+export interface IDealerInfoResponse {
+  success: boolean;
+  Response: IDealerInfoForChat;
+}
+
+export const getDealerInfoByDealerId = async (
+  dealerId: string,
+): Promise<IDealerInfoForChat> => {
+  try {
+    const response = await appAxios.get<IDealerInfoResponse>(`/user/dealer/${dealerId}/info`);
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to get dealer info');
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      throw new Error('Dealer not available');
+    }
+    if (error?.response?.status === 403) {
+      const status = error?.response?.data?.Response?.status || 'pending';
+      throw new Error(`Dealer account is ${status}. Please wait for approval.`);
+    }
+    throw error;
+  }
+};
+

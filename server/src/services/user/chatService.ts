@@ -631,6 +631,43 @@ export const sendMessage = async (
   const messageData = await messageToIMessage(message);
   emitToChatRoom(chatId, 'newMessage', messageData);
 
+  // Send push notification to recipient
+  try {
+    const recipientId = chat.type === 'direct' 
+      ? chat.participants.find((p) => p !== userId)
+      : undefined;
+
+    if (recipientId) {
+      // Get sender info for notification
+      const sender = await SignUp.findById(userId).select('name').lean();
+      const senderName = sender?.name || 'Someone';
+
+      // Truncate message text for notification
+      const notificationBody = data.text.trim().length > 100
+        ? data.text.trim().substring(0, 100) + '...'
+        : data.text.trim();
+
+      // Import notification service dynamically to avoid circular dependencies
+      const { sendPushNotification } = await import('../notificationService');
+      
+      await sendPushNotification(recipientId, {
+        title: `New message from ${senderName}`,
+        body: notificationBody,
+        data: {
+          type: 'chat',
+          chatId: chatId,
+          messageId: message.id,
+          fromUserId: userId,
+        },
+      });
+
+      logger.info(`Push notification sent for message ${message.id} to user ${recipientId}`);
+    }
+  } catch (notificationError) {
+    // Don't fail message send if notification fails
+    logger.error('Error sending push notification for chat message:', notificationError);
+  }
+
   logger.info(`Message sent: ${message.id} in chat: ${chatId} by user: ${userId}`);
 
   return {
