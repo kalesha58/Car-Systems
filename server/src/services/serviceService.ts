@@ -8,6 +8,9 @@ import {
 import { IPaginationResponse } from '../types/admin';
 import { NotFoundError, ConflictError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
+import { BusinessRegistration } from '../models/BusinessRegistration';
+import { IDealerInfo } from '../types/user/vehicle';
+import mongoose from 'mongoose';
 
 /**
  * Convert service document to IService interface
@@ -70,8 +73,46 @@ export const getServices = async (
       Service.countDocuments(filter),
     ]);
 
+    // Get unique dealerIds from services (dealerId is BusinessRegistration._id)
+    const dealerIds = [...new Set(services.map((s: any) => s.dealerId).filter(Boolean))];
+    
+    // Convert dealerIds to ObjectIds for MongoDB query
+    const dealerObjectIds = dealerIds
+      .filter(id => id && mongoose.Types.ObjectId.isValid(String(id)))
+      .map(id => new mongoose.Types.ObjectId(String(id)));
+
+    // Get all business registrations for these dealers
+    const businessRegistrations = dealerObjectIds.length > 0
+      ? await BusinessRegistration.find({ _id: { $in: dealerObjectIds } })
+      : [];
+
+    // Create a map of BusinessRegistration._id (as string) to dealer info
+    const dealerInfoMap = new Map<string, IDealerInfo>();
+    businessRegistrations.forEach((reg) => {
+      const regIdString = (reg._id as any).toString();
+      dealerInfoMap.set(regIdString, {
+        id: regIdString,
+        businessName: reg.businessName,
+        type: reg.type,
+        phone: reg.phone,
+        address: reg.address,
+        gst: reg.gst,
+      });
+    });
+
+    // Convert services and attach dealer info
+    const servicesWithDealer = services.map((serviceDoc) => {
+      const serviceDealerId = String(serviceDoc.dealerId || '').trim();
+      const dealerInfo = serviceDealerId ? dealerInfoMap.get(serviceDealerId) : undefined;
+      const service: any = serviceToIService(serviceDoc);
+      if (dealerInfo) {
+        service.dealer = dealerInfo;
+      }
+      return service;
+    });
+
     return {
-      services: services.map(serviceToIService),
+      services: servicesWithDealer,
       pagination: {
         page,
         limit,
@@ -96,7 +137,28 @@ export const getServiceById = async (serviceId: string): Promise<IService> => {
       throw new NotFoundError('Service not found');
     }
 
-    return serviceToIService(service);
+    const serviceData: any = serviceToIService(service);
+
+    // Fetch dealer info for the service
+    if (service.dealerId && mongoose.Types.ObjectId.isValid(String(service.dealerId))) {
+      try {
+        const businessReg = await BusinessRegistration.findById(service.dealerId);
+        if (businessReg) {
+          serviceData.dealer = {
+            id: (businessReg._id as any).toString(),
+            businessName: businessReg.businessName,
+            type: businessReg.type,
+            phone: businessReg.phone,
+            address: businessReg.address,
+            gst: businessReg.gst,
+          };
+        }
+      } catch (err) {
+        logger.warn(`[getServiceById] Could not fetch dealer info for service ${serviceId}:`, err);
+      }
+    }
+
+    return serviceData;
   } catch (error) {
     logger.error('Error getting service by ID:', error);
     throw error;
@@ -120,8 +182,37 @@ export const getServicesByDealerId = async (
       Service.countDocuments({ dealerId }),
     ]);
 
+    // Fetch dealer info for this dealerId
+    let dealerInfo: IDealerInfo | undefined;
+    if (dealerId && mongoose.Types.ObjectId.isValid(String(dealerId))) {
+      try {
+        const businessReg = await BusinessRegistration.findById(dealerId);
+        if (businessReg) {
+          dealerInfo = {
+            id: (businessReg._id as any).toString(),
+            businessName: businessReg.businessName,
+            type: businessReg.type,
+            phone: businessReg.phone,
+            address: businessReg.address,
+            gst: businessReg.gst,
+          };
+        }
+      } catch (err) {
+        logger.warn(`[getServicesByDealerId] Could not fetch dealer info for dealerId ${dealerId}:`, err);
+      }
+    }
+
+    // Attach dealer info to all services
+    const servicesWithDealer = services.map((serviceDoc) => {
+      const service: any = serviceToIService(serviceDoc);
+      if (dealerInfo) {
+        service.dealer = dealerInfo;
+      }
+      return service;
+    });
+
     return {
-      services: services.map(serviceToIService),
+      services: servicesWithDealer,
       pagination: {
         page,
         limit,
