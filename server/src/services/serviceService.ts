@@ -154,13 +154,12 @@ export const getServiceById = async (serviceId: string): Promise<IService> => {
           };
         }
       } catch (err) {
-        logger.warn(`[getServiceById] Could not fetch dealer info for service ${serviceId}:`, err);
+        // Ignore errors
       }
     }
 
     return serviceData;
   } catch (error) {
-    logger.error('Error getting service by ID:', error);
     throw error;
   }
 };
@@ -198,7 +197,7 @@ export const getServicesByDealerId = async (
           };
         }
       } catch (err) {
-        logger.warn(`[getServicesByDealerId] Could not fetch dealer info for dealerId ${dealerId}:`, err);
+        // Ignore errors
       }
     }
 
@@ -221,7 +220,6 @@ export const getServicesByDealerId = async (
       },
     };
   } catch (error) {
-    logger.error('Error getting services by dealer ID:', error);
     throw error;
   }
 };

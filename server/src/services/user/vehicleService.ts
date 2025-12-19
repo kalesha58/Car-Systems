@@ -392,12 +392,7 @@ export const getAllDealerVehiclesForUsers = async (
 
       if (!dealerInfo) {
         // Log detailed debugging info
-        logger.warn(`[getAllDealerVehiclesForUsers] Dealer not found for vehicle ${vehicleDoc._id}`);
-        logger.warn(`[getAllDealerVehiclesForUsers] Vehicle dealerId: "${vehicleDealerId}" (type: ${typeof vehicleDoc.dealerId})`);
-        logger.warn(`[getAllDealerVehiclesForUsers] Is valid ObjectId: ${mongoose.Types.ObjectId.isValid(vehicleDealerId)}`);
-        logger.warn(`[getAllDealerVehiclesForUsers] Available dealerIds in map (first 5):`, Array.from(dealerInfoMap.keys()).slice(0, 5));
-        logger.warn(`[getAllDealerVehiclesForUsers] Available userIds in map (first 5):`, Array.from(dealerInfoMapByUserId.keys()).slice(0, 5));
-        
+    
         // Return a default dealer info if not found
         const defaultDealerInfo: IDealerInfo = {
           id: vehicleDealerId,
@@ -422,7 +417,6 @@ export const getAllDealerVehiclesForUsers = async (
       },
     };
   } catch (error) {
-    logger.error('Error getting all dealer vehicles for users:', error);
     throw error;
   }
 };

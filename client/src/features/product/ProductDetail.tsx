@@ -34,6 +34,7 @@ import {useNavigation} from '@react-navigation/native';
 import {getDealerById} from '@service/dealerService';
 import {IDealer} from '@types/dealer/IDealer';
 import RelatedProducts from '@features/cart/RelatedProducts';
+import SkeletonLoader from '@components/ui/SkeletonLoader';
 
 type ProductDetailRouteParams = {
   ProductDetail: {
@@ -621,12 +622,110 @@ const ProductDetail: React.FC = () => {
     deliveryTextContainer: {
       flex: 1,
     },
+    skeletonImage: {
+      width: screenWidth,
+      height: screenHeight * 0.5,
+      backgroundColor: colors.backgroundSecondary,
+    },
+    skeletonTitle: {marginTop: 12, marginBottom: 8},
+    skeletonPrice: {marginTop: 8, marginBottom: 4},
+    skeletonText: {marginTop: 8},
+    skeletonButton: {marginTop: 16},
+    metricsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      marginTop: 16,
+      gap: 16,
+    },
+    metricItem: {
+      alignItems: 'center',
+      gap: 4,
+      flex: 1,
+    },
+    metricIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: Colors.secondary + '20',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    metricText: {
+      fontSize: RFValue(10),
+      color: colors.text,
+      fontFamily: Fonts.Medium,
+      textAlign: 'center',
+    },
+    metricLabel: {
+      fontSize: RFValue(8),
+      color: colors.disabled,
+      fontFamily: Fonts.Regular,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 8,
+    },
+    detailLabel: {
+      color: colors.disabled,
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Regular,
+    },
+    detailValue: {
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+    },
   });
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.secondary} />
+      <View style={styles.container}>
+        <CollapsibleContainer
+          style={[styles.container, {marginTop: insets.top || 0}]}>
+          <CollapsibleHeaderContainer containerStyle={{backgroundColor: 'transparent'}}>
+            <SkeletonLoader width={screenWidth} height={screenHeight * 0.5} borderRadius={0} />
+          </CollapsibleHeaderContainer>
+          <CollapsibleScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}>
+            <View style={styles.ratingContainer}>
+              <SkeletonLoader width={100} height={16} borderRadius={4} />
+            </View>
+            <View style={styles.productNameContainer}>
+              <SkeletonLoader width="70%" height={24} borderRadius={4} style={styles.skeletonTitle} />
+              <SkeletonLoader width={40} height={40} borderRadius={20} />
+            </View>
+            <View style={{paddingHorizontal: 16}}>
+              <SkeletonLoader width="40%" height={20} borderRadius={4} style={styles.skeletonPrice} />
+              <SkeletonLoader width="60%" height={16} borderRadius={4} style={styles.skeletonText} />
+            </View>
+            <View style={styles.metricsRow}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.metricItem}>
+                  <SkeletonLoader width={48} height={48} borderRadius={24} style={styles.metricIcon} />
+                  <SkeletonLoader width={40} height={12} borderRadius={4} style={{marginTop: 4}} />
+                  <SkeletonLoader width={30} height={10} borderRadius={4} style={{marginTop: 2}} />
+                </View>
+              ))}
+            </View>
+            <View style={{paddingHorizontal: 16, marginTop: 16}}>
+              <SkeletonLoader width="50%" height={18} borderRadius={4} />
+              <SkeletonLoader width="100%" height={12} borderRadius={4} style={styles.skeletonText} />
+              <SkeletonLoader width="95%" height={12} borderRadius={4} style={styles.skeletonText} />
+              <SkeletonLoader width="90%" height={12} borderRadius={4} style={styles.skeletonText} />
+            </View>
+            <View style={{paddingHorizontal: 16, marginTop: 24}}>
+              <SkeletonLoader width="50%" height={18} borderRadius={4} />
+              <SkeletonLoader width="100%" height={12} borderRadius={4} style={styles.skeletonText} />
+              <SkeletonLoader width="95%" height={12} borderRadius={4} style={styles.skeletonText} />
+            </View>
+            <View style={{paddingHorizontal: 16, marginTop: 16, flexDirection: 'row', gap: 12}}>
+              <SkeletonLoader width={120} height={48} borderRadius={24} style={styles.skeletonButton} />
+              <SkeletonLoader width={120} height={48} borderRadius={24} style={styles.skeletonButton} />
+            </View>
+          </CollapsibleScrollView>
+        </CollapsibleContainer>
       </View>
     );
   }
@@ -804,51 +903,82 @@ const ProductDetail: React.FC = () => {
             </View>
           </View>
 
+          {/* Key Metrics */}
+          <View style={styles.metricsRow}>
+            {product.category && (
+              <View style={styles.metricItem}>
+                <View style={styles.metricIcon}>
+                  <Icon name="grid-outline" size={RFValue(20)} color={Colors.secondary} />
+                </View>
+                <CustomText style={styles.metricText} numberOfLines={1}>
+                  {product.category}
+                </CustomText>
+                <CustomText style={styles.metricLabel}>Category</CustomText>
+              </View>
+            )}
+            {product.brand && (
+              <View style={styles.metricItem}>
+                <View style={styles.metricIcon}>
+                  <Icon name="pricetag-outline" size={RFValue(20)} color={Colors.secondary} />
+                </View>
+                <CustomText style={styles.metricText} numberOfLines={1}>
+                  {product.brand}
+                </CustomText>
+                <CustomText style={styles.metricLabel}>Brand</CustomText>
+              </View>
+            )}
+            <View style={styles.metricItem}>
+              <View style={styles.metricIcon}>
+                <Icon 
+                  name={product.stock > 0 ? "checkmark-circle-outline" : "close-circle-outline"} 
+                  size={RFValue(20)} 
+                  color={Colors.secondary} 
+                />
+              </View>
+              <CustomText style={styles.metricText}>
+                {product.stock}
+              </CustomText>
+              <CustomText style={styles.metricLabel}>Stock</CustomText>
+            </View>
+            {product.vehicleType && (
+              <View style={styles.metricItem}>
+                <View style={styles.metricIcon}>
+                  <Icon name="car-outline" size={RFValue(20)} color={Colors.secondary} />
+                </View>
+                <CustomText style={styles.metricText} numberOfLines={1}>
+                  {product.vehicleType}
+                </CustomText>
+                <CustomText style={styles.metricLabel}>Type</CustomText>
+              </View>
+            )}
+          </View>
+
           {/* Product Description */}
           {product.description && (
             <View style={styles.sectionContainer}>
               <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                Description
+                Overview
               </CustomText>
-              <CustomText variant="h7" fontFamily={Fonts.Regular} style={styles.descriptionText}>
+              <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.descriptionText}>
                 {product.description}
               </CustomText>
             </View>
           )}
 
-          {/* Collapsible Product Details */}
-          <Pressable
-            style={styles.viewDetailsLink}
-            onPress={() => setShowProductDetails(!showProductDetails)}>
-            <CustomText
-              variant="h7"
-              fontFamily={Fonts.Medium}
-              style={styles.viewDetailsText}>
-              View product details
-            </CustomText>
-            <Icon
-              name={showProductDetails ? 'chevron-down' : 'chevron-up'}
-              size={RFValue(14)}
-              color={colors.secondary}
-            />
-          </Pressable>
-          
-          {showProductDetails && (
-            <View style={styles.productDetailsContent}>
-              {product.specifications && Object.keys(product.specifications).length > 0 && (
-                <View style={styles.specsContainer}>
-                  {Object.entries(product.specifications).map(([key, value]) => (
-                    <View key={key} style={styles.specRow}>
-                      <CustomText variant="h7" fontFamily={Fonts.Regular} style={styles.specLabel}>
-                        {key}
-                      </CustomText>
-                      <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.specValue}>
-                        {String(value)}
-                      </CustomText>
-                    </View>
-                  ))}
-                </View>
-              )}
+          {/* Product Details */}
+          {product.specifications && Object.keys(product.specifications).length > 0 && (
+            <View style={styles.sectionContainer}>
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
+                Product Details
+              </CustomText>
+              <View style={{gap: 8}}>
+                {Object.entries(product.specifications).map(([key, value]) => (
+                  <View key={key} style={styles.detailRow}>
+                    <CustomText style={styles.detailLabel}>{key}</CustomText>
+                    <CustomText style={styles.detailValue}>{String(value)}</CustomText>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
 

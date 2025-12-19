@@ -127,19 +127,9 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
         </View>
 
         <View style={styles.priceContainer}>
-          <View>
-            <CustomText variant="h8" fontFamily={Fonts.Medium}>
-              ₹{item.price?.toLocaleString()}
-            </CustomText>
-            {item.dealer?.address && (
-              <CustomText
-                fontSize={RFValue(6)}
-                fontFamily={Fonts.Regular}
-                style={{opacity: 0.7, marginTop: 2}}>
-                {item.dealer.address}
-              </CustomText>
-            )}
-          </View>
+          <CustomText variant="h8" fontFamily={Fonts.Medium}>
+            ₹{item.price?.toLocaleString()}
+          </CustomText>
         </View>
       </View>
     </Pressable>
