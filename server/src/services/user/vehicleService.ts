@@ -283,37 +283,74 @@ export const getAllDealerVehiclesForUsers = async (
     // dealerId in DealerVehicle is BusinessRegistration._id (set by dealerMiddleware)
     const dealerIds = [...new Set(vehicles.map((v: any) => v.dealerId).filter(Boolean))];
     logger.info(`[getAllDealerVehiclesForUsers] Found ${dealerIds.length} unique dealerIds:`, dealerIds);
+    logger.info(`[getAllDealerVehiclesForUsers] Sample dealerIds (first 3):`, dealerIds.slice(0, 3).map(id => ({ raw: id, type: typeof id, string: String(id) })));
 
     // Convert dealerIds to ObjectIds for MongoDB query (BusinessRegistration._id is ObjectId)
     const dealerObjectIds = dealerIds
-      .filter(id => id && mongoose.Types.ObjectId.isValid(String(id)))
-      .map(id => new mongoose.Types.ObjectId(String(id)));
+      .filter(id => {
+        const idStr = String(id);
+        const isValid = mongoose.Types.ObjectId.isValid(idStr);
+        if (!isValid) {
+          logger.warn(`[getAllDealerVehiclesForUsers] Invalid ObjectId found: "${idStr}" (type: ${typeof id})`);
+        }
+        return isValid;
+      })
+      .map(id => {
+        try {
+          return new mongoose.Types.ObjectId(String(id));
+        } catch (e) {
+          logger.error(`[getAllDealerVehiclesForUsers] Failed to convert to ObjectId: "${id}"`, e);
+          return null;
+        }
+      })
+      .filter((id): id is mongoose.Types.ObjectId => id !== null);
 
     logger.info(`[getAllDealerVehiclesForUsers] Querying BusinessRegistration with ${dealerObjectIds.length} ObjectIds`);
+    logger.info(`[getAllDealerVehiclesForUsers] Sample ObjectIds:`, dealerObjectIds.slice(0, 3).map(id => id.toString()));
 
     // Get all business registrations for these dealers
     const businessRegistrations = dealerObjectIds.length > 0
       ? await BusinessRegistration.find({ _id: { $in: dealerObjectIds } })
       : [];
 
-    logger.info(`[getAllDealerVehiclesForUsers] Found ${businessRegistrations.length} business registrations`);
+    logger.info(`[getAllDealerVehiclesForUsers] Found ${businessRegistrations.length} business registrations out of ${dealerObjectIds.length} queried`);
+    
+    // Log what we found
+    if (businessRegistrations.length > 0) {
+      logger.info(`[getAllDealerVehiclesForUsers] Sample business registrations:`, businessRegistrations.slice(0, 3).map(reg => ({
+        _id: (reg._id as any).toString(),
+        businessName: reg.businessName,
+        userId: reg.userId,
+      })));
+    }
 
     // Create a map of BusinessRegistration._id (as string) to dealer info
-    // This matches how products work - simple and direct lookup
+    // Also create a map by userId in case dealerId was incorrectly set to userId
     const dealerInfoMap = new Map<string, IDealerInfo>();
+    const dealerInfoMapByUserId = new Map<string, IDealerInfo>();
+    
     businessRegistrations.forEach((reg) => {
       const regIdString = (reg._id as any).toString();
-      dealerInfoMap.set(regIdString, {
+      const dealerInfo: IDealerInfo = {
         id: regIdString,
         businessName: reg.businessName,
         type: reg.type,
         phone: reg.phone,
         address: reg.address,
         gst: reg.gst,
-      });
+      };
+      
+      // Map by _id (primary lookup)
+      dealerInfoMap.set(regIdString, dealerInfo);
+      
+      // Also map by userId (fallback in case dealerId was set to userId instead of _id)
+      if (reg.userId) {
+        dealerInfoMapByUserId.set(reg.userId, dealerInfo);
+      }
     });
 
-    logger.info(`[getAllDealerVehiclesForUsers] Created dealerInfoMap with ${dealerInfoMap.size} entries`);
+    logger.info(`[getAllDealerVehiclesForUsers] Created dealerInfoMap with ${dealerInfoMap.size} entries (by _id)`);
+    logger.info(`[getAllDealerVehiclesForUsers] Created dealerInfoMapByUserId with ${dealerInfoMapByUserId.size} entries (by userId)`);
 
     // Convert vehicles and attach dealer info
     const vehiclesWithDealer = vehicles.map((vehicleDoc) => {
@@ -332,20 +369,34 @@ export const getAllDealerVehiclesForUsers = async (
         return vehicleToInterfaceWithDealer(vehicleDoc, defaultDealerInfo);
       }
 
-      // Simple lookup - dealerId should match BusinessRegistration._id.toString()
+      // Try primary lookup - dealerId should match BusinessRegistration._id.toString()
       let dealerInfo = dealerInfoMap.get(vehicleDealerId);
       
-      // If not found, try normalizing the ID (handle any whitespace/formatting issues)
+      // If not found, try converting to ObjectId and back (in case of format differences)
+      if (!dealerInfo && mongoose.Types.ObjectId.isValid(vehicleDealerId)) {
+        try {
+          const normalizedId = new mongoose.Types.ObjectId(vehicleDealerId).toString();
+          dealerInfo = dealerInfoMap.get(normalizedId);
+        } catch (e) {
+          // Ignore conversion errors
+        }
+      }
+      
+      // If still not found, try lookup by userId (fallback for incorrectly set dealerIds)
       if (!dealerInfo) {
-        // Try with trimmed and normalized version
-        const normalizedId = vehicleDealerId.trim();
-        dealerInfo = dealerInfoMap.get(normalizedId);
+        dealerInfo = dealerInfoMapByUserId.get(vehicleDealerId);
+        if (dealerInfo) {
+          logger.info(`[getAllDealerVehiclesForUsers] Found dealer by userId fallback for vehicle ${vehicleDoc._id}`);
+        }
       }
 
       if (!dealerInfo) {
-        // Log for debugging
-        logger.warn(`[getAllDealerVehiclesForUsers] Dealer not found for vehicle ${vehicleDoc._id}, dealerId: "${vehicleDealerId}"`);
-        logger.warn(`[getAllDealerVehiclesForUsers] Available dealerIds in map:`, Array.from(dealerInfoMap.keys()).slice(0, 5));
+        // Log detailed debugging info
+        logger.warn(`[getAllDealerVehiclesForUsers] Dealer not found for vehicle ${vehicleDoc._id}`);
+        logger.warn(`[getAllDealerVehiclesForUsers] Vehicle dealerId: "${vehicleDealerId}" (type: ${typeof vehicleDoc.dealerId})`);
+        logger.warn(`[getAllDealerVehiclesForUsers] Is valid ObjectId: ${mongoose.Types.ObjectId.isValid(vehicleDealerId)}`);
+        logger.warn(`[getAllDealerVehiclesForUsers] Available dealerIds in map (first 5):`, Array.from(dealerInfoMap.keys()).slice(0, 5));
+        logger.warn(`[getAllDealerVehiclesForUsers] Available userIds in map (first 5):`, Array.from(dealerInfoMapByUserId.keys()).slice(0, 5));
         
         // Return a default dealer info if not found
         const defaultDealerInfo: IDealerInfo = {

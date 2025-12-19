@@ -16,7 +16,7 @@ import {Fonts, Colors} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {getVehicleById} from '@service/vehicleService';
-import type {IDealerVehicle} from '@types/vehicle/IVehicle';
+import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {openDealerChat} from '@utils/openDealerChat';
 
 type VehicleDetailRouteParams = {
@@ -47,11 +47,16 @@ const VehicleDetail: React.FC = () => {
         const response = await getVehicleById(vehicleId);
         if (response.success && response.Response) {
           let vehicleData: IDealerVehicle | null = null;
-          if (Array.isArray(response.Response.vehicles)) {
+          
+          // Check if Response has vehicles array
+          if (response.Response.vehicles && Array.isArray(response.Response.vehicles)) {
             vehicleData = response.Response.vehicles[0] || null;
-          } else if ((response.Response as any).id || (response.Response as any)._id) {
-            vehicleData = response.Response as IDealerVehicle;
+          } 
+          // Check if Response itself is a vehicle object (has id or _id)
+          else if ((response.Response as any).id || (response.Response as any)._id) {
+            vehicleData = response.Response as unknown as IDealerVehicle;
           }
+          
           if (vehicleData) {
             setVehicle(vehicleData);
           } else {
@@ -216,11 +221,9 @@ const VehicleDetail: React.FC = () => {
             (loading ? 'Loading…' : notFound ? 'This vehicle no longer exists.' : 'No description provided.')}
         </CustomText>
 
-        {vehicle?.dealer?.businessName ? (
-          <CustomText style={styles.dealerText} fontFamily={Fonts.Regular}>
-            Dealer: {vehicle.dealer.businessName}
-          </CustomText>
-        ) : null}
+        <CustomText style={styles.dealerText} fontFamily={Fonts.Regular}>
+          Dealer: {vehicle?.dealer?.businessName || 'Unknown Dealer'}
+        </CustomText>
       </ScrollView>
 
       <View style={styles.bottomBar}>
