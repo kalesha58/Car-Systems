@@ -38,20 +38,26 @@ export const getDealerUserId = async (dealerId: string): Promise<string> => {
  * Returns userId and basic dealer information
  */
 export const getDealerInfo = async (dealerId: string): Promise<IDealerInfo> => {
+  logger.info(`getDealerInfo: Looking up dealer with dealerId: ${dealerId}`);
+  
   const businessRegistration = await BusinessRegistration.findById(dealerId);
 
   if (!businessRegistration) {
+    logger.warn(`getDealerInfo: BusinessRegistration not found for dealerId: ${dealerId}`);
     throw new NotFoundError('Dealer not found');
   }
+
+  logger.info(`getDealerInfo: Found BusinessRegistration, userId: ${businessRegistration.userId}, status: ${businessRegistration.status}`);
 
   // Get user info
   const user = await SignUp.findById(businessRegistration.userId).select('name phone').lean();
 
   if (!user) {
+    logger.error(`getDealerInfo: User not found for userId: ${businessRegistration.userId}`);
     throw new NotFoundError('Dealer user account not found');
   }
 
-  return {
+  const dealerInfo = {
     userId: businessRegistration.userId,
     businessName: businessRegistration.businessName,
     status: businessRegistration.status,
@@ -59,6 +65,9 @@ export const getDealerInfo = async (dealerId: string): Promise<IDealerInfo> => {
     address: businessRegistration.address,
     phone: businessRegistration.phone || (user.phone as string),
   };
+
+  logger.info(`getDealerInfo: Returning dealer info for dealerId: ${dealerId}`);
+  return dealerInfo;
 };
 
 /**

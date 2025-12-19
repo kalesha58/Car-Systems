@@ -145,8 +145,15 @@ app.use('/api/user/cart', cartRoutes);
 logger.info('[Routes] User cart routes mounted at /api/user/cart');
 app.use('/api/user/coupons', couponRoutes);
 logger.info('[Routes] User coupon routes mounted at /api/user/coupons');
+// Mount dealer info routes BEFORE other /api/user routes to ensure proper matching
 app.use('/api/user/dealer', dealerInfoRoutes);
 logger.info('[Routes] User dealer info routes mounted at /api/user/dealer');
+// Log all registered routes for debugging
+logger.info('[Routes] Dealer routes registered:', {
+  path: '/api/user/dealer',
+  routes: ['/:dealerId/info', '/:dealerId/verify'],
+});
+// Mount notification routes after dealer routes to avoid route conflicts
 app.use('/api/user', notificationRoutes);
 logger.info('[Routes] User notification route mounted at /api/user/fcm-token');
 app.use('/api/addresses', addressRoutes);

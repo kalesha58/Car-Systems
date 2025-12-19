@@ -292,10 +292,16 @@ const VehicleDetail: React.FC = () => {
 
   const onChatPress = async () => {
     if (!vehicle) return;
+    if (!vehicle.dealerId) {
+      showError('Dealer information not available');
+      return;
+    }
     try {
       setChatLoading(true);
+      console.log('VehicleDetail: Opening chat with dealerId:', vehicle.dealerId);
       await openDealerChat(vehicle.dealerId);
     } catch (e: any) {
+      console.error('VehicleDetail: Error opening chat:', e);
       showError(e?.message || e?.response?.data?.message || 'Failed to open chat');
     } finally {
       setChatLoading(false);

@@ -265,10 +265,16 @@ const ServiceDetail: React.FC = () => {
 
   const onChatPress = async () => {
     if (!service) return;
+    if (!service.dealerId) {
+      showError('Dealer information not available');
+      return;
+    }
     try {
       setChatLoading(true);
+      console.log('ServiceDetail: Opening chat with dealerId:', service.dealerId);
       await openDealerChat(service.dealerId);
     } catch (e: any) {
+      console.error('ServiceDetail: Error opening chat:', e);
       showError(e?.message || e?.response?.data?.message || 'Failed to open chat');
     } finally {
       setChatLoading(false);

@@ -14,6 +14,9 @@ export const getDealerInfoController = async (
 ): Promise<void> => {
   try {
     const dealerId = req.params.dealerId;
+    const { logger } = await import('../../utils/logger');
+
+    logger.info(`getDealerInfoController: Request received for dealerId: ${dealerId}`);
 
     if (!dealerId) {
       res.status(400).json({
@@ -27,11 +30,15 @@ export const getDealerInfoController = async (
 
     const dealerInfo = await getDealerInfo(dealerId);
 
+    logger.info(`getDealerInfoController: Successfully retrieved dealer info for dealerId: ${dealerId}`);
+
     res.status(200).json({
       success: true,
       Response: dealerInfo,
     });
   } catch (error) {
+    const { logger } = await import('../../utils/logger');
+    logger.error(`getDealerInfoController: Error for dealerId ${req.params.dealerId}:`, error);
     errorHandler(error as IAppError, res);
   }
 };

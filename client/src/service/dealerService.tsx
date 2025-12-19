@@ -629,12 +629,23 @@ export const getDealerInfoByDealerId = async (
   dealerId: string,
 ): Promise<IDealerInfoForChat> => {
   try {
+    if (!dealerId) {
+      throw new Error('Dealer ID is required');
+    }
+    
     const response = await appAxios.get<IDealerInfoResponse>(`/user/dealer/${dealerId}/info`);
     if (response.data.success && response.data.Response) {
       return response.data.Response;
     }
     throw new Error('Failed to get dealer info');
   } catch (error: any) {
+    console.error('Error getting dealer info:', {
+      dealerId,
+      status: error?.response?.status,
+      data: error?.response?.data,
+      message: error?.message,
+    });
+    
     if (error?.response?.status === 404) {
       throw new Error('Dealer not available');
     }
@@ -642,7 +653,10 @@ export const getDealerInfoByDealerId = async (
       const status = error?.response?.data?.Response?.status || 'pending';
       throw new Error(`Dealer account is ${status}. Please wait for approval.`);
     }
-    throw error;
+    if (error?.message) {
+      throw error;
+    }
+    throw new Error('Failed to get dealer information');
   }
 };
 
