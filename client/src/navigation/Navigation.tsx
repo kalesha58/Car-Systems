@@ -44,6 +44,8 @@ import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
 import LocationPickerScreen from '@features/chat/LocationPickerScreen';
 import PaymentStatusScreen from '@features/payment/PaymentStatusScreen';
 import ProductOrder from '@features/order/ProductOrder';
+import VehicleDetail from '@features/vehicle/VehicleDetail';
+import ServiceDetail from '@features/service/ServiceDetail';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
 import { ToastProvider } from '@context/ToastContext';
@@ -380,6 +382,20 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="ProductDetail"
             component={ProductDetail}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="VehicleDetail"
+            component={VehicleDetail}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="ServiceDetail"
+            component={ServiceDetail}
             options={{
               animation: 'slide_from_right',
             }}

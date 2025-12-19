@@ -183,11 +183,7 @@ const VehicleListItem: FC<VehicleListItemProps> = ({item}) => {
       <Pressable
         style={styles.container}
         onPress={() => {
-          try {
-            navigate('ProductDetail', {productId: itemId});
-          } catch {
-            Alert.alert('Vehicle Details', 'Vehicle detail screen coming soon');
-          }
+          navigate('VehicleDetail', {vehicleId: itemId});
         }}
         onLongPress={() => {}}>
         <View style={styles.imageContainer}>
@@ -235,11 +231,7 @@ const VehicleListItem: FC<VehicleListItemProps> = ({item}) => {
           <View style={styles.actions}>
             <TouchableOpacity
               onPress={() => {
-                try {
-                  navigate('ProductDetail', {productId: itemId});
-                } catch {
-                  Alert.alert('Vehicle Details', 'Vehicle detail screen coming soon');
-                }
+                navigate('VehicleDetail', {vehicleId: itemId});
               }}
               activeOpacity={0.7}
               style={{

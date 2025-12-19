@@ -184,11 +184,7 @@ const ServiceListItem: FC<ServiceListItemProps> = ({item}) => {
       <Pressable
         style={styles.container}
         onPress={() => {
-          try {
-            navigate('ProductDetail', {productId: itemId});
-          } catch {
-            Alert.alert('Service Details', 'Service detail screen coming soon');
-          }
+          navigate('ServiceDetail', {serviceId: itemId});
         }}
         onLongPress={() => {}}>
         <View style={styles.imageContainer}>
@@ -213,7 +209,7 @@ const ServiceListItem: FC<ServiceListItemProps> = ({item}) => {
                   fontSize={RFValue(10)}
                   fontFamily={Fonts.Regular}
                   style={styles.detailText}>
-                  {item.serviceType} • {item.durationMinutes} min
+                  {item.durationMinutes} min
                   {item.homeService ? ' • Home Service' : ' • Shop Service'}
                 </CustomText>
               </View>
@@ -237,11 +233,7 @@ const ServiceListItem: FC<ServiceListItemProps> = ({item}) => {
           <View style={styles.actions}>
             <TouchableOpacity
               onPress={() => {
-                try {
-                  navigate('ProductDetail', {productId: itemId});
-                } catch {
-                  Alert.alert('Service Details', 'Service detail screen coming soon');
-                }
+                navigate('ServiceDetail', {serviceId: itemId});
               }}
               activeOpacity={0.7}
               style={{

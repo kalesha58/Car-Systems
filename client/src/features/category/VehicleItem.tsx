@@ -1,4 +1,4 @@
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image, Pressable} from 'react-native';
 import React, {FC} from 'react';
 import {screenHeight} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
@@ -6,6 +6,7 @@ import CustomText from '@components/ui/CustomText';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {useTheme} from '@hooks/useTheme';
+import {navigate} from '@utils/NavigationUtils';
 
 interface VehicleItemProps {
   item: IDealerVehicle;
@@ -86,7 +87,9 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
   });
 
   return (
-    <View style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}>
+    <Pressable
+      style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
+      onPress={() => navigate('VehicleDetail', {vehicleId: item.id || (item as any)._id})}>
       <View style={styles.imageContainer}>
         {imageUrl ? (
           <Image source={{uri: imageUrl}} style={styles.image} />
@@ -139,7 +142,7 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
           </View>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 
