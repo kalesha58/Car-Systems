@@ -180,17 +180,10 @@ export const createBusinessRegistration = async (
       payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
+      // Validation above (lines 110-115) ensures shopPhotos and documents exist and are non-empty
+      shopPhotos: data.shopPhotos,
+      documents: data.documents,
     };
-
-    // Add shopPhotos if provided
-    if (data.shopPhotos && Array.isArray(data.shopPhotos) && data.shopPhotos.length > 0) {
-      registrationData.shopPhotos = data.shopPhotos;
-    }
-
-    // Add documents if provided
-    if (data.documents && Array.isArray(data.documents) && data.documents.length > 0) {
-      registrationData.documents = data.documents;
-    }
 
     logger.info('Creating business registration with data:', {
       userId,

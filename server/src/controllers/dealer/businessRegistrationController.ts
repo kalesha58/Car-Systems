@@ -55,10 +55,14 @@ export const getBusinessRegistrationByUserIdController = async (
   try {
     // Verify that the userId in params matches the authenticated user's userId
     // This ensures users can only check their own business registration
+    // Admins can access any user's business registration
     const requestedUserId = req.params.userId;
     const authenticatedUserId = req.user?.userId;
+    const isAdmin = req.user?.role?.includes('admin');
 
-    if (requestedUserId !== authenticatedUserId) {
+    // Allow admins to access any user's business registration
+    // Regular users can only access their own
+    if (!isAdmin && requestedUserId !== authenticatedUserId) {
       res.status(403).json({
         success: false,
         Response: {

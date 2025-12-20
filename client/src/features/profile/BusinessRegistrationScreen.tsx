@@ -152,6 +152,22 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
   const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
 
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState<{
+    businessName?: string;
+    type?: string;
+    address?: string;
+    phone?: string;
+    gst?: string;
+    upiId?: string;
+    accountNumber?: string;
+    ifsc?: string;
+    accountName?: string;
+    shopPhotos?: string;
+    idDoc?: string;
+    panDoc?: string;
+  }>({});
+
   const persistDraft = () => {
     const payload = {
       businessName,
@@ -251,7 +267,14 @@ const BusinessRegistrationScreen: React.FC = () => {
         if (selected.length < 1) return;
         const newUris = selected.map(a => a.uri || '').filter(Boolean);
         if (newUris.length < 1) return;
-        setShopPhotoUris(prev => [...prev, ...newUris].slice(0, MAX_SHOP_PHOTOS));
+        setShopPhotoUris(prev => {
+          const updated = [...prev, ...newUris].slice(0, MAX_SHOP_PHOTOS);
+          // Clear error if photos are added
+          if (updated.length > 0 && fieldErrors.shopPhotos) {
+            setFieldErrors(prevErrors => ({ ...prevErrors, shopPhotos: undefined }));
+          }
+          return updated;
+        });
       },
     );
   };
@@ -283,8 +306,18 @@ const BusinessRegistrationScreen: React.FC = () => {
         if (response.didCancel || response.errorCode) return;
         const uri = response.assets?.[0]?.uri;
         if (!uri) return;
-        if (target === 'ID') setIdDocUri(uri);
-        if (target === 'PAN') setPanDocUri(uri);
+        if (target === 'ID') {
+          setIdDocUri(uri);
+          if (fieldErrors.idDoc) {
+            setFieldErrors(prev => ({ ...prev, idDoc: undefined }));
+          }
+        }
+        if (target === 'PAN') {
+          setPanDocUri(uri);
+          if (fieldErrors.panDoc) {
+            setFieldErrors(prev => ({ ...prev, panDoc: undefined }));
+          }
+        }
       },
     );
   };
@@ -294,8 +327,16 @@ const BusinessRegistrationScreen: React.FC = () => {
   };
 
   const clearDoc = (target: 'ID' | 'PAN') => {
-    if (target === 'ID') setIdDocUri(null);
-    if (target === 'PAN') setPanDocUri(null);
+    if (target === 'ID') {
+      setIdDocUri(null);
+      const error = validateField('idDoc', null);
+      setFieldErrors(prev => ({ ...prev, idDoc: error }));
+    }
+    if (target === 'PAN') {
+      setPanDocUri(null);
+      const error = validateField('panDoc', null);
+      setFieldErrors(prev => ({ ...prev, panDoc: error }));
+    }
   };
 
   const getSelectedTypeLabel = () => {
@@ -306,6 +347,11 @@ const BusinessRegistrationScreen: React.FC = () => {
   const handleDropdownSelect = (value: string) => {
     setType(value);
     setDropdownModalVisible(false);
+    // Validate after selection
+    setTimeout(() => {
+      const error = validateField('type', value);
+      setFieldErrors(prev => ({ ...prev, type: error }));
+    }, 100);
   };
 
   const handlePayoutTypeSelect = (value: string) => {
@@ -316,6 +362,14 @@ const BusinessRegistrationScreen: React.FC = () => {
     setAccountNumber('');
     setIfsc('');
     setAccountName('');
+    // Clear payout-related errors
+    setFieldErrors(prev => ({
+      ...prev,
+      upiId: undefined,
+      accountNumber: undefined,
+      ifsc: undefined,
+      accountName: undefined,
+    }));
   };
 
   const getSelectedPayoutTypeLabel = () => {
@@ -362,6 +416,123 @@ const BusinessRegistrationScreen: React.FC = () => {
   const isValidIFSC = (ifscCode: string): boolean => {
     const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
     return ifscRegex.test(ifscCode.trim().toUpperCase());
+  };
+
+  // Validate individual fields and return error messages
+  const validateField = (fieldName: string, value: any): string | undefined => {
+    switch (fieldName) {
+      case 'businessName':
+        if (!value || !value.trim()) {
+          return t('dealer.businessNameRequired') || 'Business name is required';
+        }
+        return undefined;
+
+      case 'type':
+        if (!value) {
+          return t('dealer.businessTypeRequired') || 'Business type is required';
+        }
+        return undefined;
+
+      case 'address':
+        if (!value || !value.trim()) {
+          return t('dealer.addressRequired') || 'Address is required';
+        }
+        return undefined;
+
+      case 'phone':
+        if (!value || !value.trim()) {
+          return t('dealer.phoneRequired') || 'Phone number is required';
+        }
+        if (!isValidPhone(value)) {
+          return t('dealer.phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)';
+        }
+        return undefined;
+
+      case 'upiId':
+        if (payoutType === 'UPI') {
+          if (!value || !value.trim()) {
+            return t('dealer.upiIdRequired') || 'UPI ID is required';
+          }
+          if (!isValidUPIId(value)) {
+            return t('dealer.invalidUPIId') || 'Invalid UPI ID format (e.g., user@paytm)';
+          }
+        }
+        return undefined;
+
+      case 'accountNumber':
+        if (payoutType === 'BANK') {
+          if (!value || !value.trim()) {
+            return t('dealer.accountNumberRequired') || 'Account number is required';
+          }
+        }
+        return undefined;
+
+      case 'ifsc':
+        if (payoutType === 'BANK') {
+          if (!value || !value.trim()) {
+            return t('dealer.ifscRequired') || 'IFSC code is required';
+          }
+          if (!isValidIFSC(value)) {
+            return t('dealer.invalidIFSC') || 'Invalid IFSC code format (e.g., HDFC0001234)';
+          }
+        }
+        return undefined;
+
+      case 'accountName':
+        if (payoutType === 'BANK') {
+          if (!value || !value.trim()) {
+            return t('dealer.accountNameRequired') || 'Account holder name is required';
+          }
+        }
+        return undefined;
+
+      case 'shopPhotos':
+        if (!shopPhotoUris || shopPhotoUris.length === 0) {
+          return t('dealer.shopPhotosRequired') || 'At least one shop photo is required';
+        }
+        return undefined;
+
+      case 'idDoc':
+        if (!idDocUri) {
+          return t('dealer.idDocumentRequired') || 'ID document is required';
+        }
+        return undefined;
+
+      case 'panDoc':
+        if (!panDocUri) {
+          return t('dealer.panCardRequired') || 'PAN card is required';
+        }
+        return undefined;
+
+      default:
+        return undefined;
+    }
+  };
+
+  // Validate all fields
+  const validateAllFields = (): boolean => {
+    const errors: typeof fieldErrors = {};
+
+    errors.businessName = validateField('businessName', businessName);
+    errors.type = validateField('type', type);
+    errors.address = validateField('address', address);
+    errors.phone = validateField('phone', phone);
+    errors.shopPhotos = validateField('shopPhotos', shopPhotoUris);
+    errors.idDoc = validateField('idDoc', idDocUri);
+    errors.panDoc = validateField('panDoc', panDocUri);
+
+    if (payoutType === 'UPI') {
+      errors.upiId = validateField('upiId', upiId);
+    }
+
+    if (payoutType === 'BANK') {
+      errors.accountNumber = validateField('accountNumber', accountNumber);
+      errors.ifsc = validateField('ifsc', ifsc);
+      errors.accountName = validateField('accountName', accountName);
+    }
+
+    setFieldErrors(errors);
+    return !Object.values(errors).some(error => error !== undefined);
   };
 
   // Check if payout fields are valid (if payout type is selected)
@@ -629,6 +800,10 @@ const BusinessRegistrationScreen: React.FC = () => {
       paddingVertical: screenHeight * 0.01,
       minHeight: screenHeight * 0.05,
     },
+    textInputContainerError: {
+      borderColor: colors.error || '#ef4444',
+      borderWidth: 1.5,
+    },
     textInput: {
       fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
@@ -648,6 +823,10 @@ const BusinessRegistrationScreen: React.FC = () => {
       borderColor: colors.border,
       paddingHorizontal: screenWidth * 0.03,
       paddingVertical: screenHeight * 0.012,
+    },
+    dropdownButtonError: {
+      borderColor: colors.error || '#ef4444',
+      borderWidth: 1.5,
     },
     dropdownButtonText: {
       fontSize: RFValue(10),
@@ -813,6 +992,13 @@ const BusinessRegistrationScreen: React.FC = () => {
       color: colors.text,
       opacity: 0.7,
     },
+    errorText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.error || '#ef4444',
+      marginTop: screenHeight * 0.006,
+      marginLeft: screenWidth * 0.01,
+    },
   });
 
   return (
@@ -826,15 +1012,28 @@ const BusinessRegistrationScreen: React.FC = () => {
           <CustomText style={styles.label}>
             {t('dealer.businessName') || 'Business Name'} *
           </CustomText>
-          <View style={styles.textInputContainer}>
+          <View style={[styles.textInputContainer, fieldErrors.businessName && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
               placeholder={t('dealer.enterBusinessName') || 'Enter business name'}
               placeholderTextColor={colors.disabled}
               value={businessName}
-              onChangeText={setBusinessName}
+              onChangeText={(text) => {
+                setBusinessName(text);
+                if (fieldErrors.businessName) {
+                  const error = validateField('businessName', text);
+                  setFieldErrors(prev => ({ ...prev, businessName: error }));
+                }
+              }}
+              onBlur={() => {
+                const error = validateField('businessName', businessName);
+                setFieldErrors(prev => ({ ...prev, businessName: error }));
+              }}
             />
           </View>
+          {fieldErrors.businessName && (
+            <CustomText style={styles.errorText}>{fieldErrors.businessName}</CustomText>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -842,11 +1041,17 @@ const BusinessRegistrationScreen: React.FC = () => {
             {t('dealer.businessType') || 'Business Type'} *
           </CustomText>
           <TouchableOpacity
-            style={styles.dropdownButton}
+            style={[
+              styles.dropdownButton,
+              fieldErrors.type && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 },
+            ]}
             onPress={() => setDropdownModalVisible(true)}>
             <CustomText style={styles.dropdownButtonText}>{getSelectedTypeLabel()}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
+          {fieldErrors.type && (
+            <CustomText style={styles.errorText}>{fieldErrors.type}</CustomText>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -892,16 +1097,29 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
-          <View style={styles.textInputContainer}>
+          <View style={[styles.textInputContainer, fieldErrors.phone && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
               placeholder={t('dealer.enterPhone') || 'Enter phone number'}
               placeholderTextColor={colors.disabled}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                setPhone(text);
+                if (fieldErrors.phone) {
+                  const error = validateField('phone', text);
+                  setFieldErrors(prev => ({ ...prev, phone: error }));
+                }
+              }}
+              onBlur={() => {
+                const error = validateField('phone', phone);
+                setFieldErrors(prev => ({ ...prev, phone: error }));
+              }}
               keyboardType="phone-pad"
             />
           </View>
+          {fieldErrors.phone && (
+            <CustomText style={styles.errorText}>{fieldErrors.phone}</CustomText>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -936,17 +1154,30 @@ const BusinessRegistrationScreen: React.FC = () => {
             <CustomText style={styles.label}>
               {t('dealer.upiId') || 'UPI ID'} *
             </CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={[styles.textInputContainer, fieldErrors.upiId && styles.textInputContainerError]}>
               <TextInput
                 style={styles.textInput}
                 placeholder={t('dealer.enterUPIId') || 'Enter UPI ID (e.g., user@paytm)'}
                 placeholderTextColor={colors.disabled}
                 value={upiId}
-                onChangeText={setUpiId}
+                onChangeText={(text) => {
+                  setUpiId(text);
+                  if (fieldErrors.upiId) {
+                    const error = validateField('upiId', text);
+                    setFieldErrors(prev => ({ ...prev, upiId: error }));
+                  }
+                }}
+                onBlur={() => {
+                  const error = validateField('upiId', upiId);
+                  setFieldErrors(prev => ({ ...prev, upiId: error }));
+                }}
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
             </View>
+            {fieldErrors.upiId && (
+              <CustomText style={styles.errorText}>{fieldErrors.upiId}</CustomText>
+            )}
           </View>
         )}
 
@@ -973,32 +1204,59 @@ const BusinessRegistrationScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 {t('dealer.ifsc') || 'IFSC Code'} *
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={[styles.textInputContainer, fieldErrors.ifsc && styles.textInputContainerError]}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterIFSC') || 'Enter IFSC code (e.g., HDFC0001234)'}
                   placeholderTextColor={colors.disabled}
                   value={ifsc}
-                  onChangeText={(text) => setIfsc(text.toUpperCase())}
+                  onChangeText={(text) => {
+                    const upperText = text.toUpperCase();
+                    setIfsc(upperText);
+                    if (fieldErrors.ifsc) {
+                      const error = validateField('ifsc', upperText);
+                      setFieldErrors(prev => ({ ...prev, ifsc: error }));
+                    }
+                  }}
+                  onBlur={() => {
+                    const error = validateField('ifsc', ifsc);
+                    setFieldErrors(prev => ({ ...prev, ifsc: error }));
+                  }}
                   autoCapitalize="characters"
                   maxLength={11}
                 />
               </View>
+              {fieldErrors.ifsc && (
+                <CustomText style={styles.errorText}>{fieldErrors.ifsc}</CustomText>
+              )}
             </View>
 
             <View style={styles.section}>
               <CustomText style={styles.label}>
                 {t('dealer.accountName') || 'Account Holder Name'} *
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={[styles.textInputContainer, fieldErrors.accountName && styles.textInputContainerError]}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterAccountName') || 'Enter account holder name'}
                   placeholderTextColor={colors.disabled}
                   value={accountName}
-                  onChangeText={setAccountName}
+                  onChangeText={(text) => {
+                    setAccountName(text);
+                    if (fieldErrors.accountName) {
+                      const error = validateField('accountName', text);
+                      setFieldErrors(prev => ({ ...prev, accountName: error }));
+                    }
+                  }}
+                  onBlur={() => {
+                    const error = validateField('accountName', accountName);
+                    setFieldErrors(prev => ({ ...prev, accountName: error }));
+                  }}
                 />
               </View>
+              {fieldErrors.accountName && (
+                <CustomText style={styles.errorText}>{fieldErrors.accountName}</CustomText>
+              )}
             </View>
           </>
         )}
@@ -1009,7 +1267,7 @@ const BusinessRegistrationScreen: React.FC = () => {
             {t('dealer.shopPhotos') || 'Shop Photos'} *
           </CustomText>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, fieldErrors.shopPhotos && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
             onPress={() => {
               pickShopPhotos();
             }}
@@ -1026,13 +1284,21 @@ const BusinessRegistrationScreen: React.FC = () => {
                   <Image source={{ uri }} style={styles.image} />
                   <TouchableOpacity
                     style={styles.removeImageButton}
-                    onPress={() => removeShopPhoto(index)}
+                    onPress={() => {
+                      removeShopPhoto(index);
+                      if (fieldErrors.shopPhotos && shopPhotoUris.length <= 1) {
+                        setFieldErrors(prev => ({ ...prev, shopPhotos: undefined }));
+                      }
+                    }}
                     disabled={isSubmitting}>
                     <Icon name="close" size={RFValue(12)} color="#fff" />
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
+          )}
+          {fieldErrors.shopPhotos && (
+            <CustomText style={styles.errorText}>{fieldErrors.shopPhotos}</CustomText>
           )}
         </View>
 
@@ -1045,7 +1311,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           <View style={{ gap: screenHeight * 0.012 }}>
             {/* Document ID */}
             <TouchableOpacity
-              style={styles.docRow}
+              style={[styles.docRow, fieldErrors.idDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
               onPress={() => pickSingleDoc('ID')}
               disabled={isSubmitting}>
               <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
@@ -1070,10 +1336,13 @@ const BusinessRegistrationScreen: React.FC = () => {
                 </View>
               </View>
             )}
+            {fieldErrors.idDoc && (
+              <CustomText style={styles.errorText}>{fieldErrors.idDoc}</CustomText>
+            )}
 
             {/* PAN Card */}
             <TouchableOpacity
-              style={styles.docRow}
+              style={[styles.docRow, fieldErrors.panDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
               onPress={() => pickSingleDoc('PAN')}
               disabled={isSubmitting}>
               <Icon name="id-card-outline" size={RFValue(16)} color={colors.text} />
@@ -1097,6 +1366,9 @@ const BusinessRegistrationScreen: React.FC = () => {
                   <Image source={{ uri: panDocUri }} style={styles.image} />
                 </View>
               </View>
+            )}
+            {fieldErrors.panDoc && (
+              <CustomText style={styles.errorText}>{fieldErrors.panDoc}</CustomText>
             )}
           </View>
         </View>
