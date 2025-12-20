@@ -1,4 +1,4 @@
-import {View, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator} from 'react-native';
+import {View, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions} from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
 import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
@@ -28,6 +28,12 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
   const {addItem} = useCartStore();
   const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Calculate card width for 3 products per row
+  const screenWidth = Dimensions.get('window').width;
+  const padding = 20; // Total horizontal padding (10 on each side)
+  const gap = 12; // Gap between cards
+  const cardWidth = (screenWidth - padding - (gap * 2)) / 3; // 3 cards per row
 
   useEffect(() => {
     fetchRelatedProducts();
@@ -48,8 +54,8 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
             category: category,
           });
 
-          if (categoryResponse?.data?.data) {
-            products = categoryResponse.data.data.filter(
+          if (categoryResponse?.Response?.products) {
+            products = categoryResponse.Response.products.filter(
               (product: IProduct) => !currentProductIds.includes(product.id),
             );
           }
@@ -66,8 +72,8 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
             limit: limit + currentProductIds.length + 5,
           });
 
-          if (brandResponse?.data?.data) {
-            const brandProducts = brandResponse.data.data.filter(
+          if (brandResponse?.Response?.products) {
+            const brandProducts = brandResponse.Response.products.filter(
               (product: IProduct) => 
                 !currentProductIds.includes(product.id) &&
                 product.brand === brand &&
@@ -88,8 +94,8 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
             limit: limit + currentProductIds.length + 5,
           });
 
-          if (generalResponse?.data?.data) {
-            const generalProducts = generalResponse.data.data.filter(
+          if (generalResponse?.Response?.products) {
+            const generalProducts = generalResponse.Response.products.filter(
               (product: IProduct) => 
                 !currentProductIds.includes(product.id) &&
                 !products.some(p => p.id === product.id),
@@ -133,13 +139,15 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
       </View>
 
       {loading ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
-          {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} style={[styles.productCard, {backgroundColor: colors.cardBackground, marginRight: 8}]}>
-              <SkeletonLoader width={140} height={100} borderRadius={0} />
+        <View style={styles.gridContainer}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <View 
+              key={i} 
+              style={[
+                styles.productCard, 
+                {backgroundColor: colors.cardBackground, width: cardWidth}
+              ]}>
+              <SkeletonLoader width="100%" height={100} borderRadius={0} />
               <View style={styles.productInfo}>
                 <SkeletonLoader width="90%" height={16} borderRadius={4} style={{marginBottom: 6}} />
                 <SkeletonLoader width="70%" height={14} borderRadius={4} style={{marginBottom: 8}} />
@@ -147,16 +155,16 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
               </View>
             </View>
           ))}
-        </ScrollView>
+        </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}>
+        <View style={styles.gridContainer}>
           {relatedProducts.map(product => (
             <TouchableOpacity
               key={product.id}
-              style={[styles.productCard, {backgroundColor: colors.cardBackground}]}
+              style={[
+                styles.productCard, 
+                {backgroundColor: colors.cardBackground, width: cardWidth}
+              ]}
               onPress={() => handleProductPress(product)}
               activeOpacity={0.7}>
               {product.images?.[0] ? (
@@ -196,7 +204,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
               </View>
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -210,15 +218,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 12,
   },
-  scrollContent: {
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 10,
     gap: 12,
   },
   productCard: {
-    width: 140,
     borderRadius: 12,
     overflow: 'hidden',
-    marginRight: 8,
   },
   productImage: {
     width: '100%',

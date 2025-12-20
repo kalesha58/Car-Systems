@@ -10,7 +10,8 @@
     "start:dev": "npm run dev",
     "seed:chat": "ts-node src/scripts/seedChatData.ts",
     "seed:coupons": "ts-node src/scripts/seedCouponData.ts",
-    "seed:vehicle-types": "ts-node src/scripts/seedVehicleTypes.ts"
+    "seed:vehicle-types": "ts-node src/scripts/seedVehicleTypes.ts",
+    "seed:products": "ts-node src/scripts/seedProducts.ts"
   },
   "keywords": [],
   "author": "",

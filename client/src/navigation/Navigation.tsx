@@ -106,7 +106,7 @@ const MainTabs: FC = () => {
           tabBarIcon: ({ color, size }) => (
             <Icon name="grid-outline" size={size} color={color} />
           ),
-          tabBarLabel: 'Categories',
+          tabBarLabel: 'Store',
         }}
       />
       <Tab.Screen

@@ -53,7 +53,7 @@ const Breadcrumbs: FC<IBreadcrumbsProps> = ({category, onCategoryPress}) => {
           variant="h7"
           fontFamily={Fonts.Medium}
           style={[styles.breadcrumbText, {color: colors.text}]}>
-          Categories
+          Store
         </CustomText>
       </TouchableOpacity>
       <Icon
