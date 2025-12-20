@@ -5,47 +5,60 @@ import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { getProducts } from '@service/productService';
-import { IProduct } from '../../types/product/IProduct';
-import LottieView from 'lottie-react-native';
-import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
+import { IProduct } from '@types/product/IProduct';
 
-const TopProductsSection: FC = () => {
-    const seasonalTheme = useSeasonalTheme();
+interface ProductsSectionProps {
+    title: string;
+    query?: {
+        limit?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+        category?: string;
+    };
+    backgroundColor?: string;
+    showViewAll?: boolean;
+    onViewAllPress?: () => void;
+}
+
+const ProductsSection: FC<ProductsSectionProps> = ({ 
+    title, 
+    query = { limit: 3, sortBy: 'createdAt', sortOrder: 'desc' },
+    backgroundColor,
+    showViewAll = true,
+    onViewAllPress
+}) => {
     const { colors } = useTheme();
-    const [topProducts, setTopProducts] = useState<IProduct[]>([]);
+    const [products, setProducts] = useState<IProduct[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        const fetchTopProducts = async () => {
+        const fetchProducts = async () => {
             try {
                 setLoading(true);
-                // Fetch first 3 products from API
-                const response = await getProducts({
-                    limit: 3
-                });
+                const response = await getProducts(query);
                 
                 if (response?.success && response?.Response?.products) {
-                    // Get first 3 products from response
-                    setTopProducts(response.Response.products.slice(0, 3));
+                    setProducts(response.Response.products.slice(0, query.limit || 3));
                 }
             } catch (error) {
-                console.error('Error fetching top products:', error);
-                setTopProducts([]);
+                console.error(`Error fetching products for ${title}:`, error);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchTopProducts();
-    }, []);
+        fetchProducts();
+    }, [title, query]);
 
     const styles = StyleSheet.create({
         container: {
             paddingTop: 20,
             paddingBottom: 20,
             paddingHorizontal: 20,
-            marginTop: -5,
+            marginTop: 10,
             position: 'relative',
+            backgroundColor: backgroundColor || colors.background,
         },
         header: {
             flexDirection: 'row',
@@ -108,61 +121,43 @@ const TopProductsSection: FC = () => {
             fontFamily: Fonts.Bold,
             color: colors.white,
         },
-        trainContainer: {
-            width: '100%',
-            height: 100,
-            position: 'absolute',
-            top: -50,
-            zIndex: 10,
-        },
-        trainAnimation: {
-            width: '100%',
-            height: '100%',
-        },
     });
 
     const calculateDiscount = (price: number, discountPrice: number) => {
         return Math.round(((discountPrice - price) / discountPrice) * 100);
     };
 
-    return (
-        <View style={[styles.container, { backgroundColor: seasonalTheme.colors.primary }]}>
-            {/* Overlay animation (train, sleigh, etc.) above Top Picks - if available */}
-            {seasonalTheme.animations.overlay && (
-                <View style={styles.trainContainer}>
-                    <LottieView
-                        autoPlay
-                        loop
-                        speed={1}
-                        style={styles.trainAnimation}
-                        source={seasonalTheme.animations.overlay}
-                    />
-                </View>
-            )}
+    const titleColor = backgroundColor ? colors.white : colors.text;
+    const viewAllColor = backgroundColor ? colors.white : colors.text;
 
+    return (
+        <View style={styles.container}>
             <View style={styles.header}>
-                <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
-                    Top Picks
+                <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: titleColor }}>
+                    {title}
                 </CustomText>
-                <View>
-                    <CustomText
-                        variant="h8"
-                        fontFamily={Fonts.Medium}
-                        style={{ color: colors.white }}>
-                        View All →
-                    </CustomText>
-                </View>
+                {showViewAll && (
+                    <View>
+                        <CustomText
+                            variant="h8"
+                            fontFamily={Fonts.Medium}
+                            style={{ color: viewAllColor }}
+                            onPress={onViewAllPress}>
+                            View All →
+                        </CustomText>
+                    </View>
+                )}
             </View>
 
             <View style={styles.cardsContainer}>
                 {loading ? (
-                    Array.from({ length: 3 }).map((_, index) => (
+                    Array.from({ length: query.limit || 3 }).map((_, index) => (
                         <View key={index} style={styles.productCard}>
                             <ActivityIndicator size="small" color={colors.winterBlueDark} />
                         </View>
                     ))
-                ) : topProducts.length > 0 ? (
-                    topProducts.map((product: IProduct) => {
+                ) : products.length > 0 ? (
+                    products.map((product: IProduct) => {
                         const imageUrl = product.images && product.images.length > 0 ? product.images[0] : '';
                         const originalPrice = product.originalPrice || product.price;
                         const hasDiscount = originalPrice > product.price;
@@ -209,10 +204,16 @@ const TopProductsSection: FC = () => {
                             </View>
                         );
                     })
-                ) : null}
+                ) : (
+                    <View style={styles.productCard}>
+                        <CustomText style={[styles.productName, { textAlign: 'center' }]}>
+                            No products available
+                        </CustomText>
+                    </View>
+                )}
             </View>
         </View>
     );
 };
 
-export default TopProductsSection;
+export default ProductsSection;
