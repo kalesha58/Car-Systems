@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import { authMiddleware, IAuthRequest } from '../../middleware/authMiddleware';
 import { dealerMiddleware } from '../../middleware/dealerMiddleware';
+import { BusinessRegistration } from '../../models/BusinessRegistration';
 import {
   createBusinessRegistrationController,
   getBusinessRegistrationByIdController,
@@ -28,6 +29,55 @@ const checkDealerRole = (req: IAuthRequest, res: Response, next: NextFunction): 
     return;
   }
   next();
+};
+
+// Middleware for update route - checks dealer role and business registration exists
+// but allows pending/rejected status (unlike dealerMiddleware which requires approved)
+const checkDealerRoleForUpdate = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    if (!req.user.role.includes('dealer')) {
+      res.status(403).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Dealer role required',
+        },
+      });
+      return;
+    }
+
+    // Check if business registration exists (status can be pending, rejected, or approved)
+    const businessRegistration = await BusinessRegistration.findOne({
+      userId: req.user.userId,
+    });
+
+    if (!businessRegistration) {
+      res.status(404).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Business registration not found. Please complete business registration.',
+        },
+      });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
 };
 
 // POST route - only needs auth + dealer role, NOT existing business registration
@@ -127,7 +177,7 @@ router.get('/:id', getBusinessRegistrationByIdController);
  *       403:
  *         description: Forbidden - Dealer access required
  */
-router.put('/:id', updateBusinessRegistrationController);
+router.put('/:id', checkDealerRoleForUpdate, updateBusinessRegistrationController);
 
 // All other routes require approved business registration
 router.use(dealerMiddleware);

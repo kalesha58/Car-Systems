@@ -258,6 +258,16 @@ export const updateBusinessRegistration = async (
       throw new AppError('Cannot update approved business registration', 403);
     }
 
+    // Dealers cannot change the status - only admins can via updateBusinessRegistrationStatus
+    if ((data as any).status !== undefined) {
+      throw new AppError('Dealers cannot change business registration status. Status can only be updated by admins.', 403);
+    }
+
+    // Dealers cannot change approvalCode - only admins can
+    if ((data as any).approvalCode !== undefined) {
+      throw new AppError('Dealers cannot change approval code. Approval code can only be updated by admins.', 403);
+    }
+
     if (data.businessName !== undefined) {
       if (!data.businessName.trim()) {
         throw new AppError('Business name cannot be empty', 400);
