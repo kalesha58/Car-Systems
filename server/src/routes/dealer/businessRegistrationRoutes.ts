@@ -113,6 +113,59 @@ router.get('/user/:userId', getBusinessRegistrationByUserIdController);
 // Needed for customers to validate dealer status in cart
 router.get('/:id', getBusinessRegistrationByIdController);
 
+// Status update route - must be before dealerMiddleware since it's used to approve registrations
+// Only admins should be able to update status
+/**
+ * @swagger
+ * /api/dealer/business-registration/{id}/status:
+ *   patch:
+ *     summary: Update business registration status (Admin only)
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, approved, rejected]
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Business registration not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+const checkAdminRole = (req: IAuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.user?.role.includes('admin')) {
+    res.status(403).json({
+      success: false,
+      Response: {
+        ReturnMessage: 'Admin access required to update business registration status',
+      },
+    });
+    return;
+  }
+  next();
+};
+router.patch('/:id/status', checkAdminRole, updateBusinessRegistrationStatusController);
+
 // Update route - allows updates when status is pending or rejected (before dealerMiddleware)
 /**
  * @swagger
@@ -270,45 +323,6 @@ router.post('/', createBusinessRegistrationController);
  *       403:
  *         description: Forbidden - Dealer access required
  */
-
-/**
- * @swagger
- * /api/dealer/business-registration/{id}/status:
- *   patch:
- *     summary: Update business registration status
- *     tags: [Dealer]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [status]
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [pending, approved, rejected]
- *     responses:
- *       200:
- *         description: Status updated successfully
- *       400:
- *         description: Validation error
- *       404:
- *         description: Business registration not found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Dealer access required
- */
-router.patch('/:id/status', updateBusinessRegistrationStatusController);
 
 /**
  * @swagger
