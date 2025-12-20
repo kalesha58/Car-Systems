@@ -48,54 +48,6 @@ router.get('/', authMiddleware, getPostsController);
 
 /**
  * @swagger
- * /api/posts/{id}:
- *   get:
- *     summary: Get post by ID
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Post retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/:id', authMiddleware, getPostByIdController);
-
-/**
- * @swagger
- * /api/posts/{id}:
- *   put:
- *     summary: Update post
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Post updated successfully
- *       401:
- *         description: Unauthorized
- */
-router.put('/:id', authMiddleware, updatePostController);
-
-/**
- * @swagger
- * /api/posts/{id}:
- *   delete:
- *     summary: Delete post
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Post deleted successfully
- *       401:
- *         description: Unauthorized
- */
-router.delete('/:id', authMiddleware, deletePostController);
-
-/**
- * @swagger
  * /api/posts/{id}/like:
  *   post:
  *     summary: Like a post
@@ -152,6 +104,54 @@ router.post('/:id/unlike', authMiddleware, unlikePostController);
  *         description: Unauthorized
  */
 router.post('/:id/comment', authMiddleware, addCommentController);
+
+/**
+ * @swagger
+ * /api/posts/{id}:
+ *   get:
+ *     summary: Get post by ID
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Post retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/:id', authMiddleware, getPostByIdController);
+
+/**
+ * @swagger
+ * /api/posts/{id}:
+ *   put:
+ *     summary: Update post
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Post updated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/:id', authMiddleware, updatePostController);
+
+/**
+ * @swagger
+ * /api/posts/{id}:
+ *   delete:
+ *     summary: Delete post
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.delete('/:id', authMiddleware, deletePostController);
 
 export default router;
 

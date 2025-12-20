@@ -33,11 +33,12 @@ interface IImagePostItemProps {
 
 const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const { colors, isDark } = useTheme();
-  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const { user } = useAuthStore();
+  const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes || 0);
-  const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
-  const [comments, setComments] = useState<IComment[]>(post.comments || []);
+  const [likeCount, setLikeCount] = useState(post?.likes || 0);
+  const [commentCount, setCommentCount] = useState(post?.comments?.length || 0);
+  const [comments, setComments] = useState<IComment[]>(post?.comments || []);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +46,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const screenHeight = Dimensions.get('window').height;
   const imageHeight = screenHeight * 0.5;
+
+  // Emoji reactions for quick input
+  const emojiReactions = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'];
 
   // Theme-aware background: black for dark mode, white for light mode (matching reference)
   const postBackground = isDark ? colors.black : colors.white;
@@ -62,11 +66,13 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     socketRef.current = socket;
 
     // Join post room for real-time updates
-    socket.emit('joinPost', post.id);
+    if (post?.id) {
+      socket.emit('joinPost', post.id);
+    }
 
     // Listen for like updates
     socket.on('postLiked', (data: { postId: string; likes: number; isLiked: boolean }) => {
-      if (data.postId === post.id) {
+      if (data.postId === post?.id) {
         setLikeCount(data.likes);
         // Only update isLiked if it's not our own action (to avoid double updates)
         // The API response will handle our own actions
@@ -75,7 +81,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 
     // Listen for unlike updates
     socket.on('postUnliked', (data: { postId: string; likes: number; isLiked: boolean }) => {
-      if (data.postId === post.id) {
+      if (data.postId === post?.id) {
         setLikeCount(data.likes);
       }
     });
@@ -100,11 +106,12 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 
   // Update local state when post prop changes
   useEffect(() => {
+    if (!post) return;
     setIsLiked(post.isLiked || false);
     setLikeCount(post.likes || 0);
     setCommentCount(post.comments?.length || 0);
     setComments(post.comments || []);
-  }, [post.isLiked, post.likes, post.comments]);
+  }, [post?.isLiked, post?.likes, post?.comments]);
 
   const formatCount = (count: number): string => {
     if (count >= 1000) {
@@ -136,6 +143,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     ]).start();
 
     try {
+      if (!post?.id) return;
       if (previousLiked) {
         const response = await unlikePost(post.id);
         if (response.success && response.Response) {
@@ -158,7 +166,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   };
 
   const handleComment = async () => {
-    if (!commentText.trim() || isSubmitting) return;
+    if (!commentText.trim() || isSubmitting || !post?.id) return;
 
     setIsSubmitting(true);
     const previousCount = commentCount;
@@ -262,6 +270,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     );
   };
 
+  if (!post) {
+    return null;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: postBackground }]}>
       {/* Post Header Section - matching reference */}
@@ -270,7 +282,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
           <View style={styles.avatarContainer}>
             <Image
               source={
-                post.userAvatar
+                post?.userAvatar
                   ? { uri: post.userAvatar }
                   : require('@assets/icons/bucket.png')
               }
@@ -283,7 +295,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               fontFamily={Fonts.SemiBold}
               style={{ color: textColor }}
               numberOfLines={1}>
-              {post.userName || `User ${post.userId.substring(0, 8)}`}
+              {post?.userName || `User ${post?.userId?.substring(0, 8) || 'Unknown'}`}
             </CustomText>
             {/* Optional: Music/Audio indicator - can be added if data exists */}
           </View>
@@ -334,7 +346,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 
           <TouchableOpacity
             style={styles.engagementButton}
-            onPress={() => setShowCommentModal(true)}
+            onPress={() => {
+              setShowCommentModal(true);
+            }}
             activeOpacity={0.7}>
             <Icon name="chatbubble-outline" size={RFValue(18)} color={iconColor} />
             <CustomText
@@ -363,7 +377,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
       </View>
 
       {/* Caption Section - matching reference */}
-      {post.text && (
+      {post?.text && (
         <View style={[styles.captionSection, { backgroundColor: postBackground }]}>
           <CustomText
             fontSize={RFValue(11)}
@@ -373,7 +387,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               fontSize={RFValue(11)}
               fontFamily={Fonts.SemiBold}
               style={{ color: textColor }}>
-              {post.userName || `User ${post.userId.substring(0, 8)}`}{' '}
+              {post?.userName || `User ${post?.userId?.substring(0, 8) || 'Unknown'}`}{' '}
             </CustomText>
             {post.text}
           </CustomText>
@@ -389,16 +403,19 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
           setShowCommentModal(false);
           setCommentText('');
         }}>
-        <TouchableOpacity
-          activeOpacity={1}
-          style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.5)' }]}
-          onPress={() => {
-            setShowCommentModal(false);
-            setCommentText('');
-          }}>
+        <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)' }]}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.modalBackdrop}
+            onPress={() => {
+              setShowCommentModal(false);
+              setCommentText('');
+            }}
+          />
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalContainer}>
+            style={styles.modalContainer}
+            keyboardVerticalOffset={0}>
             <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
               <View style={[styles.modalContent, { backgroundColor: postBackground }]}>
               {/* Drag Handle */}
@@ -441,6 +458,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                   styles.commentListContainer,
                   comments.length === 0 && styles.emptyListContainer,
                 ]}
+                style={styles.commentList}
                 showsVerticalScrollIndicator={false}
               />
 
@@ -498,7 +516,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               </View>
             </TouchableOpacity>
           </KeyboardAvoidingView>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -569,14 +587,29 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
+    position: 'relative',
   },
   modalContainer: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   modalContent: {
     flex: 1,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
   },
   dragHandle: {
     width: 40,
@@ -604,8 +637,12 @@ const styles = StyleSheet.create({
     width: 40,
     alignItems: 'flex-end',
   },
+  commentList: {
+    flex: 1,
+  },
   commentListContainer: {
     paddingVertical: screenHeight * 0.01,
+    flexGrow: 1,
   },
   emptyListContainer: {
     flexGrow: 1,
