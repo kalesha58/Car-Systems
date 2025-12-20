@@ -63,6 +63,72 @@ router.get('/user/:userId', getBusinessRegistrationByUserIdController);
 // Needed for customers to validate dealer status in cart
 router.get('/:id', getBusinessRegistrationByIdController);
 
+// Update route - allows updates when status is pending or rejected (before dealerMiddleware)
+/**
+ * @swagger
+ * /api/dealer/business-registration/{id}:
+ *   put:
+ *     summary: Update business registration
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               businessName:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               gst:
+ *                 type: string
+ *               payout:
+ *                 type: object
+ *                 description: Payout credentials (optional)
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [UPI, BANK]
+ *                   upiId:
+ *                     type: string
+ *                     description: Required if type is UPI. Format: username@paymentprovider
+ *                   bank:
+ *                     type: object
+ *                     description: Required if type is BANK
+ *                     properties:
+ *                       accountNumber:
+ *                         type: string
+ *                       ifsc:
+ *                         type: string
+ *                         description: IFSC code (format: XXXX0XXXXX)
+ *                       accountName:
+ *                         type: string
+ *     responses:
+ *       200:
+ *         description: Business registration updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Business registration not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Dealer access required
+ */
+router.put('/:id', updateBusinessRegistrationController);
+
 // All other routes require approved business registration
 router.use(dealerMiddleware);
 
@@ -154,74 +220,6 @@ router.post('/', createBusinessRegistrationController);
  *       403:
  *         description: Forbidden - Dealer access required
  */
-
-
-
-
-/**
- * @swagger
- * /api/dealer/business-registration/{id}:
- *   put:
- *     summary: Update business registration
- *     tags: [Dealer]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               businessName:
- *                 type: string
- *               type:
- *                 type: string
- *               address:
- *                 type: string
- *               phone:
- *                 type: string
- *               gst:
- *                 type: string
- *               payout:
- *                 type: object
- *                 description: Payout credentials (optional)
- *                 properties:
- *                   type:
- *                     type: string
- *                     enum: [UPI, BANK]
- *                   upiId:
- *                     type: string
- *                     description: Required if type is UPI. Format: username@paymentprovider
- *                   bank:
- *                     type: object
- *                     description: Required if type is BANK
- *                     properties:
- *                       accountNumber:
- *                         type: string
- *                       ifsc:
- *                         type: string
- *                         description: IFSC code (format: XXXX0XXXXX)
- *                       accountName:
- *                         type: string
- *     responses:
- *       200:
- *         description: Business registration updated successfully
- *       400:
- *         description: Validation error
- *       404:
- *         description: Business registration not found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Dealer access required
- */
-router.put('/:id', updateBusinessRegistrationController);
 
 /**
  * @swagger
