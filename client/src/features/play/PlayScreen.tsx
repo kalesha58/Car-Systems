@@ -26,7 +26,7 @@ type PlayRouteParams = {
 };
 
 const PlayScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
   const [posts, setPosts] = useState<IPost[]>([]);
@@ -97,62 +97,60 @@ const PlayScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.secondary}
-            colors={[Colors.secondary]}
+            tintColor={isDark ? colors.white : Colors.secondary}
+            colors={isDark ? [colors.white] : [Colors.secondary]}
           />
         }
       />
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-      <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
-      <CustomText
-        fontSize={RFValue(15)}
-        fontFamily={Fonts.SemiBold}
-        style={{ color: colors.text, marginTop: 12, marginBottom: 6 }}>
-        No Posts Yet
-      </CustomText>
-      <CustomText
-        fontSize={RFValue(12)}
-        fontFamily={Fonts.Regular}
-        style={{ color: colors.disabled, textAlign: 'center', paddingHorizontal: 28 }}>
-        Start following users to see their posts here
-      </CustomText>
-    </View>
-  );
+  const renderEmptyState = () => {
+    const screenBackground = isDark ? colors.black : colors.white;
+    return (
+      <View style={[styles.emptyContainer, { backgroundColor: screenBackground }]}>
+        <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
+        <CustomText
+          fontSize={RFValue(15)}
+          fontFamily={Fonts.SemiBold}
+          style={{ color: colors.text, marginTop: 12, marginBottom: 6 }}>
+          No Posts Yet
+        </CustomText>
+        <CustomText
+          fontSize={RFValue(12)}
+          fontFamily={Fonts.Regular}
+          style={{ color: colors.disabled, textAlign: 'center', paddingHorizontal: 28 }}>
+          Start following users to see their posts here
+        </CustomText>
+      </View>
+    );
+  };
+
+  // Theme-aware background: black for dark mode, white for light mode (matching reference)
+  const screenBackground = isDark ? colors.black : colors.white;
+  const headerTextColor = isDark ? colors.white : colors.text;
+  const headerIconColor = isDark ? colors.white : colors.text;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.backgroundSecondary }]}>
-        <View style={styles.headerRow}>
-          <CustomText fontSize={RFValue(16)} fontFamily={Fonts.Bold} style={{ color: colors.text }}>
-            Play
-          </CustomText>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: colors.cardBackground, borderColor: colors.backgroundSecondary }]}
-              onPress={() => navigate('CreateNewPost')}
-              activeOpacity={0.8}>
-              <Icon name="add" size={RFValue(16)} color={colors.text} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: Colors.secondary, borderColor: Colors.secondary }]}
-              onPress={() => navigate('Chat')}
-              activeOpacity={0.8}>
-              <Icon name="chatbubble" size={RFValue(16)} color={colors.white} />
-              <View style={styles.chatBadge}>
-                <CustomText
-                  fontSize={RFValue(7)}
-                  fontFamily={Fonts.Bold}
-                  style={{ color: Colors.secondary }}>
-                  !
-                </CustomText>
-              </View>
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: screenBackground }]} edges={['top']}>
+      {/* Header with message and post icons */}
+      <View style={[styles.header, { backgroundColor: screenBackground }]}>
+        <CustomText fontSize={RFValue(14)} fontFamily={Fonts.Bold} style={{ color: headerTextColor }}>
+          Play
+        </CustomText>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigate('CreateNewPost')}
+            activeOpacity={0.7}>
+            <Icon name="add" size={RFValue(20)} color={headerIconColor} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigate('Chat')}
+            activeOpacity={0.7}>
+            <Icon name="chatbubble-outline" size={RFValue(20)} color={headerIconColor} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -173,8 +171,8 @@ const PlayScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={Colors.secondary}
-              colors={[Colors.secondary]}
+            tintColor={isDark ? colors.white : Colors.secondary}
+            colors={isDark ? [colors.white] : [Colors.secondary]}
             />
           }
         />
@@ -187,60 +185,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   header: {
-    paddingHorizontal: screenWidth * 0.05,
-    paddingVertical: screenHeight * 0.012,
-    borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: screenWidth * 0.04,
+    paddingVertical: screenHeight * 0.012,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: screenWidth * 0.04,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-    borderWidth: 1,
-  },
-  chatBadge: {
-    position: 'absolute',
-    top: 3,
-    right: 3,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.secondary,
+    padding: 4,
   },
   listContent: {
-    paddingBottom: screenHeight * 0.15,
+    // No padding between posts - full screen like reference
   },
   emptyListContent: {
     flexGrow: 1,

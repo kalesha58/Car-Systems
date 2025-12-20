@@ -10,6 +10,8 @@ export interface IComment {
   userId: string;
   text: string;
   createdAt: string;
+  userName?: string;
+  userAvatar?: string;
 }
 
 export interface IPost {
@@ -20,6 +22,7 @@ export interface IPost {
   video?: string;
   location?: ILocation;
   likes: number;
+  isLiked?: boolean; // Whether the current user has liked this post
   comments?: IComment[];
   createdAt: string;
   updatedAt?: string;

@@ -202,3 +202,44 @@ export const createPost = async (
   }
 };
 
+/**
+ * Like a post
+ */
+export const likePost = async (postId: string): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.post<IPostResponse>(`/posts/${postId}/like`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Unlike a post
+ */
+export const unlikePost = async (postId: string): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.post<IPostResponse>(`/posts/${postId}/unlike`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Add a comment to a post
+ */
+export const addComment = async (
+  postId: string,
+  text: string,
+): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.post<IPostResponse>(`/posts/${postId}/comment`, {
+      text,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+

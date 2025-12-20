@@ -9,11 +9,17 @@ import {
 } from '../../types/post';
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
+import { emitToPostRoom } from '../socket/socketService';
 
 /**
  * Convert post document to IPost interface with user info
  */
-const postToIPostWithUser = async (postDoc: IPostDocument, userMap?: Map<string, { name: string; profileImage?: string }>): Promise<IPost> => {
+const postToIPostWithUser = async (
+  postDoc: IPostDocument,
+  userMap?: Map<string, { name: string; profileImage?: string }>,
+  currentUserId?: string,
+  commentUserMap?: Map<string, { name: string; profileImage?: string }>,
+): Promise<IPost> => {
   let userName: string | undefined;
   let userAvatar: string | undefined;
 
@@ -27,6 +33,38 @@ const postToIPostWithUser = async (postDoc: IPostDocument, userMap?: Map<string,
     userName = user?.name;
     userAvatar = user?.profileImage;
   }
+
+  // Check if current user has liked this post
+  const isLiked = currentUserId ? (postDoc.likedBy || []).includes(currentUserId) : false;
+
+  // Process comments with user info
+  const comments = await Promise.all(
+    (postDoc.comments || []).map(async (comment) => {
+      let commentUserName: string | undefined;
+      let commentUserAvatar: string | undefined;
+
+      if (commentUserMap) {
+        const commentUser = commentUserMap.get(comment.userId);
+        commentUserName = commentUser?.name;
+        commentUserAvatar = commentUser?.profileImage;
+      } else {
+        // Fallback: fetch user individually if map not provided
+        const commentUser = await SignUp.findById(comment.userId);
+        commentUserName = commentUser?.name;
+        commentUserAvatar = commentUser?.profileImage;
+      }
+
+      return {
+        id: comment.id,
+        postId: comment.postId,
+        userId: comment.userId,
+        text: comment.text,
+        createdAt: comment.createdAt.toISOString(),
+        userName: commentUserName,
+        userAvatar: commentUserAvatar,
+      };
+    })
+  );
 
   return {
     id: postDoc.id,
@@ -42,13 +80,8 @@ const postToIPostWithUser = async (postDoc: IPostDocument, userMap?: Map<string,
         }
       : undefined,
     likes: postDoc.likes || 0,
-    comments: postDoc.comments?.map((comment) => ({
-      id: comment.id,
-      postId: comment.postId,
-      userId: comment.userId,
-      text: comment.text,
-      createdAt: comment.createdAt.toISOString(),
-    })),
+    isLiked,
+    comments,
     createdAt: postDoc.createdAt.toISOString(),
     updatedAt: postDoc.updatedAt?.toISOString(),
     userName,
@@ -86,6 +119,7 @@ export const createPost = async (
         }
       : undefined,
     likes: 0,
+    likedBy: [],
     comments: [],
   });
 
@@ -101,28 +135,49 @@ export const createPost = async (
 /**
  * Get all posts
  */
-export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
+export const getPosts = async (userId?: string, currentUserId?: string): Promise<IPostsResponse> => {
   const query = userId ? { userId } : {};
   const posts = await Post.find(query).sort({ createdAt: -1 });
 
   // Get all unique userIds from posts
   const userIds = [...new Set(posts.map((p) => p.userId))];
 
-  // Fetch all users in one query for batch processing
-  const users = await SignUp.find({ _id: { $in: userIds } }).select('_id name profileImage');
+  // Get all unique userIds from comments
+  const commentUserIds = new Set<string>();
+  posts.forEach((post) => {
+    (post.comments || []).forEach((comment) => {
+      commentUserIds.add(comment.userId);
+    });
+  });
 
-  // Create a map of userId to user info for quick lookup
+  // Fetch all users (post authors and comment authors) in one query for batch processing
+  const allUserIds = [...new Set([...userIds, ...Array.from(commentUserIds)])];
+  const users = await SignUp.find({ _id: { $in: allUserIds } }).select('_id name profileImage');
+
+  // Create a map of userId to user info for quick lookup (post authors)
   const userMap = new Map<string, { name: string; profileImage?: string }>();
+  // Create a map for comment authors
+  const commentUserMap = new Map<string, { name: string; profileImage?: string }>();
+  
   users.forEach((user) => {
-    userMap.set((user._id as any).toString(), {
+    const userIdStr = (user._id as any).toString();
+    const userInfo = {
       name: user.name,
       profileImage: user.profileImage,
-    });
+    };
+    
+    // Add to both maps (users can be both post authors and comment authors)
+    if (userIds.includes(userIdStr)) {
+      userMap.set(userIdStr, userInfo);
+    }
+    if (commentUserIds.has(userIdStr)) {
+      commentUserMap.set(userIdStr, userInfo);
+    }
   });
 
   // Convert posts with user info
   const postsWithUser = await Promise.all(
-    posts.map((post) => postToIPostWithUser(post, userMap))
+    posts.map((post) => postToIPostWithUser(post, userMap, currentUserId, commentUserMap))
   );
 
   return {
@@ -133,15 +188,31 @@ export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
 /**
  * Get post by ID
  */
-export const getPostById = async (postId: string): Promise<IPostResponse> => {
+export const getPostById = async (postId: string, currentUserId?: string): Promise<IPostResponse> => {
   const post = await Post.findById(postId);
 
   if (!post) {
     throw new NotFoundError('Post not found');
   }
 
+  // Get all unique userIds from comments
+  const commentUserIds = new Set<string>();
+  (post.comments || []).forEach((comment) => {
+    commentUserIds.add(comment.userId);
+  });
+
+  // Fetch comment authors in batch
+  const commentUsers = await SignUp.find({ _id: { $in: Array.from(commentUserIds) } }).select('_id name profileImage');
+  const commentUserMap = new Map<string, { name: string; profileImage?: string }>();
+  commentUsers.forEach((user) => {
+    commentUserMap.set((user._id as any).toString(), {
+      name: user.name,
+      profileImage: user.profileImage,
+    });
+  });
+
   return {
-    Response: await postToIPostWithUser(post),
+    Response: await postToIPostWithUser(post, undefined, currentUserId, commentUserMap),
   };
 };
 
@@ -202,4 +273,151 @@ export const deletePost = async (postId: string, userId: string): Promise<void> 
   await Post.findByIdAndDelete(postId);
 
   logger.info(`Post deleted: ${post.id}`);
+};
+
+/**
+ * Like a post
+ */
+export const likePost = async (postId: string, userId: string): Promise<IPostResponse> => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  // Check if user already liked the post
+  const likedBy = post.likedBy || [];
+  if (likedBy.includes(userId)) {
+    // Already liked, return current state
+    return {
+      Response: await postToIPostWithUser(post, undefined, userId),
+    };
+  }
+
+  // Add user to likedBy array and increment likes
+  post.likedBy = [...likedBy, userId];
+  post.likes = (post.likes || 0) + 1;
+
+  await post.save();
+
+  logger.info(`Post ${postId} liked by user ${userId}`);
+
+  const updatedPost = await postToIPostWithUser(post, undefined, userId);
+
+  // Emit real-time update to all clients viewing this post
+  emitToPostRoom(postId, 'postLiked', {
+    postId,
+    likes: updatedPost.likes,
+    isLiked: updatedPost.isLiked,
+  });
+
+  return {
+    Response: updatedPost,
+  };
+};
+
+/**
+ * Unlike a post
+ */
+export const unlikePost = async (postId: string, userId: string): Promise<IPostResponse> => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  // Check if user has liked the post
+  const likedBy = post.likedBy || [];
+  if (!likedBy.includes(userId)) {
+    // Not liked, return current state
+    return {
+      Response: await postToIPostWithUser(post, undefined, userId),
+    };
+  }
+
+  // Remove user from likedBy array and decrement likes
+  post.likedBy = likedBy.filter((id) => id !== userId);
+  post.likes = Math.max(0, (post.likes || 0) - 1);
+
+  await post.save();
+
+  logger.info(`Post ${postId} unliked by user ${userId}`);
+
+  const updatedPost = await postToIPostWithUser(post, undefined, userId);
+
+  // Emit real-time update to all clients viewing this post
+  emitToPostRoom(postId, 'postUnliked', {
+    postId,
+    likes: updatedPost.likes,
+    isLiked: updatedPost.isLiked,
+  });
+
+  return {
+    Response: updatedPost,
+  };
+};
+
+/**
+ * Add a comment to a post
+ */
+export const addComment = async (
+  postId: string,
+  userId: string,
+  text: string,
+): Promise<IPostResponse> => {
+  if (!text || !text.trim()) {
+    throw new AppError('Comment text is required', 400);
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  // Create new comment
+  const comment = {
+    id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    postId,
+    userId,
+    text: text.trim(),
+    createdAt: new Date(),
+  };
+
+  // Add comment to post
+  const comments = post.comments || [];
+  post.comments = [...comments, comment];
+
+  await post.save();
+
+  logger.info(`Comment added to post ${postId} by user ${userId}`);
+
+  // Get all unique userIds from comments for batch fetching
+  const commentUserIds = new Set<string>();
+  (post.comments || []).forEach((comment) => {
+    commentUserIds.add(comment.userId);
+  });
+
+  // Fetch comment authors in batch
+  const commentUsers = await SignUp.find({ _id: { $in: Array.from(commentUserIds) } }).select('_id name profileImage');
+  const commentUserMap = new Map<string, { name: string; profileImage?: string }>();
+  commentUsers.forEach((user) => {
+    commentUserMap.set((user._id as any).toString(), {
+      name: user.name,
+      profileImage: user.profileImage,
+    });
+  });
+
+  const updatedPost = await postToIPostWithUser(post, undefined, userId, commentUserMap);
+
+  // Emit real-time update to all clients viewing this post
+  emitToPostRoom(postId, 'commentAdded', {
+    postId,
+    comment: updatedPost.comments?.[updatedPost.comments.length - 1],
+    commentCount: updatedPost.comments?.length || 0,
+  });
+
+  return {
+    Response: updatedPost,
+  };
 };

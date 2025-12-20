@@ -5,6 +5,9 @@ import {
   getPostByIdController,
   updatePostController,
   deletePostController,
+  likePostController,
+  unlikePostController,
+  addCommentController,
 } from '../../controllers/user/postController';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { validateCreatePost } from '../../middleware/validationMiddleware';
@@ -90,6 +93,65 @@ router.put('/:id', authMiddleware, updatePostController);
  *         description: Unauthorized
  */
 router.delete('/:id', authMiddleware, deletePostController);
+
+/**
+ * @swagger
+ * /api/posts/{id}/like:
+ *   post:
+ *     summary: Like a post
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Post liked successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:id/like', authMiddleware, likePostController);
+
+/**
+ * @swagger
+ * /api/posts/{id}/unlike:
+ *   post:
+ *     summary: Unlike a post
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Post unliked successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:id/unlike', authMiddleware, unlikePostController);
+
+/**
+ * @swagger
+ * /api/posts/{id}/comment:
+ *   post:
+ *     summary: Add a comment to a post
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - text
+ *             properties:
+ *               text:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Comment added successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:id/comment', authMiddleware, addCommentController);
 
 export default router;
 

@@ -21,6 +21,7 @@ export interface IPostDocument extends Document {
   video?: string;
   location?: ILocationDocument;
   likes: number;
+  likedBy: string[]; // Array of user IDs who liked this post
   comments?: ICommentDocument[];
   createdAt: Date;
   updatedAt: Date;
@@ -70,6 +71,10 @@ const postSchema = new Schema<IPostDocument>(
     likes: {
       type: Number,
       default: 0,
+    },
+    likedBy: {
+      type: [String],
+      default: [],
     },
     comments: {
       type: [commentSchema],

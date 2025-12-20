@@ -5,6 +5,9 @@ import {
   getPostById,
   updatePost,
   deletePost,
+  likePost,
+  unlikePost,
+  addComment,
 } from '../../services/user/postService';
 import { ICreatePostRequest, IUpdatePostRequest } from '../../types/post';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
@@ -54,7 +57,8 @@ export const getPostsController = async (
 ): Promise<void> => {
   try {
     const userId = req.query.userId as string | undefined;
-    const result = await getPosts(userId);
+    const currentUserId = req.user?.userId;
+    const result = await getPosts(userId, currentUserId);
 
     res.status(200).json({
       success: true,
@@ -75,7 +79,8 @@ export const getPostByIdController = async (
 ): Promise<void> => {
   try {
     const postId = req.params.id;
-    const result = await getPostById(postId);
+    const currentUserId = req.user?.userId;
+    const result = await getPostById(postId, currentUserId);
 
     res.status(200).json({
       success: true,
@@ -149,6 +154,116 @@ export const deletePostController = async (
       Response: {
         ReturnMessage: 'Post deleted successfully',
       },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Like post controller
+ */
+export const likePostController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const postId = req.params.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await likePost(postId, userId);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Unlike post controller
+ */
+export const unlikePostController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const postId = req.params.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await unlikePost(postId, userId);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Add comment controller
+ */
+export const addCommentController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const postId = req.params.id;
+    const { text } = req.body;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    if (!text || !text.trim()) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Comment text is required',
+        },
+      });
+      return;
+    }
+
+    const result = await addComment(postId, userId, text);
+
+    res.status(200).json({
+      success: true,
+      ...result,
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

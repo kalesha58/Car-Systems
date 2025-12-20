@@ -101,22 +101,12 @@ const MainTabs: FC = () => {
       tabBar={(props) => <LiquidTabBar {...props} />}>
       <Tab.Screen
         name="Home"
-        component={ProductDashboard}
+        component={PlayScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Icon name="home-outline" size={size} color={color} />
           ),
           tabBarLabel: 'Home',
-        }}
-      />
-      <Tab.Screen
-        name="Play"
-        component={PlayScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="play-circle-outline" size={size} color={color} />
-          ),
-          tabBarLabel: 'Play',
         }}
       />
       <Tab.Screen

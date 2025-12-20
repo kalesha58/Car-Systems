@@ -50,6 +50,30 @@ export const initializeSocket = (httpServer: HttpServer): SocketServer => {
       logger.info(`Socket ${socket.id} joined chat room: ${roomName}`);
     });
 
+    // Handle joinPost event (for post rooms - real-time like/comment updates)
+    socket.on('joinPost', (postId: string) => {
+      if (!postId) {
+        logger.warn(`Invalid postId for joinPost from socket ${socket.id}`);
+        return;
+      }
+
+      const roomName = `post:${postId}`;
+      socket.join(roomName);
+      logger.info(`Socket ${socket.id} joined post room: ${roomName}`);
+    });
+
+    // Handle leavePost event
+    socket.on('leavePost', (postId: string) => {
+      if (!postId) {
+        logger.warn(`Invalid postId for leavePost from socket ${socket.id}`);
+        return;
+      }
+
+      const roomName = `post:${postId}`;
+      socket.leave(roomName);
+      logger.info(`Socket ${socket.id} left post room: ${roomName}`);
+    });
+
     // Handle leaveChat event
     socket.on('leaveChat', (chatId: string) => {
       if (!chatId) {
@@ -172,6 +196,33 @@ export const emitToChatRoom = (
     logger.info(`Emitted ${event} to chat room: ${roomName}`);
   } catch (error) {
     logger.error(`Error emitting ${event} to chat room ${chatId}:`, error);
+  }
+};
+
+/**
+ * Emit event to specific post room (for real-time like/comment updates)
+ */
+export const emitToPostRoom = (
+  postId: string,
+  event: string,
+  data?: any,
+): void => {
+  if (!postId) {
+    logger.warn('Cannot emit to post room: postId is required');
+    return;
+  }
+
+  if (!io) {
+    logger.warn('Socket.io not initialized, cannot emit event');
+    return;
+  }
+
+  try {
+    const roomName = `post:${postId}`;
+    io.to(roomName).emit(event, data);
+    logger.info(`Emitted ${event} to post room: ${roomName}`);
+  } catch (error) {
+    logger.error(`Error emitting ${event} to post room ${postId}:`, error);
   }
 };
 
