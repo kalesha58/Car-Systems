@@ -24,7 +24,6 @@ export interface IBusinessRegistration {
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
   status: BusinessRegistrationStatus;
-  approvalCode?: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -54,7 +53,6 @@ export interface IUpdateBusinessRegistrationRequest {
 
 export interface IUpdateBusinessRegistrationStatusRequest {
   status: BusinessRegistrationStatus;
-  approvalCode?: string;
 }
 
 

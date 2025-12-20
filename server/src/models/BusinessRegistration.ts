@@ -39,7 +39,6 @@ export interface IBusinessRegistrationDocument extends Document {
     originalName?: string;
   }[];
   status: BusinessRegistrationStatus;
-  approvalCode?: string;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -135,10 +134,6 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
-    },
-    approvalCode: {
-      type: String,
-      trim: true,
     },
     userId: {
       type: String,

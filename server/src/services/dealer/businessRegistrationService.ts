@@ -27,7 +27,6 @@ export const businessRegistrationToInterface = (
     shopPhotos: doc.shopPhotos || [],
     documents: doc.documents || [],
     status: doc.status,
-    approvalCode: doc.approvalCode,
     userId: doc.userId,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -282,11 +281,6 @@ export const updateBusinessRegistration = async (
       throw new AppError('Dealers cannot change business registration status. Status can only be updated by admins.', 403);
     }
 
-    // Dealers cannot change approvalCode - only admins can
-    if ((data as any).approvalCode !== undefined) {
-      throw new AppError('Dealers cannot change approval code. Approval code can only be updated by admins.', 403);
-    }
-
     if (data.businessName !== undefined) {
       if (!data.businessName.trim()) {
         throw new AppError('Business name cannot be empty', 400);
@@ -439,10 +433,6 @@ export const updateBusinessRegistrationStatus = async (
     }
 
     registration.status = data.status;
-
-    if (data.approvalCode !== undefined) {
-      registration.approvalCode = data.approvalCode;
-    }
 
     await registration.save();
 

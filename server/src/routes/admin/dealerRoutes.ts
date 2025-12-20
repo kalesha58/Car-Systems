@@ -924,8 +924,6 @@ router.get('/:id/orders', getDealerOrdersController);
  *                       type: string
  *                     status:
  *                       type: string
- *                     approvalCode:
- *                       type: string
  *                     userId:
  *                       type: string
  *                     createdAt:

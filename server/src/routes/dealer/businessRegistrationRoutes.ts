@@ -296,8 +296,6 @@ router.post('/', createBusinessRegistrationController);
  *               status:
  *                 type: string
  *                 enum: [pending, approved, rejected]
- *               approvalCode:
- *                 type: string
  *     responses:
  *       200:
  *         description: Status updated successfully
