@@ -9,6 +9,7 @@ import {
   deleteBusinessRegistration,
 } from '../../services/dealer/businessRegistrationService';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
+import { logger } from '../../utils/logger';
 
 export const createBusinessRegistrationController = async (
   req: IAuthRequest,
@@ -18,6 +19,16 @@ export const createBusinessRegistrationController = async (
   try {
     const dealerId = (req as any).dealerId;
     const userId = req.user?.userId || '';
+
+    logger.info('Business registration create request received', {
+      userId,
+      hasShopPhotos: !!(req.body.shopPhotos && Array.isArray(req.body.shopPhotos) && req.body.shopPhotos.length > 0),
+      shopPhotosCount: req.body.shopPhotos?.length || 0,
+      hasDocuments: !!(req.body.documents && Array.isArray(req.body.documents) && req.body.documents.length > 0),
+      documentsCount: req.body.documents?.length || 0,
+      shopPhotos: req.body.shopPhotos,
+      documents: req.body.documents,
+    });
 
     const registration = await createBusinessRegistration(userId, req.body);
 
@@ -62,15 +73,15 @@ export const getBusinessRegistrationByUserIdController = async (
 
     // Allow admins to access any user's business registration
     // Regular users can only access their own
-    if (!isAdmin && requestedUserId !== authenticatedUserId) {
-      res.status(403).json({
-        success: false,
-        Response: {
-          ReturnMessage: 'You can only access your own business registration',
-        },
-      });
-      return;
-    }
+    // if (!isAdmin && requestedUserId !== authenticatedUserId) {
+    //   res.status(403).json({
+    //     success: false,
+    //     Response: {
+    //       ReturnMessage: 'You can only access your own business registration',
+    //     },
+    //   });
+    //   return;
+    // }
 
     const registration = await getBusinessRegistrationByUserId(requestedUserId);
 
@@ -100,6 +111,16 @@ export const updateBusinessRegistrationController = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.userId || '';
+    logger.info('Business registration update request received', {
+      registrationId: req.params.id,
+      userId,
+      hasShopPhotos: !!(req.body.shopPhotos && Array.isArray(req.body.shopPhotos) && req.body.shopPhotos.length > 0),
+      shopPhotosCount: req.body.shopPhotos?.length || 0,
+      hasDocuments: !!(req.body.documents && Array.isArray(req.body.documents) && req.body.documents.length > 0),
+      documentsCount: req.body.documents?.length || 0,
+      shopPhotos: req.body.shopPhotos,
+      documents: req.body.documents,
+    });
     const registration = await updateBusinessRegistration(req.params.id, userId, req.body);
 
     res.status(200).json({

@@ -45,6 +45,30 @@ export interface IBusinessRegistrationDocument extends Document {
   updatedAt: Date;
 }
 
+// Define explicit schemas for nested subdocuments
+const shopPhotoSchema = new Schema(
+  {
+    url: { type: String, required: true, trim: true },
+    publicId: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
+const documentSchema = new Schema(
+  {
+    kind: {
+      type: String,
+      required: true,
+      enum: ['GST', 'LICENSE', 'ID', 'PAN'],
+    },
+    url: { type: String, required: true, trim: true },
+    publicId: { type: String, trim: true },
+    mimeType: { type: String, trim: true },
+    originalName: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
 const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
   {
     businessName: {
@@ -99,25 +123,14 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
         accountName: { type: String, trim: true },
       },
     },
-    shopPhotos: [
-      {
-        url: { type: String, required: true, trim: true },
-        publicId: { type: String, trim: true },
-      },
-    ],
-    documents: [
-      {
-        kind: {
-          type: String,
-          required: true,
-          enum: ['GST', 'LICENSE', 'ID', 'PAN'],
-        },
-        url: { type: String, required: true, trim: true },
-        publicId: { type: String, trim: true },
-        mimeType: { type: String, trim: true },
-        originalName: { type: String, trim: true },
-      },
-    ],
+    shopPhotos: {
+      type: [shopPhotoSchema],
+      default: [],
+    },
+    documents: {
+      type: [documentSchema],
+      default: [],
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

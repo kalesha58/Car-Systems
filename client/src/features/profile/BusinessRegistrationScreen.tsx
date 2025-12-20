@@ -695,10 +695,14 @@ const BusinessRegistrationScreen: React.FC = () => {
         const url = await uploadIfNeeded(uri);
         uploadedShopPhotos.push({ url });
       }
+      console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
       const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
-      uploadedDocuments.push({ kind: 'ID', url: await uploadIfNeeded(idDocUri) });
-      uploadedDocuments.push({ kind: 'PAN', url: await uploadIfNeeded(panDocUri) });
+      const idDocUrl = await uploadIfNeeded(idDocUri);
+      const panDocUrl = await uploadIfNeeded(panDocUri);
+      uploadedDocuments.push({ kind: 'ID', url: idDocUrl });
+      uploadedDocuments.push({ kind: 'PAN', url: panDocUrl });
+      console.log('[BusinessRegistrationScreen] Uploaded documents:', uploadedDocuments);
 
       // Prepare payout object if payout type is selected
       let payoutData: any = undefined;
@@ -728,6 +732,13 @@ const BusinessRegistrationScreen: React.FC = () => {
         shopPhotos: uploadedShopPhotos,
         documents: uploadedDocuments,
       };
+
+      console.log('[BusinessRegistrationScreen] Submitting data with images:', {
+        shopPhotosCount: data.shopPhotos.length,
+        documentsCount: data.documents.length,
+        shopPhotos: data.shopPhotos,
+        documents: data.documents,
+      });
 
       if (isEdit && registrationData?.id) {
         await updateBusinessRegistration(registrationData.id, data);

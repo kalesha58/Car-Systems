@@ -22,8 +22,8 @@ const swaggerDefinition: SwaggerDefinition = {
       description: 'Development server',
     },
     {
-      url: process.env.PRODUCTION_URL || 'https://your-backend.onrender.com',
-      description: 'Production server (Render)',
+      url: process.env.PRODUCTION_URL || 'http://82.29.162.228:3002/api',
+      description: 'Production server',
     },
   ],
   components: {

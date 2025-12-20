@@ -191,10 +191,29 @@ export const createBusinessRegistration = async (
       shopPhotosCount: registrationData.shopPhotos?.length || 0,
       hasDocuments: !!(registrationData.documents && registrationData.documents.length > 0),
       documentsCount: registrationData.documents?.length || 0,
+      shopPhotos: JSON.stringify(registrationData.shopPhotos),
+      documents: JSON.stringify(registrationData.documents),
     });
 
     const registration = new BusinessRegistration(registrationData);
+    logger.info('Business registration model created, about to save', {
+      userId,
+      modelShopPhotos: registration.shopPhotos?.length || 0,
+      modelDocuments: registration.documents?.length || 0,
+      modelShopPhotosData: JSON.stringify(registration.shopPhotos),
+      modelDocumentsData: JSON.stringify(registration.documents),
+    });
+    
     await registration.save();
+    
+    logger.info('Business registration saved to database', {
+      userId,
+      registrationId: registration._id,
+      savedShopPhotos: registration.shopPhotos?.length || 0,
+      savedDocuments: registration.documents?.length || 0,
+      savedShopPhotosData: JSON.stringify(registration.shopPhotos),
+      savedDocumentsData: JSON.stringify(registration.documents),
+    });
 
     logger.info(`Business registration created with pending status for user: ${userId}`);
 
@@ -302,6 +321,11 @@ export const updateBusinessRegistration = async (
       if (!Array.isArray(photos) || photos.length < 1) {
         throw new AppError('At least one shop photo is required', 400);
       }
+      logger.info('Updating shopPhotos', {
+        registrationId: id,
+        photosCount: photos.length,
+        photos: JSON.stringify(photos),
+      });
       (registration as any).shopPhotos = photos;
     }
 
@@ -310,6 +334,11 @@ export const updateBusinessRegistration = async (
       if (!Array.isArray(docs) || docs.length < 1) {
         throw new AppError('At least one document is required', 400);
       }
+      logger.info('Updating documents', {
+        registrationId: id,
+        documentsCount: docs.length,
+        documents: JSON.stringify(docs),
+      });
       (registration as any).documents = docs;
     }
 
@@ -367,9 +396,26 @@ export const updateBusinessRegistration = async (
       }
     }
 
+    logger.info('Business registration update data prepared, about to save', {
+      registrationId: id,
+      userId,
+      hasShopPhotos: !!(registration.shopPhotos && registration.shopPhotos.length > 0),
+      shopPhotosCount: registration.shopPhotos?.length || 0,
+      hasDocuments: !!(registration.documents && registration.documents.length > 0),
+      documentsCount: registration.documents?.length || 0,
+      shopPhotos: JSON.stringify(registration.shopPhotos),
+      documents: JSON.stringify(registration.documents),
+    });
+    
     await registration.save();
 
-    logger.info(`Business registration updated: ${id}`);
+    logger.info('Business registration updated and saved to database', {
+      registrationId: id,
+      savedShopPhotos: registration.shopPhotos?.length || 0,
+      savedDocuments: registration.documents?.length || 0,
+      savedShopPhotosData: JSON.stringify(registration.shopPhotos),
+      savedDocumentsData: JSON.stringify(registration.documents),
+    });
 
     return businessRegistrationToInterface(registration);
   } catch (error) {
