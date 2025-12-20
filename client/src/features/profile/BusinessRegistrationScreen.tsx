@@ -380,16 +380,70 @@ const BusinessRegistrationScreen: React.FC = () => {
     return true;
   };
 
-  const isFormValid =
-    businessName.trim() &&
-    type &&
-    address.trim() &&
-    phone.trim() &&
-    isValidPhone(phone) &&
-    isPayoutValid() &&
-    shopPhotoUris.length > 0 &&
-    !!idDocUri &&
-    !!panDocUri;
+  const isFormValid = useMemo(() => {
+    // Inline payout validation for clarity
+    let payoutValid = true;
+    if (payoutType) {
+      if (payoutType === 'UPI') {
+        payoutValid = upiId.trim() !== '' && isValidUPIId(upiId);
+      } else if (payoutType === 'BANK') {
+        payoutValid =
+          accountNumber.trim() !== '' &&
+          ifsc.trim() !== '' &&
+          accountName.trim() !== '' &&
+          isValidIFSC(ifsc);
+      }
+    }
+
+    const validations = {
+      businessName: !!businessName.trim(),
+      type: !!type,
+      address: !!address.trim(),
+      phone: !!phone.trim() && isValidPhone(phone),
+      payout: payoutValid,
+      shopPhotos: shopPhotoUris.length > 0,
+      idDoc: !!idDocUri,
+      panDoc: !!panDocUri,
+    };
+    
+    const isValid = Object.values(validations).every(v => v === true);
+    
+    // Debug logging to help identify which validation is failing
+    if (!isValid) {
+      console.log('[BusinessRegistrationScreen] Validation check:', validations);
+      const failedChecks = Object.entries(validations)
+        .filter(([_, v]) => !v)
+        .map(([key]) => key);
+      console.log('[BusinessRegistrationScreen] Failed validations:', failedChecks);
+      console.log('[BusinessRegistrationScreen] Current values:', {
+        businessName: businessName?.substring(0, 20),
+        type,
+        address: address?.substring(0, 20),
+        phone,
+        payoutType,
+        upiId: upiId?.substring(0, 20),
+        shopPhotoUrisCount: shopPhotoUris?.length,
+        shopPhotoUris: shopPhotoUris,
+        idDocUri: idDocUri ? (idDocUri.length > 50 ? idDocUri.substring(0, 50) + '...' : idDocUri) : null,
+        panDocUri: panDocUri ? (panDocUri.length > 50 ? panDocUri.substring(0, 50) + '...' : panDocUri) : null,
+      });
+    }
+    
+    return isValid;
+  }, [
+    businessName,
+    type,
+    address,
+    phone,
+    payoutType,
+    upiId,
+    accountNumber,
+    ifsc,
+    accountName,
+    shopPhotoUris,
+    idDocUri,
+    panDocUri,
+  ]);
 
   const handleSubmit = async () => {
     if (!businessName.trim()) {

@@ -26,6 +26,7 @@ import { SOCKET_URL } from '@service/config';
 import { io, Socket } from 'socket.io-client';
 import { formatRelativeTime } from '@utils/timeUtils';
 import { useAuthStore } from '@state/authStore';
+import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 
 interface IImagePostItemProps {
   post: IPost;
@@ -34,6 +35,7 @@ interface IImagePostItemProps {
 const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
+  const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(post?.likes || 0);
@@ -216,28 +218,28 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
           <View style={styles.commentContent}>
             <View style={styles.commentHeader}>
               <CustomText
-                fontSize={RFValue(13)}
+                fontSize={RFValue(12)}
                 fontFamily={Fonts.SemiBold}
                 style={{ color: textColor }}>
                 {item.userName || `User ${item.userId.substring(0, 8)}`}
               </CustomText>
               <CustomText
-                fontSize={RFValue(11)}
+                fontSize={RFValue(10)}
                 fontFamily={Fonts.Regular}
                 style={{ color: secondaryTextColor, marginLeft: 8 }}>
                 {formatRelativeTime(item.createdAt)}
               </CustomText>
             </View>
             <CustomText
-              fontSize={RFValue(13)}
+              fontSize={RFValue(12)}
               fontFamily={Fonts.Regular}
-              style={{ color: textColor, marginTop: 2 }}>
+              style={{ color: textColor, marginTop: 4, lineHeight: RFValue(18) }}>
               {item.text}
             </CustomText>
             <TouchableOpacity style={styles.replyButton} activeOpacity={0.7}>
               <CustomText
-                fontSize={RFValue(11)}
-                fontFamily={Fonts.Regular}
+                fontSize={RFValue(10)}
+                fontFamily={Fonts.Medium}
                 style={{ color: secondaryTextColor }}>
                 Reply
               </CustomText>
@@ -255,13 +257,13 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     return (
       <View style={[styles.emptyStateContainer, { backgroundColor: postBackground }]}>
         <CustomText
-          fontSize={RFValue(18)}
-          fontFamily={Fonts.Bold}
-          style={{ color: textColor, marginBottom: 8 }}>
+          fontSize={RFValue(14)}
+          fontFamily={Fonts.SemiBold}
+          style={{ color: textColor, marginBottom: 6 }}>
           No comments yet
         </CustomText>
         <CustomText
-          fontSize={RFValue(14)}
+          fontSize={RFValue(12)}
           fontFamily={Fonts.Regular}
           style={{ color: secondaryTextColor }}>
           Start the conversation.
@@ -347,6 +349,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
           <TouchableOpacity
             style={styles.engagementButton}
             onPress={() => {
+              console.log('Opening comment modal, showCommentModal will be:', true);
               setShowCommentModal(true);
             }}
             activeOpacity={0.7}>
@@ -397,8 +400,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
       {/* Comment Modal - Full Screen */}
       <Modal
         visible={showCommentModal}
-        transparent
+        transparent={true}
         animationType="slide"
+        statusBarTranslucent={true}
         onRequestClose={() => {
           setShowCommentModal(false);
           setCommentText('');
@@ -413,11 +417,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             }}
           />
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalContainer}
-            keyboardVerticalOffset={0}>
-            <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-              <View style={[styles.modalContent, { backgroundColor: postBackground }]}>
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+            <View style={[styles.modalContent, { backgroundColor: postBackground }]}>
               {/* Drag Handle */}
               <View style={[styles.dragHandle, { backgroundColor: secondaryTextColor }]} />
 
@@ -430,11 +433,11 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                   }}
                   style={styles.closeButton}
                   activeOpacity={0.7}>
-                  <Icon name="close" size={RFValue(24)} color={textColor} />
+                  <Icon name="close" size={RFValue(22)} color={textColor} />
                 </TouchableOpacity>
                 <CustomText
-                  fontSize={RFValue(16)}
-                  fontFamily={Fonts.Bold}
+                  fontSize={RFValue(13)}
+                  fontFamily={Fonts.SemiBold}
                   style={{ color: textColor }}>
                   Comments
                 </CustomText>
@@ -449,21 +452,31 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               </View>
 
               {/* Comment List */}
-              <FlatList
-                data={comments}
-                renderItem={renderCommentItem}
-                keyExtractor={(item) => item.id}
-                ListEmptyComponent={renderEmptyState}
-                contentContainerStyle={[
-                  styles.commentListContainer,
-                  comments.length === 0 && styles.emptyListContainer,
-                ]}
-                style={styles.commentList}
-                showsVerticalScrollIndicator={false}
-              />
+              <View style={styles.commentListWrapper}>
+                <FlatList
+                  data={comments}
+                  renderItem={renderCommentItem}
+                  keyExtractor={(item) => item.id}
+                  ListEmptyComponent={renderEmptyState}
+                  contentContainerStyle={[
+                    styles.commentListContainer,
+                    comments.length === 0 && styles.emptyListContainer,
+                  ]}
+                  style={styles.commentList}
+                  showsVerticalScrollIndicator={false}
+                />
+              </View>
 
               {/* Bottom Input Section */}
-              <View style={[styles.inputSection, { backgroundColor: postBackground, borderTopColor: colors.border }]}>
+              <Animated.View 
+                style={[
+                  styles.inputSection, 
+                  { 
+                    backgroundColor: postBackground, 
+                    borderTopColor: colors.border,
+                    transform: [{ translateY: keyboardOffsetHeight > 0 ? -keyboardOffsetHeight : 0 }]
+                  }
+                ]}>
                 {/* User Avatar */}
                 <Image
                   source={
@@ -486,7 +499,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                         onPress={() => handleEmojiReaction(emoji)}
                         style={styles.emojiButton}
                         activeOpacity={0.7}>
-                        <CustomText fontSize={RFValue(20)}>{emoji}</CustomText>
+                        <CustomText fontSize={RFValue(16)}>{emoji}</CustomText>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -494,27 +507,43 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                   {/* Text Input */}
                   <View style={styles.textInputContainer}>
                     <TextInput
-                      style={[styles.commentInput, { color: textColor, backgroundColor: colors.backgroundSecondary }]}
+                      style={[styles.commentInput, { color: textColor, backgroundColor: colors.backgroundSecondary, fontSize: RFValue(13) }]}
                       placeholder="Add a comment..."
                       placeholderTextColor={colors.disabled}
                       value={commentText}
                       onChangeText={setCommentText}
                       multiline
                       maxLength={500}
+                      onSubmitEditing={handleComment}
+                      returnKeyType="send"
+                      blurOnSubmit={false}
                     />
-                    <TouchableOpacity
-                      onPress={() => {
-                        // Emoji picker - placeholder
-                      }}
-                      style={styles.emojiPickerButton}
-                      activeOpacity={0.7}>
-                      <Icon name="happy-outline" size={RFValue(20)} color={textColor} />
-                    </TouchableOpacity>
+                    {commentText.trim().length > 0 ? (
+                      <TouchableOpacity
+                        onPress={handleComment}
+                        style={[styles.sendButton, { backgroundColor: colors.primary }]}
+                        activeOpacity={0.7}
+                        disabled={isSubmitting}>
+                        {isSubmitting ? (
+                          <Icon name="hourglass-outline" size={RFValue(18)} color={colors.white} />
+                        ) : (
+                          <Icon name="send" size={RFValue(18)} color={colors.white} />
+                        )}
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => {
+                          // Emoji picker - placeholder
+                        }}
+                        style={styles.emojiPickerButton}
+                        activeOpacity={0.7}>
+                        <Icon name="happy-outline" size={RFValue(18)} color={textColor} />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
-              </View>
-              </View>
-            </TouchableOpacity>
+              </Animated.View>
+            </View>
           </KeyboardAvoidingView>
         </View>
       </Modal>
@@ -587,18 +616,18 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    position: 'relative',
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
+    position: 'relative',
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 0,
   },
   modalContent: {
-    flex: 1,
+    width: '100%',
+    height: screenHeight * 0.9,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
@@ -609,7 +638,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    zIndex: 1,
+    overflow: 'hidden',
   },
   dragHandle: {
     width: 40,
@@ -637,6 +666,9 @@ const styles = StyleSheet.create({
     width: 40,
     alignItems: 'flex-end',
   },
+  commentListWrapper: {
+    flex: 1,
+  },
   commentList: {
     flex: 1,
   },
@@ -656,7 +688,7 @@ const styles = StyleSheet.create({
   commentItem: {
     flexDirection: 'row',
     paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.012,
+    paddingVertical: screenHeight * 0.015,
     alignItems: 'flex-start',
   },
   commentLeft: {
@@ -664,39 +696,42 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   commentAvatar: {
-    width: screenWidth * 0.08,
-    height: screenWidth * 0.08,
-    borderRadius: screenWidth * 0.08 / 2,
-    marginRight: screenWidth * 0.025,
+    width: screenWidth * 0.09,
+    height: screenWidth * 0.09,
+    borderRadius: screenWidth * 0.09 / 2,
+    marginRight: screenWidth * 0.03,
   },
   commentContent: {
     flex: 1,
+    paddingRight: screenWidth * 0.02,
   },
   commentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   replyButton: {
-    marginTop: 4,
+    marginTop: 6,
     paddingVertical: 4,
   },
   commentLikeButton: {
-    padding: 4,
+    padding: 6,
     marginLeft: 8,
+    alignSelf: 'flex-start',
+    marginTop: 4,
   },
   inputSection: {
     borderTopWidth: 1,
     paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.012,
+    paddingVertical: screenHeight * 0.015,
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
   userAvatar: {
-    width: screenWidth * 0.08,
-    height: screenWidth * 0.08,
-    borderRadius: screenWidth * 0.08 / 2,
-    marginRight: screenWidth * 0.025,
+    width: screenWidth * 0.09,
+    height: screenWidth * 0.09,
+    borderRadius: screenWidth * 0.09 / 2,
+    marginRight: screenWidth * 0.03,
   },
   inputWrapper: {
     flex: 1,
@@ -707,7 +742,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emojiButton: {
-    padding: 4,
+    padding: 6,
+    minWidth: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   textInputContainer: {
     flexDirection: 'row',
@@ -719,13 +757,22 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    fontSize: RFValue(14),
+    fontSize: RFValue(13),
     fontFamily: Fonts.Regular,
     maxHeight: 100,
     minHeight: 40,
+    lineHeight: RFValue(18),
   },
   emojiPickerButton: {
     padding: 4,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
 });
 

@@ -24,8 +24,8 @@ export const businessRegistrationToInterface = (
     phone: doc.phone,
     gst: doc.gst,
     payout: doc.payout,
-    shopPhotos: (doc as any).shopPhotos,
-    documents: (doc as any).documents,
+    shopPhotos: doc.shopPhotos || [],
+    documents: doc.documents || [],
     status: doc.status,
     approvalCode: doc.approvalCode,
     userId: doc.userId,
@@ -171,19 +171,36 @@ export const createBusinessRegistration = async (
     }
 
     // Create business registration with pending status - requires admin approval
-    const registration = new BusinessRegistration({
+    const registrationData: any = {
       businessName: data.businessName.trim(),
       type: data.type,
       address: data.address.trim(),
       phone: data.phone.trim(),
       gst: data.gst?.trim() || undefined,
       payout: payoutData,
-      shopPhotos: (data as any).shopPhotos,
-      documents: (data as any).documents,
       status: 'pending', // Requires admin approval
       userId,
+    };
+
+    // Add shopPhotos if provided
+    if (data.shopPhotos && Array.isArray(data.shopPhotos) && data.shopPhotos.length > 0) {
+      registrationData.shopPhotos = data.shopPhotos;
+    }
+
+    // Add documents if provided
+    if (data.documents && Array.isArray(data.documents) && data.documents.length > 0) {
+      registrationData.documents = data.documents;
+    }
+
+    logger.info('Creating business registration with data:', {
+      userId,
+      hasShopPhotos: !!(registrationData.shopPhotos && registrationData.shopPhotos.length > 0),
+      shopPhotosCount: registrationData.shopPhotos?.length || 0,
+      hasDocuments: !!(registrationData.documents && registrationData.documents.length > 0),
+      documentsCount: registrationData.documents?.length || 0,
     });
 
+    const registration = new BusinessRegistration(registrationData);
     await registration.save();
 
     logger.info(`Business registration created with pending status for user: ${userId}`);

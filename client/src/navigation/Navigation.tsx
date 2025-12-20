@@ -207,6 +207,13 @@ const DealerTabs: FC = () => {
   const [businessRegistration, setBusinessRegistration] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
 
+  const getInitialLetter = (): string => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
+
   useEffect(() => {
     const checkBusinessRegistration = async () => {
       const userId = user?.id || user?._id;
@@ -292,6 +299,50 @@ const DealerTabs: FC = () => {
             <Icon name="receipt-outline" size={size} color={color} />
           ),
           tabBarLabel: t('dealer.orders'),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => {
+            if (user?.profileImage) {
+              return (
+                <Image
+                  source={{ uri: user.profileImage }}
+                  style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    borderWidth: focused ? 2 : 0,
+                    borderColor: focused ? color : 'transparent',
+                  }}
+                  resizeMode="cover"
+                />
+              );
+            }
+            return (
+              <View
+                style={{
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                  backgroundColor: focused ? color : colors.disabled,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: focused ? 2 : 0,
+                  borderColor: focused ? color : 'transparent',
+                }}>
+                <CustomText
+                  fontSize={RFValue(size * 0.5)}
+                  fontFamily={Fonts.Bold}
+                  style={{ color: '#fff' }}>
+                  {getInitialLetter()}
+                </CustomText>
+              </View>
+            );
+          },
+          tabBarLabel: 'Profile',
         }}
       />
     </Tab.Navigator>

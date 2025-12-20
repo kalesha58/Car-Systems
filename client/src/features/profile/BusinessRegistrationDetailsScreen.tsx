@@ -291,14 +291,14 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                         )}
 
                         {/* Shop Photos */}
-                        {Array.isArray((registration as any).shopPhotos) && (registration as any).shopPhotos.length > 0 && (
+                        {registration.shopPhotos && Array.isArray(registration.shopPhotos) && registration.shopPhotos.length > 0 && (
                             <>
                                 <View style={styles.divider} />
                                 <CustomText style={styles.sectionTitle}>{t('dealer.shopPhotos') || 'Shop Photos'}</CustomText>
                                 <View style={styles.imagesContainer}>
-                                    {(registration as any).shopPhotos.map((p: any, idx: number) => (
-                                        <View key={`${p?.url}_${idx}`} style={styles.imageWrapper}>
-                                            <Image source={{ uri: p?.url }} style={styles.image} />
+                                    {registration.shopPhotos.map((photo, idx: number) => (
+                                        <View key={`${photo?.url}_${idx}`} style={styles.imageWrapper}>
+                                            <Image source={{ uri: photo?.url }} style={styles.image} />
                                         </View>
                                     ))}
                                 </View>
@@ -306,27 +306,27 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                         )}
 
                         {/* Documents */}
-                        {Array.isArray((registration as any).documents) && (registration as any).documents.length > 0 && (
+                        {registration.documents && Array.isArray(registration.documents) && registration.documents.length > 0 && (
                             <>
                                 <View style={styles.divider} />
                                 <CustomText style={styles.sectionTitle}>{t('dealer.documents') || 'Documents'}</CustomText>
-                                {(registration as any).documents.map((d: any, idx: number) => (
+                                {registration.documents.map((doc, idx: number) => (
                                     <TouchableOpacity
-                                        key={`${d?.kind}_${d?.url}_${idx}`}
+                                        key={`${doc?.kind}_${doc?.url}_${idx}`}
                                         style={styles.docRow}
-                                        onPress={() => d?.url && Linking.openURL(d.url)}
+                                        onPress={() => doc?.url && Linking.openURL(doc.url)}
                                     >
                                         <Icon
-                                            name={d?.mimeType === 'application/pdf' ? 'document-outline' : 'image-outline'}
+                                            name={doc?.mimeType === 'application/pdf' ? 'document-outline' : 'image-outline'}
                                             size={RFValue(18)}
                                             color={colors.text}
                                         />
                                         <View style={styles.docLeft}>
                                             <CustomText style={styles.docTitle}>
-                                                {(d?.kind || 'DOC') + (d?.originalName ? ` — ${d.originalName}` : '')}
+                                                {(doc?.kind || 'DOC') + (doc?.originalName ? ` — ${doc.originalName}` : '')}
                                             </CustomText>
                                             <CustomText style={styles.docSub} numberOfLines={1}>
-                                                {d?.url}
+                                                {doc?.url}
                                             </CustomText>
                                         </View>
                                         <Icon name="open-outline" size={RFValue(18)} color={colors.textSecondary} />

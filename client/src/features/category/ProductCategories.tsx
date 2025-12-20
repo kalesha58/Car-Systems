@@ -33,9 +33,9 @@ import {useTranslation} from 'react-i18next';
 import {useRecentSearchesStore} from '@state/recentSearchesStore';
 import {useCompareStore} from '@state/compareStore';
 import {startVoiceSearch, isVoiceSearchAvailable} from '@utils/voiceSearch';
-import {shareCategory} from '@utils/shareUtils';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
+import {useNavigation} from '@react-navigation/native';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -45,6 +45,7 @@ const allServicesImage = require('@assets/images/AutoMobile-Services.jpeg');
 
 const ProductCategories = () => {
   const route = useRoute();
+  const navigation = useNavigation();
   const routeParams = route.params as {
     initialCategoryId?: string;
     initialCategoryType?: CategoryType;
@@ -683,11 +684,9 @@ const ProductCategories = () => {
     }
   };
 
-  // Handle share category
-  const handleShareCategory = async () => {
-    if (selectedCategory) {
-      await shareCategory(selectedCategory.name);
-    }
+  // Handle wishlist navigation
+  const handleWishlistPress = () => {
+    navigation.navigate('WishlistScreen' as never);
   };
 
   // Handle refresh
@@ -818,14 +817,12 @@ const ProductCategories = () => {
               activeOpacity={0.7}>
               <Icon name="swap-vertical-outline" color={colors.text} size={RFValue(18)} />
             </TouchableOpacity>
-            {selectedCategory && (
-              <TouchableOpacity
-                style={[styles.headerButton, {backgroundColor: colors.backgroundSecondary}]}
-                onPress={handleShareCategory}
-                activeOpacity={0.7}>
-                <Icon name="share-outline" color={colors.text} size={RFValue(18)} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.headerButton, {backgroundColor: colors.backgroundSecondary}]}
+              onPress={handleWishlistPress}
+              activeOpacity={0.7}>
+              <Icon name="heart-outline" color={colors.text} size={RFValue(18)} />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handleSearchPress}

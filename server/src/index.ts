@@ -124,6 +124,7 @@ app.use('/api/auth', authRoutes);
 app.post('/api/refresh-token', refreshTokenController);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/posts', postRoutes);
+logger.info('[Routes] Post routes mounted at /api/posts');
 app.use('/api/upload', uploadRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/dealer', dealerApiRoutes);

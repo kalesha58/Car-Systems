@@ -103,6 +103,7 @@ router.post('/:id/unlike', authMiddleware, unlikePostController);
  *       401:
  *         description: Unauthorized
  */
+// Register comment route before generic :id routes to ensure proper matching
 router.post('/:id/comment', authMiddleware, addCommentController);
 
 /**
@@ -152,6 +153,16 @@ router.put('/:id', authMiddleware, updatePostController);
  *         description: Unauthorized
  */
 router.delete('/:id', authMiddleware, deletePostController);
+
+// Log registered routes for debugging
+console.log('Post routes registered:', {
+  like: 'POST /:id/like',
+  unlike: 'POST /:id/unlike',
+  comment: 'POST /:id/comment',
+  getById: 'GET /:id',
+  update: 'PUT /:id',
+  delete: 'DELETE /:id',
+});
 
 export default router;
 
