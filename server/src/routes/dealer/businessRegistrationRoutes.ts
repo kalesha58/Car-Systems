@@ -153,7 +153,7 @@ router.get('/:id', getBusinessRegistrationByIdController);
  *                     enum: [UPI, BANK]
  *                   upiId:
  *                     type: string
- *                     description: Required if type is UPI. Format: username@paymentprovider
+ *                     description: "Required if type is UPI. Format: username@paymentprovider"
  *                   bank:
  *                     type: object
  *                     description: Required if type is BANK
@@ -162,7 +162,7 @@ router.get('/:id', getBusinessRegistrationByIdController);
  *                         type: string
  *                       ifsc:
  *                         type: string
- *                         description: IFSC code (format: XXXX0XXXXX)
+ *                         description: "IFSC code (format: XXXX0XXXXX)"
  *                       accountName:
  *                         type: string
  *     responses:
@@ -218,7 +218,7 @@ router.use(dealerMiddleware);
  *                     enum: [UPI, BANK]
  *                   upiId:
  *                     type: string
- *                     description: Required if type is UPI. Format: username@paymentprovider
+ *                     description: "Required if type is UPI. Format: username@paymentprovider"
  *                     example: "user@paytm"
  *                   bank:
  *                     type: object
@@ -229,7 +229,7 @@ router.use(dealerMiddleware);
  *                         description: Bank account number
  *                       ifsc:
  *                         type: string
- *                         description: IFSC code (format: XXXX0XXXXX)
+ *                         description: "IFSC code (format: XXXX0XXXXX)"
  *                         example: "HDFC0001234"
  *                       accountName:
  *                         type: string
