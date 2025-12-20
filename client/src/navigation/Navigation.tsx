@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { View, AppState, ActivityIndicator } from 'react-native';
+import { View, AppState, ActivityIndicator, Image } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -59,8 +59,16 @@ const Tab = createBottomTabNavigator();
 
 const MainTabs: FC = () => {
   const { cart } = useCartStore();
+  const { user } = useAuthStore();
   const { colors } = useTheme();
   const cartCount = cart.reduce((sum, item) => sum + item.count, 0);
+
+  const getInitialLetter = (): string => {
+    if (user?.name) {
+      return user.name.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
 
   return (
     <Tab.Navigator
@@ -131,6 +139,50 @@ const MainTabs: FC = () => {
             </View>
           ),
           tabBarLabel: 'Cart',
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ({ color, size, focused }) => {
+            if (user?.profileImage) {
+              return (
+                <Image
+                  source={{ uri: user.profileImage }}
+                  style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    borderWidth: focused ? 2 : 0,
+                    borderColor: focused ? color : 'transparent',
+                  }}
+                  resizeMode="cover"
+                />
+              );
+            }
+            return (
+              <View
+                style={{
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                  backgroundColor: focused ? color : colors.disabled,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: focused ? 2 : 0,
+                  borderColor: focused ? color : 'transparent',
+                }}>
+                <CustomText
+                  fontSize={RFValue(size * 0.5)}
+                  fontFamily={Fonts.Bold}
+                  style={{ color: '#fff' }}>
+                  {getInitialLetter()}
+                </CustomText>
+              </View>
+            );
+          },
+          tabBarLabel: 'Profile',
         }}
       />
     </Tab.Navigator>

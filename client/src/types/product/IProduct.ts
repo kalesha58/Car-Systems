@@ -13,7 +13,7 @@ export interface IProduct {
   images: string[];
   description?: string;
   category?: string;
-  vehicleType?: 'Car' | 'Bike';
+  vehicleType?: string;
   specifications?: Record<string, any>;
   tags?: string[];
   status: string;
@@ -36,7 +36,7 @@ export interface IGetProductsRequest {
   limit?: number;
   search?: string;
   category?: string;
-  vehicleType?: 'Car' | 'Bike';
+  vehicleType?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;

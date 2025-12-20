@@ -83,6 +83,7 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
             Play: { outline: 'play-circle-outline', filled: 'play-circle' },
             Category: { outline: 'grid-outline', filled: 'grid' },
             Cart: { outline: 'bag-outline', filled: 'bag' },
+            Profile: { outline: 'person-outline', filled: 'person' },
             Inventory: { outline: 'cube-outline', filled: 'cube' },
             Orders: { outline: 'receipt-outline', filled: 'receipt' },
           };

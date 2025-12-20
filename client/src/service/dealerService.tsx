@@ -100,7 +100,7 @@ export interface IGetDealerProductsRequest {
   page?: number;
   limit?: number;
   category?: string;
-  vehicleType?: 'Car' | 'Bike';
+  vehicleType?: string;
   status?: string;
   search?: string;
   minPrice?: number;

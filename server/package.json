@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "start:dev": "npm run dev",
     "seed:chat": "ts-node src/scripts/seedChatData.ts",
-    "seed:coupons": "ts-node src/scripts/seedCouponData.ts"
+    "seed:coupons": "ts-node src/scripts/seedCouponData.ts",
+    "seed:vehicle-types": "ts-node src/scripts/seedVehicleTypes.ts"
   },
   "keywords": [],
   "author": "",
