@@ -32,13 +32,12 @@ const EmptyState: FC<IEmptyStateProps> = ({ title, message, icon = 'cube-outline
       marginBottom: 16,
     },
     title: {
-      fontSize: RFValue(18),
-      fontWeight: '600',
+      fontSize: RFValue(14),
       marginBottom: 8,
       textAlign: 'center',
     },
     message: {
-      fontSize: RFValue(14),
+      fontSize: RFValue(12),
       color: colors.textSecondary,
       textAlign: 'center',
     },
@@ -49,10 +48,10 @@ const EmptyState: FC<IEmptyStateProps> = ({ title, message, icon = 'cube-outline
       <View style={styles.iconContainer}>
         <Icon name={icon} size={40} color={colors.textSecondary} />
       </View>
-      <CustomText variant="h3" fontFamily={Fonts.SemiBold} style={styles.title}>
+      <CustomText variant="h6" fontFamily={Fonts.Medium} style={styles.title}>
         {title}
       </CustomText>
-      <CustomText variant="h5" style={styles.message}>
+      <CustomText variant="h8" style={styles.message}>
         {message}
       </CustomText>
     </View>

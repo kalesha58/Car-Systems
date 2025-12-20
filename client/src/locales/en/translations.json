@@ -17,6 +17,7 @@
     "browseFAQs": "Browse FAQs",
     "logOut": "Log Out",
     "myOrders": "My Orders",
+    "wishlist": "Wishlist",
     "pastOrders": "PAST ORDERS",
     "continue": "Continue",
     "selectImage": "Select Image",
@@ -317,5 +318,17 @@
     "tiresAndMore": "Search for tires, batteries, filters",
     "carWash": "Search \"car wash\"",
     "carService": "Search \"car service\""
+  },
+  "wishlist": {
+    "title": "My Wishlist",
+    "products": "Products",
+    "vehicles": "Vehicles",
+    "services": "Services",
+    "noProducts": "No Favorite Products",
+    "noProductsMessage": "You haven't added any products to your wishlist yet",
+    "noVehicles": "No Favorite Vehicles",
+    "noVehiclesMessage": "You haven't added any vehicles to your wishlist yet",
+    "noServices": "No Favorite Services",
+    "noServicesMessage": "You haven't added any services to your wishlist yet"
   }
 }

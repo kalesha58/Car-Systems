@@ -21,6 +21,7 @@ import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
 import EditProfile from '@features/profile/EditProfile';
 import BusinessRegistrationScreen from '@features/profile/BusinessRegistrationScreen';
+import WishlistScreen from '@features/profile/WishlistScreen';
 import SavedAddresses from '@features/address/SavedAddresses';
 import AddNewAddress from '@features/address/AddNewAddress';
 import AddressForm from '@features/address/AddressForm';
@@ -402,6 +403,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="EditProfile"
             component={EditProfile}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="WishlistScreen"
+            component={WishlistScreen}
             options={{
               animation: 'slide_from_right',
             }}

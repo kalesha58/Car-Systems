@@ -53,6 +53,16 @@ const WalletSection = () => {
           }}
         />
       )}
+
+      {!isDealer && (
+        <WalletItem
+          icon="heart-outline"
+          label={t('profile.wishlist')}
+          onPress={() => {
+            navigation.navigate('WishlistScreen' as never);
+          }}
+        />
+      )}
     </View>
   );
 };

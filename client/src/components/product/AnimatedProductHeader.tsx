@@ -1,17 +1,18 @@
 import React from 'react';
-import {View, StyleSheet, Image, Pressable, TouchableOpacity, Share, Platform} from 'react-native';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { View, StyleSheet, Image, Pressable, TouchableOpacity } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
-import {goBack} from '@utils/NavigationUtils';
-import {useTheme} from '@hooks/useTheme';
-import {StickyView, useCollapsibleContext} from '@r0b0t3d/react-native-collapsible';
+import { goBack } from '@utils/NavigationUtils';
+import { useTheme } from '@hooks/useTheme';
+import { useCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface IAnimatedProductHeaderProps {
   productName: string;
@@ -19,6 +20,8 @@ interface IAnimatedProductHeaderProps {
   originalPrice?: number;
   imageUrl?: string;
   productId?: string;
+  isWishlisted: boolean;
+  onWishlistPress: () => void;
 }
 
 const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
@@ -27,40 +30,12 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
   originalPrice,
   imageUrl,
   productId,
+  isWishlisted,
+  onWishlistPress,
 }) => {
-  const {colors} = useTheme();
-  const {scrollY} = useCollapsibleContext();
-
-  const handleShare = async () => {
-    try {
-      const shareMessage = `Check out this product: ${productName}\nPrice: ₹${price.toLocaleString()}${originalPrice && originalPrice > price ? ` (Was ₹${originalPrice.toLocaleString()})` : ''}\n\nView more details in the app!`;
-      const shareUrl = productId ? `https://carconnect.app/product/${productId}` : '';
-      
-      const shareOptions: any = {
-        message: shareMessage,
-        ...(shareUrl && { url: shareUrl }),
-        title: productName,
-      };
-
-      if (Platform.OS === 'android') {
-        shareOptions.dialogTitle = 'Share Product';
-      }
-
-      const result = await Share.share(shareOptions);
-      
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // Shared with activity type of result.activityType
-        } else {
-          // Shared
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // Dismissed
-      }
-    } catch (error) {
-      console.error('Error sharing product:', error);
-    }
-  };
+  const { colors } = useTheme();
+  const { scrollY } = useCollapsibleContext();
+  const insets = useSafeAreaInsets();
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -72,12 +47,12 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
     const translateY = interpolate(
       scrollY.value,
       [0, 200],
-      [-20, 0],
+      [-200, 0], // Move further off-screen
       Extrapolation.CLAMP,
     );
     return {
       opacity,
-      transform: [{translateY}],
+      transform: [{ translateY }],
     };
   });
 
@@ -88,9 +63,9 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       [0, 1],
       Extrapolation.CLAMP,
     );
-    const rgb = colors.cardBackground === '#ffffff' 
-      ? {r: 255, g: 255, b: 255}
-      : {r: 30, g: 30, b: 30};
+    const rgb = colors.cardBackground === '#ffffff'
+      ? { r: 255, g: 255, b: 255 }
+      : { r: 30, g: 30, b: 30 };
     return {
       backgroundColor: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`,
     };
@@ -107,6 +82,11 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+      position: 'absolute',
+      top: insets.top,
+      left: 0,
+      right: 0,
+      zIndex: 100,
     },
     backButton: {
       marginRight: 12,
@@ -152,52 +132,49 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
   });
 
   return (
-    <StickyView style={backgroundColorAnimatedStyle}>
-      <Animated.View style={[styles.container, headerAnimatedStyle]}>
-        <Pressable onPress={() => goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
-        </Pressable>
-        {imageUrl && (
-          <Image
-            source={{uri: imageUrl}}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
-        )}
-        <View style={styles.content}>
+    <Animated.View style={[styles.container, headerAnimatedStyle, backgroundColorAnimatedStyle]}>
+      <Pressable onPress={() => goBack()} style={styles.backButton}>
+        <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
+      </Pressable>
+      {imageUrl && (
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+        />
+      )}
+      <View style={styles.content}>
+        <CustomText
+          variant="h6"
+          fontFamily={Fonts.Medium}
+          numberOfLines={1}
+          style={styles.productName}>
+          {truncatedName}
+        </CustomText>
+        <View style={styles.priceContainer}>
           <CustomText
             variant="h6"
-            fontFamily={Fonts.Medium}
-            numberOfLines={1}
-            style={styles.productName}>
-            {truncatedName}
+            fontFamily={Fonts.SemiBold}
+            style={styles.price}>
+            ₹{price.toLocaleString()}
           </CustomText>
-          <View style={styles.priceContainer}>
+          {originalPrice && originalPrice > price && (
             <CustomText
-              variant="h6"
-              fontFamily={Fonts.SemiBold}
-              style={styles.price}>
-              ₹{price.toLocaleString()}
+              variant="h8"
+              fontFamily={Fonts.Medium}
+              style={styles.originalPrice}>
+              ₹{originalPrice.toLocaleString()}
             </CustomText>
-            {originalPrice && originalPrice > price && (
-              <CustomText
-                variant="h8"
-                fontFamily={Fonts.Medium}
-                style={styles.originalPrice}>
-                ₹{originalPrice.toLocaleString()}
-              </CustomText>
-            )}
-          </View>
+          )}
         </View>
-        <View style={styles.rightIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
-            <Icon name="share-outline" size={RFValue(18)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </StickyView>
+      </View>
+      <View style={styles.rightIcons}>
+        <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
+          <Icon name={isWishlisted ? 'heart' : 'heart-outline'} size={RFValue(18)} color={isWishlisted ? '#FF6B9D' : colors.text} />
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
   );
 };
 
 export default AnimatedProductHeader;
-

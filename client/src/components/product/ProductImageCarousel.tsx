@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,20 +7,18 @@ import {
   ScrollView,
   Pressable,
   TouchableOpacity,
-  Share,
-  Platform,
 } from 'react-native';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Colors, Fonts} from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Colors, Fonts } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {goBack} from '@utils/NavigationUtils';
-import {useTheme} from '@hooks/useTheme';
+import { goBack } from '@utils/NavigationUtils';
+import { useTheme } from '@hooks/useTheme';
 import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import {useCollapsibleContext} from '@r0b0t3d/react-native-collapsible';
+import { useCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 
 interface IProductImageCarouselProps {
   images: string[];
@@ -28,6 +26,8 @@ interface IProductImageCarouselProps {
   productName?: string;
   productPrice?: number;
   productId?: string;
+  isWishlisted: boolean;
+  onWishlistPress: () => void;
 }
 
 const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
@@ -35,6 +35,8 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
   productName,
   productPrice,
   productId,
+  isWishlisted,
+  onWishlistPress,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -42,47 +44,16 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
   const screenHeight = Dimensions.get('window').height;
   const isTablet = screenWidth >= 768;
   const isDesktop = screenWidth >= 1024;
-  
+
   // Responsive carousel height
-  const carouselHeight = isDesktop 
-    ? screenHeight * 0.6 
-    : isTablet 
-    ? screenHeight * 0.55 
-    : screenHeight * 0.5;
-  
-  const {colors} = useTheme();
-  const {scrollY} = useCollapsibleContext();
+  const carouselHeight = isDesktop
+    ? screenHeight * 0.6
+    : isTablet
+      ? screenHeight * 0.55
+      : screenHeight * 0.5;
 
-  const handleShare = async () => {
-    try {
-      const shareMessage = `Check out this product: ${productName || 'Product'}\nPrice: ₹${productPrice?.toLocaleString() || 'N/A'}\n\nView more details in the app!`;
-      const shareUrl = productId ? `https://carconnect.app/product/${productId}` : '';
-      
-      const shareOptions: any = {
-        message: shareMessage,
-        ...(shareUrl && { url: shareUrl }),
-        title: productName || 'Product',
-      };
-
-      if (Platform.OS === 'android') {
-        shareOptions.dialogTitle = 'Share Product';
-      }
-
-      const result = await Share.share(shareOptions);
-      
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // Shared with activity type of result.activityType
-        } else {
-          // Shared
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // Dismissed
-      }
-    } catch (error) {
-      console.error('Error sharing product:', error);
-    }
-  };
+  const { colors } = useTheme();
+  const { scrollY } = useCollapsibleContext();
 
   if (!images || images.length === 0) {
     return null;
@@ -196,7 +167,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
     return (
       <Animated.View style={[styles.container, carouselAnimatedStyle]}>
         <Image
-          source={{uri: images[0]}}
+          source={{ uri: images[0] }}
           style={styles.image}
           resizeMode="contain"
         />
@@ -204,8 +175,12 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
           <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
         </Pressable>
         <View style={styles.topRightIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
-            <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
+          <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
+            <Icon
+              name={isWishlisted ? 'heart' : 'heart-outline'}
+              size={RFValue(getResponsiveValue(20, 24, 28))}
+              color={isWishlisted ? '#FF6B9D' : colors.text}
+            />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -227,7 +202,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
         {images.map((imageUri, index) => (
           <Image
             key={index}
-            source={{uri: imageUri}}
+            source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="contain"
           />
@@ -237,8 +212,12 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
         <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
       </Pressable>
       <View style={styles.topRightIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
-          <Icon name="share-outline" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
+        <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
+          <Icon
+            name={isWishlisted ? 'heart' : 'heart-outline'}
+            size={RFValue(getResponsiveValue(20, 24, 28))}
+            color={isWishlisted ? '#FF6B9D' : colors.text}
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.pagination}>
