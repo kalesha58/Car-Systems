@@ -57,6 +57,26 @@ import MetAIChatScreen from '@features/support/MetAIChatScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const StoreStack = createNativeStackNavigator();
+
+// Store Stack Navigator - nested inside Category tab
+const StoreStackNavigator: FC = () => {
+  return (
+    <StoreStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <StoreStack.Screen name="StoreDashboard" component={ProductDashboard} />
+      <StoreStack.Screen
+        name="ProductCategories"
+        component={ProductCategories}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+    </StoreStack.Navigator>
+  );
+};
 
 const MainTabs: FC = () => {
   const { cart } = useCartStore();
@@ -101,7 +121,7 @@ const MainTabs: FC = () => {
       />
       <Tab.Screen
         name="Category"
-        component={ProductCategories}
+        component={StoreStackNavigator}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Icon name="grid-outline" size={size} color={color} />
@@ -578,6 +598,13 @@ const Navigation: FC = () => {
             }}
             name="ProductOrder"
             component={ProductOrder}
+          />
+          <Stack.Screen
+            name="ProductCategories"
+            component={ProductCategories}
+            options={{
+              animation: 'slide_from_right',
+            }}
           />
         </Stack.Navigator>
       </NavigationContainer>

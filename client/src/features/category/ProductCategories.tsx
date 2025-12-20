@@ -1,5 +1,6 @@
 import {View, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Alert} from 'react-native';
 import React, {useEffect, useState, useMemo, useCallback, useRef} from 'react';
+import {useRoute} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Sidebar from './Sidebar';
@@ -43,6 +44,13 @@ const allVehiclesImage = require('@assets/images/All-Vehicles.jpeg');
 const allServicesImage = require('@assets/images/AutoMobile-Services.jpeg');
 
 const ProductCategories = () => {
+  const route = useRoute();
+  const routeParams = route.params as {
+    initialCategoryId?: string;
+    initialCategoryType?: CategoryType;
+    sortBy?: string;
+  } | undefined;
+  
   const {t} = useTranslation();
   const {showError, showSuccess} = useToast();
   const {addSearch} = useRecentSearchesStore();
@@ -144,7 +152,10 @@ const ProductCategories = () => {
           },
         ];
         setCategories(defaultCategories);
-        setSelectedCategory(defaultCategories[0]);
+        // Set initial category - will be overridden by route params if they exist
+        if (!routeParams?.initialCategoryId) {
+          setSelectedCategory(defaultCategories[0]);
+        }
       } finally {
         setCategoriesLoading(false);
       }
@@ -152,6 +163,42 @@ const ProductCategories = () => {
 
     fetchCategories();
   }, [t]);
+
+  // Handle route parameters to set initial category
+  useEffect(() => {
+    if (!routeParams || categories.length === 0 || categoriesLoading) {
+      return;
+    }
+
+    let categoryToSelect: ICategoryItem | null = null;
+
+    // If initialCategoryId is provided, find matching category
+    if (routeParams.initialCategoryId) {
+      categoryToSelect = categories.find(
+        cat => cat._id === routeParams.initialCategoryId
+      ) || null;
+    }
+    // Otherwise, if initialCategoryType is provided, find first category of that type
+    else if (routeParams.initialCategoryType) {
+      categoryToSelect = categories.find(
+        cat => cat.type === routeParams.initialCategoryType
+      ) || null;
+    }
+
+    // Set the selected category if found
+    if (categoryToSelect) {
+      setSelectedCategory(categoryToSelect);
+    }
+
+    // Apply sortBy if provided
+    if (routeParams.sortBy) {
+      if (routeParams.sortBy === 'popularity') {
+        setCurrentSort('popularity');
+      } else if (routeParams.sortBy === 'createdAt') {
+        setCurrentSort('newest');
+      }
+    }
+  }, [routeParams, categories, categoriesLoading]);
 
   // Update category counts
   const updateCategoryCounts = useCallback(async () => {

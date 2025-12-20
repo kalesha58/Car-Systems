@@ -1,4 +1,4 @@
-import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
@@ -8,6 +8,7 @@ import { getProducts } from '@service/productService';
 import { IProduct } from '../../types/product/IProduct';
 import LottieView from 'lottie-react-native';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
+import { navigate } from '@utils/NavigationUtils';
 
 const TopProductsSection: FC = () => {
     const seasonalTheme = useSeasonalTheme();
@@ -144,14 +145,22 @@ const TopProductsSection: FC = () => {
                 <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
                     Top Picks
                 </CustomText>
-                <View>
+                <TouchableOpacity
+                    onPress={() => {
+                        navigate('ProductCategories', {
+                            initialCategoryId: 'all-products',
+                            initialCategoryType: 'products',
+                            sortBy: 'popularity',
+                        });
+                    }}
+                    activeOpacity={0.7}>
                     <CustomText
                         variant="h8"
                         fontFamily={Fonts.Medium}
                         style={{ color: colors.white }}>
                         View All →
                     </CustomText>
-                </View>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.cardsContainer}>
