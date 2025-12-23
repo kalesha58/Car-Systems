@@ -19,33 +19,35 @@ const WalletItem: FC<{
       justifyContent: 'center',
       backgroundColor: colors.cardBackground,
       borderRadius: 12,
-      paddingVertical: 16,
+      paddingVertical: 20,
       paddingHorizontal: 12,
-      flex: 1,
-      minHeight: 80,
+      width: '100%',
+      minHeight: 90,
       ...(Platform.OS === 'ios'
         ? {
             shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
+            shadowOffset: {width: 0, height: 1},
+            shadowOpacity: 0.05,
+            shadowRadius: 3,
           }
         : {
-            elevation: 2,
+            elevation: 1,
           }),
     },
     iconContainer: {
-      marginBottom: 8,
+      marginBottom: 10,
     },
     labelText: {
       textAlign: 'center',
+      color: colors.text,
+      fontSize: RFValue(12),
     },
   });
 
   const content = (
     <View style={styles.walletItemContainer}>
       <View style={styles.iconContainer}>
-        <Icon name={icon} color={colors.text} size={RFValue(24)} />
+        <Icon name={icon} color={colors.winterBlue || '#4A90E2'} size={RFValue(28)} />
       </View>
       <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.labelText}>
         {label}

@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import React, { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
@@ -19,12 +19,19 @@ import { useTheme } from '@hooks/useTheme';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
+import {
+  CollapsibleContainer,
+  CollapsibleScrollView,
+  CollapsibleHeaderContainer,
+  withCollapsibleContext,
+} from '@r0b0t3d/react-native-collapsible';
+import AnimatedProfileHeader from '@components/profile/AnimatedProfileHeader';
 
 const Profile = () => {
   const { logout } = useAuthStore();
   const { clearCart } = useCartStore();
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const seasonalTheme = useSeasonalTheme();
 
@@ -46,10 +53,13 @@ const Profile = () => {
         gradientHeader: {
           paddingBottom: 0,
         },
+        content: {
+          backgroundColor: colors.background,
+        },
         scrollViewContent: {
-          padding: 16,
           paddingTop: 0,
           paddingBottom: 100,
+          paddingHorizontal: 0,
         },
         logoutButton: {
           backgroundColor: colors.secondary,
@@ -66,59 +76,62 @@ const Profile = () => {
     [colors],
   );
 
-  // Create lighter, shaded gradient colors from seasonal theme for profile header
+  // Blue gradient colors for profile header (matching Blinkit style)
   const gradientColors = useMemo(() => {
-    // Map seasonal colors to lighter, shaded versions for profile header
-    const getShadedColors = (season: string) => {
-      switch (season) {
-        case 'winter':
-          // Light blue shades - very soft and shaded
-          return ['#E3F2FD', '#BBDEFB']; // Very light blue to light blue
-        case 'spring':
-          return ['#E8F5E9', '#C8E6C9']; // Very light green to light green
-        case 'summer':
-          return ['#FFF3E0', '#FFE0B2']; // Very light orange to light orange
-        case 'autumn':
-          return ['#F3E5D5', '#E8D5C4']; // Very light brown to light brown
-        default:
-          // Default yellow theme - keep the original lighter yellow
-          return ['#FFF9E6', '#FFE5B4']; // Very light yellow to light yellow-orange
-      }
-    };
-    
-    return getShadedColors(seasonalTheme.season);
-  }, [seasonalTheme]);
+    if (isDark) {
+      // Darker blue gradient for dark mode
+      return [colors.winterBlue || '#2E5C8A', '#1A3A5A', colors.background];
+    }
+    // Light blue to white gradient
+    return [colors.winterBlue || '#4A90E2', '#E3F2FD', '#FFFFFF'];
+  }, [colors.winterBlue, colors.background, isDark]);
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={gradientColors}
-        start={{x: 0, y: 0}}
-        end={{x: 0, y: 1}}
-        style={styles.gradientHeader}>
-        <CustomHeader title={t('profile.title')} transparent />
-        <ProfileHeader />
-      </LinearGradient>
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}>
-        <WalletSection />
-        <LanguageSection />
-        <AccountSettingsSection />
-        <ActivitySection />
-        <FeedbackSection />
+      <AnimatedProfileHeader />
+      <CollapsibleContainer
+        style={[styles.container, { marginTop: insets.top || 0 }]}>
+        <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
+          <LinearGradient
+            colors={gradientColors}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={styles.gradientHeader}>
+            <CustomHeader title={t('profile.title')} transparent />
+            <ProfileHeader />
+          </LinearGradient>
+        </CollapsibleHeaderContainer>
 
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.8}>
-          <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
-            {t('profile.logOut')}
-          </CustomText>
-        </TouchableOpacity>
-      </ScrollView>
+        <CollapsibleScrollView
+          style={styles.content}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}>
+          <View style={{ paddingHorizontal: 0, paddingTop: 16 }}>
+            <View style={{ paddingHorizontal: 16 }}>
+              <WalletSection />
+            </View>
+            <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+              <LanguageSection />
+            </View>
+          </View>
+          <AccountSettingsSection />
+          <ActivitySection />
+          <FeedbackSection />
+
+          <View style={{ paddingHorizontal: 16 }}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              activeOpacity={0.8}>
+              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
+                {t('profile.logOut')}
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        </CollapsibleScrollView>
+      </CollapsibleContainer>
     </View>
   );
 };
 
-export default Profile;
+export default withCollapsibleContext(Profile);

@@ -12,6 +12,7 @@ interface IProfileMenuItemProps {
   onPress?: () => void;
   rightComponent?: ReactNode;
   showChevron?: boolean;
+  isLast?: boolean;
 }
 
 const ProfileMenuItem: FC<IProfileMenuItemProps> = ({
@@ -20,6 +21,7 @@ const ProfileMenuItem: FC<IProfileMenuItemProps> = ({
   onPress,
   rightComponent,
   showChevron = true,
+  isLast = false,
 }) => {
   const {colors} = useTheme();
 
@@ -28,8 +30,10 @@ const ProfileMenuItem: FC<IProfileMenuItemProps> = ({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 14,
-      paddingHorizontal: 4,
+      paddingVertical: 16,
+      paddingHorizontal: 0,
+      borderBottomWidth: isLast ? 0 : 1,
+      borderBottomColor: colors.border,
     },
     leftSection: {
       flexDirection: 'row',
@@ -37,13 +41,15 @@ const ProfileMenuItem: FC<IProfileMenuItemProps> = ({
       flex: 1,
     },
     iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.backgroundSecondary,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
-      marginRight: 12,
+      marginRight: 16,
+      overflow: 'visible',
+    },
+    labelContainer: {
+      flex: 1,
     },
   });
 
@@ -55,11 +61,13 @@ const ProfileMenuItem: FC<IProfileMenuItemProps> = ({
       disabled={!onPress}>
       <View style={styles.leftSection}>
         <View style={styles.iconContainer}>
-          <Icon name={icon} size={RFValue(20)} color={colors.text} />
+          <Icon name={icon} size={RFValue(24)} color={colors.text} />
         </View>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {label}
-        </CustomText>
+        <View style={styles.labelContainer}>
+          <CustomText variant="h6" fontFamily={Fonts.Medium} style={{ color: colors.text }}>
+            {label}
+          </CustomText>
+        </View>
       </View>
       {rightComponent || (showChevron && (
         <Icon

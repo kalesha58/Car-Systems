@@ -12,6 +12,7 @@ import {
   Alert,
   PermissionsAndroid,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import Geolocation from '@react-native-community/geolocation';
@@ -56,6 +57,7 @@ const ChatMessageScreen: React.FC = () => {
   const { chatId } = route.params as { chatId: string };
   const { user } = useAuthStore();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { showError, showSuccess } = useToast();
 
   const [chat, setChat] = useState<IChat | null>(null);
@@ -848,7 +850,12 @@ const ChatMessageScreen: React.FC = () => {
           ) : null
         }
       />
-      <View style={[styles.inputContainer, { paddingBottom: 8 + keyboardOffsetHeight }]}>
+      <View style={[
+        styles.inputContainer,
+        {
+          paddingBottom: 8 + keyboardOffsetHeight + (Platform.OS === 'android' ? Math.max(0, insets.bottom) : 0)
+        }
+      ]}>
         <TouchableOpacity
           style={styles.emojiButton}
           activeOpacity={0.7}>

@@ -11,6 +11,7 @@ import {
   Platform,
   I18nManager,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
@@ -42,6 +43,7 @@ const SESSION_KEY = 'supportChat:sessionId';
 const MetAIChatScreen: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<UiMessage>>(null);
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
@@ -368,7 +370,10 @@ const MetAIChatScreen: React.FC = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
       <CustomHeader title="MetAI" rightComponent={headerRight} />
 
-      <View style={styles.actionsContainer}>
+      <View style={[
+        styles.actionsContainer,
+        Platform.OS === 'android' && { paddingBottom: Math.max(6, insets.bottom + 8) }
+      ]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -427,7 +432,12 @@ const MetAIChatScreen: React.FC = () => {
         />
       )}
 
-      <View style={[styles.inputBar, { paddingBottom: 10 + (keyboardOffsetHeight || 0) }]}>
+      <View style={[
+        styles.inputBar,
+        {
+          paddingBottom: 10 + (keyboardOffsetHeight || 0) + (Platform.OS === 'android' ? Math.max(0, insets.bottom) : 0)
+        }
+      ]}>
         <TextInput
           value={input}
           onChangeText={setInput}

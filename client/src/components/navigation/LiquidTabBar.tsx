@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -23,12 +24,15 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const seasonalTheme = useSeasonalTheme();
+  const insets = useSafeAreaInsets();
 
   // Use green (success) color for active tab
   const activeTabColor = colors.success;
 
 
 
+  const bottomPadding = Math.max(8, insets.bottom);
+  
   return (
     <View
       style={[
@@ -38,6 +42,8 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
           borderTopColor: colors.border,
           shadowColor: '#000',
           shadowOpacity: isDark ? 0.3 : 0.1,
+          paddingBottom: bottomPadding,
+          minHeight: TAB_BAR_HEIGHT,
         },
       ]}>
       {/* Tab Buttons */}
@@ -186,9 +192,7 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    height: TAB_BAR_HEIGHT,
     borderTopWidth: 1,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 8,
     paddingTop: 8,
     position: 'relative',
     overflow: 'visible',

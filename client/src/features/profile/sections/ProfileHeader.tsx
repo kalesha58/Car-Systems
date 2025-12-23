@@ -14,7 +14,7 @@ import {useTheme} from '@hooks/useTheme';
 const ProfileHeader: FC = () => {
   const {user} = useAuthStore();
   const {t} = useTranslation();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
 
   const getInitialLetter = (): string => {
     if (user?.name) {
@@ -33,7 +33,7 @@ const ProfileHeader: FC = () => {
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.placeholderContainer, {backgroundColor: colors.primary}]}>
+          <View style={[styles.placeholderContainer, {backgroundColor: colors.white}]}>
             <CustomText variant="h2" fontFamily={Fonts.Bold} style={styles.placeholderText}>
               {getInitialLetter()}
             </CustomText>
@@ -41,12 +41,12 @@ const ProfileHeader: FC = () => {
         )}
       </View>
       
-      <CustomText variant="h3" fontFamily={Fonts.Bold} style={styles.accountTitle}>
+      <CustomText variant="h3" fontFamily={Fonts.Bold} style={[styles.accountTitle, { color: isDark ? '#FFFFFF' : '#000000' }]}>
         {t('profile.yourAccount') || 'Your account'}
       </CustomText>
       
       {user?.phone && (
-        <CustomText variant="h6" fontFamily={Fonts.Medium} style={styles.phoneNumber}>
+        <CustomText variant="h6" fontFamily={Fonts.Medium} style={[styles.phoneNumber, { color: colors.textSecondary }]}>
           {user.phone}
         </CustomText>
       )}
@@ -69,6 +69,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
   profileImage: {
     width: '100%',
@@ -81,17 +84,17 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#E0E0E0',
   },
   placeholderText: {
-    color: '#fff',
+    color: '#666666',
   },
   accountTitle: {
-    color: '#000',
     marginBottom: 8,
+    fontWeight: '700',
   },
   phoneNumber: {
-    color: '#000',
-    opacity: 0.8,
+    opacity: 0.9,
   },
 });
 

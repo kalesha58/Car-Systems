@@ -23,11 +23,16 @@ const LanguageSection: FC = () => {
     },
     title: {
       marginBottom: 12,
+      paddingHorizontal: 16,
+      fontSize: RFValue(11),
+      color: colors.textSecondary,
+      textTransform: 'none',
+      letterSpacing: 0.3,
     },
     languageContainer: {
       flexDirection: 'row',
       gap: 10,
-      paddingRight: 4,
+      paddingRight: 16,
     },
     languageButton: {
       paddingHorizontal: 16,
@@ -51,8 +56,8 @@ const LanguageSection: FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.title}>
-        {t('profile.tryInLanguage')}
+      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.title}>
+        {t('profile.tryInLanguage') || 'Try Car Connect in your language'}
       </CustomText>
 
       <ScrollView

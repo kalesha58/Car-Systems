@@ -54,6 +54,8 @@ import { useTranslation } from 'react-i18next';
 import LiquidTabBar from '@components/navigation/LiquidTabBar';
 import ForgotPassword from '@features/auth/ForgotPassword';
 import MetAIChatScreen from '@features/support/MetAIChatScreen';
+import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
+import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -492,6 +494,20 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="MetAIChat"
             component={MetAIChatScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="PrivacyCenter"
+            component={PrivacyCenterScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="TermsAndConditions"
+            component={TermsAndConditionsScreen}
             options={{
               animation: 'slide_from_right',
             }}

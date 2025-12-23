@@ -8,6 +8,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {navigate} from '@utils/NavigationUtils';
 import {getSavedAddresses, deleteAddress} from '@service/addressService';
 import AddressItem from './AddressItem';
+import AddressItemSkeleton from './AddressItemSkeleton';
 import {IAddress} from '../../types/address/IAddress';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useToast} from '@hooks/useToast';
@@ -207,26 +208,19 @@ const SavedAddresses = () => {
       color: colors.disabled,
       textAlign: 'center',
     },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
   });
 
-  if (loading && addresses.length === 0) {
+  const renderSkeletonList = () => {
+    const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
     return (
-      <View style={styles.container}>
-        <CustomHeader
-          title={selectMode ? 'Select Address' : 'Saved Addresses'}
-          rightComponent={renderHeaderButton()}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-        </View>
-      </View>
+      <FlatList
+        data={skeletonData}
+        renderItem={({item, index}) => <AddressItemSkeleton index={index} />}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContainer}
+      />
     );
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -234,18 +228,22 @@ const SavedAddresses = () => {
         title={selectMode ? 'Select Address' : 'Saved Addresses'}
         rightComponent={renderHeaderButton()}
       />
-      <FlatList
-        data={addresses}
-        renderItem={renderAddressItem}
-        keyExtractor={item => item._id || item.name}
-        ListEmptyComponent={renderEmptyState}
-        contentContainerStyle={
-          addresses.length === 0 ? styles.emptyListContainer : styles.listContainer
-        }
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
+      {loading && addresses.length === 0 ? (
+        renderSkeletonList()
+      ) : (
+        <FlatList
+          data={addresses}
+          renderItem={renderAddressItem}
+          keyExtractor={item => item._id || item.name}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={
+            addresses.length === 0 ? styles.emptyListContainer : styles.listContainer
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
     </View>
   );
 };

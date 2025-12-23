@@ -18,51 +18,60 @@ const WalletSection = () => {
     walletContainer: {
       flexDirection: 'row',
       alignItems: 'stretch',
+      marginBottom: 16,
+      marginTop: 0,
+      width: '100%',
       gap: 12,
-      marginBottom: 20,
-      marginTop: 20,
+    },
+    walletItemWrapper: {
+      flex: 1,
     },
   });
 
+  // Calculate which items to show - matching reference design
+  const items = [];
+  if (!isDealer) {
+    // Your orders
+    items.push({ 
+      icon: 'bag-outline', 
+      label: t('profile.myOrders'), 
+      onPress: () => navigation.navigate('OrdersList' as never) 
+    });
+    // Wallet/Money
+    items.push({ 
+      icon: 'wallet-outline', 
+      label: t('common.wallet'), 
+      onPress: () => {} 
+    });
+    // Wishlist
+    items.push({ 
+      icon: 'heart-outline', 
+      label: t('profile.wishlist'), 
+      onPress: () => navigation.navigate('WishlistScreen' as never) 
+    });
+  } else {
+    // For dealers, show support
+    items.push({ 
+      icon: 'help-circle-outline', 
+      label: t('common.support') || 'Need help?', 
+      onPress: () => {} 
+    });
+  }
+
   return (
     <View style={styles.walletContainer}>
-      {!isDealer && (
-        <WalletItem
-          icon="wallet-outline"
-          label={t('common.wallet')}
-          onPress={() => {
-            // TODO: Navigate to wallet screen when implemented
-          }}
-        />
-      )}
-
-      <WalletItem 
-        icon="chatbubble-ellipses-outline" 
-        label={t('common.support')}
-        onPress={() => {
-          // TODO: Navigate to support screen when implemented
-        }}
-      />
-
-      {!isDealer && (
-        <WalletItem
-          icon="bag-outline"
-          label={t('profile.myOrders')}
-          onPress={() => {
-            navigation.navigate('OrdersList' as never);
-          }}
-        />
-      )}
-
-      {!isDealer && (
-        <WalletItem
-          icon="heart-outline"
-          label={t('profile.wishlist')}
-          onPress={() => {
-            navigation.navigate('WishlistScreen' as never);
-          }}
-        />
-      )}
+      {items.map((item) => (
+        <View 
+          key={item.icon} 
+          style={styles.walletItemWrapper}
+        >
+          <WalletItem
+            icon={item.icon}
+            label={item.label}
+            onPress={item.onPress}
+          />
+        </View>
+      ))}
     </View>
   );
 };
