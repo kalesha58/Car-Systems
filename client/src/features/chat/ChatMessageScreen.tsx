@@ -40,6 +40,8 @@ import {
   offNewMessage,
   onUserTyping,
   offUserTyping,
+  onUserStoppedTyping,
+  offUserStoppedTyping,
   emitTyping,
   emitStopTyping,
 } from '@service/socketService';
@@ -73,14 +75,6 @@ const ChatMessageScreen: React.FC = () => {
     initializeSocket();
     loadChat();
     loadMessages();
-
-    return () => {
-      if (chatId) {
-        leaveChatRoom(chatId);
-        offNewMessage();
-        offUserTyping();
-      }
-    };
   }, [chatId]);
 
   // Refresh pending count when screen is focused
@@ -93,32 +87,117 @@ const ChatMessageScreen: React.FC = () => {
     return unsubscribe;
   }, [navigation, chat]);
 
+  // Socket event listeners - consolidated into single useEffect with proper cleanup
   useEffect(() => {
-    if (chatId) {
-      joinChatRoom(chatId);
-      onNewMessage((message: IMessage) => {
-        if (message.chatId === chatId) {
-          setMessages(prev => {
-            if (prev.find(m => m.id === message.id)) return prev;
-            return [...prev, message];
-          });
-          scrollToBottom();
-        }
-      });
+    if (!chatId || !user?.id) return;
 
-      onUserTyping((data: { chatId: string; userId: string; userName?: string }) => {
-        if (data.chatId === chatId && data.userId !== user?.id) {
-          setTypingUsers(prev => new Set([...prev, data.userId]));
-          setTimeout(() => {
-            setTypingUsers(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(data.userId);
-              return newSet;
-            });
-          }, 3000);
+    // Initialize socket
+    const socketInstance = initializeSocket();
+    
+    // Handle new messages
+    const handleNewMessage = (message: IMessage) => {
+      console.log('[ChatMessageScreen] Received new message:', message);
+      if (message.chatId === chatId) {
+        setMessages(prev => {
+          // Prevent duplicates
+          if (prev.find(m => m.id === message.id)) {
+            console.log('[ChatMessageScreen] Message already exists, skipping:', message.id);
+            return prev;
+          }
+          console.log('[ChatMessageScreen] Adding new message to list');
+          return [...prev, message];
+        });
+        scrollToBottom();
+      }
+    };
+
+    // Handle typing indicators
+    const handleUserTyping = (data: { chatId: string; userId: string; userName?: string }) => {
+      console.log('[ChatMessageScreen] User typing:', data);
+      if (data.chatId === chatId && data.userId !== user?.id) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.add(data.userId);
+          return newSet;
+        });
+        
+        // Clear existing timeout for this user if any
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
         }
-      });
-    }
+        
+        // Auto-remove typing indicator after 3 seconds if not explicitly stopped
+        const timeoutId = setTimeout(() => {
+          setTypingUsers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(data.userId);
+            return newSet;
+          });
+        }, 3000);
+        
+        // Store timeout ID for cleanup
+        typingTimeoutRef.current = timeoutId;
+      }
+    };
+
+    // Handle stopped typing
+    const handleUserStoppedTyping = (data: { chatId: string; userId: string }) => {
+      console.log('[ChatMessageScreen] User stopped typing:', data);
+      if (data.chatId === chatId && data.userId !== user?.id) {
+        // Clear timeout when user stops typing
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+        
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(data.userId);
+          return newSet;
+        });
+      }
+    };
+
+    // Wait for socket connection before joining room
+    const setupConnection = () => {
+      if (socketInstance.connected) {
+        console.log('[ChatMessageScreen] Socket connected, joining room:', chatId);
+        joinChatRoom(chatId);
+      } else {
+        console.log('[ChatMessageScreen] Socket not connected, waiting...');
+        socketInstance.once('connect', () => {
+          console.log('[ChatMessageScreen] Socket connected, joining room:', chatId);
+          joinChatRoom(chatId);
+        });
+      }
+    };
+
+    // Add event listeners first (they'll work once socket connects)
+    onNewMessage(handleNewMessage);
+    onUserTyping(handleUserTyping);
+    onUserStoppedTyping(handleUserStoppedTyping);
+
+    // Setup connection
+    setupConnection();
+
+    // Cleanup function
+    return () => {
+      console.log('[ChatMessageScreen] Cleaning up socket listeners for chatId:', chatId);
+      
+      // Clear any pending typing timeouts
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      
+      // Remove event listeners
+      offNewMessage();
+      offUserTyping();
+      offUserStoppedTyping();
+      
+      // Leave chat room
+      leaveChatRoom(chatId);
+    };
   }, [chatId, user?.id]);
 
   const loadChat = async () => {
@@ -513,6 +592,11 @@ const ChatMessageScreen: React.FC = () => {
         receivedMessageTime: {
           color: colors.disabled,
         },
+        senderName: {
+          fontSize: RFValue(11),
+          fontFamily: Fonts.Medium,
+          marginBottom: 2,
+        },
         inputContainer: {
           flexDirection: 'row',
           paddingHorizontal: 8,
@@ -582,13 +666,42 @@ const ChatMessageScreen: React.FC = () => {
   const renderMessage = ({ item }: { item: IMessage }) => {
     const isSent = item.from === user?.id;
     const showTime = true;
+    const isGroupChat = chat?.type === 'group';
+    const showSenderName = isGroupChat && !isSent && item.fromUserName;
+
+    // Build style arrays conditionally to avoid TypeScript errors
+    const messageTextStyles: any[] = [
+      styles.messageText,
+      { marginRight: 8, maxWidth: '85%' }
+    ];
+    if (!isSent) {
+      messageTextStyles.push(styles.receivedMessageText);
+    }
+
+    const messageTimeStyles: any[] = [styles.messageTime];
+    if (!isSent) {
+      messageTimeStyles.push(styles.receivedMessageTime);
+    }
+    if (!item.text || (item.messageType === 'image' && item.text === 'Image')) {
+      messageTimeStyles.push({ marginLeft: 'auto' });
+    }
 
     return (
-      <View
-        style={[
-          styles.messageBubble,
-          isSent ? styles.sentMessage : styles.receivedMessage,
-        ]}>
+      <View style={{ marginBottom: 8 }}>
+        {showSenderName && (
+          <CustomText
+            style={[
+              styles.senderName,
+              { color: colors.text, opacity: 0.7, marginBottom: 4, marginLeft: 4 },
+            ]}>
+            {item.fromUserName || 'Unknown User'}
+          </CustomText>
+        )}
+        <View
+          style={[
+            styles.messageBubble,
+            isSent ? styles.sentMessage : styles.receivedMessage,
+          ]}>
         {item.messageType === 'image' && item.imageUrl && (
           <View style={{ position: 'relative' }}>
             <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
@@ -642,25 +755,16 @@ const ChatMessageScreen: React.FC = () => {
           alignItems: 'flex-end'
         }}>
           {item.text && (item.messageType !== 'image' || item.text !== 'Image') && (
-            <CustomText
-              style={[
-                styles.messageText,
-                !isSent ? styles.receivedMessageText : undefined,
-                { marginRight: 8, maxWidth: '85%' } // Leave space for time
-              ]}>
+            <CustomText style={messageTextStyles}>
               {item.text}
             </CustomText>
           )}
 
-          <CustomText
-            style={[
-              styles.messageTime,
-              !isSent ? styles.receivedMessageTime : undefined,
-              (!item.text || (item.messageType === 'image' && item.text === 'Image')) ? { marginLeft: 'auto' } : undefined // Push to right if no text or just image
-            ]}>
+          <CustomText style={messageTimeStyles}>
             {formatTime(item.createdAt)}
           </CustomText>
         </View>
+      </View>
       </View>
     );
   };

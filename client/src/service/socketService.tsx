@@ -9,6 +9,12 @@ export const initializeSocket = (): Socket => {
     return socket;
   }
 
+  // If socket exists but not connected, disconnect it first
+  if (socket && !socket.connected) {
+    socket.disconnect();
+    socket = null;
+  }
+
   const token = tokenStorage.getString('accessToken');
   
   socket = io(SOCKET_URL, {
@@ -16,14 +22,22 @@ export const initializeSocket = (): Socket => {
     auth: {
       token,
     },
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: 5,
   });
 
   socket.on('connect', () => {
     console.log('Socket connected:', socket?.id);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected');
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected:', reason);
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Socket connection error:', error);
   });
 
   socket.on('error', (error) => {
@@ -41,8 +55,15 @@ export const disconnectSocket = (): void => {
 };
 
 export const joinChatRoom = (chatId: string): void => {
-  if (socket) {
+  if (socket && socket.connected) {
     socket.emit('joinChat', chatId);
+    console.log('Joined chat room:', chatId);
+  } else {
+    console.warn('Cannot join chat room: socket not connected');
+    // Try to initialize if not connected
+    if (!socket) {
+      initializeSocket();
+    }
   }
 };
 
@@ -55,48 +76,64 @@ export const leaveChatRoom = (chatId: string): void => {
 export const onNewMessage = (callback: (message: any) => void): void => {
   if (socket) {
     socket.on('newMessage', callback);
+    console.log('Added newMessage listener');
+  } else {
+    console.warn('Cannot add newMessage listener: socket not initialized');
   }
 };
 
 export const offNewMessage = (): void => {
   if (socket) {
     socket.off('newMessage');
+    console.log('Removed newMessage listeners');
   }
 };
 
 export const onUserTyping = (callback: (data: { chatId: string; userId: string; userName?: string }) => void): void => {
   if (socket) {
     socket.on('userTyping', callback);
+    console.log('Added userTyping listener');
+  } else {
+    console.warn('Cannot add userTyping listener: socket not initialized');
   }
 };
 
 export const offUserTyping = (): void => {
   if (socket) {
     socket.off('userTyping');
+    console.log('Removed userTyping listeners');
   }
 };
 
 export const onUserStoppedTyping = (callback: (data: { chatId: string; userId: string }) => void): void => {
   if (socket) {
     socket.on('userStoppedTyping', callback);
+    console.log('Added userStoppedTyping listener');
+  } else {
+    console.warn('Cannot add userStoppedTyping listener: socket not initialized');
   }
 };
 
 export const offUserStoppedTyping = (): void => {
   if (socket) {
     socket.off('userStoppedTyping');
+    console.log('Removed userStoppedTyping listeners');
   }
 };
 
 export const emitTyping = (chatId: string, userId: string, userName?: string): void => {
-  if (socket) {
+  if (socket && socket.connected) {
     socket.emit('typing', { chatId, userId, userName });
+  } else {
+    console.warn('Cannot emit typing: socket not connected');
   }
 };
 
 export const emitStopTyping = (chatId: string, userId: string): void => {
-  if (socket) {
+  if (socket && socket.connected) {
     socket.emit('stopTyping', { chatId, userId });
+  } else {
+    console.warn('Cannot emit stopTyping: socket not connected');
   }
 };
 
