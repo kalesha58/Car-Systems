@@ -9,12 +9,15 @@ import { IProduct } from '../../types/product/IProduct';
 import LottieView from 'lottie-react-native';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 import { navigate } from '@utils/NavigationUtils';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useCartStore } from '@state/cartStore';
 
 const TopProductsSection: FC = () => {
     const seasonalTheme = useSeasonalTheme();
     const { colors } = useTheme();
     const [topProducts, setTopProducts] = useState<IProduct[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const { addItem } = useCartStore();
 
     useEffect(() => {
         const fetchTopProducts = async () => {
@@ -24,7 +27,7 @@ const TopProductsSection: FC = () => {
                 const response = await getProducts({
                     limit: 3
                 });
-                
+
                 if (response?.success && response?.Response?.products) {
                     // Get first 3 products from response
                     setTopProducts(response.Response.products.slice(0, 3));
@@ -39,6 +42,14 @@ const TopProductsSection: FC = () => {
 
         fetchTopProducts();
     }, []);
+
+    const handleProductPress = (product: IProduct) => {
+        navigate('ProductDetail', { productId: product.id });
+    };
+
+    const handleAddToCart = (product: IProduct) => {
+        addItem(product);
+    };
 
     const styles = StyleSheet.create({
         container: {
@@ -61,45 +72,61 @@ const TopProductsSection: FC = () => {
         },
         productCard: {
             flex: 1,
-            backgroundColor: colors.iceBlue,
-            borderRadius: 12,
-            padding: 12,
+            backgroundColor: colors.white,
+            borderRadius: 8,
+            padding: 8,
+            // Shadow
+            shadowColor: '#000',
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 3,
             borderWidth: 1,
-            borderColor: colors.winterBlueLight,
+            borderColor: '#e0e0e0',
         },
         productImage: {
             width: '100%',
-            height: 80,
-            borderRadius: 8,
+            height: 100,
+            borderRadius: 4,
             marginBottom: 8,
+            resizeMode: 'contain',
+            backgroundColor: '#ffffff',
         },
         productName: {
             fontSize: RFValue(10),
-            fontFamily: Fonts.SemiBold,
+            fontFamily: Fonts.Medium,
             color: colors.text,
             marginBottom: 4,
+            height: 30, // Fixed height for 2 lines
+            lineHeight: 15,
         },
         priceContainer: {
             flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
+            alignItems: 'baseline',
+            gap: 4,
+            marginBottom: 8,
+            flexWrap: 'wrap',
         },
         price: {
-            fontSize: RFValue(11),
+            fontSize: RFValue(12),
             fontFamily: Fonts.Bold,
-            color: colors.winterBlueDark,
+            color: '#B12704',
         },
         discountPrice: {
             fontSize: RFValue(9),
             fontFamily: Fonts.Regular,
-            color: colors.disabled,
+            color: '#565959',
             textDecorationLine: 'line-through',
         },
         discountBadge: {
             position: 'absolute',
             top: 8,
-            right: 8,
-            backgroundColor: colors.winterBlue,
+            left: 8,
+            zIndex: 1,
+            backgroundColor: '#FF3B30',
             paddingHorizontal: 6,
             paddingVertical: 2,
             borderRadius: 4,
@@ -119,6 +146,19 @@ const TopProductsSection: FC = () => {
         trainAnimation: {
             width: '100%',
             height: '100%',
+        },
+        addButton: {
+            backgroundColor: '#FFD814', // Amazon-like add to cart button color
+            paddingVertical: 6,
+            borderRadius: 100,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 0,
+        },
+        addButtonText: {
+            color: '#0F1111',
+            fontSize: RFValue(9),
+            fontFamily: Fonts.Medium,
         },
     });
 
@@ -147,10 +187,13 @@ const TopProductsSection: FC = () => {
                 </CustomText>
                 <TouchableOpacity
                     onPress={() => {
-                        navigate('ProductCategories', {
-                            initialCategoryId: 'all-products',
-                            initialCategoryType: 'products',
-                            sortBy: 'popularity',
+                        navigate('Category', {
+                            screen: 'ProductCategories',
+                            params: {
+                                initialCategoryId: 'all-products',
+                                initialCategoryType: 'products',
+                                sortBy: 'popularity'
+                            }
                         });
                     }}
                     activeOpacity={0.7}>
@@ -166,8 +209,8 @@ const TopProductsSection: FC = () => {
             <View style={styles.cardsContainer}>
                 {loading ? (
                     Array.from({ length: 3 }).map((_, index) => (
-                        <View key={index} style={styles.productCard}>
-                            <ActivityIndicator size="small" color={colors.winterBlueDark} />
+                        <View key={index} style={[styles.productCard, { height: 200 }]}>
+                            <ActivityIndicator size="small" color={colors.secondary} style={{ marginTop: 50 }} />
                         </View>
                     ))
                 ) : topProducts.length > 0 ? (
@@ -175,26 +218,29 @@ const TopProductsSection: FC = () => {
                         const imageUrl = product.images && product.images.length > 0 ? product.images[0] : '';
                         const originalPrice = product.originalPrice || product.price;
                         const hasDiscount = originalPrice > product.price;
-                        
+
                         return (
-                            <View
+                            <TouchableOpacity
                                 key={product.id}
-                                style={styles.productCard}>
+                                style={styles.productCard}
+                                onPress={() => handleProductPress(product)}
+                                activeOpacity={0.9}
+                            >
                                 {imageUrl ? (
                                     <Image
                                         source={{ uri: imageUrl }}
                                         style={styles.productImage}
                                     />
                                 ) : (
-                                    <View style={[styles.productImage, { backgroundColor: colors.backgroundSecondary, justifyContent: 'center', alignItems: 'center' }]}>
-                                        <CustomText style={{ fontSize: RFValue(8), color: colors.disabled }}>No Image</CustomText>
+                                    <View style={[styles.productImage, { backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center' }]}>
+                                        <Icon name="image-outline" size={30} color={colors.disabled} />
                                     </View>
                                 )}
 
                                 {hasDiscount && (
                                     <View style={styles.discountBadge}>
                                         <CustomText style={styles.discountText}>
-                                            {calculateDiscount(product.price, originalPrice)}% OFF
+                                            {calculateDiscount(product.price, originalPrice)}% off
                                         </CustomText>
                                     </View>
                                 )}
@@ -207,18 +253,29 @@ const TopProductsSection: FC = () => {
 
                                 <View style={styles.priceContainer}>
                                     <CustomText style={styles.price}>
-                                        ₹{product.price}
+                                        ₹{product.price.toLocaleString()}
                                     </CustomText>
                                     {hasDiscount && (
                                         <CustomText style={styles.discountPrice}>
-                                            ₹{originalPrice}
+                                            ₹{originalPrice.toLocaleString()}
                                         </CustomText>
                                     )}
                                 </View>
-                            </View>
+
+                                <TouchableOpacity
+                                    style={styles.addButton}
+                                    onPress={() => handleAddToCart(product)}
+                                    activeOpacity={0.7}>
+                                    <CustomText style={styles.addButtonText}>Add to Cart</CustomText>
+                                </TouchableOpacity>
+                            </TouchableOpacity>
                         );
                     })
-                ) : null}
+                ) : (
+                    <View style={{ padding: 20, alignItems: 'center', width: '100%' }}>
+                        <CustomText style={{ color: '#fff' }}>No top products found.</CustomText>
+                    </View>
+                )}
             </View>
         </View>
     );

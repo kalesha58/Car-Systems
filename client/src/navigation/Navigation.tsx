@@ -120,6 +120,26 @@ const MainTabs: FC = () => {
           ),
           tabBarLabel: 'Store',
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: (e) => {
+            // Check if there are params passed to the tab
+            if (route.params) {
+              e.preventDefault(); // Prevent default action
+              // Navigate manually to the Screen inside the stack
+              // We need to determine if we should go to ProductCategories or StoreDashboard
+              if ((route.params as any)?.screen === 'ProductCategories') {
+                navigation.navigate('Category', {
+                  screen: 'ProductCategories',
+                  params: (route.params as any)?.params
+                });
+              } else {
+                navigation.navigate('Category', {
+                  screen: 'StoreDashboard'
+                });
+              }
+            }
+          },
+        })}
       />
       <Tab.Screen
         name="Cart"

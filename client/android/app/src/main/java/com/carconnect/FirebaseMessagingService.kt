@@ -28,7 +28,12 @@ class FirebaseMessagingService : FirebaseMessagingService() {
 
         // Handle notification payload
         remoteMessage.notification?.let {
-            sendNotification(it.title ?: "Car Connect", it.body ?: "", remoteMessage.data)
+            // We don't manually create a notification here anymore.
+            // React Native Firebase + Notifee (JS side) will handle the display.
+            // sendNotification(it.title ?: "Car Connect", it.body ?: "", remoteMessage.data)
+            
+            // Just log it for debugging
+            // Log.d("FCM", "Message Notification Body: ${it.body}")
         }
     }
 

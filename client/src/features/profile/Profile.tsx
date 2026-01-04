@@ -26,6 +26,7 @@ import {
   withCollapsibleContext,
 } from '@r0b0t3d/react-native-collapsible';
 import AnimatedProfileHeader from '@components/profile/AnimatedProfileHeader';
+import { testNotification } from '@service/notificationService';
 
 const Profile = () => {
   const { logout } = useAuthStore();
@@ -94,8 +95,8 @@ const Profile = () => {
         <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
           <LinearGradient
             colors={gradientColors}
-            start={{x: 0, y: 0}}
-            end={{x: 0, y: 1}}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
             style={styles.gradientHeader}>
             <CustomHeader title={t('profile.title')} transparent />
             <ProfileHeader />
@@ -125,6 +126,15 @@ const Profile = () => {
               activeOpacity={0.8}>
               <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
                 {t('profile.logOut')}
+              </CustomText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.logoutButton, { marginTop: 12, backgroundColor: '#4CAF50' }]}
+              onPress={() => testNotification()}
+              activeOpacity={0.8}>
+              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
+                Test Notification
               </CustomText>
             </TouchableOpacity>
           </View>

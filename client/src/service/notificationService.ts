@@ -90,7 +90,7 @@ export const registerFCMToken = async (token: string): Promise<boolean> => {
     return true;
   } catch (error: any) {
     console.error('Error registering FCM token:', error);
-    
+
     // Log detailed error information for debugging
     if (error.response) {
       // API responded with error status
@@ -98,13 +98,13 @@ export const registerFCMToken = async (token: string): Promise<boolean> => {
       const statusText = error.response.statusText || 'Unknown';
       const errorData = error.response.data;
       const errorMessage = errorData?.message || errorData?.Response?.ReturnMessage || 'Unknown error';
-      
+
       // Don't log errors for unauthenticated users (expected behavior)
       if (status === 401) {
         console.log('FCM token registration skipped: User not authenticated');
         return false;
       }
-      
+
       console.error('FCM Registration API Error:', {
         status,
         statusText,
@@ -124,7 +124,7 @@ export const registerFCMToken = async (token: string): Promise<boolean> => {
         stack: error.stack,
       });
     }
-    
+
     return false;
   }
 };
@@ -146,13 +146,17 @@ export const displayNotifeeNotification = async (
     const androidConfig: any = {
       channelId,
       smallIcon: 'ic_launcher',
-      largeIcon: imageUrl,
       pressAction: {
         id: 'default',
       },
       importance: AndroidImportance.HIGH,
       sound: 'default',
     };
+
+    // Add large icon if valid
+    if (imageUrl) {
+      androidConfig.largeIcon = imageUrl;
+    }
 
     // Add image style for Android if image URL is provided
     if (imageUrl) {
@@ -171,11 +175,11 @@ export const displayNotifeeNotification = async (
         sound: 'default',
         attachments: imageUrl
           ? [
-              {
-                url: imageUrl,
-                thumbnailHidden: false,
-              },
-            ]
+            {
+              url: imageUrl,
+              thumbnailHidden: false,
+            },
+          ]
           : undefined,
       },
     });
@@ -187,19 +191,7 @@ export const displayNotifeeNotification = async (
   }
 };
 
-/**
- * Test greeting notification - sends greeting notification from server
- */
-export const testGreetingNotification = async (): Promise<boolean> => {
-  try {
-    const response = await appAxios.post('/user/test-greeting-notification');
-    console.log('Test greeting notification sent successfully', response.data);
-    return true;
-  } catch (error: any) {
-    console.error('Error sending test greeting notification:', error);
-    return false;
-  }
-};
+
 
 /**
  * Test notification function - displays a test notification
@@ -268,12 +260,12 @@ export const initializeNotifications = async (): Promise<void> => {
     // Setup foreground message handler - Use Notifee to display
     messaging().onMessage(async (remoteMessage) => {
       console.log('Foreground message received:', remoteMessage);
-      
+
       if (remoteMessage.notification) {
         // Extract image URL from notification (FCM sends it in notification.imageUrl)
-        const imageUrl = (remoteMessage.notification as any).imageUrl || 
-                         remoteMessage.data?.imageUrl;
-        
+        const imageUrl = (remoteMessage.notification as any).imageUrl ||
+          remoteMessage.data?.imageUrl;
+
         await displayNotifeeNotification(
           remoteMessage.notification.title || 'Car Connect',
           remoteMessage.notification.body || '',
@@ -326,7 +318,7 @@ const handleNotificationNavigation = (data: any) => {
   // Import navigation dynamically to avoid circular dependencies
   // Navigation will be handled by the app's navigation system
   // For now, we'll use a navigation service or event emitter pattern
-  
+
   // Handle different notification types
   if (data.type === 'order_update' && data.orderId) {
     // Navigate to order details (LiveTracking screen)
@@ -343,9 +335,7 @@ const handleNotificationNavigation = (data: any) => {
     // Navigate to join requests screen for the group
     console.log('Navigate to join requests for group:', data.groupId);
     // You can emit an event here to navigate to JoinRequestsScreen with groupId
-  } else if (data.type === 'greeting') {
-    // Greeting notification - no navigation needed, just display
-    console.log('Greeting notification received');
+
   }
 };
 

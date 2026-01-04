@@ -48,80 +48,42 @@ const Content: FC = () => {
     return categories.filter(cat => [9, 10, 11, 12].includes(cat.id));
   }, []);
 
+  const handleNavigateToCategory = (
+    initialCategoryId: string,
+    initialCategoryType: string,
+    sortBy?: string
+  ) => {
+    navigate('Category', {
+      screen: 'ProductCategories',
+      params: {
+        initialCategoryId,
+        initialCategoryType,
+        sortBy
+      }
+    });
+  };
+
   return (
     <View style={styles.container}>
       <TopProductsSection />
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Product Categories</CustomText>
-          <TouchableOpacity
-            style={styles.viewAllButton}
-            onPress={() => {
-              navigate('ProductCategories', {
-                initialCategoryId: 'all-products',
-                initialCategoryType: 'products',
-              });
-            }}
-            activeOpacity={0.7}>
-            <CustomText variant='h7' fontFamily={Fonts.Medium} style={styles.viewAllText}>
-              View All →
-            </CustomText>
-          </TouchableOpacity>
         </View>
         <CompactCategoryContainer data={productsCategories} categoryType="products" />
-        
+
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Best Sellers</CustomText>
-          <TouchableOpacity
-            style={styles.viewAllButton}
-            onPress={() => {
-              navigate('ProductCategories', {
-                initialCategoryId: 'all-products',
-                initialCategoryType: 'products',
-                sortBy: 'createdAt',
-              });
-            }}
-            activeOpacity={0.7}>
-            <CustomText variant='h7' fontFamily={Fonts.Medium} style={styles.viewAllText}>
-              View All →
-            </CustomText>
-          </TouchableOpacity>
         </View>
         <CompactProductGrid />
-        
+
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Vehicle Categories</CustomText>
-          <TouchableOpacity
-            style={styles.viewAllButton}
-            onPress={() => {
-              navigate('ProductCategories', {
-                initialCategoryId: 'all-vehicles',
-                initialCategoryType: 'vehicles',
-              });
-            }}
-            activeOpacity={0.7}>
-            <CustomText variant='h7' fontFamily={Fonts.Medium} style={styles.viewAllText}>
-              View All →
-            </CustomText>
-          </TouchableOpacity>
         </View>
         <CompactCategoryContainer data={vehiclesCategories} categoryType="vehicles" />
-        
+
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Service Categories</CustomText>
-          <TouchableOpacity
-            style={styles.viewAllButton}
-            onPress={() => {
-              navigate('ProductCategories', {
-                initialCategoryId: 'all-services',
-                initialCategoryType: 'services',
-              });
-            }}
-            activeOpacity={0.7}>
-            <CustomText variant='h7' fontFamily={Fonts.Medium} style={styles.viewAllText}>
-              View All →
-            </CustomText>
-          </TouchableOpacity>
         </View>
         <CompactCategoryContainer data={servicesCategories} categoryType="services" />
       </View>

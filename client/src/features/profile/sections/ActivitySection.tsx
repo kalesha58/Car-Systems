@@ -1,34 +1,38 @@
-import {View, StyleSheet, Platform} from 'react-native';
-import React, {FC} from 'react';
-import {Fonts} from '@utils/Constants';
-import {RFValue} from 'react-native-responsive-fontsize';
+import { View, StyleSheet, Platform } from 'react-native';
+import React, { FC } from 'react';
+import { Fonts } from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import ProfileMenuItem from './ProfileMenuItem';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '@hooks/useTheme';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@hooks/useTheme';
 
 const ActivitySection: FC = () => {
-  const {t} = useTranslation();
-  const {colors, isDark} = useTheme();
+  const { t } = useTranslation();
+  const { colors, isDark } = useTheme();
 
   const styles = StyleSheet.create({
     container: {
       marginBottom: 24,
+      paddingHorizontal: 16,
     },
     sectionTitle: {
       marginBottom: 12,
-      paddingHorizontal: 16,
       fontSize: RFValue(13),
       color: colors.textSecondary,
-      textTransform: 'none',
-      letterSpacing: 0.3,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     menuContainer: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 0,
+      borderRadius: 12,
       paddingHorizontal: 16,
       overflow: 'hidden',
-      marginBottom: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
     },
   });
 
@@ -36,25 +40,25 @@ const ActivitySection: FC = () => {
     {
       icon: 'create-outline',
       label: t('profile.reviews'),
-      onPress: () => {},
+      onPress: () => { },
     },
     {
       icon: 'chatbubble-ellipses-outline',
       label: t('profile.questionsAnswers'),
-      onPress: () => {},
+      onPress: () => { },
     },
   ];
 
   return (
     <View style={styles.container}>
-      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.sectionTitle}>
-        {t('profile.myActivity') || 'my Activity'}
+      <CustomText variant="h8" fontFamily={Fonts.Bold} style={styles.sectionTitle}>
+        {t('profile.myActivity') || 'MY ACTIVITY'}
       </CustomText>
 
       <View style={styles.menuContainer}>
         {menuItems.map((item, index) => (
           <ProfileMenuItem
-            key={item.icon}
+            key={item.label}
             icon={item.icon}
             label={item.label}
             onPress={item.onPress}
@@ -67,4 +71,3 @@ const ActivitySection: FC = () => {
 };
 
 export default ActivitySection;
-
