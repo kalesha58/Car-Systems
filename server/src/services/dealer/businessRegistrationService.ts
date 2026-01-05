@@ -202,9 +202,9 @@ export const createBusinessRegistration = async (
       modelShopPhotosData: JSON.stringify(registration.shopPhotos),
       modelDocumentsData: JSON.stringify(registration.documents),
     });
-    
+
     await registration.save();
-    
+
     logger.info('Business registration saved to database', {
       userId,
       registrationId: registration._id,
@@ -217,32 +217,35 @@ export const createBusinessRegistration = async (
     logger.info(`Business registration created with pending status for user: ${userId}`);
 
     // Send confirmation email (do not fail registration if email fails)
-    try {
-      const user = await SignUp.findById(userId).select('name email');
-      // Primary recipient: configured notify email (or fallback to user email)
-      const notifyEmail =
-        process.env.BUSINESS_REGISTRATION_NOTIFY_EMAIL || 'kaleshabox8@gmail.com';
+    // Fire and forget to avoid blocking the response
+    (async () => {
+      try {
+        const user = await SignUp.findById(userId).select('name email');
+        // Primary recipient: configured notify email (or fallback to user email)
+        const notifyEmail =
+          process.env.BUSINESS_REGISTRATION_NOTIFY_EMAIL || 'kaleshabox8@gmail.com';
 
-      const recipients = new Set<string>();
-      if (user?.email) recipients.add(user.email);
-      if (notifyEmail) recipients.add(notifyEmail);
+        const recipients = new Set<string>();
+        if (user?.email) recipients.add(user.email);
+        if (notifyEmail) recipients.add(notifyEmail);
 
-      if (recipients.size > 0) {
-        await Promise.all(
-          Array.from(recipients).map((to) =>
-            sendBusinessRegistrationSubmittedEmail(to, {
-              name: user?.name,
-              businessName: registration.businessName,
-              submittedAt: registration.createdAt,
-            }),
-          ),
-        );
-      } else {
-        logger.warn(`Skipping business registration email: user email not found for userId=${userId}`);
+        if (recipients.size > 0) {
+          await Promise.all(
+            Array.from(recipients).map((to) =>
+              sendBusinessRegistrationSubmittedEmail(to, {
+                name: user?.name,
+                businessName: registration.businessName,
+                submittedAt: registration.createdAt,
+              }),
+            ),
+          );
+        } else {
+          logger.warn(`Skipping business registration email: user email not found for userId=${userId}`);
+        }
+      } catch (emailError) {
+        logger.error('Failed to send business registration submitted email:', emailError);
       }
-    } catch (emailError) {
-      logger.error('Failed to send business registration submitted email:', emailError);
-    }
+    })();
 
     return businessRegistrationToInterface(registration);
   } catch (error) {
@@ -400,7 +403,7 @@ export const updateBusinessRegistration = async (
       shopPhotos: JSON.stringify(registration.shopPhotos),
       documents: JSON.stringify(registration.documents),
     });
-    
+
     await registration.save();
 
     logger.info('Business registration updated and saved to database', {

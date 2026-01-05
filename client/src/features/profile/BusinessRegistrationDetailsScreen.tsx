@@ -12,6 +12,7 @@ import { useAuthStore } from '@state/authStore';
 import { getBusinessRegistrationByUserId, IBusinessRegistration } from '@service/dealerService';
 import { formatCurrency } from '@utils/analytics';
 import { useTranslation } from 'react-i18next';
+import SkeletonLoader from '@components/ui/SkeletonLoader';
 
 const BusinessRegistrationDetailsScreen: React.FC = () => {
     const navigation = useNavigation();
@@ -193,11 +194,6 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
 
     const RightHeaderComponent = () => (
         <View style={styles.headerButtons}>
-            {/* Plus Icon - Add New */}
-            <TouchableOpacity onPress={handleAddPress} style={styles.headerButton}>
-                <Icon name="add-circle-outline" size={RFValue(20)} color={colors.text} />
-            </TouchableOpacity>
-
             {/* Edit Icon - Edit Current */}
             {registration && (
                 <TouchableOpacity onPress={handleEditPress} style={styles.headerButton}>
@@ -209,8 +205,62 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={colors.secondary} />
+            <View style={styles.container}>
+                <CustomHeader
+                    title={t('dealer.businessRegistration') || 'Business Registration'}
+                />
+                <View style={[styles.content]}>
+                    <View style={styles.card}>
+                        {/* Header Row Skeleton */}
+                        <View style={styles.headerRow}>
+                            <SkeletonLoader width={screenWidth * 0.4} height={20} />
+                            <SkeletonLoader width={80} height={24} borderRadius={6} />
+                        </View>
+
+                        {/* Detail Rows Skeleton */}
+                        <View style={{ gap: 16, marginBottom: 16 }}>
+                            <View>
+                                <SkeletonLoader width={80} height={12} style={{ marginBottom: 6 }} />
+                                <SkeletonLoader width={screenWidth * 0.5} height={16} />
+                            </View>
+                            <View>
+                                <SkeletonLoader width={60} height={12} style={{ marginBottom: 6 }} />
+                                <SkeletonLoader width={screenWidth * 0.3} height={16} />
+                            </View>
+                            <View>
+                                <SkeletonLoader width={70} height={12} style={{ marginBottom: 6 }} />
+                                <SkeletonLoader width={screenWidth * 0.7} height={16} />
+                            </View>
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        {/* Payout/Second Section Skeleton */}
+                        <View style={{ marginBottom: 16 }}>
+                            <SkeletonLoader width={100} height={16} style={{ marginBottom: 12 }} />
+                            <View style={{ gap: 12 }}>
+                                <View style={styles.detailRow}>
+                                    <SkeletonLoader width={90} height={14} />
+                                </View>
+                                <View style={styles.detailRow}>
+                                    <SkeletonLoader width={screenWidth * 0.4} height={14} />
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        {/* Photos/Docs Skeleton */}
+                        <View style={{ marginTop: 8 }}>
+                            <SkeletonLoader width={90} height={16} style={{ marginBottom: 12 }} />
+                            <View style={styles.imagesContainer}>
+                                <SkeletonLoader width={screenWidth * 0.25} height={screenWidth * 0.25} borderRadius={8} />
+                                <SkeletonLoader width={screenWidth * 0.25} height={screenWidth * 0.25} borderRadius={8} />
+                                <SkeletonLoader width={screenWidth * 0.25} height={screenWidth * 0.25} borderRadius={8} />
+                            </View>
+                        </View>
+                    </View>
+                </View>
             </View>
         );
     }
@@ -310,28 +360,24 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                             <>
                                 <View style={styles.divider} />
                                 <CustomText style={styles.sectionTitle}>{t('dealer.documents') || 'Documents'}</CustomText>
-                                {registration.documents.map((doc, idx: number) => (
-                                    <TouchableOpacity
-                                        key={`${doc?.kind}_${doc?.url}_${idx}`}
-                                        style={styles.docRow}
-                                        onPress={() => doc?.url && Linking.openURL(doc.url)}
-                                    >
-                                        <Icon
-                                            name={doc?.mimeType === 'application/pdf' ? 'document-outline' : 'image-outline'}
-                                            size={RFValue(18)}
-                                            color={colors.text}
-                                        />
-                                        <View style={styles.docLeft}>
-                                            <CustomText style={styles.docTitle}>
-                                                {(doc?.kind || 'DOC') + (doc?.originalName ? ` — ${doc.originalName}` : '')}
-                                            </CustomText>
-                                            <CustomText style={styles.docSub} numberOfLines={1}>
-                                                {doc?.url}
-                                            </CustomText>
-                                        </View>
-                                        <Icon name="open-outline" size={RFValue(18)} color={colors.textSecondary} />
-                                    </TouchableOpacity>
-                                ))}
+                                <View style={styles.imagesContainer}>
+                                    {registration.documents.map((doc, idx: number) => (
+                                        <TouchableOpacity
+                                            key={`${doc?.kind}_${doc?.url}_${idx}`}
+                                            style={styles.imageWrapper}
+                                            onPress={() => doc?.url && Linking.openURL(doc.url)}
+                                        >
+                                            {doc?.mimeType === 'application/pdf' ? (
+                                                <View style={[styles.image, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.cardBackground }]}>
+                                                    <Icon name="document-text-outline" size={RFValue(24)} color={colors.text} />
+                                                    <CustomText style={{ fontSize: RFValue(8), marginTop: 4, color: colors.text }}>{doc.kind}</CustomText>
+                                                </View>
+                                            ) : (
+                                                <Image source={{ uri: doc?.url }} style={styles.image} />
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </>
                         )}
 

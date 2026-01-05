@@ -53,30 +53,39 @@ const PAYOUT_TYPES: IDropdownOption[] = [
 const MAX_SHOP_PHOTOS = 10;
 const BR_DRAFT_STORAGE_KEY = 'business-registration:draft:v1';
 
+import { useAuthStore } from '@state/authStore';
+import { refetchUser } from '@service/authService';
+
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<{ params: { isEdit?: boolean; registrationData?: IBusinessRegistration } }, 'params'>>();
   const { colors } = useTheme();
   const { showSuccess, showError } = useToast();
   const { t } = useTranslation();
+  const { setUser } = useAuthStore();
 
   const { isEdit, registrationData } = route.params || {};
+  // ... (rest of the component state)
+
+  // ... (inside handleSubmit)
+
+
   const draft = (route.params as any)?.draft as
     | {
-        businessName?: string;
-        type?: string;
-        address?: string;
-        phone?: string;
-        gst?: string;
-        payoutType?: 'UPI' | 'BANK' | '';
-        upiId?: string;
-        accountNumber?: string;
-        ifsc?: string;
-        accountName?: string;
-        shopPhotoUris?: string[];
-        idDocUri?: string | null;
-        panDocUri?: string | null;
-      }
+      businessName?: string;
+      type?: string;
+      address?: string;
+      phone?: string;
+      gst?: string;
+      payoutType?: 'UPI' | 'BANK' | '';
+      upiId?: string;
+      accountNumber?: string;
+      ifsc?: string;
+      accountName?: string;
+      shopPhotoUris?: string[];
+      idDocUri?: string | null;
+      panDocUri?: string | null;
+    }
     | undefined;
 
   // Use a ref (instead of useMemo) so Fast Refresh is less likely to complain
@@ -188,12 +197,12 @@ const BusinessRegistrationScreen: React.FC = () => {
     // 1) MMKV (survives activity recreation)
     try {
       storage.set(BR_DRAFT_STORAGE_KEY, JSON.stringify(payload));
-    } catch {}
+    } catch { }
 
     // 2) Nav params (helps within navigation state)
     try {
       (navigation as any).setParams({ draft: payload });
-    } catch {}
+    } catch { }
 
     console.log('[BusinessRegistrationScreen] persistDraft', {
       instanceId: screenInstanceIdRef.current,
@@ -242,7 +251,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       Alert.alert(
         t('dealer.limitReached') || 'Limit Reached',
         t('dealer.maxImagesReached', { max: MAX_SHOP_PHOTOS }) ||
-          `You can add up to ${MAX_SHOP_PHOTOS} images`,
+        `You can add up to ${MAX_SHOP_PHOTOS} images`,
       );
       return;
     }
@@ -576,9 +585,9 @@ const BusinessRegistrationScreen: React.FC = () => {
       idDoc: !!idDocUri,
       panDoc: !!panDocUri,
     };
-    
+
     const isValid = Object.values(validations).every(v => v === true);
-    
+
     // Debug logging to help identify which validation is failing
     if (!isValid) {
       console.log('[BusinessRegistrationScreen] Validation check:', validations);
@@ -599,7 +608,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         panDocUri: panDocUri ? (panDocUri.length > 50 ? panDocUri.substring(0, 50) + '...' : panDocUri) : null,
       });
     }
-    
+
     return isValid;
   }, [
     businessName,
@@ -690,18 +699,23 @@ const BusinessRegistrationScreen: React.FC = () => {
         return await uploadImage(uri);
       };
 
-      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = [];
-      for (const uri of shopPhotoUris) {
-        const url = await uploadIfNeeded(uri);
-        uploadedShopPhotos.push({ url });
-      }
+      // Parallelize image uploads
+      const uploadedShopPhotos = await Promise.all(
+        shopPhotoUris.map(async (uri) => {
+          const url = await uploadIfNeeded(uri);
+          return { url };
+        })
+      );
       console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
-      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
-      const idDocUrl = await uploadIfNeeded(idDocUri);
-      const panDocUrl = await uploadIfNeeded(panDocUri);
-      uploadedDocuments.push({ kind: 'ID', url: idDocUrl });
-      uploadedDocuments.push({ kind: 'PAN', url: panDocUrl });
+      const [idDocUrl, panDocUrl] = await Promise.all([
+        uploadIfNeeded(idDocUri),
+        uploadIfNeeded(panDocUri)
+      ]);
+      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [
+        { kind: 'ID', url: idDocUrl },
+        { kind: 'PAN', url: panDocUrl }
+      ];
       console.log('[BusinessRegistrationScreen] Uploaded documents:', uploadedDocuments);
 
       // Prepare payout object if payout type is selected
@@ -745,7 +759,10 @@ const BusinessRegistrationScreen: React.FC = () => {
         showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
         try {
           storage.delete(BR_DRAFT_STORAGE_KEY);
-        } catch {}
+        } catch { }
+
+        // Also refetch user on edit to ensure latest state
+        await refetchUser(setUser);
         goBack();
       } else {
         const registration = await createBusinessRegistration(data);
@@ -756,7 +773,10 @@ const BusinessRegistrationScreen: React.FC = () => {
         showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
         try {
           storage.delete(BR_DRAFT_STORAGE_KEY);
-        } catch {}
+        } catch { }
+
+        // Refetch user to update local state (e.g. from user to dealer)
+        await refetchUser(setUser);
 
         // Navigate based on context
         if (registration.status === 'pending' || registration.status === 'approved') {
@@ -1002,6 +1022,13 @@ const BusinessRegistrationScreen: React.FC = () => {
       fontFamily: Fonts.Regular,
       color: colors.text,
       opacity: 0.7,
+    },
+    helperText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.textSecondary,
+      marginTop: 4,
+      marginLeft: 4
     },
     errorText: {
       fontSize: RFValue(8),
@@ -1344,6 +1371,12 @@ const BusinessRegistrationScreen: React.FC = () => {
               <View style={styles.imagesContainer}>
                 <View style={styles.imageWrapper}>
                   <Image source={{ uri: idDocUri }} style={styles.image} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => clearDoc('ID')}
+                    disabled={isSubmitting}>
+                    <Icon name="close" size={RFValue(12)} color="#fff" />
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -1375,6 +1408,12 @@ const BusinessRegistrationScreen: React.FC = () => {
               <View style={styles.imagesContainer}>
                 <View style={styles.imageWrapper}>
                   <Image source={{ uri: panDocUri }} style={styles.image} />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => clearDoc('PAN')}
+                    disabled={isSubmitting}>
+                    <Icon name="close" size={RFValue(12)} color="#fff" />
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
