@@ -17,7 +17,7 @@ export const businessRegistrationToInterface = (
   doc: IBusinessRegistrationDocument,
 ): IBusinessRegistration => {
   return {
-    id: (doc._id as any).toString(),
+    id: ((doc as any)._id).toString(),
     businessName: doc.businessName,
     type: doc.type,
     address: doc.address,
@@ -218,6 +218,7 @@ export const createBusinessRegistration = async (
 
     // Send confirmation email (do not fail registration if email fails)
     // Fire and forget to avoid blocking the response
+    /*
     (async () => {
       try {
         const user = await SignUp.findById(userId).select('name email');
@@ -246,6 +247,7 @@ export const createBusinessRegistration = async (
         logger.error('Failed to send business registration submitted email:', emailError);
       }
     })();
+    */
 
     return businessRegistrationToInterface(registration);
   } catch (error) {
