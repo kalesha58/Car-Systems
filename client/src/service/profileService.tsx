@@ -86,3 +86,24 @@ export const updateProfile = async (data: {name?: string}): Promise<IUserProfile
   );
 };
 
+/**
+ * Get user statistics (posts count, vehicles count, orders count)
+ */
+export interface IUserStats {
+  postsCount: number;
+  vehiclesCount: number;
+  ordersCount: number;
+}
+
+export const getUserStats = async (): Promise<IUserStats> => {
+  const response = await appAxios.get('/profile/stats');
+  if (response.data && response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  throw new Error(
+    response.data?.Response?.ReturnMessage ||
+      response.data?.message ||
+      'Failed to fetch user stats',
+  );
+};
+

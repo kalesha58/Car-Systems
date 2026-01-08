@@ -3,6 +3,9 @@ import { NotFoundError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { deleteFromCloudinary } from '../../config/cloudinary';
 import { IUser } from '../../types/auth';
+import { Post } from '../../models/user/Post';
+import { Vehicle } from '../../models/user/Vehicle';
+import { Order } from '../../models/Order';
 
 /**
  * Convert user document to IUser interface
@@ -111,6 +114,41 @@ export const updateUserProfile = async (
     return userToIUser(user);
   } catch (error) {
     logger.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user statistics (posts count, vehicles count, orders count)
+ */
+export interface IUserStats {
+  postsCount: number;
+  vehiclesCount: number;
+  ordersCount: number;
+}
+
+export const getUserStats = async (userId: string): Promise<IUserStats> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Get counts in parallel for better performance
+    const [postsCount, vehiclesCount, ordersCount] = await Promise.all([
+      Post.countDocuments({ userId: userId.toString() }),
+      Vehicle.countDocuments({ ownerId: userId.toString() }),
+      Order.countDocuments({ userId: userId.toString() }),
+    ]);
+
+    return {
+      postsCount,
+      vehiclesCount,
+      ordersCount,
+    };
+  } catch (error) {
+    logger.error('Error getting user stats:', error);
     throw error;
   }
 };

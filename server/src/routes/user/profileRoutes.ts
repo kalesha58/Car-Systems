@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { uploadSingle } from '../../middleware/uploadMiddleware';
-import { getProfileController, updateProfileController } from '../../controllers/user/profileController';
+import { getProfileController, updateProfileController, getUserStatsController } from '../../controllers/user/profileController';
 
 const router = Router();
 
@@ -61,6 +61,38 @@ router.get('/', getProfileController);
  *         description: Phone number already in use
  */
 router.put('/', uploadSingle, updateProfileController);
+
+/**
+ * @swagger
+ * /api/profile/stats:
+ *   get:
+ *     summary: Get current user statistics
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 Response:
+ *                   type: object
+ *                   properties:
+ *                     postsCount:
+ *                       type: number
+ *                     vehiclesCount:
+ *                       type: number
+ *                     ordersCount:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/stats', getUserStatsController);
 
 export default router;
 

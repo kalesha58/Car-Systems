@@ -214,11 +214,13 @@ const CustomerLogin = () => {
             }
           }
         } else {
-          // Not a dealer, use normal navigation
-          navigateByRole(userRole);
+          // For regular users (not dealers), navigate to AddUserVehicle screen after login
+          // User can add vehicle or skip, then proceed to dashboard
+          resetAndNavigate('AddUserVehicle');
         }
       } else {
-        resetAndNavigate('MainTabs');
+        // If no role found, navigate to AddUserVehicle
+        resetAndNavigate('AddUserVehicle');
       }
     } catch (error: any) {
       // Extract error message from server response
@@ -245,11 +247,14 @@ const CustomerLogin = () => {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
       await customerSignup(name, email, cleanPhone, password);
       showSuccess(t('auth.signupSuccess'));
-      setIsSignupMode(false);
-      setName('');
-      setEmail('');
-      setPassword('');
-      setPhone('');
+      // Navigate to login screen after successful signup
+      setTimeout(() => {
+        setIsSignupMode(false);
+        setName('');
+        setEmail('');
+        setPassword('');
+        setPhone('');
+      }, 1500);
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.message || 'Signup failed. Please try again.';

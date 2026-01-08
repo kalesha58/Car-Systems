@@ -1,5 +1,12 @@
 import {appAxios} from './apiInterceptors';
-import {IVehiclesResponse, IGetVehiclesRequest} from '../types/vehicle/IVehicle';
+import {
+  IVehiclesResponse,
+  IGetVehiclesRequest,
+  IUserVehicleResponse,
+  IUserVehiclesResponse,
+  ICreateVehicleRequest,
+  IUpdateVehicleRequest,
+} from '../types/vehicle/IVehicle';
 
 export const getDealerVehicles = async (
   query?: IGetVehiclesRequest,
@@ -45,6 +52,56 @@ export const getVehicleById = async (vehicleId: string): Promise<IVehiclesRespon
         pagination: {page: 1, limit: 10, total: 0, totalPages: 0},
       },
     };
+  } catch (error) {
+    throw error;
+  }
+};
+
+// User Vehicle Service Methods
+export const createUserVehicle = async (
+  data: ICreateVehicleRequest,
+): Promise<IUserVehicleResponse> => {
+  try {
+    const response = await appAxios.post<IUserVehicleResponse>('/vehicles', data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserVehicles = async (): Promise<IUserVehiclesResponse> => {
+  try {
+    const response = await appAxios.get<IUserVehiclesResponse>('/vehicles');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserVehicleById = async (vehicleId: string): Promise<IUserVehicleResponse> => {
+  try {
+    const response = await appAxios.get<IUserVehicleResponse>(`/vehicles/${vehicleId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUserVehicle = async (
+  vehicleId: string,
+  data: IUpdateVehicleRequest,
+): Promise<IUserVehicleResponse> => {
+  try {
+    const response = await appAxios.put<IUserVehicleResponse>(`/vehicles/${vehicleId}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteUserVehicle = async (vehicleId: string): Promise<void> => {
+  try {
+    await appAxios.delete(`/vehicles/${vehicleId}`);
   } catch (error) {
     throw error;
   }

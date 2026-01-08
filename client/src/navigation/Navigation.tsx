@@ -19,6 +19,7 @@ import ProductCategories from '@features/category/ProductCategories';
 import CompareScreen from '@features/category/CompareScreen';
 import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
+import ProfileSettings from '@features/profile/ProfileSettings';
 import EditProfile from '@features/profile/EditProfile';
 import BusinessRegistrationScreen from '@features/profile/BusinessRegistrationScreen';
 import WishlistScreen from '@features/profile/WishlistScreen';
@@ -46,6 +47,7 @@ import LocationPickerScreen from '@features/chat/LocationPickerScreen';
 import PaymentStatusScreen from '@features/payment/PaymentStatusScreen';
 import ProductOrder from '@features/order/ProductOrder';
 import VehicleDetail from '@features/vehicle/VehicleDetail';
+import AddUserVehicleScreen from '@features/vehicle/AddUserVehicleScreen';
 import ServiceDetail from '@features/service/ServiceDetail';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
@@ -484,6 +486,13 @@ const Navigation: FC = () => {
           <Stack.Screen name="DealerOrdersList" component={DealerOrdersList} />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen
+            name="ProfileSettings"
+            component={ProfileSettings}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
             name="EditProfile"
             component={EditProfile}
             options={{
@@ -546,6 +555,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="VehicleDetail"
             component={VehicleDetail}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="AddUserVehicle"
+            component={AddUserVehicleScreen}
             options={{
               animation: 'slide_from_right',
             }}
