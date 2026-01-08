@@ -288,9 +288,6 @@ const VehicleDetail: React.FC = () => {
         testDriveButton: {
           backgroundColor: Colors.secondary,
         },
-        preBookingButton: {
-          backgroundColor: '#FF9800',
-        },
         chatButton: {
           height: 48,
           paddingHorizontal: 20,
@@ -653,16 +650,6 @@ const VehicleDetail: React.FC = () => {
               activeOpacity={0.8}
               style={[styles.actionButton, styles.testDriveButton]}>
               <Icon name="car-sport-outline" size={RFValue(16)} color="#fff" />
-            </TouchableOpacity>
-          )}
-          {vehicle?.availability === 'available' && (
-            <TouchableOpacity
-              onPress={() => {
-                (navigation as any).navigate('PreBooking', { vehicleId: vehicle.id || vehicle._id });
-              }}
-              activeOpacity={0.8}
-              style={[styles.actionButton, styles.preBookingButton]}>
-              <Icon name="bookmark-outline" size={RFValue(16)} color="#fff" />
             </TouchableOpacity>
           )}
           <TouchableOpacity

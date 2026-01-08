@@ -200,3 +200,56 @@ export const orders = [
         status: 'available'
     },
 ];
+
+export interface DiscountBannerItem {
+    id: string;
+    title: string;
+    discountText: string;
+    subtitle?: string;
+    backgroundColor: string;
+    textColor: string;
+    image?: any;
+}
+
+export const discountBannerData: DiscountBannerItem[] = [
+    {
+        id: 'banner-1',
+        title: 'Car Parts & Accessories',
+        discountText: 'Up to 90% OFF',
+        subtitle: 'On selected items',
+        backgroundColor: '#FF6B35',
+        textColor: '#FFFFFF',
+    },
+    {
+        id: 'banner-2',
+        title: 'Engine Oils & Lubricants',
+        discountText: 'Up to 90% OFF',
+        subtitle: 'Limited time offer',
+        backgroundColor: '#004E89',
+        textColor: '#FFFFFF',
+    },
+    {
+        id: 'banner-3',
+        title: 'Tires & Wheels',
+        discountText: 'Up to 90% OFF',
+        subtitle: 'Best deals of the season',
+        backgroundColor: '#FFD23F',
+        textColor: '#000000',
+    },
+    {
+        id: 'banner-4',
+        title: 'Car Care Products',
+        discountText: 'Up to 90% OFF',
+        subtitle: 'Shop now and save big',
+        backgroundColor: '#06A77D',
+        textColor: '#FFFFFF',
+    },
+    {
+        id: 'banner-5',
+        title: 'Brakes & Suspension',
+        discountText: 'Up to 90% OFF',
+        subtitle: 'Premium quality at best prices',
+        backgroundColor: '#E63946',
+        textColor: '#FFFFFF',
+    },
+];

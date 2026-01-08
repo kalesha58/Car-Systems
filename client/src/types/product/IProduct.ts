@@ -41,6 +41,7 @@ export interface IGetProductsRequest {
   maxPrice?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  dealerId?: string;
 }
 
 export interface IProductsResponse {

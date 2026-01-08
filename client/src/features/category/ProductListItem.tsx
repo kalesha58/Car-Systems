@@ -56,6 +56,19 @@ const ProductListItem: FC<ProductListItemProps> = ({item}) => {
     await shareProduct(item.name, itemId);
   };
 
+  const handleDealerPress = (e: any) => {
+    e.stopPropagation();
+    if (item.dealerId) {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          dealerId: item.dealerId,
+          initialCategoryType: 'products',
+        },
+      });
+    }
+  };
+
   const renderRightActions = () => (
     <View style={styles.rightActions}>
       <TouchableOpacity
@@ -203,12 +216,14 @@ const ProductListItem: FC<ProductListItemProps> = ({item}) => {
                 {item.name}
               </CustomText>
               {item.dealer && (
-                <CustomText
-                  fontSize={RFValue(10)}
-                  fontFamily={Fonts.Regular}
-                  style={{color: colors.disabled, marginTop: 2}}>
-                  {item.dealer.businessName}
-                </CustomText>
+                <Pressable onPress={handleDealerPress}>
+                  <CustomText
+                    fontSize={RFValue(10)}
+                    fontFamily={Fonts.Regular}
+                    style={{color: colors.disabled, marginTop: 2}}>
+                    {item.dealer.businessName}
+                  </CustomText>
+                </Pressable>
               )}
             </View>
             <TouchableOpacity

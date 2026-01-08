@@ -43,12 +43,6 @@ const WalletSection = () => {
       label: t('common.wallet'), 
       onPress: () => {} 
     });
-    // Wishlist
-    items.push({ 
-      icon: 'heart-outline', 
-      label: t('profile.wishlist'), 
-      onPress: () => navigation.navigate('WishlistScreen' as never) 
-    });
   } else {
     // For dealers, show support
     items.push({ 

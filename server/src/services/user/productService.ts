@@ -15,6 +15,7 @@ export interface IGetUserProductsRequest {
   maxPrice?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  dealerId?: string;
 }
 
 export interface IDealerInfo {
@@ -171,6 +172,10 @@ export const getAllProductsForUsers = async (
       if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
     }
 
+    if (query.dealerId) {
+      filter.userId = query.dealerId; // dealerId maps to userId in Product model
+    }
+
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = { [sortBy]: sortOrder };
@@ -243,10 +248,27 @@ export const getAllProductsForUsers = async (
     );
 
     // Recalculate total for pagination (products from open stores only)
-    const totalFromOpenStores = await Product.countDocuments({
+    // If dealerId is provided, ensure it's included in the filter
+    const paginationFilter: any = {
       ...filter,
-      userId: { $in: Array.from(openStoreUserIds) },
-    });
+      userId: query.dealerId 
+        ? query.dealerId // If dealerId specified, use it directly
+        : { $in: Array.from(openStoreUserIds) }, // Otherwise filter by open stores
+    };
+    // If dealerId is provided, also ensure the dealer has an open store
+    if (query.dealerId && !openStoreUserIds.has(query.dealerId)) {
+      // Dealer doesn't have an open store, return empty
+      return {
+        products: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
+    }
+    const totalFromOpenStores = await Product.countDocuments(paginationFilter);
 
     return {
       products: productsWithDealer,

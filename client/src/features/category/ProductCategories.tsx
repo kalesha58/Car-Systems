@@ -50,6 +50,7 @@ const ProductCategories = () => {
     initialCategoryId?: string;
     initialCategoryType?: CategoryType;
     sortBy?: string;
+    dealerId?: string;
   } | undefined;
   
   const {t} = useTranslation();
@@ -261,6 +262,11 @@ const ProductCategories = () => {
       queryParams.limit = 1000;
     }
     
+    // Add dealerId filter if provided in route params
+    if (routeParams?.dealerId) {
+      queryParams.dealerId = routeParams.dealerId;
+    }
+    
     if (queryFilters.type) {
       queryParams.vehicleType = queryFilters.type;
     }
@@ -344,7 +350,7 @@ const ProductCategories = () => {
       console.warn(`[${categoryType}] No cached data available, returning empty array for category:`, category._id);
       return [];
     }
-  }, []);
+  }, [routeParams?.dealerId]);
 
   useEffect(() => {
     const fetchItems = async () => {

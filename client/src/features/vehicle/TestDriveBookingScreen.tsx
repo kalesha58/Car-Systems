@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useTheme } from '@hooks/useTheme';
@@ -24,6 +24,7 @@ import type { IDealerVehicle } from '../../types/vehicle/IVehicle';
 import CustomButton from '@components/ui/CustomButton';
 import CustomDatePicker from '@components/ui/CustomDatePicker';
 import CustomTimePicker from '@components/ui/CustomTimePicker';
+import SkeletonLoader from '@components/ui/SkeletonLoader';
 
 type TestDriveBookingRouteParams = {
   TestDriveBooking: {
@@ -143,7 +144,7 @@ const TestDriveBookingScreen: React.FC = () => {
         },
         vehicleImage: {
           width: '100%',
-          height: 200,
+          height: 100,
           backgroundColor: colors.backgroundSecondary,
         },
         vehicleInfo: {
@@ -244,13 +245,53 @@ const TestDriveBookingScreen: React.FC = () => {
     [colors, selectedTime],
   );
 
+  const screenWidth = Dimensions.get('window').width;
+
   if (loading) {
     return (
       <View style={styles.container}>
         <CustomHeader title="Book Test Drive" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-        </View>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}>
+          {/* Vehicle Card Skeleton */}
+          <View style={styles.vehicleCard}>
+            <SkeletonLoader width="100%" height={100} borderRadius={0} />
+            <View style={styles.vehicleInfo}>
+              <SkeletonLoader width="70%" height={20} borderRadius={4} style={{ marginBottom: 8 }} />
+              <View style={styles.vehicleDetails}>
+                <SkeletonLoader width={80} height={28} borderRadius={20} />
+                <SkeletonLoader width={80} height={28} borderRadius={20} />
+                <SkeletonLoader width={80} height={28} borderRadius={20} />
+              </View>
+              <SkeletonLoader width="50%" height={22} borderRadius={4} style={{ marginTop: 12 }} />
+            </View>
+          </View>
+
+          {/* Date Selection Skeleton */}
+          <View style={styles.section}>
+            <SkeletonLoader width="40%" height={18} borderRadius={4} style={{ marginBottom: 12 }} />
+            <SkeletonLoader width="100%" height={48} borderRadius={8} />
+          </View>
+
+          {/* Time Selection Skeleton */}
+          <View style={styles.section}>
+            <SkeletonLoader width="40%" height={18} borderRadius={4} style={{ marginBottom: 12 }} />
+            <SkeletonLoader width="100%" height={48} borderRadius={8} />
+          </View>
+
+          {/* Notes Skeleton */}
+          <View style={styles.section}>
+            <SkeletonLoader width="60%" height={18} borderRadius={4} style={{ marginBottom: 12 }} />
+            <SkeletonLoader width="100%" height={100} borderRadius={8} />
+          </View>
+
+          {/* Submit Button Skeleton */}
+          <View style={styles.submitButton}>
+            <SkeletonLoader width="100%" height={50} borderRadius={8} />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -279,7 +320,7 @@ const TestDriveBookingScreen: React.FC = () => {
         {/* Vehicle Card */}
         <View style={styles.vehicleCard}>
           {vehicle.images && vehicle.images.length > 0 ? (
-            <Image source={{ uri: vehicle.images[0] }} style={styles.vehicleImage} resizeMode="cover" />
+            <Image source={{ uri: vehicle.images[0] }} style={styles.vehicleImage} resizeMode="contain" />
           ) : (
             <View style={[styles.vehicleImage, { justifyContent: 'center', alignItems: 'center' }]}>
               <Icon name="car-outline" size={RFValue(60)} color={colors.textSecondary} />

@@ -137,6 +137,19 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
     navigate('ProductDetail', {productId: item.id});
   };
 
+  const handleDealerPress = (e: any) => {
+    e.stopPropagation();
+    if (item.dealerId) {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          dealerId: item.dealerId,
+          initialCategoryType: 'products',
+        },
+      });
+    }
+  };
+
   return (
     <Pressable
       style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
@@ -173,11 +186,14 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
       <View style={styles.content}>
         {item.dealer && (
-          <View style={styles.dealerBadge}>
+          <Pressable
+            style={styles.dealerBadge}
+            onPress={handleDealerPress}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
               {item.dealer.businessName}
             </CustomText>
-          </View>
+          </Pressable>
         )}
 
         <CustomText
