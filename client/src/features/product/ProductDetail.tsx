@@ -538,6 +538,27 @@ const ProductDetail: React.FC = () => {
       flex: 1,
       color: colors.text,
     },
+    storeClosedBanner: {
+      marginTop: 12,
+      padding: 16,
+      borderRadius: 12,
+      borderWidth: 1,
+      marginBottom: 8,
+    },
+    storeStatusBannerContent: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+    },
+    storeStatusBannerTextContainer: {
+      flex: 1,
+    },
+    storeStatusBadge: {
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      marginLeft: 8,
+    },
     deliveryInfo: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -886,6 +907,26 @@ const ProductDetail: React.FC = () => {
             </View>
           )}
 
+          {/* Store Status Banner - Show when store is closed */}
+          {dealer && !storeOpen && (
+            <View style={[styles.sectionContainer, styles.storeClosedBanner, { 
+              backgroundColor: colors.error + '15',
+              borderColor: colors.error,
+            }]}>
+              <View style={styles.storeStatusBannerContent}>
+                <Icon name="close-circle" size={RFValue(24)} color={colors.error} />
+                <View style={styles.storeStatusBannerTextContainer}>
+                  <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: colors.error, marginBottom: 4 }}>
+                    {t('dealer.storeClosed') || 'Store Closed'}
+                  </CustomText>
+                  <CustomText variant="h8" fontFamily={Fonts.Regular} style={{ color: colors.textSecondary }}>
+                    {t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available for purchase.'}
+                  </CustomText>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Dealer Information */}
           {dealer && (
             <View style={styles.sectionContainer}>
@@ -894,10 +935,30 @@ const ProductDetail: React.FC = () => {
               </CustomText>
               <View style={styles.dealerInfo}>
                 <View style={styles.dealerRow}>
-                  <Icon name="storefront" size={RFValue(18)} color={colors.secondary} />
-                  <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.dealerText}>
+                  <Icon 
+                    name="storefront" 
+                    size={RFValue(18)} 
+                    color={storeOpen ? colors.secondary : colors.textSecondary} 
+                  />
+                  <CustomText 
+                    variant="h7" 
+                    fontFamily={Fonts.Medium} 
+                    style={[
+                      styles.dealerText,
+                      !storeOpen && { color: colors.textSecondary, opacity: 0.7 }
+                    ]}>
                     {dealer.businessName || dealer.name}
                   </CustomText>
+                  {!storeOpen && (
+                    <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20' }]}>
+                      <CustomText 
+                        variant="h9" 
+                        fontFamily={Fonts.SemiBold} 
+                        style={{ color: colors.error, fontSize: RFValue(9) }}>
+                        {t('dealer.storeClosed') || 'CLOSED'}
+                      </CustomText>
+                    </View>
+                  )}
                 </View>
                 {dealer.address && (
                   <View style={styles.dealerRow}>

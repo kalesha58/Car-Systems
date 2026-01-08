@@ -5,6 +5,8 @@ import vehicleRoutes from './vehicleRoutes';
 import productRoutes from './productRoutes';
 import serviceRoutes from './serviceRoutes';
 import payoutRoutes from './payoutRoutes';
+import testDriveRoutes from './testDriveRoutes';
+import preBookingRoutes from './preBookingRoutes';
 
 const router = Router();
 
@@ -15,6 +17,8 @@ router.use('/vehicles', vehicleRoutes);
 router.use('/products', productRoutes);
 router.use('/services', serviceRoutes);
 router.use('/payout', payoutRoutes);
+router.use('/test-drives', testDriveRoutes);
+router.use('/pre-bookings', preBookingRoutes);
 
 export default router;
 

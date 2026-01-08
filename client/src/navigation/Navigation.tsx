@@ -58,6 +58,8 @@ import ForgotPassword from '@features/auth/ForgotPassword';
 import MetAIChatScreen from '@features/support/MetAIChatScreen';
 import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
 import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
+import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
+import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -479,6 +481,27 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="AddEditService"
             component={AddEditServiceScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="TestDriveManagement"
+            component={TestDriveManagementScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="PreBookingManagement"
+            component={PreBookingManagementScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="UpcomingBookings"
+            component={TestDriveManagementScreen}
             options={{
               animation: 'slide_from_right',
             }}

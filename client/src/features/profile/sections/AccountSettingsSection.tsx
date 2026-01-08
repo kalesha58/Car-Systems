@@ -1,5 +1,5 @@
 import { View, StyleSheet, Switch } from 'react-native';
-import React, { FC } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
@@ -9,13 +9,74 @@ import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@state/themeStore';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
+import { getBusinessRegistrationByUserId, updateStoreStatus, IBusinessRegistration } from '@service/dealerService';
+import { useToast } from '@hooks/useToast';
 
 const AccountSettingsSection: FC = () => {
   const { t } = useTranslation();
   const { themeMode, toggleTheme } = useThemeStore();
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
+  const { showSuccess, showError } = useToast();
   const isDealer = user?.role?.includes('dealer');
+  const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
+  const [storeOpen, setStoreOpen] = useState<boolean>(true);
+  const [isUpdatingStoreStatus, setIsUpdatingStoreStatus] = useState(false);
+
+  // Fetch business registration for dealers
+  useEffect(() => {
+    if (!isDealer || !user?.id) {
+      return;
+    }
+
+    const fetchBusinessRegistration = async () => {
+      try {
+        const registration = await getBusinessRegistrationByUserId(user.id);
+        if (registration) {
+          setBusinessRegistration(registration);
+          setStoreOpen(registration.storeOpen !== undefined ? registration.storeOpen : true);
+        }
+      } catch (error) {
+        console.error('Error fetching business registration:', error);
+      }
+    };
+
+    fetchBusinessRegistration();
+  }, [isDealer, user?.id]);
+
+  const handleStoreToggle = useCallback(async (value: boolean) => {
+    if (!businessRegistration?.id || isUpdatingStoreStatus) {
+      return;
+    }
+
+    const previousValue = storeOpen;
+    // Optimistically update UI
+    setStoreOpen(value);
+
+    try {
+      setIsUpdatingStoreStatus(true);
+      const updated = await updateStoreStatus(businessRegistration.id, { storeOpen: value });
+      
+      // Update business registration state
+      setBusinessRegistration(updated);
+      
+      showSuccess(
+        value
+          ? t('dealer.storeOpen') || 'Store is now open'
+          : t('dealer.storeClosed') || 'Store is now closed',
+      );
+    } catch (error) {
+      // Revert on error
+      setStoreOpen(previousValue);
+      showError(
+        error instanceof Error
+          ? error.message
+          : t('dealer.pleaseTryAgain') || 'Failed to update store status. Please try again.',
+      );
+    } finally {
+      setIsUpdatingStoreStatus(false);
+    }
+  }, [businessRegistration?.id, storeOpen, isUpdatingStoreStatus, t, showSuccess, showError]);
 
   const styles = StyleSheet.create({
     container: {
@@ -72,6 +133,26 @@ const AccountSettingsSection: FC = () => {
       label: t('dealer.dealership') || 'Dealership',
       onPress: () => navigate('BusinessRegistrationDetails'),
     });
+
+    // Add Store Status toggle for approved dealers
+    if (businessRegistration && businessRegistration.status === 'approved') {
+      menuItems.push({
+        icon: storeOpen ? 'checkmark-circle' : 'close-circle',
+        label: storeOpen ? t('dealer.storeOpen') : t('dealer.storeClosed'),
+        onPress: undefined,
+        rightComponent: (
+          <Switch
+            value={storeOpen}
+            onValueChange={handleStoreToggle}
+            disabled={isUpdatingStoreStatus}
+            trackColor={{ false: '#E5E7EB', true: colors.secondary }}
+            thumbColor={colors.white}
+            ios_backgroundColor="#E5E7EB"
+          />
+        ),
+        showChevron: false,
+      });
+    }
   }
 
   menuItems.push({

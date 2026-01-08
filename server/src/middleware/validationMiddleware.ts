@@ -371,3 +371,154 @@ export const validateGoogleAuth = (
   }
 };
 
+/**
+ * Validate time format (HH:mm)
+ */
+const isValidTime = (time: string): boolean => {
+  const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+  return timeRegex.test(time);
+};
+
+/**
+ * Validate create test drive request
+ */
+export const validateCreateTestDrive = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  try {
+    const { vehicleId, preferredDate, preferredTime } = req.body;
+
+    if (!vehicleId || typeof vehicleId !== 'string' || !vehicleId.trim()) {
+      return next(new ValidationError('Vehicle ID is required'));
+    }
+
+    if (!preferredDate) {
+      return next(new ValidationError('Preferred date is required'));
+    }
+
+    const date = new Date(preferredDate);
+    if (isNaN(date.getTime())) {
+      return next(new ValidationError('Invalid date format'));
+    }
+
+    // Check if date is in the future
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < now) {
+      return next(new ValidationError('Preferred date must be in the future'));
+    }
+
+    if (!preferredTime || typeof preferredTime !== 'string') {
+      return next(new ValidationError('Preferred time is required'));
+    }
+
+    if (!isValidTime(preferredTime)) {
+      return next(new ValidationError('Time must be in HH:mm format (e.g., 14:30)'));
+    }
+
+    // Normalize time format
+    req.body.preferredTime = preferredTime.trim();
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Validate create pre-booking request
+ */
+export const validateCreatePreBooking = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  try {
+    const { vehicleId, bookingDate } = req.body;
+
+    if (!vehicleId || typeof vehicleId !== 'string' || !vehicleId.trim()) {
+      return next(new ValidationError('Vehicle ID is required'));
+    }
+
+    if (!bookingDate) {
+      return next(new ValidationError('Booking date is required'));
+    }
+
+    const date = new Date(bookingDate);
+    if (isNaN(date.getTime())) {
+      return next(new ValidationError('Invalid date format'));
+    }
+
+    // Check if date is in the future
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < now) {
+      return next(new ValidationError('Booking date must be in the future'));
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Validate update test drive status request
+ */
+export const validateUpdateTestDriveStatus = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  try {
+    const { status } = req.body;
+
+    if (!status || typeof status !== 'string') {
+      return next(new ValidationError('Status is required'));
+    }
+
+    const validStatuses = ['pending', 'approved', 'rejected', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return next(new ValidationError(`Status must be one of: ${validStatuses.join(', ')}`));
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Validate update pre-booking status request
+ */
+export const validateUpdatePreBookingStatus = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  try {
+    const { status } = req.body;
+
+    if (!status || typeof status !== 'string') {
+      return next(new ValidationError('Status is required'));
+    }
+
+    const validStatuses = ['pending', 'confirmed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return next(new ValidationError(`Status must be one of: ${validStatuses.join(', ')}`));
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
