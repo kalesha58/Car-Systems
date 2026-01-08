@@ -172,8 +172,79 @@ export const getAllProductsForUsers = async (
       if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
     }
 
+    // First, get all approved dealers with open stores (unless dealerId is specified)
+    let openStoreUserIds = new Set<string>();
+    const dealerInfoMap = new Map<string, IDealerInfo>();
+
     if (query.dealerId) {
+      // If dealerId is specified, verify the dealer is approved and store is open
+      const businessRegistration = await BusinessRegistration.findOne({
+        userId: query.dealerId,
+        status: 'approved',
+        storeOpen: { $ne: false },
+      });
+
+      if (!businessRegistration || businessRegistration.storeOpen === false) {
+        // Dealer doesn't have an open store, return empty
+        return {
+          products: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+
+      openStoreUserIds.add(query.dealerId);
+      dealerInfoMap.set(query.dealerId, {
+        id: (businessRegistration._id as any).toString(),
+        businessName: businessRegistration.businessName,
+        type: businessRegistration.type,
+        phone: businessRegistration.phone,
+        address: businessRegistration.address,
+        gst: businessRegistration.gst,
+      });
+
       filter.userId = query.dealerId; // dealerId maps to userId in Product model
+    } else {
+      // Get all approved dealers with open stores
+      const businessRegistrations = await BusinessRegistration.find({
+        status: 'approved',
+        storeOpen: { $ne: false }, // Include true or undefined (defaults to true)
+      });
+
+      businessRegistrations.forEach((reg) => {
+        // Only include if storeOpen is true (or undefined which defaults to true)
+        if (reg.storeOpen !== false) {
+          openStoreUserIds.add(reg.userId);
+          dealerInfoMap.set(reg.userId, {
+            id: (reg._id as any).toString(),
+            businessName: reg.businessName,
+            type: reg.type,
+            phone: reg.phone,
+            address: reg.address,
+            gst: reg.gst,
+          });
+        }
+      });
+
+      // Only fetch products from approved dealers with open stores
+      if (openStoreUserIds.size > 0) {
+        filter.userId = { $in: Array.from(openStoreUserIds) };
+      } else {
+        // No approved dealers with open stores, return empty
+        return {
+          products: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
     }
 
     const sortBy = query.sortBy || 'createdAt';
@@ -185,40 +256,8 @@ export const getAllProductsForUsers = async (
       Product.countDocuments(filter),
     ]);
 
-    // Get all unique userIds from products
-    const userIds = [...new Set(products.map((p) => p.userId))];
-
-    // Fetch all business registrations for these users in one query
-    // Filter to only include approved registrations with open stores
-    const businessRegistrations = await BusinessRegistration.find({
-      userId: { $in: userIds },
-      status: 'approved',
-      storeOpen: { $ne: false }, // Include true or undefined (defaults to true)
-    });
-
-    // Create a set of userIds with open stores for quick lookup
-    const openStoreUserIds = new Set<string>();
-    // Create a map of userId to dealer info for quick lookup
-    const dealerInfoMap = new Map<string, IDealerInfo>();
-    businessRegistrations.forEach((reg) => {
-      // Only include if storeOpen is true (or undefined which defaults to true)
-      if (reg.storeOpen !== false) {
-        openStoreUserIds.add(reg.userId);
-        dealerInfoMap.set(reg.userId, {
-          id: (reg._id as any).toString(),
-          businessName: reg.businessName,
-          type: reg.type,
-          phone: reg.phone,
-          address: reg.address,
-          gst: reg.gst,
-        });
-      }
-    });
-
-    // Filter products to only include those from dealers with open stores
-    const productsFromOpenStores = products.filter((productDoc) => 
-      openStoreUserIds.has(productDoc.userId)
-    );
+    // All products are already from approved dealers with open stores, no need to filter again
+    const productsFromOpenStores = products;
 
     // Convert products and attach dealer info
     const productsWithDealer = await Promise.all(
@@ -247,28 +286,8 @@ export const getAllProductsForUsers = async (
       }),
     );
 
-    // Recalculate total for pagination (products from open stores only)
-    // If dealerId is provided, ensure it's included in the filter
-    const paginationFilter: any = {
-      ...filter,
-      userId: query.dealerId 
-        ? query.dealerId // If dealerId specified, use it directly
-        : { $in: Array.from(openStoreUserIds) }, // Otherwise filter by open stores
-    };
-    // If dealerId is provided, also ensure the dealer has an open store
-    if (query.dealerId && !openStoreUserIds.has(query.dealerId)) {
-      // Dealer doesn't have an open store, return empty
-      return {
-        products: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          totalPages: 0,
-        },
-      };
-    }
-    const totalFromOpenStores = await Product.countDocuments(paginationFilter);
+    // Total is already calculated correctly since we filtered by approved dealers upfront
+    const totalFromOpenStores = total;
 
     return {
       products: productsWithDealer,

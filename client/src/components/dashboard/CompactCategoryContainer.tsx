@@ -60,10 +60,15 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({ data, cat
               activeOpacity={0.7}
               onPress={() => {
                 // Navigate to ProductCategories with the appropriate category type
+                // Don't include dealerId to show all products
                 const categoryId = `all-${categoryType}`;
-                navigate('ProductCategories', {
-                  initialCategoryId: categoryId,
-                  initialCategoryType: categoryType,
+                navigate('Category', {
+                  screen: 'ProductCategories',
+                  params: {
+                    initialCategoryId: categoryId,
+                    initialCategoryType: categoryType,
+                    // Explicitly omit dealerId to show all products
+                  },
                 });
               }}>
               <View style={styles.imageContainer}>

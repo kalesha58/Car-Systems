@@ -200,6 +200,17 @@ const ProductCategories = () => {
         setCurrentSort('newest');
       }
     }
+
+    // Clear dealerId filter if navigating to "all products" without explicit dealerId
+    // This ensures that when navigating from dashboard, we don't use stale dealerId
+    if (categoryToSelect && 
+        (categoryToSelect._id === 'all-products' || 
+         categoryToSelect._id === 'all-vehicles' || 
+         categoryToSelect._id === 'all-services') &&
+        !routeParams.dealerId) {
+      // Category is "all" and no dealerId in params, so we're viewing all items
+      // The dealerId filter will not be applied in fetchItemsMemoized
+    }
   }, [routeParams, categories, categoriesLoading]);
 
   // Update category counts
@@ -262,9 +273,16 @@ const ProductCategories = () => {
       queryParams.limit = 1000;
     }
     
-    // Add dealerId filter if provided in route params
-    if (routeParams?.dealerId) {
-      queryParams.dealerId = routeParams.dealerId;
+    // Add dealerId filter only if explicitly provided in route params and truthy
+    // Only apply for products category type to avoid filtering vehicles/services incorrectly
+    // Check for both undefined and 'undefined' string (React Navigation sometimes passes strings)
+    const dealerId = routeParams?.dealerId;
+    if (dealerId && 
+        typeof dealerId === 'string' && 
+        dealerId !== 'undefined' && 
+        dealerId.trim() !== '' &&
+        categoryType === 'products') {
+      queryParams.dealerId = dealerId;
     }
     
     if (queryFilters.type) {
