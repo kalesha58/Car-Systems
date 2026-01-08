@@ -200,6 +200,7 @@ export const getUserByBusinessRegistrationId = async (
       phone: businessRegistration.phone,
       gst: businessRegistration.gst,
       status: businessRegistration.status,
+      storeOpen: businessRegistration.storeOpen !== undefined ? businessRegistration.storeOpen : true,
       userId: businessRegistration.userId,
       createdAt: businessRegistration.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: businessRegistration.updatedAt?.toISOString() || new Date().toISOString(),
