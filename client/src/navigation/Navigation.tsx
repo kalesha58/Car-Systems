@@ -60,6 +60,9 @@ import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
 import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
 import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
 import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
+import QuickActionsScreen from '@features/dashboard/QuickActionsScreen';
+import TestDriveBookingScreen from '@features/vehicle/TestDriveBookingScreen';
+import PreBookingScreen from '@features/vehicle/PreBookingScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -328,6 +331,16 @@ const DealerTabs: FC = () => {
         }}
       />
       <Tab.Screen
+        name="QuickActions"
+        component={QuickActionsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="flash-outline" size={size} color={color} />
+          ),
+          tabBarLabel: 'Drive',
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={Profile}
         options={{
@@ -578,6 +591,14 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="VehicleDetail"
             component={VehicleDetail}
+          />
+          <Stack.Screen
+            name="TestDriveBooking"
+            component={TestDriveBookingScreen}
+          />
+          <Stack.Screen
+            name="PreBooking"
+            component={PreBookingScreen}
             options={{
               animation: 'slide_from_right',
             }}

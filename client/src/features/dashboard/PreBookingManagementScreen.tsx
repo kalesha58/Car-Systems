@@ -77,14 +77,14 @@ const PreBookingManagementScreen: React.FC = () => {
     },
     filterContainer: {
       flexDirection: 'row',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
       gap: 8,
     },
     filterButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
       borderWidth: 1,
     },
     filterButtonActive: {
@@ -96,13 +96,13 @@ const PreBookingManagementScreen: React.FC = () => {
       borderColor: colors.border,
     },
     listContent: {
-      padding: 16,
+      padding: 12,
     },
     preBookingCard: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 10,
       borderWidth: 1,
       borderColor: colors.border,
     },
@@ -110,35 +110,35 @@ const PreBookingManagementScreen: React.FC = () => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 12,
+      marginBottom: 10,
     },
     statusBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 16,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
     },
     statusText: {
-      fontSize: RFValue(12),
+      fontSize: RFValue(10),
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
     vehicleInfo: {
-      marginBottom: 8,
+      marginBottom: 6,
     },
     dateTime: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
+      marginBottom: 6,
     },
     actionsContainer: {
       flexDirection: 'row',
       gap: 8,
-      marginTop: 12,
+      marginTop: 10,
     },
     actionButton: {
       flex: 1,
-      paddingVertical: 10,
-      borderRadius: 8,
+      paddingVertical: 8,
+      borderRadius: 6,
       alignItems: 'center',
     },
     actionButtonConfirm: {
@@ -152,11 +152,11 @@ const PreBookingManagementScreen: React.FC = () => {
   const renderPreBookingItem = ({ item }: { item: IPreBooking }) => (
     <View style={styles.preBookingCard}>
       <View style={styles.cardHeader}>
-        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+        <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
           Pre-Booking Request
         </CustomText>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <CustomText style={styles.statusText}>{item.status.toUpperCase()}</CustomText>
+          <CustomText variant="h7" style={styles.statusText}>{item.status.toUpperCase()}</CustomText>
         </View>
       </View>
 
@@ -167,14 +167,14 @@ const PreBookingManagementScreen: React.FC = () => {
       </View>
 
       <View style={styles.dateTime}>
-        <Icon name="calendar-outline" size={RFValue(16)} color={colors.textSecondary} />
-        <CustomText variant="h8" style={{ color: colors.textSecondary, marginLeft: 8 }}>
+        <Icon name="calendar-outline" size={RFValue(14)} color={colors.textSecondary} />
+        <CustomText variant="h8" style={{ color: colors.textSecondary, marginLeft: 6 }}>
           {new Date(item.bookingDate).toLocaleDateString()}
         </CustomText>
       </View>
 
       {item.notes && (
-        <CustomText variant="h8" style={{ color: colors.textSecondary, marginTop: 8 }}>
+        <CustomText variant="h8" style={{ color: colors.textSecondary, marginTop: 6 }}>
           Notes: {item.notes}
         </CustomText>
       )}
@@ -184,14 +184,14 @@ const PreBookingManagementScreen: React.FC = () => {
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonConfirm]}
             onPress={() => handleStatusUpdate(item.id, 'confirmed')}>
-            <CustomText style={{ color: colors.success }} fontFamily={Fonts.SemiBold}>
+            <CustomText variant="h6" style={{ color: colors.success }} fontFamily={Fonts.SemiBold}>
               Confirm
             </CustomText>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonCancel]}
             onPress={() => handleStatusUpdate(item.id, 'cancelled')}>
-            <CustomText style={{ color: colors.error }} fontFamily={Fonts.SemiBold}>
+            <CustomText variant="h6" style={{ color: colors.error }} fontFamily={Fonts.SemiBold}>
               Cancel
             </CustomText>
           </TouchableOpacity>
@@ -222,9 +222,9 @@ const PreBookingManagementScreen: React.FC = () => {
             ]}
             onPress={() => setStatusFilter(status)}>
             <CustomText
+              variant="h6"
               style={{
                 color: statusFilter === status ? '#fff' : colors.text,
-                fontSize: RFValue(12),
                 fontFamily: Fonts.Medium,
               }}>
               {status.charAt(0).toUpperCase() + status.slice(1)}

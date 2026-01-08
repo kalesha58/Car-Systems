@@ -20,6 +20,8 @@ import {getVehicleById} from '@service/vehicleService';
 import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {openDealerChat} from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import { useNavigation } from '@react-navigation/native';
+import PreBookingModal from '@components/vehicle/PreBookingModal';
 
 type VehicleDetailRouteParams = {
   VehicleDetail: {
@@ -38,9 +40,11 @@ const VehicleDetail: React.FC = () => {
   const [vehicle, setVehicle] = useState<IDealerVehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const navigation = useNavigation();
   const [chatLoading, setChatLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [showPreBookingModal, setShowPreBookingModal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -145,6 +149,19 @@ const VehicleDetail: React.FC = () => {
           marginTop: 12,
         },
         title: {flex: 1, marginRight: 8},
+        headerActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        },
+        headerActionButton: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: Colors.secondary + '20',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
         categoryTag: {
           paddingHorizontal: 12,
           paddingVertical: 6,
@@ -247,7 +264,7 @@ const VehicleDetail: React.FC = () => {
           borderTopColor: colors.border,
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 16,
+          gap: 12,
         },
         priceContainer: {flex: 1},
         priceLabel: {fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular},
@@ -256,15 +273,33 @@ const VehicleDetail: React.FC = () => {
           fontFamily: Fonts.Bold,
           color: Colors.secondary,
         },
+        actionButtonsContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        },
+        actionButton: {
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        testDriveButton: {
+          backgroundColor: Colors.secondary,
+        },
+        preBookingButton: {
+          backgroundColor: '#FF9800',
+        },
         chatButton: {
           height: 48,
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
           borderRadius: 24,
           backgroundColor: Colors.secondary,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
-          gap: 8,
+          gap: 6,
         },
         dealerText: {marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium},
         detailRow: {
@@ -430,11 +465,21 @@ const VehicleDetail: React.FC = () => {
                       ? 'Vehicle not found'
                       : 'Vehicle not available'}
                 </CustomText>
-                {vehicle?.vehicleType && (
-                  <View style={styles.categoryTag}>
-                    <CustomText style={styles.categoryText}>{vehicle.vehicleType}</CustomText>
-                  </View>
-                )}
+                <View style={styles.headerActions}>
+                  {vehicle?.availability === 'available' && (
+                    <TouchableOpacity
+                      style={styles.headerActionButton}
+                      onPress={() => setShowPreBookingModal(true)}
+                      activeOpacity={0.7}>
+                      <Icon name="bookmark-outline" size={RFValue(18)} color={Colors.secondary} />
+                    </TouchableOpacity>
+                  )}
+                  {vehicle?.vehicleType && (
+                    <View style={styles.categoryTag}>
+                      <CustomText style={styles.categoryText}>{vehicle.vehicleType}</CustomText>
+                    </View>
+                  )}
+                </View>
               </View>
 
           {/* Key Metrics */}
@@ -599,18 +644,50 @@ const VehicleDetail: React.FC = () => {
             {vehicle ? `₹${vehicle.price?.toLocaleString()}` : '—'}
           </CustomText>
         </View>
-        <TouchableOpacity
-          disabled={isChatDisabled}
-          onPress={onChatPress}
-          activeOpacity={0.8}
-          style={[styles.chatButton, isChatDisabled ? {opacity: 0.6} : null]}>
-          <Icon name="chatbubbles-outline" size={RFValue(18)} color="#fff" />
-          <CustomText fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
-            {chatLoading ? 'Opening…' : 'Chat Dealer'}
-          </CustomText>
-        </TouchableOpacity>
+        <View style={styles.actionButtonsContainer}>
+          {vehicle?.allowTestDrive && (
+            <TouchableOpacity
+              onPress={() => {
+                (navigation as any).navigate('TestDriveBooking', { vehicleId: vehicle.id || vehicle._id });
+              }}
+              activeOpacity={0.8}
+              style={[styles.actionButton, styles.testDriveButton]}>
+              <Icon name="car-sport-outline" size={RFValue(16)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          {vehicle?.availability === 'available' && (
+            <TouchableOpacity
+              onPress={() => {
+                (navigation as any).navigate('PreBooking', { vehicleId: vehicle.id || vehicle._id });
+              }}
+              activeOpacity={0.8}
+              style={[styles.actionButton, styles.preBookingButton]}>
+              <Icon name="bookmark-outline" size={RFValue(16)} color="#fff" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            disabled={isChatDisabled}
+            onPress={onChatPress}
+            activeOpacity={0.8}
+            style={[styles.chatButton, isChatDisabled ? {opacity: 0.6} : null]}>
+            <Icon name="chatbubbles-outline" size={RFValue(18)} color="#fff" />
+            <CustomText fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+              {chatLoading ? 'Opening…' : 'Chat'}
+            </CustomText>
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* Pre-Booking Modal */}
+      {vehicle && (
+        <PreBookingModal
+          visible={showPreBookingModal}
+          onClose={() => setShowPreBookingModal(false)}
+          vehicleId={vehicle.id || vehicle._id || vehicleId}
+          vehicleName={`${vehicle.brand} ${vehicle.vehicleModel}`}
+          availability={vehicle.availability}
+        />
+      )}
     </View>
   );
 };

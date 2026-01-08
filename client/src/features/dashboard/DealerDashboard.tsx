@@ -55,7 +55,6 @@ import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import withLiveOrder from '@features/delivery/withLiveOrder';
-import QuickActionsModal from '@components/dashboard/QuickActionsModal';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -80,7 +79,6 @@ const DealerDashboard: React.FC = () => {
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showQuickActions, setShowQuickActions] = useState(false);
 
   const backToTopStyle = useAnimatedStyle(() => {
     const isScrollingUp =
@@ -327,18 +325,6 @@ const DealerDashboard: React.FC = () => {
     (navigation as any).navigate('DealerTabs', { screen: 'Orders' });
   };
 
-  const handleTestDrivePress = () => {
-    (navigation as any).navigate('TestDriveManagement');
-  };
-
-  const handleUpcomingBookingsPress = () => {
-    (navigation as any).navigate('UpcomingBookings');
-  };
-
-  const handlePreBookingsPress = () => {
-    (navigation as any).navigate('PreBookingManagement');
-  };
-
   if (isLoadingDealer) {
     return <DashboardSkeleton />;
   }
@@ -433,22 +419,6 @@ const DealerDashboard: React.FC = () => {
               subtitle={dealer?.address || ''}
             />
             <StickySearchBar />
-            
-            {/* Quick Actions Button */}
-            <View style={styles.quickActionsContainer}>
-              <TouchableOpacity
-                style={[styles.quickActionsButton, { backgroundColor: theme.secondary }]}
-                onPress={() => setShowQuickActions(true)}
-                activeOpacity={0.7}>
-                <IconIonicons name="flash-outline" size={RFValue(20)} color="#fff" />
-                <CustomText
-                  variant="h8"
-                  fontFamily={Fonts.SemiBold}
-                  style={{ color: '#fff', marginLeft: 6 }}>
-                  Quick Actions
-                </CustomText>
-              </TouchableOpacity>
-            </View>
             
             {/* Train Effect Below Search Bar */}
             {seasonalTheme.animations.overlay && (
@@ -685,14 +655,6 @@ const DealerDashboard: React.FC = () => {
             </View>
           </CollapsibleScrollView>
         </CollapsibleContainer>
-        
-        <QuickActionsModal
-          visible={showQuickActions}
-          onClose={() => setShowQuickActions(false)}
-          onTestDrivePress={handleTestDrivePress}
-          onUpcomingBookingsPress={handleUpcomingBookingsPress}
-          onPreBookingsPress={handlePreBookingsPress}
-        />
       </>
     </NoticeAnimation>
   );
@@ -832,19 +794,6 @@ const styles = StyleSheet.create({
   },
   inventoryCardIcon: {
     marginBottom: 8,
-  },
-  quickActionsContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  quickActionsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
   },
 });
 
