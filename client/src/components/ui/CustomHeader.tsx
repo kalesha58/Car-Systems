@@ -14,6 +14,7 @@ interface CustomHeaderProps {
   rightComponent?: ReactNode;
   onSearchPress?: () => void;
   transparent?: boolean;
+  showBackButton?: boolean;
 }
 
 const CustomHeader: FC<CustomHeaderProps> = ({
@@ -22,6 +23,7 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   rightComponent,
   onSearchPress,
   transparent = false,
+  showBackButton = true,
 }) => {
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
@@ -49,9 +51,13 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   return (
     <View style={{paddingTop: transparent ? insets.top : insets.top, backgroundColor: transparent ? 'transparent' : colors.cardBackground}}>
       <View style={styles.flexRow}>
-        <Pressable onPress={() => goBack()}>
-          <Icon name="chevron-back" color={colors.text} size={RFValue(16)} />
-        </Pressable>
+        {showBackButton ? (
+          <Pressable onPress={() => goBack()}>
+            <Icon name="chevron-back" color={colors.text} size={RFValue(16)} />
+          </Pressable>
+        ) : (
+          <View style={{width: RFValue(16)}} />
+        )}
         <CustomText
           style={styles.text}
           variant="h5"

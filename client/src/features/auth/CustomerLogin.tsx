@@ -20,7 +20,7 @@ import ProductSlider from '@components/login/ProductSlider';
 import { Colors, Fonts, lightColors } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { resetAndNavigate } from '@utils/NavigationUtils';
+import { resetAndNavigate, replace } from '@utils/NavigationUtils';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
@@ -214,9 +214,32 @@ const CustomerLogin = () => {
             }
           }
         } else {
-          // For regular users (not dealers), navigate to AddUserVehicle screen after login
-          // User can add vehicle or skip, then proceed to dashboard
-          resetAndNavigate('AddUserVehicle');
+          // For regular users (not dealers), check if they have vehicles
+          const userId = currentUser.id || currentUser._id;
+          if (userRole === 'user' && userId) {
+            try {
+              const userIdString = String(userId);
+              const { getUserVehicles } = await import('@service/vehicleService');
+              const vehiclesData = await getUserVehicles();
+              // Response is directly an array, not an object with vehicles property
+              const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
+              
+              if (hasVehicles) {
+                // User already has vehicles, navigate to MainTabs
+                resetAndNavigate('MainTabs');
+              } else {
+                // User doesn't have vehicles, replace login screen with AddUserVehicle with fromLogin param
+                await replace('AddUserVehicle', { fromLogin: true });
+              }
+            } catch (error: any) {
+              // If check fails, navigate to AddUserVehicle (safer default)
+              console.error('Error checking user vehicles:', error);
+              resetAndNavigate('AddUserVehicle');
+            }
+          } else {
+            // For regular users without userId, navigate to AddUserVehicle screen after login
+            resetAndNavigate('AddUserVehicle');
+          }
         }
       } else {
         // If no role found, navigate to AddUserVehicle

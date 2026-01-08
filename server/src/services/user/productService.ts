@@ -184,27 +184,40 @@ export const getAllProductsForUsers = async (
     const userIds = [...new Set(products.map((p) => p.userId))];
 
     // Fetch all business registrations for these users in one query
+    // Filter to only include approved registrations with open stores
     const businessRegistrations = await BusinessRegistration.find({
       userId: { $in: userIds },
       status: 'approved',
+      storeOpen: { $ne: false }, // Include true or undefined (defaults to true)
     });
 
+    // Create a set of userIds with open stores for quick lookup
+    const openStoreUserIds = new Set<string>();
     // Create a map of userId to dealer info for quick lookup
     const dealerInfoMap = new Map<string, IDealerInfo>();
     businessRegistrations.forEach((reg) => {
-      dealerInfoMap.set(reg.userId, {
-        id: (reg._id as any).toString(),
-        businessName: reg.businessName,
-        type: reg.type,
-        phone: reg.phone,
-        address: reg.address,
-        gst: reg.gst,
-      });
+      // Only include if storeOpen is true (or undefined which defaults to true)
+      if (reg.storeOpen !== false) {
+        openStoreUserIds.add(reg.userId);
+        dealerInfoMap.set(reg.userId, {
+          id: (reg._id as any).toString(),
+          businessName: reg.businessName,
+          type: reg.type,
+          phone: reg.phone,
+          address: reg.address,
+          gst: reg.gst,
+        });
+      }
     });
+
+    // Filter products to only include those from dealers with open stores
+    const productsFromOpenStores = products.filter((productDoc) => 
+      openStoreUserIds.has(productDoc.userId)
+    );
 
     // Convert products and attach dealer info
     const productsWithDealer = await Promise.all(
-      products.map(async (productDoc) => {
+      productsFromOpenStores.map(async (productDoc) => {
         const category = await getCategoryByIdSafe(productDoc.categoryId);
         const dealerInfo = dealerInfoMap.get(productDoc.userId) || null;
 
@@ -229,13 +242,19 @@ export const getAllProductsForUsers = async (
       }),
     );
 
+    // Recalculate total for pagination (products from open stores only)
+    const totalFromOpenStores = await Product.countDocuments({
+      ...filter,
+      userId: { $in: Array.from(openStoreUserIds) },
+    });
+
     return {
       products: productsWithDealer,
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: totalFromOpenStores,
+        totalPages: Math.ceil(totalFromOpenStores / limit),
       },
     };
   } catch (error) {
@@ -257,6 +276,16 @@ export const getProductByIdForUsers = async (productId: string): Promise<IProduc
 
     if (product.status !== 'active') {
       throw new NotFoundError('Product not available');
+    }
+
+    // Check if dealer's store is open
+    const businessRegistration = await BusinessRegistration.findOne({
+      userId: product.userId,
+      status: 'approved',
+    });
+
+    if (!businessRegistration || businessRegistration.storeOpen === false) {
+      throw new NotFoundError('Product not available - store is closed');
     }
 
     return await productToIProductWithDealer(product);

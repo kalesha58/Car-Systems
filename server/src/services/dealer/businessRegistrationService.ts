@@ -5,6 +5,7 @@ import {
   ICreateBusinessRegistrationRequest,
   IUpdateBusinessRegistrationRequest,
   IUpdateBusinessRegistrationStatusRequest,
+  IUpdateStoreStatusRequest,
 } from '../../types/dealer/businessRegistration';
 import { NotFoundError, ConflictError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
@@ -27,6 +28,7 @@ export const businessRegistrationToInterface = (
     shopPhotos: doc.shopPhotos || [],
     documents: doc.documents || [],
     status: doc.status,
+    storeOpen: doc.storeOpen !== undefined ? doc.storeOpen : true,
     userId: doc.userId,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -446,6 +448,44 @@ export const updateBusinessRegistrationStatus = async (
     return businessRegistrationToInterface(registration);
   } catch (error) {
     logger.error('Error updating business registration status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update store status (open/close)
+ */
+export const updateStoreStatus = async (
+  id: string,
+  userId: string,
+  data: IUpdateStoreStatusRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    const registration = await BusinessRegistration.findById(id);
+
+    if (!registration) {
+      throw new NotFoundError('Business registration not found');
+    }
+
+    // Verify ownership
+    if (registration.userId !== userId) {
+      throw new AppError('Unauthorized to update this registration', 403);
+    }
+
+    // Only allow updates when business registration is approved
+    if (registration.status !== 'approved') {
+      throw new AppError('Can only update store status when business registration is approved', 403);
+    }
+
+    registration.storeOpen = data.storeOpen;
+
+    await registration.save();
+
+    logger.info(`Store status updated: ${id} - ${data.storeOpen ? 'open' : 'closed'}`);
+
+    return businessRegistrationToInterface(registration);
+  } catch (error) {
+    logger.error('Error updating store status:', error);
     throw error;
   }
 };

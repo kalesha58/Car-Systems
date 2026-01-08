@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -27,11 +27,18 @@ import {resetAndNavigate} from '@utils/NavigationUtils';
 const MAX_IMAGES = 3;
 const MIN_IMAGES = 1;
 
+interface RouteParams {
+  fromLogin?: boolean;
+}
+
 const AddUserVehicleScreen: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const {colors} = useTheme();
   const {showSuccess, showError} = useToast();
   const {t} = useTranslation();
+  const params = (route.params as RouteParams) || {};
+  const fromLogin = params.fromLogin || false;
 
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
@@ -357,7 +364,7 @@ const AddUserVehicleScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Add Your Vehicle" />
+      <CustomHeader title="Add Your Vehicle" showBackButton={!fromLogin} />
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}

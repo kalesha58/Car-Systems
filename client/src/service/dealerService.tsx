@@ -182,6 +182,7 @@ export interface IBusinessRegistration {
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
   status: string;
+  storeOpen?: boolean;
   approvalCode?: string;
   userId: string;
   createdAt: string;
@@ -313,6 +314,28 @@ export const updateBusinessRegistration = async (
       return response.data.Response;
     }
     throw new Error('Failed to update business registration');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export interface IUpdateStoreStatusRequest {
+  storeOpen: boolean;
+}
+
+export const updateStoreStatus = async (
+  registrationId: string,
+  data: IUpdateStoreStatusRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    const response = await appAxios.patch<IBusinessRegistrationResponse>(
+      `/dealer/business-registration/${registrationId}/store-status`,
+      data,
+    );
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update store status');
   } catch (error) {
     throw error;
   }

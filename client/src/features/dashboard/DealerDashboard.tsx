@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Animated as RNAnimated, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated as RNAnimated, Platform, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
@@ -16,6 +16,7 @@ import {
   getDealerVehicles,
   getBusinessRegistrationByUserId,
   getBookings,
+  updateStoreStatus,
   IBusinessRegistration,
 } from '@service/dealerService';
 import { IDealer, IBooking } from '../../types/dealer/IDealer';
@@ -55,6 +56,7 @@ import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import withLiveOrder from '@features/delivery/withLiveOrder';
+import { useToast } from '@hooks/useToast';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -79,6 +81,9 @@ const DealerDashboard: React.FC = () => {
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [storeOpen, setStoreOpen] = useState<boolean>(true);
+  const [isUpdatingStoreStatus, setIsUpdatingStoreStatus] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const backToTopStyle = useAnimatedStyle(() => {
     const isScrollingUp =
@@ -141,6 +146,7 @@ const DealerDashboard: React.FC = () => {
         };
         setDealer(dealerData);
         setBusinessRegistration(response);
+        setStoreOpen(response.storeOpen !== undefined ? response.storeOpen : true);
       } else {
         // No registration found - allow dashboard to render with empty states
         setDealer(undefined);
@@ -218,6 +224,40 @@ const DealerDashboard: React.FC = () => {
     () => bookings?.filter((booking) => booking.dealerId === dealer?.id) || [],
     [bookings, dealer?.id],
   );
+
+  const handleStoreToggle = useCallback(async (value: boolean) => {
+    if (!businessRegistration?.id || isUpdatingStoreStatus) {
+      return;
+    }
+
+    const previousValue = storeOpen;
+    // Optimistically update UI
+    setStoreOpen(value);
+
+    try {
+      setIsUpdatingStoreStatus(true);
+      const updated = await updateStoreStatus(businessRegistration.id, { storeOpen: value });
+      
+      // Update business registration state
+      setBusinessRegistration(updated);
+      
+      showSuccess(
+        value
+          ? t('dealer.storeOpen') || 'Store is now open'
+          : t('dealer.storeClosed') || 'Store is now closed',
+      );
+    } catch (error) {
+      // Revert on error
+      setStoreOpen(previousValue);
+      showError(
+        error instanceof Error
+          ? error.message
+          : t('dealer.pleaseTryAgain') || 'Failed to update store status. Please try again.',
+      );
+    } finally {
+      setIsUpdatingStoreStatus(false);
+    }
+  }, [businessRegistration?.id, storeOpen, isUpdatingStoreStatus, t, showSuccess, showError]);
 
   const totalProducts = useMemo(() => products?.length || 0, [products]);
   const totalVehicles = useMemo(() => vehicles?.length || 0, [vehicles]);
@@ -417,6 +457,25 @@ const DealerDashboard: React.FC = () => {
               }}
               title={dealer?.businessName || user?.name || ''}
               subtitle={dealer?.address || ''}
+              rightComponent={
+                businessRegistration && businessRegistration.status === 'approved' ? (
+                  <View style={styles.headerToggleContainer}>
+                    <Switch
+                      value={storeOpen}
+                      onValueChange={handleStoreToggle}
+                      disabled={isUpdatingStoreStatus}
+                      trackColor={{ false: 'rgba(255,255,255,0.3)', true: 'rgba(255,255,255,0.5)' }}
+                      thumbColor={theme.white}
+                      ios_backgroundColor="rgba(255,255,255,0.3)"
+                    />
+                    <CustomText
+                      style={[styles.headerToggleLabel, { color: '#fff' }]}
+                      numberOfLines={1}>
+                      {storeOpen ? t('dealer.storeOpen') : t('dealer.storeClosed')}
+                    </CustomText>
+                  </View>
+                ) : undefined
+              }
             />
             <StickySearchBar />
             
@@ -794,6 +853,22 @@ const styles = StyleSheet.create({
   },
   inventoryCardIcon: {
     marginBottom: 8,
+  },
+  headerToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  headerToggleLabel: {
+    fontSize: RFValue(10),
+    fontFamily: Fonts.SemiBold,
+    maxWidth: 70,
   },
 });
 

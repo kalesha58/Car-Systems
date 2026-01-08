@@ -24,18 +24,6 @@ interface IQuickFiltersProps {
 
 const quickFilters: IQuickFilter[] = [
   {
-    id: 'under_1000',
-    label: 'Under ₹1000',
-    icon: 'pricetag-outline',
-    filter: {maxPrice: 1000},
-  },
-  {
-    id: 'under_5000',
-    label: 'Under ₹5000',
-    icon: 'pricetag-outline',
-    filter: {maxPrice: 5000},
-  },
-  {
     id: 'new_arrivals',
     label: 'New Arrivals',
     icon: 'sparkles-outline',

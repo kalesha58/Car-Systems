@@ -8,6 +8,7 @@ import {
   getBusinessRegistrationByUserIdController,
   updateBusinessRegistrationController,
   updateBusinessRegistrationStatusController,
+  updateStoreStatusController,
   deleteBusinessRegistrationController,
 } from '../../controllers/dealer/businessRegistrationController';
 
@@ -234,6 +235,45 @@ router.put('/:id', checkDealerRoleForUpdate, updateBusinessRegistrationControlle
 
 // All other routes require approved business registration
 router.use(dealerMiddleware);
+
+/**
+ * @swagger
+ * /api/dealer/business-registration/{id}/store-status:
+ *   patch:
+ *     summary: Update store status (open/close)
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [storeOpen]
+ *             properties:
+ *               storeOpen:
+ *                 type: boolean
+ *                 description: Store open status (true = open, false = closed)
+ *     responses:
+ *       200:
+ *         description: Store status updated successfully
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Business registration not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Dealer access required or business registration not approved
+ */
+router.patch('/:id/store-status', updateStoreStatusController);
 
 /**
  * @swagger

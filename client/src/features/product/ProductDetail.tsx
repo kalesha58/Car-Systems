@@ -16,6 +16,7 @@ import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { getProductById } from '@service/productService';
+import { getBusinessRegistrationByUserId } from '@service/dealerService';
 import { IProduct } from '../../types/product/IProduct';
 import ProductImageCarousel from '@components/product/ProductImageCarousel';
 import AnimatedProductHeader from '@components/product/AnimatedProductHeader';
@@ -53,6 +54,7 @@ const ProductDetail: React.FC = () => {
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [dealer, setDealer] = useState<IDealer | null>(null);
   const [loadingDealer, setLoadingDealer] = useState<boolean>(false);
+  const [storeOpen, setStoreOpen] = useState<boolean>(true);
   const { colors } = useTheme();
   const { addItem } = useCartStore();
   const insets = useSafeAreaInsets();
@@ -88,8 +90,13 @@ const ProductDetail: React.FC = () => {
         } else {
           setError('Product not found');
         }
-      } catch (err) {
-        setError('Failed to load product');
+      } catch (err: any) {
+        // Check if error is due to closed store
+        if (err?.response?.data?.message?.includes('closed') || err?.message?.includes('closed')) {
+          setError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
+        } else {
+          setError('Failed to load product');
+        }
       } finally {
         setLoading(false);
       }
@@ -103,6 +110,24 @@ const ProductDetail: React.FC = () => {
   const fetchDealerInfo = async (dealerId: string) => {
     try {
       setLoadingDealer(true);
+      
+      // Fetch business registration to check storeOpen status
+      // dealerId in products is actually the userId
+      try {
+        const businessRegistration = await getBusinessRegistrationByUserId(dealerId);
+        if (businessRegistration) {
+          setStoreOpen(businessRegistration.storeOpen !== undefined ? businessRegistration.storeOpen : true);
+        } else {
+          // No registration found - default to open
+          setStoreOpen(true);
+        }
+      } catch (regErr) {
+        // Business registration not found or error - default to open
+        console.log('Error fetching business registration:', regErr);
+        setStoreOpen(true);
+      }
+
+      // Fetch dealer info for display
       const response = await getDealerById(dealerId);
       if (response.success && response.Response) {
         // Handle both single dealer and dealer list response
@@ -123,6 +148,12 @@ const ProductDetail: React.FC = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
+    // Check if store is closed
+    if (!storeOpen) {
+      showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
+      return;
+    }
+
     // Check stock availability
     if (product.stock === 0) {
       showError('Product is out of stock');
@@ -138,6 +169,12 @@ const ProductDetail: React.FC = () => {
 
   const handleBuyNow = () => {
     if (!product) return;
+
+    // Check if store is closed
+    if (!storeOpen) {
+      showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
+      return;
+    }
 
     // Check stock availability
     if (product.stock === 0) {
@@ -736,7 +773,16 @@ const ProductDetail: React.FC = () => {
                 Inclusive of all taxes
               </CustomText>
             </View>
-            {product.stock === 0 ? (
+            {!storeOpen ? (
+              <TouchableOpacity
+                style={[styles.actionButtonsAddToCart, styles.actionButtonsDisabled]}
+                disabled>
+                <Icon name="close-circle-outline" size={RFValue(16)} color={colors.textSecondary} />
+                <CustomText style={styles.actionButtonsAddToCartText}>
+                  {t('dealer.storeCurrentlyClosed') || 'Store is currently closed'}
+                </CustomText>
+              </TouchableOpacity>
+            ) : product.stock === 0 ? (
               <TouchableOpacity
                 style={[styles.actionButtonsAddToCart, styles.actionButtonsDisabled]}
                 disabled>

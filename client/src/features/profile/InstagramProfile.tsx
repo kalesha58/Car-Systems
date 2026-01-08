@@ -16,23 +16,31 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {navigate} from '@utils/NavigationUtils';
 import InstagramProfileHeader from './sections/InstagramProfileHeader';
 import PostGrid from './sections/PostGrid';
+import VehicleGrid from './sections/VehicleGrid';
 import {getUserStats, IUserStats} from '@service/profileService';
 import {getPosts} from '@service/postService';
+import {getUserVehicles} from '@service/vehicleService';
 import {IPost} from '../../types/post/IPost';
+import {IUserVehicle} from '../../types/vehicle/IVehicle';
 import {useTranslation} from 'react-i18next';
+
+type TabType = 'posts' | 'vehicles';
 
 const InstagramProfile: React.FC = () => {
   const {user} = useAuthStore();
   const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const {t} = useTranslation();
+  const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [stats, setStats] = useState<IUserStats>({
     postsCount: 0,
     vehiclesCount: 0,
     ordersCount: 0,
   });
   const [posts, setPosts] = useState<IPost[]>([]);
+  const [vehicles, setVehicles] = useState<IUserVehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async (showRefreshing = false) => {
@@ -63,14 +71,55 @@ const InstagramProfile: React.FC = () => {
     }
   };
 
+  const fetchVehicles = async () => {
+    // Only fetch if not already loaded
+    if (vehicles.length > 0) {
+      return;
+    }
+
+    try {
+      setVehiclesLoading(true);
+      const vehiclesData = await getUserVehicles();
+      if (vehiclesData?.success && vehiclesData?.Response && Array.isArray(vehiclesData.Response)) {
+        setVehicles(vehiclesData.Response);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+    } finally {
+      setVehiclesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.id) {
       fetchData();
     }
   }, [user?.id]);
 
-  const handleRefresh = () => {
-    fetchData(true);
+  useEffect(() => {
+    // Fetch vehicles when vehicles tab is selected
+    if (activeTab === 'vehicles' && user?.id) {
+      fetchVehicles();
+    }
+  }, [activeTab, user?.id]);
+
+  const handleRefresh = async () => {
+    if (activeTab === 'posts') {
+      await fetchData(true);
+    } else {
+      // Refresh vehicles
+      try {
+        setRefreshing(true);
+        const vehiclesData = await getUserVehicles();
+        if (vehiclesData?.success && vehiclesData?.Response && Array.isArray(vehiclesData.Response)) {
+          setVehicles(vehiclesData.Response);
+        }
+      } catch (error) {
+        console.error('Error refreshing vehicles:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    }
   };
 
   const handlePostPress = (post: IPost) => {
@@ -79,10 +128,10 @@ const InstagramProfile: React.FC = () => {
     console.log('Post pressed:', post.id);
   };
 
-  const handleHamburgerPress = () => {
-    // Navigate to settings/profile menu
-    // We'll show the settings screen with profile sections
-    navigate('ProfileSettings');
+  const handleVehiclePress = (vehicle: IUserVehicle) => {
+    // Navigate to vehicle detail if needed
+    // For now, just log
+    console.log('Vehicle pressed:', vehicle.id);
   };
 
   const handleSettingsPress = () => {
@@ -100,17 +149,13 @@ const InstagramProfile: React.FC = () => {
         header: {
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           paddingHorizontal: 16,
           paddingTop: insets.top + 8,
           paddingBottom: 12,
           borderBottomWidth: 0.5,
           borderBottomColor: isDark ? colors.border : '#DBDBDB',
           backgroundColor: colors.background,
-        },
-        headerLeft: {
-          flexDirection: 'row',
-          alignItems: 'center',
         },
         headerRight: {
           flexDirection: 'row',
@@ -130,13 +175,18 @@ const InstagramProfile: React.FC = () => {
           borderTopWidth: 0.5,
           borderBottomWidth: 0.5,
           borderColor: isDark ? colors.border : '#DBDBDB',
+          gap: 32,
         },
         gridNavIcon: {
           padding: 8,
+          position: 'relative',
         },
         gridNavIconActive: {
           borderBottomWidth: 1,
           borderBottomColor: colors.text,
+        },
+        gridNavIconInactive: {
+          opacity: 0.5,
         },
       }),
     [colors, isDark, insets.top],
@@ -146,14 +196,6 @@ const InstagramProfile: React.FC = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={handleHamburgerPress}
-            activeOpacity={0.7}>
-            <Icon name="menu" size={RFValue(24)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.headerButton}
@@ -186,14 +228,36 @@ const InstagramProfile: React.FC = () => {
         {/* Grid Navigation */}
         <View style={styles.gridNav}>
           <TouchableOpacity
-            style={[styles.gridNavIcon, styles.gridNavIconActive]}
+            style={[
+              styles.gridNavIcon,
+              activeTab === 'posts' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+            ]}
+            onPress={() => setActiveTab('posts')}
             activeOpacity={0.7}>
             <Icon name="grid" size={RFValue(24)} color={colors.text} />
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.gridNavIcon,
+              activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+            ]}
+            onPress={() => setActiveTab('vehicles')}
+            activeOpacity={0.7}>
+            <Icon name="car" size={RFValue(24)} color={colors.text} />
+          </TouchableOpacity>
         </View>
 
-        {/* Post Grid */}
-        <PostGrid posts={posts} loading={loading} onPostPress={handlePostPress} />
+        {/* Content Grid */}
+        {activeTab === 'posts' ? (
+          <PostGrid posts={posts} loading={loading} onPostPress={handlePostPress} />
+        ) : (
+          <VehicleGrid
+            vehicles={vehicles}
+            loading={vehiclesLoading}
+            refreshing={refreshing}
+            onVehiclePress={handleVehiclePress}
+          />
+        )}
       </ScrollView>
     </View>
   );

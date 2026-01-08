@@ -24,6 +24,7 @@ export interface IBusinessRegistration {
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
   status: BusinessRegistrationStatus;
+  storeOpen: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -53,6 +54,10 @@ export interface IUpdateBusinessRegistrationRequest {
 
 export interface IUpdateBusinessRegistrationStatusRequest {
   status: BusinessRegistrationStatus;
+}
+
+export interface IUpdateStoreStatusRequest {
+  storeOpen: boolean;
 }
 
 

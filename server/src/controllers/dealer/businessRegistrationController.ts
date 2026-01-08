@@ -6,6 +6,7 @@ import {
   getBusinessRegistrationByUserId,
   updateBusinessRegistration,
   updateBusinessRegistrationStatus,
+  updateStoreStatus,
   deleteBusinessRegistration,
 } from '../../services/dealer/businessRegistrationService';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
@@ -122,6 +123,24 @@ export const updateBusinessRegistrationStatusController = async (
 ): Promise<void> => {
   try {
     const registration = await updateBusinessRegistrationStatus(req.params.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      Response: registration,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const updateStoreStatusController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId || '';
+    const registration = await updateStoreStatus(req.params.id, userId, req.body);
 
     res.status(200).json({
       success: true,

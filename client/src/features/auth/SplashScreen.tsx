@@ -55,7 +55,31 @@ const SplashScreen: FC = () => {
 
   const navigateByRole = async (userRole: string | null, userId?: string) => {
     if (userRole === 'user') {
-      resetAndNavigate('MainTabs');
+      // Check if user has vehicles before navigating
+      if (userId) {
+        try {
+          const userIdString = String(userId);
+          const { getUserVehicles } = await import('@service/vehicleService');
+          const vehiclesData = await getUserVehicles();
+          // Response is directly an array, not an object with vehicles property
+          const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
+          
+          if (hasVehicles) {
+            // User already has vehicles, navigate to MainTabs
+            resetAndNavigate('MainTabs');
+          } else {
+            // User doesn't have vehicles, navigate to AddUserVehicle
+            resetAndNavigate('AddUserVehicle');
+          }
+        } catch (error: any) {
+          // If check fails, navigate to AddUserVehicle (safer default)
+          console.error('Error checking user vehicles in SplashScreen:', error);
+          resetAndNavigate('AddUserVehicle');
+        }
+      } else {
+        // No userId, navigate to AddUserVehicle
+        resetAndNavigate('AddUserVehicle');
+      }
     } else if (userRole === 'dealer') {
       // Check if dealer has business registration
       if (userId) {

@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import React, {FC, useMemo} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -12,6 +11,7 @@ import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {IPost} from '../../../types/post/IPost';
 import {Dimensions} from 'react-native';
+import SkeletonLoader from '@components/ui/SkeletonLoader';
 
 interface PostGridProps {
   posts: IPost[];
@@ -64,9 +64,14 @@ const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
       color: colors.textSecondary,
       textAlign: 'center',
     },
-    loadingContainer: {
-      paddingVertical: 40,
-      alignItems: 'center',
+    skeletonGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    skeletonItem: {
+      width: itemSize,
+      height: itemSize,
+      backgroundColor: colors.cardBackground,
     },
   });
 
@@ -109,9 +114,17 @@ const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
   );
 
   if (loading) {
+    // Show 9 skeleton items (3x3 grid like Instagram)
+    const skeletonCount = 9;
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.secondary} />
+      <View style={styles.container}>
+        <View style={styles.skeletonGrid}>
+          {Array.from({length: skeletonCount}, (_, index) => (
+            <View key={`skeleton-${index}`} style={styles.skeletonItem}>
+              <SkeletonLoader width="100%" height="100%" borderRadius={0} />
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
