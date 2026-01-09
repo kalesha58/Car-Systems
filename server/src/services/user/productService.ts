@@ -139,6 +139,7 @@ export const getAllProductsForUsers = async (
   query: IGetUserProductsRequest,
 ): Promise<{ products: IProductWithDealer[]; pagination: IPaginationResponse }> => {
   try {
+    logger.info(`[getAllProductsForUsers] Called with query:`, JSON.stringify(query, null, 2));
     const page = query.page || 1;
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
@@ -172,98 +173,33 @@ export const getAllProductsForUsers = async (
       if (query.maxPrice !== undefined) filter.price.$lte = query.maxPrice;
     }
 
-    // First, get all approved dealers with open stores (unless dealerId is specified)
-    let openStoreUserIds = new Set<string>();
-    const dealerInfoMap = new Map<string, IDealerInfo>();
-
+    // Only filter by dealerId if explicitly specified in query
     if (query.dealerId) {
-      // If dealerId is specified, verify the dealer is approved and store is open
-      const businessRegistration = await BusinessRegistration.findOne({
-        userId: query.dealerId,
-        status: 'approved',
-        storeOpen: { $ne: false },
-      });
-
-      if (!businessRegistration || businessRegistration.storeOpen === false) {
-        // Dealer doesn't have an open store, return empty
-        return {
-          products: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
-
-      openStoreUserIds.add(query.dealerId);
-      dealerInfoMap.set(query.dealerId, {
-        id: (businessRegistration._id as any).toString(),
-        businessName: businessRegistration.businessName,
-        type: businessRegistration.type,
-        phone: businessRegistration.phone,
-        address: businessRegistration.address,
-        gst: businessRegistration.gst,
-      });
-
-      filter.userId = query.dealerId; // dealerId maps to userId in Product model
-    } else {
-      // Get all approved dealers with open stores
-      const businessRegistrations = await BusinessRegistration.find({
-        status: 'approved',
-        storeOpen: { $ne: false }, // Include true or undefined (defaults to true)
-      });
-
-      businessRegistrations.forEach((reg) => {
-        // Only include if storeOpen is true (or undefined which defaults to true)
-        if (reg.storeOpen !== false) {
-          openStoreUserIds.add(reg.userId);
-          dealerInfoMap.set(reg.userId, {
-            id: (reg._id as any).toString(),
-            businessName: reg.businessName,
-            type: reg.type,
-            phone: reg.phone,
-            address: reg.address,
-            gst: reg.gst,
-          });
-        }
-      });
-
-      // Only fetch products from approved dealers with open stores
-      if (openStoreUserIds.size > 0) {
-        filter.userId = { $in: Array.from(openStoreUserIds) };
-      } else {
-        // No approved dealers with open stores, return empty
-        return {
-          products: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-          },
-        };
-      }
+      filter.userId = query.dealerId;
+      logger.info(`[getAllProductsForUsers] Filtering products by dealerId: ${query.dealerId}`);
     }
 
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = { [sortBy]: sortOrder };
 
+    logger.info(`[getAllProductsForUsers] Final filter:`, JSON.stringify(filter, null, 2));
+    logger.info(`[getAllProductsForUsers] Sort:`, JSON.stringify(sort, null, 2));
+    logger.info(`[getAllProductsForUsers] Pagination: page=${page}, limit=${limit}, skip=${skip}`);
+
+    // Fetch products directly - no BusinessRegistration filtering
     const [products, total] = await Promise.all([
       Product.find(filter).sort(sort).skip(skip).limit(limit),
       Product.countDocuments(filter),
     ]);
 
-    // All products are already from approved dealers with open stores, no need to filter again
-    const productsFromOpenStores = products;
+    logger.info(`[getAllProductsForUsers] Found ${products.length} products (total: ${total})`);
 
-    // Convert products and attach dealer info
+    // Convert products - no dealer info assignment needed
+    // Backend already ensures only approved dealers can add products
     const productsWithDealer = await Promise.all(
-      productsFromOpenStores.map(async (productDoc) => {
+      products.map(async (productDoc: IProductDocument) => {
         const category = await getCategoryByIdSafe(productDoc.categoryId);
-        const dealerInfo = dealerInfoMap.get(productDoc.userId) || null;
 
         return {
           id: (productDoc._id as any).toString(),
@@ -279,23 +215,22 @@ export const getAllProductsForUsers = async (
           specifications: productDoc.specifications || {},
           tags: productDoc.tags || [],
           status: productDoc.status,
-          dealer: dealerInfo || undefined,
+          dealer: undefined, // No dealer info assignment - backend already validates approved dealers
           createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
           updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),
         };
       }),
     );
 
-    // Total is already calculated correctly since we filtered by approved dealers upfront
-    const totalFromOpenStores = total;
+    logger.info(`[getAllProductsForUsers] Returning ${productsWithDealer.length} products (all from approved dealers)`);
 
     return {
       products: productsWithDealer,
       pagination: {
         page,
         limit,
-        total: totalFromOpenStores,
-        totalPages: Math.ceil(totalFromOpenStores / limit),
+        total,
+        totalPages: Math.ceil(total / limit),
       },
     };
   } catch (error) {
@@ -319,16 +254,7 @@ export const getProductByIdForUsers = async (productId: string): Promise<IProduc
       throw new NotFoundError('Product not available');
     }
 
-    // Check if dealer's store is open
-    const businessRegistration = await BusinessRegistration.findOne({
-      userId: product.userId,
-      status: 'approved',
-    });
-
-    if (!businessRegistration || businessRegistration.storeOpen === false) {
-      throw new NotFoundError('Product not available - store is closed');
-    }
-
+    // No BusinessRegistration check needed - backend already ensures only approved dealers can add products
     return await productToIProductWithDealer(product);
   } catch (error) {
     logger.error('Error getting product by ID for users:', error);

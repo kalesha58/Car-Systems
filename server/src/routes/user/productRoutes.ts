@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/authMiddleware';
-import { getAllProductsController, getProductByIdController } from '../../controllers/user/productController';
+import { getAllProductsController, getProductByIdController, getProductsDiagnosticController } from '../../controllers/user/productController';
 import { logger } from '../../utils/logger';
 
 const router = Router();
 
 // Log route registration
-logger.info('[productRoutes] Registering user product routes: GET /, GET /:id');
+logger.info('[productRoutes] Registering user product routes: GET /, GET /diagnostic, GET /:id');
 
 /**
  * @swagger
@@ -66,6 +66,20 @@ logger.info('[productRoutes] Registering user product routes: GET /, GET /:id');
  *         description: Unauthorized
  */
 router.get('/', authMiddleware, getAllProductsController);
+
+/**
+ * @swagger
+ * /api/user/products/diagnostic:
+ *   get:
+ *     summary: Diagnostic endpoint to check products and dealers (for debugging)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Diagnostic information
+ */
+router.get('/diagnostic', authMiddleware, getProductsDiagnosticController);
 
 /**
  * @swagger

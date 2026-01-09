@@ -6,9 +6,17 @@ export const getProducts = async (
 ): Promise<IProductsResponse> => {
   try {
     const params = query || {};
+    console.log('[getProducts] API Request - URL: /user/products, Params:', JSON.stringify(params, null, 2));
     const response = await appAxios.get<IProductsResponse>('/user/products', {params});
+    console.log('[getProducts] API Response Status:', response.status);
+    console.log('[getProducts] API Response Data:', JSON.stringify(response.data, null, 2));
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.error('[getProducts] API Error:', {
+      message: error?.message,
+      response: error?.response?.data,
+      status: error?.response?.status,
+    });
     throw error;
   }
 };

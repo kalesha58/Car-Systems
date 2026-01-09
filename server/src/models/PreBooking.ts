@@ -65,3 +65,5 @@ preBookingSchema.index({ dealerId: 1, status: 1 });
 
 export const PreBooking = mongoose.model<IPreBookingDocument>('PreBooking', preBookingSchema);
 
+
+

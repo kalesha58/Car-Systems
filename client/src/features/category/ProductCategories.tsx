@@ -329,8 +329,25 @@ const ProductCategories = () => {
       let fetchedItems: ItemType[] = [];
       
       if (categoryType === 'products') {
+        console.log('[All Products] Fetching products with params:', JSON.stringify(queryParams, null, 2));
         const response = await getProducts(queryParams);
+        console.log('[All Products] Full API Response:', JSON.stringify(response, null, 2));
+        console.log('[All Products] Response structure:', {
+          success: response?.success,
+          hasResponse: !!response?.Response,
+          productsCount: response?.Response?.products?.length || 0,
+          pagination: response?.Response?.pagination,
+        });
         fetchedItems = response.Response?.products || [];
+        console.log('[All Products] Extracted products:', fetchedItems.length);
+        if (fetchedItems.length > 0) {
+          console.log('[All Products] First product sample:', {
+            id: fetchedItems[0].id,
+            name: fetchedItems[0].name,
+            dealerId: (fetchedItems[0] as IProduct).dealerId,
+            dealer: (fetchedItems[0] as IProduct).dealer,
+          });
+        }
       } else if (categoryType === 'vehicles') {
         console.log('[All Vehicles] Fetching vehicles with params:', queryParams);
         const response = await getDealerVehicles(queryParams);
