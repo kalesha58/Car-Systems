@@ -396,9 +396,7 @@ export const validateCreateTestDrive = (
 
     if (!preferredDate) {
       return next(new ValidationError('Preferred date is required'));
-    }
-
-    const date = new Date(preferredDate);
+    }    const date = new Date(preferredDate);
     if (isNaN(date.getTime())) {
       return next(new ValidationError('Invalid date format'));
     }
@@ -428,9 +426,7 @@ export const validateCreateTestDrive = (
   } catch (error) {
     next(error);
   }
-};
-
-/**
+};/**
  * Validate create pre-booking request
  */
 export const validateCreatePreBooking = (
@@ -443,13 +439,9 @@ export const validateCreatePreBooking = (
 
     if (!vehicleId || typeof vehicleId !== 'string' || !vehicleId.trim()) {
       return next(new ValidationError('Vehicle ID is required'));
-    }
-
-    if (!bookingDate) {
+    }    if (!bookingDate) {
       return next(new ValidationError('Booking date is required'));
-    }
-
-    const date = new Date(bookingDate);
+    }    const date = new Date(bookingDate);
     if (isNaN(date.getTime())) {
       return next(new ValidationError('Invalid date format'));
     }
@@ -521,4 +513,3 @@ export const validateUpdatePreBookingStatus = (
     next(error);
   }
 };
-

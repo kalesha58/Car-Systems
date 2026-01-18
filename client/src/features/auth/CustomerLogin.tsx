@@ -223,7 +223,7 @@ const CustomerLogin = () => {
               const vehiclesData = await getUserVehicles();
               // Response is directly an array, not an object with vehicles property
               const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
-              
+
               if (hasVehicles) {
                 // User already has vehicles, navigate to MainTabs
                 resetAndNavigate('MainTabs');
@@ -339,7 +339,7 @@ const CustomerLogin = () => {
                     left={
                       <Ionicons
                         name="person"
-                        color="#F8890E"
+                        color={Colors.secondary}
                         style={{ marginLeft: 10 }}
                         size={RFValue(18)}
                       />
@@ -357,7 +357,7 @@ const CustomerLogin = () => {
                   left={
                     <Ionicons
                       name="mail"
-                      color="#F8890E"
+                      color={Colors.secondary}
                       style={{ marginLeft: 10 }}
                       size={RFValue(18)}
                     />
@@ -377,7 +377,7 @@ const CustomerLogin = () => {
                     left={
                       <Ionicons
                         name="call"
-                        color="#F8890E"
+                        color={Colors.secondary}
                         style={{ marginLeft: 10 }}
                         size={RFValue(18)}
                       />
@@ -395,7 +395,7 @@ const CustomerLogin = () => {
                   left={
                     <Ionicons
                       name="key-sharp"
-                      color="#F8890E"
+                      color={Colors.secondary}
                       style={{ marginLeft: 10 }}
                       size={RFValue(18)}
                     />
@@ -414,7 +414,7 @@ const CustomerLogin = () => {
                     >
                       <Ionicons
                         name={showPassword ? "eye-off" : "eye"}
-                        color="#F8890E"
+                        color={Colors.secondary}
                         size={RFValue(getResponsiveValue(22, 24, 26))}
                       />
                     </TouchableOpacity>

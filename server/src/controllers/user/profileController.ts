@@ -148,11 +148,7 @@ export const getUserStatsController = async (
         },
       });
       return;
-    }
-
-    const stats = await getUserStats(req.user.userId);
-
-    res.status(200).json({
+    }    const stats = await getUserStats(req.user.userId);    res.status(200).json({
       success: true,
       Response: stats,
     });
@@ -160,4 +156,3 @@ export const getUserStatsController = async (
     errorHandler(error as IAppError, res);
   }
 };
-

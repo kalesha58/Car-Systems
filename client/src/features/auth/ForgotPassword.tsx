@@ -15,7 +15,7 @@ import CustomText from '@components/ui/CustomText';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
 import ThemedModal from '@components/ui/ThemedModal';
-import { Fonts } from '@utils/Constants';
+import { Colors, Fonts } from '@utils/Constants';
 import { goBack, resetAndNavigate } from '@utils/NavigationUtils';
 import { requestPasswordReset, resetPasswordWithCode } from '@service/authService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -219,146 +219,146 @@ const ForgotPassword: FC = () => {
           </View>
 
           <View style={styles.formContent}>
-          {step === 'email' ? (
-            <>
-              <CustomInput
-                onChangeText={setEmail}
-                onClear={() => setEmail('')}
-                value={email}
-                placeholder="Email"
-                inputMode="email"
-                left={
-                  <Ionicons
-                    name="mail"
-                    color="#F8890E"
-                    style={{ marginLeft: 10 }}
-                    size={RFValue(18)}
-                  />
-                }
-                right={false}
-              />
-
-              <CustomButton
-                disabled={!canSendCode}
-                title="Send code"
-                onPress={handleSendCode}
-                loading={loading}
-              />
-            </>
-          ) : (
-            <>
-              <CustomInput
-                onChangeText={setEmail}
-                onClear={() => setEmail('')}
-                value={email}
-                placeholder="Email"
-                inputMode="email"
-                left={
-                  <Ionicons
-                    name="mail"
-                    color="#F8890E"
-                    style={{ marginLeft: 10 }}
-                    size={RFValue(18)}
-                  />
-                }
-                right={false}
-              />
-
-              <CustomInput
-                onChangeText={(t) => setCode(t.replace(/[^0-9]/g, ''))}
-                onClear={() => setCode('')}
-                value={code}
-                placeholder="6-digit code"
-                keyboardType="numeric"
-                maxLength={6}
-                left={
-                  <Ionicons
-                    name="keypad"
-                    color="#F8890E"
-                    style={{ marginLeft: 10 }}
-                    size={RFValue(18)}
-                  />
-                }
-                right={false}
-              />
-
-              <CustomInput
-                onChangeText={setPassword}
-                onClear={() => setPassword('')}
-                value={password}
-                placeholder="New password"
-                secureTextEntry={!showPassword}
-                left={
-                  <Ionicons
-                    name="lock-closed"
-                    color="#F8890E"
-                    style={{ marginLeft: 10 }}
-                    size={RFValue(18)}
-                  />
-                }
-                right={false}
-                rightIcon={
-                  <TouchableOpacity
-                    onPress={() => setShowPassword((v) => !v)}
-                    style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    activeOpacity={0.7}>
+            {step === 'email' ? (
+              <>
+                <CustomInput
+                  onChangeText={setEmail}
+                  onClear={() => setEmail('')}
+                  value={email}
+                  placeholder="Email"
+                  inputMode="email"
+                  left={
                     <Ionicons
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      color="#F8890E"
+                      name="mail"
+                      color={Colors.secondary}
+                      style={{ marginLeft: 10 }}
                       size={RFValue(18)}
                     />
-                  </TouchableOpacity>
-                }
-              />
+                  }
+                  right={false}
+                />
 
-              <CustomInput
-                onChangeText={setConfirmPassword}
-                onClear={() => setConfirmPassword('')}
-                value={confirmPassword}
-                placeholder="Confirm password"
-                secureTextEntry={!showConfirmPassword}
-                left={
-                  <Ionicons
-                    name="lock-closed"
-                    color="#F8890E"
-                    style={{ marginLeft: 10 }}
-                    size={RFValue(18)}
-                  />
-                }
-                right={false}
-                rightIcon={
-                  <TouchableOpacity
-                    onPress={() => setShowConfirmPassword((v) => !v)}
-                    style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    activeOpacity={0.7}>
+                <CustomButton
+                  disabled={!canSendCode}
+                  title="Send code"
+                  onPress={handleSendCode}
+                  loading={loading}
+                />
+              </>
+            ) : (
+              <>
+                <CustomInput
+                  onChangeText={setEmail}
+                  onClear={() => setEmail('')}
+                  value={email}
+                  placeholder="Email"
+                  inputMode="email"
+                  left={
                     <Ionicons
-                      name={showConfirmPassword ? 'eye-off' : 'eye'}
-                      color="#F8890E"
+                      name="mail"
+                      color={Colors.secondary}
+                      style={{ marginLeft: 10 }}
                       size={RFValue(18)}
                     />
-                  </TouchableOpacity>
-                }
-              />
+                  }
+                  right={false}
+                />
 
-              <CustomButton
-                disabled={!canReset}
-                title="Reset password"
-                onPress={handleResetPassword}
-                loading={loading}
-              />
+                <CustomInput
+                  onChangeText={(t) => setCode(t.replace(/[^0-9]/g, ''))}
+                  onClear={() => setCode('')}
+                  value={code}
+                  placeholder="6-digit code"
+                  keyboardType="numeric"
+                  maxLength={6}
+                  left={
+                    <Ionicons
+                      name="keypad"
+                      color={Colors.secondary}
+                      style={{ marginLeft: 10 }}
+                      size={RFValue(18)}
+                    />
+                  }
+                  right={false}
+                />
 
-              <TouchableOpacity onPress={handleSendCode} style={styles.resendBtn} disabled={loading || !canSendCode}>
-                <CustomText
-                  variant="h6"
-                  fontFamily={Fonts.Medium}
-                  style={{ color: '#F8890E', opacity: loading || !canSendCode ? 0.6 : 1 }}>
-                  Resend code
-                </CustomText>
-              </TouchableOpacity>
-            </>
-          )}
+                <CustomInput
+                  onChangeText={setPassword}
+                  onClear={() => setPassword('')}
+                  value={password}
+                  placeholder="New password"
+                  secureTextEntry={!showPassword}
+                  left={
+                    <Ionicons
+                      name="lock-closed"
+                      color={Colors.secondary}
+                      style={{ marginLeft: 10 }}
+                      size={RFValue(18)}
+                    />
+                  }
+                  right={false}
+                  rightIcon={
+                    <TouchableOpacity
+                      onPress={() => setShowPassword((v) => !v)}
+                      style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.7}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        color={Colors.secondary}
+                        size={RFValue(18)}
+                      />
+                    </TouchableOpacity>
+                  }
+                />
+
+                <CustomInput
+                  onChangeText={setConfirmPassword}
+                  onClear={() => setConfirmPassword('')}
+                  value={confirmPassword}
+                  placeholder="Confirm password"
+                  secureTextEntry={!showConfirmPassword}
+                  left={
+                    <Ionicons
+                      name="lock-closed"
+                      color={Colors.secondary}
+                      style={{ marginLeft: 10 }}
+                      size={RFValue(18)}
+                    />
+                  }
+                  right={false}
+                  rightIcon={
+                    <TouchableOpacity
+                      onPress={() => setShowConfirmPassword((v) => !v)}
+                      style={{ padding: 8, justifyContent: 'center', alignItems: 'center' }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      activeOpacity={0.7}>
+                      <Ionicons
+                        name={showConfirmPassword ? 'eye-off' : 'eye'}
+                        color={Colors.secondary}
+                        size={RFValue(18)}
+                      />
+                    </TouchableOpacity>
+                  }
+                />
+
+                <CustomButton
+                  disabled={!canReset}
+                  title="Reset password"
+                  onPress={handleResetPassword}
+                  loading={loading}
+                />
+
+                <TouchableOpacity onPress={handleSendCode} style={styles.resendBtn} disabled={loading || !canSendCode}>
+                  <CustomText
+                    variant="h6"
+                    fontFamily={Fonts.Medium}
+                    style={{ color: Colors.secondary, opacity: loading || !canSendCode ? 0.6 : 1 }}>
+                    Resend code
+                  </CustomText>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </ScrollView>

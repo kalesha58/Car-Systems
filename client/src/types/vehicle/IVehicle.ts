@@ -59,9 +59,7 @@ export interface IVehicleDocuments {
   insurance?: string;
   pollution?: string;
   dl?: string;
-}
-
-export interface IUserVehicle {
+}export interface IUserVehicle {
   id: string;
   ownerId: string;
   brand: string;
@@ -74,9 +72,7 @@ export interface IUserVehicle {
   images: string[];
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface ICreateVehicleRequest {
+}export interface ICreateVehicleRequest {
   brand: string;
   model: string;
   numberPlate: string;
@@ -96,15 +92,10 @@ export interface IUpdateVehicleRequest {
   year?: number;
   color?: string;
   images?: string[];
-}
-
-export interface IUserVehicleResponse {
+}export interface IUserVehicleResponse {
   success: boolean;
   Response: IUserVehicle;
-}
-
-export interface IUserVehiclesResponse {
+}export interface IUserVehiclesResponse {
   success: boolean;
   Response: IUserVehicle[];
 }
-

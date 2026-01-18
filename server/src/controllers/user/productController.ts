@@ -174,4 +174,3 @@ export const getProductsDiagnosticController = async (
     errorHandler(error as IAppError, res);
   }
 };
-

@@ -125,24 +125,16 @@ export interface IUserStats {
   postsCount: number;
   vehiclesCount: number;
   ordersCount: number;
-}
-
-export const getUserStats = async (userId: string): Promise<IUserStats> => {
+}export const getUserStats = async (userId: string): Promise<IUserStats> => {
   try {
-    const user = await SignUp.findById(userId);
-
-    if (!user) {
+    const user = await SignUp.findById(userId);    if (!user) {
       throw new NotFoundError('User not found');
-    }
-
-    // Get counts in parallel for better performance
+    }    // Get counts in parallel for better performance
     const [postsCount, vehiclesCount, ordersCount] = await Promise.all([
       Post.countDocuments({ userId: userId.toString() }),
       Vehicle.countDocuments({ ownerId: userId.toString() }),
       Order.countDocuments({ userId: userId.toString() }),
-    ]);
-
-    return {
+    ]);    return {
       postsCount,
       vehiclesCount,
       ordersCount,
@@ -152,4 +144,3 @@ export const getUserStats = async (userId: string): Promise<IUserStats> => {
     throw error;
   }
 };
-

@@ -67,3 +67,12 @@ export const PreBooking = mongoose.model<IPreBookingDocument>('PreBooking', preB
 
 
 
+
+
+
+
+
+
+
+
+

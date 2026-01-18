@@ -67,27 +67,21 @@ export const createUserVehicle = async (
   } catch (error) {
     throw error;
   }
-};
-
-export const getUserVehicles = async (): Promise<IUserVehiclesResponse> => {
+};export const getUserVehicles = async (): Promise<IUserVehiclesResponse> => {
   try {
     const response = await appAxios.get<IUserVehiclesResponse>('/vehicles');
     return response.data;
   } catch (error) {
     throw error;
   }
-};
-
-export const getUserVehicleById = async (vehicleId: string): Promise<IUserVehicleResponse> => {
+};export const getUserVehicleById = async (vehicleId: string): Promise<IUserVehicleResponse> => {
   try {
     const response = await appAxios.get<IUserVehicleResponse>(`/vehicles/${vehicleId}`);
     return response.data;
   } catch (error) {
     throw error;
   }
-};
-
-export const updateUserVehicle = async (
+};export const updateUserVehicle = async (
   vehicleId: string,
   data: IUpdateVehicleRequest,
 ): Promise<IUserVehicleResponse> => {
@@ -97,13 +91,10 @@ export const updateUserVehicle = async (
   } catch (error) {
     throw error;
   }
-};
-
-export const deleteUserVehicle = async (vehicleId: string): Promise<void> => {
+};export const deleteUserVehicle = async (vehicleId: string): Promise<void> => {
   try {
     await appAxios.delete(`/vehicles/${vehicleId}`);
   } catch (error) {
     throw error;
   }
 };
-
