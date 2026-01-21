@@ -120,7 +120,7 @@ const PreBookingManagementScreen: React.FC = () => {
     statusText: {
       fontSize: RFValue(10),
       fontFamily: Fonts.SemiBold,
-      color: '#fff',
+      color: colors.white,
     },
     vehicleInfo: {
       marginBottom: 6,

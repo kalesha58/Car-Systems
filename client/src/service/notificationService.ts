@@ -350,3 +350,95 @@ export const createNotificationChannel = (): void => {
   }
 };
 
+/**
+ * In-app notification types and interfaces
+ */
+export interface INotification {
+  id: string;
+  type: 'order_update' | 'service_update' | 'general';
+  title: string;
+  body: string;
+  data?: {
+    orderId?: string;
+    serviceId?: string;
+    status?: string;
+    [key: string]: any;
+  };
+  read: boolean;
+  readAt?: string;
+  relatedId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IGetNotificationsResponse {
+  notifications: INotification[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface IGetNotificationsParams {
+  page?: number;
+  limit?: number;
+  read?: boolean;
+}
+
+/**
+ * Get user notifications
+ */
+export const getNotifications = async (
+  params: IGetNotificationsParams = {},
+): Promise<IGetNotificationsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.read !== undefined) queryParams.append('read', params.read.toString());
+
+    const response = await appAxios.get(`/user/notifications?${queryParams.toString()}`);
+    return response.data.Response;
+  } catch (error: any) {
+    console.error('Error fetching notifications:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  try {
+    await appAxios.put(`/user/notifications/${notificationId}/read`);
+  } catch (error: any) {
+    console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark all notifications as read
+ */
+export const markAllNotificationsAsRead = async (): Promise<{ count: number }> => {
+  try {
+    const response = await appAxios.put('/user/notifications/read-all');
+    return response.data.Response;
+  } catch (error: any) {
+    console.error('Error marking all notifications as read:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get unread notification count
+ */
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  try {
+    const response = await appAxios.get('/user/notifications/unread-count');
+    return response.data.Response.count || 0;
+  } catch (error: any) {
+    console.error('Error getting unread notification count:', error);
+    return 0;
+  }
+};

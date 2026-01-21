@@ -3,7 +3,14 @@ import { IAuthRequest } from '../../middleware/authMiddleware';
 import { SignUp } from '../../models/SignUp';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../utils/errorHandler';
-import { sendGreetingNotification } from '../../services/notificationService';
+import {
+  sendGreetingNotification,
+  getUserNotifications,
+  markAsRead,
+  markAllAsRead,
+  getUnreadCount,
+} from '../../services/notificationService';
+import { errorHandler, IAppError } from '../../utils/errorHandler';
 
 /**
  * Register/Update FCM token for authenticated user
@@ -141,6 +148,151 @@ export const testGreetingNotificationController = async (
         },
       });
     }
+  }
+};
+
+/**
+ * Get user notifications
+ */
+export const getNotificationsController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const read = req.query.read === 'true' ? true : req.query.read === 'false' ? false : undefined;
+
+    const result = await getUserNotifications(userId, { page, limit, read });
+
+    res.status(200).json({
+      success: true,
+      Response: result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+export const markNotificationAsReadController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const { id } = req.params;
+
+    if (!id) {
+      throw new AppError('Notification ID is required', 400);
+    }
+
+    await markAsRead(id, userId);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'Notification marked as read',
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Mark all notifications as read
+ */
+export const markAllNotificationsAsReadController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await markAllAsRead(userId);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'All notifications marked as read',
+        count: result.count,
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Get unread notification count
+ */
+export const getUnreadCountController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const count = await getUnreadCount(userId);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        count,
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
   }
 };
 

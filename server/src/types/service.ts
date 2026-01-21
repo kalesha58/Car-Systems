@@ -13,6 +13,8 @@ export interface IService {
     longitude: number;
     address?: string;
   };
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +59,8 @@ export interface IUpdateServiceRequest {
     longitude: number;
     address?: string;
   };
+  slotDurationMinutes?: number;
+  slotBookingEnabled?: boolean;
 }
 
 export interface IUpdateServiceImagesRequest {

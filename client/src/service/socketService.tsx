@@ -141,5 +141,43 @@ export const getSocket = (): Socket | null => {
   return socket;
 };
 
+/**
+ * Join user notification room for real-time notifications
+ */
+export const joinUserNotificationRoom = (userId: string): void => {
+  if (socket && socket.connected) {
+    socket.emit('joinUserNotifications', userId);
+    console.log('Joined user notification room:', userId);
+  } else {
+    console.warn('Cannot join user notification room: socket not connected');
+    // Try to initialize if not connected
+    if (!socket) {
+      initializeSocket();
+    }
+  }
+};
+
+/**
+ * Listen for new notifications
+ */
+export const onNewNotification = (callback: (notification: any) => void): void => {
+  if (socket) {
+    socket.on('newNotification', callback);
+    console.log('Added newNotification listener');
+  } else {
+    console.warn('Cannot add newNotification listener: socket not initialized');
+  }
+};
+
+/**
+ * Remove new notification listener
+ */
+export const offNewNotification = (): void => {
+  if (socket) {
+    socket.off('newNotification');
+    console.log('Removed newNotification listeners');
+  }
+};
+
 
 

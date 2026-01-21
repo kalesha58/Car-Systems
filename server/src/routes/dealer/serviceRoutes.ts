@@ -7,6 +7,7 @@ import {
   createDealerServiceController,
   updateDealerServiceController,
   updateServiceStatusController,
+  toggleServiceStatusController,
   updateServiceImagesController,
   deleteDealerServiceController,
   getServicesByCategoryController,
@@ -363,6 +364,32 @@ router.put('/:id', updateDealerServiceController);
  *         description: Forbidden - Dealer access required
  */
 router.patch('/:id/status', updateServiceStatusController);
+
+/**
+ * @swagger
+ * /api/dealer/services/{id}/toggle-status:
+ *   put:
+ *     summary: Toggle service status (enable/disable)
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Status toggled successfully
+ *       404:
+ *         description: Service not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Dealer access required
+ */
+router.put('/:id/toggle-status', toggleServiceStatusController);
 
 /**
  * @swagger

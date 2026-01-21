@@ -26,6 +26,45 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
   const [isLoadingAddress, setIsLoadingAddress] = useState<boolean>(false);
   const { colors } = useTheme();
 
+  const styles = StyleSheet.create({
+    text: {
+      color: colors.text,
+    },
+    text2: {
+      color: colors.text,
+      width: '90%',
+      textAlign: 'center',
+    },
+    flexRow: {
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 2,
+      width: '70%',
+    },
+    titleContainer: {
+      marginTop: 10,
+    },
+    subContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingTop: Platform.OS === 'android' ? 10 : 5,
+      justifyContent: 'flex-start',
+    },
+    flexRowGap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    noticeBtn: {
+      borderRadius: 100,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      bottom: -2,
+    },
+  });
+
   const fetchSavedAddresses = async () => {
     try {
       setIsLoadingAddress(true);
@@ -122,7 +161,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
           {!subtitle && (
             <Icon
               name="menu-down"
-              color={colors.white}
+              color={colors.text}
               size={RFValue(20)}
               style={{ bottom: -1 }}
             />
@@ -132,44 +171,5 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  text: {
-    color: '#fff',
-  },
-  text2: {
-    color: '#fff',
-    width: '90%',
-    textAlign: 'center',
-  },
-  flexRow: {
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 2,
-    width: '70%',
-  },
-  titleContainer: {
-    marginTop: 10,
-  },
-  subContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingTop: Platform.OS === 'android' ? 10 : 5,
-    justifyContent: 'flex-start',
-  },
-  flexRowGap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  noticeBtn: {
-    borderRadius: 100,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    bottom: -2,
-  },
-});
 
 export default Header;

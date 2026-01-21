@@ -7,9 +7,12 @@ import Navigation from '@navigation/Navigation';
 import { initializeNotifications, getFCMToken, registerFCMToken } from '@service/notificationService';
 import { tokenStorage } from '@state/storage';
 import { useThemeStore } from '@state/themeStore';
+import { useAuthStore } from '@state/authStore';
+import { initializeSocket, joinUserNotificationRoom, onNewNotification } from '@service/socketService';
 
 const App = () => {
   const { initializeTheme, syncWithDeviceTheme } = useThemeStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     // Initialize theme based on device theme on first load
@@ -29,6 +32,27 @@ const App = () => {
     // Initialize notifications on app start
     initializeNotifications();
 
+    // Initialize socket and join notification room if user is authenticated
+    const accessToken = tokenStorage.getString('accessToken');
+    if (accessToken && user?.userId) {
+      try {
+        const socket = initializeSocket();
+        if (socket) {
+          socket.on('connect', () => {
+            joinUserNotificationRoom(user.userId);
+          });
+          
+          // Listen for new notifications
+          onNewNotification((notification) => {
+            console.log('New notification received:', notification);
+            // Notification icon will auto-refresh via its own polling
+          });
+        }
+      } catch (error) {
+        console.error('Error initializing socket:', error);
+      }
+    }
+
     // Handle app state changes for token refresh
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
@@ -39,6 +63,18 @@ const App = () => {
           if (token) {
             await registerFCMToken(token);
           }
+          
+          // Rejoin notification room if socket is connected
+          if (user?.userId) {
+            try {
+              const socket = initializeSocket();
+              if (socket?.connected) {
+                joinUserNotificationRoom(user.userId);
+              }
+            } catch (error) {
+              console.error('Error rejoining notification room:', error);
+            }
+          }
         }
       }
     });
@@ -47,7 +83,7 @@ const App = () => {
       appearanceSubscription.remove();
       appStateSubscription.remove();
     };
-  }, [initializeTheme, syncWithDeviceTheme]);
+  }, [initializeTheme, syncWithDeviceTheme, user?.userId]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>

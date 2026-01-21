@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
@@ -591,7 +591,7 @@ const ProductDetail: React.FC = () => {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: Colors.secondary + '20',
+      backgroundColor: colors.secondary + '20',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -833,7 +833,7 @@ const ProductDetail: React.FC = () => {
             {product.category && (
               <View style={styles.metricItem}>
                 <View style={styles.metricIcon}>
-                  <Icon name="grid-outline" size={RFValue(20)} color={Colors.secondary} />
+                  <Icon name="grid-outline" size={RFValue(20)} color={colors.secondary} />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
                   {product.category}
@@ -844,7 +844,7 @@ const ProductDetail: React.FC = () => {
             {product.brand && (
               <View style={styles.metricItem}>
                 <View style={styles.metricIcon}>
-                  <Icon name="pricetag-outline" size={RFValue(20)} color={Colors.secondary} />
+                  <Icon name="pricetag-outline" size={RFValue(20)} color={colors.secondary} />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
                   {product.brand}
@@ -857,7 +857,7 @@ const ProductDetail: React.FC = () => {
                 <Icon
                   name={product.stock > 0 ? "checkmark-circle-outline" : "close-circle-outline"}
                   size={RFValue(20)}
-                  color={Colors.secondary}
+                  color={colors.secondary}
                 />
               </View>
               <CustomText style={styles.metricText}>
@@ -868,7 +868,11 @@ const ProductDetail: React.FC = () => {
             {product.vehicleType && (
               <View style={styles.metricItem}>
                 <View style={styles.metricIcon}>
-                  <Icon name="car-outline" size={RFValue(20)} color={Colors.secondary} />
+                  <Icon
+                    name={product.vehicleType === 'Bike' ? 'bicycle-outline' : 'car-outline'}
+                    size={RFValue(20)}
+                    color={colors.secondary}
+                  />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
                   {product.vehicleType}

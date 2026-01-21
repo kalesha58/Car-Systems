@@ -15,7 +15,7 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import {useTheme} from '@hooks/useTheme';
@@ -56,6 +56,8 @@ const AddEditServiceScreen: React.FC = () => {
   const [homeService, setHomeService] = useState(service?.homeService || false);
   const [category, setCategory] = useState(service?.category || '');
   const [description, setDescription] = useState(service?.description || '');
+  const [isActive, setIsActive] = useState(service?.isActive !== undefined ? service.isActive : true);
+  const [serviceType, setServiceType] = useState<'car_wash' | 'general' | undefined>(service?.serviceType);
   const [location, setLocation] = useState<ILocationData | null>(
     service?.location
       ? {
@@ -189,6 +191,8 @@ const AddEditServiceScreen: React.FC = () => {
                 address: location.address || location.formattedAddress,
               }
             : undefined,
+          isActive,
+          serviceType,
         };
 
         await updateDealerService(service.id, updateData);
@@ -209,6 +213,8 @@ const AddEditServiceScreen: React.FC = () => {
                 address: location.address || location.formattedAddress,
               }
             : undefined,
+          isActive: true, // New services are active by default
+          serviceType,
         };
 
         await createDealerService(createData);
@@ -405,7 +411,7 @@ const AddEditServiceScreen: React.FC = () => {
       gap: screenWidth * 0.02,
     },
     submitButton: {
-      backgroundColor: Colors.secondary,
+      backgroundColor: colors.secondary,
       borderRadius: 8,
       paddingVertical: screenHeight * 0.015,
       alignItems: 'center',
@@ -573,7 +579,7 @@ const AddEditServiceScreen: React.FC = () => {
             </TouchableOpacity>
           ) : (
             <View style={styles.locationContainer}>
-              <Icon name="location" size={RFValue(16)} color={Colors.secondary} />
+              <Icon name="location" size={RFValue(16)} color={colors.secondary} />
               <CustomText style={styles.locationText} numberOfLines={2}>
                 {location.address || location.formattedAddress}
               </CustomText>

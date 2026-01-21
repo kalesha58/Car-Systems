@@ -336,6 +336,25 @@ export const updateOrderStatus = async (
         // Don't throw - notification failure shouldn't block status update
       }
 
+      // Create in-app notification for order status update
+      try {
+        const { createNotification } = await import('../notificationService');
+        await createNotification({
+          userId: order.userId,
+          type: 'order_update',
+          title: message.title,
+          body: message.body,
+          data: {
+            orderId,
+            status: newStatus,
+          },
+          relatedId: orderId,
+        });
+      } catch (notificationError) {
+        logger.error('Error creating in-app notification for order status update:', notificationError);
+        // Don't throw - notification failure shouldn't block status update
+      }
+
       logger.info(
         `Order status updated by admin: ${order.orderNumber} - ${newStatus}`,
       );

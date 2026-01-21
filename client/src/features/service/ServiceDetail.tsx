@@ -13,13 +13,14 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {getServiceById} from '@service/serviceService';
 import type {IService} from '../../types/service/IService';
 import {openDealerChat} from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import ServiceSlotPicker, {IServiceSlot} from '@components/service/ServiceSlotPicker';
 
 type ServiceDetailRouteParams = {
   ServiceDetail: {
@@ -41,6 +42,8 @@ const ServiceDetail: React.FC = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedSlot, setSelectedSlot] = useState<IServiceSlot | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -82,7 +85,8 @@ const ServiceDetail: React.FC = () => {
     if (serviceId) {
       load();
     }
-  }, [serviceId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId]); // Only depend on serviceId to prevent infinite loop
 
   const images = service?.images && service.images.length > 0 
     ? service.images 
@@ -133,7 +137,7 @@ const ServiceDetail: React.FC = () => {
         },
         activeDot: {
           width: 20,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.secondary,
         },
         detailsContainer: {padding: 16},
         titleRow: {
@@ -147,7 +151,7 @@ const ServiceDetail: React.FC = () => {
           paddingHorizontal: 12,
           paddingVertical: 6,
           borderRadius: 20,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.secondary,
         },
         categoryText: {color: '#fff', fontSize: RFValue(10), fontFamily: Fonts.Medium},
         metricsRow: {
@@ -227,13 +231,13 @@ const ServiceDetail: React.FC = () => {
         priceValue: {
           fontSize: RFValue(20),
           fontFamily: Fonts.Bold,
-          color: Colors.secondary,
+          color: colors.secondary,
         },
         chatButton: {
           height: 48,
           paddingHorizontal: 24,
           borderRadius: 24,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.secondary,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
@@ -404,7 +408,7 @@ const ServiceDetail: React.FC = () => {
               {service.durationMinutes && (
                 <View style={styles.metricItem}>
                   <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('duration')} size={RFValue(20)} color={Colors.secondary} />
+                    <Icon name={getMetricIcon('duration')} size={RFValue(20)} color={colors.secondary} />
                   </View>
                   <CustomText style={styles.metricText}>{service.durationMinutes}</CustomText>
                   <CustomText style={styles.metricLabel}>mins</CustomText>
@@ -415,7 +419,7 @@ const ServiceDetail: React.FC = () => {
                   <Icon
                     name={getMetricIcon('service')}
                     size={RFValue(20)}
-                    color={Colors.secondary}
+                    color={colors.secondary}
                   />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
@@ -464,7 +468,7 @@ const ServiceDetail: React.FC = () => {
                   <Icon
                     name="chatbubbles-outline"
                     size={RFValue(20)}
-                    color={isChatDisabled ? colors.disabled : Colors.secondary}
+                    color={isChatDisabled ? colors.disabled : colors.secondary}
                   />
                 </TouchableOpacity>
                 {service.dealer.phone && (
@@ -517,6 +521,24 @@ const ServiceDetail: React.FC = () => {
                   </View>
                 </>
               )}
+
+              {/* Service Slot Booking */}
+              {service?.slotBookingEnabled && (
+                <>
+                  <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
+                    Book a Slot
+                  </CustomText>
+                  <ServiceSlotPicker
+                    serviceId={service.id}
+                    selectedDate={selectedDate}
+                    serviceType={service.homeService ? 'home' : 'center'}
+                    onSlotSelect={(slot) => {
+                      setSelectedSlot(slot);
+                    }}
+                    selectedSlotId={selectedSlot?.id}
+                  />
+                </>
+              )}
             </>
           )}
         </View>
@@ -535,8 +557,8 @@ const ServiceDetail: React.FC = () => {
           onPress={onChatPress}
           activeOpacity={0.8}
           style={[styles.chatButton, isChatDisabled ? {opacity: 0.6} : null]}>
-          <Icon name="chatbubbles-outline" size={RFValue(18)} color="#fff" />
-          <CustomText fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+          <Icon name="chatbubbles-outline" size={RFValue(18)} color={colors.white} />
+          <CustomText fontFamily={Fonts.SemiBold} style={{color: colors.white}}>
             {chatLoading ? 'Opening…' : 'Chat Dealer'}
           </CustomText>
         </TouchableOpacity>
