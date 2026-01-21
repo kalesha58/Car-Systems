@@ -338,15 +338,6 @@ export const toggleServiceStatus = async (
   }
 };
 
-    logger.info(`Service status update requested: ${serviceId}`);
-
-    return serviceToDealerService(service);
-  } catch (error) {
-    logger.error('Error updating service status:', error);
-    throw error;
-  }
-};
-
 /**
  * Delete service
  */
