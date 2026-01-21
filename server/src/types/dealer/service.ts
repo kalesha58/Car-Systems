@@ -2,7 +2,7 @@ import { IService } from '../../types/service';
 
 export interface IDealerService extends IService {
   isActive?: boolean;
-  serviceType?: string;
+  serviceType?: 'car_wash' | 'general';
 }
 
 export interface ICreateDealerServiceRequest {

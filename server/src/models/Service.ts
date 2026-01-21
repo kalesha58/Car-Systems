@@ -15,7 +15,9 @@ export interface IServiceDocument extends Document {
     address?: string;
   };
   isActive: boolean;
-  serviceType?: string;
+  serviceType?: 'car_wash' | 'general';
+  slotDurationMinutes?: number;
+  slotBookingEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

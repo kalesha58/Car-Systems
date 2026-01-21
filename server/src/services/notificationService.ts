@@ -210,7 +210,7 @@ export const createNotification = async (
     // Emit socket event for real-time notification
     try {
       emitToUserNotificationRoom(data.userId, 'newNotification', {
-        id: notification._id.toString(),
+        id: (notification._id as any).toString(),
         type: notification.type,
         title: notification.title,
         body: notification.body,

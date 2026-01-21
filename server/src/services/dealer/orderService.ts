@@ -479,32 +479,32 @@ export const updateOrderStatus = async (
 
     // Send push notification for order status update
     if (data.status && data.status !== order.status) {
+      const statusMessages: { [key: string]: { title: string; body: string } } = {
+        ORDER_CONFIRMED: {
+          title: 'Order Confirmed',
+          body: `Your order ${order.orderNumber} has been confirmed and is being prepared.`,
+        },
+        OUT_FOR_DELIVERY: {
+          title: 'Order Out for Delivery',
+          body: `Your order ${order.orderNumber} is on its way to you!`,
+        },
+        DELIVERED: {
+          title: 'Order Delivered',
+          body: `Your order ${order.orderNumber} has been delivered. Thank you for shopping with us!`,
+        },
+        CANCELLED: {
+          title: 'Order Cancelled',
+          body: `Your order ${order.orderNumber} has been cancelled.`,
+        },
+      };
+
+      const message = statusMessages[data.status] || {
+        title: 'Order Status Updated',
+        body: `Your order ${order.orderNumber} status has been updated.`,
+      };
+
       try {
         const { sendPushNotification } = await import('../notificationService');
-        const statusMessages: { [key: string]: { title: string; body: string } } = {
-          ORDER_CONFIRMED: {
-            title: 'Order Confirmed',
-            body: `Your order ${order.orderNumber} has been confirmed and is being prepared.`,
-          },
-          OUT_FOR_DELIVERY: {
-            title: 'Order Out for Delivery',
-            body: `Your order ${order.orderNumber} is on its way to you!`,
-          },
-          DELIVERED: {
-            title: 'Order Delivered',
-            body: `Your order ${order.orderNumber} has been delivered. Thank you for shopping with us!`,
-          },
-          CANCELLED: {
-            title: 'Order Cancelled',
-            body: `Your order ${order.orderNumber} has been cancelled.`,
-          },
-        };
-
-        const message = statusMessages[data.status] || {
-          title: 'Order Status Updated',
-          body: `Your order ${order.orderNumber} status has been updated.`,
-        };
-
         await sendPushNotification(order.userId, {
           title: message.title,
           body: message.body,

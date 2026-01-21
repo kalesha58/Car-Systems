@@ -15,6 +15,8 @@ export interface IService {
   };
   isActive?: boolean;
   serviceType?: 'car_wash' | 'general';
+  slotDurationMinutes?: number;
+  slotBookingEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
