@@ -14,6 +14,8 @@ export interface IServiceDocument extends Document {
     longitude: number;
     address?: string;
   };
+  isActive: boolean;
+  serviceType?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +69,23 @@ const serviceSchema = new Schema<IServiceDocument>(
         type: String,
         trim: true,
       },
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    serviceType: {
+      type: String,
+      trim: true,
+      enum: ['car_wash', 'general'],
+    },
+    slotDurationMinutes: {
+      type: Number,
+      min: 1,
+    },
+    slotBookingEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   {

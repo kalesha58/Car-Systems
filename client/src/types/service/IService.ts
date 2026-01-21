@@ -16,6 +16,8 @@ export interface IService {
     longitude: number;
     address?: string;
   };
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;

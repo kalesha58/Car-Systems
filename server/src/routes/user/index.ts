@@ -13,6 +13,7 @@ import notificationRoutes from './notificationRoutes';
 import cartRoutes from './cartRoutes';
 import couponRoutes from './couponRoutes';
 import dealerRoutes from './dealerRoutes';
+import serviceSlotRoutes from './serviceSlotRoutes';
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.use('/cart', cartRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/dealer', dealerRoutes);
 router.use('/', notificationRoutes);
+router.use('/services', serviceSlotRoutes);
 
 export default router;
 

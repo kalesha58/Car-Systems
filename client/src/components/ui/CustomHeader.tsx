@@ -7,6 +7,7 @@ import {goBack} from '@utils/NavigationUtils';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from './CustomText';
 import {useTheme} from '@hooks/useTheme';
+import NotificationIcon from '@components/common/NotificationIcon';
 
 interface CustomHeaderProps {
   title: string;
@@ -65,12 +66,17 @@ const CustomHeader: FC<CustomHeaderProps> = ({
           {title}
         </CustomText>
 
-        <View>
-          {rightComponent || (search && (
-            <Pressable onPress={onSearchPress} style={styles.iconButton}>
-              <Icon name="search" color={colors.text} size={RFValue(20)} />
-            </Pressable>
-          ))}
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          {rightComponent || (
+            <>
+              {search && (
+                <Pressable onPress={onSearchPress} style={styles.iconButton}>
+                  <Icon name="search" color={colors.text} size={RFValue(20)} />
+                </Pressable>
+              )}
+              {!search && <NotificationIcon />}
+            </>
+          )}
         </View>
       </View>
     </View>

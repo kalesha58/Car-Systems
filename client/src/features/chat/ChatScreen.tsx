@@ -480,9 +480,25 @@ const ChatScreen: React.FC = () => {
     );
   };
 
+  const renderHeaderRight = () => {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {selectedTab === 'groups' && (
+          <TouchableOpacity
+            onPress={() => (navigation as any).navigate('CreateGroup')}
+            style={{ marginRight: 12, padding: 4 }}
+            activeOpacity={0.7}>
+            <Icon name="add-circle-outline" size={RFValue(24)} color={colors.secondary} />
+          </TouchableOpacity>
+        )}
+        {renderNotificationIcon()}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <CustomHeader title="Chat" rightComponent={renderNotificationIcon()} />
+      <CustomHeader title="Chat" rightComponent={renderHeaderRight()} />
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, selectedTab === 'messages' && styles.activeTab]}
@@ -536,14 +552,6 @@ const ChatScreen: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      {selectedTab === 'groups' && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => (navigation as any).navigate('CreateGroup')}
-          activeOpacity={0.8}>
-          <Icon name="add" size={RFValue(24)} color={colors.white} />
-        </TouchableOpacity>
-      )}
     </View>
   );
 };

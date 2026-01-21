@@ -556,6 +556,8 @@ export interface ICreateDealerServiceRequest {
     address?: string;
   };
   images?: string[];
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -571,6 +573,8 @@ export interface IUpdateDealerServiceRequest {
     address?: string;
   };
   images?: string[];
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
 }
 
 export interface IDealerServiceResponse {

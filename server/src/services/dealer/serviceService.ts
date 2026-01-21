@@ -25,6 +25,8 @@ const serviceToDealerService = (doc: IServiceDocument): IDealerService => {
     category: doc.category,
     images: doc.images,
     location: doc.location,
+    isActive: doc.isActive !== undefined ? doc.isActive : true,
+    serviceType: doc.serviceType,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -163,6 +165,8 @@ export const createDealerService = async (
       category: data.category?.trim(),
       images: data.images || [],
       location: data.location,
+      isActive: data.isActive !== undefined ? data.isActive : true,
+      serviceType: data.serviceType,
     });
 
     await service.save();
@@ -272,7 +276,7 @@ export const updateDealerService = async (
 };
 
 /**
- * Update service status (Note: Service model doesn't have isActive, this might need model update)
+ * Update service status
  */
 export const updateServiceStatus = async (
   serviceId: string,
@@ -291,10 +295,48 @@ export const updateServiceStatus = async (
       throw new ForbiddenError('Unauthorized to update this service');
     }
 
-    // Note: Service model doesn't have isActive field
-    // This would require adding it to the model or using a different approach
-    // For now, we'll skip this or mark it as a TODO
-    // If needed, we can add a status field to the Service model
+    service.isActive = data.isActive;
+    await service.save();
+
+    logger.info(`Service status updated: ${serviceId} - isActive: ${data.isActive}`);
+
+    return serviceToDealerService(service);
+  } catch (error) {
+    logger.error('Error updating service status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Toggle service status (enable/disable)
+ */
+export const toggleServiceStatus = async (
+  serviceId: string,
+  dealerId: string,
+): Promise<IDealerService> => {
+  try {
+    const service = await Service.findById(serviceId);
+
+    if (!service) {
+      throw new NotFoundError('Service not found');
+    }
+
+    // Verify dealer owns this service
+    if (service.dealerId !== dealerId) {
+      throw new ForbiddenError('Unauthorized to update this service');
+    }
+
+    service.isActive = !service.isActive;
+    await service.save();
+
+    logger.info(`Service status toggled: ${serviceId} - isActive: ${service.isActive}`);
+
+    return serviceToDealerService(service);
+  } catch (error) {
+    logger.error('Error toggling service status:', error);
+    throw error;
+  }
+};
 
     logger.info(`Service status update requested: ${serviceId}`);
 

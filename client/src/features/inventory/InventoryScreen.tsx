@@ -15,7 +15,7 @@ import {
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/dealerService';
+import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration, toggleDealerServiceStatus} from '@service/dealerService';
 import {useAuthStore} from '@state/authStore';
 import {IProduct} from '../../types/product/IProduct';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
@@ -392,11 +392,25 @@ const InventoryScreen: React.FC = () => {
                 </CustomText>
               </View>
             )}
-            <View style={[styles.statusBadge, {backgroundColor: '#10b98115'}]}>
-              <CustomText variant="h9" fontFamily={Fonts.Medium} style={[styles.statusText, {color: '#10b981'}]}>
-                {t('dealer.active')}
+            <TouchableOpacity
+              onPress={(e) => handleToggleServiceStatus(item.id, e)}
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    item.isActive !== false ? theme.success + '15' : theme.error + '15',
+                },
+              ]}>
+              <CustomText
+                variant="h9"
+                fontFamily={Fonts.Medium}
+                style={[
+                  styles.statusText,
+                  {color: item.isActive !== false ? theme.success : theme.error},
+                ]}>
+                {item.isActive !== false ? t('dealer.active') : t('dealer.inactive')}
               </CustomText>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

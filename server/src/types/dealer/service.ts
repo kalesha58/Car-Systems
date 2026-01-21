@@ -1,7 +1,8 @@
 import { IService } from '../../types/service';
 
 export interface IDealerService extends IService {
-  // Reuse IService interface from existing types
+  isActive?: boolean;
+  serviceType?: string;
 }
 
 export interface ICreateDealerServiceRequest {
@@ -17,6 +18,8 @@ export interface ICreateDealerServiceRequest {
     address?: string;
   };
   images?: string[];
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -32,6 +35,8 @@ export interface IUpdateDealerServiceRequest {
     address?: string;
   };
   images?: string[];
+  isActive?: boolean;
+  serviceType?: 'car_wash' | 'general';
 }
 
 export interface IUpdateServiceStatusRequest {
@@ -50,6 +55,7 @@ export interface IGetDealerServicesRequest {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  isActive?: boolean;
 }
 
 

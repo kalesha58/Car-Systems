@@ -27,6 +27,10 @@ const serviceToIService = (serviceDoc: IServiceDocument): IService => {
     category: serviceDoc.category,
     images: serviceDoc.images,
     location: serviceDoc.location,
+    isActive: serviceDoc.isActive !== undefined ? serviceDoc.isActive : true,
+    serviceType: serviceDoc.serviceType,
+    slotDurationMinutes: serviceDoc.slotDurationMinutes,
+    slotBookingEnabled: serviceDoc.slotBookingEnabled !== undefined ? serviceDoc.slotBookingEnabled : false,
     createdAt: serviceDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: serviceDoc.updatedAt?.toISOString() || new Date().toISOString(),
   };

@@ -41,6 +41,7 @@ import ChatScreen from '@features/chat/ChatScreen';
 import UserSelectionScreen from '@features/chat/UserSelectionScreen';
 import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
+import NotificationScreen from '@features/notifications/NotificationScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
 import LocationPickerScreen from '@features/chat/LocationPickerScreen';
@@ -161,7 +162,7 @@ const MainTabs: FC = () => {
                     position: 'absolute',
                     right: -8,
                     top: -4,
-                    backgroundColor: '#ff3040',
+                    backgroundColor: colors.error,
                     borderRadius: 8,
                     width: 16,
                     height: 16,
@@ -171,7 +172,7 @@ const MainTabs: FC = () => {
                   <CustomText
                     fontSize={RFValue(8)}
                     fontFamily={Fonts.Bold}
-                    style={{ color: '#fff' }}>
+                    style={{ color: colors.white }}>
                     {cartCount > 9 ? '9+' : cartCount}
                   </CustomText>
                 </View>
@@ -216,7 +217,7 @@ const MainTabs: FC = () => {
                 <CustomText
                   fontSize={RFValue(size * 0.5)}
                   fontFamily={Fonts.Bold}
-                  style={{ color: '#fff' }}>
+                  style={{ color: colors.white }}>
                   {getInitialLetter()}
                 </CustomText>
               </View>
@@ -375,7 +376,7 @@ const DealerTabs: FC = () => {
                 <CustomText
                   fontSize={RFValue(size * 0.5)}
                   fontFamily={Fonts.Bold}
-                  style={{ color: '#fff' }}>
+                  style={{ color: colors.white }}>
                   {getInitialLetter()}
                 </CustomText>
               </View>
@@ -700,6 +701,13 @@ const Navigation: FC = () => {
             }}
             name="EditGroup"
             component={EditGroupScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="NotificationScreen"
+            component={NotificationScreen}
           />
           <Stack.Screen
             options={{

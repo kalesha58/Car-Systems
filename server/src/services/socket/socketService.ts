@@ -226,3 +226,29 @@ export const emitToPostRoom = (
   }
 };
 
+/**
+ * Emit event to specific user notification room
+ */
+export const emitToUserNotificationRoom = (
+  userId: string,
+  event: string,
+  data?: any,
+): void => {
+  if (!userId) {
+    logger.warn('Cannot emit to user notification room: userId is required');
+    return;
+  }
+
+  if (!io) {
+    logger.warn('Socket.io not initialized, cannot emit event');
+    return;
+  }
+
+  try {
+    const roomName = `user:${userId}`;
+    io.to(roomName).emit(event, data);
+    logger.info(`Emitted ${event} to user notification room: ${roomName}`);
+  } catch (error) {
+    logger.error(`Error emitting ${event} to user notification room ${userId}:`, error);
+  }
+};

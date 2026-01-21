@@ -6,6 +6,7 @@ import {
   createDealerService,
   updateDealerService,
   updateServiceStatus,
+  toggleServiceStatus,
   deleteDealerService,
   getServicesByCategory,
   getHomeServices,
@@ -205,6 +206,24 @@ export const updateServiceImagesController = async (
   try {
     const dealerId = (req as any).dealerId;
     const service = await updateServiceImages(req.params.id, dealerId, req.body);
+
+    res.status(200).json({
+      success: true,
+      Response: service,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const toggleServiceStatusController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const dealerId = (req as any).dealerId;
+    const service = await toggleServiceStatus(req.params.id, dealerId);
 
     res.status(200).json({
       success: true,

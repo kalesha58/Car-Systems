@@ -10,7 +10,7 @@ import {
   canRequestReturn,
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
-import { sendPushNotification } from '../notificationService';
+import { sendPushNotification, createNotification } from '../notificationService';
 
 export interface IPaymentAction {
   type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
@@ -293,6 +293,24 @@ export const createUserOrder = async (
       });
     } catch (notificationError) {
       logger.error('Error sending push notification for order creation:', notificationError);
+      // Don't throw - notification failure shouldn't block order creation
+    }
+
+    // Create in-app notification for order creation
+    try {
+      await createNotification({
+        userId,
+        type: 'order_update',
+        title: 'Order Placed Successfully',
+        body: `Your order ${order.orderNumber} has been placed. We'll keep you updated on its status.`,
+        data: {
+          orderId: (order._id as any).toString(),
+          status: 'ORDER_PLACED',
+        },
+        relatedId: (order._id as any).toString(),
+      });
+    } catch (notificationError) {
+      logger.error('Error creating in-app notification for order creation:', notificationError);
       // Don't throw - notification failure shouldn't block order creation
     }
 
