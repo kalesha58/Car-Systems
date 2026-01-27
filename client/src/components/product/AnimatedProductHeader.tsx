@@ -90,6 +90,13 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
     },
     backButton: {
       marginRight: 12,
+      padding: 6,
+      borderRadius: 20,
+      backgroundColor: colors.backgroundSecondary,
+      width: 36,
+      height: 36,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     thumbnail: {
       width: 40,
@@ -124,10 +131,12 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       gap: 12,
     },
     iconButton: {
-      width: 32,
-      height: 32,
+      width: 36,
+      height: 36,
       justifyContent: 'center',
       alignItems: 'center',
+      borderRadius: 18,
+      backgroundColor: colors.backgroundSecondary,
     },
   });
 
@@ -170,7 +179,7 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       </View>
       <View style={styles.rightIcons}>
         <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
-          <Icon name={isWishlisted ? 'heart' : 'heart-outline'} size={RFValue(18)} color={isWishlisted ? '#FF6B9D' : colors.text} />
+          <Icon name={isWishlisted ? 'heart' : 'heart-outline'} size={RFValue(18)} color={isWishlisted ? colors.error : colors.text} />
         </TouchableOpacity>
       </View>
     </Animated.View>

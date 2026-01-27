@@ -115,6 +115,128 @@ const EnhancedOrderItem: FC<EnhancedOrderItemProps> = ({
     swipeableRef.current?.close();
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: colors.cardBackground,
+      borderTopWidth: 0.6,
+      borderTopColor: colors.border,
+    },
+    flexRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 12,
+    },
+    imgContainer: {
+      backgroundColor: colors.backgroundSecondary,
+      padding: 10,
+      borderRadius: 15,
+      width: 70,
+      height: 70,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+    },
+    img: {
+      width: 50,
+      height: 50,
+      borderRadius: 8,
+    },
+    placeholderImg: {
+      backgroundColor: colors.backgroundSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    savedBadge: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      backgroundColor: colors.secondary,
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    contentContainer: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    productInfo: {
+      flex: 1,
+      marginRight: 8,
+    },
+    stockWarning: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    controlsContainer: {
+      alignItems: 'flex-end',
+      gap: 8,
+    },
+    quantityContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      borderRadius: 8,
+      padding: 4,
+      gap: 12,
+      minWidth: 90,
+      justifyContent: 'space-between',
+    },
+    quantityButton: {
+      padding: 4,
+      borderRadius: 4,
+    },
+    quantityButtonDisabled: {
+      opacity: 0.4,
+    },
+    quantityText: {
+      minWidth: 20,
+      textAlign: 'center',
+    },
+    priceContainer: {
+      alignItems: 'flex-end',
+    },
+    priceText: {
+      color: colors.text,
+    },
+    unitPrice: {
+      opacity: 0.6,
+      marginTop: 2,
+    },
+    rightActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginVertical: 8,
+      marginRight: 10,
+    },
+    actionButton: {
+      width: 80,
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 12,
+      marginLeft: 8,
+    },
+    actionTouchable: {
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    actionText: {
+      color: '#fff',
+      marginTop: 4,
+    },
+  });
+
   const renderRightActions = (progress: Animated.AnimatedInterpolation<number>) => {
     const translateX = progress.interpolate({
       inputRange: [0, 1],
@@ -279,128 +401,6 @@ const EnhancedOrderItem: FC<EnhancedOrderItemProps> = ({
     </Swipeable>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    borderTopWidth: 0.6,
-    borderTopColor: Colors.border,
-  },
-  flexRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-  },
-  imgContainer: {
-    backgroundColor: Colors.backgroundSecondary,
-    padding: 10,
-    borderRadius: 15,
-    width: 70,
-    height: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  img: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
-  },
-  placeholderImg: {
-    backgroundColor: Colors.backgroundSecondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  savedBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: Colors.secondary,
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productInfo: {
-    flex: 1,
-    marginRight: 8,
-  },
-  stockWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  controlsContainer: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 8,
-    padding: 4,
-    gap: 12,
-    minWidth: 90,
-    justifyContent: 'space-between',
-  },
-  quantityButton: {
-    padding: 4,
-    borderRadius: 4,
-  },
-  quantityButtonDisabled: {
-    opacity: 0.4,
-  },
-  quantityText: {
-    minWidth: 20,
-    textAlign: 'center',
-  },
-  priceContainer: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    color: Colors.text,
-  },
-  unitPrice: {
-    opacity: 0.6,
-    marginTop: 2,
-  },
-  rightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginVertical: 8,
-    marginRight: 10,
-  },
-  actionButton: {
-    width: 80,
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  actionTouchable: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  actionText: {
-    color: '#fff',
-    marginTop: 4,
-  },
-});
 
 export default EnhancedOrderItem;
 

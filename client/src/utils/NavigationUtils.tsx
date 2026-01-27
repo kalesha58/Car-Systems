@@ -29,10 +29,13 @@ export async function resetAndNavigate(routeName: string) {
     }
 }
 
-export async function goBack() {
-    navigationRef.isReady()
-    if (navigationRef.isReady()) {
-        navigationRef.dispatch(CommonActions.goBack())
+export function goBack() {
+    try {
+        if (navigationRef.isReady() && navigationRef.canGoBack()) {
+            navigationRef.dispatch(CommonActions.goBack());
+        }
+    } catch (error) {
+        console.log('Navigation goBack error:', error);
     }
 }
 

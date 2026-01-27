@@ -56,6 +56,89 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
     outputRange: ['0deg', '180deg'],
   });
 
+  const styles = StyleSheet.create({
+    container: {
+      borderRadius: 15,
+      marginVertical: 15,
+      marginHorizontal: 10,
+      overflow: 'hidden',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    savingsBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    billContainer: {
+      padding: 15,
+      paddingTop: 0,
+      paddingHorizontal: 15,
+    },
+    reportItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      minHeight: 40,
+    },
+    flexRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      flex: 1,
+      marginRight: 8,
+    },
+    titleContainer: {
+      flex: 1,
+      marginLeft: 8,
+      paddingRight: 4,
+    },
+    titleText: {
+      flexShrink: 1,
+    },
+    priceContainer: {
+      minWidth: 70,
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    priceText: {
+      textAlign: 'right',
+    },
+    freeDeliveryBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 10,
+    },
+    savingsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      marginTop: 8,
+    },
+    grandTotalContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 15,
+      borderTopWidth: 1,
+    },
+  });
+
   const ReportItem: FC<{
     iconName: string;
     title: string;
@@ -76,7 +159,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
             <CustomText
               style={[
                 {
-                  color: isDiscount ? colors.secondary : undefined,
+                  color: isDiscount ? colors.secondary : colors.text,
                 },
                 styles.titleText,
               ]}
@@ -86,7 +169,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
               {title}
             </CustomText>
             {subtitle && (
-              <CustomText variant="h9" style={{opacity: 0.6, marginTop: 2}} numberOfLines={1}>
+              <CustomText variant="h9" style={{color: colors.textSecondary, opacity: 0.6, marginTop: 2}} numberOfLines={1}>
                 {subtitle}
               </CustomText>
             )}
@@ -97,7 +180,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
             variant="h8"
             fontFamily={Fonts.Medium}
             style={[
-              isDiscount ? {color: colors.secondary} : undefined,
+              {color: isDiscount ? colors.secondary : colors.text},
               styles.priceText,
             ]}>
             {isDiscount && price > 0 ? '-' : ''}₹{Math.abs(price || 0).toFixed(2)}
@@ -114,7 +197,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
         onPress={() => setIsExpanded(!isExpanded)}
         activeOpacity={0.7}>
         <View style={styles.headerContent}>
-          <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+          <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{color: colors.text}}>
             Bill Details
           </CustomText>
           {totalSavings > 0 && (
@@ -191,7 +274,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
             <View style={[styles.savingsContainer, {borderColor: colors.border}]}>
               <View style={styles.flexRow}>
                 <IconIonicons name="checkmark-circle" size={RFValue(16)} color={colors.secondary} />
-                <CustomText variant="h8" fontFamily={Fonts.Medium} style={{marginLeft: 6}}>
+                <CustomText variant="h8" fontFamily={Fonts.Medium} style={{color: colors.text, marginLeft: 6}}>
                   Total Savings
                 </CustomText>
               </View>
@@ -207,7 +290,7 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
       )}
 
       <View style={[styles.grandTotalContainer, {borderTopColor: colors.border}]}>
-        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+        <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{color: colors.text}}>
           Grand Total
         </CustomText>
         <CustomText variant="h5" fontFamily={Fonts.Bold} style={{color: colors.secondary}}>
@@ -217,89 +300,6 @@ const EnhancedBillDetails: FC<EnhancedBillDetailsProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 15,
-    marginVertical: 15,
-    marginHorizontal: 10,
-    overflow: 'hidden',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  savingsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  billContainer: {
-    padding: 15,
-    paddingTop: 0,
-    paddingHorizontal: 15,
-  },
-  reportItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    minHeight: 40,
-  },
-  flexRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-    marginRight: 8,
-  },
-  titleContainer: {
-    flex: 1,
-    marginLeft: 8,
-    paddingRight: 4,
-  },
-  titleText: {
-    flexShrink: 1,
-  },
-  priceContainer: {
-    minWidth: 70,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  priceText: {
-    textAlign: 'right',
-  },
-  freeDeliveryBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  savingsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 8,
-  },
-  grandTotalContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderTopWidth: 1,
-  },
-});
 
 export default EnhancedBillDetails;
 

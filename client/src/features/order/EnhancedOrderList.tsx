@@ -6,12 +6,14 @@ import EnhancedOrderItem from './EnhancedOrderItem';
 import DeliveryTimeEstimate from '../cart/DeliveryTimeEstimate';
 import {getProductById} from '@service/productService';
 import {IProduct} from '../../types/product/IProduct';
+import {useTheme} from '@hooks/useTheme';
 
 const EnhancedOrderList = () => {
   const cartItems = useCartStore(state => state.cart);
   const {updateItemStock} = useCartStore();
   const {moveToCart} = useSavedForLaterStore();
   const [productStocks, setProductStocks] = useState<Record<string, number>>({});
+  const {colors} = useTheme();
 
   useEffect(() => {
     fetchProductStocks();
@@ -52,6 +54,15 @@ const EnhancedOrderList = () => {
     return null;
   }
 
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 15,
+      marginBottom: 15,
+      overflow: 'hidden',
+    },
+  });
+
   return (
     <View style={styles.container}>
       <DeliveryTimeEstimate />
@@ -75,14 +86,4 @@ const EnhancedOrderList = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    marginBottom: 15,
-    overflow: 'hidden',
-  },
-});
-
 export default EnhancedOrderList;
-

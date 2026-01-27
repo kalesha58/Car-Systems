@@ -110,7 +110,8 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
       width: getResponsiveValue(6, 8, 10),
       height: getResponsiveValue(6, 8, 10),
       borderRadius: getResponsiveValue(3, 4, 5),
-      backgroundColor: 'rgba(255, 255, 255, 0.5)',
+      backgroundColor: colors.text,
+      opacity: 0.3,
     },
     activeDot: {
       width: getResponsiveValue(20, 24, 28),
@@ -123,10 +124,16 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
       width: getResponsiveValue(40, 48, 52),
       height: getResponsiveValue(40, 48, 52),
       borderRadius: getResponsiveValue(20, 24, 26),
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: colors.cardBackground,
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 10,
+      opacity: 0.9,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
     },
     actionButton: {
       position: 'absolute',
@@ -157,9 +164,15 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
       width: getResponsiveValue(40, 48, 52),
       height: getResponsiveValue(40, 48, 52),
       borderRadius: getResponsiveValue(20, 24, 26),
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: colors.cardBackground,
       justifyContent: 'center',
       alignItems: 'center',
+      opacity: 0.9,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
     },
   });
 
@@ -179,7 +192,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
             <Icon
               name={isWishlisted ? 'heart' : 'heart-outline'}
               size={RFValue(getResponsiveValue(20, 24, 28))}
-              color={isWishlisted ? '#FF6B9D' : colors.text}
+              color={isWishlisted ? colors.error : colors.text}
             />
           </TouchableOpacity>
         </View>
@@ -216,7 +229,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
           <Icon
             name={isWishlisted ? 'heart' : 'heart-outline'}
             size={RFValue(getResponsiveValue(20, 24, 28))}
-            color={isWishlisted ? '#FF6B9D' : colors.text}
+            color={isWishlisted ? colors.error : colors.text}
           />
         </TouchableOpacity>
       </View>

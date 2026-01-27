@@ -3,7 +3,7 @@ import React, {FC, ReactNode} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Fonts} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {goBack} from '@utils/NavigationUtils';
+import {useNavigation} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from './CustomText';
 import {useTheme} from '@hooks/useTheme';
@@ -28,6 +28,7 @@ const CustomHeader: FC<CustomHeaderProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
+  const navigation = useNavigation();
 
   const styles = StyleSheet.create({
     flexRow: {
@@ -53,7 +54,12 @@ const CustomHeader: FC<CustomHeaderProps> = ({
     <View style={{paddingTop: transparent ? insets.top : insets.top, backgroundColor: transparent ? 'transparent' : colors.cardBackground}}>
       <View style={styles.flexRow}>
         {showBackButton ? (
-          <Pressable onPress={() => goBack()}>
+          <Pressable 
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
+            }}>
             <Icon name="chevron-back" color={colors.text} size={RFValue(16)} />
           </Pressable>
         ) : (
