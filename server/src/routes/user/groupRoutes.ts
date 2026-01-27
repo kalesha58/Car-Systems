@@ -10,8 +10,10 @@ import {
   removeMemberController,
   markAttendanceController,
   driverConsentController,
+  updateGroupImageController,
 } from '../../controllers/user/groupController';
 import { authMiddleware } from '../../middleware/authMiddleware';
+import { uploadSingle } from '../../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -174,6 +176,22 @@ router.post('/:id/attendance', authMiddleware, markAttendanceController);
  *         description: Unauthorized
  */
 router.post('/:id/driver-consent', authMiddleware, driverConsentController);
+
+/**
+ * @swagger
+ * /api/groups/{id}/image:
+ *   put:
+ *     summary: Update group profile image
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Group image updated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/:id/image', authMiddleware, uploadSingle, updateGroupImageController);
 
 export default router;
 

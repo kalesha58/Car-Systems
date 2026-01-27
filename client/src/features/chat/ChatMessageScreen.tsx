@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   PermissionsAndroid,
+  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -31,8 +32,11 @@ import {
   followGroupChat,
   startLiveLocation,
   stopLiveLocation,
+  getPendingRequestCount,
+  getGroupMembers,
+  updateGroupImage,
+  editGroupChat,
 } from '@service/chatService';
-import { getPendingRequestCount } from '@service/chatService';
 import {
   initializeSocket,
   joinChatRoom,
@@ -69,6 +73,9 @@ const ChatMessageScreen: React.FC = () => {
   const [isLiveLocationActive, setIsLiveLocationActive] = useState(false);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<any>(null);
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
@@ -224,6 +231,11 @@ const ChatMessageScreen: React.FC = () => {
       if (data.type === 'group' && data.isOwner && data.groupId) {
         loadPendingRequestCount(data.groupId);
       }
+
+      // Load group members if it's a group
+      if (data.type === 'group' && data.groupId) {
+        loadGroupMembers(data.groupId);
+      }
     } catch (error: any) {
       const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || 'Failed to load chat';
       if (errorMessage.includes('must follow') || errorMessage.includes('not a member')) {
@@ -244,6 +256,64 @@ const ChatMessageScreen: React.FC = () => {
       setPendingRequestCount(count);
     } catch (error) {
       // Silently fail - not critical
+    }
+  };
+
+  const loadGroupMembers = async (groupId: string) => {
+    setLoadingMembers(true);
+    try {
+      const members = await getGroupMembers(groupId);
+      setGroupMembers(members);
+    } catch (error: any) {
+      showError(error?.response?.data?.message || 'Failed to load group members');
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleGroupImageUpload = async () => {
+    if (!chat?.groupId) return;
+
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+      },
+      async (response: ImagePickerResponse) => {
+        if (response.didCancel || !response.assets?.[0]) {
+          return;
+        }
+
+        const imageUri = response.assets[0].uri;
+        if (!imageUri) return;
+
+        try {
+          await updateGroupImage(chat.groupId!, imageUri);
+          showSuccess('Group image updated successfully');
+          loadChat(); // Reload chat to get updated image
+        } catch (error: any) {
+          showError(error?.response?.data?.message || 'Failed to upload group image');
+        }
+      },
+    );
+  };
+
+  const handleAddMembers = () => {
+    if (!chat?.id || !chat?.groupId) return;
+    // Navigate to EditGroup screen to add members
+    (navigation as any).navigate('EditGroup', { chatId: chat.id });
+  };
+
+  const handleTogglePrivacy = async (newPrivacy: 'public' | 'private') => {
+    if (!chat?.id) return;
+    try {
+      await editGroupChat(chat.id, {
+        privacy: newPrivacy,
+      });
+      showSuccess(`Group is now ${newPrivacy}`);
+      loadChat();
+    } catch (error: any) {
+      showError(error?.response?.data?.message || 'Failed to update privacy');
     }
   };
 
@@ -784,36 +854,150 @@ const ChatMessageScreen: React.FC = () => {
 
   const headerRight = () => {
     if (chat?.type === 'group') {
-      if (chat.isOwner && chat.groupId) {
-        return (
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
-            onPress={() => (navigation as any).navigate('JoinRequests', { groupId: chat.groupId })}
-            style={{ marginRight: 16, position: 'relative' }}>
-            <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
-            {pendingRequestCount > 0 && (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -4,
-                  backgroundColor: colors.secondary,
-                  borderRadius: 10,
-                  minWidth: 20,
-                  height: 20,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  paddingHorizontal: 4,
-                }}>
-                <CustomText style={{ color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold }}>
-                  {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
-                </CustomText>
+            onPress={() => setShowGroupInfo(!showGroupInfo)}
+            style={{ marginRight: 12, padding: 4 }}
+            activeOpacity={0.7}>
+            <Icon name="information-circle-outline" size={RFValue(24)} color={colors.text} />
+          </TouchableOpacity>
+          {chat.isOwner && chat.groupId && (
+            <TouchableOpacity
+              onPress={() => (navigation as any).navigate('JoinRequests', { groupId: chat.groupId })}
+              style={{ marginRight: 16, position: 'relative' }}>
+              <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
+              {pendingRequestCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    backgroundColor: colors.secondary,
+                    borderRadius: 10,
+                    minWidth: 20,
+                    height: 20,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingHorizontal: 4,
+                  }}>
+                  <CustomText style={{ color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold }}>
+                    {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
+                  </CustomText>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const renderGroupInfo = () => {
+    if (!showGroupInfo || chat?.type !== 'group') return null;
+
+    const groupImage = chat.groupImage || chat.participantAvatars?.[0];
+
+    return (
+      <View style={{
+        backgroundColor: colors.cardBackground,
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <TouchableOpacity onPress={handleGroupImageUpload} activeOpacity={0.7}>
+            {groupImage ? (
+              <Image 
+                source={{ uri: groupImage }} 
+                style={{ width: 60, height: 60, borderRadius: 30 }}
+              />
+            ) : (
+              <View style={{
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: colors.border,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <Icon name="camera" size={RFValue(24)} color={colors.disabled} />
               </View>
             )}
           </TouchableOpacity>
-        );
-      }
-    }
-    return null;
+          <View style={{ marginLeft: 12, flex: 1 }}>
+            <CustomText style={{ fontSize: RFValue(18), fontFamily: Fonts.SemiBold }}>
+              {chat.groupName || 'Group'}
+            </CustomText>
+            <CustomText style={{ fontSize: RFValue(12), color: colors.disabled, marginTop: 4 }}>
+              {loadingMembers ? 'Loading...' : `${groupMembers.length} ${groupMembers.length === 1 ? 'member' : 'members'}`}
+            </CustomText>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 12,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+          }}
+          onPress={handleAddMembers}
+          activeOpacity={0.7}>
+          <Icon name="person-add-outline" size={RFValue(20)} color={colors.text} />
+          <CustomText style={{ marginLeft: 12, fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
+            Add Members
+          </CustomText>
+        </TouchableOpacity>
+
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}>
+          <CustomText style={{ fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
+            Privacy
+          </CustomText>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Switch
+              value={chat.privacy === 'public'}
+              onValueChange={(value: boolean) => handleTogglePrivacy(value ? 'public' : 'private')}
+              trackColor={{ false: colors.border, true: colors.secondary }}
+              thumbColor={colors.white}
+            />
+            <CustomText style={{ marginLeft: 8, fontSize: RFValue(12), color: colors.disabled }}>
+              {chat.privacy === 'public' ? 'Public' : 'Private'}
+            </CustomText>
+          </View>
+        </View>
+
+        {chat.isOwner && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 12,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+            }}
+            onPress={() => {
+              setShowGroupInfo(false);
+              (navigation as any).navigate('EditGroup', { chatId: chat.id });
+            }}
+            activeOpacity={0.7}>
+            <Icon name="settings-outline" size={RFValue(20)} color={colors.text} />
+            <CustomText style={{ marginLeft: 12, fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
+              Edit Group Settings
+            </CustomText>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
   };
 
   return (
@@ -829,6 +1013,7 @@ const ChatMessageScreen: React.FC = () => {
         }
         rightComponent={headerRight()}
       />
+      {renderGroupInfo()}
       <FlatList
         ref={flatListRef}
         data={messages}

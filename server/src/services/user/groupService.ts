@@ -49,6 +49,7 @@ const groupToIGroup = async (groupDoc: IGroupDocument): Promise<IGroup> => {
         }
       : undefined,
     vanDetails: groupDoc.vanDetails,
+    groupImage: groupDoc.groupImage,
     chatEnabled: groupDoc.chatEnabled,
     liveLocationEnabled: groupDoc.liveLocationEnabled,
     memberCount,
@@ -111,6 +112,7 @@ export const createGroup = async (
         }
       : undefined,
     vanDetails,
+    groupImage: data.groupImage,
     chatEnabled: data.chatEnabled !== undefined ? data.chatEnabled : true,
     liveLocationEnabled: data.liveLocationEnabled !== undefined ? data.liveLocationEnabled : true,
   });
@@ -220,6 +222,7 @@ export const updateGroup = async (
     };
   }
   if (data.vanDetails !== undefined) group.vanDetails = data.vanDetails;
+  if (data.groupImage !== undefined) group.groupImage = data.groupImage;
   if (data.chatEnabled !== undefined) group.chatEnabled = data.chatEnabled;
   if (data.liveLocationEnabled !== undefined) group.liveLocationEnabled = data.liveLocationEnabled;
 

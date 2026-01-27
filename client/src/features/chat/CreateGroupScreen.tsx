@@ -8,6 +8,8 @@ import {
   TextInput,
   Switch,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
@@ -77,7 +79,8 @@ const CreateGroupScreen: React.FC = () => {
         privacy: isPublic ? 'public' : 'private',
       });
       showSuccess('Group created successfully');
-      (navigation as any).navigate('ChatMessage', {chatId: chat.id});
+      // Navigate back to Chat screen with groups tab selected
+      (navigation as any).navigate('Chat', {initialTab: 'groups'});
     } catch (error: any) {
       showError(error?.response?.data?.message || 'Failed to create group');
     } finally {
@@ -94,6 +97,7 @@ const CreateGroupScreen: React.FC = () => {
         },
         content: {
           padding: 16,
+          paddingBottom: 100, // Add padding for fixed button
         },
         inputContainer: {
           marginBottom: 24,
@@ -181,21 +185,36 @@ const CreateGroupScreen: React.FC = () => {
           backgroundColor: colors.secondary,
           borderColor: colors.secondary,
         },
+        createButtonContainer: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: colors.background,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 12,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        },
         createButton: {
           backgroundColor: colors.secondary,
           borderRadius: 12,
           paddingVertical: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 24,
         },
         createButtonDisabled: {
-          opacity: 0.5,
+          backgroundColor: colors.border,
+          opacity: 0.6,
         },
         createButtonText: {
           color: colors.white,
           fontSize: RFValue(16),
           fontFamily: Fonts.SemiBold,
+        },
+        createButtonTextDisabled: {
+          color: colors.disabled,
         },
         loadingContainer: {
           flex: 1,
@@ -232,6 +251,8 @@ const CreateGroupScreen: React.FC = () => {
     );
   };
 
+  const isButtonDisabled = !groupName.trim() || selectedUsers.size === 0 || creating;
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -244,7 +265,10 @@ const CreateGroupScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
       <CustomHeader title="Create Group" />
       <FlatList
         data={users}
@@ -279,24 +303,31 @@ const CreateGroupScreen: React.FC = () => {
           </View>
         }
         contentContainerStyle={styles.content}
-        ListFooterComponent={
-          <TouchableOpacity
-            style={[
-              styles.createButton,
-              creating && styles.createButtonDisabled,
-            ]}
-            onPress={handleCreateGroup}
-            disabled={creating || !groupName.trim() || selectedUsers.size === 0}
-            activeOpacity={0.8}>
-            {creating ? (
-              <ActivityIndicator size="small" color={colors.white} />
-            ) : (
-              <CustomText style={styles.createButtonText}>Create Group</CustomText>
-            )}
-          </TouchableOpacity>
-        }
       />
-    </View>
+      
+      {/* Fixed button at bottom */}
+      <View style={styles.createButtonContainer}>
+        <TouchableOpacity
+          style={[
+            styles.createButton,
+            isButtonDisabled && styles.createButtonDisabled,
+          ]}
+          onPress={handleCreateGroup}
+          disabled={isButtonDisabled}
+          activeOpacity={0.8}>
+          {creating ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <CustomText style={[
+              styles.createButtonText,
+              ...(isButtonDisabled ? [styles.createButtonTextDisabled] : [])
+            ]}>
+              Create Group
+            </CustomText>
+          )}
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

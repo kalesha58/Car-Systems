@@ -21,6 +21,8 @@ import {
 import { errorHandler, IAppError } from '../../utils/errorHandler';
 import { IAuthRequest } from '../../middleware/authMiddleware';
 import { logger } from '../../utils/logger';
+import { uploadToCloudinary } from '../../config/cloudinary';
+import fs from 'fs';
 
 /**
  * Create group controller
@@ -338,6 +340,124 @@ export const driverConsentController = async (
       },
     });
   } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Update group image controller
+ */
+export const updateGroupImageController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const groupId = req.params.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'No image file provided',
+        },
+      });
+      return;
+    }
+
+    // Verify user is group owner/admin
+    const groupResult = await getGroupById(groupId, userId);
+    const group = groupResult.Response;
+
+    if (group.ownerId !== userId) {
+      // Check if user is admin member
+      const { GroupMember } = await import('../../models/GroupMember');
+      const member = await GroupMember.findOne({
+        groupId: group.id,
+        userId,
+        role: 'admin',
+        status: 'active',
+      });
+
+      if (!member) {
+        res.status(403).json({
+          success: false,
+          Response: {
+            ReturnMessage: 'Only group owner or admin can update group image',
+          },
+        });
+        return;
+      }
+    }
+
+    try {
+      logger.info('Uploading group image to Cloudinary...');
+
+      // Determine if using memory storage (buffer) or disk storage (path)
+      const fileSource = (req.file as any).buffer || req.file.path;
+
+      // Upload to Cloudinary in groups folder
+      const result = await uploadToCloudinary(fileSource, 'car-connect/groups');
+
+      logger.info(`Group image uploaded to Cloudinary: ${result.url}`);
+
+      // Update group with new image URL
+      const updateResult = await updateGroup(groupId, userId, {
+        groupImage: result.url,
+      });
+
+      // Delete local file after upload (only if using disk storage)
+      if (req.file.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+        logger.info('Local group image file deleted after upload');
+      }
+
+      res.status(200).json({
+        success: true,
+        ...updateResult,
+      });
+    } catch (uploadError) {
+      logger.error('Error uploading group image:', uploadError);
+
+      // Clean up local file on error (only if using disk storage)
+      if (req.file.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+          logger.info('Local file cleaned up after upload error');
+        } catch (unlinkError) {
+          logger.error('Error deleting local file:', unlinkError);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Failed to upload group image',
+        },
+      });
+    }
+  } catch (error) {
+    // Clean up local file on error (only if using disk storage)
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+        logger.info('Local file cleaned up after error');
+      } catch (unlinkError) {
+        logger.error('Error deleting local file:', unlinkError);
+      }
+    }
+
     errorHandler(error as IAppError, res);
   }
 };

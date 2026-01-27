@@ -27,6 +27,7 @@ export interface IGroupDocument extends Document {
   joinCode?: string;
   tripPlan?: ITripPlan;
   vanDetails?: IVanDetails;
+  groupImage?: string;
   chatEnabled: boolean;
   liveLocationEnabled: boolean;
   createdAt: Date;
@@ -93,6 +94,10 @@ const groupSchema = new Schema<IGroupDocument>(
     },
     vanDetails: {
       type: vanDetailsSchema,
+    },
+    groupImage: {
+      type: String,
+      trim: true,
     },
     chatEnabled: {
       type: Boolean,

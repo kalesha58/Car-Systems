@@ -32,6 +32,8 @@ export interface IChat {
   participantAvatars?: string[];
   groupId?: string;
   groupName?: string;
+  groupImage?: string;
+  privacy?: 'public' | 'private';
   lastMessage?: IMessage;
   unreadCount?: number;
   isMember?: boolean;
@@ -67,6 +69,7 @@ export interface IEditGroupChatRequest {
   userIdsToAdd?: string[];
   userIdsToRemove?: string[];
   privacy?: 'public' | 'private';
+  groupImage?: string;
 }
 
 export interface IUserListItem {
