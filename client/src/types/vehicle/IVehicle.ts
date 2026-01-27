@@ -81,9 +81,7 @@ export interface IVehicleDocuments {
   year?: number;
   color?: string;
   images: string[];
-}
-
-export interface IUpdateVehicleRequest {
+}export interface IUpdateVehicleRequest {
   brand?: string;
   model?: string;
   numberPlate?: string;

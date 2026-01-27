@@ -388,9 +388,7 @@ export const validateCreateTestDrive = (
   next: NextFunction,
 ): void => {
   try {
-    const { vehicleId, preferredDate, preferredTime } = req.body;
-
-    if (!vehicleId || typeof vehicleId !== 'string' || !vehicleId.trim()) {
+    const { vehicleId, preferredDate, preferredTime } = req.body;    if (!vehicleId || typeof vehicleId !== 'string' || !vehicleId.trim()) {
       return next(new ValidationError('Vehicle ID is required'));
     }
 
@@ -417,9 +415,7 @@ export const validateCreateTestDrive = (
 
     if (!isValidTime(preferredTime)) {
       return next(new ValidationError('Time must be in HH:mm format (e.g., 14:30)'));
-    }
-
-    // Normalize time format
+    }    // Normalize time format
     req.body.preferredTime = preferredTime.trim();
 
     next();
