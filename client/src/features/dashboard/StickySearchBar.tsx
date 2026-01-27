@@ -3,6 +3,7 @@ import React from 'react'
 import { StickyView, useCollapsibleContext } from '@r0b0t3d/react-native-collapsible'
 import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import SearchBar from '@components/dashboard/SearchBar'
+import CategoryButtons from '@components/dashboard/CategoryButtons'
 import { useTheme } from '@hooks/useTheme'
 
 
@@ -44,6 +45,7 @@ const StickySearchBar = () => {
 
   return (
     <StickyView style={backgroundColorChanges}>
+      <CategoryButtons />
       <SearchBar />
       <Animated.View style={[styles.shadow,animatedShadow]} />
     </StickyView>

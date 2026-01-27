@@ -6,31 +6,26 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { getProducts } from '@service/productService';
 import { IProduct } from '../../types/product/IProduct';
-import LottieView from 'lottie-react-native';
-import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 import { navigate } from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useCartStore } from '@state/cartStore';
 
 const TopProductsSection: FC = () => {
-    const seasonalTheme = useSeasonalTheme();
     const { colors } = useTheme();
     const [topProducts, setTopProducts] = useState<IProduct[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const { addItem } = useCartStore();
 
     useEffect(() => {
         const fetchTopProducts = async () => {
             try {
                 setLoading(true);
-                // Fetch first 3 products from API
+                // Fetch first 4 products from API for 2x2 grid
                 const response = await getProducts({
-                    limit: 3
+                    limit: 4
                 });
 
                 if (response?.success && response?.Response?.products) {
-                    // Get first 3 products from response
-                    setTopProducts(response.Response.products.slice(0, 3));
+                    // Get first 4 products from response
+                    setTopProducts(response.Response.products.slice(0, 4));
                 }
             } catch (error) {
                 console.error('Error fetching top products:', error);
@@ -47,118 +42,94 @@ const TopProductsSection: FC = () => {
         navigate('ProductDetail', { productId: product.id });
     };
 
-    const handleAddToCart = (product: IProduct) => {
-        addItem(product);
-    };
-
     const styles = StyleSheet.create({
         container: {
-            paddingTop: 20,
-            paddingBottom: 20,
-            paddingHorizontal: 20,
+            paddingTop: 12,
+            paddingBottom: 12,
+            paddingHorizontal: 15,
             marginTop: -5,
             position: 'relative',
+            backgroundColor: colors.backgroundSecondary,
         },
         header: {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 15,
+            marginBottom: 10,
         },
-        cardsContainer: {
+        gridContainer: {
             flexDirection: 'row',
+            flexWrap: 'wrap',
             justifyContent: 'space-between',
-            gap: 12,
         },
         productCard: {
-            flex: 1,
-            backgroundColor: colors.white,
-            borderRadius: 8,
-            padding: 8,
-            // Shadow
-            shadowColor: '#000',
-            shadowOffset: {
-                width: 0,
-                height: 2,
-            },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 3,
+            width: '48%',
+            backgroundColor: colors.cardBackground,
+            borderRadius: 6,
+            padding: 0,
+            marginBottom: 8,
+            overflow: 'hidden',
             borderWidth: 1,
-            borderColor: '#e0e0e0',
+            borderColor: colors.border,
+            position: 'relative',
+        },
+        imageContainer: {
+            width: '100%',
+            height: 80,
+            backgroundColor: colors.backgroundSecondary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
         },
         productImage: {
             width: '100%',
-            height: 100,
-            borderRadius: 4,
-            marginBottom: 8,
+            height: '100%',
             resizeMode: 'contain',
-            backgroundColor: '#ffffff',
+        },
+        productInfo: {
+            padding: 6,
         },
         productName: {
-            fontSize: RFValue(10),
+            fontSize: RFValue(9),
             fontFamily: Fonts.Medium,
             color: colors.text,
             marginBottom: 4,
-            height: 30, // Fixed height for 2 lines
-            lineHeight: 15,
+            minHeight: 28,
+            lineHeight: 14,
         },
         priceContainer: {
             flexDirection: 'row',
             alignItems: 'baseline',
             gap: 4,
-            marginBottom: 8,
+            marginBottom: 4,
             flexWrap: 'wrap',
         },
         price: {
-            fontSize: RFValue(12),
+            fontSize: RFValue(11),
             fontFamily: Fonts.Bold,
-            color: '#B12704',
+            color: colors.secondary,
         },
         discountPrice: {
-            fontSize: RFValue(9),
+            fontSize: RFValue(8),
             fontFamily: Fonts.Regular,
-            color: '#565959',
+            color: colors.disabled,
             textDecorationLine: 'line-through',
         },
         discountBadge: {
             position: 'absolute',
-            top: 8,
-            left: 8,
-            zIndex: 1,
-            backgroundColor: '#FF3B30',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: colors.secondary,
+            paddingVertical: 3,
             paddingHorizontal: 6,
-            paddingVertical: 2,
-            borderRadius: 4,
+            alignItems: 'center',
+            justifyContent: 'center',
         },
         discountText: {
             fontSize: RFValue(8),
             fontFamily: Fonts.Bold,
             color: colors.white,
-        },
-        trainContainer: {
-            width: '100%',
-            height: 100,
-            position: 'absolute',
-            top: -50,
-            zIndex: 10,
-        },
-        trainAnimation: {
-            width: '100%',
-            height: '100%',
-        },
-        addButton: {
-            backgroundColor: '#FFD814', // Amazon-like add to cart button color
-            paddingVertical: 6,
-            borderRadius: 100,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 0,
-        },
-        addButtonText: {
-            color: '#0F1111',
-            fontSize: RFValue(9),
-            fontFamily: Fonts.Medium,
         },
     });
 
@@ -167,23 +138,11 @@ const TopProductsSection: FC = () => {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: seasonalTheme.colors.primary }]}>
-            {/* Overlay animation (train, sleigh, etc.) above Top Picks - if available */}
-            {seasonalTheme.animations.overlay && (
-                <View style={styles.trainContainer}>
-                    <LottieView
-                        autoPlay
-                        loop
-                        speed={1}
-                        style={styles.trainAnimation}
-                        source={seasonalTheme.animations.overlay}
-                    />
-                </View>
-            )}
+        <View style={styles.container}>
 
             <View style={styles.header}>
-                <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
-                    Top Picks
+                <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: colors.text }}>
+                    Continue shopping deals
                 </CustomText>
                 <TouchableOpacity
                     onPress={() => {
@@ -200,17 +159,17 @@ const TopProductsSection: FC = () => {
                     <CustomText
                         variant="h8"
                         fontFamily={Fonts.Medium}
-                        style={{ color: colors.white }}>
+                        style={{ color: colors.secondary }}>
                         View All →
                     </CustomText>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.cardsContainer}>
+            <View style={styles.gridContainer}>
                 {loading ? (
-                    Array.from({ length: 3 }).map((_, index) => (
-                        <View key={index} style={[styles.productCard, { height: 200 }]}>
-                            <ActivityIndicator size="small" color={colors.secondary} style={{ marginTop: 50 }} />
+                    Array.from({ length: 4 }).map((_, index) => (
+                        <View key={index} style={[styles.productCard, { height: 140 }]}>
+                            <ActivityIndicator size="small" color={colors.secondary} style={{ marginTop: 40 }} />
                         </View>
                     ))
                 ) : topProducts.length > 0 ? (
@@ -218,6 +177,7 @@ const TopProductsSection: FC = () => {
                         const imageUrl = product.images && product.images.length > 0 ? product.images[0] : '';
                         const originalPrice = product.originalPrice || product.price;
                         const hasDiscount = originalPrice > product.price;
+                        const discountPercent = hasDiscount ? calculateDiscount(product.price, originalPrice) : 0;
 
                         return (
                             <TouchableOpacity
@@ -226,54 +186,49 @@ const TopProductsSection: FC = () => {
                                 onPress={() => handleProductPress(product)}
                                 activeOpacity={0.9}
                             >
-                                {imageUrl ? (
-                                    <Image
-                                        source={{ uri: imageUrl }}
-                                        style={styles.productImage}
-                                    />
-                                ) : (
-                                    <View style={[styles.productImage, { backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center' }]}>
-                                        <Icon name="image-outline" size={30} color={colors.disabled} />
+                                <View style={styles.imageContainer}>
+                                    {imageUrl ? (
+                                        <Image
+                                            source={{ uri: imageUrl }}
+                                            style={styles.productImage}
+                                        />
+                                    ) : (
+                                        <Icon name="image-outline" size={40} color={colors.disabled} />
+                                    )}
+                                </View>
+
+                                <View style={styles.productInfo}>
+                                    <CustomText
+                                        style={styles.productName}
+                                        numberOfLines={2}>
+                                        {product.name}
+                                    </CustomText>
+
+                                    <View style={styles.priceContainer}>
+                                        <CustomText style={styles.price}>
+                                            ₹{product.price.toLocaleString()}
+                                        </CustomText>
+                                        {hasDiscount && (
+                                            <CustomText style={styles.discountPrice}>
+                                                ₹{originalPrice.toLocaleString()}
+                                            </CustomText>
+                                        )}
                                     </View>
-                                )}
+                                </View>
 
                                 {hasDiscount && (
                                     <View style={styles.discountBadge}>
                                         <CustomText style={styles.discountText}>
-                                            {calculateDiscount(product.price, originalPrice)}% off
+                                            {discountPercent}% off
                                         </CustomText>
                                     </View>
                                 )}
-
-                                <CustomText
-                                    style={styles.productName}
-                                    numberOfLines={2}>
-                                    {product.name}
-                                </CustomText>
-
-                                <View style={styles.priceContainer}>
-                                    <CustomText style={styles.price}>
-                                        ₹{product.price.toLocaleString()}
-                                    </CustomText>
-                                    {hasDiscount && (
-                                        <CustomText style={styles.discountPrice}>
-                                            ₹{originalPrice.toLocaleString()}
-                                        </CustomText>
-                                    )}
-                                </View>
-
-                                <TouchableOpacity
-                                    style={styles.addButton}
-                                    onPress={() => handleAddToCart(product)}
-                                    activeOpacity={0.7}>
-                                    <CustomText style={styles.addButtonText}>Add to Cart</CustomText>
-                                </TouchableOpacity>
                             </TouchableOpacity>
                         );
                     })
                 ) : (
                     <View style={{ padding: 20, alignItems: 'center', width: '100%' }}>
-                        <CustomText style={{ color: '#fff' }}>No top products found.</CustomText>
+                        <CustomText style={{ color: colors.text }}>No products found.</CustomText>
                     </View>
                 )}
             </View>
