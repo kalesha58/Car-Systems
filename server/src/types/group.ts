@@ -26,6 +26,7 @@ export interface IGroup {
   joinCode?: string;
   tripPlan?: ITripPlan;
   vanDetails?: IVanDetails;
+  groupImage?: string;
   chatEnabled: boolean;
   liveLocationEnabled: boolean;
   memberCount?: number;
@@ -41,6 +42,7 @@ export interface ICreateGroupRequest {
   privacy?: GroupPrivacy;
   tripPlan?: ITripPlan;
   vanDetails?: IVanDetails;
+  groupImage?: string;
   chatEnabled?: boolean;
   liveLocationEnabled?: boolean;
 }
@@ -52,6 +54,7 @@ export interface IUpdateGroupRequest {
   privacy?: GroupPrivacy;
   tripPlan?: ITripPlan;
   vanDetails?: IVanDetails;
+  groupImage?: string;
   chatEnabled?: boolean;
   liveLocationEnabled?: boolean;
 }

@@ -7,7 +7,7 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
@@ -21,7 +21,9 @@ import { useToast } from '@hooks/useToast';
 import { ChatListSkeleton } from '@components/common/Skeleton/SkeletonLoader';
 
 const ChatScreen: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState<'messages' | 'groups'>('messages');
+  const route = useRoute();
+  const initialTab = (route.params as any)?.initialTab as 'messages' | 'groups' | undefined;
+  const [selectedTab, setSelectedTab] = useState<'messages' | 'groups'>(initialTab || 'messages');
   const [chats, setChats] = useState<IChat[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -111,6 +113,13 @@ const ChatScreen: React.FC = () => {
     loadChats();
     loadPendingRequests();
   }, []);
+
+  // Set initial tab from route params
+  useEffect(() => {
+    if (initialTab) {
+      setSelectedTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Load pending request counts after chats are loaded
   useEffect(() => {

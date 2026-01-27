@@ -102,6 +102,17 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
     }
   }
 
+  let privacy: 'public' | 'private' | undefined;
+  let groupImage: string | undefined;
+
+  if (chatDoc.type === 'group' && chatDoc.groupId) {
+    const group = await Group.findById(chatDoc.groupId);
+    if (group) {
+      privacy = group.privacy;
+      groupImage = group.groupImage;
+    }
+  }
+
   return {
     id: chatDoc.id,
     type: chatDoc.type,
@@ -110,6 +121,8 @@ const chatToIChat = async (chatDoc: IChatDocument, userId?: string): Promise<ICh
     participantAvatars,
     groupId: chatDoc.groupId,
     groupName,
+    groupImage,
+    privacy,
     lastMessage,
     unreadCount,
     isMember,
@@ -373,6 +386,11 @@ export const editGroupChat = async (
   // Update privacy if provided
   if (data.privacy !== undefined) {
     group.privacy = data.privacy;
+  }
+
+  // Update group image if provided
+  if (data.groupImage !== undefined) {
+    group.groupImage = data.groupImage;
   }
 
   await group.save();

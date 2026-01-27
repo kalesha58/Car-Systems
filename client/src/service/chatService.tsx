@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { appAxios } from './apiInterceptors';
 import {
   IChat,
@@ -214,3 +215,34 @@ export const getUserJoinRequests = async (): Promise<IGroupJoinRequest[]> => {
   }
 };
 
+export const getGroupMembers = async (groupId: string): Promise<any[]> => {
+  try {
+    const response = await appAxios.get(`/groups/${groupId}/members`);
+    return response.data.Response || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateGroupImage = async (
+  groupId: string,
+  imageUri: string,
+): Promise<any> => {
+  try {
+    const formData = new FormData();
+    const fileExtension = imageUri.split('.').pop() || 'jpg';
+    const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+    const fileName = `group_${Date.now()}.${fileExtension}`;
+    formData.append('image', {
+      uri: Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri,
+      type: mimeType,
+      name: fileName,
+    } as any);
+    const response = await appAxios.put(`/groups/${groupId}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.Response;
+  } catch (error) {
+    throw error;
+  }
+};

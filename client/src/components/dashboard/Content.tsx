@@ -1,13 +1,12 @@
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { FC, useMemo } from 'react'
-import { categories, discountBannerData } from '@utils/dummyData'
+import { categories } from '@utils/dummyData'
 import { Fonts } from '@utils/Constants'
 import CustomText from '@components/ui/CustomText'
 import CompactCategoryContainer from './CompactCategoryContainer'
 import CompactProductGrid from './CompactProductGrid'
 import { useTheme } from '@hooks/useTheme'
 import TopProductsSection from './TopProductsSection'
-import DiscountBannerCarousel from './DiscountBannerCarousel'
 import { navigate } from '@utils/NavigationUtils'
 
 const Content: FC = () => {
@@ -67,7 +66,6 @@ const Content: FC = () => {
   return (
     <View style={styles.container}>
       <TopProductsSection />
-      <DiscountBannerCarousel bannerData={discountBannerData} />
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Product Categories</CustomText>
