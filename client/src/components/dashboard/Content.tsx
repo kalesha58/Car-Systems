@@ -6,7 +6,6 @@ import CustomText from '@components/ui/CustomText'
 import CompactCategoryContainer from './CompactCategoryContainer'
 import CompactProductGrid from './CompactProductGrid'
 import { useTheme } from '@hooks/useTheme'
-import TopProductsSection from './TopProductsSection'
 import { navigate } from '@utils/NavigationUtils'
 
 const Content: FC = () => {
@@ -65,7 +64,6 @@ const Content: FC = () => {
 
   return (
     <View style={styles.container}>
-      <TopProductsSection />
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <CustomText variant='h5' fontFamily={Fonts.SemiBold}>Product Categories</CustomText>

@@ -1,16 +1,15 @@
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
 import React, { FC } from 'react';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { navigate } from '@utils/NavigationUtils';
 
 interface CategoryButton {
   id: string;
   label: string;
-  icon: string;
+  imageSource: ImageSourcePropType;
   backgroundColor: string;
   textColor: string;
   categoryType: 'products' | 'vehicles' | 'services';
@@ -24,45 +23,45 @@ const CategoryButtons: FC = () => {
     {
       id: 'car-service',
       label: 'Car Service',
-      icon: 'car-sport',
-      backgroundColor: '#FFD700', // Yellow like "Pay" button
-      textColor: '#000000',
+      imageSource: require('@assets/services/car_service.png'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
       categoryType: 'services',
       categoryId: 'all-services',
     },
     {
       id: 'bike-service',
       label: 'Bike Service',
-      icon: 'bicycle',
-      backgroundColor: '#90EE90', // Light Green like "Fresh" button
-      textColor: '#000000',
+      imageSource: require('@assets/services/bike_service.jpg'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
       categoryType: 'services',
       categoryId: 'all-services',
     },
     {
       id: 'car-wash',
       label: 'Car Wash',
-      icon: 'water',
-      backgroundColor: '#87CEEB', // Sky Blue like "MX Player" button
-      textColor: '#000000',
+      imageSource: require('@assets/services/car_wash.jpg'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
       categoryType: 'services',
       categoryId: 'all-services',
     },
     {
       id: 'tire-service',
       label: 'Tire Service',
-      icon: 'disc',
-      backgroundColor: '#FFB6C1', // Light Pink like "Bazaar" button
-      textColor: '#000000',
+      imageSource: require('@assets/services/tier_service.jpg'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
       categoryType: 'services',
       categoryId: 'all-services',
     },
     {
       id: 'battery-service',
       label: 'Battery',
-      icon: 'battery-charging',
-      backgroundColor: '#F0E68C', // Light Green/Cream like "Pharmacy" button
-      textColor: '#000000',
+      imageSource: require('@assets/services/batery_sevices.jpg'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
       categoryType: 'services',
       categoryId: 'all-services',
     },
@@ -83,16 +82,20 @@ const CategoryButtons: FC = () => {
       paddingVertical: 10,
       paddingHorizontal: 10,
       backgroundColor: 'transparent',
+      overflow: 'visible',
+      zIndex: 1,
     },
     scrollView: {
       paddingHorizontal: 5,
+      paddingRight: 15,
     },
     button: {
       marginRight: 10,
       borderRadius: 10,
-      paddingVertical: 12,
-      paddingHorizontal: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
       width: 85,
+      height: 85,
       alignItems: 'center',
       justifyContent: 'center',
       shadowColor: '#000',
@@ -102,7 +105,8 @@ const CategoryButtons: FC = () => {
       },
       shadowOpacity: 0.1,
       shadowRadius: 3,
-      elevation: 3,
+      elevation: 2,
+      overflow: 'hidden',
     },
     buttonContent: {
       alignItems: 'center',
@@ -110,13 +114,23 @@ const CategoryButtons: FC = () => {
       width: '100%',
     },
     iconContainer: {
-      marginBottom: 6,
+      marginBottom: 4,
       justifyContent: 'center',
       alignItems: 'center',
+      width: 50,
+      height: 50,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 8,
+      padding: 3,
+    },
+    serviceImage: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'contain',
     },
     label: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(9),
+      fontFamily: Fonts.Bold,
       textAlign: 'center',
     },
   });
@@ -126,7 +140,8 @@ const CategoryButtons: FC = () => {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollView}>
+        contentContainerStyle={styles.scrollView}
+        style={{overflow: 'visible'}}>
         {categoryButtons.map((button) => (
           <TouchableOpacity
             key={button.id}
@@ -140,10 +155,10 @@ const CategoryButtons: FC = () => {
             activeOpacity={0.8}>
             <View style={styles.buttonContent}>
               <View style={styles.iconContainer}>
-                <Icon
-                  name={button.icon}
-                  size={RFValue(28)}
-                  color={button.textColor}
+                <Image
+                  source={button.imageSource}
+                  style={styles.serviceImage}
+                  resizeMode="contain"
                 />
               </View>
               <CustomText

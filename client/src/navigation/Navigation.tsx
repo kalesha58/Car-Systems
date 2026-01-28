@@ -49,6 +49,7 @@ import PaymentStatusScreen from '@features/payment/PaymentStatusScreen';
 import ProductOrder from '@features/order/ProductOrder';
 import VehicleDetail from '@features/vehicle/VehicleDetail';
 import AddUserVehicleScreen from '@features/vehicle/AddUserVehicleScreen';
+import UserVehicleDetail from '@features/vehicle/UserVehicleDetail';
 import ServiceDetail from '@features/service/ServiceDetail';
 import { useCartStore } from '@state/cartStore';
 import { useTheme } from '@hooks/useTheme';
@@ -607,6 +608,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="AddUserVehicle"
             component={AddUserVehicleScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="UserVehicleDetail"
+            component={UserVehicleDetail}
             options={{
               animation: 'slide_from_right',
             }}

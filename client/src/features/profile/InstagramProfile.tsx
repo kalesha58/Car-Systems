@@ -129,9 +129,7 @@ const InstagramProfile: React.FC = () => {
   };
 
   const handleVehiclePress = (vehicle: IUserVehicle) => {
-    // Navigate to vehicle detail if needed
-    // For now, just log
-    console.log('Vehicle pressed:', vehicle.id);
+    navigate('UserVehicleDetail', {vehicleId: vehicle.id});
   };
 
   const handleSettingsPress = () => {
