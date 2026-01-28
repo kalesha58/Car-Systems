@@ -193,7 +193,7 @@ const QuickActionsScreen: React.FC = () => {
     statusText: {
       fontSize: RFValue(12),
       fontFamily: Fonts.SemiBold,
-      color: colors.white,
+      color: '#FFFFFF',
     },
     vehicleInfo: {
       marginBottom: 8,
@@ -212,7 +212,7 @@ const QuickActionsScreen: React.FC = () => {
       activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
-          Test Drive Request
+          {t('dealer.testDriveRequest') || 'Test Drive Request'}
         </CustomText>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status, 'test-drive') }]}>
           <CustomText style={styles.statusText}>{item.status.toUpperCase()}</CustomText>
@@ -220,18 +220,18 @@ const QuickActionsScreen: React.FC = () => {
       </View>
       <View style={styles.vehicleInfo}>
         <CustomText variant="h8" style={{ color: theme.textSecondary }}>
-          Vehicle ID: {item.vehicleId.slice(0, 8)}...
+          {t('dealer.vehicleId') || 'Vehicle ID'}: {item.vehicleId.slice(0, 8)}...
         </CustomText>
       </View>
       <View style={styles.dateTime}>
         <Icon name="calendar-outline" size={RFValue(16)} color={theme.textSecondary} />
         <CustomText variant="h8" style={{ color: theme.textSecondary, marginLeft: 8 }}>
-          {new Date(item.preferredDate).toLocaleDateString()} at {item.preferredTime}
+          {new Date(item.preferredDate).toLocaleDateString()} {t('dealer.at') || 'at'} {item.preferredTime}
         </CustomText>
       </View>
       {item.notes && (
         <CustomText variant="h8" style={{ color: theme.textSecondary, marginTop: 8 }}>
-          Notes: {item.notes}
+          {t('dealer.notes') || 'Notes'}: {item.notes}
         </CustomText>
       )}
     </TouchableOpacity>
@@ -244,7 +244,7 @@ const QuickActionsScreen: React.FC = () => {
       activeOpacity={0.7}>
       <View style={styles.cardHeader}>
         <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
-          Pre-Booking Request
+          {t('dealer.preBookingRequest') || 'Pre-Booking Request'}
         </CustomText>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status, 'pre-booking') }]}>
           <CustomText style={styles.statusText}>{item.status.toUpperCase()}</CustomText>
@@ -252,7 +252,7 @@ const QuickActionsScreen: React.FC = () => {
       </View>
       <View style={styles.vehicleInfo}>
         <CustomText variant="h8" style={{ color: theme.textSecondary }}>
-          Vehicle ID: {item.vehicleId.slice(0, 8)}...
+          {t('dealer.vehicleId') || 'Vehicle ID'}: {item.vehicleId.slice(0, 8)}...
         </CustomText>
       </View>
       <View style={styles.dateTime}>
@@ -263,7 +263,7 @@ const QuickActionsScreen: React.FC = () => {
       </View>
       {item.notes && (
         <CustomText variant="h8" style={{ color: theme.textSecondary, marginTop: 8 }}>
-          Notes: {item.notes}
+          {t('dealer.notes') || 'Notes'}: {item.notes}
         </CustomText>
       )}
     </TouchableOpacity>
@@ -279,7 +279,7 @@ const QuickActionsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Drive" />
+      <CustomHeader title={t('dealer.quickActions') || 'Quick Actions'} />
       
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -298,7 +298,7 @@ const QuickActionsScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{ color: activeTab === 'test-drive' ? theme.secondary : theme.textSecondary }}
             numberOfLines={1}>
-            Test Drive
+            {t('dealer.testDrive') || 'Test Drive'}
           </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -317,7 +317,7 @@ const QuickActionsScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{ color: activeTab === 'upcoming-bookings' ? theme.secondary : theme.textSecondary }}
             numberOfLines={1}>
-            Upcoming
+            {t('dealer.upcoming') || 'Upcoming'}
           </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -336,7 +336,7 @@ const QuickActionsScreen: React.FC = () => {
             fontFamily={Fonts.SemiBold}
             style={{ color: activeTab === 'pre-bookings' ? theme.secondary : theme.textSecondary }}
             numberOfLines={1}>
-            Pre-Bookings
+            {t('dealer.preBookings') || 'Pre-Bookings'}
           </CustomText>
         </TouchableOpacity>
       </View>
@@ -369,7 +369,11 @@ const QuickActionsScreen: React.FC = () => {
             }
             ListEmptyComponent={
               activeTab === 'test-drive' ? (
-                <EmptyState icon="car-outline" title="No Test Drives" message="No test drive requests found" />
+                <EmptyState 
+                  icon="car-outline" 
+                  title={t('dealer.noTestDrives') || 'No Test Drives'} 
+                  message={t('dealer.noTestDrivesMessage') || 'No test drive requests found'} 
+                />
               ) : null
             }
           />
@@ -395,7 +399,11 @@ const QuickActionsScreen: React.FC = () => {
             }
             ListEmptyComponent={
               activeTab === 'upcoming-bookings' ? (
-                <EmptyState icon="calendar-outline" title="No Upcoming Bookings" message="No upcoming bookings found" />
+                <EmptyState 
+                  icon="calendar-outline" 
+                  title={t('dealer.noUpcomingBookings') || 'No Upcoming Bookings'} 
+                  message={t('dealer.noUpcomingBookingsMessage') || 'No upcoming bookings found'} 
+                />
               ) : null
             }
           />
@@ -421,7 +429,11 @@ const QuickActionsScreen: React.FC = () => {
             }
             ListEmptyComponent={
               activeTab === 'pre-bookings' ? (
-                <EmptyState icon="bookmark-outline" title="No Pre-Bookings" message="No pre-booking requests found" />
+                <EmptyState 
+                  icon="bookmark-outline" 
+                  title={t('dealer.noPreBookings') || 'No Pre-Bookings'} 
+                  message={t('dealer.noPreBookingsMessage') || 'No pre-booking requests found'} 
+                />
               ) : null
             }
           />

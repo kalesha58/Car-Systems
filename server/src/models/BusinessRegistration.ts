@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export type DealerType =
   | 'Automobile Showroom'
+  | 'Bike Dealer'
   | 'Vehicle Wash Station'
   | 'Detailing Center'
   | 'Mechanic Workshop'
@@ -81,6 +82,7 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
       required: true,
       enum: [
         'Automobile Showroom',
+        'Bike Dealer',
         'Vehicle Wash Station',
         'Detailing Center',
         'Mechanic Workshop',

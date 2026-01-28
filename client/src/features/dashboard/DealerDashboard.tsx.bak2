@@ -341,13 +341,6 @@ const DealerDashboard: React.FC = () => {
   }
 
   // Determine registration status for displaying appropriate messages
-
-  // Determine business type for conditional rendering
-  const businessType = businessRegistration?.type;
-  const isAutomobileDealer = businessType === 'Automobile Showroom';
-  const isBikeDealer = businessType === 'Bike Dealer';
-  const isMechanicWorkshop = businessType === 'Mechanic Workshop';
-  const isVehicleWash = businessType === 'Vehicle Wash Station';
   const registrationStatus = businessRegistration?.status || 'none';
   const showPendingMessage = registrationStatus === 'pending';
   const showRejectedMessage = registrationStatus === 'rejected';
@@ -466,85 +459,6 @@ const DealerDashboard: React.FC = () => {
 
                   <View style={{ height: 12 }} />
 
-                  {/* Conditional rendering based on business type */}
-                  {(isAutomobileDealer || isBikeDealer) && (
-                    <>
-                      {/* Customer Enquiries for Automobile/Bike Dealers */}
-                      <CustomerEnquiriesCard limit={2} />
-
-                      {/* Quick Actions Card - Navigate to QuickActionsScreen */}
-                      <TouchableOpacity
-                        style={[styles.section, { backgroundColor: theme.cardBackground, borderRadius: 12, padding: 16 }]}
-                        onPress={() => (navigation as any).navigate('QuickActions')}>
-                        <View style={styles.sectionHeader}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <IconIonicons name="flash-outline" size={RFValue(20)} color={theme.text} />
-                            <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
-                              {t('dealer.quickActions') || 'Quick Actions'}
-                            </CustomText>
-                          </View>
-                          <IconIonicons name="chevron-forward" size={20} color={theme.textSecondary} />
-                        </View>
-                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-                          <TouchableOpacity
-                            style={{ flex: 1, backgroundColor: theme.primary + '20', padding: 12, borderRadius: 8 }}
-                            onPress={() => (navigation as any).navigate('AddEditVehicle')}>
-                            <IconIonicons name="add-circle-outline" size={RFValue(24)} color={theme.primary} />
-                            <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: theme.text, marginTop: 8 }}>
-                              {t('dealer.addNewCarDetails') || 'Add New Car Details'}
-                            </CustomText>
-                            <CustomText variant="h8" style={{ color: theme.textSecondary, marginTop: 4 }}>
-                              {t('dealer.listNewVehicle') || 'List a new vehicle available for sale.'}
-                            </CustomText>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={{ flex: 1, backgroundColor: theme.secondary + '20', padding: 12, borderRadius: 8 }}
-                            onPress={() => (navigation as any).navigate('PreBookingManagement')}>
-                            <IconIonicons name="calendar-outline" size={RFValue(24)} color={theme.secondary} />
-                            <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: theme.text, marginTop: 8 }}>
-                              {t('dealer.managePreBookings') || 'Manage Pre-Bookings'}
-                            </CustomText>
-                            <CustomText variant="h8" style={{ color: theme.textSecondary, marginTop: 4 }}>
-                              {t('dealer.handleUpcomingLaunches') || 'Handle upcoming launches and pre-orders.'}
-                            </CustomText>
-                          </TouchableOpacity>
-                        </View>
-                      </TouchableOpacity>
-
-                      {/* Upcoming Test Drives */}
-                      <TouchableOpacity
-                        style={[styles.section, { backgroundColor: theme.cardBackground, borderRadius: 12, padding: 16 }]}
-                        onPress={() => (navigation as any).navigate('QuickActions', { initialTab: 'test-drive' })}>
-                        <View style={styles.sectionHeader}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                            <IconIonicons name="car-outline" size={RFValue(20)} color={theme.text} />
-                            <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
-                              {t('dealer.upcomingTestDrives') || 'Upcoming Test Drives'}
-                            </CustomText>
-                          </View>
-                          <IconIonicons name="chevron-forward" size={20} color={theme.textSecondary} />
-                        </View>
-                      </TouchableOpacity>
-                    </>
-                  )}
-
-                  {/* Mechanic Workshop Dashboard */}
-                  {isMechanicWorkshop && (
-                    <>
-                      <StationOpenToggle label={t('dealer.workshopOpen') || 'Workshop Open'} icon="construct-outline" />
-                      <ServiceBookingsCard limit={5} />
-                      <WorkshopTasksCard limit={3} />
-                    </>
-                  )}
-
-                  {/* Vehicle Wash Dashboard */}
-                  {isVehicleWash && (
-                    <>
-                      <StationOpenToggle label={t('dealer.stationOpen') || 'Station Open'} icon="storefront-outline" />
-                      <VehicleWashBookingsCard limit={5} />
-                    </>
-                  )}
-
                   <ProfitCard
                     amount={totalRevenue}
                     label={t('dealer.profitAmount')}
@@ -645,29 +559,6 @@ const DealerDashboard: React.FC = () => {
                           ))}
                         </View>
                       )}
-                    </View>
-                  )}
-
-                  {/* Inventory Section - Conditionally show based on business type */}
-                  {((isAutomobileDealer || isBikeDealer) && (vehicles.length > 0 || products.length > 0)) && (
-                    <DealerInventorySection products={products} vehicles={vehicles} services={[]} />
-                  )}
-                  {isMechanicWorkshop && (
-                    <View style={styles.section}>
-                      <TouchableOpacity onPress={() => (navigation as any).navigate('DealerTabs', { screen: 'Inventory' })}>
-                        <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
-                          {t('dealer.inventory') || 'Inventory'} - {t('dealer.services') || 'Services'}
-                        </CustomText>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                  {isVehicleWash && (
-                    <View style={styles.section}>
-                      <TouchableOpacity onPress={() => (navigation as any).navigate('DealerTabs', { screen: 'Inventory' })}>
-                        <CustomText variant="h4" fontFamily={Fonts.SemiBold} style={[styles.sectionTitle, { color: theme.text }]}>
-                          {t('dealer.inventory') || 'Inventory'} - {t('dealer.services') || 'Services'}
-                        </CustomText>
-                      </TouchableOpacity>
                     </View>
                   )}
 

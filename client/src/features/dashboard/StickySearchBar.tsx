@@ -8,9 +8,10 @@ import { useTheme } from '@hooks/useTheme'
 
 interface StickySearchBarProps {
   showCategoryButtons?: boolean;
+  showVehicleSuggestions?: boolean;
 }
 
-const StickySearchBar: React.FC<StickySearchBarProps> = ({ showCategoryButtons = true }) => {
+const StickySearchBar: React.FC<StickySearchBarProps> = ({ showCategoryButtons = true, showVehicleSuggestions = false }) => {
   const {scrollY} = useCollapsibleContext();
   const {colors} = useTheme();
 
@@ -49,7 +50,7 @@ const StickySearchBar: React.FC<StickySearchBarProps> = ({ showCategoryButtons =
   return (
     <StickyView style={backgroundColorChanges}>
       {showCategoryButtons && <CategoryButtons />}
-      <SearchBar />
+      <SearchBar showVehicleSuggestions={showVehicleSuggestions} />
       <Animated.View style={[styles.shadow,animatedShadow]} />
     </StickyView>
   )

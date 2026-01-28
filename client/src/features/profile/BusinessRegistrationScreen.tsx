@@ -37,10 +37,11 @@ import { ILocationData } from '../../types/address/IAddress';
 import { useRoute, RouteProp } from '@react-navigation/native';
 
 const BUSINESS_TYPES: IDropdownOption[] = [
-  { label: 'Automobile Showroom', value: 'Automobile Showroom' },
-  { label: 'Vehicle Wash Station', value: 'Vehicle Wash Station' },
+  { label: 'Automobile Dealer', value: 'Automobile Showroom' },
+  { label: 'Bike Dealer', value: 'Bike Dealer' },
+  { label: 'Vehicle Wash Dealer', value: 'Vehicle Wash Station' },
+  { label: 'Mechanical Workshop', value: 'Mechanic Workshop' },
   { label: 'Detailing Center', value: 'Detailing Center' },
-  { label: 'Mechanic Workshop', value: 'Mechanic Workshop' },
   { label: 'Spare Parts Dealer', value: 'Spare Parts Dealer' },
   { label: 'Riding Gear Store', value: 'Riding Gear Store' },
 ];

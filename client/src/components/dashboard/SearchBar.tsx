@@ -10,9 +10,10 @@ import { useTranslation } from 'react-i18next';
 
 interface SearchBarProps {
   onPress?: () => void;
+  showVehicleSuggestions?: boolean;
 }
 
-const SearchBar: FC<SearchBarProps> = ({ onPress }) => {
+const SearchBar: FC<SearchBarProps> = ({ onPress, showVehicleSuggestions = false }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -54,21 +55,43 @@ const SearchBar: FC<SearchBarProps> = ({ onPress }) => {
         interval={3000}
         defaultStyle={false}
         customStyle={styles.textContainer}>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {t('search.engineOil')}
-        </CustomText>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {t('search.brakePads')}
-        </CustomText>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {t('search.tiresAndMore')}
-        </CustomText>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {t('search.carWash')}
-        </CustomText>
-        <CustomText variant="h6" fontFamily={Fonts.Medium}>
-          {t('search.carService')}
-        </CustomText>
+        {showVehicleSuggestions ? (
+          <>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.newCars')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.usedCars')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.vehicles')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.engineOil')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.carService')}
+            </CustomText>
+          </>
+        ) : (
+          <>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.engineOil')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.brakePads')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.tiresAndMore')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.carWash')}
+            </CustomText>
+            <CustomText variant="h6" fontFamily={Fonts.Medium}>
+              {t('search.carService')}
+            </CustomText>
+          </>
+        )}
       </RollingBar>
 
       <View style={styles.divider} />

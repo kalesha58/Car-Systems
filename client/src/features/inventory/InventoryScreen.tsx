@@ -48,8 +48,29 @@ const InventoryScreen: React.FC = () => {
   const [loadingRegistration, setLoadingRegistration] = useState(true);
   const pagerRef = useRef<ScrollView>(null);
 
-  const tabOrder = useMemo(() => ['products', 'vehicles', 'services'] as const, []);
+  // Filter tabs based on business type
+  const tabOrder = useMemo(() => {
+    const businessType = businessRegistration?.type;
+    // Automobile Dealer and Bike Dealer: Show products and vehicles
+    if (businessType === 'Automobile Showroom' || businessType === 'Bike Dealer') {
+      return ['products', 'vehicles'] as const;
+    }
+    // Mechanic Workshop and Vehicle Wash: Show services only
+    if (businessType === 'Mechanic Workshop' || businessType === 'Vehicle Wash Station') {
+      return ['services'] as const;
+    }
+    // Default: Show all tabs
+    return ['products', 'vehicles', 'services'] as const;
+  }, [businessRegistration?.type]);
+  
   const activeIndex = useMemo(() => tabOrder.indexOf(activeTab), [activeTab, tabOrder]);
+
+  // Set default active tab based on available tabs
+  useEffect(() => {
+    if (tabOrder.length > 0 && !tabOrder.includes(activeTab)) {
+      setActiveTab(tabOrder[0]);
+    }
+  }, [tabOrder]);
 
   const isApproved = businessRegistration?.status === 'approved';
   const canAddItems = isApproved;

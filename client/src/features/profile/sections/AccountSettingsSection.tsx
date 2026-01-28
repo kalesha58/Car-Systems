@@ -49,6 +49,12 @@ const AccountSettingsSection: FC = () => {
       return;
     }
 
+    // Only allow toggling if business registration is approved
+    if (businessRegistration.status !== 'approved') {
+      showError(t('dealer.pendingApproval') || 'Your business registration must be approved before you can toggle store status.');
+      return;
+    }
+
     const previousValue = storeOpen;
     // Optimistically update UI
     setStoreOpen(value);
@@ -71,12 +77,12 @@ const AccountSettingsSection: FC = () => {
       showError(
         error instanceof Error
           ? error.message
-          : t('dealer.pleaseTryAgain') || 'Failed to update store status. Please try again.',
+          : t('dealer.failedToUpdateStatus') || t('dealer.pleaseTryAgain') || 'Failed to update store status. Please try again.',
       );
     } finally {
       setIsUpdatingStoreStatus(false);
     }
-  }, [businessRegistration?.id, storeOpen, isUpdatingStoreStatus, t, showSuccess, showError]);
+  }, [businessRegistration, storeOpen, isUpdatingStoreStatus, t, showSuccess, showError]);
 
   const styles = StyleSheet.create({
     container: {
@@ -134,8 +140,9 @@ const AccountSettingsSection: FC = () => {
       onPress: () => navigate('BusinessRegistrationDetails'),
     });
 
-    // Add Store Status toggle for approved dealers
-    if (businessRegistration && businessRegistration.status === 'approved') {
+    // Add Store Status toggle for dealers with business registration
+    // Show for approved dealers, or pending dealers (they can set it up before approval)
+    if (businessRegistration && (businessRegistration.status === 'approved' || businessRegistration.status === 'pending')) {
       menuItems.push({
         icon: storeOpen ? 'checkmark-circle' : 'close-circle',
         label: storeOpen ? t('dealer.storeOpen') : t('dealer.storeClosed'),
@@ -144,7 +151,7 @@ const AccountSettingsSection: FC = () => {
           <Switch
             value={storeOpen}
             onValueChange={handleStoreToggle}
-            disabled={isUpdatingStoreStatus}
+            disabled={isUpdatingStoreStatus || businessRegistration.status !== 'approved'}
             trackColor={{ false: '#E5E7EB', true: colors.secondary }}
             thumbColor={colors.white}
             ios_backgroundColor="#E5E7EB"
