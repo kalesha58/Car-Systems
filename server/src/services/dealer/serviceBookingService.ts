@@ -43,9 +43,9 @@ const serviceBookingToInterface = async (doc: IServiceBookingDocument): Promise<
   let vehicleName: string | undefined;
   if (doc.vehicleId) {
     try {
-      const vehicle = await DealerVehicle.findById(doc.vehicleId).select('name brand model').lean();
+      const vehicle = await DealerVehicle.findById(doc.vehicleId).select('brand vehicleModel').lean();
       if (vehicle) {
-        vehicleName = `${vehicle.brand} ${vehicle.model}`.trim() || vehicle.name;
+        vehicleName = `${vehicle.brand} ${vehicle.vehicleModel}`.trim();
       }
     } catch (error) {
       logger.warn(`Failed to fetch vehicle info for service booking ${doc._id}:`, error);

@@ -131,7 +131,7 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
       backgroundColor: theme.backgroundSecondary,
     },
     activeTab: {
-      backgroundColor: theme.primary,
+      backgroundColor: theme.success,
     },
     tabText: {
       fontSize: RFValue(11),

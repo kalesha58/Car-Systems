@@ -86,7 +86,7 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: theme.primary + '20',
+      backgroundColor: businessRegistration?.storeOpen ? theme.success + '20' : theme.primary + '20',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -108,7 +108,7 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
       width: 50,
       height: 30,
       borderRadius: 15,
-      backgroundColor: businessRegistration?.storeOpen ? theme.primary : theme.backgroundSecondary,
+      backgroundColor: businessRegistration?.storeOpen ? theme.success : theme.backgroundSecondary,
       justifyContent: 'center',
       alignItems: businessRegistration?.storeOpen ? 'flex-end' : 'flex-start',
       paddingHorizontal: 3,
@@ -124,7 +124,7 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="small" color={theme.primary} />
+        <ActivityIndicator size="small" color={theme.success} />
       </View>
     );
   }
@@ -137,7 +137,7 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
       activeOpacity={0.7}>
       <View style={styles.leftContainer}>
         <View style={styles.iconContainer}>
-          <IconIonicons name={icon} size={RFValue(20)} color={theme.primary} />
+          <IconIonicons name={icon} size={RFValue(20)} color={businessRegistration?.storeOpen ? theme.success : theme.primary} />
         </View>
         <View style={styles.textContainer}>
           <CustomText style={styles.label}>
@@ -151,7 +151,7 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
         </View>
       </View>
       {updating ? (
-        <ActivityIndicator size="small" color={theme.primary} />
+        <ActivityIndicator size="small" color={businessRegistration?.storeOpen ? theme.success : theme.primary} />
       ) : (
         <View style={styles.toggle}>
           <View style={styles.toggleCircle} />

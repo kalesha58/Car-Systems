@@ -33,9 +33,12 @@ const SearchBar: FC<SearchBarProps> = ({ onPress, showVehicleSuggestions = false
       minHeight: 50,
     },
     textContainer: {
-      width: '90%',
+      flex: 1,
       paddingLeft: 10,
+      paddingRight: 10,
       height: 50,
+      justifyContent: 'center',
+      alignItems: 'flex-start',
     },
     divider: {
       width: 1,
