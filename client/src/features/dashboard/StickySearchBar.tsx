@@ -6,8 +6,11 @@ import SearchBar from '@components/dashboard/SearchBar'
 import CategoryButtons from '@components/dashboard/CategoryButtons'
 import { useTheme } from '@hooks/useTheme'
 
+interface StickySearchBarProps {
+  showCategoryButtons?: boolean;
+}
 
-const StickySearchBar = () => {
+const StickySearchBar: React.FC<StickySearchBarProps> = ({ showCategoryButtons = true }) => {
   const {scrollY} = useCollapsibleContext();
   const {colors} = useTheme();
 
@@ -45,7 +48,7 @@ const StickySearchBar = () => {
 
   return (
     <StickyView style={backgroundColorChanges}>
-      <CategoryButtons />
+      {showCategoryButtons && <CategoryButtons />}
       <SearchBar />
       <Animated.View style={[styles.shadow,animatedShadow]} />
     </StickyView>

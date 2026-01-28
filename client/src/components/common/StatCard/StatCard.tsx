@@ -29,22 +29,28 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
   const gradientColors = useMemo(() => {
     if (iconColor) return [iconColor, iconColor];
 
-    // Gradient colors based on common icon names
+    // Gradient colors based on common icon names - adapt to dark theme
     if (icon === 'cube-outline' || icon === 'cube') {
-      return ['#4A90E2', '#357ABD']; // Blue gradient
+      return isDark ? ['#5BA3F5', '#3A6BA8'] : ['#4A90E2', '#357ABD']; // Blue gradient
     }
-    if (icon === 'trending-up-outline' || icon === 'trending-up') {
-      return ['#10b981', '#059669']; // Green gradient
+    if (icon === 'trending-up-outline' || icon === 'trending-up' || icon === 'arrow-up-outline') {
+      return isDark ? ['#10B981', '#059669'] : ['#10b981', '#059669']; // Green gradient
     }
     if (icon === 'trending-down-outline' || icon === 'trending-down') {
-      return ['#ef4444', '#b91c1c']; // Red gradient
+      return isDark ? ['#EF4444', '#DC2626'] : ['#ef4444', '#b91c1c']; // Red gradient
     }
     if (icon === 'bag-outline' || icon === 'cart-outline' || icon === 'receipt-outline') {
-      return ['#9B59B6', '#8E44AD']; // Purple gradient
+      return isDark ? ['#A78BFA', '#8B5CF6'] : ['#9B59B6', '#8E44AD']; // Purple gradient
+    }
+    if (icon === 'stats-chart-outline' || icon === 'analytics-outline') {
+      return isDark ? ['#F59E0B', '#D97706'] : ['#F59E0B', '#D97706']; // Orange/Amber gradient
+    }
+    if (icon === 'remove-outline' || icon === 'close-outline') {
+      return isDark ? ['#EF4444', '#DC2626'] : ['#ef4444', '#b91c1c']; // Red gradient
     }
     // Default to primary color gradient
     return [colors.primary, colors.secondary];
-  }, [icon, iconColor, colors.primary, colors.secondary]);
+  }, [icon, iconColor, colors.primary, colors.secondary, isDark]);
 
   const styles = StyleSheet.create({
     card: {

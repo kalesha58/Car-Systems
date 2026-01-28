@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Animated as RNAnimated } from 'react-native'
 import React, { FC } from 'react'
 import { NoticeHeight } from '@utils/Scaling';
 import Notice from '@components/dashboard/Notice';
+import { useTheme } from '@hooks/useTheme';
 
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12)
@@ -9,8 +10,10 @@ const NOTICE_HEIGHT = -(NoticeHeight + 12)
 
 const NoticeAnimation: FC<{ noticePosition: any; children: React.ReactElement }>
     = ({ noticePosition, children }) => {
+        const { colors } = useTheme();
+        
         return (
-            <View style={styles.container}>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
                 <RNAnimated.View style={[styles.noticeContainer, { transform: [{ translateY: noticePosition }] }]}>
                     <Notice />
                 </RNAnimated.View>
@@ -39,7 +42,6 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: '#fff'
     }
 })
 

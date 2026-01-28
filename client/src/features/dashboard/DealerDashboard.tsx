@@ -356,27 +356,6 @@ const DealerDashboard: React.FC = () => {
       paddingVertical: 5,
       zIndex: 999,
     },
-    inventoryCard: {
-      flex: 1,
-      backgroundColor: theme.iceBlue,
-      borderRadius: 12,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: theme.winterBlueLight,
-      alignItems: 'center',
-    },
-    inventoryCardValue: {
-      fontSize: RFValue(16),
-      fontFamily: Fonts.Bold,
-      color: theme.winterBlueDark,
-      marginBottom: 4,
-    },
-    inventoryCardLabel: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
-      color: theme.text,
-      textAlign: 'center',
-    },
   });
 
   return (
@@ -418,7 +397,7 @@ const DealerDashboard: React.FC = () => {
               title={dealer?.businessName || user?.name || ''}
               subtitle={dealer?.address || ''}
             />
-            <StickySearchBar />
+            <StickySearchBar showCategoryButtons={false} />
             
             {/* Train Effect Below Search Bar */}
             {seasonalTheme.animations.overlay && (
@@ -433,59 +412,6 @@ const DealerDashboard: React.FC = () => {
               </View>
             )}
             
-            {/* Inventory Stats Section - Now in Header */}
-            <View style={styles.inventorySection}>
-              {/* Stats Cards */}
-              <View style={styles.inventoryCardsContainer}>
-                {/* Total Products Card */}
-                <View style={dynamicStyles.inventoryCard}>
-                  <IconIonicons
-                    name="cube-outline"
-                    size={RFValue(24)}
-                    color={theme.winterBlueDark}
-                    style={styles.inventoryCardIcon}
-                  />
-                  <CustomText style={dynamicStyles.inventoryCardValue}>
-                    {totalProducts}
-                  </CustomText>
-                  <CustomText style={dynamicStyles.inventoryCardLabel}>
-                    {t('dealer.totalProducts') || 'Total Products'}
-                  </CustomText>
-                </View>
-
-                {/* Monthly Income Card */}
-                <View style={dynamicStyles.inventoryCard}>
-                  <IconIonicons
-                    name="trending-up-outline"
-                    size={RFValue(24)}
-                    color={theme.winterBlueDark}
-                    style={styles.inventoryCardIcon}
-                  />
-                  <CustomText style={dynamicStyles.inventoryCardValue}>
-                    {formatCurrency(monthlyRevenue)}
-                  </CustomText>
-                  <CustomText style={dynamicStyles.inventoryCardLabel}>
-                    {t('dealer.monthlyIncome') || 'Monthly Income'}
-                  </CustomText>
-                </View>
-
-                {/* Total Orders Card */}
-                <View style={dynamicStyles.inventoryCard}>
-                  <IconIonicons
-                    name="receipt-outline"
-                    size={RFValue(24)}
-                    color={theme.winterBlueDark}
-                    style={styles.inventoryCardIcon}
-                  />
-                  <CustomText style={dynamicStyles.inventoryCardValue}>
-                    {orderStats?.total || 0}
-                  </CustomText>
-                  <CustomText style={dynamicStyles.inventoryCardLabel}>
-                    {t('dealer.totalOrders') || 'Total Orders'}
-                  </CustomText>
-                </View>
-              </View>
-            </View>
           </CollapsibleHeaderContainer>
 
           <CollapsibleScrollView
@@ -779,24 +705,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  inventorySection: {
-    paddingTop: 10,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    marginTop: 0,
-    marginBottom: 0,
-    position: 'relative',
-  },
-  inventoryCardsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  inventoryCardIcon: {
-    marginBottom: 8,
-  },
 });
 
 export default withLiveOrder(withCollapsibleContext(DealerDashboard));
-
-
