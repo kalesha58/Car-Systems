@@ -1,11 +1,25 @@
 import {View, Text, StyleSheet} from 'react-native';
-import React, {FC} from 'react';
-import {Colors, Fonts} from '@utils/Constants';
+import React, {FC, useMemo} from 'react';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useCartStore} from '@state/cartStore';
 import {useTheme} from '@hooks/useTheme';
+
+// Shared layout styles that don't depend on theme
+const sharedStyles = StyleSheet.create({
+  flexRowBetween: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  flexRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+});
 
 const ReportItem: FC<{
   iconName: string;
@@ -16,19 +30,19 @@ const ReportItem: FC<{
 }> = ({iconName, underline, title, price, isDiscount}) => {
   const {colors} = useTheme();
   return (
-    <View style={[styles.flexRowBetween, {marginBottom: 10}]}>
-      <View style={styles.flexRow}>
+    <View style={[sharedStyles.flexRowBetween, {marginBottom: 10}]}>
+      <View style={sharedStyles.flexRow}>
         <Icon
           name={iconName}
           style={{opacity: 0.7}}
           size={RFValue(12)}
-          color={isDiscount ? colors.secondary : Colors.text}
+          color={isDiscount ? colors.secondary : colors.text}
         />
         <CustomText
           style={{
             textDecorationLine: underline ? 'underline' : 'none',
             textDecorationStyle: 'dashed',
-            color: isDiscount ? colors.secondary : undefined,
+            ...(isDiscount && {color: colors.secondary}),
           }}
           variant="h8">
           {title}
@@ -54,6 +68,24 @@ const BillDetails: FC<{totalItemPrice: number; codCharge?: number}> = ({totalIte
   const subtotal = totalItemPrice;
   const totalAfterDiscount = subtotal - couponDiscount;
   const grandTotal = totalAfterDiscount + otherCharges + codCharge;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 15,
+      marginVertical: 15,
+    },
+    text: {
+      marginHorizontal: 10,
+      marginTop: 15,
+    },
+    billContainer: {
+      padding: 10,
+      paddingBottom: 0,
+      borderBottomColor: colors.border,
+      borderBottomWidth: 0.7,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.container}>
@@ -82,7 +114,7 @@ const BillDetails: FC<{totalItemPrice: number; codCharge?: number}> = ({totalIte
         )}
       </View>
 
-      <View style={[styles.flexRowBetween, {marginBottom: 15}]}>
+      <View style={[sharedStyles.flexRowBetween, {marginBottom: 15}]}>
         <CustomText
           variant="h7"
           style={styles.text}
@@ -97,33 +129,5 @@ const BillDetails: FC<{totalItemPrice: number; codCharge?: number}> = ({totalIte
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    marginVertical: 15,
-  },
-  text: {
-    marginHorizontal: 10,
-    marginTop: 15,
-  },
-  billContainer: {
-    padding: 10,
-    paddingBottom: 0,
-    borderBottomColor: Colors.border,
-    borderBottomWidth: 0.7,
-  },
-  flexRowBetween: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  flexRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-});
 
 export default BillDetails;

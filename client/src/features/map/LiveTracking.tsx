@@ -1,11 +1,12 @@
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState, useMemo} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {getDealerById} from '@service/dealerService';
 import {getProductById} from '@service/productService';
 import {SOCKET_URL} from '@service/config';
-import {Colors, Fonts} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
+import {useTheme} from '@hooks/useTheme';
 import LiveHeader from './LiveHeader';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -20,6 +21,7 @@ import {IDealer} from '../../types/dealer/IDealer';
 
 const LiveTracking = () => {
   const {currentOrder, setCurrentOrder} = useAuthStore();
+  const {colors} = useTheme();
   const socketRef = useRef<Socket | null>(null);
   const [dealer, setDealer] = useState<IDealer | null>(null);
 
@@ -154,6 +156,35 @@ const LiveTracking = () => {
   const msg = statusDisplay.message;
   const time = statusDisplay.timeEstimate;
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    scrollContent: {
+      paddingBottom: 150,
+      backgroundColor: colors.backgroundSecondary,
+      padding: 15,
+    },
+    flexRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      width: '100%',
+      borderRadius: 15,
+      marginTop: 15,
+      paddingVertical: 10,
+      padding: 10,
+      borderBottomWidth: 0.7,
+    },
+    iconContainer: {
+      borderRadius: 100,
+      padding: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  }), [colors]);
+
   return (
     <View style={styles.container}>
       <LiveHeader type="Customer" title={msg} secondTitle={time} />
@@ -172,11 +203,11 @@ const LiveTracking = () => {
 
         <OrderWorkflow status={currentOrder?.status} timeline={currentOrder?.timeline} />
 
-        <View style={styles.flexRow}>
-          <View style={styles.iconContainer}>
+        <View style={[styles.flexRow, {backgroundColor: colors.cardBackground, borderColor: colors.border}]}>
+          <View style={[styles.iconContainer, {backgroundColor: colors.backgroundSecondary}]}>
             <Icon
               name={currentOrder?.deliveryPartner ? 'phone' : 'shopping'}
-              color={Colors.disabled}
+              color={colors.disabled}
               size={RFValue(20)}
             />
           </View>
@@ -219,11 +250,11 @@ const LiveTracking = () => {
 
         <OrderSummary order={currentOrder} />
 
-        <View style={styles.flexRow}>
-          <View style={styles.iconContainer}>
+        <View style={[styles.flexRow, {backgroundColor: colors.cardBackground, borderColor: colors.border}]}>
+          <View style={[styles.iconContainer, {backgroundColor: colors.backgroundSecondary}]}>
             <Icon
               name="cards-heart-outline"
-              color={Colors.disabled}
+              color={colors.disabled}
               size={RFValue(20)}
             />
           </View>
@@ -249,37 +280,5 @@ const LiveTracking = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.secondary,
-  },
-  scrollContent: {
-    paddingBottom: 150,
-    backgroundColor: Colors.backgroundSecondary,
-    padding: 15,
-  },
-  flexRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    width: '100%',
-    borderRadius: 15,
-    marginTop: 15,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderBottomWidth: 0.7,
-    borderColor: Colors.border,
-  },
-  iconContainer: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 100,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default LiveTracking;

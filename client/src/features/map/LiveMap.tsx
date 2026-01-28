@@ -1,6 +1,6 @@
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import React, {FC, useEffect} from 'react';
-import {Colors} from '@utils/Constants';
+import React, {FC, useEffect, useMemo} from 'react';
+import {useTheme} from '@hooks/useTheme';
 import {screenHeight} from '@utils/Scaling';
 import {useMapRefStore} from '@state/mapStore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -23,6 +23,7 @@ const LiveMap: FC<LiveMapProps> = ({
   hasPickedUp,
   pickupLocation,
 }) => {
+  const {colors} = useTheme();
   const {mapRef, setMapRef} = useMapRefStore();
 
   useEffect(() => {
@@ -43,6 +44,34 @@ const LiveMap: FC<LiveMapProps> = ({
     hasPickedUp,
     deliveryLocation,
   ]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      height: screenHeight * 0.35,
+      width: '100%',
+      borderRadius: 15,
+      backgroundColor: colors.cardBackground,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      position: 'relative',
+    },
+    fitButton: {
+      position: 'absolute',
+      bottom: 10,
+      right: 10,
+      padding: 5,
+      backgroundColor: colors.cardBackground,
+      borderWidth: 0.8,
+      borderColor: colors.border,
+      shadowOffset: {width: 1, height: 2},
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowColor: 'black',
+      elevation: 5,
+      borderRadius: 35,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.container}>
@@ -68,38 +97,10 @@ const LiveMap: FC<LiveMapProps> = ({
             deliveryPersonLocation,
           );
         }}>
-        <Icon name="target" size={RFValue(14)} color={Colors.text} />
+        <Icon name="target" size={RFValue(14)} color={colors.text} />
       </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    height: screenHeight * 0.35,
-    width: '100%',
-    borderRadius: 15,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    position: 'relative',
-  },
-  fitButton: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    padding: 5,
-    backgroundColor: '#fff',
-    borderWidth: 0.8,
-    borderColor: Colors.border,
-    shadowOffset: {width: 1, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowColor: 'black',
-    elevation: 5,
-    borderRadius: 35,
-  },
-});
 
 export default LiveMap;

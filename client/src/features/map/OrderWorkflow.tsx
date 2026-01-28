@@ -1,6 +1,7 @@
 import {View, StyleSheet, ScrollView} from 'react-native';
-import React, {FC} from 'react';
-import {Colors, Fonts} from '@utils/Constants';
+import React, {FC, useMemo} from 'react';
+import {Fonts} from '@utils/Constants';
+import {useTheme} from '@hooks/useTheme';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
@@ -63,6 +64,7 @@ const workflowSteps: IWorkflowStep[] = [
 ];
 
 const OrderWorkflow: FC<IOrderWorkflowProps> = ({status, timeline}) => {
+  const {colors} = useTheme();
   const normalizedStatus = status?.toUpperCase() || 'ORDER_PLACED';
 
   // Find the current step index
@@ -101,11 +103,108 @@ const OrderWorkflow: FC<IOrderWorkflowProps> = ({status, timeline}) => {
     return false;
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      width: '100%',
+      borderRadius: 15,
+      marginVertical: 15,
+      paddingVertical: 15,
+      backgroundColor: colors.cardBackground,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      paddingHorizontal: 15,
+      paddingBottom: 15,
+      borderBottomWidth: 0.7,
+      borderColor: colors.border,
+    },
+    iconContainer: {
+      backgroundColor: colors.backgroundSecondary,
+      borderRadius: 100,
+      padding: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    stepperContainer: {
+      paddingHorizontal: 15,
+      paddingTop: 15,
+      paddingBottom: 10,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    stepWrapper: {
+      alignItems: 'center',
+      minWidth: 70,
+      maxWidth: 90,
+      marginRight: 0,
+      position: 'relative',
+      flex: 1,
+    },
+    stepContent: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      width: '100%',
+      gap: 6,
+    },
+    stepIconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: colors.backgroundSecondary,
+      borderWidth: 2,
+      borderColor: colors.disabled,
+    },
+    stepIconCompleted: {
+      backgroundColor: colors.secondary + '15',
+      borderColor: colors.secondary,
+    },
+    stepIconCurrent: {
+      backgroundColor: colors.secondary + '20',
+      borderColor: colors.secondary,
+      borderWidth: 2.5,
+    },
+    stepIconPending: {
+      backgroundColor: colors.backgroundSecondary,
+      borderColor: colors.disabled,
+    },
+    stepLabel: {
+      fontSize: RFValue(9),
+      textAlign: 'center',
+    },
+    stepLabelCompleted: {
+      color: colors.secondary,
+    },
+    stepLabelCurrent: {
+      color: colors.secondary,
+    },
+    stepLabelPending: {
+      color: colors.disabled,
+    },
+    connectorLine: {
+      position: 'absolute',
+      top: 16,
+      right: -35,
+      width: 35,
+      height: 2,
+      zIndex: 0,
+    },
+    connectorLineCompleted: {
+      backgroundColor: colors.secondary,
+    },
+    connectorLinePending: {
+      backgroundColor: colors.border,
+    },
+  }), [colors]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconContainer}>
-          <Icon name="package-variant" color={Colors.disabled} size={RFValue(20)} />
+          <Icon name="package-variant" color={colors.disabled} size={RFValue(20)} />
         </View>
         <View>
           <CustomText variant="h5" fontFamily={Fonts.SemiBold}>
@@ -145,10 +244,10 @@ const OrderWorkflow: FC<IOrderWorkflowProps> = ({status, timeline}) => {
                     name={isCompleted || isCurrent ? step.iconFilled : step.icon}
                     color={
                       isCompleted
-                        ? Colors.secondary
+                        ? colors.secondary
                         : isCurrent
-                        ? Colors.secondary
-                        : Colors.disabled
+                        ? colors.secondary
+                        : colors.disabled
                     }
                     size={RFValue(16)}
                   />
@@ -187,103 +286,6 @@ const OrderWorkflow: FC<IOrderWorkflowProps> = ({status, timeline}) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    borderRadius: 15,
-    marginVertical: 15,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 15,
-    paddingBottom: 15,
-    borderBottomWidth: 0.7,
-    borderColor: Colors.border,
-  },
-  iconContainer: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderRadius: 100,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stepperContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 15,
-    paddingBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  stepWrapper: {
-    alignItems: 'center',
-    minWidth: 70,
-    maxWidth: 90,
-    marginRight: 0,
-    position: 'relative',
-    flex: 1,
-  },
-  stepContent: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '100%',
-    gap: 6,
-  },
-  stepIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.backgroundSecondary,
-    borderWidth: 2,
-    borderColor: Colors.disabled,
-  },
-  stepIconCompleted: {
-    backgroundColor: Colors.secondary + '15',
-    borderColor: Colors.secondary,
-  },
-  stepIconCurrent: {
-    backgroundColor: Colors.secondary + '20',
-    borderColor: Colors.secondary,
-    borderWidth: 2.5,
-  },
-  stepIconPending: {
-    backgroundColor: Colors.backgroundSecondary,
-    borderColor: Colors.disabled,
-  },
-  stepLabel: {
-    fontSize: RFValue(9),
-    textAlign: 'center',
-  },
-  stepLabelCompleted: {
-    color: Colors.secondary,
-  },
-  stepLabelCurrent: {
-    color: Colors.secondary,
-  },
-  stepLabelPending: {
-    color: Colors.disabled,
-  },
-  connectorLine: {
-    position: 'absolute',
-    top: 16,
-    right: -35,
-    width: 35,
-    height: 2,
-    zIndex: 0,
-  },
-  connectorLineCompleted: {
-    backgroundColor: Colors.secondary,
-  },
-  connectorLinePending: {
-    backgroundColor: Colors.border,
-  },
-});
 
 export default OrderWorkflow;
 

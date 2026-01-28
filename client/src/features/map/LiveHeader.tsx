@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
+import {useTheme} from '@hooks/useTheme';
 
 const LiveHeader: FC<{
   type: 'Customer' | 'Delivery';
@@ -14,6 +15,7 @@ const LiveHeader: FC<{
   secondTitle: string;
 }> = ({title, type, secondTitle}) => {
   const isCustomer = type === 'Customer';
+  const {colors} = useTheme();
 
   const {currentOrder, setCurrentOrder} = useAuthStore();
 
@@ -42,21 +44,21 @@ const LiveHeader: FC<{
           <Icon
             name="chevron-back"
             size={RFValue(16)}
-            color={isCustomer ? '#fff' : '#000'}
+            color={isCustomer ? '#fff' : colors.text}
           />
         </Pressable>
 
         <CustomText
           variant="h8"
           fontFamily={Fonts.Medium}
-          style={isCustomer ? styles.titleTextWhite : styles.titleTextBlack}>
+          style={isCustomer ? styles.titleTextWhite : {color: colors.text}}>
           {title}
         </CustomText>
 
         <CustomText
           variant="h4"
           fontFamily={Fonts.SemiBold}
-          style={isCustomer ? styles.titleTextWhite : styles.titleTextBlack}>
+          style={isCustomer ? styles.titleTextWhite : {color: colors.text}}>
           {secondTitle}
         </CustomText>
 
@@ -75,9 +77,6 @@ const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     left: 20,
-  },
-  titleTextBlack: {
-    color: 'black',
   },
   titleTextWhite: {
     color: 'white',

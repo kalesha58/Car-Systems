@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -24,6 +24,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import { navigate } from '@utils/NavigationUtils';
+import NotificationItemSkeleton from './NotificationItemSkeleton';
 
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -37,8 +38,26 @@ const NotificationScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
 
+  // Use refs to store toast functions to avoid dependency issues
+  const showErrorRef = useRef(showError);
+  const showSuccessRef = useRef(showSuccess);
+  const isLoadingRef = useRef(false);
+
+  // Update refs when toast functions change
+  useEffect(() => {
+    showErrorRef.current = showError;
+    showSuccessRef.current = showSuccess;
+  }, [showError, showSuccess]);
+
   const loadNotifications = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
+    // Guard against concurrent calls
+    if (isLoadingRef.current && !refresh && pageNum === 1) {
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
+      
       if (refresh) {
         setRefreshing(true);
       } else if (pageNum === 1) {
@@ -64,13 +83,14 @@ const NotificationScreen: React.FC = () => {
       setTotal(response.total);
       setHasMore(response.page < response.totalPages);
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to load notifications');
+      showErrorRef.current(error?.response?.data?.message || 'Failed to load notifications');
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [showError]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -83,7 +103,7 @@ const NotificationScreen: React.FC = () => {
   }, [loadNotifications]);
 
   const handleLoadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
+    if (!loadingMore && hasMore && !isLoadingRef.current) {
       loadNotifications(page + 1, false);
     }
   }, [loadingMore, hasMore, page, loadNotifications]);
@@ -277,21 +297,20 @@ const NotificationScreen: React.FC = () => {
     [unreadCount, handleMarkAllAsRead, colors, styles],
   );
 
-  if (loading && notifications.length === 0) {
-    return (
-      <View style={styles.container}>
-        <CustomHeader title="Notifications" rightComponent={headerRight} />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.secondary} />
-        </View>
-      </View>
-    );
-  }
+  const renderSkeletonItem = ({ index }: { index: number }) => (
+    <NotificationItemSkeleton index={index} />
+  );
 
   return (
     <View style={styles.container}>
       <CustomHeader title="Notifications" rightComponent={headerRight} />
-      {notifications.length === 0 ? (
+      {loading && notifications.length === 0 ? (
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6, 7, 8]}
+          renderItem={renderSkeletonItem}
+          keyExtractor={(item) => `skeleton-${item}`}
+        />
+      ) : notifications.length === 0 ? (
         <EmptyState
           icon="notifications-outline"
           title="No notifications"
