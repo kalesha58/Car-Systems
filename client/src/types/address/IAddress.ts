@@ -9,6 +9,13 @@ export interface IAddress {
   };
   addressType: 'home' | 'office' | 'other';
   iconType: 'home' | 'building' | 'location';
+  locationDescription?: string;
+  nearbyLocation?: string;
+  alternateNumber?: string;
+  flatNumber?: string;
+  buildingName?: string;
+  townOrCity?: string;
+  isDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -23,6 +30,13 @@ export interface IAddressFormData {
   };
   addressType: 'home' | 'office' | 'other';
   iconType: 'home' | 'building' | 'location';
+  locationDescription?: string;
+  nearbyLocation?: string;
+  alternateNumber?: string;
+  flatNumber?: string;
+  buildingName?: string;
+  townOrCity?: string;
+  isDefault?: boolean;
 }
 
 export interface ILocationData {

@@ -107,6 +107,16 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
+    // Validate GST number (required)
+    if (!data.gst || !data.gst.trim()) {
+      throw new AppError('GST number is required', 400);
+    }
+    // Validate GST format: 15 characters, alphanumeric pattern
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstRegex.test(data.gst.trim().toUpperCase())) {
+      throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+    }
+
     // Validate required uploads (shop photos + documents)
     if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
       throw new AppError('At least one shop photo is required', 400);
@@ -177,7 +187,7 @@ export const createBusinessRegistration = async (
       type: data.type,
       address: data.address.trim(),
       phone: data.phone.trim(),
-      gst: data.gst?.trim() || undefined,
+      gst: data.gst.trim().toUpperCase(),
       payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
@@ -314,7 +324,15 @@ export const updateBusinessRegistration = async (
     }
 
     if (data.gst !== undefined) {
-      registration.gst = data.gst?.trim() || undefined;
+      if (!data.gst.trim()) {
+        throw new AppError('GST number is required', 400);
+      }
+      // Validate GST format: 15 characters, alphanumeric pattern
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstRegex.test(data.gst.trim().toUpperCase())) {
+        throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+      }
+      registration.gst = data.gst.trim().toUpperCase();
     }
 
     if ((data as any).shopPhotos !== undefined) {

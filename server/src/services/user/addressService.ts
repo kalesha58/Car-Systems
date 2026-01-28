@@ -16,7 +16,21 @@ export const createAddress = async (
   userId: string,
   data: IAddressFormData,
 ): Promise<IAddressResponse> => {
-  const { name, phone, fullAddress, coordinates, addressType, iconType } = data;
+  const {
+    name,
+    phone,
+    fullAddress,
+    coordinates,
+    addressType,
+    iconType,
+    locationDescription,
+    nearbyLocation,
+    alternateNumber,
+    flatNumber,
+    buildingName,
+    townOrCity,
+    isDefault,
+  } = data;
 
   // Validate required fields
   if (!name?.trim()) {
@@ -49,6 +63,16 @@ export const createAddress = async (
     throw new ValidationError('Phone number must be exactly 10 digits');
   }
 
+  // Validate alternate number format if provided
+  if (alternateNumber && !/^[0-9]{10}$/.test(alternateNumber.trim())) {
+    throw new ValidationError('Alternate number must be exactly 10 digits');
+  }
+
+  // If this address is set as default, unset all other default addresses for this user
+  if (isDefault) {
+    await Address.updateMany({ userId, isDefault: true }, { isDefault: false });
+  }
+
   // Create new address
   const address = new Address({
     userId,
@@ -61,6 +85,13 @@ export const createAddress = async (
     },
     addressType: addressType || 'home',
     iconType: iconType || 'location',
+    locationDescription: locationDescription?.trim(),
+    nearbyLocation: nearbyLocation?.trim(),
+    alternateNumber: alternateNumber?.trim(),
+    flatNumber: flatNumber?.trim(),
+    buildingName: buildingName?.trim(),
+    townOrCity: townOrCity?.trim(),
+    isDefault: isDefault || false,
   });
 
   await address.save();
@@ -202,6 +233,44 @@ export const updateAddress = async (
 
   if (data.iconType !== undefined) {
     address.iconType = data.iconType;
+  }
+
+  if (data.locationDescription !== undefined) {
+    address.locationDescription = data.locationDescription?.trim();
+  }
+
+  if (data.nearbyLocation !== undefined) {
+    address.nearbyLocation = data.nearbyLocation?.trim();
+  }
+
+  if (data.alternateNumber !== undefined) {
+    if (data.alternateNumber && !/^[0-9]{10}$/.test(data.alternateNumber.trim())) {
+      throw new ValidationError('Alternate number must be exactly 10 digits');
+    }
+    address.alternateNumber = data.alternateNumber?.trim();
+  }
+
+  if (data.flatNumber !== undefined) {
+    address.flatNumber = data.flatNumber?.trim();
+  }
+
+  if (data.buildingName !== undefined) {
+    address.buildingName = data.buildingName?.trim();
+  }
+
+  if (data.townOrCity !== undefined) {
+    address.townOrCity = data.townOrCity?.trim();
+  }
+
+  if (data.isDefault !== undefined) {
+    // If setting this address as default, unset all other default addresses for this user
+    if (data.isDefault) {
+      await Address.updateMany(
+        { userId, _id: { $ne: addressId }, isDefault: true },
+        { isDefault: false },
+      );
+    }
+    address.isDefault = data.isDefault;
   }
 
   const updatedAddress = await address.save();

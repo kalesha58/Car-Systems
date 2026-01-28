@@ -47,7 +47,7 @@ const WalletItem: FC<{
   const content = (
     <View style={styles.walletItemContainer}>
       <View style={styles.iconContainer}>
-        <Icon name={icon} color={colors.winterBlue || '#4A90E2'} size={RFValue(28)} />
+        <Icon name={icon} color={colors.secondary} size={RFValue(28)} />
       </View>
       <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.labelText}>
         {label}

@@ -57,7 +57,7 @@ export const reverseGeocodeForAddress = async (
   }
 };
 
-const requestLocationPermission = async (): Promise<boolean> => {
+export const requestLocationPermission = async (): Promise<boolean> => {
   if (Platform.OS === 'android') {
     try {
       const checkResult = await PermissionsAndroid.check(

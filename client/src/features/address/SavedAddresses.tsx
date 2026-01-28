@@ -65,6 +65,7 @@ const SavedAddresses = () => {
     navigate('AddressForm', {
       address: item,
       isEdit: true,
+      selectMode: selectMode,
     });
   };
 

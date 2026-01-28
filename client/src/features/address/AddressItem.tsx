@@ -91,6 +91,21 @@ const AddressItem: FC<IAddressItemProps> = ({
           flex: 1,
           gap: 4,
         },
+        nameRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        },
+        defaultBadge: {
+          backgroundColor: colors.secondary,
+          paddingHorizontal: 8,
+          paddingVertical: 2,
+          borderRadius: 4,
+        },
+        defaultBadgeText: {
+          color: '#fff',
+          fontSize: RFValue(10),
+        },
         addressText: {
           color: colors.text,
           opacity: 0.8,
@@ -202,9 +217,18 @@ const AddressItem: FC<IAddressItemProps> = ({
       </View>
 
       <View style={styles.contentContainer}>
-        <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
-          {item.name}
-        </CustomText>
+        <View style={styles.nameRow}>
+          <CustomText variant="h6" fontFamily={Fonts.SemiBold}>
+            {item.name}
+          </CustomText>
+          {item.isDefault && (
+            <View style={styles.defaultBadge}>
+              <CustomText variant="h9" fontFamily={Fonts.Medium} style={styles.defaultBadgeText}>
+                Default
+              </CustomText>
+            </View>
+          )}
+        </View>
         <CustomText variant="h8" style={styles.addressText} numberOfLines={3}>
           {item.fullAddress}
         </CustomText>

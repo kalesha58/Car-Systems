@@ -10,6 +10,13 @@ export interface IAddressFormData {
   };
   addressType: 'home' | 'office' | 'other';
   iconType: 'home' | 'building' | 'location';
+  locationDescription?: string;
+  nearbyLocation?: string;
+  alternateNumber?: string;
+  flatNumber?: string;
+  buildingName?: string;
+  townOrCity?: string;
+  isDefault?: boolean;
 }
 
 export interface IAddressResponse {
@@ -24,6 +31,13 @@ export interface IAddressResponse {
   };
   addressType: 'home' | 'office' | 'other';
   iconType: 'home' | 'building' | 'location';
+  locationDescription?: string;
+  nearbyLocation?: string;
+  alternateNumber?: string;
+  flatNumber?: string;
+  buildingName?: string;
+  townOrCity?: string;
+  isDefault?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +72,13 @@ export const mapAddressToResponse = (address: IAddressDocument): IAddressRespons
     },
     addressType: address.addressType,
     iconType: address.iconType,
+    locationDescription: address.locationDescription,
+    nearbyLocation: address.nearbyLocation,
+    alternateNumber: address.alternateNumber,
+    flatNumber: address.flatNumber,
+    buildingName: address.buildingName,
+    townOrCity: address.townOrCity,
+    isDefault: address.isDefault,
     createdAt: address.createdAt.toISOString(),
     updatedAt: address.updatedAt.toISOString(),
   };

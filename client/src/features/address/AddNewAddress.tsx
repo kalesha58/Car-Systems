@@ -1,6 +1,8 @@
-import {View, StyleSheet, TextInput, TouchableOpacity, ScrollView} from 'react-native';
+import {View, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform, Alert} from 'react-native';
 import React, {useState, useEffect} from 'react';
 import {useRoute} from '@react-navigation/native';
+import {PermissionsAndroid} from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import {Colors, Fonts} from '@utils/Constants';
@@ -10,6 +12,7 @@ import {goBack, navigate} from '@utils/NavigationUtils';
 import AddressMapView from './AddressMapView';
 import {ILocationData} from '../../types/address/IAddress';
 import {getSavedAddresses} from '@service/addressService';
+import {requestLocationPermission} from '@utils/addressUtils';
 
 interface RouteParams {
   selectMode?: boolean;
@@ -24,6 +27,8 @@ const AddNewAddress = () => {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [useMapView, setUseMapView] = useState(true);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
 
   useEffect(() => {
     const fetchDefaultCoordinates = async () => {
@@ -43,6 +48,33 @@ const AddNewAddress = () => {
     fetchDefaultCoordinates();
   }, []);
 
+  useEffect(() => {
+    const requestPermission = async () => {
+      if (useMapView) {
+        const hasPermission = await requestLocationPermission();
+        setHasLocationPermission(hasPermission);
+        if (!hasPermission) {
+          Alert.alert(
+            'Location Permission Required',
+            'Please enable location permission to use map view. You can still add addresses manually.',
+            [
+              {
+                text: 'Use Manual Entry',
+                onPress: () => setUseMapView(false),
+              },
+              {
+                text: 'OK',
+                style: 'cancel',
+              },
+            ],
+          );
+        }
+      }
+    };
+
+    requestPermission();
+  }, [useMapView]);
+
   const handleLocationSelect = (location: ILocationData) => {
     setSelectedLocation(location);
   };
@@ -56,6 +88,19 @@ const AddNewAddress = () => {
     }
   };
 
+  const handleManualEntry = () => {
+    navigate('AddressForm', {
+      location: null,
+      selectMode: selectMode,
+      isManualEntry: true,
+    });
+  };
+
+  const handleToggleEntryMode = () => {
+    setUseMapView(!useMapView);
+    setSelectedLocation(null);
+  };
+
   const handleChange = () => {
     setSelectedLocation(null);
   };
@@ -64,65 +109,125 @@ const AddNewAddress = () => {
     <View style={styles.container}>
       <CustomHeader title="Add new address" />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.searchContainer}>
-          <Icon name="search" size={RFValue(18)} color={Colors.disabled} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by area, street name..."
-            placeholderTextColor={Colors.disabled}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        <View style={styles.mapContainer}>
-          <AddressMapView
-            onLocationSelect={handleLocationSelect}
-            initialLocation={selectedLocation || undefined}
-            defaultCoordinates={defaultCoordinates || undefined}
-          />
-        </View>
-
-        {selectedLocation && (
-          <View style={styles.addressCard}>
-            <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.deliverToText}>
-              Deliver to
+        <View style={styles.modeToggleContainer}>
+          <TouchableOpacity
+            style={[styles.modeButton, useMapView && styles.modeButtonActive]}
+            onPress={() => setUseMapView(true)}>
+            <Icon
+              name="map-outline"
+              size={RFValue(18)}
+              color={useMapView ? '#fff' : Colors.text}
+            />
+            <CustomText
+              variant="h8"
+              fontFamily={Fonts.Medium}
+              style={
+                useMapView
+                  ? [styles.modeButtonText, styles.modeButtonTextActive]
+                  : styles.modeButtonText
+              }>
+              Use Map
             </CustomText>
-            <View style={styles.addressRow}>
-              <Icon name="location" size={RFValue(16)} color={Colors.secondary} />
-              <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={styles.addressName}>
-                {selectedLocation.address.split(',')[0]}
-              </CustomText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modeButton, !useMapView && styles.modeButtonActive]}
+            onPress={() => setUseMapView(false)}>
+            <Icon
+              name="create-outline"
+              size={RFValue(18)}
+              color={!useMapView ? '#fff' : Colors.text}
+            />
+            <CustomText
+              variant="h8"
+              fontFamily={Fonts.Medium}
+              style={
+                !useMapView
+                  ? [styles.modeButtonText, styles.modeButtonTextActive]
+                  : styles.modeButtonText
+              }>
+              Manual Entry
+            </CustomText>
+          </TouchableOpacity>
+        </View>
+
+        {useMapView ? (
+          <>
+            <View style={styles.searchContainer}>
+              <Icon name="search" size={RFValue(18)} color={Colors.disabled} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by area, street name..."
+                placeholderTextColor={Colors.disabled}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
             </View>
-            <CustomText variant="h8" style={styles.fullAddress} numberOfLines={2}>
-              {selectedLocation.formattedAddress}
+
+            <View style={styles.mapContainer}>
+              <AddressMapView
+                onLocationSelect={handleLocationSelect}
+                initialLocation={selectedLocation || undefined}
+                defaultCoordinates={defaultCoordinates || undefined}
+              />
+            </View>
+
+            {selectedLocation && (
+              <View style={styles.addressCard}>
+                <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.deliverToText}>
+                  Deliver to
+                </CustomText>
+                <View style={styles.addressRow}>
+                  <Icon name="location" size={RFValue(16)} color={Colors.secondary} />
+                  <CustomText variant="h7" fontFamily={Fonts.SemiBold} style={styles.addressName}>
+                    {selectedLocation.address.split(',')[0]}
+                  </CustomText>
+                </View>
+                <CustomText variant="h8" style={styles.fullAddress} numberOfLines={2}>
+                  {selectedLocation.formattedAddress}
+                </CustomText>
+                <TouchableOpacity style={styles.changeButton} onPress={handleChange}>
+                  <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.changeButtonText}>
+                    Change
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[
+                styles.addButton,
+                !selectedLocation && styles.addButtonDisabled,
+              ]}
+              onPress={handleAddAddressDetails}
+              disabled={!selectedLocation}>
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={
+                  !selectedLocation
+                    ? styles.addButtonTextDisabled
+                    : styles.addButtonText
+                }>
+                Add address details
+              </CustomText>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View style={styles.manualEntryContainer}>
+            <CustomText variant="h7" fontFamily={Fonts.Medium} style={styles.manualEntryTitle}>
+              Enter Address Manually
             </CustomText>
-            <TouchableOpacity style={styles.changeButton} onPress={handleChange}>
-              <CustomText variant="h8" fontFamily={Fonts.Medium} style={styles.changeButtonText}>
-                Change
+            <CustomText variant="h8" style={styles.manualEntryDescription}>
+              You can add an address manually for booking products to different locations (e.g., for family members or friends).
+            </CustomText>
+            <TouchableOpacity style={styles.manualEntryButton} onPress={handleManualEntry}>
+              <Icon name="create-outline" size={RFValue(20)} color="#fff" />
+              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.manualEntryButtonText}>
+                Continue with Manual Entry
               </CustomText>
             </TouchableOpacity>
           </View>
         )}
-
-        <TouchableOpacity
-          style={[
-            styles.addButton,
-            !selectedLocation && styles.addButtonDisabled,
-          ]}
-          onPress={handleAddAddressDetails}
-          disabled={!selectedLocation}>
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={
-              !selectedLocation
-                ? styles.addButtonTextDisabled
-                : styles.addButtonText
-            }>
-            Add address details
-          </CustomText>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -135,6 +240,35 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  modeToggleContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 15,
+    marginTop: 10,
+    gap: 10,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundSecondary,
+  },
+  modeButtonActive: {
+    backgroundColor: Colors.secondary,
+    borderColor: Colors.secondary,
+  },
+  modeButtonText: {
+    color: Colors.text,
+  },
+  modeButtonTextActive: {
+    color: '#fff',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -218,6 +352,38 @@ const styles = StyleSheet.create({
   addButtonTextDisabled: {
     color: '#fff',
     opacity: 0.6,
+  },
+  manualEntryContainer: {
+    marginHorizontal: 15,
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  manualEntryTitle: {
+    color: Colors.text,
+    marginBottom: 10,
+  },
+  manualEntryDescription: {
+    color: Colors.text,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  manualEntryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.secondary,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  manualEntryButtonText: {
+    color: '#fff',
   },
 });
 

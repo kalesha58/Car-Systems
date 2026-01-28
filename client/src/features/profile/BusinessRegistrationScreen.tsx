@@ -513,6 +513,17 @@ const BusinessRegistrationScreen: React.FC = () => {
         }
         return undefined;
 
+      case 'gst':
+        if (!value || !value.trim()) {
+          return t('dealer.gstRequired') || 'GST number is required';
+        }
+        // Basic GST format validation (15 characters, alphanumeric)
+        const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        if (!gstRegex.test(value.trim().toUpperCase())) {
+          return t('dealer.invalidGST') || 'Invalid GST number format';
+        }
+        return undefined;
+
       default:
         return undefined;
     }
@@ -526,6 +537,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     errors.type = validateField('type', type);
     errors.address = validateField('address', address);
     errors.phone = validateField('phone', phone);
+    errors.gst = validateField('gst', gst);
     errors.shopPhotos = validateField('shopPhotos', shopPhotoUris);
     errors.idDoc = validateField('idDoc', idDocUri);
     errors.panDoc = validateField('panDoc', panDocUri);
@@ -575,11 +587,16 @@ const BusinessRegistrationScreen: React.FC = () => {
       }
     }
 
+    // Validate GST format
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    const isGstValid = !!gst.trim() && gstRegex.test(gst.trim().toUpperCase());
+
     const validations = {
       businessName: !!businessName.trim(),
       type: !!type,
       address: !!address.trim(),
       phone: !!phone.trim() && isValidPhone(phone),
+      gst: isGstValid,
       payout: payoutValid,
       shopPhotos: shopPhotoUris.length > 0,
       idDoc: !!idDocUri,
@@ -600,6 +617,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         type,
         address: address?.substring(0, 20),
         phone,
+        gst,
         payoutType,
         upiId: upiId?.substring(0, 20),
         shopPhotoUrisCount: shopPhotoUris?.length,
@@ -644,6 +662,16 @@ const BusinessRegistrationScreen: React.FC = () => {
     }
     if (!isValidPhone(phone)) {
       showError(t('dealer.phoneInvalid') || 'Please enter a valid phone number (at least 10 digits)');
+      return;
+    }
+    if (!gst.trim()) {
+      showError(t('dealer.gstRequired') || 'GST number is required');
+      return;
+    }
+    // Validate GST format
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstRegex.test(gst.trim().toUpperCase())) {
+      showError(t('dealer.invalidGST') || 'Invalid GST number format');
       return;
     }
 
@@ -741,7 +769,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         type: type as any, // Type assertion to match DealerType enum
         address: address.trim(),
         phone: phone.trim(),
-        gst: gst.trim() || undefined,
+        gst: gst.trim().toUpperCase(),
         payout: payoutData,
         shopPhotos: uploadedShopPhotos,
         documents: uploadedDocuments,
@@ -1161,16 +1189,32 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'}</CustomText>
-          <View style={styles.textInputContainer}>
+          <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'} *</CustomText>
+          <View style={[styles.textInputContainer, fieldErrors.gst && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
-              placeholder={t('dealer.enterGST') || 'Enter GST number (optional)'}
+              placeholder={t('dealer.enterGST') || 'Enter GST number (e.g., 27AABCU9603R1ZX)'}
               placeholderTextColor={colors.disabled}
               value={gst}
-              onChangeText={setGst}
+              onChangeText={(text) => {
+                const upperText = text.toUpperCase();
+                setGst(upperText);
+                if (fieldErrors.gst) {
+                  const error = validateField('gst', upperText);
+                  setFieldErrors(prev => ({ ...prev, gst: error }));
+                }
+              }}
+              onBlur={() => {
+                const error = validateField('gst', gst);
+                setFieldErrors(prev => ({ ...prev, gst: error }));
+              }}
+              autoCapitalize="characters"
+              maxLength={15}
             />
           </View>
+          {fieldErrors.gst && (
+            <CustomText style={styles.errorText}>{fieldErrors.gst}</CustomText>
+          )}
         </View>
 
         {/* Payout Section */}
