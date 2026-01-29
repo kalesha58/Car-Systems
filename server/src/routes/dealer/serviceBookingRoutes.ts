@@ -3,11 +3,13 @@ import {
   getDealerServiceBookingsController,
   updateServiceBookingStatusController,
 } from '../../controllers/dealer/serviceBookingController';
+import { authMiddleware } from '../../middleware/authMiddleware';
 import { dealerMiddleware } from '../../middleware/dealerMiddleware';
 
 const router = Router();
 
-// Apply dealer middleware to all routes
+// All routes require authentication and dealer role
+router.use(authMiddleware);
 router.use(dealerMiddleware);
 
 /**
