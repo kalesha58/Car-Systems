@@ -14,6 +14,7 @@ import {useTheme} from '@hooks/useTheme';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {navigate} from '@utils/NavigationUtils';
+import {useFocusEffect} from '@react-navigation/native';
 import InstagramProfileHeader from './sections/InstagramProfileHeader';
 import PostGrid from './sections/PostGrid';
 import VehicleGrid from './sections/VehicleGrid';
@@ -103,6 +104,29 @@ const InstagramProfile: React.FC = () => {
     }
   }, [activeTab, user?.id]);
 
+  // Refresh vehicles when screen comes into focus (e.g., after adding a vehicle)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (activeTab === 'vehicles' && user?.id) {
+        // Force refresh vehicles when screen is focused
+        const refreshVehicles = async () => {
+          try {
+            setVehiclesLoading(true);
+            const vehiclesData = await getUserVehicles();
+            if (vehiclesData?.success && vehiclesData?.Response && Array.isArray(vehiclesData.Response)) {
+              setVehicles(vehiclesData.Response);
+            }
+          } catch (error) {
+            console.error('Error refreshing vehicles:', error);
+          } finally {
+            setVehiclesLoading(false);
+          }
+        };
+        refreshVehicles();
+      }
+    }, [activeTab, user?.id]),
+  );
+
   const handleRefresh = async () => {
     if (activeTab === 'posts') {
       await fetchData(true);
@@ -135,6 +159,10 @@ const InstagramProfile: React.FC = () => {
   const handleSettingsPress = () => {
     // Navigate to settings
     navigate('ProfileSettings');
+  };
+
+  const handleAddVehicle = () => {
+    navigate('AddUserVehicle');
   };
 
   const styles = useMemo(
@@ -185,6 +213,26 @@ const InstagramProfile: React.FC = () => {
         },
         gridNavIconInactive: {
           opacity: 0.5,
+        },
+        floatingButton: {
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: colors.secondary,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: colors.black,
+          shadowOffset: {
+            width: 0,
+            height: 4,
+          },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+          zIndex: 1000,
         },
       }),
     [colors, isDark, insets.top],
@@ -257,6 +305,16 @@ const InstagramProfile: React.FC = () => {
           />
         )}
       </ScrollView>
+
+      {/* Floating Add Vehicle Button - Only show when vehicles tab is active */}
+      {activeTab === 'vehicles' && (
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={handleAddVehicle}
+          activeOpacity={0.8}>
+          <Icon name="add" size={RFValue(28)} color="#fff" />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

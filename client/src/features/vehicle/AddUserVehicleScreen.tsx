@@ -26,6 +26,7 @@ import { uploadImage } from '@service/postService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
 import { getDropdownOptions } from '@service/dropdownService';
+import { storage } from '@state/storage';
 
 const MAX_IMAGES = 3;
 const MIN_IMAGES = 1;
@@ -237,6 +238,8 @@ const AddUserVehicleScreen: React.FC = () => {
   };
 
   const handleSkip = () => {
+    // Store flag that user has skipped adding vehicle
+    storage.set('hasSkippedVehicle', 'true');
     resetAndNavigate('MainTabs');
   };
 
@@ -301,6 +304,9 @@ const AddUserVehicleScreen: React.FC = () => {
 
       await createUserVehicle(createData);
       showSuccess('Vehicle added successfully');
+
+      // Clear the skip flag since user has now added a vehicle
+      storage.delete('hasSkippedVehicle');
 
       setTimeout(() => {
         resetAndNavigate('MainTabs');

@@ -50,17 +50,39 @@ const router = Router();
  *         schema:
  *           type: string
  *           default: createdAt
- *       - in: query
- *         name: sortOrder
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *     responses:
- *       200:
- *         description: Services retrieved successfully
- */
-router.get('/', getServicesController);
+     *       - in: query
+     *         name: sortOrder
+     *         schema:
+     *           type: string
+     *           enum: [asc, desc]
+     *           default: desc
+     *       - in: query
+     *         name: vehicleType
+     *         schema:
+     *           type: string
+     *           enum: [Car, Bike]
+     *       - in: query
+     *         name: vehicleModel
+     *         schema:
+     *           type: string
+     *       - in: query
+     *         name: vehicleBrand
+     *         schema:
+     *           type: string
+     *       - in: query
+     *         name: serviceType
+     *         schema:
+     *           type: string
+     *           enum: [car_wash, car_detailing, car_automobile, bike_automobile, general]
+     *       - in: query
+     *         name: serviceSubCategory
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: Services retrieved successfully
+     */
+    router.get('/', getServicesController);
 
 /**
  * @swagger

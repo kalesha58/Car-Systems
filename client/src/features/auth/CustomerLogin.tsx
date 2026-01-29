@@ -37,6 +37,7 @@ import ThemedModal from '@components/ui/ThemedModal';
 import { navigate } from '@utils/NavigationUtils';
 import { useThemeStore } from '@state/themeStore';
 import { useTheme } from '@hooks/useTheme';
+import { storage } from '@state/storage';
 
 // bottomColors will be set dynamically based on theme
 
@@ -228,28 +229,47 @@ const CustomerLogin = () => {
           // For regular users (not dealers), check if they have vehicles
           const userId = currentUser.id || currentUser._id;
           if (userRole === 'user' && userId) {
-            try {
-              const userIdString = String(userId);
-              const { getUserVehicles } = await import('@service/vehicleService');
-              const vehiclesData = await getUserVehicles();
-              // Response is directly an array, not an object with vehicles property
-              const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
+            // Check if user has skipped adding vehicle
+            const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
+            
+            if (hasSkippedVehicle) {
+              // User has skipped before, navigate directly to MainTabs
+              resetAndNavigate('MainTabs');
+            } else {
+              try {
+                const userIdString = String(userId);
+                const { getUserVehicles } = await import('@service/vehicleService');
+                const vehiclesData = await getUserVehicles();
+                // Response is directly an array, not an object with vehicles property
+                const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
 
-              if (hasVehicles) {
-                // User already has vehicles, navigate to MainTabs
-                resetAndNavigate('MainTabs');
-              } else {
-                // User doesn't have vehicles, replace login screen with AddUserVehicle with fromLogin param
-                await replace('AddUserVehicle', { fromLogin: true });
+                if (hasVehicles) {
+                  // User already has vehicles, clear skip flag and navigate to MainTabs
+                  storage.delete('hasSkippedVehicle');
+                  resetAndNavigate('MainTabs');
+                } else {
+                  // User doesn't have vehicles, replace login screen with AddUserVehicle with fromLogin param
+                  await replace('AddUserVehicle', { fromLogin: true });
+                }
+              } catch (error: any) {
+                // If check fails, check skip flag before navigating
+                console.error('Error checking user vehicles:', error);
+                const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
+                if (hasSkippedVehicle) {
+                  resetAndNavigate('MainTabs');
+                } else {
+                  await replace('AddUserVehicle', { fromLogin: true });
+                }
               }
-            } catch (error: any) {
-              // If check fails, navigate to AddUserVehicle (safer default)
-              console.error('Error checking user vehicles:', error);
-              resetAndNavigate('AddUserVehicle');
             }
           } else {
-            // For regular users without userId, navigate to AddUserVehicle screen after login
-            resetAndNavigate('AddUserVehicle');
+            // For regular users without userId, check skip flag
+            const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
+            if (hasSkippedVehicle) {
+              resetAndNavigate('MainTabs');
+            } else {
+              resetAndNavigate('AddUserVehicle');
+            }
           }
         }
       } else {

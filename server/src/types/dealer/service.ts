@@ -2,7 +2,7 @@ import { IService } from '../../types/service';
 
 export interface IDealerService extends IService {
   isActive?: boolean;
-  serviceType?: 'car_wash' | 'general';
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
 }
 
 export interface ICreateDealerServiceRequest {
@@ -19,7 +19,11 @@ export interface ICreateDealerServiceRequest {
   };
   images?: string[];
   isActive?: boolean;
-  serviceType?: 'car_wash' | 'general';
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceSubCategory?: string;
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -36,7 +40,11 @@ export interface IUpdateDealerServiceRequest {
   };
   images?: string[];
   isActive?: boolean;
-  serviceType?: 'car_wash' | 'general';
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceSubCategory?: string;
 }
 
 export interface IUpdateServiceStatusRequest {
@@ -56,6 +64,11 @@ export interface IGetDealerServicesRequest {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   isActive?: boolean;
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  serviceSubCategory?: string;
 }
 
 

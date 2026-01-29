@@ -15,7 +15,11 @@ export interface IServiceDocument extends Document {
     address?: string;
   };
   isActive: boolean;
-  serviceType?: 'car_wash' | 'general';
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceSubCategory?: string;
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
   createdAt: Date;
@@ -79,7 +83,24 @@ const serviceSchema = new Schema<IServiceDocument>(
     serviceType: {
       type: String,
       trim: true,
-      enum: ['car_wash', 'general'],
+      enum: ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'],
+    },
+    vehicleType: {
+      type: String,
+      trim: true,
+      enum: ['Car', 'Bike'],
+    },
+    vehicleModel: {
+      type: String,
+      trim: true,
+    },
+    vehicleBrand: {
+      type: String,
+      trim: true,
+    },
+    serviceSubCategory: {
+      type: String,
+      trim: true,
     },
     slotDurationMinutes: {
       type: Number,
@@ -99,6 +120,11 @@ const serviceSchema = new Schema<IServiceDocument>(
 serviceSchema.index({ dealerId: 1 });
 serviceSchema.index({ category: 1 });
 serviceSchema.index({ homeService: 1 });
+serviceSchema.index({ serviceType: 1 });
+serviceSchema.index({ vehicleType: 1 });
+serviceSchema.index({ vehicleModel: 1 });
+serviceSchema.index({ vehicleBrand: 1 });
+serviceSchema.index({ serviceSubCategory: 1 });
 serviceSchema.index({ name: 'text', description: 'text' });
 
 export const Service = mongoose.model<IServiceDocument>('Service', serviceSchema);

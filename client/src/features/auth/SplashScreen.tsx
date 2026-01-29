@@ -6,7 +6,7 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import { resetAndNavigate} from '@utils/NavigationUtils';
 import GeoLocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
-import {tokenStorage} from '@state/storage';
+import {tokenStorage, storage} from '@state/storage';
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_tokens} from '@service/authService';
 import {getBusinessRegistrationByUserId} from '@service/dealerService';
@@ -55,6 +55,15 @@ const SplashScreen: FC = () => {
 
   const navigateByRole = async (userRole: string | null, userId?: string) => {
     if (userRole === 'user') {
+      // Check if user has skipped adding vehicle
+      const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
+      
+      if (hasSkippedVehicle) {
+        // User has skipped before, navigate directly to MainTabs
+        resetAndNavigate('MainTabs');
+        return;
+      }
+
       // Check if user has vehicles before navigating
       if (userId) {
         try {
@@ -65,16 +74,22 @@ const SplashScreen: FC = () => {
           const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
           
           if (hasVehicles) {
-            // User already has vehicles, navigate to MainTabs
+            // User already has vehicles, clear skip flag and navigate to MainTabs
+            storage.delete('hasSkippedVehicle');
             resetAndNavigate('MainTabs');
           } else {
             // User doesn't have vehicles, navigate to AddUserVehicle
             resetAndNavigate('AddUserVehicle');
           }
         } catch (error: any) {
-          // If check fails, navigate to AddUserVehicle (safer default)
+          // If check fails, check skip flag before navigating
           console.error('Error checking user vehicles in SplashScreen:', error);
-          resetAndNavigate('AddUserVehicle');
+          const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
+          if (hasSkippedVehicle) {
+            resetAndNavigate('MainTabs');
+          } else {
+            resetAndNavigate('AddUserVehicle');
+          }
         }
       } else {
         // No userId, navigate to AddUserVehicle

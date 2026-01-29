@@ -17,7 +17,11 @@ export interface IService {
     address?: string;
   };
   isActive?: boolean;
-  serviceType?: 'car_wash' | 'general';
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceSubCategory?: string;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +36,11 @@ export interface IGetServicesRequest {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  vehicleType?: 'Car' | 'Bike';
+  vehicleModel?: string;
+  vehicleBrand?: string;
+  serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+  serviceSubCategory?: string;
 }
 
 export interface IServicesResponse {

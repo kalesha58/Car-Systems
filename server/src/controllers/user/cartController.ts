@@ -42,68 +42,44 @@ export const getProductStockController = async (req: Request, res: Response) => 
  */
 export const getDeliveryTimeEstimateController = async (req: Request, res: Response) => {
   try {
-    const {addressId, dealerId, itemCount} = req.body;
+    const {addressId, dealerId, itemCount, isSparePart, pincode} = req.body;
     const userId = (req as any).user?.id;
 
-    // Base delivery time
-    let baseMinutes = 12;
+    let addressCoordinates;
+    let dealerCoordinates;
 
-    // Adjust based on item count
-    if (itemCount > 5) {
-      baseMinutes += 5;
-    }
-
-    // Adjust based on time of day
-    const hour = new Date().getHours();
-    if (hour >= 17 && hour <= 20) {
-      baseMinutes += 8; // Rush hour
-    } else if (hour >= 12 && hour <= 14) {
-      baseMinutes += 5; // Lunch time
-    }
-
-    // If address provided, calculate distance-based time
+    // Get address coordinates if addressId provided
     if (addressId && userId) {
       const addressesResponse = await getUserAddresses(userId);
       const address = addressesResponse?.addresses?.find((addr: any) => addr._id?.toString() === addressId || addr.id === addressId);
-
-      if (address?.coordinates?.latitude && dealerId) {
-        // In a real app, you'd get dealer location from database
-        // For now, estimate based on address
-        const estimatedDistance = 5; // km (placeholder)
-        const distanceMinutes = Math.max(10, Math.round(estimatedDistance * 2));
-        baseMinutes = Math.max(baseMinutes, distanceMinutes);
+      if (address?.coordinates) {
+        addressCoordinates = {
+          latitude: address.coordinates.latitude,
+          longitude: address.coordinates.longitude,
+        };
       }
     }
 
-    // Round to nearest 5 minutes
-    const roundedMinutes = Math.ceil(baseMinutes / 5) * 5;
+    // Get dealer coordinates if dealerId provided
+    if (dealerId) {
+      // TODO: Get dealer location from BusinessRegistration or Dealer model
+      // For now, we'll let the delivery service handle it
+    }
 
-    // Calculate time slot
-    const now = new Date();
-    const deliveryDate = new Date(now.getTime() + roundedMinutes * 60000);
-    const hours = deliveryDate.getHours();
-    const minutes = deliveryDate.getMinutes();
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-    const displayMinutes = minutes.toString().padStart(2, '0');
-
-    const slotEnd = new Date(deliveryDate);
-    slotEnd.setMinutes(Math.ceil(minutes / 15) * 15 + 15);
-    const endHours = slotEnd.getHours();
-    const endMinutes = slotEnd.getMinutes();
-    const endPeriod = endHours >= 12 ? 'PM' : 'AM';
-    const endDisplayHours = endHours > 12 ? endHours - 12 : endHours === 0 ? 12 : endHours;
-    const endDisplayMinutes = endMinutes.toString().padStart(2, '0');
-
-    const timeSlot = `${displayHours}:${displayMinutes} ${period} - ${endDisplayHours}:${endDisplayMinutes} ${endPeriod}`;
+    // Use the delivery time service
+    const {calculateDeliveryTime} = await import('../../services/deliveryTimeService');
+    const result = await calculateDeliveryTime({
+      addressCoordinates,
+      dealerId,
+      dealerCoordinates,
+      itemCount,
+      isSparePart,
+      pincode,
+    });
 
     res.json({
       success: true,
-      data: {
-        minutes: roundedMinutes,
-        timeSlot,
-        estimatedDelivery: deliveryDate.toISOString(),
-      },
+      data: result,
     });
   } catch (error: any) {
     logger.error('Error estimating delivery time:', error);

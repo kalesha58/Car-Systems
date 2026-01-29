@@ -17,6 +17,8 @@ export interface IProductDocument extends Document {
   tags: string[];
   specifications: Record<string, any>;
   userId: string;
+  deliveryTimeMinutes?: number;
+  isSparePart?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +88,14 @@ const productSchema = new Schema<IProductDocument>(
       type: String,
       required: true,
     },
+    deliveryTimeMinutes: {
+      type: Number,
+      min: 0,
+    },
+    isSparePart: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -97,6 +107,8 @@ productSchema.index({ categoryId: 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ userId: 1 });
+productSchema.index({ vehicleType: 1 });
+productSchema.index({ isSparePart: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 
 export const Product = mongoose.model<IProductDocument>('Product', productSchema);

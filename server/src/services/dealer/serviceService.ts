@@ -27,6 +27,10 @@ const serviceToDealerService = (doc: IServiceDocument): IDealerService => {
     location: doc.location,
     isActive: doc.isActive !== undefined ? doc.isActive : true,
     serviceType: doc.serviceType,
+    vehicleType: doc.vehicleType,
+    vehicleModel: doc.vehicleModel,
+    vehicleBrand: doc.vehicleBrand,
+    serviceSubCategory: doc.serviceSubCategory,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -52,6 +56,30 @@ export const getDealerServices = async (
 
     if (query.homeService !== undefined) {
       filter.homeService = query.homeService;
+    }
+
+    if (query.vehicleType) {
+      filter.vehicleType = query.vehicleType;
+    }
+
+    if (query.vehicleModel) {
+      filter.vehicleModel = { $regex: query.vehicleModel, $options: 'i' };
+    }
+
+    if (query.vehicleBrand) {
+      filter.vehicleBrand = { $regex: query.vehicleBrand, $options: 'i' };
+    }
+
+    if (query.serviceType) {
+      filter.serviceType = query.serviceType;
+    }
+
+    if (query.serviceSubCategory) {
+      filter.serviceSubCategory = { $regex: query.serviceSubCategory, $options: 'i' };
+    }
+
+    if (query.isActive !== undefined) {
+      filter.isActive = query.isActive;
     }
 
     if (query.search) {

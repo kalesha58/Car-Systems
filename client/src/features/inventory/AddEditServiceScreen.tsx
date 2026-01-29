@@ -57,7 +57,11 @@ const AddEditServiceScreen: React.FC = () => {
   const [category, setCategory] = useState(service?.category || '');
   const [description, setDescription] = useState(service?.description || '');
   const [isActive, setIsActive] = useState(service?.isActive !== undefined ? service.isActive : true);
-  const [serviceType, setServiceType] = useState<'car_wash' | 'general' | undefined>(service?.serviceType);
+  const [serviceType, setServiceType] = useState<'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general' | undefined>(service?.serviceType);
+  const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | undefined>(service?.vehicleType);
+  const [vehicleModel, setVehicleModel] = useState(service?.vehicleModel || '');
+  const [vehicleBrand, setVehicleBrand] = useState(service?.vehicleBrand || '');
+  const [serviceSubCategory, setServiceSubCategory] = useState(service?.serviceSubCategory || '');
   const [location, setLocation] = useState<ILocationData | null>(
     service?.location
       ? {
@@ -193,6 +197,10 @@ const AddEditServiceScreen: React.FC = () => {
             : undefined,
           isActive,
           serviceType,
+          vehicleType,
+          vehicleModel: vehicleModel.trim() || undefined,
+          vehicleBrand: vehicleBrand.trim() || undefined,
+          serviceSubCategory: serviceSubCategory.trim() || undefined,
         };
 
         await updateDealerService(service.id, updateData);
@@ -215,6 +223,10 @@ const AddEditServiceScreen: React.FC = () => {
             : undefined,
           isActive: true, // New services are active by default
           serviceType,
+          vehicleType,
+          vehicleModel: vehicleModel.trim() || undefined,
+          vehicleBrand: vehicleBrand.trim() || undefined,
+          serviceSubCategory: serviceSubCategory.trim() || undefined,
         };
 
         await createDealerService(createData);
@@ -509,6 +521,121 @@ const AddEditServiceScreen: React.FC = () => {
             />
           </View>
         </View>
+
+        <View style={styles.section}>
+          <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
+          <View style={styles.button}>
+            <Icon name="construct-outline" size={RFValue(16)} color={colors.text} />
+            <CustomText style={styles.buttonText}>
+              {serviceType || t('dealer.selectServiceType')}
+            </CustomText>
+          </View>
+          <View style={styles.imagesContainer}>
+            {(['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'] as const).map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.button,
+                  serviceType === type && {backgroundColor: colors.secondary + '20', borderColor: colors.secondary},
+                ]}
+                onPress={() => {
+                  setServiceType(type);
+                  if (type === 'car_automobile') {
+                    setVehicleType('Car');
+                  } else if (type === 'bike_automobile') {
+                    setVehicleType('Bike');
+                  } else {
+                    setVehicleType(undefined);
+                    setVehicleModel('');
+                    setVehicleBrand('');
+                  }
+                }}>
+                <CustomText style={[styles.buttonText, serviceType === type && {color: colors.secondary}]}>
+                  {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </CustomText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {(serviceType === 'car_automobile' || serviceType === 'bike_automobile') && (
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
+            <View style={styles.button}>
+              <Icon name="car-outline" size={RFValue(16)} color={colors.text} />
+              <CustomText style={styles.buttonText}>
+                {vehicleType || t('dealer.selectVehicleType')}
+              </CustomText>
+            </View>
+            <View style={styles.imagesContainer}>
+              {(['Car', 'Bike'] as const).map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.button,
+                    vehicleType === type && {backgroundColor: colors.secondary + '20', borderColor: colors.secondary},
+                  ]}
+                  onPress={() => {
+                    setVehicleType(type);
+                    if (serviceType === 'car_automobile' && type !== 'Car') {
+                      setServiceType('bike_automobile');
+                    } else if (serviceType === 'bike_automobile' && type !== 'Bike') {
+                      setServiceType('car_automobile');
+                    }
+                  }}>
+                  <CustomText style={[styles.buttonText, vehicleType === type && {color: colors.secondary}]}>
+                    {type}
+                  </CustomText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {serviceType === 'bike_automobile' && (
+          <>
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.vehicleBrand')}</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterVehicleBrand') || 'Enter bike brand (e.g., Bajaj, Hero)'}
+                  placeholderTextColor={colors.disabled}
+                  value={vehicleBrand}
+                  onChangeText={setVehicleBrand}
+                />
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.vehicleModel')}</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterVehicleModel') || 'Enter bike model (e.g., Pulsar, Splendor)'}
+                  placeholderTextColor={colors.disabled}
+                  value={vehicleModel}
+                  onChangeText={setVehicleModel}
+                />
+              </View>
+            </View>
+          </>
+        )}
+
+        {(serviceType === 'car_wash' || serviceType === 'car_detailing') && (
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder={t('dealer.enterSubCategory') || 'e.g., Interior Cleaning, Exterior Cleaning'}
+                placeholderTextColor={colors.disabled}
+                value={serviceSubCategory}
+                onChangeText={setServiceSubCategory}
+              />
+            </View>
+          </View>
+        )}
 
         <View style={styles.section}>
           <CustomText style={styles.label}>{t('dealer.category')}</CustomText>

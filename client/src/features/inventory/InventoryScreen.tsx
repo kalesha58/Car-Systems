@@ -15,7 +15,7 @@ import {
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration, toggleDealerServiceStatus} from '@service/dealerService';
+import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/dealerService';
 import {useAuthStore} from '@state/authStore';
 import {IProduct} from '../../types/product/IProduct';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
@@ -51,12 +51,28 @@ const InventoryScreen: React.FC = () => {
   // Filter tabs based on business type
   const tabOrder = useMemo(() => {
     const businessType = businessRegistration?.type;
-    // Automobile Dealer and Bike Dealer: Show products and vehicles
-    if (businessType === 'Automobile Showroom' || businessType === 'Bike Dealer') {
-      return ['products', 'vehicles'] as const;
+    // Automobile Showroom: Show products, vehicles, and car automobile services
+    if (businessType === 'Automobile Showroom') {
+      return ['products', 'vehicles', 'services'] as const;
     }
-    // Mechanic Workshop and Vehicle Wash: Show services only
-    if (businessType === 'Mechanic Workshop' || businessType === 'Vehicle Wash Station') {
+    // Bike Dealer: Show products, vehicles, and bike automobile services
+    if (businessType === 'Bike Dealer') {
+      return ['products', 'vehicles', 'services'] as const;
+    }
+    // Vehicle Wash Station: Show car wash services only
+    if (businessType === 'Vehicle Wash Station') {
+      return ['services'] as const;
+    }
+    // Detailing Center: Show car detailing services only
+    if (businessType === 'Detailing Center') {
+      return ['services'] as const;
+    }
+    // Spare Parts Dealer: Show products only
+    if (businessType === 'Spare Parts Dealer') {
+      return ['products'] as const;
+    }
+    // Mechanic Workshop: Show services only
+    if (businessType === 'Mechanic Workshop') {
       return ['services'] as const;
     }
     // Default: Show all tabs
@@ -115,13 +131,54 @@ const InventoryScreen: React.FC = () => {
     }
   };
 
+  const handleToggleServiceStatus = async (serviceId: string, e: any) => {
+    e.stopPropagation();
+    try {
+      const service = services.find(s => s.id === serviceId);
+      if (!service) return;
+      
+      // Toggle the service status locally
+      const updatedServices = services.map(s =>
+        s.id === serviceId ? {...s, isActive: !s.isActive} : s
+      );
+      setServices(updatedServices);
+      
+      // TODO: Call API to update service status on backend
+      // await updateServiceStatus(serviceId, !service.isActive);
+    } catch (error) {
+      // Revert on error
+      fetchData();
+    }
+  };
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const businessType = businessRegistration?.type;
+      
+      // Build service filters based on business type
+      const serviceFilters: any = { limit: 1000 };
+      
+      if (businessType === 'Automobile Showroom') {
+        // Show car automobile services
+        serviceFilters.serviceType = 'car_automobile';
+        serviceFilters.vehicleType = 'Car';
+      } else if (businessType === 'Bike Dealer') {
+        // Show bike automobile services
+        serviceFilters.serviceType = 'bike_automobile';
+        serviceFilters.vehicleType = 'Bike';
+      } else if (businessType === 'Vehicle Wash Station') {
+        // Show car wash services
+        serviceFilters.serviceType = 'car_wash';
+      } else if (businessType === 'Detailing Center') {
+        // Show car detailing services
+        serviceFilters.serviceType = 'car_detailing';
+      }
+      
       const [productsData, vehiclesData, servicesData] = await Promise.all([
         getDealerProducts({limit: 1000}),
         getDealerVehicles({limit: 1000}),
-        getDealerServices({limit: 1000}),
+        getDealerServices(serviceFilters),
       ]);
       setProducts(productsData.Response?.products || []);
       setVehicles(vehiclesData.Response?.vehicles || []);
@@ -131,7 +188,7 @@ const InventoryScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [businessRegistration?.type]);
 
   const fetchBusinessRegistration = useCallback(async () => {
     if (!user?.id) {

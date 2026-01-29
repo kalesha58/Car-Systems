@@ -28,7 +28,11 @@ const serviceToIService = (serviceDoc: IServiceDocument): IService => {
     images: serviceDoc.images,
     location: serviceDoc.location,
     isActive: serviceDoc.isActive !== undefined ? serviceDoc.isActive : true,
-    serviceType: serviceDoc.serviceType as 'car_wash' | 'general' | undefined,
+    serviceType: serviceDoc.serviceType as 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general' | undefined,
+    vehicleType: serviceDoc.vehicleType as 'Car' | 'Bike' | undefined,
+    vehicleModel: serviceDoc.vehicleModel,
+    vehicleBrand: serviceDoc.vehicleBrand,
+    serviceSubCategory: serviceDoc.serviceSubCategory,
     slotDurationMinutes: serviceDoc.slotDurationMinutes,
     slotBookingEnabled: serviceDoc.slotBookingEnabled !== undefined ? serviceDoc.slotBookingEnabled : false,
     createdAt: serviceDoc.createdAt?.toISOString() || new Date().toISOString(),
@@ -59,6 +63,26 @@ export const getServices = async (
 
     if (query.homeService !== undefined) {
       filter.homeService = query.homeService;
+    }
+
+    if (query.vehicleType) {
+      filter.vehicleType = query.vehicleType;
+    }
+
+    if (query.vehicleModel) {
+      filter.vehicleModel = { $regex: query.vehicleModel, $options: 'i' };
+    }
+
+    if (query.vehicleBrand) {
+      filter.vehicleBrand = { $regex: query.vehicleBrand, $options: 'i' };
+    }
+
+    if (query.serviceType) {
+      filter.serviceType = query.serviceType;
+    }
+
+    if (query.serviceSubCategory) {
+      filter.serviceSubCategory = { $regex: query.serviceSubCategory, $options: 'i' };
     }
 
     if (query.search) {

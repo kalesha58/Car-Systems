@@ -71,7 +71,15 @@ export const createUserVehicle = async (
   try {
     const response = await appAxios.get<IUserVehiclesResponse>('/vehicles');
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    // Handle 404 errors gracefully - return empty array (user has no vehicles)
+    if (error?.response?.status === 404) {
+      return {
+        success: true,
+        Response: [],
+      };
+    }
+    // Re-throw other errors
     throw error;
   }
 };export const getUserVehicleById = async (vehicleId: string): Promise<IUserVehicleResponse> => {

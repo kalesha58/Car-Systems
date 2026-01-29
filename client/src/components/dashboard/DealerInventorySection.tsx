@@ -34,8 +34,8 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
       type: 'product' | 'vehicle' | 'service';
     }> = [];
 
-    // Add products only (max 3)
-    products.slice(0, 3).forEach((product) => {
+    // Add products (max 2)
+    products.slice(0, 2).forEach((product) => {
       items.push({
         id: product.id || (product as any)._id,
         name: product.name,
@@ -47,7 +47,32 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
       });
     });
 
-    return items; // Return up to 3 products
+    // Add vehicles (max 1)
+    vehicles.slice(0, 1).forEach((vehicle) => {
+      items.push({
+        id: vehicle.id || (vehicle as any)._id,
+        name: `${vehicle.brand} ${vehicle.vehicleModel}`,
+        image: vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : '',
+        price: vehicle.price,
+        type: 'vehicle',
+      });
+    });
+
+    // Add services (max 2, only active services)
+    services
+      .filter(service => service.isActive !== false)
+      .slice(0, 2)
+      .forEach((service) => {
+        items.push({
+          id: service.id || (service as any)._id,
+          name: service.name,
+          image: service.images && service.images.length > 0 ? service.images[0] : '',
+          price: service.price,
+          type: 'service',
+        });
+      });
+
+    return items; // Return up to 5 items total
   }, [products, vehicles, services]);
 
   const calculateDiscount = (price: number, originalPrice?: number) => {
@@ -62,8 +87,9 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
       // Navigate to vehicle detail if route exists
       // (navigation as any).navigate('VehicleDetail', { vehicleId: item.id });
     } else if (item.type === 'service') {
-      // Navigate to service detail if route exists
+      // Navigate to service booking or detail if route exists
       // (navigation as any).navigate('ServiceDetail', { serviceId: item.id });
+      // For now, can navigate to service booking or category screen
     }
   };
 
