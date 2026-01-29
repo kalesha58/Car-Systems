@@ -76,19 +76,38 @@ export const customerLogin = async (email: string, password: string) => {
   }
 };
 
-export const customerSignup = async (name: string, email: string, phone: string, password: string) => {
+export const customerSignup = async (
+  name: string,
+  email: string,
+  phone: string,
+  password: string,
+  role?: 'user' | 'dealer'
+) => {
   try {
     // Trim all fields to remove any whitespace
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
     
-    const response = await axios.post(`${BASE_URL}/auth/signup`, { 
+    const requestBody: {
+      name: string;
+      email: string;
+      phone: string;
+      password: string;
+      role?: 'user' | 'dealer';
+    } = {
       name: trimmedName,
-      email: trimmedEmail, 
-      phone, 
-      password: trimmedPassword 
-    });
+      email: trimmedEmail,
+      phone,
+      password: trimmedPassword,
+    };
+
+    // Only include role if provided (defaults to 'user' on backend)
+    if (role) {
+      requestBody.role = role;
+    }
+    
+    const response = await axios.post(`${BASE_URL}/auth/signup`, requestBody);
     const { Response } = response.data;
     const { setUser } = useAuthStore.getState();
     setUser(Response);

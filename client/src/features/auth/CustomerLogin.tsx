@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
+  Switch,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -54,6 +55,7 @@ const CustomerLogin = () => {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [isSignupMode, setIsSignupMode] = useState(false);
+  const [userType, setUserType] = useState<'user' | 'dealer'>('user');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -268,7 +270,7 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
-      await customerSignup(name, email, cleanPhone, password);
+      await customerSignup(name, email, cleanPhone, password, userType);
       showSuccess(t('auth.signupSuccess'));
       // Navigate to login screen after successful signup
       setTimeout(() => {
@@ -277,6 +279,7 @@ const CustomerLogin = () => {
         setEmail('');
         setPassword('');
         setPhone('');
+        setUserType('user'); // Reset to default
       }, 1500);
     } catch (error: any) {
       const errorMessage =
@@ -421,6 +424,58 @@ const CustomerLogin = () => {
                   }
                 />
 
+                {isSignupMode && (
+                  <View style={styles.toggleContainer}>
+                    <CustomText
+                      variant="h6"
+                      fontFamily={Fonts.Medium}
+                      style={styles.toggleTitle}>
+                      Account Type
+                    </CustomText>
+                    <View style={styles.toggleRow}>
+                      <TouchableOpacity
+                        onPress={() => setUserType('user')}
+                        style={[
+                          styles.toggleOption,
+                          userType === 'user' && styles.toggleOptionActive,
+                        ]}
+                        activeOpacity={0.7}>
+                        <CustomText
+                          variant="h6"
+                          fontFamily={userType === 'user' ? Fonts.SemiBold : Fonts.Medium}
+                          style={userType === 'user' 
+                            ? [styles.toggleLabel, styles.toggleLabelActive]
+                            : styles.toggleLabel}>
+                          Customer
+                        </CustomText>
+                      </TouchableOpacity>
+                      <Switch
+                        value={userType === 'dealer'}
+                        onValueChange={(value) => setUserType(value ? 'dealer' : 'user')}
+                        trackColor={{ false: Colors.border, true: Colors.secondary }}
+                        thumbColor="#fff"
+                        ios_backgroundColor={Colors.border}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setUserType('dealer')}
+                        style={[
+                          styles.toggleOption,
+                          userType === 'dealer' && styles.toggleOptionActive,
+                        ]}
+                        activeOpacity={0.7}>
+                        <CustomText
+                          variant="h6"
+                          fontFamily={userType === 'dealer' ? Fonts.SemiBold : Fonts.Medium}
+                          style={userType === 'dealer' 
+                            ? [styles.toggleLabel, styles.toggleLabelActive]
+                            : styles.toggleLabel}>
+                          Dealer
+                        </CustomText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
                 {!isSignupMode && (
                   <TouchableOpacity
                     onPress={() =>
@@ -554,6 +609,43 @@ const styles = StyleSheet.create({
   signupButtonText: {
     color: Colors.secondary,
     textAlign: 'center',
+  },
+  toggleContainer: {
+    width: '100%',
+    marginTop: getResponsiveValue(15, 18, 20),
+    marginBottom: getResponsiveValue(10, 12, 14),
+  },
+  toggleTitle: {
+    color: Colors.text,
+    fontSize: RFValue(getResponsiveValue(14, 15, 16)),
+    marginBottom: getResponsiveValue(10, 12, 14),
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: getResponsiveValue(12, 14, 16),
+    padding: getResponsiveValue(12, 14, 16),
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  toggleOption: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: getResponsiveValue(8, 10, 12),
+    borderRadius: getResponsiveValue(8, 10, 12),
+  },
+  toggleOptionActive: {
+    backgroundColor: Colors.secondary + '15',
+  },
+  toggleLabel: {
+    color: Colors.disabled,
+    fontSize: RFValue(getResponsiveValue(14, 15, 16)),
+  },
+  toggleLabelActive: {
+    color: Colors.secondary,
   },
 });
 

@@ -49,7 +49,10 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
  * Signup a new user
  */
 export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
-  const { name, email, phone, password } = data;
+  const { name, email, phone, password, role } = data;
+
+  // Validate role if provided (must be 'user' or 'dealer')
+  const validRole = role && (role === 'user' || role === 'dealer') ? role : 'user';
 
   // Check if user already exists with email or phone
   const existingUser = await SignUp.findOne({
@@ -65,18 +68,18 @@ export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
     }
   }
 
-  // Create new user
+  // Create new user with the specified role (defaults to 'user' if not provided)
   const signUpUser = new SignUp({
     name: name.trim(),
     email: email.toLowerCase(),
     phone,
     password,
-    role: ['user'],
+    role: [validRole], // Set role as array with single value
   });
 
   await signUpUser.save();
 
-  logger.info(`New user signed up: ${signUpUser.email}`);
+  logger.info(`New user signed up: ${signUpUser.email} with role: ${validRole}`);
 
   return ({
     Response: userToIUser(signUpUser),

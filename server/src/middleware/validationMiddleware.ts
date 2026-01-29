@@ -26,7 +26,7 @@ export const validateSignup = (
   next: NextFunction,
 ): void => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, role } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return next(new ValidationError('Name is required'));
@@ -59,6 +59,16 @@ export const validateSignup = (
 
     if (password.length < 8) {
       return next(new ValidationError('Password must be at least 6 characters'));
+    }
+
+    // Validate role if provided
+    if (role !== undefined) {
+      if (typeof role !== 'string') {
+        return next(new ValidationError('Role must be a string'));
+      }
+      if (role !== 'user' && role !== 'dealer') {
+        return next(new ValidationError('Role must be either "user" or "dealer"'));
+      }
     }
 
     // Normalize phone number

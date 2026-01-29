@@ -19,6 +19,7 @@ export interface ISignupRequest {
   email: string;
   phone: string;
   password: string;
+  role?: 'user' | 'dealer'; // Optional, defaults to 'user'
 }
 
 export interface ILoginRequest {
