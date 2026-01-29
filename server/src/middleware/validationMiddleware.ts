@@ -162,6 +162,43 @@ export const validateCreateVehicle = (
       }
     }
 
+    // Validate documents if provided
+    if (req.body.documents !== undefined) {
+      if (typeof req.body.documents !== 'object' || Array.isArray(req.body.documents) || req.body.documents === null) {
+        return next(new ValidationError('Documents must be an object'));
+      }
+
+      const { rc, dl, insurance, pollution } = req.body.documents;
+
+      // Validate RC document
+      if (rc !== undefined) {
+        if (typeof rc !== 'string' || !rc.trim()) {
+          return next(new ValidationError('RC document must be a valid URL string'));
+        }
+      }
+
+      // Validate DL (driving license) document
+      if (dl !== undefined) {
+        if (typeof dl !== 'string' || !dl.trim()) {
+          return next(new ValidationError('Driving license document must be a valid URL string'));
+        }
+      }
+
+      // Validate insurance document
+      if (insurance !== undefined) {
+        if (typeof insurance !== 'string' || !insurance.trim()) {
+          return next(new ValidationError('Insurance document must be a valid URL string'));
+        }
+      }
+
+      // Validate pollution document
+      if (pollution !== undefined) {
+        if (typeof pollution !== 'string' || !pollution.trim()) {
+          return next(new ValidationError('Pollution document must be a valid URL string'));
+        }
+      }
+    }
+
     // Normalize number plate to uppercase
     req.body.numberPlate = numberPlate.trim().toUpperCase();
 

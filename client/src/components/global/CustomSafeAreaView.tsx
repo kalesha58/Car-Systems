@@ -1,5 +1,6 @@
 import {FC, ReactNode} from 'react';
 import {SafeAreaView, StyleSheet, View, ViewStyle} from 'react-native';
+import { useTheme } from '@hooks/useTheme';
 
 interface CustomSafeAreaViewProps {
   children: ReactNode;
@@ -7,9 +8,11 @@ interface CustomSafeAreaViewProps {
 }
 
 const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
+  const { colors } = useTheme();
+  
   return (
-    <SafeAreaView style={[styles.container, style]}>
-      <View style={[styles.container, style]}>{children}</View>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }, style]}>
+      <View style={[styles.container, { backgroundColor: colors.background }, style]}>{children}</View>
     </SafeAreaView>
   );
 };
@@ -17,7 +20,6 @@ const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
 });
 export default CustomSafeAreaView;

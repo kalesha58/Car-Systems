@@ -18,7 +18,7 @@ import {
 } from 'react-native-gesture-handler';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import ProductSlider from '@components/login/ProductSlider';
-import { Colors, Fonts, lightColors } from '@utils/Constants';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { resetAndNavigate, replace } from '@utils/NavigationUtils';
@@ -35,8 +35,10 @@ import { useToast } from '@hooks/useToast';
 import { useAuthStore } from '@state/authStore';
 import ThemedModal from '@components/ui/ThemedModal';
 import { navigate } from '@utils/NavigationUtils';
+import { useThemeStore } from '@state/themeStore';
+import { useTheme } from '@hooks/useTheme';
 
-const bottomColors = [...lightColors].reverse();
+// bottomColors will be set dynamically based on theme
 
 // Define responsive helper at module level (before component)
 const screenWidth = Dimensions.get('window').width;
@@ -66,6 +68,13 @@ const CustomerLogin = () => {
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const { t } = useTranslation();
   const { showSuccess } = useToast();
+  const { toggleTheme } = useThemeStore();
+  const { isDark, colors } = useTheme();
+
+  // Dynamic gradient colors based on theme
+  const bottomColors = isDark 
+    ? ['rgba(18, 18, 18, 1)', 'rgba(18, 18, 18, 0.9)', 'rgba(18, 18, 18, 0.7)', 'rgba(18, 18, 18, 0.6)', 'rgba(18, 18, 18, 0.5)', 'rgba(18, 18, 18, 0.4)', 'rgba(18, 18, 18, 0.003)']
+    : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0.003)'];
 
   const checkUserRole = (role: string | string[] | undefined): string | null => {
     if (!role) {
@@ -293,8 +302,8 @@ const CustomerLogin = () => {
   };
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <View style={styles.container}>
+    <GestureHandlerRootView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <CustomSafeAreaView>
           <ThemedModal
             visible={errorModalVisible}
@@ -316,19 +325,19 @@ const CustomerLogin = () => {
 
               <LinearGradient colors={bottomColors} style={styles.gradient} />
 
-              <View style={styles.content}>
+              <View style={[styles.content, { backgroundColor: colors.cardBackground }]}>
                 <Image
                   source={require('@assets/images/logo.jpeg')}
                   style={styles.logo}
                 />
 
-                <CustomText variant="h2" fontFamily={Fonts.Bold}>
+                <CustomText variant="h2" fontFamily={Fonts.Bold} style={{ color: colors.text }}>
                   Car Connect App
                 </CustomText>
                 <CustomText
                   variant="h5"
                   fontFamily={Fonts.SemiBold}
-                  style={styles.text}>
+                  style={[styles.text, { color: colors.textSecondary }]}>
                   {t('auth.loginOrSignUp')}
                 </CustomText>
 
@@ -342,7 +351,7 @@ const CustomerLogin = () => {
                     left={
                       <Ionicons
                         name="person"
-                        color={Colors.secondary}
+                        color={colors.secondary}
                         style={{ marginLeft: 10 }}
                         size={RFValue(18)}
                       />
@@ -357,14 +366,14 @@ const CustomerLogin = () => {
                   value={email}
                   placeholder={t('auth.email')}
                   inputMode="email"
-                  left={
-                    <Ionicons
-                      name="mail"
-                      color={Colors.secondary}
-                      style={{ marginLeft: 10 }}
-                      size={RFValue(18)}
-                    />
-                  }
+                    left={
+                      <Ionicons
+                        name="mail"
+                        color={colors.secondary}
+                        style={{ marginLeft: 10 }}
+                        size={RFValue(18)}
+                      />
+                    }
                   right={false}
                 />
 
@@ -380,7 +389,7 @@ const CustomerLogin = () => {
                     left={
                       <Ionicons
                         name="call"
-                        color={Colors.secondary}
+                        color={colors.secondary}
                         style={{ marginLeft: 10 }}
                         size={RFValue(18)}
                       />
@@ -398,7 +407,7 @@ const CustomerLogin = () => {
                   left={
                     <Ionicons
                       name="key-sharp"
-                      color={Colors.secondary}
+                      color={colors.secondary}
                       style={{ marginLeft: 10 }}
                       size={RFValue(18)}
                     />
@@ -417,7 +426,7 @@ const CustomerLogin = () => {
                     >
                       <Ionicons
                         name={showPassword ? "eye-off" : "eye"}
-                        color={Colors.secondary}
+                        color={colors.secondary}
                         size={RFValue(getResponsiveValue(22, 24, 26))}
                       />
                     </TouchableOpacity>
@@ -429,46 +438,46 @@ const CustomerLogin = () => {
                     <CustomText
                       variant="h6"
                       fontFamily={Fonts.Medium}
-                      style={styles.toggleTitle}>
+                      style={[styles.toggleTitle, { color: colors.text }]}>
                       Account Type
                     </CustomText>
-                    <View style={styles.toggleRow}>
+                    <View style={[styles.toggleRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
                       <TouchableOpacity
                         onPress={() => setUserType('user')}
                         style={[
                           styles.toggleOption,
-                          userType === 'user' && styles.toggleOptionActive,
+                          userType === 'user' && [styles.toggleOptionActive, { backgroundColor: colors.secondary + '15' }],
                         ]}
                         activeOpacity={0.7}>
                         <CustomText
                           variant="h6"
                           fontFamily={userType === 'user' ? Fonts.SemiBold : Fonts.Medium}
                           style={userType === 'user' 
-                            ? [styles.toggleLabel, styles.toggleLabelActive]
-                            : styles.toggleLabel}>
+                            ? [styles.toggleLabel, { color: colors.secondary }]
+                            : [styles.toggleLabel, { color: colors.disabled }]}>
                           Customer
                         </CustomText>
                       </TouchableOpacity>
                       <Switch
                         value={userType === 'dealer'}
                         onValueChange={(value) => setUserType(value ? 'dealer' : 'user')}
-                        trackColor={{ false: Colors.border, true: Colors.secondary }}
-                        thumbColor="#fff"
-                        ios_backgroundColor={Colors.border}
+                        trackColor={{ false: colors.border, true: colors.secondary }}
+                        thumbColor={colors.white}
+                        ios_backgroundColor={colors.border}
                       />
                       <TouchableOpacity
                         onPress={() => setUserType('dealer')}
                         style={[
                           styles.toggleOption,
-                          userType === 'dealer' && styles.toggleOptionActive,
+                          userType === 'dealer' && [styles.toggleOptionActive, { backgroundColor: colors.secondary + '15' }],
                         ]}
                         activeOpacity={0.7}>
                         <CustomText
                           variant="h6"
                           fontFamily={userType === 'dealer' ? Fonts.SemiBold : Fonts.Medium}
                           style={userType === 'dealer' 
-                            ? [styles.toggleLabel, styles.toggleLabelActive]
-                            : styles.toggleLabel}>
+                            ? [styles.toggleLabel, { color: colors.secondary }]
+                            : [styles.toggleLabel, { color: colors.disabled }]}>
                           Dealer
                         </CustomText>
                       </TouchableOpacity>
@@ -488,7 +497,7 @@ const CustomerLogin = () => {
                     <CustomText
                       variant="h6"
                       fontFamily={Fonts.Medium}
-                      style={{ color: Colors.secondary }}>
+                      style={{ color: colors.secondary }}>
                       Forgot password?
                     </CustomText>
                   </TouchableOpacity>
@@ -507,7 +516,7 @@ const CustomerLogin = () => {
                   <CustomText
                     variant="h6"
                     fontFamily={Fonts.Medium}
-                    style={styles.signupButtonText}>
+                    style={[styles.signupButtonText, { color: colors.secondary }]}>
                     {isSignupMode ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
                   </CustomText>
                 </TouchableOpacity>
@@ -516,18 +525,23 @@ const CustomerLogin = () => {
           </PanGestureHandler>
         </CustomSafeAreaView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
           <SafeAreaView />
-          <CustomText fontSize={RFValue(6)}>
+          <CustomText fontSize={RFValue(6)} style={{ color: colors.textSecondary }}>
             By Continuing, you agree to our Terms of Service & Privacy Policy
           </CustomText>
           <SafeAreaView />
         </View>
 
         <TouchableOpacity
-          style={styles.absoluteSwitch}
-          onPress={() => resetAndNavigate('DeliveryLogin')}>
-          <Icon name='bike-fast' color="#000" size={RFValue(getResponsiveValue(18, 20, 22))} />
+          style={[styles.absoluteSwitch, { backgroundColor: colors.cardBackground }]}
+          onPress={toggleTheme}
+          activeOpacity={0.7}>
+          <Ionicons 
+            name={isDark ? 'sunny' : 'moon'} 
+            color={colors.text} 
+            size={RFValue(getResponsiveValue(20, 22, 24))} 
+          />
         </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
@@ -541,7 +555,6 @@ const styles = StyleSheet.create({
   absoluteSwitch: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? getResponsiveValue(50, 60, 70) : getResponsiveValue(30, 40, 50),
-    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity: 0.5,
@@ -576,7 +589,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 0.8,
-    borderColor: Colors.border,
     paddingBottom: getResponsiveValue(10, 12, 14),
     zIndex: 22,
     position: 'absolute',
@@ -584,7 +596,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: getResponsiveValue(10, 12, 14),
-    backgroundColor: '#f8f9fc',
     width: '100%',
   },
   gradient: {
@@ -597,7 +608,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: isDesktop ? 500 : isTablet ? 450 : '100%',
     alignSelf: 'center',
-    backgroundColor: 'white',
     paddingHorizontal: isDesktop ? 40 : isTablet ? 32 : 20,
     paddingTop: 0,
     paddingBottom: isDesktop ? 28 : isTablet ? 24 : 20,
@@ -607,7 +617,6 @@ const styles = StyleSheet.create({
     paddingVertical: getResponsiveValue(10, 12, 14),
   },
   signupButtonText: {
-    color: Colors.secondary,
     textAlign: 'center',
   },
   toggleContainer: {
@@ -616,7 +625,6 @@ const styles = StyleSheet.create({
     marginBottom: getResponsiveValue(10, 12, 14),
   },
   toggleTitle: {
-    color: Colors.text,
     fontSize: RFValue(getResponsiveValue(14, 15, 16)),
     marginBottom: getResponsiveValue(10, 12, 14),
   },
@@ -624,11 +632,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.backgroundSecondary,
     borderRadius: getResponsiveValue(12, 14, 16),
     padding: getResponsiveValue(12, 14, 16),
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   toggleOption: {
     flex: 1,
@@ -638,14 +644,13 @@ const styles = StyleSheet.create({
     borderRadius: getResponsiveValue(8, 10, 12),
   },
   toggleOptionActive: {
-    backgroundColor: Colors.secondary + '15',
+    // Background color will be set dynamically
   },
   toggleLabel: {
-    color: Colors.disabled,
     fontSize: RFValue(getResponsiveValue(14, 15, 16)),
   },
   toggleLabelActive: {
-    color: Colors.secondary,
+    // Color will be set dynamically
   },
 });
 

@@ -3,8 +3,10 @@ import React, { FC, useMemo } from 'react'
 import { imageData } from '@utils/dummyData'
 import AutoScroll from '@homielab/react-native-auto-scroll'
 import { screenWidth } from '@utils/Scaling'
+import { useTheme } from '@hooks/useTheme'
 
 const ProductSlider = () => {
+  const { colors } = useTheme();
 
   const rows= useMemo(()=>{
     const result=[]
@@ -20,7 +22,7 @@ const ProductSlider = () => {
             <View style={styles.gridContainer}>
                     {rows?.map((row:any,rowIndex:number)=>{
                         return(
-                            <MemoizedRow key={rowIndex} row={row} rowIndex={rowIndex} />
+                            <MemoizedRow key={rowIndex} row={row} rowIndex={rowIndex} backgroundColor={colors.backgroundSecondary} />
                         )
                     })}
             </View>
@@ -29,13 +31,13 @@ const ProductSlider = () => {
   )
 }
 
-const Row:FC<{row:typeof imageData; rowIndex:number}>=({row,rowIndex})=>{
+const Row:FC<{row:typeof imageData; rowIndex:number; backgroundColor: string}>=({row,rowIndex, backgroundColor})=>{
     return(
         <View style={styles.row}>
             {row?.map((image,imageIndex)=>{
                 const horizontalShift = rowIndex % 2===0 ? -18:18
                 return(
-                    <View key={imageIndex} style={[styles.itemContainer,{transform:[{translateX:horizontalShift}]}]}>
+                    <View key={imageIndex} style={[styles.itemContainer, { backgroundColor }, {transform:[{translateX:horizontalShift}]}]}>
                         <Image source={image} style={styles.image}/>
                     </View>
                 )
@@ -70,7 +72,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         width: screenWidth * 0.26,
         height: screenWidth * 0.26,
-        backgroundColor: '#f4f4f4',
         justifyContent: 'center',
         borderRadius: 25,
         alignItems: 'center'

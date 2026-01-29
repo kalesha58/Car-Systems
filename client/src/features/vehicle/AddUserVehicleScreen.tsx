@@ -51,6 +51,8 @@ const AddUserVehicleScreen: React.FC = () => {
   const [year, setYear] = useState('');
   const [color, setColor] = useState('');
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const [rcDocumentUri, setRcDocumentUri] = useState<string | null>(null);
+  const [bikeLicenceUri, setBikeLicenceUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
@@ -136,6 +138,48 @@ const AddUserVehicleScreen: React.FC = () => {
     );
   };
 
+  const handleRcDocumentPicker = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: 1,
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel || response.errorCode) {
+          return;
+        }
+
+        const selectedImages = response.assets || [];
+        if (selectedImages.length > 0 && selectedImages[0].uri) {
+          setRcDocumentUri(selectedImages[0].uri);
+        }
+      },
+    );
+  };
+
+  const handleBikeLicencePicker = () => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        quality: 0.8,
+        includeBase64: false,
+        selectionLimit: 1,
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel || response.errorCode) {
+          return;
+        }
+
+        const selectedImages = response.assets || [];
+        if (selectedImages.length > 0 && selectedImages[0].uri) {
+          setBikeLicenceUri(selectedImages[0].uri);
+        }
+      },
+    );
+  };
+
   const removeImage = (index: number) => {
     setImageUris(prev => prev.filter((_, i) => i !== index));
   };
@@ -170,6 +214,25 @@ const AddUserVehicleScreen: React.FC = () => {
       throw error instanceof Error ? error : new Error(error?.message || 'Failed to upload images. Please try again.');
     } finally {
       setIsUploadingImages(false);
+    }
+  };
+
+  const uploadDocument = async (uri: string | null): Promise<string | undefined> => {
+    if (!uri) {
+      return undefined;
+    }
+
+    if (uri.startsWith('http://') || uri.startsWith('https://')) {
+      return uri;
+    }
+
+    try {
+      const url = await uploadImage(uri);
+      return url;
+    } catch (uploadError: any) {
+      console.error('Failed to upload document:', uploadError);
+      const errorMessage = uploadError?.message || 'Failed to upload document';
+      throw new Error(`${errorMessage}. Please check the document and try again.`);
     }
   };
 
@@ -219,6 +282,10 @@ const AddUserVehicleScreen: React.FC = () => {
         return;
       }
 
+      // Upload documents if provided
+      const rcDocumentUrl = await uploadDocument(rcDocumentUri);
+      const bikeLicenceUrl = await uploadDocument(bikeLicenceUri);
+
       const createData: any = { // Changed to any to avoid type import issues
         brand: brand.trim(),
         model: model.trim(),
@@ -226,6 +293,10 @@ const AddUserVehicleScreen: React.FC = () => {
         images: uploadedImageUrls,
         year: year ? parseInt(year) : undefined,
         color: color.trim() || undefined,
+        documents: {
+          rc: rcDocumentUrl || undefined,
+          dl: bikeLicenceUrl || undefined,
+        },
       };
 
       await createUserVehicle(createData);
@@ -484,15 +555,29 @@ const AddUserVehicleScreen: React.FC = () => {
             Brand <CustomText style={styles.required}>*</CustomText>
           </CustomText>
           <TouchableOpacity
-            style={styles.textInputContainer}
-            onPress={() => setShowBrandDropdown(true)}
+            style={[
+              styles.textInputContainer,
+              (isLoadingBrands || brandOptions.length === 0) && { opacity: 0.6 }
+            ]}
+            onPress={() => {
+              if (isLoadingBrands) {
+                showError('Loading brands, please wait...');
+                return;
+              }
+              if (brandOptions.length === 0) {
+                showError('No brands available. Please try again.');
+                return;
+              }
+              setShowBrandDropdown(true);
+            }}
+            disabled={isLoadingBrands || brandOptions.length === 0}
           >
             <View style={styles.dropdownButton}>
               <CustomText style={{
                 ...styles.textInput,
                 color: brand ? colors.text : colors.disabled
               }}>
-                {brand || 'Select Brand'}
+                {isLoadingBrands ? 'Loading brands...' : (brand || 'Select Brand')}
               </CustomText>
               <Icon name="chevron-down" size={RFValue(14)} color={colors.text} />
             </View>
@@ -510,15 +595,21 @@ const AddUserVehicleScreen: React.FC = () => {
               (!brand || modelOptions.length === 0) && { opacity: 0.6 }
             ]}
             onPress={() => {
-              if (brand && modelOptions.length > 0) {
-                setShowModelDropdown(true);
-              } else if (!brand) {
-                showError('Please select a brand first');
-              } else {
-                showError('No models available for this brand');
+              if (isLoadingModels) {
+                showError('Loading models, please wait...');
+                return;
               }
+              if (!brand) {
+                showError('Please select a brand first');
+                return;
+              }
+              if (modelOptions.length === 0) {
+                showError('No models available for this brand');
+                return;
+              }
+              setShowModelDropdown(true);
             }}
-            disabled={!brand}
+            disabled={!brand || isLoadingModels || modelOptions.length === 0}
           >
             <View style={styles.dropdownButton}>
               <CustomText style={{
@@ -607,6 +698,64 @@ const AddUserVehicleScreen: React.FC = () => {
             </View>
           )}
         </View>
+
+        {/* RC Document Section */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            RC Document (Optional)
+          </CustomText>
+          <CustomText style={styles.descriptionText}>
+            Upload Registration Certificate document
+          </CustomText>
+          {rcDocumentUri ? (
+            <View style={styles.imagesContainer}>
+              <View style={styles.imageWrapper}>
+                <Image source={{ uri: rcDocumentUri }} style={styles.image} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => setRcDocumentUri(null)}>
+                  <Icon name="close" size={RFValue(12)} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleRcDocumentPicker}>
+              <Icon name="document-text-outline" size={RFValue(16)} color={colors.text} />
+              <CustomText style={styles.buttonText}>
+                Add RC Document
+              </CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Bike Licence Section */}
+        <View style={styles.section}>
+          <CustomText style={styles.label}>
+            Bike Licence (Optional)
+          </CustomText>
+          <CustomText style={styles.descriptionText}>
+            Upload Driving License document
+          </CustomText>
+          {bikeLicenceUri ? (
+            <View style={styles.imagesContainer}>
+              <View style={styles.imageWrapper}>
+                <Image source={{ uri: bikeLicenceUri }} style={styles.image} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => setBikeLicenceUri(null)}>
+                  <Icon name="close" size={RFValue(12)} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleBikeLicencePicker}>
+              <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
+              <CustomText style={styles.buttonText}>
+                Add Bike Licence
+              </CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
       </ScrollView>
 
       {/* Sticky Button Container */}
@@ -626,8 +775,8 @@ const AddUserVehicleScreen: React.FC = () => {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <>
-                <Icon name="add-circle-outline" size={RFValue(16)} color="#fff" />
-                <CustomText style={styles.submitButtonText}>Add Vehicle</CustomText>
+                <Icon name="checkmark-circle-outline" size={RFValue(16)} color="#fff" />
+                <CustomText style={styles.submitButtonText}>Submit Vehicle</CustomText>
               </>
             )}
           </TouchableOpacity>
