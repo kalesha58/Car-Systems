@@ -349,7 +349,6 @@ const DealerDashboard: React.FC = () => {
   const isMechanicWorkshop = businessType === 'Mechanic Workshop';
   const isVehicleWash = businessType === 'Vehicle Wash Station';
   const registrationStatus = businessRegistration?.status || 'none';
-  const showPendingMessage = registrationStatus === 'pending';
   const showRejectedMessage = registrationStatus === 'rejected';
   const isApproved = registrationStatus === 'approved';
 
@@ -441,14 +440,7 @@ const DealerDashboard: React.FC = () => {
               ) : (
                 <>
                   {/* Show registration status messages */}
-                  {showPendingMessage && (
-                    <View style={[styles.statusBanner, { backgroundColor: '#dbeafe', borderColor: '#3b82f6' }]}>
-                      <CustomText style={[styles.statusBannerText, { color: '#1e40af' }]}>
-                        {t('dealer.pendingApproval') || 'Your business registration is pending admin approval. You can view your dashboard, but some features will be limited until approved.'}
-                      </CustomText>
-                    </View>
-                  )}
-
+                  {/* Pending approval banner removed - no need to show it */}
                   {showRejectedMessage && (
                     <View style={[styles.statusBanner, { backgroundColor: '#fee2e2', borderColor: '#ef4444' }]}>
                       <CustomText style={[styles.statusBannerText, { color: '#991b1b' }]}>

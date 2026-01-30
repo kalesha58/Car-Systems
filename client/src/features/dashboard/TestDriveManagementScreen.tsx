@@ -6,7 +6,7 @@ import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Header from '@components/common/Header/Header';
+import CustomHeader from '@components/ui/CustomHeader';
 import Loader from '@components/common/Loader/Loader';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import { getDealerTestDrives, updateTestDriveStatus } from '@service/testDriveService';
@@ -207,7 +207,7 @@ const TestDriveManagementScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Test Drive Management" />
+        <CustomHeader title="Test Drive Management" />
         <Loader />
       </View>
     );
@@ -215,7 +215,7 @@ const TestDriveManagementScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Header title="Test Drive Management" />
+      <CustomHeader title="Test Drive Management" />
       <View style={styles.filterContainer}>
         {['all', 'pending', 'approved', 'rejected', 'completed'].map((status) => (
           <TouchableOpacity

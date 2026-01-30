@@ -66,7 +66,28 @@ const BusinessRegistrationScreen: React.FC = () => {
   const { setUser } = useAuthStore();
 
   const { isEdit, registrationData } = route.params || {};
-  // ... (rest of the component state)
+
+  // Determine if fields are editable based on registration status
+  const canUpdateFields = useMemo(() => {
+    if (!isEdit || !registrationData) return true; // New registration - all fields editable
+    // Can only update if status is pending or rejected (not approved)
+    return registrationData.status === 'pending' || registrationData.status === 'rejected';
+  }, [isEdit, registrationData?.status]);
+
+  // List of editable fields for reference
+  const editableFields = useMemo(() => {
+    if (!isEdit || !canUpdateFields) return [];
+    return [
+      'businessName',
+      'type',
+      'address',
+      'phone',
+      'gst',
+      'payout',
+      'shopPhotos',
+      'documents',
+    ];
+  }, [isEdit, canUpdateFields]);
 
   // ... (inside handleSubmit)
 
@@ -949,12 +970,6 @@ const BusinessRegistrationScreen: React.FC = () => {
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
-    labelRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: screenHeight * 0.008,
-    },
     locationButton: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1066,6 +1081,62 @@ const BusinessRegistrationScreen: React.FC = () => {
       marginTop: screenHeight * 0.006,
       marginLeft: screenWidth * 0.01,
     },
+    noticeBanner: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: 8,
+      padding: screenWidth * 0.03,
+      marginBottom: screenHeight * 0.02,
+      borderWidth: 1,
+      borderColor: canUpdateFields ? (Colors.secondary + '40') : (colors.error + '40'),
+      borderLeftWidth: 3,
+      borderLeftColor: canUpdateFields ? Colors.secondary : colors.error,
+    },
+    noticeTitle: {
+      fontSize: RFValue(9),
+      fontFamily: Fonts.SemiBold,
+      color: colors.text,
+      marginBottom: screenHeight * 0.006,
+    },
+    noticeText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.textSecondary,
+      lineHeight: RFValue(12),
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: screenWidth * 0.015,
+      marginBottom: screenHeight * 0.008,
+    },
+    editableBadge: {
+      backgroundColor: Colors.secondary + '20',
+      paddingHorizontal: screenWidth * 0.02,
+      paddingVertical: screenHeight * 0.003,
+      borderRadius: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    editableBadgeText: {
+      fontSize: RFValue(7),
+      fontFamily: Fonts.Medium,
+      color: Colors.secondary,
+    },
+    nonEditableBadge: {
+      backgroundColor: colors.disabled + '30',
+      paddingHorizontal: screenWidth * 0.02,
+      paddingVertical: screenHeight * 0.003,
+      borderRadius: 4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    nonEditableBadgeText: {
+      fontSize: RFValue(7),
+      fontFamily: Fonts.Medium,
+      color: colors.textSecondary,
+    },
   });
 
   return (
@@ -1075,10 +1146,58 @@ const BusinessRegistrationScreen: React.FC = () => {
         style={styles.container}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: screenHeight * 0.12 }]}
         showsVerticalScrollIndicator={false}>
+        {/* Update Notice Banner */}
+        {isEdit && (
+          <View style={styles.noticeBanner}>
+            <CustomText style={styles.noticeTitle}>
+              {canUpdateFields
+                ? t('dealer.updateNoticeTitle') || 'Fields You Can Update'
+                : t('dealer.cannotUpdateNoticeTitle') || 'Registration Cannot Be Updated'}
+            </CustomText>
+            <CustomText style={styles.noticeText}>
+              {canUpdateFields
+                ? t('dealer.updateNoticeText') ||
+                  'You can update the following fields: Business Name, Type, Address, Phone, GST, Payout Details, Shop Photos, and Documents. Changes will require admin approval.'
+                : t('dealer.cannotUpdateNoticeText') ||
+                  'Your registration has been approved. You cannot update the registration details. Please contact support if you need to make changes.'}
+            </CustomText>
+          </View>
+        )}
+
         <View style={styles.section}>
-          <CustomText style={styles.label}>
-            {t('dealer.businessName') || 'Business Name'} *
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>
+              {t('dealer.businessName') || 'Business Name'} *
+            </CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('businessName')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('businessName') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('businessName')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('businessName')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('businessName')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <View style={[styles.textInputContainer, fieldErrors.businessName && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
@@ -1096,6 +1215,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                 const error = validateField('businessName', businessName);
                 setFieldErrors(prev => ({ ...prev, businessName: error }));
               }}
+              editable={!isEdit || (canUpdateFields && editableFields.includes('businessName'))}
             />
           </View>
           {fieldErrors.businessName && (
@@ -1104,15 +1224,51 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>
-            {t('dealer.businessType') || 'Business Type'} *
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>
+              {t('dealer.businessType') || 'Business Type'} *
+            </CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('type')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('type') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('type')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('type')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('type')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <TouchableOpacity
             style={[
               styles.dropdownButton,
               fieldErrors.type && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 },
+              !isEdit || (canUpdateFields && editableFields.includes('type')) ? {} : { opacity: 0.6 },
             ]}
-            onPress={() => setDropdownModalVisible(true)}>
+            onPress={() => {
+              if (!isEdit || (canUpdateFields && editableFields.includes('type'))) {
+                setDropdownModalVisible(true);
+              }
+            }}
+            disabled={isEdit && (!canUpdateFields || !editableFields.includes('type'))}>
             <CustomText style={styles.dropdownButtonText}>{getSelectedTypeLabel()}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
@@ -1123,7 +1279,39 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <CustomText style={styles.label}>{t('dealer.address') || 'Address'} *</CustomText>
+            <View style={{ flex: 1 }}>
+              <View style={[styles.labelRow, { marginBottom: 0 }]}>
+                <CustomText style={styles.label}>{t('dealer.address') || 'Address'} *</CustomText>
+                {isEdit && (
+                  <View
+                    style={
+                      canUpdateFields && editableFields.includes('address')
+                        ? styles.editableBadge
+                        : styles.nonEditableBadge
+                    }>
+                    <Icon
+                      name={canUpdateFields && editableFields.includes('address') ? 'create-outline' : 'lock-closed'}
+                      size={RFValue(8)}
+                      color={
+                        canUpdateFields && editableFields.includes('address')
+                          ? Colors.secondary
+                          : colors.textSecondary
+                      }
+                    />
+                    <CustomText
+                      style={
+                        canUpdateFields && editableFields.includes('address')
+                          ? styles.editableBadgeText
+                          : styles.nonEditableBadgeText
+                      }>
+                      {canUpdateFields && editableFields.includes('address')
+                        ? t('dealer.editable') || 'Editable'
+                        : t('dealer.locked') || 'Locked'}
+                    </CustomText>
+                  </View>
+                )}
+              </View>
+            </View>
             {!location ? (
               <TouchableOpacity
                 style={styles.locationButton}
@@ -1158,12 +1346,43 @@ const BusinessRegistrationScreen: React.FC = () => {
               value={address}
               onChangeText={setAddress}
               multiline
+              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
             />
           </View>
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('phone')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('phone') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('phone')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('phone')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('phone')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <View style={[styles.textInputContainer, fieldErrors.phone && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
@@ -1182,6 +1401,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                 setFieldErrors(prev => ({ ...prev, phone: error }));
               }}
               keyboardType="phone-pad"
+              editable={!isEdit || (canUpdateFields && editableFields.includes('phone'))}
             />
           </View>
           {fieldErrors.phone && (
@@ -1190,7 +1410,37 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'} *</CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'} *</CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('gst')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('gst') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('gst')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('gst')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('gst')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <View style={[styles.textInputContainer, fieldErrors.gst && styles.textInputContainerError]}>
             <TextInput
               style={styles.textInput}
@@ -1211,6 +1461,7 @@ const BusinessRegistrationScreen: React.FC = () => {
               }}
               autoCapitalize="characters"
               maxLength={15}
+              editable={!isEdit || (canUpdateFields && editableFields.includes('gst'))}
             />
           </View>
           {fieldErrors.gst && (
@@ -1220,12 +1471,50 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         {/* Payout Section */}
         <View style={styles.section}>
-          <CustomText style={styles.label}>
-            {t('dealer.payoutType') || 'Payout Type'} ({t('dealer.optional') || 'Optional'})
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>
+              {t('dealer.payoutType') || 'Payout Type'} ({t('dealer.optional') || 'Optional'})
+            </CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('payout')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('payout') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('payout')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('payout')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('payout')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => setPayoutTypeModalVisible(true)}>
+            style={[
+              styles.dropdownButton,
+              !isEdit || (canUpdateFields && editableFields.includes('payout')) ? {} : { opacity: 0.6 },
+            ]}
+            onPress={() => {
+              if (!isEdit || (canUpdateFields && editableFields.includes('payout'))) {
+                setPayoutTypeModalVisible(true);
+              }
+            }}
+            disabled={isEdit && (!canUpdateFields || !editableFields.includes('payout'))}>
             <CustomText style={styles.dropdownButtonText}>{getSelectedPayoutTypeLabel()}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
           </TouchableOpacity>
@@ -1234,9 +1523,11 @@ const BusinessRegistrationScreen: React.FC = () => {
         {/* UPI Fields */}
         {payoutType === 'UPI' && (
           <View style={styles.section}>
-            <CustomText style={styles.label}>
-              {t('dealer.upiId') || 'UPI ID'} *
-            </CustomText>
+            <View style={styles.labelRow}>
+              <CustomText style={styles.label}>
+                {t('dealer.upiId') || 'UPI ID'} *
+              </CustomText>
+            </View>
             <View style={[styles.textInputContainer, fieldErrors.upiId && styles.textInputContainerError]}>
               <TextInput
                 style={styles.textInput}
@@ -1256,6 +1547,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                 }}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                editable={!isEdit || (canUpdateFields && editableFields.includes('payout'))}
               />
             </View>
             {fieldErrors.upiId && (
@@ -1268,9 +1560,11 @@ const BusinessRegistrationScreen: React.FC = () => {
         {payoutType === 'BANK' && (
           <>
             <View style={styles.section}>
-              <CustomText style={styles.label}>
-                {t('dealer.accountNumber') || 'Account Number'} *
-              </CustomText>
+              <View style={styles.labelRow}>
+                <CustomText style={styles.label}>
+                  {t('dealer.accountNumber') || 'Account Number'} *
+                </CustomText>
+              </View>
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
@@ -1279,14 +1573,17 @@ const BusinessRegistrationScreen: React.FC = () => {
                   value={accountNumber}
                   onChangeText={setAccountNumber}
                   keyboardType="numeric"
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('payout'))}
                 />
               </View>
             </View>
 
             <View style={styles.section}>
-              <CustomText style={styles.label}>
-                {t('dealer.ifsc') || 'IFSC Code'} *
-              </CustomText>
+              <View style={styles.labelRow}>
+                <CustomText style={styles.label}>
+                  {t('dealer.ifsc') || 'IFSC Code'} *
+                </CustomText>
+              </View>
               <View style={[styles.textInputContainer, fieldErrors.ifsc && styles.textInputContainerError]}>
                 <TextInput
                   style={styles.textInput}
@@ -1307,6 +1604,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                   }}
                   autoCapitalize="characters"
                   maxLength={11}
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('payout'))}
                 />
               </View>
               {fieldErrors.ifsc && (
@@ -1315,9 +1613,11 @@ const BusinessRegistrationScreen: React.FC = () => {
             </View>
 
             <View style={styles.section}>
-              <CustomText style={styles.label}>
-                {t('dealer.accountName') || 'Account Holder Name'} *
-              </CustomText>
+              <View style={styles.labelRow}>
+                <CustomText style={styles.label}>
+                  {t('dealer.accountName') || 'Account Holder Name'} *
+                </CustomText>
+              </View>
               <View style={[styles.textInputContainer, fieldErrors.accountName && styles.textInputContainerError]}>
                 <TextInput
                   style={styles.textInput}
@@ -1335,6 +1635,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                     const error = validateField('accountName', accountName);
                     setFieldErrors(prev => ({ ...prev, accountName: error }));
                   }}
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('payout'))}
                 />
               </View>
               {fieldErrors.accountName && (
@@ -1346,15 +1647,51 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         {/* Shop Photos */}
         <View style={styles.section}>
-          <CustomText style={styles.label}>
-            {t('dealer.shopPhotos') || 'Shop Photos'} *
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>
+              {t('dealer.shopPhotos') || 'Shop Photos'} *
+            </CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('shopPhotos')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('shopPhotos') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('shopPhotos')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('shopPhotos')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('shopPhotos')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
           <TouchableOpacity
-            style={[styles.button, fieldErrors.shopPhotos && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
+            style={[
+              styles.button,
+              fieldErrors.shopPhotos && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 },
+              !isEdit || (canUpdateFields && editableFields.includes('shopPhotos')) ? {} : { opacity: 0.6 },
+            ]}
             onPress={() => {
-              pickShopPhotos();
+              if (!isEdit || (canUpdateFields && editableFields.includes('shopPhotos'))) {
+                pickShopPhotos();
+              }
             }}
-            disabled={isSubmitting}>
+            disabled={isSubmitting || (isEdit && (!canUpdateFields || !editableFields.includes('shopPhotos')))}>
             <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>
               {(t('dealer.addImages') || 'Add Images') + ` (${shopPhotoUris.length}/${MAX_SHOP_PHOTOS})`}
@@ -1387,16 +1724,54 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         {/* Documents */}
         <View style={styles.section}>
-          <CustomText style={styles.label}>
-            {t('dealer.documents') || 'Documents'} *
-          </CustomText>
+          <View style={styles.labelRow}>
+            <CustomText style={styles.label}>
+              {t('dealer.documents') || 'Documents'} *
+            </CustomText>
+            {isEdit && (
+              <View
+                style={
+                  canUpdateFields && editableFields.includes('documents')
+                    ? styles.editableBadge
+                    : styles.nonEditableBadge
+                }>
+                <Icon
+                  name={canUpdateFields && editableFields.includes('documents') ? 'create-outline' : 'lock-closed'}
+                  size={RFValue(8)}
+                  color={
+                    canUpdateFields && editableFields.includes('documents')
+                      ? Colors.secondary
+                      : colors.textSecondary
+                  }
+                />
+                <CustomText
+                  style={
+                    canUpdateFields && editableFields.includes('documents')
+                      ? styles.editableBadgeText
+                      : styles.nonEditableBadgeText
+                  }>
+                  {canUpdateFields && editableFields.includes('documents')
+                    ? t('dealer.editable') || 'Editable'
+                    : t('dealer.locked') || 'Locked'}
+                </CustomText>
+              </View>
+            )}
+          </View>
 
           <View style={{ gap: screenHeight * 0.012 }}>
             {/* Document ID */}
             <TouchableOpacity
-              style={[styles.docRow, fieldErrors.idDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
-              onPress={() => pickSingleDoc('ID')}
-              disabled={isSubmitting}>
+              style={[
+                styles.docRow,
+                fieldErrors.idDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 },
+                !isEdit || (canUpdateFields && editableFields.includes('documents')) ? {} : { opacity: 0.6 },
+              ]}
+              onPress={() => {
+                if (!isEdit || (canUpdateFields && editableFields.includes('documents'))) {
+                  pickSingleDoc('ID');
+                }
+              }}
+              disabled={isSubmitting || (isEdit && (!canUpdateFields || !editableFields.includes('documents')))}>
               <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
               <View style={styles.docLeft}>
                 <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'}</CustomText>
@@ -1431,9 +1806,17 @@ const BusinessRegistrationScreen: React.FC = () => {
 
             {/* PAN Card */}
             <TouchableOpacity
-              style={[styles.docRow, fieldErrors.panDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 }]}
-              onPress={() => pickSingleDoc('PAN')}
-              disabled={isSubmitting}>
+              style={[
+                styles.docRow,
+                fieldErrors.panDoc && { borderColor: colors.error || '#ef4444', borderWidth: 1.5 },
+                !isEdit || (canUpdateFields && editableFields.includes('documents')) ? {} : { opacity: 0.6 },
+              ]}
+              onPress={() => {
+                if (!isEdit || (canUpdateFields && editableFields.includes('documents'))) {
+                  pickSingleDoc('PAN');
+                }
+              }}
+              disabled={isSubmitting || (isEdit && (!canUpdateFields || !editableFields.includes('documents')))}>
               <Icon name="id-card-outline" size={RFValue(16)} color={colors.text} />
               <View style={styles.docLeft}>
                 <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'}</CustomText>

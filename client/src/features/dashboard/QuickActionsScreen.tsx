@@ -24,18 +24,24 @@ import EmptyState from '@components/common/EmptyState/EmptyState';
 import { ITestDrive } from '../../types/testDrive/ITestDrive';
 import { IPreBooking } from '../../types/preBooking/IPreBooking';
 import { useToast } from '@hooks/useToast';
+import { useBusinessRegistration } from '@hooks/useBusinessRegistration';
 
 const QuickActionsScreen: React.FC = () => {
   const navigation = useNavigation();
   const { colors: theme } = useTheme();
   const { t } = useTranslation();
   const { showError } = useToast();
+  const { businessRegistration } = useBusinessRegistration();
   const [activeTab, setActiveTab] = useState<'test-drive' | 'upcoming-bookings' | 'pre-bookings'>('test-drive');
   const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
   const [preBookings, setPreBookings] = useState<IPreBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const pagerRef = useRef<ScrollView>(null);
+  const initializedStatusRef = useRef<string | null>(null);
+
+  // Prevent any banners from showing on this screen
+  // No banner rendering logic - banners are not needed on Drive section
 
   const tabOrder = useMemo(() => ['test-drive', 'upcoming-bookings', 'pre-bookings'] as const, []);
   const activeIndex = useMemo(() => tabOrder.indexOf(activeTab), [activeTab, tabOrder]);
@@ -56,17 +62,53 @@ const QuickActionsScreen: React.FC = () => {
         setPreBookings(preBookingsData.Response.preBookings || []);
       }
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to load data');
+      // Suppress errors related to pending registration approval - no need to show banner/toast
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      const isPendingApprovalError = 
+        errorMessage.toLowerCase().includes('pending') ||
+        errorMessage.toLowerCase().includes('wait for approval') ||
+        errorMessage.toLowerCase().includes('admin approval') ||
+        error?.response?.status === 403;
+      
+      // Only show error if it's not related to pending approval
+      if (!isPendingApprovalError) {
+        showError(errorMessage || 'Failed to load data');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [showError]);
 
+  // Initialize data based on registration status (only once per status change)
+  useEffect(() => {
+    const registrationStatus = businessRegistration?.status;
+    const statusKey = `${registrationStatus || 'none'}`;
+    
+    // Only initialize if status has changed or hasn't been initialized yet
+    if (initializedStatusRef.current === statusKey) return;
+    
+    if (registrationStatus === 'pending') {
+      // For pending status, just set empty arrays - no need to fetch or show errors
+      // Only set if not already empty to avoid unnecessary re-renders
+      setTestDrives(prev => prev.length === 0 ? prev : []);
+      setPreBookings(prev => prev.length === 0 ? prev : []);
+      setLoading(false);
+      initializedStatusRef.current = statusKey;
+    } else if (registrationStatus === 'approved' || !businessRegistration) {
+      // For approved or no registration, fetch data
+      fetchData();
+      initializedStatusRef.current = statusKey;
+    }
+  }, [businessRegistration?.status, fetchData]);
+
+  // Only refetch on focus if registration is approved
   useFocusEffect(
     useCallback(() => {
-      fetchData();
-    }, [fetchData]),
+      if (businessRegistration?.status === 'approved') {
+        fetchData();
+      }
+    }, [fetchData, businessRegistration?.status]),
   );
 
   const scrollToTab = useCallback(

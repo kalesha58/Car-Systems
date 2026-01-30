@@ -21,6 +21,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {useTranslation} from 'react-i18next';
+import {useBusinessRegistration} from '@hooks/useBusinessRegistration';
 import {
   createDealerService,
   updateDealerService,
@@ -35,9 +36,33 @@ import {IService} from '../../types/service/IService';
 
 const MAX_IMAGES = 10;
 
+type ServiceType = 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+
 interface RouteParams {
   service?: IService;
 }
+
+const getAllowedServiceTypes = (businessType: string | undefined): ServiceType[] => {
+  if (!businessType) {
+    return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+  }
+
+  switch (businessType) {
+    case 'Vehicle Wash Station':
+      return ['car_wash'];
+    case 'Detailing Center':
+      return ['car_detailing'];
+    case 'Bike Dealer':
+      return ['bike_automobile'];
+    case 'Automobile Showroom':
+      return ['car_automobile'];
+    case 'Mechanic Workshop':
+    case 'Riding Gear Store':
+      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+    default:
+      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+  }
+};
 
 const AddEditServiceScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -45,10 +70,19 @@ const AddEditServiceScreen: React.FC = () => {
   const {colors} = useTheme();
   const {showSuccess, showError} = useToast();
   const {t} = useTranslation();
+  const {businessRegistration} = useBusinessRegistration();
   const params = (route.params as RouteParams) || {};
 
   const isEditMode = !!params.service;
   const service = params.service;
+
+  // Get allowed service types based on business registration
+  const allowedServiceTypes = getAllowedServiceTypes(businessRegistration?.type);
+  
+  // Check if existing service type is allowed for current business type
+  const isExistingServiceTypeAllowed = service?.serviceType 
+    ? allowedServiceTypes.includes(service.serviceType as ServiceType)
+    : true;
 
   const [name, setName] = useState(service?.name || '');
   const [price, setPrice] = useState(service?.price?.toString() || '');
@@ -76,6 +110,19 @@ const AddEditServiceScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // Pre-select service type if only one option is available and not in edit mode
+  useEffect(() => {
+    if (!isEditMode && allowedServiceTypes.length === 1 && !serviceType) {
+      const singleType = allowedServiceTypes[0];
+      setServiceType(singleType);
+      if (singleType === 'car_automobile') {
+        setVehicleType('Car');
+      } else if (singleType === 'bike_automobile') {
+        setVehicleType('Bike');
+      }
+    }
+  }, [allowedServiceTypes, isEditMode, serviceType]);
 
   useEffect(() => {
     // Fetch location address if we have coordinates
@@ -524,21 +571,30 @@ const AddEditServiceScreen: React.FC = () => {
 
         <View style={styles.section}>
           <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
-          <View style={styles.button}>
+          <View style={[styles.button, !isExistingServiceTypeAllowed && {opacity: 0.6}]}>
             <Icon name="construct-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>
               {serviceType || t('dealer.selectServiceType')}
             </CustomText>
           </View>
+          {!isExistingServiceTypeAllowed && (
+            <CustomText style={[styles.label, {color: colors.error, fontSize: RFValue(7), marginTop: screenHeight * 0.005}]}>
+              {t('dealer.serviceTypeNotAllowed') || 'This service type is not allowed for your business type. You can edit other fields but cannot change the service type.'}
+            </CustomText>
+          )}
           <View style={styles.imagesContainer}>
-            {(['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'] as const).map((type) => (
+            {allowedServiceTypes.map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[
                   styles.button,
                   serviceType === type && {backgroundColor: colors.secondary + '20', borderColor: colors.secondary},
+                  !isExistingServiceTypeAllowed && isEditMode && {opacity: 0.5},
                 ]}
                 onPress={() => {
+                  if (!isExistingServiceTypeAllowed && isEditMode) {
+                    return; // Disable changing service type if existing type is not allowed
+                  }
                   setServiceType(type);
                   if (type === 'car_automobile') {
                     setVehicleType('Car');
@@ -549,7 +605,8 @@ const AddEditServiceScreen: React.FC = () => {
                     setVehicleModel('');
                     setVehicleBrand('');
                   }
-                }}>
+                }}
+                disabled={!isExistingServiceTypeAllowed && isEditMode}>
                 <CustomText style={[styles.buttonText, serviceType === type && {color: colors.secondary}]}>
                   {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </CustomText>
@@ -599,7 +656,7 @@ const AddEditServiceScreen: React.FC = () => {
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('dealer.enterVehicleBrand') || 'Enter bike brand (e.g., Bajaj, Hero)'}
+                  placeholder={t('dealer.enterVehicleBrand')}
                   placeholderTextColor={colors.disabled}
                   value={vehicleBrand}
                   onChangeText={setVehicleBrand}
@@ -612,7 +669,7 @@ const AddEditServiceScreen: React.FC = () => {
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('dealer.enterVehicleModel') || 'Enter bike model (e.g., Pulsar, Splendor)'}
+                  placeholder={t('dealer.enterVehicleModel')}
                   placeholderTextColor={colors.disabled}
                   value={vehicleModel}
                   onChangeText={setVehicleModel}
@@ -628,7 +685,7 @@ const AddEditServiceScreen: React.FC = () => {
             <View style={styles.textInputContainer}>
               <TextInput
                 style={styles.textInput}
-                placeholder={t('dealer.enterSubCategory') || 'e.g., Interior Cleaning, Exterior Cleaning'}
+                placeholder={t('dealer.enterSubCategory')}
                 placeholderTextColor={colors.disabled}
                 value={serviceSubCategory}
                 onChangeText={setServiceSubCategory}

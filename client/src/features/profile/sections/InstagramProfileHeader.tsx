@@ -15,15 +15,17 @@ import {navigate} from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 interface InstagramProfileHeaderProps {
-  postsCount: number;
+  postsCount?: number;
   vehiclesCount: number;
   ordersCount: number;
+  isDealer?: boolean;
 }
 
 const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
   postsCount,
   vehiclesCount,
   ordersCount,
+  isDealer = false,
 }) => {
   const {user} = useAuthStore();
   const {t} = useTranslation();
@@ -161,10 +163,12 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
         </View>
         
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <CustomText style={styles.statNumber}>{postsCount}</CustomText>
-            <CustomText style={styles.statLabel}>Posts</CustomText>
-          </View>
+          {!isDealer && postsCount !== undefined && (
+            <View style={styles.statItem}>
+              <CustomText style={styles.statNumber}>{postsCount}</CustomText>
+              <CustomText style={styles.statLabel}>Posts</CustomText>
+            </View>
+          )}
           <View style={styles.statItem}>
             <CustomText style={styles.statNumber}>{vehiclesCount}</CustomText>
             <CustomText style={styles.statLabel}>Vehicles</CustomText>

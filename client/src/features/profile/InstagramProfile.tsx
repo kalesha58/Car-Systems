@@ -18,21 +18,24 @@ import {useFocusEffect} from '@react-navigation/native';
 import InstagramProfileHeader from './sections/InstagramProfileHeader';
 import PostGrid from './sections/PostGrid';
 import VehicleGrid from './sections/VehicleGrid';
+import BusinessRegistrationInfo from './sections/BusinessRegistrationInfo';
 import {getUserStats, IUserStats} from '@service/profileService';
 import {getPosts} from '@service/postService';
 import {getUserVehicles} from '@service/vehicleService';
+import {getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/dealerService';
 import {IPost} from '../../types/post/IPost';
 import {IUserVehicle} from '../../types/vehicle/IVehicle';
 import {useTranslation} from 'react-i18next';
 
-type TabType = 'posts' | 'vehicles';
+type TabType = 'posts' | 'vehicles' | 'businessInfo';
 
 const InstagramProfile: React.FC = () => {
   const {user} = useAuthStore();
   const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const {t} = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabType>('posts');
+  const isDealer = user?.role?.includes('dealer');
+  const [activeTab, setActiveTab] = useState<TabType>(isDealer ? 'businessInfo' : 'posts');
   const [stats, setStats] = useState<IUserStats>({
     postsCount: 0,
     vehiclesCount: 0,
@@ -40,8 +43,10 @@ const InstagramProfile: React.FC = () => {
   });
   const [posts, setPosts] = useState<IPost[]>([]);
   const [vehicles, setVehicles] = useState<IUserVehicle[]>([]);
+  const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
   const [loading, setLoading] = useState(true);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const [businessInfoLoading, setBusinessInfoLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async (showRefreshing = false) => {
@@ -52,22 +57,52 @@ const InstagramProfile: React.FC = () => {
         setLoading(true);
       }
 
-      const [statsData, postsData] = await Promise.all([
-        getUserStats(),
-        getPosts(user?.id),
-      ]);
+      if (isDealer) {
+        // For dealers, fetch stats only (no posts)
+        const statsData = await getUserStats();
+        if (statsData) {
+          setStats(statsData);
+        }
+      } else {
+        // For regular users, fetch stats and posts
+        const [statsData, postsData] = await Promise.all([
+          getUserStats(),
+          getPosts(user?.id),
+        ]);
 
-      if (statsData) {
-        setStats(statsData);
-      }
+        if (statsData) {
+          setStats(statsData);
+        }
 
-      if (postsData?.success && postsData?.Response) {
-        setPosts(postsData.Response);
+        if (postsData?.success && postsData?.Response) {
+          setPosts(postsData.Response);
+        }
       }
     } catch (error) {
       console.error('Error fetching profile data:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const fetchBusinessRegistration = async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setBusinessInfoLoading(true);
+      }
+
+      if (user?.id) {
+        const registration = await getBusinessRegistrationByUserId(user.id);
+        setBusinessRegistration(registration);
+      }
+    } catch (error) {
+      console.error('Error fetching business registration:', error);
+      setBusinessRegistration(null);
+    } finally {
+      setBusinessInfoLoading(false);
       setRefreshing(false);
     }
   };
@@ -94,15 +129,22 @@ const InstagramProfile: React.FC = () => {
   useEffect(() => {
     if (user?.id) {
       fetchData();
+      if (isDealer) {
+        fetchBusinessRegistration();
+      }
     }
-  }, [user?.id]);
+  }, [user?.id, isDealer]);
 
   useEffect(() => {
     // Fetch vehicles when vehicles tab is selected
     if (activeTab === 'vehicles' && user?.id) {
       fetchVehicles();
     }
-  }, [activeTab, user?.id]);
+    // Fetch business registration when businessInfo tab is selected
+    if (activeTab === 'businessInfo' && isDealer && user?.id) {
+      fetchBusinessRegistration();
+    }
+  }, [activeTab, user?.id, isDealer]);
 
   // Refresh vehicles when screen comes into focus (e.g., after adding a vehicle)
   useFocusEffect(
@@ -124,12 +166,17 @@ const InstagramProfile: React.FC = () => {
         };
         refreshVehicles();
       }
-    }, [activeTab, user?.id]),
+      if (activeTab === 'businessInfo' && isDealer && user?.id) {
+        fetchBusinessRegistration();
+      }
+    }, [activeTab, user?.id, isDealer]),
   );
 
   const handleRefresh = async () => {
     if (activeTab === 'posts') {
       await fetchData(true);
+    } else if (activeTab === 'businessInfo' && isDealer) {
+      await fetchBusinessRegistration(true);
     } else {
       // Refresh vehicles
       try {
@@ -266,36 +313,67 @@ const InstagramProfile: React.FC = () => {
         }>
         {/* Profile Header with Stats */}
         <InstagramProfileHeader
-          postsCount={stats.postsCount}
+          postsCount={isDealer ? undefined : stats.postsCount}
           vehiclesCount={stats.vehiclesCount}
           ordersCount={stats.ordersCount}
+          isDealer={isDealer}
         />
 
         {/* Grid Navigation */}
         <View style={styles.gridNav}>
-          <TouchableOpacity
-            style={[
-              styles.gridNavIcon,
-              activeTab === 'posts' ? styles.gridNavIconActive : styles.gridNavIconInactive,
-            ]}
-            onPress={() => setActiveTab('posts')}
-            activeOpacity={0.7}>
-            <Icon name="grid" size={RFValue(24)} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.gridNavIcon,
-              activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
-            ]}
-            onPress={() => setActiveTab('vehicles')}
-            activeOpacity={0.7}>
-            <Icon name="car" size={RFValue(24)} color={colors.text} />
-          </TouchableOpacity>
+          {isDealer ? (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.gridNavIcon,
+                  activeTab === 'businessInfo' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                ]}
+                onPress={() => setActiveTab('businessInfo')}
+                activeOpacity={0.7}>
+                <Icon name="business-outline" size={RFValue(24)} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.gridNavIcon,
+                  activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                ]}
+                onPress={() => setActiveTab('vehicles')}
+                activeOpacity={0.7}>
+                <Icon name="car" size={RFValue(24)} color={colors.text} />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.gridNavIcon,
+                  activeTab === 'posts' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                ]}
+                onPress={() => setActiveTab('posts')}
+                activeOpacity={0.7}>
+                <Icon name="grid" size={RFValue(24)} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.gridNavIcon,
+                  activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                ]}
+                onPress={() => setActiveTab('vehicles')}
+                activeOpacity={0.7}>
+                <Icon name="car" size={RFValue(24)} color={colors.text} />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Content Grid */}
         {activeTab === 'posts' ? (
           <PostGrid posts={posts} loading={loading} onPostPress={handlePostPress} />
+        ) : activeTab === 'businessInfo' ? (
+          <BusinessRegistrationInfo
+            businessRegistration={businessRegistration}
+            loading={businessInfoLoading}
+          />
         ) : (
           <VehicleGrid
             vehicles={vehicles}

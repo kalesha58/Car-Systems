@@ -6,9 +6,9 @@ import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Header from '@components/common/Header/Header';
-import Loader from '@components/common/Loader/Loader';
+import CustomHeader from '@components/ui/CustomHeader';
 import EmptyState from '@components/common/EmptyState/EmptyState';
+import PreBookingSkeleton from './PreBookingSkeleton';
 import { getDealerPreBookings, updatePreBookingStatus } from '@service/preBookingService';
 import { IPreBooking } from '@types/preBooking/IPreBooking';
 import { useToast } from '@hooks/useToast';
@@ -200,18 +200,22 @@ const PreBookingManagementScreen: React.FC = () => {
     </View>
   );
 
-  if (loading) {
+  const renderSkeletonList = () => {
+    const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
     return (
-      <View style={styles.container}>
-        <Header title="Pre-Booking Management" />
-        <Loader />
-      </View>
+      <FlatList
+        data={skeletonData}
+        renderItem={() => <PreBookingSkeleton />}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        scrollEnabled={false}
+      />
     );
-  }
+  };
 
   return (
     <View style={styles.container}>
-      <Header title="Pre-Booking Management" />
+      <CustomHeader title="Pre-Booking Management" />
       <View style={styles.filterContainer}>
         {['all', 'pending', 'confirmed', 'cancelled'].map((status) => (
           <TouchableOpacity
@@ -233,25 +237,29 @@ const PreBookingManagementScreen: React.FC = () => {
         ))}
       </View>
 
-      <FlatList
-        data={filteredPreBookings}
-        renderItem={renderPreBookingItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => {
-            setRefreshing(true);
-            fetchPreBookings();
-          }} />
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon="bookmark-outline"
-            title="No Pre-Bookings"
-            message="No pre-booking requests found"
-          />
-        }
-      />
+      {loading ? (
+        renderSkeletonList()
+      ) : (
+        <FlatList
+          data={filteredPreBookings}
+          renderItem={renderPreBookingItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => {
+              setRefreshing(true);
+              fetchPreBookings();
+            }} />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              icon="bookmark-outline"
+              title="No Pre-Bookings"
+              message="No pre-booking requests found"
+            />
+          }
+        />
+      )}
     </View>
   );
 };

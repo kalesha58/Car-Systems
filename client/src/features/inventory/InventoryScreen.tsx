@@ -75,6 +75,10 @@ const InventoryScreen: React.FC = () => {
     if (businessType === 'Mechanic Workshop') {
       return ['services'] as const;
     }
+    // Riding Gear Store: Show products and services (gear products, not vehicles)
+    if (businessType === 'Riding Gear Store') {
+      return ['products', 'services'] as const;
+    }
     // Default: Show all tabs
     return ['products', 'vehicles', 'services'] as const;
   }, [businessRegistration?.type]);
@@ -90,6 +94,9 @@ const InventoryScreen: React.FC = () => {
 
   const isApproved = businessRegistration?.status === 'approved';
   const canAddItems = isApproved;
+
+  // Check if we should show tabs (only show if more than one tab is available)
+  const shouldShowTabs = tabOrder.length > 1;
 
   const handleAddPress = () => {
     if (!canAddItems) {
@@ -112,21 +119,27 @@ const InventoryScreen: React.FC = () => {
       return;
     }
 
-    if (activeTab === 'products') {
+    // Use the current active tab, or if only one tab exists, use that
+    const tabToUse = shouldShowTabs ? activeTab : tabOrder[0];
+
+    if (tabToUse === 'products') {
       (navigation as any).navigate('AddEditProduct');
-    } else if (activeTab === 'vehicles') {
+    } else if (tabToUse === 'vehicles') {
       (navigation as any).navigate('AddEditVehicle');
-    } else if (activeTab === 'services') {
+    } else if (tabToUse === 'services') {
       (navigation as any).navigate('AddEditService');
     }
   };
 
   const handleItemPress = (item: IProduct | IDealerVehicle | IService) => {
-    if (activeTab === 'products') {
+    // Use the current active tab, or if only one tab exists, use that
+    const tabToUse = shouldShowTabs ? activeTab : tabOrder[0];
+
+    if (tabToUse === 'products') {
       (navigation as any).navigate('AddEditProduct', {product: item as IProduct});
-    } else if (activeTab === 'vehicles') {
+    } else if (tabToUse === 'vehicles') {
       (navigation as any).navigate('AddEditVehicle', {vehicle: item as IDealerVehicle});
-    } else if (activeTab === 'services') {
+    } else if (tabToUse === 'services') {
       (navigation as any).navigate('AddEditService', {service: item as IService});
     }
   };
@@ -558,22 +571,22 @@ const InventoryScreen: React.FC = () => {
     }
 
     let bannerMessage = '';
-    let bannerColor = '#f59e0b';
+    let bannerColor = theme.warning;
     let bannerIcon = 'information-circle-outline';
     let showButton = false;
 
     if (!businessRegistration) {
       bannerMessage = t('dealer.completeRegistrationToAdd') || 'Complete business registration to add products to inventory';
-      bannerColor = '#3b82f6';
+      bannerColor = theme.secondary;
       bannerIcon = 'business-outline';
       showButton = true;
     } else if (businessRegistration.status === 'pending') {
       bannerMessage = t('dealer.pendingApprovalMessage') || "Your dealership request is pending approval. You'll be able to add products once approved.";
-      bannerColor = '#f59e0b';
+      bannerColor = theme.warning;
       bannerIcon = 'time-outline';
     } else if (businessRegistration.status === 'rejected') {
       bannerMessage = t('dealer.rejectedMessage') || 'Your dealership request was rejected. Please update your registration to reapply.';
-      bannerColor = '#ef4444';
+      bannerColor = theme.error;
       bannerIcon = 'close-circle-outline';
       showButton = true;
     }
@@ -608,120 +621,201 @@ const InventoryScreen: React.FC = () => {
     );
   };
 
+  // Render single content view when only one tab is allowed (no tabs needed)
+  const renderSingleContentView = () => {
+    const singleTab = tabOrder[0];
+    
+    if (loading) {
+      return renderSkeletonList();
+    }
+
+    if (singleTab === 'products') {
+      return (
+        <FlatList
+          data={products}
+          renderItem={renderProductItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+          }
+        />
+      );
+    }
+
+    if (singleTab === 'vehicles') {
+      return (
+        <FlatList
+          data={vehicles}
+          renderItem={renderVehicleItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+          }
+        />
+      );
+    }
+
+    if (singleTab === 'services') {
+      return (
+        <FlatList
+          data={services}
+          renderItem={renderServiceItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+          }
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={[styles.container, {backgroundColor: theme.background}]}>
       <CustomHeader title={t('dealer.inventory')} />
       {renderBanner()}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'products' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
-          ]}
-          onPress={() => scrollToTab('products')}>
-          <Icon
-            name="cube-outline"
-            size={RFValue(16)}
-            color={activeTab === 'products' ? theme.success : theme.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'products' ? theme.success : theme.textSecondary}}
-            numberOfLines={1}>
-            {t('dealer.products')}
-          </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'vehicles' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
-          ]}
-          onPress={() => scrollToTab('vehicles')}>
-          <Icon
-            name="car-outline"
-            size={RFValue(16)}
-            color={activeTab === 'vehicles' ? theme.success : theme.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'vehicles' ? theme.success : theme.textSecondary}}
-            numberOfLines={1}>
-            {t('dealer.vehicles')}
-          </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'services' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
-          ]}
-          onPress={() => scrollToTab('services')}>
-          <Icon
-            name="construct-outline"
-            size={RFValue(16)}
-            color={activeTab === 'services' ? theme.success : theme.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{color: activeTab === 'services' ? theme.success : theme.textSecondary}}
-            numberOfLines={1}>
-            {t('dealer.services')}
-          </CustomText>
-        </TouchableOpacity>
-      </View>
-      {loading ? (
-        renderSkeletonList()
+      
+      {/* Only show tabs if more than one tab is available */}
+      {shouldShowTabs && (
+        <View style={styles.tabContainer}>
+          {tabOrder.includes('products') && (
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'products' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
+              ]}
+              onPress={() => scrollToTab('products')}>
+              <Icon
+                name="cube-outline"
+                size={RFValue(16)}
+                color={activeTab === 'products' ? theme.success : theme.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{color: activeTab === 'products' ? theme.success : theme.textSecondary}}
+                numberOfLines={1}>
+                {t('dealer.products')}
+              </CustomText>
+            </TouchableOpacity>
+          )}
+          {tabOrder.includes('vehicles') && (
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'vehicles' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
+              ]}
+              onPress={() => scrollToTab('vehicles')}>
+              <Icon
+                name="car-outline"
+                size={RFValue(16)}
+                color={activeTab === 'vehicles' ? theme.success : theme.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{color: activeTab === 'vehicles' ? theme.success : theme.textSecondary}}
+                numberOfLines={1}>
+                {t('dealer.vehicles')}
+              </CustomText>
+            </TouchableOpacity>
+          )}
+          {tabOrder.includes('services') && (
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'services' && {backgroundColor: theme.success + '20', borderBottomColor: theme.success},
+              ]}
+              onPress={() => scrollToTab('services')}>
+              <Icon
+                name="construct-outline"
+                size={RFValue(16)}
+                color={activeTab === 'services' ? theme.success : theme.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{color: activeTab === 'services' ? theme.success : theme.textSecondary}}
+                numberOfLines={1}>
+                {t('dealer.services')}
+              </CustomText>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Render content - single view if only one tab, or scrollable tabs if multiple */}
+      {shouldShowTabs ? (
+        loading ? (
+          renderSkeletonList()
+        ) : (
+          <ScrollView
+            ref={pagerRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={onPagerMomentumEnd}
+            contentOffset={{x: activeIndex * screenWidth, y: 0}}
+            keyboardShouldPersistTaps="handled">
+            {tabOrder.includes('products') && (
+              <View style={{width: screenWidth}}>
+                <FlatList
+                  data={products}
+                  renderItem={renderProductItem}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={styles.listContent}
+                  showsVerticalScrollIndicator={false}
+                  ListEmptyComponent={activeTab === 'products' ? renderEmptyState : null}
+                  refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+                  }
+                />
+              </View>
+            )}
+            {tabOrder.includes('vehicles') && (
+              <View style={{width: screenWidth}}>
+                <FlatList
+                  data={vehicles}
+                  renderItem={renderVehicleItem}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={styles.listContent}
+                  showsVerticalScrollIndicator={false}
+                  ListEmptyComponent={activeTab === 'vehicles' ? renderEmptyState : null}
+                  refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+                  }
+                />
+              </View>
+            )}
+            {tabOrder.includes('services') && (
+              <View style={{width: screenWidth}}>
+                <FlatList
+                  data={services}
+                  renderItem={renderServiceItem}
+                  keyExtractor={item => item.id}
+                  contentContainerStyle={styles.listContent}
+                  showsVerticalScrollIndicator={false}
+                  ListEmptyComponent={activeTab === 'services' ? renderEmptyState : null}
+                  refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
+                  }
+                />
+              </View>
+            )}
+          </ScrollView>
+        )
       ) : (
-        <ScrollView
-          ref={pagerRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onPagerMomentumEnd}
-          contentOffset={{x: activeIndex * screenWidth, y: 0}}
-          keyboardShouldPersistTaps="handled">
-          <View style={{width: screenWidth}}>
-            <FlatList
-              data={products}
-              renderItem={renderProductItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={activeTab === 'products' ? renderEmptyState : null}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-              }
-            />
-          </View>
-          <View style={{width: screenWidth}}>
-            <FlatList
-              data={vehicles}
-              renderItem={renderVehicleItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={activeTab === 'vehicles' ? renderEmptyState : null}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-              }
-            />
-          </View>
-          <View style={{width: screenWidth}}>
-            <FlatList
-              data={services}
-              renderItem={renderServiceItem}
-              keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={activeTab === 'services' ? renderEmptyState : null}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
-              }
-            />
-          </View>
-        </ScrollView>
+        renderSingleContentView()
       )}
       <TouchableOpacity
         style={[styles.fab, !canAddItems && styles.fabDisabled]}

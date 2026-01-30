@@ -246,6 +246,11 @@ const DealerTabs: FC = () => {
   };
 
   useEffect(() => {
+    // Prevent multiple checks if already checked
+    if (businessRegistration !== null && !isChecking) {
+      return;
+    }
+
     const checkBusinessRegistration = async () => {
       const userId = user?.id || user?._id;
       if (!userId) {
@@ -260,8 +265,12 @@ const DealerTabs: FC = () => {
 
         // Only redirect if no registration exists OR status is rejected
         // Allow access if registration exists (even if pending or approved)
+        // Use setTimeout to prevent navigation during render
         if (!registration || (registration && registration.status === 'rejected')) {
-          resetAndNavigate('BusinessRegistration');
+          setTimeout(() => {
+            resetAndNavigate('BusinessRegistration');
+          }, 100);
+          return;
         }
       } catch (error) {
         console.error('Error checking business registration:', error);
@@ -269,7 +278,10 @@ const DealerTabs: FC = () => {
         // Otherwise allow access (might be network error)
         const errorStatus = (error as any)?.response?.status;
         if (errorStatus === 404) {
-          resetAndNavigate('BusinessRegistration');
+          setTimeout(() => {
+            resetAndNavigate('BusinessRegistration');
+          }, 100);
+          return;
         } else {
           // Network error or other - allow access, will be handled by dashboard
           setIsChecking(false);
@@ -293,6 +305,14 @@ const DealerTabs: FC = () => {
       </View>
     );
   }
+
+  // Check if Drive tab should be shown based on business type
+  const shouldShowDriveTab = (businessType: string | undefined): boolean => {
+    if (!businessType) return true;
+    return businessType !== 'Vehicle Wash Station' && businessType !== 'Detailing Center';
+  };
+
+  const showDriveTab = shouldShowDriveTab(businessRegistration?.type);
 
   return (
     <Tab.Navigator
@@ -332,16 +352,18 @@ const DealerTabs: FC = () => {
           tabBarLabel: t('dealer.orders'),
         }}
       />
-      <Tab.Screen
-        name="QuickActions"
-        component={QuickActionsScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="flash-outline" size={size} color={color} />
-          ),
-          tabBarLabel: 'Drive',
-        }}
-      />
+      {showDriveTab && (
+        <Tab.Screen
+          name="QuickActions"
+          component={QuickActionsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="flash-outline" size={size} color={color} />
+            ),
+            tabBarLabel: 'Drive',
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={Profile}
