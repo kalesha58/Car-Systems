@@ -39,6 +39,7 @@ const SearchBar: FC<SearchBarProps> = ({ onPress, showVehicleSuggestions = false
       height: 50,
       justifyContent: 'center',
       alignItems: 'flex-start',
+      overflow: 'hidden',
     },
     divider: {
       width: 1,

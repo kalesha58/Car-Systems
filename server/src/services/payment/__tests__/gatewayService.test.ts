@@ -1,8 +1,8 @@
 /**
  * Payment Gateway Service Tests
  * 
- * These tests verify Razorpay gateway integration including:
- * - Payment intent creation
+ * These tests verify Cashfree gateway integration including:
+ * - Payment order and session creation
  * - Webhook signature verification
  * - Payment status polling
  * - Payout creation

@@ -3,10 +3,22 @@
  */
 
 import { AppRegistry, Platform } from 'react-native';
+import { getApp } from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance } from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
+
+// Initialize Firebase app (auto-initializes from native config, but we ensure it's ready)
+let firebaseApp;
+try {
+  firebaseApp = getApp();
+  console.log('Firebase app initialized:', firebaseApp.name);
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  // Firebase should auto-initialize from native config files
+  // If this fails, check that google-services.json (Android) and GoogleService-Info.plist (iOS) are present
+}
 
 // Create notification channel for Android (must be called early, before handler registration)
 const createNotificationChannel = async () => {
@@ -35,8 +47,10 @@ createNotificationChannel();
 // Register background message handler
 // This must be called outside of your application logic, as early as possible
 // It handles messages when the app is in background or quit state
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-  console.log('Message handled in the background!', remoteMessage);
+// Only register if Firebase is initialized
+if (firebaseApp) {
+  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+    console.log('Message handled in the background!', remoteMessage);
 
   try {
     // Ensure channel exists
@@ -104,8 +118,11 @@ messaging().setBackgroundMessageHandler(async (remoteMessage) => {
     console.error('Error displaying background notification:', error);
   }
 
-  // The handler must return a promise once logic is completed
-  return Promise.resolve();
-});
+    // The handler must return a promise once logic is completed
+    return Promise.resolve();
+  });
+} else {
+  console.warn('Firebase not initialized, background message handler not registered');
+}
 
 AppRegistry.registerComponent(appName, () => App);

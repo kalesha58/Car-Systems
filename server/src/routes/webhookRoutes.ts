@@ -5,15 +5,15 @@ import { logger } from '../utils/logger';
 const router = Router();
 
 /**
- * Razorpay webhook endpoint
- * This endpoint receives webhook events from Razorpay
- * Note: This endpoint should NOT require authentication as Razorpay calls it directly
+ * Cashfree webhook endpoint
+ * This endpoint receives webhook events from Cashfree
+ * Note: This endpoint should NOT require authentication as Cashfree calls it directly
  */
-router.post('/razorpay', async (req: Request, res: Response): Promise<void> => {
+router.post('/cashfree', async (req: Request, res: Response): Promise<void> => {
   try {
-    // Get signature from header
-    const signature = req.headers['x-razorpay-signature'] as string;
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    // Get signature from header (Cashfree uses x-cashfree-signature)
+    const signature = req.headers['x-cashfree-signature'] as string;
+    const webhookSecret = process.env.CASHFREE_WEBHOOK_SECRET;
 
     // Prepare webhook data with signature
     const webhookData = {
@@ -22,7 +22,7 @@ router.post('/razorpay', async (req: Request, res: Response): Promise<void> => {
     };
 
     // Process webhook asynchronously
-    // Always return 200 quickly to Razorpay
+    // Always return 200 quickly to Cashfree
     handlePaymentWebhook(webhookData).catch((error) => {
       logger.error('Error processing webhook asynchronously:', error);
       // Webhook is already stored, can be retried later
@@ -35,7 +35,7 @@ router.post('/razorpay', async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error: any) {
     logger.error('Error in webhook endpoint:', error);
-    // Still return 200 to Razorpay to prevent retries
+    // Still return 200 to Cashfree to prevent retries
     // The webhook will be stored and can be processed later
     res.status(200).json({
       success: false,

@@ -3,15 +3,15 @@ import { handlePaymentWebhook } from '../services/payment/paymentService';
 import { logger } from '../utils/logger';
 
 /**
- * Razorpay webhook controller
+ * Cashfree webhook controller
  */
-export const razorpayWebhookController = async (
+export const cashfreeWebhookController = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
   try {
-    // Get signature from header
-    const signature = req.headers['x-razorpay-signature'] as string;
+    // Get signature from header (Cashfree uses x-cashfree-signature)
+    const signature = req.headers['x-cashfree-signature'] as string;
 
     // Prepare webhook data with signature
     const webhookData = {
@@ -20,7 +20,7 @@ export const razorpayWebhookController = async (
     };
 
     // Process webhook asynchronously
-    // Always return 200 quickly to Razorpay
+    // Always return 200 quickly to Cashfree
     handlePaymentWebhook(webhookData).catch((error) => {
       logger.error('Error processing webhook asynchronously:', error);
       // Webhook is already stored, can be retried later
@@ -33,7 +33,7 @@ export const razorpayWebhookController = async (
     });
   } catch (error: any) {
     logger.error('Error in webhook controller:', error);
-    // Still return 200 to Razorpay to prevent retries
+    // Still return 200 to Cashfree to prevent retries
     // The webhook will be stored and can be processed later
     res.status(200).json({
       success: false,

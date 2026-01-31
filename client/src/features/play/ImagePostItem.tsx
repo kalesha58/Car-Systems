@@ -72,19 +72,23 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
       socket.emit('joinPost', post.id);
     }
 
-    // Listen for like updates
+    // Listen for like updates from other users
     socket.on('postLiked', (data: { postId: string; likes: number; isLiked: boolean }) => {
       if (data.postId === post?.id) {
+        // Update like count immediately when any user likes the post
         setLikeCount(data.likes);
-        // Only update isLiked if it's not our own action (to avoid double updates)
-        // The API response will handle our own actions
+        // Note: isLiked is user-specific, so we don't update it here
+        // Each user can independently like/unlike the same post
+        // The API response handles our own like/unlike actions
       }
     });
 
-    // Listen for unlike updates
+    // Listen for unlike updates from other users
     socket.on('postUnliked', (data: { postId: string; likes: number; isLiked: boolean }) => {
       if (data.postId === post?.id) {
+        // Update like count immediately when any user unlikes the post
         setLikeCount(data.likes);
+        // Note: isLiked remains unchanged for other users
       }
     });
 

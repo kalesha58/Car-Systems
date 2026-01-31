@@ -39,10 +39,14 @@ export interface ICreateUserOrderRequest {
 }
 
 export interface IVerifyPaymentRequest {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-  paymentId?: string; // Keep for backward compatibility
+  payment_id: string;
+  order_id: string;
+  payment_session_id?: string;
+  // Legacy fields for backward compatibility
+  razorpay_payment_id?: string;
+  razorpay_order_id?: string;
+  razorpay_signature?: string;
+  paymentId?: string;
   transactionId?: string;
 }
 
@@ -115,18 +119,21 @@ export const verifyPaymentController = async (
       return;
     }
 
-    // Extract Razorpay payment response fields
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentData;
+    // Extract Cashfree payment response fields (with backward compatibility for Razorpay)
+    const paymentId = paymentData.payment_id || paymentData.razorpay_payment_id;
+    const cashfreeOrderId = paymentData.order_id || paymentData.razorpay_order_id;
 
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+    if (!cashfreeOrderId) {
       res.status(400).json({
         success: false,
         Response: {
-          ReturnMessage: 'Missing required payment fields: razorpay_payment_id, razorpay_order_id, razorpay_signature',
+          ReturnMessage: 'Missing required payment field: order_id',
         },
       });
       return;
     }
+
+    // Note: payment_id is optional - server will fetch it from Cashfree if not provided
 
     // Get order document for direct manipulation
     const orderDoc = await Order.findById(orderId);
@@ -152,7 +159,7 @@ export const verifyPaymentController = async (
       return;
     }
 
-    // Get the stored order_id from order's paymentIntentId (server-side order_id)
+    // Get the stored Cashfree order_id from order's paymentIntentId
     const serverOrderId = orderDoc.paymentIntentId;
     if (!serverOrderId) {
       res.status(400).json({
@@ -164,12 +171,15 @@ export const verifyPaymentController = async (
       return;
     }
 
-    // Verify payment signature
+    // Verify payment using Cashfree API
     const isVerified = await verifyPayment({
-      razorpay_payment_id,
-      razorpay_order_id,
-      razorpay_signature,
-      order_id: serverOrderId, // Use server-side order_id from paymentIntentId
+      payment_id: paymentId,
+      order_id: cashfreeOrderId,
+      payment_session_id: paymentData.payment_session_id,
+      // Legacy fields for backward compatibility
+      razorpay_payment_id: paymentData.razorpay_payment_id,
+      razorpay_order_id: paymentData.razorpay_order_id,
+      razorpay_signature: paymentData.razorpay_signature,
     });
 
     if (!isVerified) {
@@ -177,7 +187,7 @@ export const verifyPaymentController = async (
       orderDoc.timeline.push({
         status: orderDoc.status,
         timestamp: new Date(),
-        notes: 'Payment verification failed - signature mismatch',
+        notes: 'Payment verification failed',
         actor: 'system',
         actorId: 'system',
       });
@@ -186,10 +196,27 @@ export const verifyPaymentController = async (
       res.status(400).json({
         success: false,
         Response: {
-          ReturnMessage: 'Payment verification failed - signature mismatch',
+          ReturnMessage: 'Payment verification failed',
         },
       });
       return;
+    }
+
+    // If payment_id was not provided, try to fetch it from Cashfree order
+    let finalPaymentId = paymentId;
+    if (!finalPaymentId) {
+      try {
+        const { cashfreeClient } = await import('../../config/cashfree');
+        const xApiVersion = '2023-08-01';
+        const orderResponse = await cashfreeClient!.PGFetchOrder(xApiVersion, cashfreeOrderId);
+        if (orderResponse.data?.payments && orderResponse.data.payments.length > 0) {
+          finalPaymentId = orderResponse.data.payments[0].cf_payment_id || 
+                          orderResponse.data.payments[0].payment_id ||
+                          orderResponse.data.payments[0].id;
+        }
+      } catch (error) {
+        logger.warn('Could not fetch payment_id from Cashfree order', { cashfreeOrderId, error });
+      }
     }
 
     // Store payment response fields in Payment model
@@ -199,27 +226,29 @@ export const verifyPaymentController = async (
     if (!payment) {
       payment = new Payment({
         orderId: orderIdString,
-        gatewayTxnId: razorpay_payment_id,
-        gatewayPaymentIntentId: razorpay_order_id,
+        gatewayTxnId: finalPaymentId || '',
+        gatewayPaymentIntentId: cashfreeOrderId,
         amount: Math.round(orderDoc.totalAmount * 100), // in paise
         currency: 'INR',
         status: 'completed',
         rawPayload: {
-          razorpay_payment_id,
-          razorpay_order_id,
-          razorpay_signature,
+          payment_id: finalPaymentId,
+          order_id: cashfreeOrderId,
+          payment_session_id: paymentData.payment_session_id,
           verifiedAt: new Date().toISOString(),
         },
       });
     } else {
-      payment.gatewayTxnId = razorpay_payment_id;
-      payment.gatewayPaymentIntentId = razorpay_order_id;
+      if (finalPaymentId) {
+        payment.gatewayTxnId = finalPaymentId;
+      }
+      payment.gatewayPaymentIntentId = cashfreeOrderId;
       payment.status = 'completed';
       payment.rawPayload = {
         ...(payment.rawPayload || {}),
-        razorpay_payment_id,
-        razorpay_order_id,
-        razorpay_signature,
+        payment_id: finalPaymentId,
+        order_id: cashfreeOrderId,
+        payment_session_id: paymentData.payment_session_id,
         verifiedAt: new Date().toISOString(),
       };
     }
@@ -232,7 +261,7 @@ export const verifyPaymentController = async (
     orderDoc.timeline.push({
       status: 'PAYMENT_CONFIRMED',
       timestamp: new Date(),
-      notes: `Payment verified. Payment ID: ${razorpay_payment_id}`,
+      notes: `Payment verified. Payment ID: ${paymentId}`,
       actor: 'system',
       actorId: 'system',
     });
@@ -240,8 +269,8 @@ export const verifyPaymentController = async (
     await orderDoc.save();
 
     logger.info(`Payment verified for order: ${orderDoc.orderNumber}`, {
-      razorpay_payment_id,
-      razorpay_order_id,
+      payment_id: paymentId,
+      order_id: cashfreeOrderId,
       orderId: orderIdString,
     });
 

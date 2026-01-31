@@ -359,10 +359,10 @@ export const createUserOrder = async (
         // Create payment action for frontend
         paymentAction = {
           type: 'UPI_INTENT',
-          paymentIntentId: paymentIntent.id,
+          paymentIntentId: paymentIntent.order_id, // Cashfree order_id
+          paymentSessionId: paymentIntent.payment_session_id, // Cashfree payment_session_id
           amount: paymentIntent.amount,
           currency: paymentIntent.currency || 'INR',
-          deeplink: `razorpay://pay?amount=${paymentIntent.amount}&currency=${paymentIntent.currency || 'INR'}&order_id=${paymentIntent.id}`,
           expiresAt: updatedOrder.expiresAt?.toISOString(),
         };
 
@@ -373,7 +373,8 @@ export const createUserOrder = async (
         }
 
         logger.info(`UPI payment intent created for order: ${order.orderNumber}`, {
-          paymentIntentId: paymentIntent.id,
+          cashfreeOrderId: paymentIntent.order_id,
+          paymentSessionId: paymentIntent.payment_session_id,
         });
       } else if (data.paymentMethod === 'cash_on_delivery') {
         // Process COD order - add COD charge

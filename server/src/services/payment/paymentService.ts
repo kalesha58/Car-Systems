@@ -104,8 +104,8 @@ export const processUPIPayment = async (
 
     const paymentIntent = await createPaymentIntent(paymentIntentRequest);
 
-    // Update order with payment intent ID and expiry
-    order.paymentIntentId = paymentIntent.id;
+    // Update order with Cashfree order_id and payment_session_id
+    order.paymentIntentId = paymentIntent.order_id; // Store Cashfree order_id
     order.status = 'PENDING_PAYMENT';
     order.paymentStatus = 'pending';
     const expiresAt = new Date();
@@ -115,7 +115,7 @@ export const processUPIPayment = async (
     order.timeline.push({
       status: 'PENDING_PAYMENT',
       timestamp: new Date(),
-      notes: `UPI payment intent created. Expires at ${expiresAt.toISOString()}`,
+      notes: `UPI payment intent created. Order ID: ${paymentIntent.order_id}. Expires at ${expiresAt.toISOString()}`,
       actor: 'system',
       actorId: 'system',
     });
@@ -125,18 +125,22 @@ export const processUPIPayment = async (
     // Create payment record
     const payment = new Payment({
       orderId: orderId,
-      gatewayPaymentIntentId: paymentIntent.id,
+      gatewayPaymentIntentId: paymentIntent.order_id,
       amount: amountInPaise,
       currency: 'INR',
       status: 'pending',
-      rawPayload: paymentIntent,
+      rawPayload: {
+        ...paymentIntent,
+        payment_session_id: paymentIntent.payment_session_id,
+      },
     });
 
     await payment.save();
 
     logger.info(`UPI payment intent created for order: ${order.orderNumber}`, {
       orderId,
-      paymentIntentId: paymentIntent.id,
+      cashfreeOrderId: paymentIntent.order_id,
+      paymentSessionId: paymentIntent.payment_session_id,
       expiresAt: expiresAt.toISOString(),
     });
 
@@ -192,11 +196,15 @@ export const handlePaymentWebhook = async (webhookData: any): Promise<void> => {
     await webhookEvent.save();
 
     // Process different event types
-    const eventType = webhookData.event || webhookData.entity?.event;
+    // Cashfree webhook events: PAYMENT_SUCCESS, PAYMENT_FAILED, PAYMENT_USER_DROPPED, etc.
+    const eventType = webhookData.type || webhookData.event || webhookData.entity?.event;
 
-    if (eventType === 'payment.captured' || eventType === 'payment.success') {
+    if (eventType === 'PAYMENT_SUCCESS' || eventType === 'payment.captured' || eventType === 'payment.success') {
       await handlePaymentSuccess(webhookData);
-    } else if (eventType === 'payment.failed' || eventType === 'payment.failure') {
+    } else if (eventType === 'PAYMENT_FAILED' || eventType === 'payment.failed' || eventType === 'payment.failure') {
+      await handlePaymentFailure(webhookData);
+    } else if (eventType === 'PAYMENT_USER_DROPPED') {
+      // User cancelled payment - treat as failure
       await handlePaymentFailure(webhookData);
     } else if (eventType === 'payout.processed' || eventType === 'payout.success') {
       await handlePayoutSuccess(webhookData);
@@ -223,20 +231,23 @@ export const handlePaymentWebhook = async (webhookData: any): Promise<void> => {
  */
 const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
   try {
-    const paymentData = webhookData.payload?.payment?.entity || webhookData.payload?.payment || webhookData;
-    const paymentId = paymentData.id;
-    const orderId = paymentData.notes?.orderId || paymentData.order_id;
+    // Cashfree webhook structure: { type: 'PAYMENT_SUCCESS', data: { order: {...}, payment: {...} } }
+    const paymentData = webhookData.data?.payment || webhookData.payload?.payment?.entity || webhookData.payload?.payment || webhookData;
+    const orderData = webhookData.data?.order || webhookData.payload?.order || {};
+    const paymentId = paymentData.payment_id || paymentData.id || paymentData.cf_payment_id;
+    const cashfreeOrderId = orderData.order_id || paymentData.order_id || paymentData.orderId;
+    const orderId = paymentData.notes?.orderId || orderData.order_note ? JSON.parse(orderData.order_note || '{}').orderId : null;
 
     if (!paymentId) {
       logger.error('Payment ID missing in webhook', webhookData);
       return;
     }
 
-    // Get payment details from Razorpay
+    // Get payment details from Cashfree
     const paymentDetails = await getPaymentDetails(paymentId);
 
-    // Find order by payment intent ID or order ID from notes
-    let order = await Order.findOne({ paymentIntentId: paymentDetails.order_id });
+    // Find order by Cashfree order_id (stored in paymentIntentId)
+    let order = await Order.findOne({ paymentIntentId: cashfreeOrderId });
 
     if (!order && orderId) {
       order = await Order.findById(orderId);
@@ -249,7 +260,9 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
 
     // Verify payment amount matches order amount
     const expectedAmount = Math.round(order.totalAmount * 100); // in paise
-    const paidAmount = paymentDetails.amount;
+    // Cashfree returns amount in rupees, convert to paise
+    const paidAmount = paymentDetails.payment_amount ? Math.round(paymentDetails.payment_amount * 100) : 
+                      paymentDetails.amount ? (typeof paymentDetails.amount === 'number' ? paymentDetails.amount : Math.round(parseFloat(paymentDetails.amount) * 100)) : 0;
 
     if (paidAmount !== expectedAmount) {
       logger.warn(`Payment amount mismatch for order ${order.orderNumber}`, {
@@ -280,9 +293,9 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
       payment = new Payment({
         orderId: orderIdString,
         gatewayTxnId: paymentId,
-        gatewayPaymentIntentId: paymentDetails.order_id,
+        gatewayPaymentIntentId: cashfreeOrderId || paymentDetails.order_id,
         amount: paidAmount,
-        currency: paymentDetails.currency || 'INR',
+        currency: paymentDetails.payment_currency || paymentDetails.currency || 'INR',
         status: 'completed',
         rawPayload: paymentDetails,
       });
@@ -324,12 +337,15 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
  */
 const handlePaymentFailure = async (webhookData: any): Promise<void> => {
   try {
-    const paymentData = webhookData.payload?.payment?.entity || webhookData.payload?.payment || webhookData;
-    const paymentId = paymentData.id;
-    const orderId = paymentData.notes?.orderId;
+    // Cashfree webhook structure: { type: 'PAYMENT_FAILED', data: { order: {...}, payment: {...} } }
+    const paymentData = webhookData.data?.payment || webhookData.payload?.payment?.entity || webhookData.payload?.payment || webhookData;
+    const orderData = webhookData.data?.order || webhookData.payload?.order || {};
+    const paymentId = paymentData.payment_id || paymentData.id || paymentData.cf_payment_id;
+    const cashfreeOrderId = orderData.order_id || paymentData.order_id || paymentData.orderId;
+    const orderId = paymentData.notes?.orderId || orderData.order_note ? JSON.parse(orderData.order_note || '{}').orderId : null;
 
-    // Find order
-    let order = await Order.findOne({ paymentIntentId: paymentData.order_id });
+    // Find order by Cashfree order_id (stored in paymentIntentId)
+    let order = await Order.findOne({ paymentIntentId: cashfreeOrderId });
     if (!order && orderId) {
       order = await Order.findById(orderId);
     }
@@ -359,15 +375,15 @@ const handlePaymentFailure = async (webhookData: any): Promise<void> => {
     if (!payment) {
       payment = new Payment({
         orderId: orderIdString,
-        gatewayTxnId: paymentId,
-        gatewayPaymentIntentId: paymentData.order_id,
-        amount: paymentData.amount || 0,
-        currency: paymentData.currency || 'INR',
+        gatewayTxnId: paymentId || '',
+        gatewayPaymentIntentId: cashfreeOrderId || paymentData.order_id,
+        amount: paymentData.payment_amount ? Math.round(paymentData.payment_amount * 100) : (paymentData.amount || 0),
+        currency: paymentData.payment_currency || paymentData.currency || 'INR',
         status: 'failed',
         rawPayload: paymentData,
       });
     } else {
-      payment.gatewayTxnId = paymentId;
+      payment.gatewayTxnId = paymentId || payment.gatewayTxnId;
       payment.status = 'failed';
       payment.rawPayload = paymentData;
     }
@@ -389,7 +405,7 @@ const handlePaymentFailure = async (webhookData: any): Promise<void> => {
 
     logger.info(`Payment failed for order: ${order.orderNumber}`, {
       paymentId,
-      reason: paymentData.error_description,
+      reason: paymentData.payment_message || paymentData.error_description || paymentData.failure_reason || 'Unknown',
     });
   } catch (error) {
     logger.error('Error handling payment failure:', error);

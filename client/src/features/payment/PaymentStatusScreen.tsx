@@ -13,8 +13,8 @@ import {
   handlePaymentFailure,
   IPaymentAction,
 } from '@services/payment/upiPaymentService';
-import RazorpayService from '@services/payment/RazorpayService';
-import { verifyRazorpayPayment } from '@services/payment/paymentService';
+import CashfreeService from '@services/payment/CashfreeService';
+import { verifyCashfreePayment } from '@services/payment/paymentService';
 import { useAuthStore } from '@state/authStore';
 import { appAxios } from '@service/apiInterceptors';
 
@@ -82,7 +82,7 @@ const PaymentStatusScreen: React.FC = () => {
     setError(msg || 'Payment failed');
   };
 
-  // Listen for app state changes to detect when returning from Razorpay
+  // Listen for app state changes to detect when returning from Cashfree
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (
@@ -90,7 +90,7 @@ const PaymentStatusScreen: React.FC = () => {
         nextAppState === 'active' &&
         paymentInProgress.current
       ) {
-        // App came to foreground - might be returning from Razorpay
+        // App came to foreground - might be returning from Cashfree
         // Do a quick server status check as a fallback (no long polling here).
         setTimeout(async () => {
           if (!paymentInProgress.current || status !== 'processing') {
@@ -118,13 +118,13 @@ const PaymentStatusScreen: React.FC = () => {
       paymentInProgress.current = true;
       verifyAndNavigateRef.current = false;
       try {
-        console.log('🚀 [Payment] Starting Razorpay checkout', {
+        console.log('🚀 [Payment] Starting Cashfree payment', {
           orderId,
-          paymentIntentId: paymentAction.paymentIntentId,
+          cashfreeOrderId: paymentAction.paymentIntentId,
+          paymentSessionId: paymentAction.paymentSessionId,
           amount: paymentAction.amount,
           currency: paymentAction.currency,
           type: paymentAction.type,
-          deeplink: paymentAction.deeplink,
           fullPaymentAction: JSON.stringify(paymentAction, null, 2),
         });
         console.log('👤 [Payment] User info:', {
@@ -159,34 +159,30 @@ const PaymentStatusScreen: React.FC = () => {
           }
         }, 10000);
 
-        // Prepare Razorpay checkout options
-        const checkoutOptions = {
-          description: `Payment for Order #${orderId.slice(-6)}`,
-          image: 'https://i.imgur.com/3g7nmJC.png', // Placeholder logo
-          currency: paymentAction.currency,
-          amount: paymentAction.amount,
-          order_id: paymentAction.paymentIntentId,
-          prefill: {
-            email: user?.email || undefined,
-            contact: user?.phone || undefined,
-            name: user?.name || undefined,
-          },
-          theme: { color: colors.secondary },
-          notes: {
-            orderId: orderId,
-            orderNumber: `ORDER-${orderId.slice(-6)}`,
-          },
+        // Validate payment session ID is available
+        if (!paymentAction.paymentSessionId) {
+          console.error('❌ [Payment] Payment session ID missing');
+          finalizeFailure('Payment session not available. Please try again.');
+          return;
+        }
+
+        // Prepare Cashfree payment options
+        const paymentOptions = {
+          payment_session_id: paymentAction.paymentSessionId,
+          order_id: paymentAction.paymentIntentId, // Cashfree order_id
+          environment: CashfreeService.isTestMode() ? 'SANDBOX' : 'PRODUCTION' as 'SANDBOX' | 'PRODUCTION',
         };
 
-        console.log('📤 [Payment] Sending to Razorpay:', JSON.stringify(checkoutOptions, null, 2));
-        console.log('🔑 [Payment] Payment Intent ID:', paymentAction.paymentIntentId);
+        console.log('📤 [Payment] Initiating Cashfree payment:', JSON.stringify(paymentOptions, null, 2));
+        console.log('🔑 [Payment] Cashfree Order ID:', paymentAction.paymentIntentId);
+        console.log('🔑 [Payment] Payment Session ID:', paymentAction.paymentSessionId);
         console.log('💰 [Payment] Amount (paise):', paymentAction.amount);
         console.log('💰 [Payment] Amount (₹):', paymentAction.amount / 100);
 
-        console.log('⏳ [Payment] Waiting for Razorpay response...');
-        const paymentResponse = await RazorpayService.openCheckout(checkoutOptions);
+        console.log('⏳ [Payment] Waiting for Cashfree response...');
+        const paymentResponse = await CashfreeService.initiatePayment(paymentOptions);
 
-        console.log('📥 [Payment] Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
+        console.log('📥 [Payment] Received from Cashfree:', JSON.stringify(paymentResponse, null, 2));
 
         // Clear fallback timer since we got the callback
         if (fallbackTimerRef.current) {
@@ -194,15 +190,13 @@ const PaymentStatusScreen: React.FC = () => {
           fallbackTimerRef.current = null;
         }
 
-        console.log('✅ [Payment] Razorpay checkout successful', paymentResponse);
+        console.log('✅ [Payment] Cashfree payment successful', paymentResponse);
 
-        // Extract payment response fields (already validated in RazorpayService)
-        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentResponse;
+        // Extract payment response fields
+        const { order_id } = paymentResponse;
 
         console.log('🔍 [Payment] Extracted payment data:', {
-          razorpay_payment_id,
-          razorpay_order_id,
-          razorpay_signature: razorpay_signature ? `${razorpay_signature.substring(0, 20)}...` : 'missing',
+          order_id,
         });
 
         // Verify payment with server
@@ -211,10 +205,9 @@ const PaymentStatusScreen: React.FC = () => {
         
         let verificationResult;
         try {
-          verificationResult = await verifyRazorpayPayment(orderId, {
-            razorpay_payment_id,
-            razorpay_order_id,
-            razorpay_signature,
+          verificationResult = await verifyCashfreePayment(orderId, {
+            order_id,
+            payment_session_id: paymentAction.paymentSessionId,
           });
         } catch (verifyError) {
           console.error('❌ [Payment] Verification threw an error:', verifyError);
@@ -240,8 +233,8 @@ const PaymentStatusScreen: React.FC = () => {
         setPaymentStatus('paid');
         finalizeSuccess();
       } catch (error: any) {
-        // Payment cancelled or failed at Razorpay level
-        console.error('❌ [Payment] Razorpay error:', error);
+        // Payment cancelled or failed at Cashfree level
+        console.error('❌ [Payment] Cashfree error:', error);
         console.error('❌ [Payment] Error details:', {
           code: error?.code,
           description: error?.description,
@@ -254,7 +247,7 @@ const PaymentStatusScreen: React.FC = () => {
         console.error('❌ [Payment] Error stack:', error?.stack);
 
         // If user cancelled/backed out, do not show "failed" UI; just go back.
-        const isUserCancelled = error?.reason === 'user_cancelled' || error?.code === 0;
+        const isUserCancelled = error?.reason === 'user_cancelled' || error?.code === 0 || error?.description?.includes('cancelled');
         if (isUserCancelled) {
           paymentInProgress.current = false;
           setStatus('processing');
@@ -276,7 +269,7 @@ const PaymentStatusScreen: React.FC = () => {
           return;
         }
 
-        // Razorpay error description - handle both PaymentFailureResponse and generic errors
+        // Cashfree error description - handle both PaymentFailureResponse and generic errors
         const errorMsg = error?.description || error?.reason || error?.message || 'Payment cancelled';
         finalizeFailure(errorMsg);
       }
@@ -300,40 +293,35 @@ const PaymentStatusScreen: React.FC = () => {
     // Re-initiate payment
     const retryPayment = async () => {
       try {
-        console.log('🔄 [Payment] Retry payment - Opening Razorpay checkout');
-        const retryCheckoutOptions = {
-          description: `Payment for Order #${orderId.slice(-6)}`,
-          image: 'https://i.imgur.com/3g7nmJC.png',
-          currency: paymentAction.currency,
-          amount: paymentAction.amount,
-          order_id: paymentAction.paymentIntentId,
-          prefill: {
-            email: user?.email || undefined,
-            contact: user?.phone || undefined,
-            name: user?.name || undefined,
-          },
-          theme: { color: colors.secondary },
-        };
-        console.log('📤 [Payment] Retry - Sending to Razorpay:', JSON.stringify(retryCheckoutOptions, null, 2));
-        
-        const paymentResponse = await RazorpayService.openCheckout(retryCheckoutOptions);
-        
-        console.log('📥 [Payment] Retry - Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
+        if (!paymentAction.paymentSessionId) {
+          setStatus('failed');
+          setError('Payment session not available. Please try again.');
+          return;
+        }
 
-        // Extract payment response fields (already validated in RazorpayService)
-        const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = paymentResponse;
+        console.log('🔄 [Payment] Retry payment - Initiating Cashfree payment');
+        const retryPaymentOptions = {
+          payment_session_id: paymentAction.paymentSessionId,
+          order_id: paymentAction.paymentIntentId,
+          environment: CashfreeService.isTestMode() ? 'SANDBOX' : 'PRODUCTION' as 'SANDBOX' | 'PRODUCTION',
+        };
+        console.log('📤 [Payment] Retry - Sending to Cashfree:', JSON.stringify(retryPaymentOptions, null, 2));
+        
+        const paymentResponse = await CashfreeService.initiatePayment(retryPaymentOptions);
+        
+        console.log('📥 [Payment] Retry - Received from Cashfree:', JSON.stringify(paymentResponse, null, 2));
+
+        // Extract payment response fields
+        const { order_id } = paymentResponse;
         
         console.log('🔍 [Payment] Retry - Extracted payment data:', {
-          razorpay_payment_id,
-          razorpay_order_id,
-          razorpay_signature: razorpay_signature ? `${razorpay_signature.substring(0, 20)}...` : 'missing',
+          order_id,
         });
 
         // Verify payment with server
-        const verificationResult = await verifyRazorpayPayment(orderId, {
-          razorpay_payment_id,
-          razorpay_order_id,
-          razorpay_signature,
+        const verificationResult = await verifyCashfreePayment(orderId, {
+          order_id,
+          payment_session_id: paymentAction.paymentSessionId,
         });
 
         if (!verificationResult.success) {
@@ -375,7 +363,8 @@ const PaymentStatusScreen: React.FC = () => {
       } catch (err: any) {
         setStatus('failed');
         // Handle both PaymentFailureResponse and generic errors
-        setError(err?.description || err?.reason || err?.message || 'Payment retry failed');
+        const errorMsg = err?.description || err?.reason || err?.message || 'Payment retry failed';
+        setError(errorMsg);
       }
     };
 
@@ -398,13 +387,13 @@ const PaymentStatusScreen: React.FC = () => {
             <CustomText variant="h9" style={styles.amount}>
               Amount: ₹{paymentAction.amount / 100}
             </CustomText>
-            {RazorpayService.isTestMode() && (
+            {CashfreeService.isTestMode() && (
               <View style={[styles.testHintBox, { borderColor: colors.secondary }]}>
                 <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{ textAlign: 'center' }}>
-                  Test mode UPI
+                  Test mode
                 </CustomText>
                 <CustomText variant="h9" style={{ opacity: 0.8, textAlign: 'center', marginTop: 6 }}>
-                  In Razorpay checkout, enter UPI ID: success@razorpay (success) or failure@razorpay (fail)
+                  Using Cashfree sandbox environment for testing
                 </CustomText>
               </View>
             )}

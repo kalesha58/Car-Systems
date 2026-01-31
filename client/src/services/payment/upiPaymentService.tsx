@@ -5,7 +5,8 @@ import {useAuthStore} from '../../state/authStore';
 
 export interface IPaymentAction {
   type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
-  paymentIntentId: string;
+  paymentIntentId: string; // Cashfree order_id
+  paymentSessionId?: string; // Cashfree payment_session_id
   amount: number;
   currency: string;
   deeplink?: string;
@@ -18,11 +19,10 @@ export interface IPaymentAction {
  */
 export const initiateUPIPayment = async (paymentAction: IPaymentAction): Promise<boolean> => {
   try {
-    // For Razorpay, we need to construct the UPI deeplink
-    // Format: razorpay://pay?amount={amount}&currency={currency}&order_id={order_id}
+    // For direct UPI deeplink (if needed, though Cashfree SDK handles most payment flows)
+    // Note: Cashfree SDK typically handles payment flow, but this can be used for direct UPI app integration
     if (paymentAction.type === 'UPI_INTENT' || paymentAction.type === 'DEEP_LINK') {
-      const deeplink = paymentAction.deeplink || 
-        `razorpay://pay?amount=${paymentAction.amount}&currency=${paymentAction.currency}&order_id=${paymentAction.paymentIntentId}`;
+      const deeplink = paymentAction.deeplink;
       
       // Try to open UPI app
       const canOpen = await Linking.canOpenURL(deeplink);
