@@ -1,33 +1,33 @@
 import { appAxios } from '../../service/apiInterceptors';
 
-export interface IRazorpayPaymentResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
+export interface ICashfreePaymentResponse {
+  order_id: string;
+  payment_id?: string;
+  payment_session_id?: string;
 }
 
 /**
- * Verify Razorpay payment with server
- * @param orderId - Order ID
- * @param paymentResponse - Payment response from Razorpay checkout
+ * Verify Cashfree payment with server
+ * @param orderId - Order ID (internal order ID)
+ * @param paymentResponse - Payment response from Cashfree (contains order_id from Cashfree)
  * @returns Promise resolving to verification result
  */
-export const verifyRazorpayPayment = async (
+export const verifyCashfreePayment = async (
   orderId: string,
-  paymentResponse: IRazorpayPaymentResponse,
+  paymentResponse: ICashfreePaymentResponse,
 ): Promise<{ success: boolean; data?: any; error?: string }> => {
   try {
     console.log('🔐 [PaymentService] Starting payment verification', {
       orderId,
-      payment_id: paymentResponse.razorpay_payment_id,
-      order_id: paymentResponse.razorpay_order_id,
-      signature: paymentResponse.razorpay_signature ? `${paymentResponse.razorpay_signature.substring(0, 20)}...` : 'missing',
+      cashfree_order_id: paymentResponse.order_id,
+      payment_id: paymentResponse.payment_id,
+      payment_session_id: paymentResponse.payment_session_id,
     });
 
     const verificationPayload = {
-      razorpay_payment_id: paymentResponse.razorpay_payment_id,
-      razorpay_order_id: paymentResponse.razorpay_order_id,
-      razorpay_signature: paymentResponse.razorpay_signature,
+      payment_id: paymentResponse.payment_id || '',
+      order_id: paymentResponse.order_id,
+      payment_session_id: paymentResponse.payment_session_id,
     };
 
     console.log('📤 [PaymentService] Sending verification request to:', `/user/orders/${orderId}/verify-payment`);
@@ -70,3 +70,5 @@ export const verifyRazorpayPayment = async (
   }
 };
 
+// Legacy function name for backward compatibility
+export const verifyRazorpayPayment = verifyCashfreePayment;
