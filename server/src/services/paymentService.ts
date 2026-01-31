@@ -3,7 +3,7 @@ import { cashfreeClient, isCashfreeEnabled } from '../config/cashfree';
 import { getPaymentDetails } from './payment/gatewayService';
 
 export interface IVerifyPaymentData {
-  payment_id: string;
+  payment_id?: string;
   order_id: string;
   payment_session_id?: string;
   // Legacy fields for backward compatibility
@@ -40,22 +40,23 @@ export const verifyPayment = async (paymentData: IVerifyPaymentData): Promise<bo
     // If payment_id is not provided, fetch order details from Cashfree to get payment_id
     let paymentDetails;
     if (!paymentId) {
-      // Fetch order details to get payment information
-      const xApiVersion = '2023-08-01';
+      // Fetch payments for the order
       try {
-        const orderResponse = await cashfreeClient!.PGFetchOrder(xApiVersion, orderId);
-        if (orderResponse.data?.payments && orderResponse.data.payments.length > 0) {
-          paymentId = orderResponse.data.payments[0].cf_payment_id || 
-                     orderResponse.data.payments[0].payment_id ||
-                     orderResponse.data.payments[0].id;
+        const paymentsResponse = await cashfreeClient!.PGOrderFetchPayments(orderId);
+        if (paymentsResponse.data && paymentsResponse.data.length > 0) {
+          const payment = paymentsResponse.data[0];
+          paymentId = payment.cf_payment_id?.toString();
         }
         // If still no payment_id, check order status directly
-        if (!paymentId && orderResponse.data?.order_status === 'PAID') {
-          logger.info('Order is paid but payment_id not available', { orderId });
-          return true;
+        if (!paymentId) {
+          const orderResponse = await cashfreeClient!.PGFetchOrder(orderId);
+          if (orderResponse.data?.order_status === 'PAID') {
+            logger.info('Order is paid but payment_id not available', { orderId });
+            return true;
+          }
         }
       } catch (error) {
-        logger.warn('Could not fetch order details from Cashfree', { orderId, error });
+        logger.warn('Could not fetch payment details from Cashfree', { orderId, error });
         return false;
       }
     }
@@ -74,7 +75,7 @@ export const verifyPayment = async (paymentData: IVerifyPaymentData): Promise<bo
 
     // Fetch payment details from Cashfree to verify payment status
     try {
-      paymentDetails = await getPaymentDetails(paymentId);
+      paymentDetails = await getPaymentDetails(orderId, paymentId);
     } catch (error) {
       logger.warn('Could not fetch payment details, verifying using order status', { paymentId, orderId, error });
       // Fallback to order status verification

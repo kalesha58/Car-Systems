@@ -243,8 +243,8 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
       return;
     }
 
-    // Get payment details from Cashfree
-    const paymentDetails = await getPaymentDetails(paymentId);
+    // Get payment details from Cashfree (requires order_id)
+    const paymentDetails = await getPaymentDetails(cashfreeOrderId, paymentId);
 
     // Find order by Cashfree order_id (stored in paymentIntentId)
     let order = await Order.findOne({ paymentIntentId: cashfreeOrderId });

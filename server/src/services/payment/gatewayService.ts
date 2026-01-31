@@ -69,12 +69,13 @@ export const createPaymentIntent = async (
   }
 
   try {
-    const xApiVersion = '2023-08-01';
     const orderRequest = {
+      order_id: request.orderId,
       order_amount: request.amount / 100, // Cashfree expects amount in rupees
       order_currency: request.currency || 'INR',
       customer_details: {
         customer_id: request.orderId,
+        customer_phone: '9999999999', // Required by Cashfree, can be updated from order data if available
       },
       order_meta: {
         return_url: `${process.env.APP_URL || 'https://test.cashfree.com'}/payment/return?order_id=${request.orderId}`,
@@ -85,7 +86,7 @@ export const createPaymentIntent = async (
       }),
     };
 
-    const response = await cashfreeClient!.PGCreateOrder(xApiVersion, orderRequest);
+    const response = await cashfreeClient!.PGCreateOrder(orderRequest);
 
     if (!response.data) {
       throw new Error('Failed to create order: No data in response');
@@ -161,8 +162,7 @@ export const getPaymentStatus = async (
   }
 
   try {
-    const xApiVersion = '2023-08-01';
-    const response = await cashfreeClient!.PGFetchOrder(xApiVersion, orderId);
+    const response = await cashfreeClient!.PGFetchOrder(orderId);
 
     if (!response.data) {
       return null;
@@ -190,16 +190,27 @@ export const getPaymentStatus = async (
 
 /**
  * Get payment details by payment ID
+ * Note: Cashfree requires order_id to fetch payment. This function should be called with order_id.
+ * For fetching by payment_id only, use PGOrderFetchPayments and filter.
  */
-export const getPaymentDetails = async (paymentId: string): Promise<any> => {
+export const getPaymentDetails = async (orderId: string, paymentId?: string): Promise<any> => {
   if (!isCashfreeEnabled()) {
     throw new Error('Cashfree is not configured');
   }
 
   try {
-    const xApiVersion = '2023-08-01';
-    const response = await cashfreeClient!.PGFetchPayment(xApiVersion, paymentId);
-    return response.data;
+    if (paymentId) {
+      // Fetch specific payment by order_id and payment_id
+      const response = await cashfreeClient!.PGOrderFetchPayment(orderId, paymentId);
+      return response.data;
+    } else {
+      // Fetch all payments for the order and return the first one
+      const response = await cashfreeClient!.PGOrderFetchPayments(orderId);
+      if (response.data && response.data.length > 0) {
+        return response.data[0];
+      }
+      return null;
+    }
   } catch (error: any) {
     logger.error('Error fetching payment details:', error);
     throw new Error(`Failed to fetch payment details: ${error?.message || 'Unknown error'}`);
@@ -233,32 +244,6 @@ export const createPayout = async (request: IPayoutRequest): Promise<IPayoutResp
       notes: request.notes,
       created_at: Math.floor(Date.now() / 1000),
     };
-
-    if (!payoutResponse.data) {
-      throw new Error('Failed to create payout: No data in response');
-    }
-
-    const payoutData = payoutResponse.data;
-
-    logger.info('Payout created', {
-      payoutId: payoutData.reference_id,
-      amount: payoutData.amount,
-    });
-
-    return {
-      id: payoutData.reference_id || `payout_${Date.now()}`,
-      entity: 'payout',
-      amount: (payoutData.amount || 0) * 100, // Convert to paise
-      currency: payoutData.currency || 'INR',
-      fees: (payoutData.fees || 0) * 100,
-      tax: 0,
-      status: payoutData.status || 'PENDING',
-      utr: payoutData.utr || '',
-      mode: payoutData.mode || request.mode || 'NEFT',
-      reference_id: payoutData.reference_id || request.referenceId || `payout_${Date.now()}`,
-      notes: request.notes,
-      created_at: Math.floor(Date.now() / 1000),
-    };
   } catch (error: any) {
     logger.error('Error creating payout:', error);
     // If payouts API not available, return a mock response
@@ -284,9 +269,10 @@ export const createPayout = async (request: IPayoutRequest): Promise<IPayoutResp
 
 /**
  * Refund payment
+ * Note: Cashfree requires order_id to create refund
  */
 export const refundPayment = async (
-  paymentId: string,
+  orderId: string,
   amount?: number,
   notes?: Record<string, string>,
 ): Promise<any> => {
@@ -295,14 +281,13 @@ export const refundPayment = async (
   }
 
   try {
-    const xApiVersion = '2023-08-01';
     const refundRequest: any = {
       refund_amount: amount ? amount / 100 : undefined, // Cashfree expects amount in rupees
       refund_note: JSON.stringify(notes || {}),
       refund_id: `refund_${Date.now()}`,
     };
 
-    const response = await cashfreeClient!.PGCreateRefund(xApiVersion, paymentId, refundRequest);
+    const response = await cashfreeClient!.PGOrderCreateRefund(orderId, refundRequest);
 
     if (!response.data) {
       throw new Error('Failed to create refund: No data in response');
@@ -312,7 +297,7 @@ export const refundPayment = async (
 
     logger.info('Refund created', {
       refundId: refundData.refund_id,
-      paymentId,
+      orderId,
       amount: refundData.refund_amount,
     });
 

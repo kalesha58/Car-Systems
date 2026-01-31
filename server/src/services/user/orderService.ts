@@ -15,6 +15,7 @@ import { sendPushNotification, createNotification } from '../notificationService
 export interface IPaymentAction {
   type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
   paymentIntentId: string;
+  paymentSessionId?: string;
   amount: number;
   currency: string;
   deeplink?: string;

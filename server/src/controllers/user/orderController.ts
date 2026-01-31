@@ -173,7 +173,7 @@ export const verifyPaymentController = async (
 
     // Verify payment using Cashfree API
     const isVerified = await verifyPayment({
-      payment_id: paymentId,
+      payment_id: paymentId || undefined,
       order_id: cashfreeOrderId,
       payment_session_id: paymentData.payment_session_id,
       // Legacy fields for backward compatibility
@@ -207,12 +207,10 @@ export const verifyPaymentController = async (
     if (!finalPaymentId) {
       try {
         const { cashfreeClient } = await import('../../config/cashfree');
-        const xApiVersion = '2023-08-01';
-        const orderResponse = await cashfreeClient!.PGFetchOrder(xApiVersion, cashfreeOrderId);
-        if (orderResponse.data?.payments && orderResponse.data.payments.length > 0) {
-          finalPaymentId = orderResponse.data.payments[0].cf_payment_id || 
-                          orderResponse.data.payments[0].payment_id ||
-                          orderResponse.data.payments[0].id;
+        const paymentsResponse = await cashfreeClient!.PGOrderFetchPayments(cashfreeOrderId);
+        if (paymentsResponse.data && paymentsResponse.data.length > 0) {
+          const payment = paymentsResponse.data[0];
+          finalPaymentId = payment.cf_payment_id?.toString();
         }
       } catch (error) {
         logger.warn('Could not fetch payment_id from Cashfree order', { cashfreeOrderId, error });
