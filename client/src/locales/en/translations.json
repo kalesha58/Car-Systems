@@ -281,7 +281,7 @@
     "phone": "Phone",
     "enterPhone": "Enter phone number",
     "gst": "GST Number",
-    "enterGST": "Enter GST number (optional)",
+    "enterGST": "Enter GST number (e.g., 27AABCU9603R1ZX)",
     "invalidGST": "Invalid GST number format",
     "businessNameRequired": "Business name is required",
     "businessTypeRequired": "Business type is required",

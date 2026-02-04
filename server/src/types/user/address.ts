@@ -16,6 +16,8 @@ export interface IAddressFormData {
   flatNumber?: string;
   buildingName?: string;
   townOrCity?: string;
+  pincode?: string;
+  state?: string;
   isDefault?: boolean;
 }
 
@@ -37,6 +39,8 @@ export interface IAddressResponse {
   flatNumber?: string;
   buildingName?: string;
   townOrCity?: string;
+  pincode?: string;
+  state?: string;
   isDefault?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +82,8 @@ export const mapAddressToResponse = (address: IAddressDocument): IAddressRespons
     flatNumber: address.flatNumber,
     buildingName: address.buildingName,
     townOrCity: address.townOrCity,
+    pincode: address.pincode,
+    state: address.state,
     isDefault: address.isDefault,
     createdAt: address.createdAt.toISOString(),
     updatedAt: address.updatedAt.toISOString(),

@@ -261,7 +261,7 @@
     "phone": "ఫోన్",
     "enterPhone": "ఫోన్ నంబర్ నమోదు చేయండి",
     "gst": "GST నంబర్",
-    "enterGST": "GST నంబర్ నమోదు చేయండి (ఐచ్ఛికం)",
+    "enterGST": "GST నంబర్ నమోదు చేయండి (ఉదా., 27AABCU9603R1ZX)",
     "invalidGST": "చెల్లని GST నంబర్ ఫార్మాట్",
     "businessNameRequired": "వ్యాపార పేరు అవసరం",
     "businessTypeRequired": "వ్యాపార రకం అవసరం",

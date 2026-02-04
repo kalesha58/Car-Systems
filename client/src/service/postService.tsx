@@ -22,6 +22,144 @@ export const getPostById = async (postId: string): Promise<IPostResponse> => {
 };
 
 /**
+ * Upload document (image or PDF) for business registration
+ * @param fileUri - Local URI of the selected file
+ * @param mimeType - MIME type of the file (e.g., 'image/jpeg', 'application/pdf')
+ * @param fileName - Optional file name
+ * @returns Promise with uploaded file URL
+ */
+export const uploadDocument = async (
+  fileUri: string,
+  mimeType?: string,
+  fileName?: string,
+): Promise<string> => {
+  try {
+    const formData = new FormData();
+    
+    let detectedMimeType = mimeType || 'image/jpeg';
+    let fileExtension = 'jpg';
+    let processedUri = fileUri;
+    let finalFileName = fileName || `document_${Date.now()}`;
+
+    // Detect file type from URI or mimeType
+    if (mimeType) {
+      detectedMimeType = mimeType;
+      if (mimeType === 'application/pdf') {
+        fileExtension = 'pdf';
+      } else if (mimeType.startsWith('image/')) {
+        // Extract extension from mimeType
+        if (mimeType.includes('png')) fileExtension = 'png';
+        else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) fileExtension = 'jpg';
+        else if (mimeType.includes('gif')) fileExtension = 'gif';
+        else if (mimeType.includes('webp')) fileExtension = 'webp';
+      }
+    } else {
+      // Try to detect from URI
+      const uriParts = fileUri.split('.');
+      if (uriParts.length > 1) {
+        const ext = uriParts.pop()?.split('?')[0]?.toLowerCase();
+        if (ext === 'pdf') {
+          detectedMimeType = 'application/pdf';
+          fileExtension = 'pdf';
+        } else if (ext && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+          fileExtension = ext;
+          detectedMimeType = ext === 'png' ? 'image/png' :
+                            ext === 'gif' ? 'image/gif' :
+                            ext === 'webp' ? 'image/webp' :
+                            'image/jpeg';
+        }
+      }
+    }
+
+    // Handle URI for different platforms
+    const isContentUri = fileUri.startsWith('content://');
+    const isFileUri = fileUri.startsWith('file://');
+    
+    if (Platform.OS === 'ios') {
+      // iOS: Remove file:// prefix for FormData
+      processedUri = fileUri.replace('file://', '');
+    } else if (Platform.OS === 'android') {
+      if (isContentUri) {
+        // Android content:// URI - keep as is
+        processedUri = fileUri;
+      } else if (isFileUri) {
+        // Android file:// URI - keep file:// prefix
+        processedUri = fileUri;
+      }
+    }
+
+    // Ensure fileName has extension
+    if (!finalFileName.includes('.')) {
+      finalFileName = `${finalFileName}.${fileExtension}`;
+    }
+
+    // Add file to FormData
+    formData.append('image', {
+      uri: processedUri,
+      type: detectedMimeType,
+      name: finalFileName,
+    } as any);
+
+    const response = await appAxios.post('/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000, // 30 second timeout
+    });
+
+    if (response.data && response.data.success && response.data.Response?.url) {
+      return response.data.Response.url;
+    }
+    
+    const errorMessage = response.data?.Response?.ReturnMessage ||
+                        response.data?.message ||
+                        response.data?.error ||
+                        'Failed to upload document';
+    throw new Error(errorMessage);
+  } catch (error: any) {
+    console.error('Upload document error:', {
+      message: error?.message,
+      response: error?.response?.data,
+      status: error?.response?.status,
+      uri: fileUri.substring(0, 100),
+    });
+    
+    if (!error?.response) {
+      if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+        throw new Error('Upload timeout. Please check your internet connection and try again.');
+      }
+      if (error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      throw new Error('Network error. Please check your internet connection and try again.');
+    }
+    
+    if (error?.response?.status === 400) {
+      const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
+                          error?.response?.data?.message ||
+                          'Invalid file. Please select a valid image or PDF and try again.';
+      throw new Error(errorMessage);
+    }
+    
+    if (error?.response?.status === 401) {
+      throw new Error('Unauthorized. Please log in and try again.');
+    }
+    
+    if (error?.response?.status >= 500) {
+      throw new Error('Server error. Please try again later.');
+    }
+    
+    const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
+                        error?.response?.data?.message ||
+                        error?.response?.data?.error ||
+                        error?.message ||
+                        'Failed to upload document. Please try again.';
+    
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * Upload image for post
  * @param imageUri - Local URI of the selected image or base64 data URI
  * @returns Promise with uploaded image URL

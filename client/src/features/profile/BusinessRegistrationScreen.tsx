@@ -21,7 +21,8 @@ import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
 import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
-import { uploadImage } from '@service/postService';
+import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
+import { uploadImage, uploadDocument } from '@service/postService';
 import { storage } from '@state/storage';
 import {
   createBusinessRegistration,
@@ -182,6 +183,10 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(initialDraft?.shopPhotoUris ?? existingShopPhotos);
   const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
   const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
+  const [idDocMimeType, setIdDocMimeType] = useState<string | null>(null);
+  const [panDocMimeType, setPanDocMimeType] = useState<string | null>(null);
+  const [idDocFileName, setIdDocFileName] = useState<string | null>(null);
+  const [panDocFileName, setPanDocFileName] = useState<string | null>(null);
 
   // Field-level validation errors
   const [fieldErrors, setFieldErrors] = useState<{
@@ -310,47 +315,71 @@ const BusinessRegistrationScreen: React.FC = () => {
     );
   };
 
-  const pickSingleDoc = (target: 'ID' | 'PAN') => {
-    // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
+  const pickSingleDoc = async (target: 'ID' | 'PAN') => {
+    // Ensure draft is saved BEFORE opening picker (in case Android recreates activity)
     persistDraft();
     console.log('[BusinessRegistrationScreen] pickSingleDoc', {
       instanceId: screenInstanceIdRef.current,
       target,
     });
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        quality: 0.8,
-        includeBase64: false,
-        selectionLimit: 1,
-      },
-      (response: ImagePickerResponse) => {
+    
+    try {
+      // Use DocumentPicker to allow both images and PDFs
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
+        allowMultiSelection: false,
+      });
+
+      if (result && result.length > 0) {
+        const file = result[0];
+        const uri = file.uri;
+        const mimeType = file.type || '';
+        
         console.log('[BusinessRegistrationScreen] pickSingleDoc callback', {
           instanceId: screenInstanceIdRef.current,
           target,
-          didCancel: response.didCancel,
-          errorCode: response.errorCode,
-          errorMessage: response.errorMessage,
-          assetsCount: response.assets?.length || 0,
-          firstUri: response.assets?.[0]?.uri,
+          uri,
+          mimeType,
+          name: file.name,
         });
-        if (response.didCancel || response.errorCode) return;
-        const uri = response.assets?.[0]?.uri;
+
         if (!uri) return;
+
+        // Validate file type (image or PDF)
+        const isImage = mimeType.startsWith('image/');
+        const isPDF = mimeType === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
+        
+        if (!isImage && !isPDF) {
+          showError('Please select an image or PDF file');
+          return;
+        }
+
         if (target === 'ID') {
           setIdDocUri(uri);
+          setIdDocMimeType(mimeType);
+          setIdDocFileName(file.name || null);
           if (fieldErrors.idDoc) {
             setFieldErrors(prev => ({ ...prev, idDoc: undefined }));
           }
         }
         if (target === 'PAN') {
           setPanDocUri(uri);
+          setPanDocMimeType(mimeType);
+          setPanDocFileName(file.name || null);
           if (fieldErrors.panDoc) {
             setFieldErrors(prev => ({ ...prev, panDoc: undefined }));
           }
         }
-      },
-    );
+      }
+    } catch (error: any) {
+      // User cancelled or error occurred
+      if (DocumentPicker.isCancel(error)) {
+        console.log('[BusinessRegistrationScreen] User cancelled document picker');
+        return;
+      }
+      console.error('[BusinessRegistrationScreen] Error picking document:', error);
+      showError('Failed to pick document. Please try again.');
+    }
   };
 
   const removeShopPhoto = (index: number) => {
@@ -360,11 +389,15 @@ const BusinessRegistrationScreen: React.FC = () => {
   const clearDoc = (target: 'ID' | 'PAN') => {
     if (target === 'ID') {
       setIdDocUri(null);
+      setIdDocMimeType(null);
+      setIdDocFileName(null);
       const error = validateField('idDoc', null);
       setFieldErrors(prev => ({ ...prev, idDoc: error }));
     }
     if (target === 'PAN') {
       setPanDocUri(null);
+      setPanDocMimeType(null);
+      setPanDocFileName(null);
       const error = validateField('panDoc', null);
       setFieldErrors(prev => ({ ...prev, panDoc: error }));
     }
@@ -749,6 +782,16 @@ const BusinessRegistrationScreen: React.FC = () => {
         return await uploadImage(uri);
       };
 
+      const uploadDocumentIfNeeded = async (
+        uri: string | null,
+        mimeType: string | null,
+        fileName: string | null,
+      ): Promise<string> => {
+        if (!uri) throw new Error('Document URI is required');
+        if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
+        return await uploadDocument(uri, mimeType || undefined, fileName || undefined);
+      };
+
       // Parallelize image uploads
       const uploadedShopPhotos = await Promise.all(
         shopPhotoUris.map(async (uri) => {
@@ -759,8 +802,8 @@ const BusinessRegistrationScreen: React.FC = () => {
       console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
       const [idDocUrl, panDocUrl] = await Promise.all([
-        uploadIfNeeded(idDocUri),
-        uploadIfNeeded(panDocUri)
+        uploadDocumentIfNeeded(idDocUri, idDocMimeType, idDocFileName),
+        uploadDocumentIfNeeded(panDocUri, panDocMimeType, panDocFileName),
       ]);
       const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [
         { kind: 'ID', url: idDocUrl },

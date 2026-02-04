@@ -24,25 +24,36 @@ const router = Router();
  */
 router.post('/image', authMiddleware, uploadSingle, async (req: IAuthRequest, res: Response, next: NextFunction) => {
   try {
-    logger.info('Image upload request received');
+    logger.info('File upload request received');
     
     if (!req.file) {
-      logger.warn('No image file provided in upload request');
+      logger.warn('No file provided in upload request');
       return res.status(400).json({
         success: false,
         Response: {
-          ReturnMessage: 'No image file provided',
+          ReturnMessage: 'No file provided',
         },
       });
     }
 
     // Determine if using memory storage (buffer) or disk storage (path)
     const fileSource = (req.file as any).buffer || req.file.path;
-    logger.info(`Uploading file, size: ${req.file.size} bytes, type: ${(req.file as any).buffer ? 'buffer' : 'file'}`);
+    const isPDF = req.file.mimetype === 'application/pdf';
+    const isImage = req.file.mimetype.startsWith('image/');
+    
+    logger.info(`Uploading file, size: ${req.file.size} bytes, type: ${req.file.mimetype}, isPDF: ${isPDF}, isImage: ${isImage}`);
 
-    // Upload to Cloudinary (handles both buffer and file path)
-    const result = await uploadToCloudinary(fileSource, 'car-connect/posts');
-    logger.info(`Image uploaded to Cloudinary: ${result.url}`);
+    // Use different folder for documents (PDFs) vs images
+    const cloudinaryFolder = isPDF ? 'car-connect/documents' : 'car-connect/posts';
+    
+    // Upload to Cloudinary (handles both buffer and file path, and both images and PDFs)
+    // Use 'auto' resource type for PDFs to allow Cloudinary to handle them properly
+    const result = await uploadToCloudinary(
+      fileSource,
+      cloudinaryFolder,
+      isPDF ? { resourceType: 'auto' } : undefined
+    );
+    logger.info(`File uploaded to Cloudinary: ${result.url}, type: ${req.file.mimetype}`);
 
     // Delete local file after upload (only if using disk storage)
     if (req.file.path && fs.existsSync(req.file.path)) {

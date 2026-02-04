@@ -19,6 +19,8 @@ export interface IAddressDocumentFields {
   flatNumber?: string; // Flat/Apartment number
   buildingName?: string; // Building name
   townOrCity?: string; // Town or city name
+  pincode?: string; // Pincode/Postal code
+  state?: string; // State
   isDefault?: boolean; // Mark address as default
   createdAt: Date;
   updatedAt: Date;
@@ -105,6 +107,14 @@ const addressSchema = new Schema<any>(
       trim: true,
     },
     townOrCity: {
+      type: String,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      trim: true,
+    },
+    state: {
       type: String,
       trim: true,
     },

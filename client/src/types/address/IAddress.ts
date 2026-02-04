@@ -15,6 +15,8 @@ export interface IAddress {
   flatNumber?: string;
   buildingName?: string;
   townOrCity?: string;
+  pincode?: string;
+  state?: string;
   isDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -36,6 +38,8 @@ export interface IAddressFormData {
   flatNumber?: string;
   buildingName?: string;
   townOrCity?: string;
+  pincode?: string;
+  state?: string;
   isDefault?: boolean;
 }
 

@@ -40,6 +40,8 @@ const AddressForm = () => {
   const [flatNumber, setFlatNumber] = useState('');
   const [buildingName, setBuildingName] = useState('');
   const [townOrCity, setTownOrCity] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [state, setState] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -81,6 +83,8 @@ const AddressForm = () => {
       setFlatNumber(address.flatNumber || '');
       setBuildingName(address.buildingName || '');
       setTownOrCity(address.townOrCity || '');
+      setPincode(address.pincode || '');
+      setState(address.state || '');
       setIsDefault(address.isDefault || false);
       // Extract additional details if any (assuming fullAddress contains formattedAddress + additional)
       const mainAddress = address.fullAddress.split(',')[0];
@@ -163,6 +167,8 @@ const AddressForm = () => {
           flatNumber: flatNumber.trim() || undefined,
           buildingName: buildingName.trim() || undefined,
           townOrCity: townOrCity.trim() || undefined,
+          pincode: pincode.trim() || undefined,
+          state: state.trim() || undefined,
           isDefault,
         };
 
@@ -237,6 +243,8 @@ const AddressForm = () => {
           flatNumber: flatNumber.trim() || undefined,
           buildingName: buildingName.trim() || undefined,
           townOrCity: townOrCity.trim() || undefined,
+          pincode: pincode.trim() || undefined,
+          state: state.trim() || undefined,
           isDefault,
         };
 
@@ -552,6 +560,38 @@ const AddressForm = () => {
           value={townOrCity}
           onChangeText={setTownOrCity}
           placeholder="Town or City"
+          left={
+            <Icon
+              name="map-outline"
+              color={Colors.secondary}
+              style={{marginLeft: 10}}
+              size={RFValue(18)}
+            />
+          }
+          right={false}
+        />
+
+        <CustomInput
+          value={pincode}
+          onChangeText={setPincode}
+          placeholder="Pincode"
+          keyboardType="numeric"
+          maxLength={6}
+          left={
+            <Icon
+              name="location-outline"
+              color={Colors.secondary}
+              style={{marginLeft: 10}}
+              size={RFValue(18)}
+            />
+          }
+          right={false}
+        />
+
+        <CustomInput
+          value={state}
+          onChangeText={setState}
+          placeholder="State"
           left={
             <Icon
               name="map-outline"

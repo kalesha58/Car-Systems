@@ -261,7 +261,7 @@
     "phone": "फ़ोन",
     "enterPhone": "फ़ोन नंबर दर्ज करें",
     "gst": "GST नंबर",
-    "enterGST": "GST नंबर दर्ज करें (वैकल्पिक)",
+    "enterGST": "GST नंबर दर्ज करें (उदा., 27AABCU9603R1ZX)",
     "invalidGST": "अमान्य GST नंबर प्रारूप",
     "businessNameRequired": "व्यवसाय का नाम आवश्यक है",
     "businessTypeRequired": "व्यवसाय प्रकार आवश्यक है",
