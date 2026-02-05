@@ -41,6 +41,9 @@ export const upload = multer({
 // Single image upload middleware
 export const uploadSingle = upload.single('image');
 
+// Single file upload middleware (for documents - images or PDFs)
+export const uploadFile = upload.single('file');
+
 // Multiple images upload middleware
 export const uploadMultiple = upload.array('images', 10); // Max 10 images
 

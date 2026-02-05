@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { uploadSingle, uploadMultiple } from '../../middleware/uploadMiddleware';
+import { uploadSingle, uploadMultiple, uploadFile } from '../../middleware/uploadMiddleware';
 import { uploadToCloudinary } from '../../config/cloudinary';
 import { authMiddleware, IAuthRequest, IMulterFile } from '../../middleware/authMiddleware';
 import { Response, NextFunction } from 'express';
@@ -70,6 +70,96 @@ router.post('/image', authMiddleware, uploadSingle, async (req: IAuthRequest, re
     });
   } catch (error) {
     logger.error('Error in image upload:', error);
+    
+    // Clean up local file on error (only if using disk storage)
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+        logger.info('Local file cleaned up after error');
+      } catch (unlinkError) {
+        logger.error('Error deleting local file:', unlinkError);
+      }
+    }
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/upload/images:
+ *   post:
+ *     summary: Upload multiple images
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Images uploaded successfully
+ *       401:
+ *         description: Unauthorized
+ */
+/**
+ * @swagger
+ * /api/upload/file:
+ *   post:
+ *     summary: Upload single file (image or PDF)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: File uploaded successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/file', authMiddleware, uploadFile, async (req: IAuthRequest, res: Response, next: NextFunction) => {
+  try {
+    logger.info('File upload request received (file endpoint)');
+    
+    if (!req.file) {
+      logger.warn('No file provided in upload request');
+      return res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'No file provided',
+        },
+      });
+    }
+
+    // Determine if using memory storage (buffer) or disk storage (path)
+    const fileSource = (req.file as any).buffer || req.file.path;
+    const isPDF = req.file.mimetype === 'application/pdf';
+    const isImage = req.file.mimetype.startsWith('image/');
+    
+    logger.info(`Uploading file, size: ${req.file.size} bytes, type: ${req.file.mimetype}, isPDF: ${isPDF}, isImage: ${isImage}`);
+
+    // Use different folder for documents (PDFs) vs images
+    const cloudinaryFolder = isPDF ? 'car-connect/documents' : 'car-connect/posts';
+    
+    // Upload to Cloudinary (handles both buffer and file path, and both images and PDFs)
+    // Use 'auto' resource type for PDFs to allow Cloudinary to handle them properly
+    const result = await uploadToCloudinary(
+      fileSource,
+      cloudinaryFolder,
+      isPDF ? { resourceType: 'auto' } : undefined
+    );
+    logger.info(`File uploaded to Cloudinary: ${result.url}, type: ${req.file.mimetype}`);
+
+    // Delete local file after upload (only if using disk storage)
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+      logger.info('Local file deleted after upload');
+    }
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        url: result.url,
+        publicId: result.publicId,
+      },
+    });
+  } catch (error) {
+    logger.error('Error in file upload:', error);
     
     // Clean up local file on error (only if using disk storage)
     if (req.file && req.file.path && fs.existsSync(req.file.path)) {

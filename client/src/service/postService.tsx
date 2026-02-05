@@ -69,6 +69,24 @@ export const uploadDocument = async (
                 'image/jpeg';
         }
       }
+
+      // If still default/unknown, try to detect from fileName
+      if (fileName && (detectedMimeType === 'image/jpeg' || detectedMimeType === 'application/octet-stream')) {
+        const nameParts = fileName.split('.');
+        if (nameParts.length > 1) {
+          const ext = nameParts.pop()?.toLowerCase();
+          if (ext === 'pdf') {
+            detectedMimeType = 'application/pdf';
+            fileExtension = 'pdf';
+          } else if (ext && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            fileExtension = ext;
+            detectedMimeType = ext === 'png' ? 'image/png' :
+              ext === 'gif' ? 'image/gif' :
+                ext === 'webp' ? 'image/webp' :
+                  'image/jpeg';
+          }
+        }
+      }
     }
 
     // Handle URI for different platforms
@@ -102,8 +120,8 @@ export const uploadDocument = async (
       finalFileName = `${finalFileName}.${fileExtension}`;
     }
 
-    // Add file to FormData
-    formData.append('image', {
+    // Add file to FormData - use 'file' field name for the /upload/file endpoint
+    formData.append('file', {
       uri: processedUri,
       type: detectedMimeType,
       name: finalFileName,
@@ -118,7 +136,7 @@ export const uploadDocument = async (
       fileName: finalFileName,
     });
 
-    const response = await appAxios.post('/upload/image', formData, {
+    const response = await appAxios.post('/upload/file', formData, {
       headers: {
         // 'Content-Type': 'multipart/form-data', // Let Axios set the correct boundary
         'Accept': 'application/json',
@@ -142,17 +160,49 @@ export const uploadDocument = async (
       message: error?.message,
       response: error?.response?.data,
       status: error?.response?.status,
+      code: error?.code,
+      errno: error?.errno,
       uri: fileUri.substring(0, 100),
+      platform: Platform.OS,
+      processedUri: processedUri?.substring(0, 100),
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
 
+    // Handle network errors (no response from server)
     if (!error?.response) {
+      // Check for specific network error codes
       if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
         throw new Error('Upload timeout. Please check your internet connection and try again.');
       }
-      if (error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+
+      // Check for Android-specific errors
+      if (Platform.OS === 'android') {
+        // Android might have file access issues
+        if (error?.message?.includes('ENOENT') || error?.message?.includes('No such file')) {
+          throw new Error('File not found. Please select the file again.');
+        }
+        if (error?.message?.includes('EACCES') || error?.message?.includes('permission')) {
+          throw new Error('File access denied. Please check app permissions.');
+        }
+        // Android emulator network issues
+        if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+          throw new Error('Cannot connect to server. If using Android emulator, ensure your backend server is accessible. Check your BASE_URL in config.tsx');
+        }
       }
-      throw new Error('Network error. Please check your internet connection and try again.');
+
+      if (error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
+        // Provide more helpful error message for Android emulator
+        const errorMsg = Platform.OS === 'android'
+          ? 'Network error. If using Android emulator, ensure your backend server is accessible. Check your BASE_URL in config.tsx. For emulator, use 10.0.2.2 instead of localhost.'
+          : 'Network error. Please check your internet connection and try again.';
+        throw new Error(errorMsg);
+      }
+
+      // Generic network error with more context
+      const genericError = Platform.OS === 'android'
+        ? `Network error (${error?.code || 'unknown'}). Please check your internet connection and ensure the backend server is running and accessible. For Android emulator, use 10.0.2.2 instead of localhost.`
+        : 'Network error. Please check your internet connection and try again.';
+      throw new Error(genericError);
     }
 
     if (error?.response?.status === 400) {
@@ -249,8 +299,13 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
         }
         // If no valid extension found, default to jpeg (common for Android cache files)
       } else {
-        // Fallback: assume it's a file path without file:// prefix
-        processedUri = imageUri;
+        // Fallback: assume it's a file path
+        // React Native Android FormData REQUIRE 'file://' prefix for absolute paths
+        if (imageUri.startsWith('/')) {
+          processedUri = `file://${imageUri}`;
+        } else {
+          processedUri = imageUri;
+        }
         fileExtension = 'jpg';
       }
     }

@@ -331,19 +331,21 @@ const BusinessRegistrationScreen: React.FC = () => {
       instanceId: screenInstanceIdRef.current,
       target,
     });
-    
+
     try {
       // Use DocumentPicker to allow both images and PDFs
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
         allowMultiSelection: false,
+        copyTo: 'cachesDirectory',
       });
 
       if (result && result.length > 0) {
         const file = result[0];
-        const uri = file.uri;
+        // Use fileCopyUri if available (persistent), otherwise uri
+        const uri = file.fileCopyUri || file.uri;
         const mimeType = file.type || '';
-        
+
         console.log('[BusinessRegistrationScreen] pickSingleDoc callback', {
           instanceId: screenInstanceIdRef.current,
           target,
@@ -357,7 +359,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         // Validate file type (image or PDF)
         const isImage = mimeType.startsWith('image/');
         const isPDF = mimeType === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf');
-        
+
         if (!isImage && !isPDF) {
           showError('Please select an image or PDF file');
           return;
@@ -799,7 +801,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
       // Upload documents only if they are provided (documents are optional)
       const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
-      
+
       if (idDocUri) {
         try {
           const idDocUrl = await uploadDocumentIfNeeded(idDocUri, idDocMimeType, idDocFileName);
@@ -811,7 +813,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           return;
         }
       }
-      
+
       if (panDocUri) {
         try {
           const panDocUrl = await uploadDocumentIfNeeded(panDocUri, panDocMimeType, panDocFileName);
@@ -823,7 +825,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           return;
         }
       }
-      
+
       console.log('[BusinessRegistrationScreen] Uploaded documents:', uploadedDocuments);
 
       // Prepare payout object if payout type is selected
@@ -1222,9 +1224,9 @@ const BusinessRegistrationScreen: React.FC = () => {
             <CustomText style={styles.noticeText}>
               {canUpdateFields
                 ? t('dealer.updateNoticeText') ||
-                  'You can update the following fields: Business Name, Type, Address, Phone, GST, Payout Details, Shop Photos, and Documents. Changes will require admin approval.'
+                'You can update the following fields: Business Name, Type, Address, Phone, GST, Payout Details, Shop Photos, and Documents. Changes will require admin approval.'
                 : t('dealer.cannotUpdateNoticeText') ||
-                  'Your registration has been approved. You cannot update the registration details. Please contact support if you need to make changes.'}
+                'Your registration has been approved. You cannot update the registration details. Please contact support if you need to make changes.'}
             </CustomText>
           </View>
         )}
