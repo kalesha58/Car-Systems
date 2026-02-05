@@ -54,6 +54,9 @@ import { IChat, IMessage } from '../../types/chat';
 import { useToast } from '@hooks/useToast';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import AttachmentModal from '@components/common/AttachmentModal';
+import { useGroupLiveLocation } from '@hooks/useGroupLiveLocation';
+import { getGroupById } from '@service/groupService';
+import { IGroup } from '../../types/group';
 
 const ChatMessageScreen: React.FC = () => {
   const route = useRoute();
@@ -76,9 +79,17 @@ const ChatMessageScreen: React.FC = () => {
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [group, setGroup] = useState<IGroup | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<any>(null);
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
+  
+  // Use the live location hook for automatic tracking
+  const {isActive: isAutoLiveLocationActive} = useGroupLiveLocation({
+    group,
+    chatId: chat?.type === 'group' ? chatId : undefined,
+    enabled: chat?.type === 'group' && group?.liveLocationEnabled === true,
+  });
 
   useEffect(() => {
     initializeSocket();
@@ -232,9 +243,10 @@ const ChatMessageScreen: React.FC = () => {
         loadPendingRequestCount(data.groupId);
       }
 
-      // Load group members if it's a group
+      // Load group members and group data if it's a group
       if (data.type === 'group' && data.groupId) {
         loadGroupMembers(data.groupId);
+        loadGroupData(data.groupId);
       }
     } catch (error: any) {
       const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || 'Failed to load chat';
@@ -268,6 +280,16 @@ const ChatMessageScreen: React.FC = () => {
       showError(error?.response?.data?.message || 'Failed to load group members');
     } finally {
       setLoadingMembers(false);
+    }
+  };
+
+  const loadGroupData = async (groupId: string) => {
+    try {
+      const groupData = await getGroupById(groupId);
+      setGroup(groupData);
+    } catch (error: any) {
+      // Silently fail - not critical
+      console.error('Failed to load group data:', error);
     }
   };
 

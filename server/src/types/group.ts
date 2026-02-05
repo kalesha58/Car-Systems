@@ -13,6 +13,16 @@ export interface ITripPlan {
   endDate: string;
   startTime?: string;
   endTime?: string;
+  startingPoint?: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  endingPoint?: {
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface IGroup {

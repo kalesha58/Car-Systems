@@ -193,6 +193,16 @@ const ChatScreen: React.FC = () => {
           borderRadius: 12,
           alignItems: 'center',
         },
+        groupActions: {
+          flexDirection: 'row',
+          gap: 8,
+          marginLeft: 8,
+        },
+        actionButton: {
+          padding: 8,
+          borderRadius: 8,
+          backgroundColor: colors.backgroundSecondary,
+        },
         avatar: {
           width: 50,
           height: 50,
@@ -368,6 +378,16 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  const handleShareGroup = (groupId?: string, groupName?: string) => {
+    if (!groupId) return;
+    // Implement share functionality
+    showSuccess('Share functionality coming soon');
+  };
+
+  const handleMessageGroup = (chatId: string) => {
+    (navigation as any).navigate('ChatMessage', { chatId });
+  };
+
   const renderChatItem = ({ item }: { item: IChat }) => {
     const chatName =
       item.type === 'group'
@@ -397,62 +417,81 @@ const ChatScreen: React.FC = () => {
     const isRequesting = item.groupId ? requestingGroups.has(item.groupId) : false;
     // Show follow button only if: it's a group, user can follow, user is not a member, and no pending request
     const showFollowButton = item.type === 'group' && item.canFollow && !item.isMember && !hasPendingRequest;
+    const isGroup = item.type === 'group' && item.isMember;
 
     return (
-      <TouchableOpacity
-        style={styles.chatItem}
-        onPress={() => (navigation as any).navigate('ChatMessage', { chatId: item.id })}
-        activeOpacity={0.7}>
-        {avatar ? (
-          <Image source={{ uri: avatar }} style={styles.avatarImage} />
-        ) : (
-          <View style={styles.avatar}>
-            <Icon name="person" size={RFValue(24)} color={colors.disabled} />
+      <View style={styles.chatItem}>
+        <TouchableOpacity
+          style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}
+          onPress={() => (navigation as any).navigate('ChatMessage', { chatId: item.id })}
+          activeOpacity={0.7}>
+          {avatar ? (
+            <Image source={{ uri: avatar }} style={styles.avatarImage} />
+          ) : (
+            <View style={styles.avatar}>
+              <Icon name="person" size={RFValue(24)} color={colors.disabled} />
+            </View>
+          )}
+          <View style={styles.chatContent}>
+            <CustomText style={styles.chatName}>{chatName}</CustomText>
+            {item.lastMessage && (
+              <CustomText style={styles.lastMessage} numberOfLines={1}>
+                {item.lastMessage.messageType === 'image'
+                  ? '📷 Image'
+                  : item.lastMessage.messageType === 'location'
+                    ? '📍 Location'
+                    : item.lastMessage.text}
+              </CustomText>
+            )}
+            {hasPendingRequest && (
+              <View style={styles.requestedButton}>
+                <CustomText style={styles.requestedButtonText}>Pending</CustomText>
+              </View>
+            )}
+            {showFollowButton && (
+              <TouchableOpacity
+                style={styles.followButton}
+                onPress={(e) => handleFollowGroup(item.id, item.groupId, e)}
+                disabled={isRequesting}
+                activeOpacity={0.7}>
+                <CustomText style={styles.followButtonText}>
+                  {isRequesting ? 'Requesting...' : 'Follow'}
+                </CustomText>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.timeContainer}>
+            {item.lastMessage && (
+              <CustomText style={styles.timeText}>
+                {formatTime(item.lastMessage.createdAt)}
+              </CustomText>
+            )}
+            {(item.unreadCount || 0) > 0 && (
+              <View style={styles.unreadBadge}>
+                <CustomText style={styles.unreadText}>
+                  {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
+                </CustomText>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+        {isGroup && (
+          <View style={styles.groupActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleShareGroup(item.groupId, item.groupName)}
+              activeOpacity={0.7}>
+              <Icon name="share-outline" size={RFValue(20)} color={colors.secondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleMessageGroup(item.id)}
+              activeOpacity={0.7}>
+              <Icon name="chatbubble-outline" size={RFValue(20)} color={colors.secondary} />
+            </TouchableOpacity>
           </View>
         )}
-        <View style={styles.chatContent}>
-          <CustomText style={styles.chatName}>{chatName}</CustomText>
-          {item.lastMessage && (
-            <CustomText style={styles.lastMessage} numberOfLines={1}>
-              {item.lastMessage.messageType === 'image'
-                ? '📷 Image'
-                : item.lastMessage.messageType === 'location'
-                  ? '📍 Location'
-                  : item.lastMessage.text}
-            </CustomText>
-          )}
-          {hasPendingRequest && (
-            <View style={styles.requestedButton}>
-              <CustomText style={styles.requestedButtonText}>Pending</CustomText>
-            </View>
-          )}
-          {showFollowButton && (
-            <TouchableOpacity
-              style={styles.followButton}
-              onPress={(e) => handleFollowGroup(item.id, item.groupId, e)}
-              disabled={isRequesting}
-              activeOpacity={0.7}>
-              <CustomText style={styles.followButtonText}>
-                {isRequesting ? 'Requesting...' : 'Follow'}
-              </CustomText>
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.timeContainer}>
-          {item.lastMessage && (
-            <CustomText style={styles.timeText}>
-              {formatTime(item.lastMessage.createdAt)}
-            </CustomText>
-          )}
-          {(item.unreadCount || 0) > 0 && (
-            <View style={styles.unreadBadge}>
-              <CustomText style={styles.unreadText}>
-                {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
-              </CustomText>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 

@@ -7,6 +7,7 @@ import {
   deleteGroup,
   joinGroup,
   getGroupMembers,
+  addMembers,
   removeMember,
   markAttendance,
   driverConsent,
@@ -230,6 +231,52 @@ export const getGroupMembersController = async (
     res.status(200).json({
       success: true,
       ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Add members controller
+ */
+export const addMembersController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const adminUserId = req.user?.userId;
+    const groupId = req.params.id;
+    const { userIds } = req.body;
+
+    if (!adminUserId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      res.status(400).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'User IDs array is required',
+        },
+      });
+      return;
+    }
+
+    await addMembers(groupId, adminUserId, userIds);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'Members added successfully',
+      },
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

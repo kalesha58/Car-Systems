@@ -46,6 +46,8 @@ const groupToIGroup = async (groupDoc: IGroupDocument): Promise<IGroup> => {
           endDate: groupDoc.tripPlan.endDate.toISOString(),
           startTime: groupDoc.tripPlan.startTime,
           endTime: groupDoc.tripPlan.endTime,
+          startingPoint: groupDoc.tripPlan.startingPoint,
+          endingPoint: groupDoc.tripPlan.endingPoint,
         }
       : undefined,
     vanDetails: groupDoc.vanDetails,
@@ -75,9 +77,7 @@ export const createGroup = async (
     throw new AppError('Group type is required', 400);
   }
 
-  if (type === 'bikeCarDrive' && !tripPlan) {
-    throw new AppError('Trip plan is required for bike/car drive groups', 400);
-  }
+  // Trip plan is optional - can create group without it
 
   if (type === 'vanTransportation' && !vanDetails) {
     throw new AppError('Van details are required for van transportation groups', 400);
@@ -109,6 +109,8 @@ export const createGroup = async (
           endDate: new Date(tripPlan.endDate),
           startTime: tripPlan.startTime,
           endTime: tripPlan.endTime,
+          startingPoint: tripPlan.startingPoint,
+          endingPoint: tripPlan.endingPoint,
         }
       : undefined,
     vanDetails,
@@ -219,6 +221,8 @@ export const updateGroup = async (
       endDate: new Date(data.tripPlan.endDate),
       startTime: data.tripPlan.startTime,
       endTime: data.tripPlan.endTime,
+      startingPoint: data.tripPlan.startingPoint,
+      endingPoint: data.tripPlan.endingPoint,
     };
   }
   if (data.vanDetails !== undefined) group.vanDetails = data.vanDetails;
@@ -349,6 +353,49 @@ export const getGroupMembers = async (groupId: string): Promise<IGroupMembersRes
   return {
     Response: membersWithUser,
   };
+};
+
+/**
+ * Add members to group (admin only)
+ */
+export const addMembers = async (
+  groupId: string,
+  adminUserId: string,
+  userIds: string[],
+): Promise<void> => {
+  const group = await Group.findById(groupId);
+
+  if (!group) {
+    throw new NotFoundError('Group not found');
+  }
+
+  // Check if user is admin
+  const adminMember = await GroupMember.findOne({ groupId: group.id, userId: adminUserId, role: 'admin' });
+  if (!adminMember) {
+    throw new AppError('Only group admins can add members', 403);
+  }
+
+  if (!userIds || userIds.length === 0) {
+    throw new AppError('At least one user ID is required', 400);
+  }
+
+  // Add members
+  const addPromises = userIds.map((uid) => {
+    return GroupMember.findOneAndUpdate(
+      { groupId: group.id, userId: uid },
+      {
+        groupId: group.id,
+        userId: uid,
+        role: 'member',
+        status: 'active',
+      },
+      { upsert: true, new: true },
+    );
+  });
+
+  await Promise.all(addPromises);
+
+  logger.info(`Members added to group: ${group.id} by admin: ${adminUserId}`);
 };
 
 /**

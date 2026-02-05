@@ -160,6 +160,15 @@ export const stopLiveLocation = async (chatId: string): Promise<void> => {
   }
 };
 
+export const getLiveLocations = async (groupId: string): Promise<any[]> => {
+  try {
+    const response = await appAxios.get(`/chats/group/${groupId}/live-locations`);
+    return response.data.Response || [];
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Join Request APIs
 export const requestToJoinGroup = async (groupId: string): Promise<IGroupJoinRequest> => {
   try {

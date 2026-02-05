@@ -9,12 +9,20 @@ export interface IVanDetails {
   vehicleType: string;
 }
 
+export interface ILocationPoint {
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface ITripPlan {
   plan: string;
   startDate: Date;
   endDate: Date;
   startTime?: string;
   endTime?: string;
+  startingPoint?: ILocationPoint;
+  endingPoint?: ILocationPoint;
 }
 
 export interface IGroupDocument extends Document {
@@ -43,6 +51,15 @@ const vanDetailsSchema = new Schema<IVanDetails>(
   { _id: false },
 );
 
+const locationPointSchema = new Schema<ILocationPoint>(
+  {
+    address: { type: String, required: true, trim: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
 const tripPlanSchema = new Schema<ITripPlan>(
   {
     plan: { type: String, required: true, trim: true },
@@ -50,6 +67,8 @@ const tripPlanSchema = new Schema<ITripPlan>(
     endDate: { type: Date, required: true },
     startTime: { type: String },
     endTime: { type: String },
+    startingPoint: { type: locationPointSchema },
+    endingPoint: { type: locationPointSchema },
   },
   { _id: false },
 );

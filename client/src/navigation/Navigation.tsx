@@ -41,6 +41,7 @@ import ChatScreen from '@features/chat/ChatScreen';
 import UserSelectionScreen from '@features/chat/UserSelectionScreen';
 import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
+import GroupDetailScreen from '@features/chat/GroupDetailScreen';
 import NotificationScreen from '@features/notifications/NotificationScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
@@ -747,6 +748,13 @@ const Navigation: FC = () => {
             }}
             name="CreateGroup"
             component={CreateGroupScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="GroupDetail"
+            component={GroupDetailScreen}
           />
           <Stack.Screen
             options={{
