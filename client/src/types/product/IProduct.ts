@@ -17,6 +17,8 @@ export interface IProduct {
   specifications?: Record<string, any>;
   tags?: string[];
   status: string;
+  deliveryTimeMinutes?: number;
+  isSparePart?: boolean;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;

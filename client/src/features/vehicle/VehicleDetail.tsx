@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState, useRef} from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,17 +8,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
-import {useTheme} from '@hooks/useTheme';
-import {useToast} from '@hooks/useToast';
-import {getVehicleById} from '@service/vehicleService';
-import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
-import {openDealerChat} from '@utils/openDealerChat';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts, Colors } from '@utils/Constants';
+import { useTheme } from '@hooks/useTheme';
+import { useToast } from '@hooks/useToast';
+import { getVehicleById } from '@service/vehicleService';
+import type { IDealerVehicle } from '../../types/vehicle/IVehicle';
+import { openDealerChat } from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import { useNavigation } from '@react-navigation/native';
 import PreBookingModal from '@components/vehicle/PreBookingModal';
@@ -31,10 +31,10 @@ type VehicleDetailRouteParams = {
 
 const VehicleDetail: React.FC = () => {
   const route = useRoute<RouteProp<VehicleDetailRouteParams, 'VehicleDetail'>>();
-  const {vehicleId} = route.params;
+  const { vehicleId } = route.params;
 
-  const {colors} = useTheme();
-  const {showError} = useToast();
+  const { colors } = useTheme();
+  const { showError } = useToast();
   const screenWidth = Dimensions.get('window').width;
 
   const [vehicle, setVehicle] = useState<IDealerVehicle | null>(null);
@@ -54,13 +54,13 @@ const VehicleDetail: React.FC = () => {
         const response = await getVehicleById(vehicleId);
         if (response.success && response.Response) {
           let vehicleData: IDealerVehicle | null = null;
-          
+
           if (response.Response.vehicles && Array.isArray(response.Response.vehicles)) {
             vehicleData = response.Response.vehicles[0] || null;
           } else if ((response.Response as any).id || (response.Response as any)._id) {
             vehicleData = response.Response as unknown as IDealerVehicle;
           }
-          
+
           if (vehicleData) {
             setVehicle(vehicleData);
           } else {
@@ -90,8 +90,8 @@ const VehicleDetail: React.FC = () => {
     }
   }, [vehicleId]);
 
-  const images = vehicle?.images && vehicle.images.length > 0 
-    ? vehicle.images 
+  const images = vehicle?.images && vehicle.images.length > 0
+    ? vehicle.images
     : [];
 
   const handleImageScroll = (event: any) => {
@@ -105,8 +105,8 @@ const VehicleDetail: React.FC = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {flex: 1, backgroundColor: colors.background},
-        content: {paddingBottom: 120},
+        container: { flex: 1, backgroundColor: colors.background },
+        content: { paddingBottom: 120 },
         imageCarousel: {
           width: '100%',
           height: screenWidth * 0.8,
@@ -139,16 +139,16 @@ const VehicleDetail: React.FC = () => {
         },
         activeDot: {
           width: 20,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.text,
         },
-        detailsContainer: {padding: 16},
+        detailsContainer: { padding: 16 },
         titleRow: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginTop: 12,
         },
-        title: {flex: 1, marginRight: 8},
+        title: { flex: 1, marginRight: 8 },
         headerActions: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -158,7 +158,7 @@ const VehicleDetail: React.FC = () => {
           width: 36,
           height: 36,
           borderRadius: 18,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
           justifyContent: 'center',
           alignItems: 'center',
         },
@@ -166,9 +166,11 @@ const VehicleDetail: React.FC = () => {
           paddingHorizontal: 12,
           paddingVertical: 6,
           borderRadius: 20,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
-        categoryText: {color: '#fff', fontSize: RFValue(10), fontFamily: Fonts.Medium},
+        categoryText: { color: colors.text, fontSize: RFValue(10), fontFamily: Fonts.Medium },
         metricsRow: {
           flexDirection: 'row',
           marginTop: 16,
@@ -182,12 +184,12 @@ const VehicleDetail: React.FC = () => {
           width: 48,
           height: 48,
           borderRadius: 24,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
           justifyContent: 'center',
           alignItems: 'center',
         },
-        metricText: {fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium},
-        metricLabel: {fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular},
+        metricText: { fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium },
+        metricLabel: { fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular },
         dealerSection: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -200,14 +202,14 @@ const VehicleDetail: React.FC = () => {
           width: 56,
           height: 56,
           borderRadius: 28,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
           justifyContent: 'center',
           alignItems: 'center',
           marginRight: 12,
         },
-        dealerInfo: {flex: 1},
-        dealerName: {fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text},
-        dealerRole: {fontSize: RFValue(11), color: colors.disabled, marginTop: 2},
+        dealerInfo: { flex: 1 },
+        dealerName: { fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text },
+        dealerRole: { fontSize: RFValue(11), color: colors.disabled, marginTop: 2 },
         dealerActions: {
           flexDirection: 'row',
           gap: 8,
@@ -216,11 +218,11 @@ const VehicleDetail: React.FC = () => {
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
           justifyContent: 'center',
           alignItems: 'center',
         },
-        sectionTitle: {marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14)},
+        sectionTitle: { marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14) },
         description: {
           color: colors.text,
           opacity: 0.9,
@@ -243,7 +245,7 @@ const VehicleDetail: React.FC = () => {
           width: 48,
           height: 48,
           borderRadius: 24,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
           justifyContent: 'center',
           alignItems: 'center',
         },
@@ -266,12 +268,12 @@ const VehicleDetail: React.FC = () => {
           alignItems: 'center',
           gap: 12,
         },
-        priceContainer: {flex: 1},
-        priceLabel: {fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular},
+        priceContainer: { flex: 1 },
+        priceLabel: { fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular },
         priceValue: {
           fontSize: RFValue(20),
           fontFamily: Fonts.Bold,
-          color: Colors.secondary,
+          color: colors.text,
         },
         actionButtonsContainer: {
           flexDirection: 'row',
@@ -298,26 +300,41 @@ const VehicleDetail: React.FC = () => {
           flexDirection: 'row',
           gap: 6,
         },
-        dealerText: {marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium},
+        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium },
         detailRow: {
           flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 8,
+          alignItems: 'center',
+          backgroundColor: colors.cardBackground,
+          borderRadius: 10,
+          padding: 14,
+          gap: 8,
+          width: (screenWidth - 40) / 2,
         },
-        detailLabel: {color: colors.disabled, fontSize: RFValue(10), fontFamily: Fonts.Regular},
-        detailValue: {fontSize: RFValue(10), fontFamily: Fonts.Medium},
+        detailIconContainer: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        detailContent: {
+          flex: 1,
+        },
+        detailLabel: { color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Regular, marginBottom: 4 },
+        detailValue: { fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text },
         skeletonImage: {
           width: screenWidth,
           height: screenWidth * 0.8,
           backgroundColor: colors.backgroundSecondary,
         },
-        skeletonTitle: {marginTop: 12, marginBottom: 8},
-        skeletonTag: {width: 80, height: 24, borderRadius: 20},
-        skeletonMetric: {width: 60, height: 60, borderRadius: 30},
-        skeletonDealer: {width: 56, height: 56, borderRadius: 28},
-        skeletonDealerInfo: {flex: 1, marginLeft: 12},
-        skeletonText: {marginTop: 8},
-        skeletonDetailRow: {marginTop: 8},
+        skeletonTitle: { marginTop: 12, marginBottom: 8 },
+        skeletonTag: { width: 80, height: 24, borderRadius: 20 },
+        skeletonMetric: { width: 60, height: 60, borderRadius: 30 },
+        skeletonDealer: { width: 56, height: 56, borderRadius: 28 },
+        skeletonDealerInfo: { flex: 1, marginLeft: 12 },
+        skeletonText: { marginTop: 8 },
+        skeletonDetailRow: { marginTop: 8 },
       }),
     [colors, chatLoading, screenWidth],
   );
@@ -391,7 +408,7 @@ const VehicleDetail: React.FC = () => {
                 {images.map((imageUri, index) => (
                   <Image
                     key={index}
-                    source={{uri: imageUri}}
+                    source={{ uri: imageUri }}
                     style={styles.image}
                     resizeMode="contain"
                   />
@@ -434,8 +451,8 @@ const VehicleDetail: React.FC = () => {
                 {[1, 2, 3, 4].map((i) => (
                   <View key={i} style={styles.metricItem}>
                     <SkeletonLoader width={48} height={48} borderRadius={24} style={styles.skeletonMetric} />
-                    <SkeletonLoader width={40} height={12} borderRadius={4} style={{marginTop: 4}} />
-                    <SkeletonLoader width={30} height={10} borderRadius={4} style={{marginTop: 2}} />
+                    <SkeletonLoader width={40} height={12} borderRadius={4} style={{ marginTop: 4 }} />
+                    <SkeletonLoader width={30} height={10} borderRadius={4} style={{ marginTop: 2 }} />
                   </View>
                 ))}
               </View>
@@ -468,7 +485,7 @@ const VehicleDetail: React.FC = () => {
                       style={styles.headerActionButton}
                       onPress={() => setShowPreBookingModal(true)}
                       activeOpacity={0.7}>
-                      <Icon name="bookmark-outline" size={RFValue(18)} color={Colors.secondary} />
+                      <Icon name="bookmark-outline" size={RFValue(18)} color={colors.text} />
                     </TouchableOpacity>
                   )}
                   {vehicle?.vehicleType && (
@@ -479,90 +496,90 @@ const VehicleDetail: React.FC = () => {
                 </View>
               </View>
 
-          {/* Key Metrics */}
-          {vehicle && (
-            <View style={styles.metricsRow}>
-              {vehicle.year && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('year')} size={RFValue(20)} color={Colors.secondary} />
-                  </View>
-                  <CustomText style={styles.metricText}>{vehicle.year}</CustomText>
-                  <CustomText style={styles.metricLabel}>Year</CustomText>
+              {/* Key Metrics */}
+              {vehicle && (
+                <View style={styles.metricsRow}>
+                  {vehicle.year && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('year')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText}>{vehicle.year}</CustomText>
+                      <CustomText style={styles.metricLabel}>Year</CustomText>
+                    </View>
+                  )}
+                  {vehicle.mileage && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('mileage')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText}>{vehicle.mileage}</CustomText>
+                      <CustomText style={styles.metricLabel}>km</CustomText>
+                    </View>
+                  )}
+                  {vehicle.fuelType && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('fuel')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText} numberOfLines={1}>
+                        {vehicle.fuelType}
+                      </CustomText>
+                      <CustomText style={styles.metricLabel}>Fuel</CustomText>
+                    </View>
+                  )}
+                  {vehicle.transmission && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('transmission')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText} numberOfLines={1}>
+                        {vehicle.transmission}
+                      </CustomText>
+                      <CustomText style={styles.metricLabel}>Gear</CustomText>
+                    </View>
+                  )}
                 </View>
               )}
-              {vehicle.mileage && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('mileage')} size={RFValue(20)} color={Colors.secondary} />
-                  </View>
-                  <CustomText style={styles.metricText}>{vehicle.mileage}</CustomText>
-                  <CustomText style={styles.metricLabel}>km</CustomText>
-                </View>
-              )}
-              {vehicle.fuelType && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('fuel')} size={RFValue(20)} color={Colors.secondary} />
-                  </View>
-                  <CustomText style={styles.metricText} numberOfLines={1}>
-                    {vehicle.fuelType}
-                  </CustomText>
-                  <CustomText style={styles.metricLabel}>Fuel</CustomText>
-                </View>
-              )}
-              {vehicle.transmission && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('transmission')} size={RFValue(20)} color={Colors.secondary} />
-                  </View>
-                  <CustomText style={styles.metricText} numberOfLines={1}>
-                    {vehicle.transmission}
-                  </CustomText>
-                  <CustomText style={styles.metricLabel}>Gear</CustomText>
-                </View>
-              )}
-            </View>
-          )}
 
-          {/* Dealer Information */}
-          {vehicle?.dealer && (
-            <View style={styles.dealerSection}>
-              <View style={styles.dealerAvatar}>
-                <Icon name="business-outline" size={RFValue(24)} color={Colors.secondary} />
-              </View>
-              <View style={styles.dealerInfo}>
-                <CustomText style={styles.dealerName}>
-                  {vehicle.dealer.businessName || 'Unknown Dealer'}
-                </CustomText>
-                <CustomText style={styles.dealerRole}>
-                  {vehicle.dealer.type || 'Dealer'}
-                </CustomText>
-                {vehicle.dealer.address && (
-                  <CustomText style={styles.dealerText} numberOfLines={1}>
-                    {vehicle.dealer.address}
-                  </CustomText>
-                )}
-              </View>
-              <View style={styles.dealerActions}>
-                <TouchableOpacity
-                  style={styles.dealerActionButton}
-                  onPress={onChatPress}
-                  disabled={isChatDisabled}>
-                  <Icon
-                    name="chatbubbles-outline"
-                    size={RFValue(20)}
-                    color={isChatDisabled ? colors.disabled : Colors.secondary}
-                  />
-                </TouchableOpacity>
-                {vehicle.dealer.phone && (
-                  <TouchableOpacity style={styles.dealerActionButton}>
-                    <Icon name="call-outline" size={RFValue(20)} color={Colors.secondary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
+              {/* Dealer Information */}
+              {vehicle?.dealer && (
+                <View style={styles.dealerSection}>
+                  <View style={styles.dealerAvatar}>
+                    <Icon name="business-outline" size={RFValue(24)} color={colors.text} />
+                  </View>
+                  <View style={styles.dealerInfo}>
+                    <CustomText style={styles.dealerName}>
+                      {vehicle.dealer.businessName || 'Unknown Dealer'}
+                    </CustomText>
+                    <CustomText style={styles.dealerRole}>
+                      {vehicle.dealer.type || 'Dealer'}
+                    </CustomText>
+                    {vehicle.dealer.address && (
+                      <CustomText style={styles.dealerText} numberOfLines={1}>
+                        {vehicle.dealer.address}
+                      </CustomText>
+                    )}
+                  </View>
+                  <View style={styles.dealerActions}>
+                    <TouchableOpacity
+                      style={styles.dealerActionButton}
+                      onPress={onChatPress}
+                      disabled={isChatDisabled}>
+                      <Icon
+                        name="chatbubbles-outline"
+                        size={RFValue(20)}
+                        color={isChatDisabled ? colors.disabled : colors.text}
+                      />
+                    </TouchableOpacity>
+                    {vehicle.dealer.phone && (
+                      <TouchableOpacity style={styles.dealerActionButton}>
+                        <Icon name="call-outline" size={RFValue(20)} color={colors.text} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
 
               {/* Overview/Description */}
               <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
@@ -575,54 +592,180 @@ const VehicleDetail: React.FC = () => {
                     : 'No description provided.')}
               </CustomText>
 
-          {/* Features */}
-          {vehicle?.features && vehicle.features.length > 0 && (
-            <>
-              <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                Features
-              </CustomText>
-              <View style={styles.featuresGrid}>
-                {vehicle.features.slice(0, 8).map((feature, index) => (
-                  <View key={index} style={styles.featureItem}>
-                    <View style={styles.featureIcon}>
-                      <Icon
-                        name={getFeatureIcon(feature)}
-                        size={RFValue(20)}
-                        color={Colors.secondary}
-                      />
-                    </View>
-                    <CustomText style={styles.featureLabel} numberOfLines={2}>
-                      {feature}
-                    </CustomText>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
-
-              {/* Additional Details */}
-              {(vehicle?.color || vehicle?.condition || vehicle?.numberPlate) && (
+              {/* Features */}
+              {vehicle?.features && vehicle.features.length > 0 && (
                 <>
                   <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                    Additional Details
+                    Features
                   </CustomText>
-                  <View style={{gap: 8}}>
+                  <View style={styles.featuresGrid}>
+                    {vehicle.features.slice(0, 8).map((feature, index) => (
+                      <View key={index} style={styles.featureItem}>
+                        <View style={styles.featureIcon}>
+                          <Icon
+                            name={getFeatureIcon(feature)}
+                            size={RFValue(20)}
+                            color={colors.text}
+                          />
+                        </View>
+                        <CustomText style={styles.featureLabel} numberOfLines={2}>
+                          {feature}
+                        </CustomText>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* Vehicle Details */}
+              {vehicle && (
+                <>
+                  <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
+                    Vehicle Details
+                  </CustomText>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {vehicle.vehicleType && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="car-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Vehicle Type</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.vehicleType}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.brand && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="pricetag-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Brand</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.brand}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.vehicleModel && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="car-sport-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Model</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.vehicleModel}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.year && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="calendar-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Year</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.year}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.mileage !== undefined && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="speedometer-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Mileage</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.mileage} km</CustomText>
+                        </View>
+                      </View>
+                    )}
                     {vehicle.color && (
                       <View style={styles.detailRow}>
-                        <CustomText style={styles.detailLabel}>Color</CustomText>
-                        <CustomText style={styles.detailValue}>{vehicle.color}</CustomText>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="color-palette-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Color</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.color}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.fuelType && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="flash-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Fuel Type</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.fuelType}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.transmission && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="settings-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Transmission</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.transmission}</CustomText>
+                        </View>
                       </View>
                     )}
                     {vehicle.condition && (
                       <View style={styles.detailRow}>
-                        <CustomText style={styles.detailLabel}>Condition</CustomText>
-                        <CustomText style={styles.detailValue}>{vehicle.condition}</CustomText>
+                        <View style={styles.detailIconContainer}>
+                          <Icon
+                            name={vehicle.condition === 'New' ? 'star-outline' : vehicle.condition === 'Used' ? 'time-outline' : 'shield-checkmark-outline'}
+                            size={RFValue(18)}
+                            color={colors.text}
+                          />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Condition</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.condition}</CustomText>
+                        </View>
                       </View>
                     )}
                     {vehicle.numberPlate && (
                       <View style={styles.detailRow}>
-                        <CustomText style={styles.detailLabel}>Number Plate</CustomText>
-                        <CustomText style={styles.detailValue}>{vehicle.numberPlate}</CustomText>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="document-text-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Number Plate</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>{vehicle.numberPlate}</CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.availability && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon
+                            name={vehicle.availability === 'available' ? 'checkmark-circle-outline' : vehicle.availability === 'sold' ? 'close-circle-outline' : 'time-outline'}
+                            size={RFValue(18)}
+                            color={colors.text}
+                          />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Availability</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>
+                            {vehicle.availability === 'available' ? 'Available' : vehicle.availability === 'sold' ? 'Sold' : 'Reserved'}
+                          </CustomText>
+                        </View>
+                      </View>
+                    )}
+                    {vehicle.allowTestDrive !== undefined && (
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailIconContainer}>
+                          <Icon name="car-sport-outline" size={RFValue(18)} color={colors.text} />
+                        </View>
+                        <View style={styles.detailContent}>
+                          <CustomText style={styles.detailLabel}>Test Drive</CustomText>
+                          <CustomText style={styles.detailValue} numberOfLines={1}>
+                            {vehicle.allowTestDrive ? 'Available' : 'Not Available'}
+                          </CustomText>
+                        </View>
                       </View>
                     )}
                   </View>
@@ -645,7 +788,7 @@ const VehicleDetail: React.FC = () => {
           {vehicle?.allowTestDrive && (
             <TouchableOpacity
               onPress={() => {
-                (navigation as any).navigate('TestDriveBooking', { vehicleId: vehicle.id || vehicle._id });
+                (navigation as any).navigate('TestDriveBooking', { vehicleId: vehicle.id });
               }}
               activeOpacity={0.8}
               style={[styles.actionButton, styles.testDriveButton]}>
@@ -656,9 +799,9 @@ const VehicleDetail: React.FC = () => {
             disabled={isChatDisabled}
             onPress={onChatPress}
             activeOpacity={0.8}
-            style={[styles.chatButton, isChatDisabled ? {opacity: 0.6} : null]}>
+            style={[styles.chatButton, isChatDisabled ? { opacity: 0.6 } : null]}>
             <Icon name="chatbubbles-outline" size={RFValue(18)} color="#fff" />
-            <CustomText fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+            <CustomText fontFamily={Fonts.SemiBold} style={{ color: '#fff' }}>
               {chatLoading ? 'Opening…' : 'Chat'}
             </CustomText>
           </TouchableOpacity>
@@ -670,12 +813,12 @@ const VehicleDetail: React.FC = () => {
         <PreBookingModal
           visible={showPreBookingModal}
           onClose={() => setShowPreBookingModal(false)}
-          vehicleId={vehicle.id || vehicle._id || vehicleId}
+          vehicleId={vehicle.id || vehicleId}
           vehicleName={`${vehicle.brand} ${vehicle.vehicleModel}`}
           availability={vehicle.availability}
         />
       )}
-    </View>
+    </View >
   );
 };
 

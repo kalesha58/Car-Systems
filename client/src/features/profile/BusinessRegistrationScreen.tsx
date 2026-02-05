@@ -147,6 +147,9 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [businessName, setBusinessName] = useState(initialDraft?.businessName ?? registrationData?.businessName ?? '');
   const [type, setType] = useState(initialDraft?.type ?? registrationData?.type ?? '');
   const [address, setAddress] = useState(initialDraft?.address ?? registrationData?.address ?? '');
+  const [pincode, setPincode] = useState(initialDraft?.pincode ?? '');
+  const [nearLandmark, setNearLandmark] = useState(initialDraft?.nearLandmark ?? '');
+  const [state, setState] = useState(initialDraft?.state ?? '');
   const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? '');
   const [gst, setGst] = useState(initialDraft?.gst ?? registrationData?.gst ?? '');
 
@@ -219,6 +222,9 @@ const BusinessRegistrationScreen: React.FC = () => {
       shopPhotoUris,
       idDocUri,
       panDocUri,
+      pincode,
+      nearLandmark,
+      state,
     };
 
     // 1) MMKV (survives activity recreation)
@@ -264,6 +270,9 @@ const BusinessRegistrationScreen: React.FC = () => {
     shopPhotoUris,
     idDocUri,
     panDocUri,
+    pincode,
+    nearLandmark,
+    state,
   ]);
 
   const pickShopPhotos = () => {
@@ -557,15 +566,11 @@ const BusinessRegistrationScreen: React.FC = () => {
         return undefined;
 
       case 'idDoc':
-        if (!idDocUri) {
-          return t('dealer.idDocumentRequired') || 'ID document is required';
-        }
+        // Documents are optional - no validation needed
         return undefined;
 
       case 'panDoc':
-        if (!panDocUri) {
-          return t('dealer.panCardRequired') || 'PAN card is required';
-        }
+        // Documents are optional - no validation needed
         return undefined;
 
       case 'gst':
@@ -594,8 +599,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     errors.phone = validateField('phone', phone);
     errors.gst = validateField('gst', gst);
     errors.shopPhotos = validateField('shopPhotos', shopPhotoUris);
-    errors.idDoc = validateField('idDoc', idDocUri);
-    errors.panDoc = validateField('panDoc', panDocUri);
+    // Documents are optional - no validation needed
 
     if (payoutType === 'UPI') {
       errors.upiId = validateField('upiId', upiId);
@@ -654,8 +658,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       gst: isGstValid,
       payout: payoutValid,
       shopPhotos: shopPhotoUris.length > 0,
-      idDoc: !!idDocUri,
-      panDoc: !!panDocUri,
+      // Documents are optional - not included in validation
     };
 
     const isValid = Object.values(validations).every(v => v === true);
@@ -734,14 +737,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       showError(t('dealer.shopPhotosRequired') || 'At least one shop photo is required');
       return;
     }
-    if (!idDocUri) {
-      showError(t('dealer.idDocumentRequired') || 'Document ID is required');
-      return;
-    }
-    if (!panDocUri) {
-      showError(t('dealer.panCardRequired') || 'PAN card is required');
-      return;
-    }
+    // Documents are optional - no validation needed
 
     // Validate payout fields if payout type is selected
     if (payoutType) {
@@ -801,14 +797,33 @@ const BusinessRegistrationScreen: React.FC = () => {
       );
       console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
-      const [idDocUrl, panDocUrl] = await Promise.all([
-        uploadDocumentIfNeeded(idDocUri, idDocMimeType, idDocFileName),
-        uploadDocumentIfNeeded(panDocUri, panDocMimeType, panDocFileName),
-      ]);
-      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [
-        { kind: 'ID', url: idDocUrl },
-        { kind: 'PAN', url: panDocUrl }
-      ];
+      // Upload documents only if they are provided (documents are optional)
+      const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
+      
+      if (idDocUri) {
+        try {
+          const idDocUrl = await uploadDocumentIfNeeded(idDocUri, idDocMimeType, idDocFileName);
+          uploadedDocuments.push({ kind: 'ID', url: idDocUrl });
+        } catch (error) {
+          console.error('Error uploading ID document:', error);
+          showError('Failed to upload ID document. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      if (panDocUri) {
+        try {
+          const panDocUrl = await uploadDocumentIfNeeded(panDocUri, panDocMimeType, panDocFileName);
+          uploadedDocuments.push({ kind: 'PAN', url: panDocUrl });
+        } catch (error) {
+          console.error('Error uploading PAN document:', error);
+          showError('Failed to upload PAN document. Please try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
       console.log('[BusinessRegistrationScreen] Uploaded documents:', uploadedDocuments);
 
       // Prepare payout object if payout type is selected
@@ -829,10 +844,17 @@ const BusinessRegistrationScreen: React.FC = () => {
         };
       }
 
+      // Combine address fields into full address string
+      const addressParts = [address.trim()];
+      if (nearLandmark.trim()) addressParts.push(`Near ${nearLandmark.trim()}`);
+      if (pincode.trim()) addressParts.push(`Pincode: ${pincode.trim()}`);
+      if (state.trim()) addressParts.push(`State: ${state.trim()}`);
+      const fullAddress = addressParts.join(', ');
+
       const data: ICreateBusinessRegistrationRequest = {
         businessName: businessName.trim(),
         type: type as any, // Type assertion to match DealerType enum
-        address: address.trim(),
+        address: fullAddress,
         phone: phone.trim(),
         gst: gst.trim().toUpperCase(),
         payout: payoutData,
@@ -1395,6 +1417,50 @@ const BusinessRegistrationScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
+          <CustomText style={styles.label}>Near Landmark</CustomText>
+          <View style={styles.textInputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter nearby landmark (e.g., Near Metro Station)"
+              placeholderTextColor={colors.disabled}
+              value={nearLandmark}
+              onChangeText={setNearLandmark}
+              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <CustomText style={styles.label}>Pincode</CustomText>
+          <View style={styles.textInputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter pincode"
+              placeholderTextColor={colors.disabled}
+              value={pincode}
+              onChangeText={setPincode}
+              keyboardType="numeric"
+              maxLength={6}
+              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <CustomText style={styles.label}>State</CustomText>
+          <View style={styles.textInputContainer}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter state"
+              placeholderTextColor={colors.disabled}
+              value={state}
+              onChangeText={setState}
+              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
             {isEdit && (
@@ -1817,7 +1883,7 @@ const BusinessRegistrationScreen: React.FC = () => {
               disabled={isSubmitting || (isEdit && (!canUpdateFields || !editableFields.includes('documents')))}>
               <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
               <View style={styles.docLeft}>
-                <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'}</CustomText>
+                <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'} (Optional)</CustomText>
                 <CustomText style={styles.docSub} numberOfLines={1}>
                   {idDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
                 </CustomText>
@@ -1862,7 +1928,7 @@ const BusinessRegistrationScreen: React.FC = () => {
               disabled={isSubmitting || (isEdit && (!canUpdateFields || !editableFields.includes('documents')))}>
               <Icon name="id-card-outline" size={RFValue(16)} color={colors.text} />
               <View style={styles.docLeft}>
-                <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'}</CustomText>
+                <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'} (Optional)</CustomText>
                 <CustomText style={styles.docSub} numberOfLines={1}>
                   {panDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
                 </CustomText>

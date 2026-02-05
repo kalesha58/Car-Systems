@@ -43,6 +43,8 @@ export interface IProductWithDealer {
   specifications?: Record<string, any>;
   tags?: string[];
   status: string;
+  deliveryTimeMinutes?: number;
+  isSparePart?: boolean;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -125,6 +127,8 @@ const productToIProductWithDealer = async (
     specifications: productDoc.specifications || {},
     tags: productDoc.tags || [],
     status: productDoc.status,
+    deliveryTimeMinutes: productDoc.deliveryTimeMinutes,
+    isSparePart: productDoc.isSparePart,
     dealer: dealerInfo || undefined,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -207,6 +211,8 @@ export const getAllProductsForUsers = async (
           name: productDoc.name,
           brand: productDoc.brand,
           price: productDoc.price,
+          originalPrice: productDoc.originalPrice,
+          discountPercentage: productDoc.discountPercentage,
           stock: productDoc.stock,
           images: productDoc.images,
           description: productDoc.description,
@@ -215,6 +221,8 @@ export const getAllProductsForUsers = async (
           specifications: productDoc.specifications || {},
           tags: productDoc.tags || [],
           status: productDoc.status,
+          deliveryTimeMinutes: productDoc.deliveryTimeMinutes,
+          isSparePart: productDoc.isSparePart,
           dealer: undefined, // No dealer info assignment - backend already validates approved dealers
           createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
           updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),

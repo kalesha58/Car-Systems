@@ -117,13 +117,11 @@ export const createBusinessRegistration = async (
       throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
     }
 
-    // Validate required uploads (shop photos + documents)
+    // Validate required uploads (shop photos)
     if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
       throw new AppError('At least one shop photo is required', 400);
     }
-    if (!Array.isArray((data as any).documents) || (data as any).documents.length < 1) {
-      throw new AppError('At least one document is required', 400);
-    }
+    // Documents are optional - no validation needed
 
     // Validate payout information if provided
     if (data.payout) {
@@ -191,9 +189,9 @@ export const createBusinessRegistration = async (
       payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
-      // Validation above (lines 110-115) ensures shopPhotos and documents exist and are non-empty
+      // Validation above ensures shopPhotos exist and are non-empty
       shopPhotos: data.shopPhotos,
-      documents: data.documents,
+      documents: data.documents || [], // Documents are optional, default to empty array
     };
 
     logger.info('Creating business registration with data:', {
@@ -350,8 +348,9 @@ export const updateBusinessRegistration = async (
 
     if ((data as any).documents !== undefined) {
       const docs = (data as any).documents;
-      if (!Array.isArray(docs) || docs.length < 1) {
-        throw new AppError('At least one document is required', 400);
+      // Documents are optional - allow empty array
+      if (!Array.isArray(docs)) {
+        throw new AppError('Documents must be an array', 400);
       }
       logger.info('Updating documents', {
         registrationId: id,

@@ -110,7 +110,7 @@ const ProductDetail: React.FC = () => {
   const fetchDealerInfo = async (dealerId: string) => {
     try {
       setLoadingDealer(true);
-      
+
       // Fetch business registration to check storeOpen status
       // dealerId in products is actually the userId
       try {
@@ -311,7 +311,7 @@ const ProductDetail: React.FC = () => {
       flexWrap: 'wrap',
     },
     currentPrice: {
-      color: colors.secondary,
+      color: colors.text,
       fontFamily: Fonts.SemiBold,
     },
     originalPrice: {
@@ -339,7 +339,7 @@ const ProductDetail: React.FC = () => {
       gap: 4,
     },
     viewDetailsText: {
-      color: colors.secondary,
+      color: colors.text,
       fontFamily: Fonts.Medium,
     },
     serviceHighlightsContainer: {
@@ -364,25 +364,6 @@ const ProductDetail: React.FC = () => {
       textAlign: 'center',
       fontSize: RFValue(11),
       fontFamily: Fonts.Medium,
-    },
-    highlightsContent: {
-      paddingTop: 4,
-    },
-    highlightRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    highlightLabel: {
-      opacity: 0.7,
-      flex: 1,
-    },
-    highlightValue: {
-      fontFamily: Fonts.Medium,
-      flex: 1,
-      textAlign: 'right',
     },
     sectionContainer: {
       marginHorizontal: 16,
@@ -425,7 +406,7 @@ const ProductDetail: React.FC = () => {
     },
     actionButtonsPrice: {
       fontFamily: Fonts.SemiBold,
-      color: colors.secondary,
+      color: colors.text,
       fontSize: RFValue(getResponsiveValue(18, 20, 22)),
     },
     actionButtonsMrp: {
@@ -591,7 +572,7 @@ const ProductDetail: React.FC = () => {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: colors.secondary + '20',
+      backgroundColor: colors.backgroundSecondary || colors.cardBackground,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -608,16 +589,33 @@ const ProductDetail: React.FC = () => {
     },
     detailRow: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: colors.cardBackground,
+      borderRadius: 10,
+      padding: 12,
       marginTop: 8,
+      gap: 12,
+      width: (screenWidth - 40) / 2,
+    },
+    detailIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.backgroundSecondary || colors.cardBackground,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    detailContent: {
+      flex: 1,
     },
     detailLabel: {
       color: colors.disabled,
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
+      marginBottom: 4,
     },
     detailValue: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(13),
       fontFamily: Fonts.Medium,
       color: colors.text,
     },
@@ -749,12 +747,12 @@ const ProductDetail: React.FC = () => {
                       </CustomText>
                     </View>
                   ) : product.stock > 5 ? (
-                    <View style={[styles.compactStockBadge, { backgroundColor: colors.success + '20' }]}>
-                      <Icon name="checkmark-circle" size={RFValue(10)} color={colors.success || '#4CAF50'} />
+                    <View style={[styles.compactStockBadge, { backgroundColor: colors.backgroundSecondary || colors.cardBackground }]}>
+                      <Icon name="checkmark-circle" size={RFValue(10)} color={colors.text} />
                       <CustomText
                         variant="h8"
                         fontFamily={Fonts.Medium}
-                        style={[styles.stockText, { color: colors.success || '#4CAF50', fontSize: RFValue(10) }]}>
+                        style={[styles.stockText, { color: colors.text, fontSize: RFValue(10) }]}>
                         In stock
                       </CustomText>
                     </View>
@@ -833,7 +831,7 @@ const ProductDetail: React.FC = () => {
             {product.category && (
               <View style={styles.metricItem}>
                 <View style={styles.metricIcon}>
-                  <Icon name="grid-outline" size={RFValue(20)} color={colors.secondary} />
+                  <Icon name="grid-outline" size={RFValue(20)} color={colors.text} />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
                   {product.category}
@@ -844,7 +842,7 @@ const ProductDetail: React.FC = () => {
             {product.brand && (
               <View style={styles.metricItem}>
                 <View style={styles.metricIcon}>
-                  <Icon name="pricetag-outline" size={RFValue(20)} color={colors.secondary} />
+                  <Icon name="pricetag-outline" size={RFValue(20)} color={colors.text} />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
                   {product.brand}
@@ -857,7 +855,7 @@ const ProductDetail: React.FC = () => {
                 <Icon
                   name={product.stock > 0 ? "checkmark-circle-outline" : "close-circle-outline"}
                   size={RFValue(20)}
-                  color={colors.secondary}
+                  color={colors.text}
                 />
               </View>
               <CustomText style={styles.metricText}>
@@ -871,7 +869,7 @@ const ProductDetail: React.FC = () => {
                   <Icon
                     name={product.vehicleType === 'Bike' ? 'bicycle-outline' : 'car-outline'}
                     size={RFValue(20)}
-                    color={colors.secondary}
+                    color={colors.text}
                   />
                 </View>
                 <CustomText style={styles.metricText} numberOfLines={1}>
@@ -895,105 +893,204 @@ const ProductDetail: React.FC = () => {
           )}
 
           {/* Product Details */}
-          {product.specifications && Object.keys(product.specifications).length > 0 && (
-            <View style={styles.sectionContainer}>
-              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                Product Details
-              </CustomText>
-              <View style={{ gap: 8 }}>
-                {Object.entries(product.specifications).map(([key, value]) => (
-                  <View key={key} style={styles.detailRow}>
-                    <CustomText style={styles.detailLabel}>{key}</CustomText>
-                    <CustomText style={styles.detailValue}>{String(value)}</CustomText>
+          <View style={styles.sectionContainer}>
+            <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
+              Product Details
+            </CustomText>
+            <View style={{ gap: 8 }}>
+              {product.brand && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="pricetag-outline" size={RFValue(18)} color={colors.text} />
                   </View>
-                ))}
-              </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Brand</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>{product.brand}</CustomText>
+                  </View>
+                </View>
+              )}
+              {product.category && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="grid-outline" size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Category</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>{product.category}</CustomText>
+                  </View>
+                </View>
+              )}
+              {product.vehicleType && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name={product.vehicleType === 'Bike' ? 'bicycle-outline' : 'car-outline'} size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Vehicle Type</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>{product.vehicleType}</CustomText>
+                  </View>
+                </View>
+              )}
+              {product.status && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon
+                      name={product.status === 'active' ? 'checkmark-circle-outline' : product.status === 'out_of_stock' ? 'close-circle-outline' : 'pause-circle-outline'}
+                      size={RFValue(18)}
+                      color={colors.text}
+                    />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Status</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>
+                      {product.status === 'active' ? 'Active' : product.status === 'out_of_stock' ? 'Out of Stock' : 'Inactive'}
+                    </CustomText>
+                  </View>
+                </View>
+              )}
+              {product.deliveryTimeMinutes !== undefined && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="time-outline" size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Delivery Time</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>{product.deliveryTimeMinutes} mins</CustomText>
+                  </View>
+                </View>
+              )}
+
+              {product.isSparePart !== undefined && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="construct-outline" size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>Product Type</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>
+                      {product.isSparePart ? 'Spare Part' : 'Regular Product'}
+                    </CustomText>
+                  </View>
+                </View>
+              )}
+
+              {product.specifications && Object.entries(product.specifications).map(([key, value]) => {
+                const getIconForSpec = (specKey: string) => {
+                  const lowerKey = specKey.toLowerCase();
+                  if (lowerKey.includes('color')) return 'color-palette-outline';
+                  if (lowerKey.includes('dimension') || lowerKey.includes('size')) return 'resize-outline';
+                  if (lowerKey.includes('weight')) return 'barbell-outline';
+                  if (lowerKey.includes('material')) return 'cube-outline';
+                  if (lowerKey.includes('warranty')) return 'shield-checkmark-outline';
+                  if (lowerKey.includes('compatible') || lowerKey.includes('fit')) return 'checkmark-circle-outline';
+                  return 'information-circle-outline';
+                };
+                return (
+                  <View key={key} style={styles.detailRow}>
+                    <View style={styles.detailIconContainer}>
+                      <Icon name={getIconForSpec(key)} size={RFValue(18)} color={colors.text} />
+                    </View>
+                    <View style={styles.detailContent}>
+                      <CustomText style={styles.detailLabel}>{key}</CustomText>
+                      <CustomText style={styles.detailValue} numberOfLines={2}>{String(value)}</CustomText>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
-          )}
+          </View>
 
           {/* Store Status Banner - Show when store is closed */}
-          {dealer && !storeOpen && (
-            <View style={[styles.sectionContainer, styles.storeClosedBanner, { 
-              backgroundColor: colors.error + '15',
-              borderColor: colors.error,
-            }]}>
-              <View style={styles.storeStatusBannerContent}>
-                <Icon name="close-circle" size={RFValue(24)} color={colors.error} />
-                <View style={styles.storeStatusBannerTextContainer}>
-                  <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: colors.error, marginBottom: 4 }}>
-                    {t('dealer.storeClosed') || 'Store Closed'}
-                  </CustomText>
-                  <CustomText variant="h8" fontFamily={Fonts.Regular} style={{ color: colors.textSecondary }}>
-                    {t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available for purchase.'}
-                  </CustomText>
+          {
+            dealer && !storeOpen && (
+              <View style={[styles.sectionContainer, styles.storeClosedBanner, {
+                backgroundColor: colors.error + '15',
+                borderColor: colors.error,
+              }]}>
+                <View style={styles.storeStatusBannerContent}>
+                  <Icon name="close-circle" size={RFValue(24)} color={colors.error} />
+                  <View style={styles.storeStatusBannerTextContainer}>
+                    <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: colors.error, marginBottom: 4 }}>
+                      {t('dealer.storeClosed') || 'Store Closed'}
+                    </CustomText>
+                    <CustomText variant="h8" fontFamily={Fonts.Regular} style={{ color: colors.textSecondary }}>
+                      {t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available for purchase.'}
+                    </CustomText>
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
+            )
+          }
 
           {/* Dealer Information */}
-          {dealer && (
-            <View style={styles.sectionContainer}>
-              <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
-                Seller Information
-              </CustomText>
-              <View style={styles.dealerInfo}>
-                <View style={styles.dealerRow}>
-                  <Icon 
-                    name="storefront" 
-                    size={RFValue(18)} 
-                    color={storeOpen ? colors.secondary : colors.textSecondary} 
-                  />
-                  <CustomText 
-                    variant="h7" 
-                    fontFamily={Fonts.Medium} 
-                    style={[
-                      styles.dealerText,
-                      !storeOpen && { color: colors.textSecondary, opacity: 0.7 }
-                    ]}>
-                    {dealer.businessName || dealer.name}
-                  </CustomText>
-                  {!storeOpen && (
-                    <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20' }]}>
-                      <CustomText 
-                        variant="h9" 
-                        fontFamily={Fonts.SemiBold} 
-                        style={{ color: colors.error, fontSize: RFValue(9) }}>
-                        {t('dealer.storeClosed') || 'CLOSED'}
+          {
+            dealer && (
+              <View style={styles.sectionContainer}>
+                <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={styles.sectionTitle}>
+                  Seller Information
+                </CustomText>
+                <View style={styles.dealerInfo}>
+                  <View style={styles.dealerRow}>
+                    <Icon
+                      name="storefront"
+                      size={RFValue(18)}
+                      color={colors.text}
+                    />
+                    <CustomText
+                      variant="h7"
+                      fontFamily={Fonts.Medium}
+                      style={[
+                        styles.dealerText,
+                        !storeOpen ? { color: colors.textSecondary, opacity: 0.7 } : {}
+                      ]}>
+                      {dealer.businessName || dealer.name}
+                    </CustomText>
+                    {!storeOpen && (
+                      <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20' }]}>
+                        <CustomText
+                          variant="h9"
+                          fontFamily={Fonts.SemiBold}
+                          style={{ color: colors.error, fontSize: RFValue(9) }}>
+                          {t('dealer.storeClosed') || 'CLOSED'}
+                        </CustomText>
+                      </View>
+                    )}
+                  </View>
+                  {dealer.address && (
+                    <View style={styles.dealerRow}>
+                      <Icon name="location" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
+                      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
+                        {dealer.address}
+                      </CustomText>
+                    </View>
+                  )}
+                  {dealer.phone && (
+                    <View style={styles.dealerRow}>
+                      <Icon name="call" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
+                      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
+                        {dealer.phone}
                       </CustomText>
                     </View>
                   )}
                 </View>
-                {dealer.address && (
-                  <View style={styles.dealerRow}>
-                    <Icon name="location" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
-                    <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
-                      {dealer.address}
-                    </CustomText>
-                  </View>
-                )}
-                {dealer.phone && (
-                  <View style={styles.dealerRow}>
-                    <Icon name="call" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
-                    <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
-                      {dealer.phone}
-                    </CustomText>
-                  </View>
-                )}
               </View>
-            </View>
-          )}
+            )
+          }
 
           {/* Delivery Time Estimate */}
           <View style={styles.sectionContainer}>
             <View style={styles.deliveryInfo}>
-              <Icon name="time-outline" size={RFValue(20)} color={colors.secondary} />
+              <Icon name="time-outline" size={RFValue(20)} color={colors.text} />
               <View style={styles.deliveryTextContainer}>
                 <CustomText variant="h7" fontFamily={Fonts.Medium}>
                   Estimated Delivery
                 </CustomText>
                 <CustomText variant="h8" fontFamily={Fonts.Regular} style={{ opacity: 0.7, marginTop: 2 }}>
-                  {product.stock > 0 ? '2-3 business days' : 'Currently unavailable'}
+                  {product.stock > 0
+                    ? product.deliveryTimeMinutes
+                      ? `${Math.ceil(product.deliveryTimeMinutes / 60)}-${Math.ceil(product.deliveryTimeMinutes / 60) + 1} business days`
+                      : '2-3 business days'
+                    : 'Currently unavailable'}
                 </CustomText>
               </View>
             </View>
@@ -1035,99 +1132,37 @@ const ProductDetail: React.FC = () => {
               variant="h6"
               fontFamily={Fonts.SemiBold}
               style={styles.sectionTitle}>
-              {t('product.highlights')}
-            </CustomText>
-            <View style={styles.highlightsContent}>
-              {product.brand && (
-                <View style={styles.highlightRow}>
-                  <CustomText
-                    variant="h7"
-                    fontFamily={Fonts.Regular}
-                    style={styles.highlightLabel}>
-                    {t('product.brand')}
-                  </CustomText>
-                  <CustomText
-                    variant="h7"
-                    fontFamily={Fonts.Medium}
-                    style={styles.highlightValue}>
-                    {product.brand}
-                  </CustomText>
-                </View>
-              )}
-              {product.category && (
-                <View style={styles.highlightRow}>
-                  <CustomText
-                    variant="h7"
-                    fontFamily={Fonts.Regular}
-                    style={styles.highlightLabel}>
-                    {t('product.productType')}
-                  </CustomText>
-                  <CustomText
-                    variant="h7"
-                    fontFamily={Fonts.Medium}
-                    style={styles.highlightValue}>
-                    {product.category}
-                  </CustomText>
-                </View>
-              )}
-              {product.specifications && Object.keys(product.specifications).length > 0 && (
-                <>
-                  {Object.entries(product.specifications).map(([key, value]) => (
-                    <View key={key} style={styles.highlightRow}>
-                      <CustomText
-                        variant="h7"
-                        fontFamily={Fonts.Regular}
-                        style={styles.highlightLabel}>
-                        {key}
-                      </CustomText>
-                      <CustomText
-                        variant="h7"
-                        fontFamily={Fonts.Medium}
-                        style={styles.highlightValue}>
-                        {String(value)}
-                      </CustomText>
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.sectionContainer}>
-            <CustomText
-              variant="h6"
-              fontFamily={Fonts.SemiBold}
-              style={styles.sectionTitle}>
               Info
             </CustomText>
-            <View style={styles.informationContent}>
-              <CustomText
-                variant="h7"
-                fontFamily={Fonts.Medium}
-                style={{ marginBottom: 8 }}>
-                Disclaimer
-              </CustomText>
-              <CustomText
-                variant="h7"
-                fontFamily={Fonts.Regular}
-                style={styles.disclaimerText}>
-                All images are for representational purposes
-              </CustomText>
+            <View style={[styles.detailRow, { marginTop: 0 }]}>
+              <View style={styles.detailIconContainer}>
+                <Icon name="information-circle-outline" size={RFValue(18)} color={colors.text} />
+              </View>
+              <View style={styles.detailContent}>
+                <CustomText style={styles.detailLabel}>Disclaimer</CustomText>
+                <CustomText style={styles.detailValue}>
+                  All images are for representational purposes
+                </CustomText>
+              </View>
             </View>
           </View>
 
           {/* Related Products */}
-          {product && (
-            <RelatedProducts
-              currentProductIds={[product.id]}
-              category={product.category}
-              brand={product.brand}
-              limit={10}
-            />
-          )}
-        </CollapsibleScrollView>
-      </CollapsibleContainer>
-    </View>
+          {
+            product && (
+              <View style={{ marginTop: 8 }}>
+                <RelatedProducts
+                  currentProductIds={[product.id]}
+                  category={product.category}
+                  brand={product.brand}
+                  limit={6}
+                />
+              </View>
+            )
+          }
+        </CollapsibleScrollView >
+      </CollapsibleContainer >
+    </View >
   );
 };
 

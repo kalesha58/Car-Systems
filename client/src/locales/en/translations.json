@@ -389,6 +389,7 @@
     "locked": "Locked"
   },
   "search": {
+    "placeholder": "Search for products, services, and more...",
     "engineOil": "Search \"engine oil\"",
     "brakePads": "Search \"brake pads\"",
     "tiresAndMore": "Search for tires, batteries, filters",

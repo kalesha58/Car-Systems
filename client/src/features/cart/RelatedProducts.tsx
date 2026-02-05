@@ -141,7 +141,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
             />
           ) : (
             <View style={[styles.productImage, styles.placeholderImage]}>
-              <Icon name="image-outline" size={RFValue(30)} color={colors.disabled} />
+              <Icon name="image-outline" size={RFValue(24)} color={colors.disabled} />
             </View>
           )}
           {discount > 0 && (
@@ -161,7 +161,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
           </CustomText>
 
           <View style={styles.ratingRow}>
-            <Icon name="star" size={RFValue(10)} color="#FFD700" />
+            <Icon name="star" size={RFValue(8)} color="#FFD700" />
             <CustomText style={styles.ratingText}>
               {item.rating || 4.2} ({item.reviewCount || 120})
             </CustomText>
@@ -195,7 +195,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
             <CustomText
               variant="h9"
               fontFamily={Fonts.Medium}
-              style={{ color: '#000' }}>
+              style={{ color: '#000', fontSize: RFValue(9) }}>
               Add to Cart
             </CustomText>
           </TouchableOpacity>
@@ -239,7 +239,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+          ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
         />
       )}
     </View>
@@ -248,7 +248,7 @@ const RelatedProducts: FC<RelatedProductsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 12,
+    marginVertical: 4,
     backgroundColor: 'transparent',
   },
   header: {
@@ -256,31 +256,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 6,
   },
   title: {
-    fontSize: RFValue(16),
+    fontSize: RFValue(12),
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   productCard: {
-    width: 160,
-    borderRadius: 8,
+    width: 110,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     overflow: 'hidden',
     backgroundColor: '#fff',
   },
   imageContainer: {
-    height: 160,
+    height: 90,
     width: '100%',
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
-    padding: 8,
+    padding: 6,
   },
   productImage: {
     width: '100%',
@@ -291,61 +291,61 @@ const styles = StyleSheet.create({
   },
   discountBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: 4,
+    left: 4,
     backgroundColor: '#cc0c39',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
     borderRadius: 2,
   },
   discountText: {
     color: '#fff',
-    fontSize: RFValue(9),
+    fontSize: RFValue(8),
     fontFamily: Fonts.Bold,
   },
   productInfo: {
-    padding: 10,
+    padding: 8,
   },
   productName: {
-    fontSize: RFValue(11),
-    lineHeight: 16,
-    height: 32,
-    marginBottom: 4,
+    fontSize: RFValue(10),
+    lineHeight: 14,
+    height: 28,
+    marginBottom: 3,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
-    gap: 4,
+    marginBottom: 4,
+    gap: 3,
   },
   ratingText: {
-    fontSize: RFValue(9),
+    fontSize: RFValue(8),
     color: '#007185',
     fontFamily: Fonts.Regular,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
+    gap: 3,
     marginBottom: 2,
   },
   price: {
-    fontSize: RFValue(14),
+    fontSize: RFValue(12),
     color: '#B12704',
   },
   mrp: {
-    fontSize: RFValue(10),
+    fontSize: RFValue(9),
     color: '#565959',
     textDecorationLine: 'line-through',
   },
   deliveryText: {
-    fontSize: RFValue(9),
+    fontSize: RFValue(8),
     color: '#565959',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   addButton: {
     backgroundColor: '#FFD814',
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 100,
     alignItems: 'center',
     borderWidth: 0,

@@ -23,6 +23,7 @@ export interface IService {
   vehicleBrand?: string;
   serviceSubCategory?: string;
   dealer?: IDealerInfo;
+  slotBookingEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

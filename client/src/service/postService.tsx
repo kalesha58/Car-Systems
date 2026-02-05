@@ -1,11 +1,11 @@
-import {appAxios} from './apiInterceptors';
-import {Platform} from 'react-native';
-import {IPostsResponse, IPostResponse, ICreatePostRequest} from '../types/post/IPost';
+import { appAxios } from './apiInterceptors';
+import { Platform } from 'react-native';
+import { IPostsResponse, IPostResponse, ICreatePostRequest } from '../types/post/IPost';
 
 export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
   try {
-    const params = userId ? {userId} : {};
-    const response = await appAxios.get<IPostsResponse>('/posts', {params});
+    const params = userId ? { userId } : {};
+    const response = await appAxios.get<IPostsResponse>('/posts', { params });
     return response.data;
   } catch (error) {
     throw error;
@@ -35,7 +35,7 @@ export const uploadDocument = async (
 ): Promise<string> => {
   try {
     const formData = new FormData();
-    
+
     let detectedMimeType = mimeType || 'image/jpeg';
     let fileExtension = 'jpg';
     let processedUri = fileUri;
@@ -64,9 +64,9 @@ export const uploadDocument = async (
         } else if (ext && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
           fileExtension = ext;
           detectedMimeType = ext === 'png' ? 'image/png' :
-                            ext === 'gif' ? 'image/gif' :
-                            ext === 'webp' ? 'image/webp' :
-                            'image/jpeg';
+            ext === 'gif' ? 'image/gif' :
+              ext === 'webp' ? 'image/webp' :
+                'image/jpeg';
         }
       }
     }
@@ -74,10 +74,19 @@ export const uploadDocument = async (
     // Handle URI for different platforms
     const isContentUri = fileUri.startsWith('content://');
     const isFileUri = fileUri.startsWith('file://');
-    
+
     if (Platform.OS === 'ios') {
-      // iOS: Remove file:// prefix for FormData
-      processedUri = fileUri.replace('file://', '');
+      // iOS: Keep file:// prefix or use full path
+      // React Native FormData on iOS can handle both formats
+      if (fileUri.startsWith('file://')) {
+        processedUri = fileUri;
+      } else if (fileUri.startsWith('/')) {
+        // Absolute path - add file:// prefix
+        processedUri = `file://${fileUri}`;
+      } else {
+        // Relative path or other format - use as is
+        processedUri = fileUri;
+      }
     } else if (Platform.OS === 'android') {
       if (isContentUri) {
         // Android content:// URI - keep as is
@@ -100,21 +109,33 @@ export const uploadDocument = async (
       name: finalFileName,
     } as any);
 
+    // Log upload attempt for debugging
+    console.log('Attempting to upload document:', {
+      platform: Platform.OS,
+      uri: fileUri.substring(0, 100),
+      processedUri: processedUri.substring(0, 100),
+      mimeType: detectedMimeType,
+      fileName: finalFileName,
+    });
+
     const response = await appAxios.post('/upload/image', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        // 'Content-Type': 'multipart/form-data', // Let Axios set the correct boundary
+        'Accept': 'application/json',
       },
-      timeout: 30000, // 30 second timeout
+      timeout: 60000, // Increased to 60 seconds for large files
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
 
     if (response.data && response.data.success && response.data.Response?.url) {
       return response.data.Response.url;
     }
-    
+
     const errorMessage = response.data?.Response?.ReturnMessage ||
-                        response.data?.message ||
-                        response.data?.error ||
-                        'Failed to upload document';
+      response.data?.message ||
+      response.data?.error ||
+      'Failed to upload document';
     throw new Error(errorMessage);
   } catch (error: any) {
     console.error('Upload document error:', {
@@ -123,7 +144,7 @@ export const uploadDocument = async (
       status: error?.response?.status,
       uri: fileUri.substring(0, 100),
     });
-    
+
     if (!error?.response) {
       if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
         throw new Error('Upload timeout. Please check your internet connection and try again.');
@@ -133,28 +154,28 @@ export const uploadDocument = async (
       }
       throw new Error('Network error. Please check your internet connection and try again.');
     }
-    
+
     if (error?.response?.status === 400) {
       const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
-                          error?.response?.data?.message ||
-                          'Invalid file. Please select a valid image or PDF and try again.';
+        error?.response?.data?.message ||
+        'Invalid file. Please select a valid image or PDF and try again.';
       throw new Error(errorMessage);
     }
-    
+
     if (error?.response?.status === 401) {
       throw new Error('Unauthorized. Please log in and try again.');
     }
-    
+
     if (error?.response?.status >= 500) {
       throw new Error('Server error. Please try again later.');
     }
-    
+
     const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
-                        error?.response?.data?.message ||
-                        error?.response?.data?.error ||
-                        error?.message ||
-                        'Failed to upload document. Please try again.';
-    
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      error?.message ||
+      'Failed to upload document. Please try again.';
+
     throw new Error(errorMessage);
   }
 };
@@ -165,10 +186,12 @@ export const uploadDocument = async (
  * @returns Promise with uploaded image URL
  */
 export const uploadImage = async (imageUri: string): Promise<string> => {
+  let processedUri = imageUri;
+
   try {
     // Check if it's a base64 data URI
     const isBase64 = imageUri.startsWith('data:image/');
-    
+
     if (isBase64) {
       // React Native FormData doesn't support base64 data URIs on Android
       // We need to throw a helpful error message
@@ -179,20 +202,28 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
     }
 
     const formData = new FormData();
-    
+
     let mimeType = 'image/jpeg';
     let fileExtension = 'jpg';
     let fileName = `post_${Date.now()}.${fileExtension}`;
-    let processedUri = imageUri;
 
     // Check if it's a content:// URI (Android content provider)
     const isContentUri = imageUri.startsWith('content://');
     const isFileUri = imageUri.startsWith('file://');
-    
+
     // Handle URI for different platforms
     if (Platform.OS === 'ios') {
-      // iOS: Remove file:// prefix for FormData
-      processedUri = imageUri.replace('file://', '');
+      // iOS: Keep file:// prefix or use full path
+      // React Native FormData on iOS can handle both formats
+      if (imageUri.startsWith('file://')) {
+        processedUri = imageUri;
+      } else if (imageUri.startsWith('/')) {
+        // Absolute path - add file:// prefix
+        processedUri = `file://${imageUri}`;
+      } else {
+        // Relative path or other format - use as is
+        processedUri = imageUri;
+      }
       // Extract file extension from URI
       const uriParts = imageUri.split('.');
       if (uriParts.length > 1) {
@@ -246,22 +277,34 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
       name: fileName,
     } as any);
 
+    // Log upload attempt for debugging
+    console.log('Attempting to upload image:', {
+      platform: Platform.OS,
+      uri: imageUri.substring(0, 100),
+      processedUri: processedUri.substring(0, 100),
+      mimeType,
+      fileName,
+    });
+
     const response = await appAxios.post('/upload/image', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        // 'Content-Type': 'multipart/form-data', // Let Axios set the correct boundary
+        'Accept': 'application/json',
       },
-      timeout: 30000, // 30 second timeout
+      timeout: 60000, // Increased to 60 seconds for large files
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
 
     if (response.data && response.data.success && response.data.Response?.url) {
       return response.data.Response.url;
     }
-    
+
     // If response doesn't have the expected structure, throw error with details
     const errorMessage = response.data?.Response?.ReturnMessage ||
-                        response.data?.message ||
-                        response.data?.error ||
-                        'Failed to upload image';
+      response.data?.message ||
+      response.data?.error ||
+      'Failed to upload image';
     throw new Error(errorMessage);
   } catch (error: any) {
     console.error('Upload image error:', {
@@ -271,50 +314,71 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
       code: error?.code,
       errno: error?.errno,
       uri: imageUri.substring(0, 100), // Log only first 100 chars to avoid huge logs
+      platform: Platform.OS,
+      processedUri: processedUri?.substring(0, 100),
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
-    
+
     // Handle network errors (no response from server)
     if (!error?.response) {
       // Check for specific network error codes
       if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
         throw new Error('Upload timeout. Please check your internet connection and try again.');
       }
-      
+
+      // Check for iOS-specific errors
+      if (Platform.OS === 'ios') {
+        // iOS might have file access issues
+        if (error?.message?.includes('ENOENT') || error?.message?.includes('No such file')) {
+          throw new Error('File not found. Please select the file again.');
+        }
+        if (error?.message?.includes('EACCES') || error?.message?.includes('permission')) {
+          throw new Error('File access denied. Please check app permissions.');
+        }
+      }
+
       if (error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK' || error?.message?.includes('Network Error')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+        // Provide more helpful error message for iOS simulator
+        const errorMsg = Platform.OS === 'ios'
+          ? 'Network error. If using iOS simulator, ensure your backend server is accessible. Check your BASE_URL in config.tsx'
+          : 'Network error. Please check your internet connection and try again.';
+        throw new Error(errorMsg);
       }
-      
+
       if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
-        throw new Error('Cannot connect to server. Please check your internet connection and try again.');
+        throw new Error('Cannot connect to server. Please check your internet connection and server URL.');
       }
-      
-      // Generic network error
-      throw new Error('Network error. Please check your internet connection and try again.');
+
+      // Generic network error with more context
+      const genericError = Platform.OS === 'ios'
+        ? `Network error (${error?.code || 'unknown'}). Please check your internet connection and ensure the backend server is running and accessible.`
+        : 'Network error. Please check your internet connection and try again.';
+      throw new Error(genericError);
     }
-    
+
     // Handle server response errors
     if (error?.response?.status === 400) {
       const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
-                          error?.response?.data?.message ||
-                          'Invalid image file. Please select a valid image and try again.';
+        error?.response?.data?.message ||
+        'Invalid image file. Please select a valid image and try again.';
       throw new Error(errorMessage);
     }
-    
+
     if (error?.response?.status === 401) {
       throw new Error('Unauthorized. Please log in and try again.');
     }
-    
+
     if (error?.response?.status >= 500) {
       throw new Error('Server error. Please try again later.');
     }
-    
+
     // Extract more specific error message from server response
     const errorMessage = error?.response?.data?.Response?.ReturnMessage ||
-                        error?.response?.data?.message ||
-                        error?.response?.data?.error ||
-                        error?.message ||
-                        'Failed to upload image. Please try again.';
-    
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      error?.message ||
+      'Failed to upload image. Please try again.';
+
     throw new Error(errorMessage);
   }
 };

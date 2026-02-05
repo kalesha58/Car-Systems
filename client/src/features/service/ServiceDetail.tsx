@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState, useRef} from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,19 +8,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
-import {useTheme} from '@hooks/useTheme';
-import {useToast} from '@hooks/useToast';
-import {getServiceById} from '@service/serviceService';
-import type {IService} from '../../types/service/IService';
-import {openDealerChat} from '@utils/openDealerChat';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts, Colors } from '@utils/Constants';
+import { useTheme } from '@hooks/useTheme';
+import { useToast } from '@hooks/useToast';
+import { getServiceById } from '@service/serviceService';
+import type { IService } from '../../types/service/IService';
+import { openDealerChat } from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
-import ServiceSlotPicker, {IServiceSlot} from '@components/service/ServiceSlotPicker';
+import ServiceSlotPicker, { IServiceSlot } from '@components/service/ServiceSlotPicker';
 
 type ServiceDetailRouteParams = {
   ServiceDetail: {
@@ -30,10 +30,10 @@ type ServiceDetailRouteParams = {
 
 const ServiceDetail: React.FC = () => {
   const route = useRoute<RouteProp<ServiceDetailRouteParams, 'ServiceDetail'>>();
-  const {serviceId} = route.params;
+  const { serviceId } = route.params;
 
-  const {colors} = useTheme();
-  const {showError} = useToast();
+  const { colors } = useTheme();
+  const { showError } = useToast();
   const screenWidth = Dimensions.get('window').width;
 
   const [service, setService] = useState<IService | null>(null);
@@ -53,10 +53,15 @@ const ServiceDetail: React.FC = () => {
         const response = await getServiceById(serviceId);
         if (response.success && response.Response) {
           let serviceData: IService | null = null;
+          // Handle response structure - could be array of services or single service
           if (Array.isArray(response.Response.services)) {
             serviceData = response.Response.services[0] || null;
-          } else if ((response.Response as any).id || (response.Response as any)._id) {
-            serviceData = response.Response as IService;
+          } else if (response.Response && typeof response.Response === 'object') {
+            // Check if Response itself is a service object
+            const responseData = response.Response as any;
+            if (responseData.id || responseData._id || responseData.name) {
+              serviceData = responseData as IService;
+            }
           }
           if (serviceData) {
             setService(serviceData);
@@ -88,8 +93,8 @@ const ServiceDetail: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId]); // Only depend on serviceId to prevent infinite loop
 
-  const images = service?.images && service.images.length > 0 
-    ? service.images 
+  const images = service?.images && service.images.length > 0
+    ? service.images
     : [];
 
   const handleImageScroll = (event: any) => {
@@ -103,8 +108,8 @@ const ServiceDetail: React.FC = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {flex: 1, backgroundColor: colors.background},
-        content: {paddingBottom: 120},
+        container: { flex: 1, backgroundColor: colors.background },
+        content: { paddingBottom: 120 },
         imageCarousel: {
           width: '100%',
           height: screenWidth * 0.8,
@@ -137,23 +142,23 @@ const ServiceDetail: React.FC = () => {
         },
         activeDot: {
           width: 20,
-          backgroundColor: colors.secondary,
+          backgroundColor: colors.text, // Changed from secondary for less green
         },
-        detailsContainer: {padding: 16},
+        detailsContainer: { padding: 16 },
         titleRow: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginTop: 12,
         },
-        title: {flex: 1, marginRight: 8},
+        title: { flex: 1, marginRight: 8 },
         categoryTag: {
           paddingHorizontal: 12,
           paddingVertical: 6,
           borderRadius: 20,
-          backgroundColor: colors.secondary,
+          backgroundColor: colors.backgroundSecondary, // Changed from secondary
         },
-        categoryText: {color: '#fff', fontSize: RFValue(10), fontFamily: Fonts.Medium},
+        categoryText: { color: colors.text, fontSize: RFValue(10), fontFamily: Fonts.Medium }, // Changed text color
         metricsRow: {
           flexDirection: 'row',
           marginTop: 16,
@@ -167,12 +172,12 @@ const ServiceDetail: React.FC = () => {
           width: 48,
           height: 48,
           borderRadius: 24,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary, // Changed from secondary opacity
           justifyContent: 'center',
           alignItems: 'center',
         },
-        metricText: {fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium},
-        metricLabel: {fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular},
+        metricText: { fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium },
+        metricLabel: { fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular },
         dealerSection: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -185,14 +190,14 @@ const ServiceDetail: React.FC = () => {
           width: 56,
           height: 56,
           borderRadius: 28,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary,
           justifyContent: 'center',
           alignItems: 'center',
           marginRight: 12,
         },
-        dealerInfo: {flex: 1},
-        dealerName: {fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text},
-        dealerRole: {fontSize: RFValue(11), color: colors.disabled, marginTop: 2},
+        dealerInfo: { flex: 1 },
+        dealerName: { fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text },
+        dealerRole: { fontSize: RFValue(11), color: colors.disabled, marginTop: 2 },
         dealerActions: {
           flexDirection: 'row',
           gap: 8,
@@ -201,11 +206,11 @@ const ServiceDetail: React.FC = () => {
           width: 40,
           height: 40,
           borderRadius: 20,
-          backgroundColor: Colors.secondary + '20',
+          backgroundColor: colors.backgroundSecondary,
           justifyContent: 'center',
           alignItems: 'center',
         },
-        sectionTitle: {marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14)},
+        sectionTitle: { marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14) },
         description: {
           color: colors.text,
           opacity: 0.9,
@@ -226,12 +231,12 @@ const ServiceDetail: React.FC = () => {
           alignItems: 'center',
           gap: 16,
         },
-        priceContainer: {flex: 1},
-        priceLabel: {fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular},
+        priceContainer: { flex: 1 },
+        priceLabel: { fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular },
         priceValue: {
           fontSize: RFValue(20),
           fontFamily: Fonts.Bold,
-          color: colors.secondary,
+          color: colors.text, // Changed from secondary
         },
         chatButton: {
           height: 48,
@@ -243,26 +248,31 @@ const ServiceDetail: React.FC = () => {
           flexDirection: 'row',
           gap: 8,
         },
-        dealerText: {marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium},
+        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium },
         detailRow: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 8,
+          flexDirection: 'row', // Changed back to row for list layout
+          alignItems: 'center',
+          justifyContent: 'space-between', // Added for split
+          backgroundColor: colors.cardBackground,
+          borderRadius: 10,
+          padding: 12,
+          gap: 12,
+          width: '100%', // Full width
         },
-        detailLabel: {color: colors.disabled, fontSize: RFValue(10), fontFamily: Fonts.Regular},
-        detailValue: {fontSize: RFValue(10), fontFamily: Fonts.Medium},
+        detailLabel: { color: colors.disabled, fontSize: RFValue(10), fontFamily: Fonts.Regular },
+        detailValue: { fontSize: RFValue(10), fontFamily: Fonts.Medium },
         skeletonImage: {
           width: screenWidth,
           height: screenWidth * 0.8,
           backgroundColor: colors.backgroundSecondary,
         },
-        skeletonTitle: {marginTop: 12, marginBottom: 8},
-        skeletonTag: {width: 80, height: 24, borderRadius: 20},
-        skeletonMetric: {width: 60, height: 60, borderRadius: 30},
-        skeletonDealer: {width: 56, height: 56, borderRadius: 28},
-        skeletonDealerInfo: {flex: 1, marginLeft: 12},
-        skeletonText: {marginTop: 8},
-        skeletonDetailRow: {marginTop: 8},
+        skeletonTitle: { marginTop: 12, marginBottom: 8 },
+        skeletonTag: { width: 80, height: 24, borderRadius: 20 },
+        skeletonMetric: { width: 60, height: 60, borderRadius: 30 },
+        skeletonDealer: { width: 56, height: 56, borderRadius: 28 },
+        skeletonDealerInfo: { flex: 1, marginLeft: 12 },
+        skeletonText: { marginTop: 8 },
+        skeletonDetailRow: { marginTop: 8 },
       }),
     [colors, chatLoading, screenWidth],
   );
@@ -324,7 +334,7 @@ const ServiceDetail: React.FC = () => {
                 {images.map((imageUri, index) => (
                   <Image
                     key={index}
-                    source={{uri: imageUri}}
+                    source={{ uri: imageUri }}
                     style={styles.image}
                     resizeMode="contain"
                   />
@@ -367,8 +377,8 @@ const ServiceDetail: React.FC = () => {
                 {[1, 2, 3].map((i) => (
                   <View key={i} style={styles.metricItem}>
                     <SkeletonLoader width={48} height={48} borderRadius={24} style={styles.skeletonMetric} />
-                    <SkeletonLoader width={40} height={12} borderRadius={4} style={{marginTop: 4}} />
-                    <SkeletonLoader width={30} height={10} borderRadius={4} style={{marginTop: 2}} />
+                    <SkeletonLoader width={40} height={12} borderRadius={4} style={{ marginTop: 4 }} />
+                    <SkeletonLoader width={30} height={10} borderRadius={4} style={{ marginTop: 2 }} />
                   </View>
                 ))}
               </View>
@@ -402,83 +412,83 @@ const ServiceDetail: React.FC = () => {
                 )}
               </View>
 
-          {/* Key Metrics */}
-          {service && (
-            <View style={styles.metricsRow}>
-              {service.durationMinutes && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('duration')} size={RFValue(20)} color={colors.secondary} />
+              {/* Key Metrics */}
+              {service && (
+                <View style={styles.metricsRow}>
+                  {service.durationMinutes && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('duration')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText}>{service.durationMinutes}</CustomText>
+                      <CustomText style={styles.metricLabel}>mins</CustomText>
+                    </View>
+                  )}
+                  <View style={styles.metricItem}>
+                    <View style={styles.metricIcon}>
+                      <Icon
+                        name={getMetricIcon('service')}
+                        size={RFValue(20)}
+                        color={colors.text}
+                      />
+                    </View>
+                    <CustomText style={styles.metricText} numberOfLines={1}>
+                      {service.homeService ? 'Home' : 'Shop'}
+                    </CustomText>
+                    <CustomText style={styles.metricLabel}>Service</CustomText>
                   </View>
-                  <CustomText style={styles.metricText}>{service.durationMinutes}</CustomText>
-                  <CustomText style={styles.metricLabel}>mins</CustomText>
+                  {service.category && (
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricIcon}>
+                        <Icon name={getMetricIcon('category')} size={RFValue(20)} color={colors.text} />
+                      </View>
+                      <CustomText style={styles.metricText} numberOfLines={1}>
+                        {service.category}
+                      </CustomText>
+                      <CustomText style={styles.metricLabel}>Type</CustomText>
+                    </View>
+                  )}
                 </View>
               )}
-              <View style={styles.metricItem}>
-                <View style={styles.metricIcon}>
-                  <Icon
-                    name={getMetricIcon('service')}
-                    size={RFValue(20)}
-                    color={colors.secondary}
-                  />
-                </View>
-                <CustomText style={styles.metricText} numberOfLines={1}>
-                  {service.homeService ? 'Home' : 'Shop'}
-                </CustomText>
-                <CustomText style={styles.metricLabel}>Service</CustomText>
-              </View>
-              {service.category && (
-                <View style={styles.metricItem}>
-                  <View style={styles.metricIcon}>
-                    <Icon name={getMetricIcon('category')} size={RFValue(20)} color={Colors.secondary} />
-                  </View>
-                  <CustomText style={styles.metricText} numberOfLines={1}>
-                    {service.category}
-                  </CustomText>
-                  <CustomText style={styles.metricLabel}>Type</CustomText>
-                </View>
-              )}
-            </View>
-          )}
 
-          {/* Dealer Information */}
-          {service?.dealer && (
-            <View style={styles.dealerSection}>
-              <View style={styles.dealerAvatar}>
-                <Icon name="business-outline" size={RFValue(24)} color={Colors.secondary} />
-              </View>
-              <View style={styles.dealerInfo}>
-                <CustomText style={styles.dealerName}>
-                  {service.dealer.businessName || 'Unknown Dealer'}
-                </CustomText>
-                <CustomText style={styles.dealerRole}>
-                  {service.dealer.type || 'Dealer'}
-                </CustomText>
-                {service.dealer.address && (
-                  <CustomText style={styles.dealerText} numberOfLines={1}>
-                    {service.dealer.address}
-                  </CustomText>
-                )}
-              </View>
-              <View style={styles.dealerActions}>
-                <TouchableOpacity
-                  style={styles.dealerActionButton}
-                  onPress={onChatPress}
-                  disabled={isChatDisabled}>
-                  <Icon
-                    name="chatbubbles-outline"
-                    size={RFValue(20)}
-                    color={isChatDisabled ? colors.disabled : colors.secondary}
-                  />
-                </TouchableOpacity>
-                {service.dealer.phone && (
-                  <TouchableOpacity style={styles.dealerActionButton}>
-                    <Icon name="call-outline" size={RFValue(20)} color={Colors.secondary} />
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
+              {/* Dealer Information */}
+              {service?.dealer && (
+                <View style={styles.dealerSection}>
+                  <View style={styles.dealerAvatar}>
+                    <Icon name="business-outline" size={RFValue(24)} color={Colors.secondary} />
+                  </View>
+                  <View style={styles.dealerInfo}>
+                    <CustomText style={styles.dealerName}>
+                      {service.dealer.businessName || 'Unknown Dealer'}
+                    </CustomText>
+                    <CustomText style={styles.dealerRole}>
+                      {service.dealer.type || 'Dealer'}
+                    </CustomText>
+                    {service.dealer.address && (
+                      <CustomText style={styles.dealerText} numberOfLines={1}>
+                        {service.dealer.address}
+                      </CustomText>
+                    )}
+                  </View>
+                  <View style={styles.dealerActions}>
+                    <TouchableOpacity
+                      style={styles.dealerActionButton}
+                      onPress={onChatPress}
+                      disabled={isChatDisabled}>
+                      <Icon
+                        name="chatbubbles-outline"
+                        size={RFValue(20)}
+                        color={isChatDisabled ? colors.disabled : colors.secondary}
+                      />
+                    </TouchableOpacity>
+                    {service.dealer.phone && (
+                      <TouchableOpacity style={styles.dealerActionButton}>
+                        <Icon name="call-outline" size={RFValue(20)} color={Colors.secondary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              )}
 
               {/* Overview/Description */}
               <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
@@ -492,30 +502,63 @@ const ServiceDetail: React.FC = () => {
               </CustomText>
 
               {/* Service Details */}
-              {(service?.location || service?.homeService !== undefined) && (
+              {/* Service Details */}
+              {(service?.location || service?.homeService !== undefined || service?.serviceType || service?.vehicleType || service?.vehicleBrand || service?.vehicleModel || service?.category) && (
                 <>
                   <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
                     Service Details
                   </CustomText>
-                  <View style={{gap: 8}}>
+                  <View style={{ gap: 12 }}>
                     <View style={styles.detailRow}>
                       <CustomText style={styles.detailLabel}>Service Type</CustomText>
                       <CustomText style={styles.detailValue}>
                         {service.homeService ? 'Home Service' : 'Shop Service'}
                       </CustomText>
                     </View>
-                    {service.location?.address && (
+                    {service.serviceType && (
                       <View style={styles.detailRow}>
-                        <CustomText style={styles.detailLabel}>Location</CustomText>
-                        <CustomText style={styles.detailValue} numberOfLines={2}>
-                          {service.location.address}
+                        <CustomText style={styles.detailLabel}>Type</CustomText>
+                        <CustomText style={styles.detailValue} numberOfLines={1}>
+                          {service.serviceType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                         </CustomText>
+                      </View>
+                    )}
+                    {service.vehicleType && (
+                      <View style={styles.detailRow}>
+                        <CustomText style={styles.detailLabel}>Vehicle Type</CustomText>
+                        <CustomText style={styles.detailValue}>{service.vehicleType}</CustomText>
+                      </View>
+                    )}
+                    {service.vehicleBrand && (
+                      <View style={styles.detailRow}>
+                        <CustomText style={styles.detailLabel}>Brand</CustomText>
+                        <CustomText style={styles.detailValue}>{service.vehicleBrand}</CustomText>
+                      </View>
+                    )}
+                    {service.vehicleModel && (
+                      <View style={styles.detailRow}>
+                        <CustomText style={styles.detailLabel}>Model</CustomText>
+                        <CustomText style={styles.detailValue}>{service.vehicleModel}</CustomText>
                       </View>
                     )}
                     {service.category && (
                       <View style={styles.detailRow}>
                         <CustomText style={styles.detailLabel}>Category</CustomText>
                         <CustomText style={styles.detailValue}>{service.category}</CustomText>
+                      </View>
+                    )}
+                    {service.serviceSubCategory && (
+                      <View style={styles.detailRow}>
+                        <CustomText style={styles.detailLabel}>Sub Category</CustomText>
+                        <CustomText style={styles.detailValue}>{service.serviceSubCategory}</CustomText>
+                      </View>
+                    )}
+                    {service.location?.address && (
+                      <View style={[styles.detailRow, { flexDirection: 'column', alignItems: 'flex-start', gap: 8 }]}>
+                        <CustomText style={styles.detailLabel}>Location</CustomText>
+                        <CustomText style={[styles.detailValue, { marginTop: 0 }]} numberOfLines={3}>
+                          {service.location.address}
+                        </CustomText>
                       </View>
                     )}
                   </View>
@@ -556,9 +599,9 @@ const ServiceDetail: React.FC = () => {
           disabled={isChatDisabled}
           onPress={onChatPress}
           activeOpacity={0.8}
-          style={[styles.chatButton, isChatDisabled ? {opacity: 0.6} : null]}>
+          style={[styles.chatButton, isChatDisabled ? { opacity: 0.6 } : null]}>
           <Icon name="chatbubbles-outline" size={RFValue(18)} color={colors.white} />
-          <CustomText fontFamily={Fonts.SemiBold} style={{color: colors.white}}>
+          <CustomText fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
             {chatLoading ? 'Opening…' : 'Chat Dealer'}
           </CustomText>
         </TouchableOpacity>
