@@ -46,7 +46,24 @@
     "metAI_q_orders": "నా ఆర్డర్ ఎక్కడ ఉంది?",
     "metAI_q_refund": "రిఫండ్ ఎలా పొందాలి?",
     "metAI_q_account": "నా ఖాతాకు సహాయం",
-    "metAI_q_support": "సపోర్ట్‌ను సంప్రదించండి"
+    "metAI_q_support": "సపోర్ట్‌ను సంప్రదించండి",
+    "privacyPermissions": "గోప్యత మరియు అనుమతులు",
+    "privateProfile": "ప్రైవేట్ ప్రొఫైల్",
+    "hidePhoneNumber": "ఫోన్ నంబర్ దాచండి",
+    "hideEmail": "ఇమెయిల్ దాచండి",
+    "hideVehicleNumber": "వాహనం నంబర్ దాచండి",
+    "storagePermission": "స్టోరేజ్ అనుమతి",
+    "notificationPermission": "నోటిఫికేషన్ అనుమతి",
+    "locationPermission": "స్థానం అనుమతి",
+    "cameraPermission": "కెమెరా అనుమతి",
+    "microphonePermission": "మైక్రోఫోన్ అనుమతి",
+    "granted": "అనుమతించబడింది",
+    "notGranted": "అనుమతించబడలేదు",
+    "permissionGranted": "అనుమతి అనుమతించబడింది",
+    "permissionDenied": "అనుమతి తిరస్కరించబడింది",
+    "permissionError": "అనుమతి అభ్యర్థనలో లోపం",
+    "privacySettingsUpdated": "గోప్యత సెట్టింగ్‌లు నవీకరించబడ్డాయి",
+    "failedToUpdatePrivacy": "గోప్యత సెట్టింగ్‌లను నవీకరించడంలో విఫలమైంది"
   },
   "common": {
     "wallet": "వాలెట్",
@@ -365,5 +382,9 @@
     "newCars": "\"కొత్త కార్లు\" శోధించండి",
     "usedCars": "\"వాడుక కార్లు\" శోధించండి",
     "vehicles": "వాహనాలు, కార్లు, బైక్‌లు శోధించండి"
+  },
+  "product": {
+    "sharedSuccessfully": "ఉత్పత్తి విజయవంతంగా భాగస్వామ్యం చేయబడింది",
+    "shareFailed": "ఉత్పత్తిని భాగస్వామ్యం చేయడంలో విఫలమైంది"
   }
 }

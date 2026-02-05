@@ -13,7 +13,11 @@
     "pod-install": "cd ios && cross-env RCT_NEW_ARCH_ENABLED=1 bundle exec pod install",
     "android:apk": "cd android && gradlew.bat assembleRelease && cd ..",
     "android:apk:debug": "cd android && gradlew.bat assembleDebug && cd ..",
-    "android:bundle": "react-native build-android --mode=release"
+    "android:bundle": "react-native build-android --mode=release",
+    "remove:android:bundle": "rimraf android/app/src/main/assets/index.android.bundle",
+    "create:android:bundle": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "react-native:clean": "npx react-native clean",
+    "cache:clean": "npm cache clear --force"
   },
   "dependencies": {
     "@homielab/react-native-auto-scroll": "^0.0.10",
@@ -37,7 +41,7 @@
     "react-native": "0.82.1",
     "react-native-cashfree-pg-sdk": "^2.2.5",
     "react-native-chart-kit": "^6.12.0",
-    "react-native-document-picker": "^9.3.2",
+    "react-native-document-picker": "^9.3.1",
     "react-native-gesture-handler": "^2.23.0",
     "react-native-image-picker": "^7.1.2",
     "react-native-linear-gradient": "^2.8.3",

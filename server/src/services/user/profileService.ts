@@ -18,6 +18,12 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
     phone: userDoc.phone,
     role: userDoc.role,
     profileImage: userDoc.profileImage,
+    privacySettings: userDoc.privacySettings || {
+      isPrivate: false,
+      hidePhone: false,
+      hideEmail: false,
+      hideVehicleNumber: false,
+    },
   };
 };
 
@@ -141,6 +147,95 @@ export interface IUserStats {
     };
   } catch (error) {
     logger.error('Error getting user stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update user privacy settings
+ */
+export interface IUpdatePrivacySettingsRequest {
+  isPrivate?: boolean;
+  hidePhone?: boolean;
+  hideEmail?: boolean;
+  hideVehicleNumber?: boolean;
+}
+
+export const updatePrivacySettings = async (
+  userId: string,
+  data: IUpdatePrivacySettingsRequest,
+): Promise<ISignUpDocument['privacySettings']> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Initialize privacySettings if it doesn't exist
+    if (!user.privacySettings) {
+      user.privacySettings = {
+        isPrivate: false,
+        hidePhone: false,
+        hideEmail: false,
+        hideVehicleNumber: false,
+      };
+    }
+
+    // Update privacy settings
+    if (data.isPrivate !== undefined) {
+      user.privacySettings.isPrivate = data.isPrivate;
+      // Auto-hide vehicle number when profile is private
+      if (data.isPrivate) {
+        user.privacySettings.hideVehicleNumber = true;
+      }
+    }
+
+    if (data.hidePhone !== undefined) {
+      user.privacySettings.hidePhone = data.hidePhone;
+    }
+
+    if (data.hideEmail !== undefined) {
+      user.privacySettings.hideEmail = data.hideEmail;
+    }
+
+    if (data.hideVehicleNumber !== undefined) {
+      user.privacySettings.hideVehicleNumber = data.hideVehicleNumber;
+    }
+
+    await user.save();
+
+    logger.info(`Privacy settings updated for user: ${user.email}`);
+
+    return user.privacySettings;
+  } catch (error) {
+    logger.error('Error updating privacy settings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user privacy settings
+ */
+export const getPrivacySettings = async (
+  userId: string,
+): Promise<ISignUpDocument['privacySettings']> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Return default settings if not set
+    return user.privacySettings || {
+      isPrivate: false,
+      hidePhone: false,
+      hideEmail: false,
+      hideVehicleNumber: false,
+    };
+  } catch (error) {
+    logger.error('Error getting privacy settings:', error);
     throw error;
   }
 };

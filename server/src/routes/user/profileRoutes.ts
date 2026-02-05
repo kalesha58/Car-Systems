@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { uploadSingle } from '../../middleware/uploadMiddleware';
-import { getProfileController, updateProfileController, getUserStatsController } from '../../controllers/user/profileController';
+import { getProfileController, updateProfileController, getUserStatsController, getPrivacySettingsController, updatePrivacySettingsController } from '../../controllers/user/profileController';
 
 const router = Router();
 
@@ -93,6 +93,53 @@ router.put('/', uploadSingle, updateProfileController);
  *         description: Unauthorized
  */
 router.get('/stats', getUserStatsController);
+
+/**
+ * @swagger
+ * /api/profile/privacy-settings:
+ *   get:
+ *     summary: Get user privacy settings
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Privacy settings retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/privacy-settings', getPrivacySettingsController);
+
+/**
+ * @swagger
+ * /api/profile/privacy-settings:
+ *   put:
+ *     summary: Update user privacy settings
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isPrivate:
+ *                 type: boolean
+ *               hidePhone:
+ *                 type: boolean
+ *               hideEmail:
+ *                 type: boolean
+ *               hideVehicleNumber:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Privacy settings updated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/privacy-settings', updatePrivacySettingsController);
 
 export default router;
 

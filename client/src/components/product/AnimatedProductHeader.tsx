@@ -13,6 +13,8 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { shareProduct } from '@utils/shareUtils';
+import { useToast } from '@hooks/useToast';
 
 interface IAnimatedProductHeaderProps {
   productName: string;
@@ -36,6 +38,22 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
   const { colors } = useTheme();
   const { scrollY } = useCollapsibleContext();
   const insets = useSafeAreaInsets();
+  const { showSuccess, showError } = useToast();
+
+  const handleShare = async () => {
+    if (!productId) {
+      showError('Product ID not available');
+      return;
+    }
+    try {
+      const shared = await shareProduct(productName, productId);
+      if (shared) {
+        showSuccess('Product shared successfully');
+      }
+    } catch (error) {
+      showError('Failed to share product');
+    }
+  };
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -178,6 +196,9 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
         </View>
       </View>
       <View style={styles.rightIcons}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleShare}>
+          <Icon name="share-outline" size={RFValue(18)} color={colors.text} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
           <Icon name={isWishlisted ? 'heart' : 'heart-outline'} size={RFValue(18)} color={isWishlisted ? colors.error : colors.text} />
         </TouchableOpacity>

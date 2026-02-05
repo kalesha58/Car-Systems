@@ -46,7 +46,24 @@
     "metAI_q_orders": "मेरा ऑर्डर कहाँ है?",
     "metAI_q_refund": "रिफंड कैसे मिलेगा?",
     "metAI_q_account": "मेरे खाते में मदद",
-    "metAI_q_support": "सपोर्ट से संपर्क करें"
+    "metAI_q_support": "सपोर्ट से संपर्क करें",
+    "privacyPermissions": "गोपनीयता और अनुमतियां",
+    "privateProfile": "निजी प्रोफ़ाइल",
+    "hidePhoneNumber": "फ़ोन नंबर छुपाएं",
+    "hideEmail": "ईमेल छुपाएं",
+    "hideVehicleNumber": "वाहन नंबर छुपाएं",
+    "storagePermission": "स्टोरेज अनुमति",
+    "notificationPermission": "सूचना अनुमति",
+    "locationPermission": "स्थान अनुमति",
+    "cameraPermission": "कैमरा अनुमति",
+    "microphonePermission": "माइक्रोफ़ोन अनुमति",
+    "granted": "अनुमत",
+    "notGranted": "अनुमति नहीं दी गई",
+    "permissionGranted": "अनुमति दी गई",
+    "permissionDenied": "अनुमति अस्वीकृत",
+    "permissionError": "अनुमति अनुरोध करने में त्रुटि",
+    "privacySettingsUpdated": "गोपनीयता सेटिंग्स अपडेट की गईं",
+    "failedToUpdatePrivacy": "गोपनीयता सेटिंग्स अपडेट करने में विफल"
   },
   "common": {
     "wallet": "वॉलेट",
@@ -367,5 +384,9 @@
     "newCars": "\"नई कारें\" खोजें",
     "usedCars": "\"पुरानी कारें\" खोजें",
     "vehicles": "वाहन, कारें, बाइक खोजें"
+  },
+  "product": {
+    "sharedSuccessfully": "उत्पाद सफलतापूर्वक साझा किया गया",
+    "shareFailed": "उत्पाद साझा करने में विफल"
   }
 }

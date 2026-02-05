@@ -4,6 +4,13 @@ import bcrypt from 'bcryptjs';
 export type UserRole = 'user' | 'admin' | 'dealer';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
+export interface IPrivacySettings {
+  isPrivate: boolean;
+  hidePhone: boolean;
+  hideEmail: boolean;
+  hideVehicleNumber: boolean;
+}
+
 export interface ISignUpDocument extends Document {
   name: string;
   email: string;
@@ -16,6 +23,7 @@ export interface ISignUpDocument extends Document {
   resetPasswordCodeExpires?: Date;
   googleId?: string;
   fcmToken?: string;
+  privacySettings?: IPrivacySettings;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -78,6 +86,20 @@ const signUpSchema = new Schema<ISignUpDocument>(
       type: String,
       trim: true,
       default: null,
+    },
+    privacySettings: {
+      type: {
+        isPrivate: { type: Boolean, default: false },
+        hidePhone: { type: Boolean, default: false },
+        hideEmail: { type: Boolean, default: false },
+        hideVehicleNumber: { type: Boolean, default: false },
+      },
+      default: {
+        isPrivate: false,
+        hidePhone: false,
+        hideEmail: false,
+        hideVehicleNumber: false,
+      },
     },
   },
   {
