@@ -434,10 +434,12 @@ export const unlikePost = async (postId: string): Promise<IPostResponse> => {
 export const addComment = async (
   postId: string,
   text: string,
+  parentCommentId?: string,
 ): Promise<IPostResponse> => {
   try {
     const response = await appAxios.post<IPostResponse>(`/posts/${postId}/comment`, {
       text,
+      parentCommentId,
     });
     return response.data;
   } catch (error) {
@@ -445,3 +447,32 @@ export const addComment = async (
   }
 };
 
+/**
+ * Like a comment
+ */
+export const likeComment = async (
+  postId: string,
+  commentId: string,
+): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.post<IPostResponse>(`/posts/${postId}/comments/${commentId}/like`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Unlike a comment
+ */
+export const unlikeComment = async (
+  postId: string,
+  commentId: string,
+): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.post<IPostResponse>(`/posts/${postId}/comments/${commentId}/unlike`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

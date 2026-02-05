@@ -12,6 +12,8 @@ import {
   Animated,
   FlatList,
   ScrollView,
+  PanResponder,
+  GestureResponderEvent,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts } from '@utils/Constants';
@@ -21,12 +23,13 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ImageCarousel from './ImageCarousel';
 import { IPost, IComment } from '../../types/post/IPost';
 import { useTheme } from '@hooks/useTheme';
-import { likePost, unlikePost, addComment } from '@service/postService';
+import { likePost, unlikePost, addComment, likeComment, unlikeComment } from '@service/postService';
 import { SOCKET_URL } from '@service/config';
 import { io, Socket } from 'socket.io-client';
 import { formatRelativeTime } from '@utils/timeUtils';
 import { useAuthStore } from '@state/authStore';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
+import { shareContent } from '@utils/shareUtils';
 
 interface IImagePostItemProps {
   post: IPost;
@@ -44,10 +47,48 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const modalTranslateY = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get('window').height;
   const imageHeight = screenHeight * 0.5;
+  
+  // Pan responder for swipe down to dismiss
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          modalTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) {
+          // Dismiss modal if swiped down more than 100px
+          Animated.timing(modalTranslateY, {
+            toValue: screenHeight,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            setShowCommentModal(false);
+            setCommentText('');
+            setReplyingTo(null);
+            modalTranslateY.setValue(0);
+          });
+        } else {
+          // Snap back
+          Animated.spring(modalTranslateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   // Emoji reactions for quick input
   const emojiReactions = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'];
@@ -119,6 +160,42 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     setComments(post.comments || []);
   }, [post?.isLiked, post?.likes, post?.comments]);
 
+  // Listen for comment like updates
+  useEffect(() => {
+    if (!socketRef.current || !post?.id) return;
+
+    const socket = socketRef.current;
+
+    socket.on('commentLiked', (data: { postId: string; commentId: string; likes: number; isLiked: boolean }) => {
+      if (data.postId === post.id) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === data.commentId
+              ? { ...comment, likes: data.likes, isLiked: data.isLiked }
+              : comment
+          )
+        );
+      }
+    });
+
+    socket.on('commentUnliked', (data: { postId: string; commentId: string; likes: number; isLiked: boolean }) => {
+      if (data.postId === post.id) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === data.commentId
+              ? { ...comment, likes: data.likes, isLiked: data.isLiked }
+              : comment
+          )
+        );
+      }
+    });
+
+    return () => {
+      socket.off('commentLiked');
+      socket.off('commentUnliked');
+    };
+  }, [post?.id]);
+
   const formatCount = (count: number): string => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}k`;
@@ -177,16 +254,20 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     setIsSubmitting(true);
     const previousCount = commentCount;
     const previousComments = [...comments];
+    const replyToId = replyingTo;
 
     // Optimistic update
     setCommentCount(previousCount + 1);
 
     try {
-      const response = await addComment(post.id, commentText.trim());
+      // Remove @username prefix if replying
+      const textToSend = replyingTo ? commentText.replace(/^@\w+\s/, '').trim() : commentText.trim();
+      const response = await addComment(post.id, textToSend, replyToId || undefined);
       if (response.success && response.Response) {
         setCommentCount(response.Response.comments?.length || 0);
         setComments(response.Response.comments || []);
         setCommentText('');
+        setReplyingTo(null);
         // Don't close modal - keep it open to see the comment
       } else {
         // Rollback on error
@@ -207,7 +288,79 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     setCommentText((prev) => prev + emoji);
   };
 
+  const handleCommentLike = async (commentId: string) => {
+    if (!post?.id) return;
+
+    const comment = comments.find(c => c.id === commentId);
+    if (!comment) return;
+
+    const previousLiked = comment.isLiked || false;
+    const previousCount = comment.likes || 0;
+
+    // Optimistic update
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? {
+              ...c,
+              isLiked: !previousLiked,
+              likes: previousLiked ? previousCount - 1 : previousCount + 1,
+            }
+          : c
+      )
+    );
+
+    try {
+      if (previousLiked) {
+        await unlikeComment(post.id, commentId);
+      } else {
+        await likeComment(post.id, commentId);
+      }
+      // Real-time update will handle the state update via socket
+    } catch (error) {
+      // Rollback on error
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                isLiked: previousLiked,
+                likes: previousCount,
+              }
+            : c
+        )
+      );
+      console.error('Error toggling comment like:', error);
+    }
+  };
+
+  const handleReply = (commentId: string, userName: string) => {
+    setReplyingTo(commentId);
+    setCommentText(`@${userName} `);
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareText = post?.text || 'Check out this post!';
+      const shareUrl = post?.images && post.images.length > 0 
+        ? `Check out this post with ${post.images.length} image${post.images.length > 1 ? 's' : ''}!`
+        : shareText;
+      
+      await shareContent({
+        title: 'Car Connect Post',
+        message: shareUrl,
+        url: post?.id ? `carconnect://post/${post.id}` : undefined,
+      });
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
   const renderCommentItem = ({ item }: { item: IComment }) => {
+    const isLiked = item.isLiked || false;
+    const likes = item.likes || 0;
+    const userName = item.userName || `User ${item.userId.substring(0, 8)}`;
+    
     return (
       <View style={[styles.commentItem, { backgroundColor: postBackground }]}>
         <View style={styles.commentLeft}>
@@ -225,7 +378,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                 fontSize={RFValue(12)}
                 fontFamily={Fonts.SemiBold}
                 style={{ color: textColor }}>
-                {item.userName || `User ${item.userId.substring(0, 8)}`}
+                {userName}
               </CustomText>
               <CustomText
                 fontSize={RFValue(10)}
@@ -240,7 +393,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               style={{ color: textColor, marginTop: 4, lineHeight: RFValue(18) }}>
               {item.text}
             </CustomText>
-            <TouchableOpacity style={styles.replyButton} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.replyButton} 
+              activeOpacity={0.7}
+              onPress={() => handleReply(item.id, userName)}>
               <CustomText
                 fontSize={RFValue(10)}
                 fontFamily={Fonts.Medium}
@@ -250,8 +406,23 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.commentLikeButton} activeOpacity={0.7}>
-          <Icon name="heart-outline" size={RFValue(16)} color={iconColor} />
+        <TouchableOpacity 
+          style={styles.commentLikeButton} 
+          activeOpacity={0.7}
+          onPress={() => handleCommentLike(item.id)}>
+          <Icon 
+            name={isLiked ? 'heart' : 'heart-outline'} 
+            size={RFValue(16)} 
+            color={isLiked ? '#ff3040' : iconColor} 
+          />
+          {likes > 0 && (
+            <CustomText
+              fontSize={RFValue(10)}
+              fontFamily={Fonts.Regular}
+              style={{ color: secondaryTextColor, marginLeft: 4 }}>
+              {likes}
+            </CustomText>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -366,21 +537,13 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             </CustomText>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.engagementButton} activeOpacity={0.7}>
+          <TouchableOpacity 
+            style={styles.engagementButton} 
+            activeOpacity={0.7}
+            onPress={handleShare}>
             <Icon name="arrow-redo-outline" size={RFValue(18)} color={iconColor} />
           </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => setIsSaved(!isSaved)}
-          activeOpacity={0.7}>
-          <Icon
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
-            size={RFValue(18)}
-            color={iconColor}
-          />
-        </TouchableOpacity>
       </View>
 
       {/* Caption Section - matching reference */}
@@ -424,35 +587,28 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalContainer}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-            <View style={[styles.modalContent, { backgroundColor: postBackground }]}>
+            <Animated.View 
+              style={[
+                styles.modalContent, 
+                { 
+                  backgroundColor: postBackground,
+                  transform: [{ translateY: modalTranslateY }]
+                }
+              ]}
+              {...panResponder.panHandlers}>
               {/* Drag Handle */}
               <View style={[styles.dragHandle, { backgroundColor: secondaryTextColor }]} />
 
               {/* Header */}
               <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowCommentModal(false);
-                    setCommentText('');
-                  }}
-                  style={styles.closeButton}
-                  activeOpacity={0.7}>
-                  <Icon name="close" size={RFValue(22)} color={textColor} />
-                </TouchableOpacity>
+                <View style={styles.closeButton} />
                 <CustomText
                   fontSize={RFValue(13)}
                   fontFamily={Fonts.SemiBold}
                   style={{ color: textColor }}>
                   Comments
                 </CustomText>
-                <TouchableOpacity
-                  onPress={() => {
-                    // Three dots menu - placeholder for future features
-                  }}
-                  style={styles.menuButton}
-                  activeOpacity={0.7}>
-                  <Icon name="ellipsis-vertical" size={RFValue(20)} color={textColor} />
-                </TouchableOpacity>
+                <View style={styles.menuButton} />
               </View>
 
               {/* Comment List */}
@@ -510,9 +666,27 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 
                   {/* Text Input */}
                   <View style={styles.textInputContainer}>
+                    {replyingTo && (
+                      <View style={[styles.replyingToIndicator, { backgroundColor: colors.backgroundSecondary }]}>
+                        <CustomText
+                          fontSize={RFValue(11)}
+                          fontFamily={Fonts.Medium}
+                          style={{ color: colors.primary }}>
+                          Replying to {comments.find(c => c.id === replyingTo)?.userName || 'user'}
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setReplyingTo(null);
+                            setCommentText('');
+                          }}
+                          style={styles.cancelReplyButton}>
+                          <Icon name="close" size={RFValue(14)} color={textColor} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                     <TextInput
                       style={[styles.commentInput, { color: textColor, backgroundColor: colors.backgroundSecondary, fontSize: RFValue(13) }]}
-                      placeholder="Add a comment..."
+                      placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                       placeholderTextColor={colors.disabled}
                       value={commentText}
                       onChangeText={setCommentText}
@@ -611,7 +785,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  saveButton: {
+  replyingToIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  cancelReplyButton: {
     padding: 4,
   },
   captionSection: {

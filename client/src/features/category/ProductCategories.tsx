@@ -51,6 +51,8 @@ const ProductCategories = () => {
     initialCategoryType?: CategoryType;
     sortBy?: string;
     dealerId?: string;
+    serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+    vehicleType?: 'Car' | 'Bike';
   } | undefined;
   
   const {t} = useTranslation();
@@ -283,6 +285,14 @@ const ProductCategories = () => {
         dealerId.trim() !== '' &&
         categoryType === 'products') {
       queryParams.dealerId = dealerId;
+    }
+    
+    // Apply service type and vehicle type filters from route params
+    if (routeParams?.serviceType && categoryType === 'services') {
+      queryParams.serviceType = routeParams.serviceType;
+    }
+    if (routeParams?.vehicleType && categoryType === 'services') {
+      queryParams.vehicleType = routeParams.vehicleType;
     }
     
     if (queryFilters.type) {

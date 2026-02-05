@@ -8,6 +8,8 @@ import {
   likePost,
   unlikePost,
   addComment,
+  likeComment,
+  unlikeComment,
 } from '../../services/user/postService';
 import { ICreatePostRequest, IUpdatePostRequest } from '../../types/post';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
@@ -237,7 +239,7 @@ export const addCommentController = async (
   try {
     const userId = req.user?.userId;
     const postId = req.params.id;
-    const { text } = req.body;
+    const { text, parentCommentId } = req.body;
 
     if (!userId) {
       res.status(401).json({
@@ -259,7 +261,75 @@ export const addCommentController = async (
       return;
     }
 
-    const result = await addComment(postId, userId, text);
+    const result = await addComment(postId, userId, text, parentCommentId);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Like comment controller
+ */
+export const likeCommentController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const postId = req.params.postId;
+    const commentId = req.params.commentId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await likeComment(postId, commentId, userId);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Unlike comment controller
+ */
+export const unlikeCommentController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const postId = req.params.postId;
+    const commentId = req.params.commentId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const result = await unlikeComment(postId, commentId, userId);
 
     res.status(200).json({
       success: true,

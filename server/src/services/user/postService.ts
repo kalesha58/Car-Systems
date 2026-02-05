@@ -54,11 +54,17 @@ const postToIPostWithUser = async (
         commentUserAvatar = commentUser?.profileImage;
       }
 
+      // Check if current user has liked this comment
+      const isCommentLiked = currentUserId ? (comment.likedBy || []).includes(currentUserId) : false;
+
       return {
         id: comment.id,
         postId: comment.postId,
         userId: comment.userId,
         text: comment.text,
+        parentCommentId: comment.parentCommentId,
+        likes: comment.likes || 0,
+        isLiked: isCommentLiked,
         createdAt: comment.createdAt.toISOString(),
         userName: commentUserName,
         userAvatar: commentUserAvatar,
@@ -364,6 +370,7 @@ export const addComment = async (
   postId: string,
   userId: string,
   text: string,
+  parentCommentId?: string,
 ): Promise<IPostResponse> => {
   if (!text || !text.trim()) {
     throw new AppError('Comment text is required', 400);
@@ -375,12 +382,23 @@ export const addComment = async (
     throw new NotFoundError('Post not found');
   }
 
+  // If replying to a comment, verify parent comment exists
+  if (parentCommentId) {
+    const parentComment = (post.comments || []).find(c => c.id === parentCommentId);
+    if (!parentComment) {
+      throw new NotFoundError('Parent comment not found');
+    }
+  }
+
   // Create new comment
   const comment = {
     id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     postId,
     userId,
     text: text.trim(),
+    parentCommentId: parentCommentId || undefined,
+    likes: 0,
+    likedBy: [],
     createdAt: new Date(),
   };
 
@@ -390,7 +408,7 @@ export const addComment = async (
 
   await post.save();
 
-  logger.info(`Comment added to post ${postId} by user ${userId}`);
+  logger.info(`Comment added to post ${postId} by user ${userId}${parentCommentId ? ` (reply to ${parentCommentId})` : ''}`);
 
   // Get all unique userIds from comments for batch fetching
   const commentUserIds = new Set<string>();
@@ -420,4 +438,137 @@ export const addComment = async (
   return {
     Response: updatedPost,
   };
+};
+
+/**
+ * Like a comment
+ */
+export const likeComment = async (
+  postId: string,
+  commentId: string,
+  userId: string,
+): Promise<IPostResponse> => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  const comments = post.comments || [];
+  const comment = comments.find(c => c.id === commentId);
+
+  if (!comment) {
+    throw new NotFoundError('Comment not found');
+  }
+
+  // Check if user already liked the comment
+  const likedBy = comment.likedBy || [];
+  if (likedBy.includes(userId)) {
+    // Already liked, return current state
+    const commentUserMap = await getCommentUserMap(comments);
+    const updatedPost = await postToIPostWithUser(post, undefined, userId, commentUserMap);
+    return {
+      Response: updatedPost,
+    };
+  }
+
+  // Add user to likedBy array and increment likes
+  comment.likedBy = [...likedBy, userId];
+  comment.likes = (comment.likes || 0) + 1;
+
+  await post.save();
+
+  logger.info(`Comment ${commentId} liked by user ${userId}`);
+
+  const commentUserMap = await getCommentUserMap(comments);
+  const updatedPost = await postToIPostWithUser(post, undefined, userId, commentUserMap);
+
+  // Emit real-time update
+  emitToPostRoom(postId, 'commentLiked', {
+    postId,
+    commentId,
+    likes: comment.likes,
+    isLiked: true,
+  });
+
+  return {
+    Response: updatedPost,
+  };
+};
+
+/**
+ * Unlike a comment
+ */
+export const unlikeComment = async (
+  postId: string,
+  commentId: string,
+  userId: string,
+): Promise<IPostResponse> => {
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+
+  const comments = post.comments || [];
+  const comment = comments.find(c => c.id === commentId);
+
+  if (!comment) {
+    throw new NotFoundError('Comment not found');
+  }
+
+  // Check if user has liked the comment
+  const likedBy = comment.likedBy || [];
+  if (!likedBy.includes(userId)) {
+    // Not liked, return current state
+    const commentUserMap = await getCommentUserMap(comments);
+    const updatedPost = await postToIPostWithUser(post, undefined, userId, commentUserMap);
+    return {
+      Response: updatedPost,
+    };
+  }
+
+  // Remove user from likedBy array and decrement likes
+  comment.likedBy = likedBy.filter(id => id !== userId);
+  comment.likes = Math.max((comment.likes || 0) - 1, 0);
+
+  await post.save();
+
+  logger.info(`Comment ${commentId} unliked by user ${userId}`);
+
+  const commentUserMap = await getCommentUserMap(comments);
+  const updatedPost = await postToIPostWithUser(post, undefined, userId, commentUserMap);
+
+  // Emit real-time update
+  emitToPostRoom(postId, 'commentUnliked', {
+    postId,
+    commentId,
+    likes: comment.likes,
+    isLiked: false,
+  });
+
+  return {
+    Response: updatedPost,
+  };
+};
+
+/**
+ * Helper function to get comment user map
+ */
+const getCommentUserMap = async (comments: any[]): Promise<Map<string, { name: string; profileImage?: string }>> => {
+  const commentUserIds = new Set<string>();
+  comments.forEach((comment) => {
+    commentUserIds.add(comment.userId);
+  });
+
+  const commentUsers = await SignUp.find({ _id: { $in: Array.from(commentUserIds) } }).select('_id name profileImage');
+  const commentUserMap = new Map<string, { name: string; profileImage?: string }>();
+  commentUsers.forEach((user) => {
+    commentUserMap.set((user._id as any).toString(), {
+      name: user.name,
+      profileImage: user.profileImage,
+    });
+  });
+
+  return commentUserMap;
 };

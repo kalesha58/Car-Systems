@@ -27,6 +27,10 @@ export interface IBusinessRegistrationDocument extends Document {
   address: string;
   phone: string;
   gst?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   payout?: IPayoutCredentials;
   shopPhotos?: {
     url: string;
@@ -94,6 +98,10 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
       type: String,
       required: true,
       trim: true,
+    },
+    location: {
+      latitude: { type: Number },
+      longitude: { type: Number },
     },
     phone: {
       type: String,

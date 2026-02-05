@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { getDealersController, getDealerByIdController } from '../controllers/dealerController';
+import { getNearbyCarWashDealersController } from '../controllers/dealer/nearbyDealersController';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -66,6 +68,43 @@ router.get('/', getDealersController);
  *         description: Dealer not found
  */
 router.get('/:id', getDealerByIdController);
+
+/**
+ * @swagger
+ * /api/dealers/nearby/car-wash:
+ *   get:
+ *     summary: Get nearby car wash dealers
+ *     tags: [Public]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: latitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: longitude
+ *         required: true
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: radiusKm
+ *         schema:
+ *           type: number
+ *           default: 50
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Nearby dealers retrieved successfully
+ *       400:
+ *         description: Bad request
+ */
+router.get('/nearby/car-wash', authMiddleware, getNearbyCarWashDealersController);
 
 export default router;
 

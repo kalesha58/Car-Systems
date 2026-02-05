@@ -20,6 +20,10 @@ export interface IBusinessRegistration {
   address: string;
   phone: string;
   gst?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   payout?: IPayoutCredentials;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
@@ -36,6 +40,10 @@ export interface ICreateBusinessRegistrationRequest {
   address: string;
   phone: string;
   gst?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   payout?: IPayoutCredentials;
   shopPhotos: IBusinessRegistrationPhoto[];
   documents: IBusinessRegistrationDocumentFile[];
@@ -47,6 +55,10 @@ export interface IUpdateBusinessRegistrationRequest {
   address?: string;
   phone?: string;
   gst?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   payout?: IPayoutCredentials;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
