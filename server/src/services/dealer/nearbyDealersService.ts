@@ -39,9 +39,9 @@ const calculateDistance = (
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -90,12 +90,12 @@ export const getNearbyCarWashDealers = async (
           distance,
         };
       })
-      .filter((item): item is { station: IBusinessRegistrationDocument; distance: number } => item !== null)
+      .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => a.distance - b.distance)
       .slice(0, limit);
 
     // Get services for each dealer
-    const dealerIds = dealersWithDistance.map((item) => item.station._id.toString());
+    const dealerIds = dealersWithDistance.map((item) => (item.station as any)._id.toString());
     const services = await Service.find({
       dealerId: { $in: dealerIds },
       serviceType: 'car_wash',
@@ -114,7 +114,7 @@ export const getNearbyCarWashDealers = async (
 
     // Build result
     const result: INearbyDealer[] = dealersWithDistance.map(({ station, distance }) => {
-      const dealerId = station._id.toString();
+      const dealerId = (station as any)._id.toString();
       const dealerServices = servicesByDealer.get(dealerId) || [];
 
       return {
@@ -125,14 +125,14 @@ export const getNearbyCarWashDealers = async (
         phone: station.phone,
         location: station.location
           ? {
-              latitude: station.location.latitude,
-              longitude: station.location.longitude,
-            }
+            latitude: station.location.latitude,
+            longitude: station.location.longitude,
+          }
           : undefined,
         distance: Math.round(distance * 10) / 10, // Round to 1 decimal place
         totalServices: dealerServices.length,
         services: dealerServices.map((service) => ({
-          id: service._id.toString(),
+          id: (service as any)._id.toString(),
           name: service.name,
           price: service.price,
           serviceType: service.serviceType || 'car_wash',
