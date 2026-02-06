@@ -26,6 +26,60 @@ export const getDealerById = async (dealerId: string): Promise<IDealersResponse>
   }
 };
 
+export interface INearbyDealer {
+  id: string;
+  businessName: string;
+  type: string;
+  address: string;
+  phone: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  distance?: number; // Distance in kilometers
+  totalServices: number;
+  services: Array<{
+    id: string;
+    name: string;
+    price: number;
+    serviceType: string;
+  }>;
+}
+
+export interface INearbyDealersResponse {
+  success: boolean;
+  Response: {
+    dealers: INearbyDealer[];
+  };
+}
+
+/**
+ * Get nearby car wash dealers
+ */
+export const getNearbyCarWashDealers = async (
+  latitude: number,
+  longitude: number,
+  radiusKm: number = 50,
+  limit: number = 20,
+): Promise<INearbyDealer[]> => {
+  try {
+    const response = await appAxios.get<INearbyDealersResponse>('/dealers/nearby/car-wash', {
+      params: {
+        latitude,
+        longitude,
+        radiusKm,
+        limit,
+      },
+    });
+    if (response.data.success && response.data.Response) {
+      return response.data.Response.dealers;
+    }
+    return [];
+  } catch (error) {
+    throw error;
+  }
+};
+
 export interface IDealerOrderStats {
   total: number;
   pending?: number;
@@ -178,6 +232,10 @@ export interface IBusinessRegistration {
   address: string;
   phone: string;
   gst?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   payout?: IPayoutCredentials;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];

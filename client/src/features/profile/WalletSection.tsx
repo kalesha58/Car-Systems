@@ -37,12 +37,6 @@ const WalletSection = () => {
       label: t('profile.myOrders'), 
       onPress: () => navigation.navigate('OrdersList' as never) 
     });
-    // Wallet/Money
-    items.push({ 
-      icon: 'wallet-outline', 
-      label: t('common.wallet'), 
-      onPress: () => {} 
-    });
   } else {
     // For dealers, show support
     items.push({ 

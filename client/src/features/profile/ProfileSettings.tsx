@@ -1,4 +1,4 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import React, { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
@@ -11,11 +11,14 @@ import { resetAndNavigate } from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
 import LanguageSection from './sections/LanguageSection';
 import AccountSettingsSection from './sections/AccountSettingsSection';
+import PrivacyPermissionsSection from './sections/PrivacyPermissionsSection';
 import ActivitySection from './sections/ActivitySection';
 import FeedbackSection from './sections/FeedbackSection';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RFValue } from 'react-native-responsive-fontsize';
+import Icon from 'react-native-vector-icons/Ionicons';
 import {
   CollapsibleContainer,
   CollapsibleScrollView,
@@ -24,12 +27,14 @@ import {
 } from '@r0b0t3d/react-native-collapsible';
 
 const ProfileSettings = () => {
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const { clearCart } = useCartStore();
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+
+  const hasMultipleAccounts = user?.role && user.role.length > 1;
 
   const handleLogout = () => {
     clearCart();
@@ -37,6 +42,17 @@ const ProfileSettings = () => {
     tokenStorage.clearAll();
     storage.clearAll();
     resetAndNavigate('CustomerLogin');
+  };
+
+  const handleSwitchAccount = () => {
+    // Navigate to account switcher or show account selection modal
+    // For now, we'll show an alert - this can be enhanced later
+    navigation.navigate('Profile' as never);
+  };
+
+  const handleSettingsPress = () => {
+    // Already on settings page, could scroll to top or show additional options
+    // For now, do nothing as we're already here
   };
 
   const styles = useMemo(
@@ -75,7 +91,26 @@ const ProfileSettings = () => {
         style={[styles.container, { marginTop: insets.top || 0 }]}>
         <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
           <View style={{ backgroundColor: colors.background }}>
-            <CustomHeader title={t('profile.settings') || 'Settings'} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: insets.top || 0, backgroundColor: colors.cardBackground, borderBottomWidth: 0.6, borderColor: colors.border }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 10, height: 60 }}>
+                {hasMultipleAccounts ? (
+                  <Pressable onPress={handleSwitchAccount} style={{ padding: 4 }}>
+                    <Icon name="swap-horizontal-outline" color={colors.text} size={RFValue(20)} />
+                  </Pressable>
+                ) : (
+                  <View style={{ width: RFValue(20) }} />
+                )}
+                <CustomText
+                  style={{ textAlign: 'center', flex: 1 }}
+                  variant="h5"
+                  fontFamily={Fonts.SemiBold}>
+                  {t('profile.settings') || 'Settings'}
+                </CustomText>
+                <Pressable onPress={handleSettingsPress} style={{ padding: 4 }}>
+                  <Icon name="settings-outline" color={colors.text} size={RFValue(20)} />
+                </Pressable>
+              </View>
+            </View>
           </View>
         </CollapsibleHeaderContainer>
 
@@ -92,6 +127,7 @@ const ProfileSettings = () => {
             </View>
           </View>
           <AccountSettingsSection />
+          <PrivacyPermissionsSection />
           <ActivitySection />
           <FeedbackSection />
 

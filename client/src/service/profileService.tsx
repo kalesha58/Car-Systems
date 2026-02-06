@@ -1,6 +1,13 @@
 import {appAxios} from './apiInterceptors';
 import {Platform} from 'react-native';
 
+export interface IPrivacySettings {
+  isPrivate: boolean;
+  hidePhone: boolean;
+  hideEmail: boolean;
+  hideVehicleNumber: boolean;
+}
+
 interface IUserProfile {
   id: string;
   name: string;
@@ -8,6 +15,7 @@ interface IUserProfile {
   phone: string;
   role: string[];
   profileImage?: string;
+  privacySettings?: IPrivacySettings;
 }
 
 /**
@@ -102,5 +110,37 @@ export interface IUserStats {
     response.data?.Response?.ReturnMessage ||
       response.data?.message ||
       'Failed to fetch user stats',
+  );
+};
+
+/**
+ * Get user privacy settings
+ */
+export const getPrivacySettings = async (): Promise<IPrivacySettings> => {
+  const response = await appAxios.get('/profile/privacy-settings');
+  if (response.data && response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  throw new Error(
+    response.data?.Response?.ReturnMessage ||
+      response.data?.message ||
+      'Failed to fetch privacy settings',
+  );
+};
+
+/**
+ * Update user privacy settings
+ */
+export const updatePrivacySettings = async (
+  settings: Partial<IPrivacySettings>,
+): Promise<IPrivacySettings> => {
+  const response = await appAxios.put('/profile/privacy-settings', settings);
+  if (response.data && response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  throw new Error(
+    response.data?.Response?.ReturnMessage ||
+      response.data?.message ||
+      'Failed to update privacy settings',
   );
 };

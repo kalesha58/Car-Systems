@@ -13,6 +13,7 @@ import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
 import {navigate} from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { shouldHidePhone, shouldHideEmail, maskPhone, maskEmail } from '@utils/privacyUtils';
 
 interface InstagramProfileHeaderProps {
   postsCount?: number;
@@ -182,11 +183,11 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
 
       <View style={styles.infoSection}>
         <CustomText style={styles.userName}>{user?.name || 'User'}</CustomText>
-        {user?.email && (
-          <CustomText style={styles.bioText}>{user.email}</CustomText>
+        {user?.email && !shouldHideEmail() && (
+          <CustomText style={styles.bioText}>{maskEmail(user.email)}</CustomText>
         )}
-        {user?.phone && (
-          <CustomText style={styles.bioText}>{user.phone}</CustomText>
+        {user?.phone && !shouldHidePhone() && (
+          <CustomText style={styles.bioText}>{maskPhone(user.phone)}</CustomText>
         )}
       </View>
 

@@ -11,6 +11,9 @@ export interface ICommentDocument {
   postId: string;
   userId: string;
   text: string;
+  parentCommentId?: string; // For nested replies
+  likes: number;
+  likedBy: string[]; // Array of user IDs who liked this comment
   createdAt: Date;
 }
 
@@ -42,6 +45,9 @@ const commentSchema = new Schema<ICommentDocument>(
     postId: { type: String, required: true },
     userId: { type: String, required: true },
     text: { type: String, required: true },
+    parentCommentId: { type: String },
+    likes: { type: Number, default: 0 },
+    likedBy: { type: [String], default: [] },
     createdAt: { type: Date, default: Date.now },
   },
   { _id: false },

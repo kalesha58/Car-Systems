@@ -1,4 +1,4 @@
-import { UserRole } from '../models/SignUp';
+import { UserRole, IPrivacySettings } from '../models/SignUp';
 
 export interface IUser {
   id: string;
@@ -7,6 +7,7 @@ export interface IUser {
   phone: string;
   role: UserRole[];
   profileImage?: string;
+  privacySettings?: IPrivacySettings;
 }
 
 export interface ICredentials {

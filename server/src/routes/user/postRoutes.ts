@@ -8,6 +8,8 @@ import {
   likePostController,
   unlikePostController,
   addCommentController,
+  likeCommentController,
+  unlikeCommentController,
 } from '../../controllers/user/postController';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { validateCreatePost } from '../../middleware/validationMiddleware';
@@ -105,6 +107,38 @@ router.post('/:id/unlike', authMiddleware, unlikePostController);
  */
 // Register comment route before generic :id routes to ensure proper matching
 router.post('/:id/comment', authMiddleware, addCommentController);
+
+/**
+ * @swagger
+ * /api/posts/{postId}/comments/{commentId}/like:
+ *   post:
+ *     summary: Like a comment
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Comment liked successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:postId/comments/:commentId/like', authMiddleware, likeCommentController);
+
+/**
+ * @swagger
+ * /api/posts/{postId}/comments/{commentId}/unlike:
+ *   post:
+ *     summary: Unlike a comment
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Comment unliked successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:postId/comments/:commentId/unlike', authMiddleware, unlikeCommentController);
 
 /**
  * @swagger

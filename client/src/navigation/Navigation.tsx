@@ -1,9 +1,9 @@
 import React, { FC, useEffect, useState } from 'react';
-import { View, AppState, ActivityIndicator, Image } from 'react-native';
+import { View, AppState, ActivityIndicator, Image, Linking } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import { navigationRef, resetAndNavigate } from '@utils/NavigationUtils';
+import { navigationRef, resetAndNavigate, navigate } from '@utils/NavigationUtils';
 import { useAuthStore } from '@state/authStore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -41,6 +41,7 @@ import ChatScreen from '@features/chat/ChatScreen';
 import UserSelectionScreen from '@features/chat/UserSelectionScreen';
 import ChatMessageScreen from '@features/chat/ChatMessageScreen';
 import CreateGroupScreen from '@features/chat/CreateGroupScreen';
+import GroupDetailScreen from '@features/chat/GroupDetailScreen';
 import NotificationScreen from '@features/notifications/NotificationScreen';
 import EditGroupScreen from '@features/chat/EditGroupScreen';
 import JoinRequestsScreen from '@features/chat/JoinRequestsScreen';
@@ -483,10 +484,33 @@ const Navigation: FC = () => {
     };
   }, [user]);
 
+  // Deep linking configuration
+  // React Navigation will automatically handle deep links
+  const linking = {
+    prefixes: ['carconnect://'],
+    config: {
+      screens: {
+        ProductDetail: {
+          path: 'product/:productId',
+          parse: {
+            productId: (productId: string) => productId,
+          },
+        },
+        ProductCategories: {
+          path: 'category/:categoryName',
+          parse: {
+            categoryName: (categoryName: string) => decodeURIComponent(categoryName),
+          },
+        },
+      },
+    },
+  };
+
   return (
     <ToastProvider>
       <NavigationContainer
         ref={navigationRef}
+        linking={linking}
         onReady={() => {
           // Navigation is ready
         }}>
@@ -724,6 +748,13 @@ const Navigation: FC = () => {
             }}
             name="CreateGroup"
             component={CreateGroupScreen}
+          />
+          <Stack.Screen
+            options={{
+              headerShown: false,
+            }}
+            name="GroupDetail"
+            component={GroupDetailScreen}
           />
           <Stack.Screen
             options={{

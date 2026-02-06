@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -36,6 +37,7 @@ import { resetAndNavigate, goBack } from '@utils/NavigationUtils';
 import { getCurrentLocationWithAddress } from '@utils/addressUtils';
 import { ILocationData } from '../../types/address/IAddress';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreviewModal';
 
 const BUSINESS_TYPES: IDropdownOption[] = [
   { label: 'Automobile Dealer', value: 'Automobile Showroom' },
@@ -178,18 +180,24 @@ const BusinessRegistrationScreen: React.FC = () => {
 
   const existingDocs = useMemo(() => {
     const docs = registrationData?.documents || [];
-    const idDoc = docs.find(d => d.kind === 'ID')?.url || null;
-    const panDoc = docs.find(d => d.kind === 'PAN')?.url || null;
-    return { idDoc, panDoc };
+    const idDocData = docs.find(d => d.kind === 'ID');
+    const panDocData = docs.find(d => d.kind === 'PAN');
+    return {
+      idDoc: idDocData?.url || null,
+      idDocMimeType: idDocData?.mimeType || null,
+      panDoc: panDocData?.url || null,
+      panDocMimeType: panDocData?.mimeType || null,
+    };
   }, [registrationData?.documents]);
 
   const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(initialDraft?.shopPhotoUris ?? existingShopPhotos);
   const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
   const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
-  const [idDocMimeType, setIdDocMimeType] = useState<string | null>(null);
-  const [panDocMimeType, setPanDocMimeType] = useState<string | null>(null);
+  const [idDocMimeType, setIdDocMimeType] = useState<string | null>(initialDraft?.idDocMimeType ?? existingDocs.idDocMimeType);
+  const [panDocMimeType, setPanDocMimeType] = useState<string | null>(initialDraft?.panDocMimeType ?? existingDocs.panDocMimeType);
   const [idDocFileName, setIdDocFileName] = useState<string | null>(null);
   const [panDocFileName, setPanDocFileName] = useState<string | null>(null);
+  const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
 
   // Field-level validation errors
   const [fieldErrors, setFieldErrors] = useState<{
@@ -270,6 +278,8 @@ const BusinessRegistrationScreen: React.FC = () => {
     shopPhotoUris,
     idDocUri,
     panDocUri,
+    idDocMimeType,
+    panDocMimeType,
     pincode,
     nearLandmark,
     state,
@@ -411,6 +421,23 @@ const BusinessRegistrationScreen: React.FC = () => {
       setPanDocFileName(null);
       const error = validateField('panDoc', null);
       setFieldErrors(prev => ({ ...prev, panDoc: error }));
+    }
+  };
+
+  const handleDocumentPreview = (uri: string | null, mimeType: string | null) => {
+    if (!uri) return;
+    
+    const isPDF = mimeType === 'application/pdf' || uri.toLowerCase().endsWith('.pdf');
+    
+    if (isPDF) {
+      // Open PDF externally
+      Linking.openURL(uri).catch(err => {
+        console.error('Failed to open PDF:', err);
+        showError('Failed to open PDF. Please try again.');
+      });
+    } else {
+      // Show image in preview modal
+      setPreviewImageUri(uri);
     }
   };
 
@@ -1407,58 +1434,56 @@ const BusinessRegistrationScreen: React.FC = () => {
           </View>
           <View style={styles.textInputContainer}>
             <TextInput
-              style={[styles.textInput, styles.textInputMultiline]}
-              placeholder={t('dealer.enterAddress') || 'Enter business address'}
+              style={styles.textInput}
+              placeholder={t('dealer.enterAddress') || 'Enter address line'}
               placeholderTextColor={colors.disabled}
               value={address}
               onChangeText={setAddress}
-              multiline
               editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
             />
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>Near Landmark</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter nearby landmark (e.g., Near Metro Station)"
-              placeholderTextColor={colors.disabled}
-              value={nearLandmark}
-              onChangeText={setNearLandmark}
-              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
-            />
+          <View style={{ flexDirection: 'row', gap: screenWidth * 0.02, marginTop: screenHeight * 0.012 }}>
+            <View style={{ flex: 1 }}>
+              <CustomText style={styles.label}>Pincode</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Pincode"
+                  placeholderTextColor={colors.disabled}
+                  value={pincode}
+                  onChangeText={setPincode}
+                  keyboardType="numeric"
+                  maxLength={6}
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+                />
+              </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <CustomText style={styles.label}>State</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="State"
+                  placeholderTextColor={colors.disabled}
+                  value={state}
+                  onChangeText={setState}
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+                />
+              </View>
+            </View>
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>Pincode</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter pincode"
-              placeholderTextColor={colors.disabled}
-              value={pincode}
-              onChangeText={setPincode}
-              keyboardType="numeric"
-              maxLength={6}
-              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>State</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter state"
-              placeholderTextColor={colors.disabled}
-              value={state}
-              onChangeText={setState}
-              editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
-            />
+          <View style={{ marginTop: screenHeight * 0.012 }}>
+            <CustomText style={styles.label}>Landmark</CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Near landmark (optional)"
+                placeholderTextColor={colors.disabled}
+                value={nearLandmark}
+                onChangeText={setNearLandmark}
+                editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+              />
+            </View>
           </View>
         </View>
 
@@ -1887,7 +1912,7 @@ const BusinessRegistrationScreen: React.FC = () => {
               <View style={styles.docLeft}>
                 <CustomText style={styles.docTitle}>{t('dealer.documentId') || 'Document ID'} (Optional)</CustomText>
                 <CustomText style={styles.docSub} numberOfLines={1}>
-                  {idDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                  {idDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload Photo or PDF')}
                 </CustomText>
               </View>
               {idDocUri ? (
@@ -1900,15 +1925,26 @@ const BusinessRegistrationScreen: React.FC = () => {
             </TouchableOpacity>
             {idDocUri && (
               <View style={styles.imagesContainer}>
-                <View style={styles.imageWrapper}>
-                  <Image source={{ uri: idDocUri }} style={styles.image} />
+                <TouchableOpacity
+                  style={styles.imageWrapper}
+                  onPress={() => handleDocumentPreview(idDocUri, idDocMimeType)}
+                  activeOpacity={0.8}>
+                  {idDocMimeType === 'application/pdf' || idDocUri.toLowerCase().endsWith('.pdf') ? (
+                    <View style={[styles.image, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.cardBackground }]}>
+                      <Icon name="document-text-outline" size={RFValue(24)} color={colors.text} />
+                      <CustomText style={{ fontSize: RFValue(8), marginTop: 4, color: colors.text }}>ID Document</CustomText>
+                      <CustomText style={{ fontSize: RFValue(7), marginTop: 2, color: colors.textSecondary }}>Tap to open</CustomText>
+                    </View>
+                  ) : (
+                    <Image source={{ uri: idDocUri }} style={styles.image} />
+                  )}
                   <TouchableOpacity
                     style={styles.removeImageButton}
                     onPress={() => clearDoc('ID')}
                     disabled={isSubmitting}>
                     <Icon name="close" size={RFValue(12)} color="#fff" />
                   </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
             )}
             {fieldErrors.idDoc && (
@@ -1932,7 +1968,7 @@ const BusinessRegistrationScreen: React.FC = () => {
               <View style={styles.docLeft}>
                 <CustomText style={styles.docTitle}>{t('dealer.panCard') || 'PAN Card'} (Optional)</CustomText>
                 <CustomText style={styles.docSub} numberOfLines={1}>
-                  {panDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload')}
+                  {panDocUri ? (t('dealer.tapToChange') || 'Tap to change') : (t('dealer.tapToUpload') || 'Tap to upload Photo or PDF')}
                 </CustomText>
               </View>
               {panDocUri ? (
@@ -1945,15 +1981,26 @@ const BusinessRegistrationScreen: React.FC = () => {
             </TouchableOpacity>
             {panDocUri && (
               <View style={styles.imagesContainer}>
-                <View style={styles.imageWrapper}>
-                  <Image source={{ uri: panDocUri }} style={styles.image} />
+                <TouchableOpacity
+                  style={styles.imageWrapper}
+                  onPress={() => handleDocumentPreview(panDocUri, panDocMimeType)}
+                  activeOpacity={0.8}>
+                  {panDocMimeType === 'application/pdf' || panDocUri.toLowerCase().endsWith('.pdf') ? (
+                    <View style={[styles.image, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.cardBackground }]}>
+                      <Icon name="document-text-outline" size={RFValue(24)} color={colors.text} />
+                      <CustomText style={{ fontSize: RFValue(8), marginTop: 4, color: colors.text }}>PAN Card</CustomText>
+                      <CustomText style={{ fontSize: RFValue(7), marginTop: 2, color: colors.textSecondary }}>Tap to open</CustomText>
+                    </View>
+                  ) : (
+                    <Image source={{ uri: panDocUri }} style={styles.image} />
+                  )}
                   <TouchableOpacity
                     style={styles.removeImageButton}
                     onPress={() => clearDoc('PAN')}
                     disabled={isSubmitting}>
                     <Icon name="close" size={RFValue(12)} color="#fff" />
                   </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
             )}
             {fieldErrors.panDoc && (
@@ -2001,6 +2048,15 @@ const BusinessRegistrationScreen: React.FC = () => {
         title={t('dealer.selectPayoutType') || 'Select Payout Type'}
         searchable={false}
       />
+
+      {/* Image Preview Modal */}
+      {previewImageUri && (
+        <ImagePreviewModal
+          visible={!!previewImageUri}
+          images={[previewImageUri]}
+          onClose={() => setPreviewImageUri(null)}
+        />
+      )}
     </View>
   );
 };

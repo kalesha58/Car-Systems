@@ -9,6 +9,9 @@ export interface IComment {
   postId: string;
   userId: string;
   text: string;
+  parentCommentId?: string; // For nested replies
+  likes: number;
+  isLiked?: boolean; // Whether the current user has liked this comment
   createdAt: string;
   userName?: string;
   userAvatar?: string;

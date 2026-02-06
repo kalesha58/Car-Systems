@@ -27,7 +27,7 @@ const CategoryButtons: FC = () => {
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'all-services',
+      categoryId: 'car-service',
     },
     {
       id: 'bike-service',
@@ -36,7 +36,7 @@ const CategoryButtons: FC = () => {
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'all-services',
+      categoryId: 'bike-service',
     },
     {
       id: 'car-wash',
@@ -45,7 +45,7 @@ const CategoryButtons: FC = () => {
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'all-services',
+      categoryId: 'car-wash',
     },
     {
       id: 'tire-service',
@@ -68,12 +68,25 @@ const CategoryButtons: FC = () => {
   ];
 
   const handleCategoryPress = (button: CategoryButton) => {
+    const params: any = {
+      initialCategoryId: button.categoryId || `all-${button.categoryType}`,
+      initialCategoryType: button.categoryType,
+    };
+    
+    // Add service type filter for specific service categories
+    if (button.id === 'car-service') {
+      params.serviceType = 'car_automobile';
+      params.vehicleType = 'Car';
+    } else if (button.id === 'bike-service') {
+      params.serviceType = 'bike_automobile';
+      params.vehicleType = 'Bike';
+    } else if (button.id === 'car-wash') {
+      params.serviceType = 'car_wash';
+    }
+    
     navigate('Category', {
       screen: 'ProductCategories',
-      params: {
-        initialCategoryId: button.categoryId || `all-${button.categoryType}`,
-        initialCategoryType: button.categoryType,
-      },
+      params,
     });
   };
 

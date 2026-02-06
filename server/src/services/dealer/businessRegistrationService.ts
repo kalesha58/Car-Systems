@@ -24,6 +24,12 @@ export const businessRegistrationToInterface = (
     address: doc.address,
     phone: doc.phone,
     gst: doc.gst,
+    location: doc.location
+      ? {
+          latitude: doc.location.latitude,
+          longitude: doc.location.longitude,
+        }
+      : undefined,
     payout: doc.payout,
     shopPhotos: doc.shopPhotos || [],
     documents: doc.documents || [],

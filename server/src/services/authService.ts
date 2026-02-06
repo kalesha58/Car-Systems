@@ -35,14 +35,20 @@ const generateToken = (payload: IJwtPayload): string => {
  * Convert user document to IUser interface
  */
 const userToIUser = (userDoc: ISignUpDocument): IUser => {
-  return ({
+  return {
     id: userDoc.id,
     name: userDoc.name,
     email: userDoc.email,
     phone: userDoc.phone,
     role: userDoc.role,
     profileImage: userDoc.profileImage,
-  });
+    privacySettings: userDoc.privacySettings || {
+      isPrivate: false,
+      hidePhone: false,
+      hideEmail: false,
+      hideVehicleNumber: false,
+    },
+  };
 };
 
 /**

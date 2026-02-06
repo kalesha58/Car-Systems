@@ -10,6 +10,7 @@ import CustomText from '@components/ui/CustomText';
 import {useAuthStore} from '@state/authStore';
 import {useTranslation} from 'react-i18next';
 import {useTheme} from '@hooks/useTheme';
+import { shouldHidePhone, maskPhone } from '@utils/privacyUtils';
 
 const ProfileHeader: FC = () => {
   const {user} = useAuthStore();
@@ -45,9 +46,9 @@ const ProfileHeader: FC = () => {
         {t('profile.yourAccount') || 'Your account'}
       </CustomText>
       
-      {user?.phone && (
+      {user?.phone && !shouldHidePhone() && (
         <CustomText variant="h6" fontFamily={Fonts.Medium} style={[styles.phoneNumber, { color: colors.textSecondary }]}>
-          {user.phone}
+          {maskPhone(user.phone)}
         </CustomText>
       )}
     </View>

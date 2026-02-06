@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { IAuthRequest, IMulterFile } from '../../middleware/authMiddleware';
-import { getUserProfile, updateUserProfile, getUserStats } from '../../services/user/profileService';
+import { getUserProfile, updateUserProfile, getUserStats, updatePrivacySettings, getPrivacySettings } from '../../services/user/profileService';
 import { uploadToCloudinary } from '../../config/cloudinary';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
@@ -151,6 +151,66 @@ export const getUserStatsController = async (
     }    const stats = await getUserStats(req.user.userId);    res.status(200).json({
       success: true,
       Response: stats,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Get user privacy settings
+ */
+export const getPrivacySettingsController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const settings = await getPrivacySettings(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      Response: settings,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Update user privacy settings
+ */
+export const updatePrivacySettingsController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const settings = await updatePrivacySettings(req.user.userId, req.body);
+
+    res.status(200).json({
+      success: true,
+      Response: settings,
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

@@ -7,6 +7,7 @@ import {
   deleteGroupController,
   joinGroupController,
   getGroupMembersController,
+  addMembersController,
   removeMemberController,
   markAttendanceController,
   driverConsentController,
@@ -128,6 +129,22 @@ router.post('/:id/join', authMiddleware, joinGroupController);
  *         description: Unauthorized
  */
 router.get('/:id/members', authMiddleware, getGroupMembersController);
+
+/**
+ * @swagger
+ * /api/groups/{id}/members:
+ *   post:
+ *     summary: Add members to group (admin only)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Members added successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/:id/members', authMiddleware, addMembersController);
 
 /**
  * @swagger

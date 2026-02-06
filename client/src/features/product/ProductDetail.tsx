@@ -37,6 +37,7 @@ import { getDealerById } from '@service/dealerService';
 import type { IDealer } from '../../types/dealer/IDealer';
 import RelatedProducts from '@features/cart/RelatedProducts';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import { shareProduct } from '@utils/shareUtils';
 
 type ProductDetailRouteParams = {
   ProductDetail: {
@@ -207,6 +208,21 @@ const ProductDetail: React.FC = () => {
 
   const handleWishlist = () => {
     setIsWishlisted(!isWishlisted);
+  };
+
+  const handleShare = async () => {
+    if (!product || !product.id) {
+      showError('Product information not available');
+      return;
+    }
+    try {
+      const shared = await shareProduct(product.name, product.id);
+      if (shared) {
+        showSuccess(t('product.sharedSuccessfully') || 'Product shared successfully');
+      }
+    } catch (error) {
+      showError(t('product.shareFailed') || 'Failed to share product');
+    }
   };
 
   const discountPercentage =
@@ -477,6 +493,13 @@ const ProductDetail: React.FC = () => {
       color: colors.white,
       fontFamily: Fonts.SemiBold,
       fontSize: RFValue(getResponsiveValue(12, 13, 14)),
+    },
+    actionButtonsShare: {
+      width: getResponsiveValue(40, 44, 48),
+      height: getResponsiveValue(40, 44, 48),
+      borderRadius: getResponsiveValue(6, 8, 10),
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     descriptionText: {
       lineHeight: 22,
@@ -821,6 +844,12 @@ const ProductDetail: React.FC = () => {
                   style={styles.actionButtonsBuyNow}
                   activeOpacity={0.8}>
                   <CustomText style={styles.actionButtonsBuyNowText}>Buy Now</CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleShare}
+                  style={[styles.actionButtonsShare, styles.actionButtonsSecondary]}
+                  activeOpacity={0.8}>
+                  <Icon name="share-outline" size={RFValue(16)} color={colors.secondary} />
                 </TouchableOpacity>
               </View>
             )}

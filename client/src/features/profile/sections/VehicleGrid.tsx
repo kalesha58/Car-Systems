@@ -12,6 +12,7 @@ import {useTheme} from '@hooks/useTheme';
 import {IUserVehicle} from '../../../types/vehicle/IVehicle';
 import {Dimensions} from 'react-native';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import { shouldHideVehicleNumber, maskVehicleNumber } from '@utils/privacyUtils';
 
 interface VehicleGridProps {
   vehicles: IUserVehicle[];
@@ -127,9 +128,9 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
                   {item.brand} {item.model}
                 </CustomText>
               </View>
-              {item.numberPlate && (
+              {item.numberPlate && !shouldHideVehicleNumber() && (
                 <CustomText style={[styles.vehicleText, {fontSize: RFValue(9), marginTop: 2}]} numberOfLines={1}>
-                  {item.numberPlate}
+                  {maskVehicleNumber(item.numberPlate)}
                 </CustomText>
               )}
             </View>
@@ -139,9 +140,9 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
             <CustomText style={{color: colors.textSecondary, fontSize: RFValue(12), textAlign: 'center', padding: 8}}>
               {item.brand} {item.model}
             </CustomText>
-            {item.numberPlate && (
+            {item.numberPlate && !shouldHideVehicleNumber() && (
               <CustomText style={{color: colors.textSecondary, fontSize: RFValue(10), marginTop: 4}}>
-                {item.numberPlate}
+                {maskVehicleNumber(item.numberPlate)}
               </CustomText>
             )}
           </View>

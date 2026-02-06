@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
 
 type PlayRouteParams = {
   refresh?: boolean;
+  postId?: string;
 };
 
 const PlayScreen: React.FC = () => {

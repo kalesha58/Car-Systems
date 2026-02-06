@@ -194,9 +194,11 @@ const InstagramProfile: React.FC = () => {
   };
 
   const handlePostPress = (post: IPost) => {
-    // Navigate to post detail if needed
-    // For now, just log
-    console.log('Post pressed:', post.id);
+    // Navigate to Play screen to view the post
+    navigate('MainTabs', {
+      screen: 'Play',
+      params: { postId: post.id },
+    });
   };
 
   const handleVehiclePress = (vehicle: IUserVehicle) => {

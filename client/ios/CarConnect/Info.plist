@@ -86,5 +86,14 @@
 		<string>amazonpay</string>
 		<string>credpay</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>carconnect</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

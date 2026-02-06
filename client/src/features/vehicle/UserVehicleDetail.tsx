@@ -24,6 +24,7 @@ import {uploadImage} from '@service/postService';
 import type {IUserVehicle, IVehicleDocuments} from '../../types/vehicle/IVehicle';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreviewModal';
+import { shouldHideVehicleNumber, maskVehicleNumber } from '@utils/privacyUtils';
 
 type UserVehicleDetailRouteParams = {
   UserVehicleDetail: {
@@ -494,10 +495,10 @@ const UserVehicleDetail: React.FC = () => {
                 Vehicle Information
               </CustomText>
 
-              {vehicle.numberPlate && (
+              {vehicle.numberPlate && !shouldHideVehicleNumber() && (
                 <View style={styles.detailRow}>
                   <CustomText style={styles.detailLabel}>Number Plate</CustomText>
-                  <CustomText style={styles.detailValue}>{vehicle.numberPlate}</CustomText>
+                  <CustomText style={styles.detailValue}>{maskVehicleNumber(vehicle.numberPlate)}</CustomText>
                 </View>
               )}
 
