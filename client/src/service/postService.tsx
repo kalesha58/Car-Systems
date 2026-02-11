@@ -476,23 +476,39 @@ export const uploadImagesBatch = async (images: IUploadImageInput[]): Promise<st
     } as unknown as Blob);
   });
 
-  const response = await appAxios.post<IUploadImagesResponse>('/upload', formData, {
-    timeout: UPLOAD_BATCH_TIMEOUT_MS,
-    headers: {
-      Accept: 'application/json',
-    },
-    maxContentLength: Infinity,
-    maxBodyLength: Infinity,
-  });
+  let uploadedUrls: string[];
+  try {
+    const response = await appAxios.post<IUploadImagesResponse>('/upload/images', formData, {
+      timeout: UPLOAD_BATCH_TIMEOUT_MS,
+      headers: {
+        Accept: 'application/json',
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
 
-  if (!response.data?.success || !Array.isArray(response.data.Response)) {
-    const msg = response.data?.Response && typeof response.data.Response === 'object' && 'ReturnMessage' in response.data.Response
-      ? (response.data.Response as { ReturnMessage?: string }).ReturnMessage
-      : 'Failed to upload images';
-    throw new Error(msg ?? 'Failed to upload images');
+    if (!response.data?.success || !Array.isArray(response.data.Response)) {
+      const msg = response.data?.Response && typeof response.data.Response === 'object' && 'ReturnMessage' in response.data.Response
+        ? (response.data.Response as { ReturnMessage?: string }).ReturnMessage
+        : 'Failed to upload images';
+      throw new Error(msg ?? 'Failed to upload images');
+    }
+
+    uploadedUrls = (response.data.Response as IUploadImagesResponse['Response']).map((r) => r.url);
+  } catch (batchError: unknown) {
+    const status = batchError && typeof batchError === 'object' && 'response' in batchError
+      ? (batchError as { response?: { status?: number } }).response?.status
+      : undefined;
+    if (status === 404) {
+      uploadedUrls = [];
+      for (const img of localImages) {
+        const url = await uploadImage(img.uri);
+        uploadedUrls.push(url);
+      }
+    } else {
+      throw batchError;
+    }
   }
-
-  const uploadedUrls = (response.data.Response as IUploadImagesResponse['Response']).map((r) => r.url);
 
   if (remoteUrls.length === 0) {
     return uploadedUrls;

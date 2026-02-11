@@ -156,7 +156,7 @@ const ProductDashboard = () => {
                 fontSize={RFValue(32)}
                 fontFamily={Fonts.Bold}
                 style={{opacity: 0.2}}>
-                Car Connect 🚗
+                MotoNode 🚗
               </CustomText>
               <CustomText
                 fontFamily={Fonts.Bold}

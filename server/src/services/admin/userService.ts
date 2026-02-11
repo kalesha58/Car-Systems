@@ -148,7 +148,7 @@ export const getUserById = async (userId: string): Promise<IUser> => {
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -282,7 +282,7 @@ export const updateUser = async (userId: string, data: IUpdateUserRequest): Prom
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -316,7 +316,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -337,7 +337,7 @@ export const updateUserStatus = async (userId: string, status: string): Promise<
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -373,7 +373,7 @@ export const resetUserPassword = async (userId: string, newPassword: string): Pr
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -398,7 +398,7 @@ export const getUserOrders = async (
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
@@ -431,7 +431,7 @@ export const getUserVehicles = async (userId: string): Promise<any[]> => {
   try {
     const user = await SignUp.findById(userId);
 
-    if (!user || !user.role.includes('user')) {
+    if (!user) {
       throw new NotFoundError('User not found');
     }
 
