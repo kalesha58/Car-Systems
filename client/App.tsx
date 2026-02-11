@@ -4,7 +4,7 @@ import { AppState, AppStateStatus, Appearance } from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import './src/config/i18n';
 import Navigation from '@navigation/Navigation';
-import { initializeNotifications, getFCMToken, registerFCMToken } from '@service/notificationService';
+import { initializeNotifications } from '@service/notificationService';
 import { tokenStorage } from '@state/storage';
 import { useThemeStore } from '@state/themeStore';
 import { useAuthStore } from '@state/authStore';
@@ -53,27 +53,18 @@ const App = () => {
       }
     }
 
-    // Handle app state changes for token refresh
+    // Handle app state changes - rejoin notification room when app becomes active
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        // Only register FCM token if user is authenticated
         const accessToken = tokenStorage.getString('accessToken');
-        if (accessToken) {
-          const token = await getFCMToken();
-          if (token) {
-            await registerFCMToken(token);
-          }
-          
-          // Rejoin notification room if socket is connected
-          if (user?.userId) {
-            try {
-              const socket = initializeSocket();
-              if (socket?.connected) {
-                joinUserNotificationRoom(user.userId);
-              }
-            } catch (error) {
-              console.error('Error rejoining notification room:', error);
+        if (accessToken && user?.userId) {
+          try {
+            const socket = initializeSocket();
+            if (socket?.connected) {
+              joinUserNotificationRoom(user.userId);
             }
+          } catch (error) {
+            console.error('Error rejoining notification room:', error);
           }
         }
       }

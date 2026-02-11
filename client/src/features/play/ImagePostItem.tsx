@@ -53,7 +53,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const modalTranslateY = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get('window').height;
   const imageHeight = screenHeight * 0.5;
-  
+
   // Pan responder for swipe down to dismiss
   const panResponder = useRef(
     PanResponder.create({
@@ -302,10 +302,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
       prev.map((c) =>
         c.id === commentId
           ? {
-              ...c,
-              isLiked: !previousLiked,
-              likes: previousLiked ? previousCount - 1 : previousCount + 1,
-            }
+            ...c,
+            isLiked: !previousLiked,
+            likes: previousLiked ? previousCount - 1 : previousCount + 1,
+          }
           : c
       )
     );
@@ -323,10 +323,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
         prev.map((c) =>
           c.id === commentId
             ? {
-                ...c,
-                isLiked: previousLiked,
-                likes: previousCount,
-              }
+              ...c,
+              isLiked: previousLiked,
+              likes: previousCount,
+            }
             : c
         )
       );
@@ -342,10 +342,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const handleShare = async () => {
     try {
       const shareText = post?.text || 'Check out this post!';
-      const shareUrl = post?.images && post.images.length > 0 
+      const shareUrl = post?.images && post.images.length > 0
         ? `Check out this post with ${post.images.length} image${post.images.length > 1 ? 's' : ''}!`
         : shareText;
-      
+
       await shareContent({
         title: 'Car Connect Post',
         message: shareUrl,
@@ -360,7 +360,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     const isLiked = item.isLiked || false;
     const likes = item.likes || 0;
     const userName = item.userName || `User ${item.userId.substring(0, 8)}`;
-    
+
     return (
       <View style={[styles.commentItem, { backgroundColor: postBackground }]}>
         <View style={styles.commentLeft}>
@@ -393,8 +393,8 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               style={{ color: textColor, marginTop: 4, lineHeight: RFValue(18) }}>
               {item.text}
             </CustomText>
-            <TouchableOpacity 
-              style={styles.replyButton} 
+            <TouchableOpacity
+              style={styles.replyButton}
               activeOpacity={0.7}
               onPress={() => handleReply(item.id, userName)}>
               <CustomText
@@ -406,14 +406,14 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.commentLikeButton} 
+        <TouchableOpacity
+          style={styles.commentLikeButton}
           activeOpacity={0.7}
           onPress={() => handleCommentLike(item.id)}>
-          <Icon 
-            name={isLiked ? 'heart' : 'heart-outline'} 
-            size={RFValue(16)} 
-            color={isLiked ? '#ff3040' : iconColor} 
+          <Icon
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={RFValue(16)}
+            color={isLiked ? '#ff3040' : iconColor}
           />
           {likes > 0 && (
             <CustomText
@@ -537,8 +537,8 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             </CustomText>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.engagementButton} 
+          <TouchableOpacity
+            style={styles.engagementButton}
             activeOpacity={0.7}
             onPress={handleShare}>
             <Icon name="arrow-redo-outline" size={RFValue(18)} color={iconColor} />
@@ -587,10 +587,10 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalContainer}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-            <Animated.View 
+            <Animated.View
               style={[
-                styles.modalContent, 
-                { 
+                styles.modalContent,
+                {
                   backgroundColor: postBackground,
                   transform: [{ translateY: modalTranslateY }]
                 }
@@ -628,11 +628,11 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               </View>
 
               {/* Bottom Input Section */}
-              <Animated.View 
+              <Animated.View
                 style={[
-                  styles.inputSection, 
-                  { 
-                    backgroundColor: postBackground, 
+                  styles.inputSection,
+                  {
+                    backgroundColor: postBackground,
                     borderTopColor: colors.border,
                     transform: [{ translateY: keyboardOffsetHeight > 0 ? -keyboardOffsetHeight : 0 }]
                   }
@@ -721,7 +721,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
                   </View>
                 </View>
               </Animated.View>
-            </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </View>
       </Modal>

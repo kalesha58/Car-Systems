@@ -802,40 +802,48 @@ const BusinessRegistrationScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      const uploadIfNeeded = async (uri: string): Promise<string> => {
-        if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
-        return await uploadImage(uri);
-      };
-
-      const uploadDocumentIfNeeded = async (
-        uri: string | null,
-        mimeType: string | null,
-        fileName: string | null,
-      ): Promise<string> => {
-        if (!uri) throw new Error('Document URI is required');
-        if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
-        return await uploadDocument(uri, mimeType || undefined, fileName || undefined);
-      };
-
-      // Parallelize image uploads
-      const uploadedShopPhotos = await Promise.all(
-        shopPhotoUris.map(async (uri) => {
-          const url = await uploadIfNeeded(uri);
-          return { url };
-        })
-      );
+      // Upload shop photos sequentially with individual error handling (same pattern as AddEditProductScreen)
+      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = [];
+      
+      for (let i = 0; i < shopPhotoUris.length; i++) {
+        const uri = shopPhotoUris[i];
+        try {
+          // Check if it's already a URL (http:// or https://) - skip upload
+          if (uri.startsWith('http://') || uri.startsWith('https://')) {
+            uploadedShopPhotos.push({ url: uri });
+          } else {
+            // It's a local file, upload it
+            const url = await uploadImage(uri);
+            uploadedShopPhotos.push({ url });
+          }
+        } catch (uploadError: any) {
+          console.error(`Failed to upload shop photo ${i + 1}:`, uploadError);
+          // Provide more specific error message
+          const errorMessage = uploadError?.message || 'Failed to upload image';
+          throw new Error(`${errorMessage}. Please check the image and try again.`);
+        }
+      }
       console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
       // Upload documents only if they are provided (documents are optional)
+      // Use sequential uploads with individual error handling (same pattern as shop photos)
       const uploadedDocuments: IBusinessRegistrationDocumentFile[] = [];
 
       if (idDocUri) {
         try {
-          const idDocUrl = await uploadDocumentIfNeeded(idDocUri, idDocMimeType, idDocFileName);
+          // Check if it's already a URL (http:// or https://) - skip upload
+          let idDocUrl: string;
+          if (idDocUri.startsWith('http://') || idDocUri.startsWith('https://')) {
+            idDocUrl = idDocUri;
+          } else {
+            // It's a local file, upload it
+            idDocUrl = await uploadDocument(idDocUri, idDocMimeType || undefined, idDocFileName || undefined);
+          }
           uploadedDocuments.push({ kind: 'ID', url: idDocUrl });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error uploading ID document:', error);
-          showError('Failed to upload ID document. Please try again.');
+          const errorMessage = error?.message || 'Failed to upload ID document';
+          showError(`${errorMessage}. Please check the document and try again.`);
           setIsSubmitting(false);
           return;
         }
@@ -843,11 +851,19 @@ const BusinessRegistrationScreen: React.FC = () => {
 
       if (panDocUri) {
         try {
-          const panDocUrl = await uploadDocumentIfNeeded(panDocUri, panDocMimeType, panDocFileName);
+          // Check if it's already a URL (http:// or https://) - skip upload
+          let panDocUrl: string;
+          if (panDocUri.startsWith('http://') || panDocUri.startsWith('https://')) {
+            panDocUrl = panDocUri;
+          } else {
+            // It's a local file, upload it
+            panDocUrl = await uploadDocument(panDocUri, panDocMimeType || undefined, panDocFileName || undefined);
+          }
           uploadedDocuments.push({ kind: 'PAN', url: panDocUrl });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Error uploading PAN document:', error);
-          showError('Failed to upload PAN document. Please try again.');
+          const errorMessage = error?.message || 'Failed to upload PAN document';
+          showError(`${errorMessage}. Please check the document and try again.`);
           setIsSubmitting(false);
           return;
         }

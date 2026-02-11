@@ -1,6 +1,7 @@
 import { appAxios } from './apiInterceptors';
 import { Platform } from 'react-native';
 import { IPostsResponse, IPostResponse, ICreatePostRequest } from '../types/post/IPost';
+import { IUploadImageInput, IUploadImagesResponse } from '../types/upload/IUpload';
 
 export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
   try {
@@ -164,7 +165,6 @@ export const uploadDocument = async (
       errno: error?.errno,
       uri: fileUri.substring(0, 100),
       platform: Platform.OS,
-      processedUri: processedUri?.substring(0, 100),
       fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     });
 
@@ -436,6 +436,79 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
 
     throw new Error(errorMessage);
   }
+};
+
+const UPLOAD_BATCH_TIMEOUT_MS = 30000;
+
+/**
+ * Upload multiple images in a single request (batch). Use for vehicle images to avoid
+ * sequential timeouts on Render. Already-remote URLs are returned as-is.
+ * @param images - Array of image descriptors (uri and optional fileName, type)
+ * @returns Promise with array of URLs in the same order as input
+ */
+export const uploadImagesBatch = async (images: IUploadImageInput[]): Promise<string[]> => {
+  if (images.length === 0) {
+    return [];
+  }
+
+  const remoteUrls: string[] = [];
+  const localImages: IUploadImageInput[] = [];
+  for (const img of images) {
+    if (img.uri.startsWith('http://') || img.uri.startsWith('https://')) {
+      remoteUrls.push(img.uri);
+    } else {
+      localImages.push(img);
+    }
+  }
+
+  if (localImages.length === 0) {
+    return remoteUrls;
+  }
+
+  const formData = new FormData();
+  localImages.forEach((img, index) => {
+    const name = img.fileName ?? `vehicle_${Date.now()}_${index}.jpg`;
+    const type = img.type ?? 'image/jpeg';
+    formData.append('images', {
+      uri: img.uri,
+      name,
+      type,
+    } as unknown as Blob);
+  });
+
+  const response = await appAxios.post<IUploadImagesResponse>('/upload', formData, {
+    timeout: UPLOAD_BATCH_TIMEOUT_MS,
+    headers: {
+      Accept: 'application/json',
+    },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+  });
+
+  if (!response.data?.success || !Array.isArray(response.data.Response)) {
+    const msg = response.data?.Response && typeof response.data.Response === 'object' && 'ReturnMessage' in response.data.Response
+      ? (response.data.Response as { ReturnMessage?: string }).ReturnMessage
+      : 'Failed to upload images';
+    throw new Error(msg ?? 'Failed to upload images');
+  }
+
+  const uploadedUrls = (response.data.Response as IUploadImagesResponse['Response']).map((r) => r.url);
+
+  if (remoteUrls.length === 0) {
+    return uploadedUrls;
+  }
+
+  const result: string[] = [];
+  let remoteIdx = 0;
+  let uploadedIdx = 0;
+  for (const img of images) {
+    if (img.uri.startsWith('http://') || img.uri.startsWith('https://')) {
+      result.push(remoteUrls[remoteIdx++]);
+    } else {
+      result.push(uploadedUrls[uploadedIdx++]);
+    }
+  }
+  return result;
 };
 
 export interface IUploadFileResult {

@@ -9,6 +9,41 @@ import { logger } from '../../utils/logger';
 const router = Router();
 
 /**
+ * POST /api/upload - Batch upload multiple images (e.g. vehicle images). Same shape as /images.
+ */
+router.post('/', authMiddleware, uploadMultiple, async (req: IAuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
+      return res.status(400).json({ message: 'No images received' });
+    }
+
+    let files: IMulterFile[] = Array.isArray(req.files) ? (req.files as IMulterFile[]) : [];
+    if (files.length === 0 && req.files && typeof req.files === 'object') {
+      files = Object.values(req.files).flat() as IMulterFile[];
+    }
+
+    if (files.length === 0) {
+      return res.status(400).json({ message: 'No images received' });
+    }
+
+    const uploadPromises = files.map((file) => {
+      const fileSource = (file as Express.Multer.File & { buffer?: Buffer }).buffer ?? file.path;
+      return uploadToCloudinary(fileSource, 'car-connect/posts');
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    res.status(200).json({
+      success: true,
+      Response: results.map((r) => ({ url: r.url, publicId: r.publicId })),
+    });
+  } catch (error) {
+    logger.error('Error in batch image upload:', error);
+    next(error);
+  }
+});
+
+/**
  * @swagger
  * /api/upload/image:
  *   post:

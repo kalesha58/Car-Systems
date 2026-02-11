@@ -113,13 +113,14 @@ const CustomerLogin = () => {
     if (keyboardOffsetHeight === 0) {
       Animated.timing(animatedValue, {
         toValue: 0,
-        duration: 500,
+        duration: 300,
         useNativeDriver: true,
       }).start();
     } else {
+      // Use a smaller offset so the name field (top of form) stays visible when focused
       Animated.timing(animatedValue, {
-        toValue: -keyboardOffsetHeight * 0.84,
-        duration: 1000,
+        toValue: -keyboardOffsetHeight * 0.4,
+        duration: 250,
         useNativeDriver: true,
       }).start();
     }
@@ -352,7 +353,7 @@ const CustomerLogin = () => {
                 />
 
                 <CustomText variant="h2" fontFamily={Fonts.Bold} style={{ color: colors.text }}>
-                  Car Connect App
+                  MotoNode
                 </CustomText>
                 <CustomText
                   variant="h5"

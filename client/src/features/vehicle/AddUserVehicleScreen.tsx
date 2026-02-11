@@ -22,7 +22,7 @@ import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
 // Removed ICreateVehicleRequest import as it might not be exported
 import { createUserVehicle } from '@service/vehicleService';
-import { uploadImage } from '@service/postService';
+import { uploadImage, uploadImagesBatch } from '@service/postService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
 import { getDropdownOptions } from '@service/dropdownService';
@@ -121,9 +121,11 @@ const AddUserVehicleScreen: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        quality: 0.6,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: false,
-        selectionLimit: MAX_IMAGES - imageUris.length,
+        selectionLimit: Math.min(5, MAX_IMAGES - imageUris.length),
       },
       (response: ImagePickerResponse) => {
         if (response.didCancel || response.errorCode) {
@@ -143,7 +145,9 @@ const AddUserVehicleScreen: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        quality: 0.6,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: false,
         selectionLimit: 1,
       },
@@ -164,7 +168,9 @@ const AddUserVehicleScreen: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        quality: 0.6,
+        maxWidth: 1280,
+        maxHeight: 1280,
         includeBase64: false,
         selectionLimit: 1,
       },
@@ -191,28 +197,13 @@ const AddUserVehicleScreen: React.FC = () => {
     }
 
     setIsUploadingImages(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (let i = 0; i < imageUris.length; i++) {
-        const uri = imageUris[i];
-        if (uri.startsWith('http://') || uri.startsWith('https://')) {
-          uploadedUrls.push(uri);
-        } else {
-          try {
-            const url = await uploadImage(uri);
-            uploadedUrls.push(url);
-          } catch (uploadError: any) {
-            console.error(`Failed to upload image ${i + 1}:`, uploadError);
-            const errorMessage = uploadError?.message || 'Failed to upload image';
-            throw new Error(`${errorMessage}. Please check the image and try again.`);
-          }
-        }
-      }
-      return uploadedUrls;
-    } catch (error: any) {
-      console.error('Error in uploadImages:', error);
-      throw error instanceof Error ? error : new Error(error?.message || 'Failed to upload images. Please try again.');
+      const urls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+      return urls;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to upload images. Please try again.');
+      console.error('Error in uploadImages:', err);
+      throw err;
     } finally {
       setIsUploadingImages(false);
     }

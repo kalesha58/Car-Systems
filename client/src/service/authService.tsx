@@ -4,7 +4,6 @@ import { tokenStorage } from '@state/storage';
 import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
-import { getFCMToken, registerFCMToken } from './notificationService';
 
 export const customerLogin = async (email: string, password: string) => {
   try {
@@ -52,17 +51,6 @@ export const customerLogin = async (email: string, password: string) => {
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
-
-      // Register FCM token after successful login
-      try {
-        const fcmToken = await getFCMToken();
-        if (fcmToken) {
-          await registerFCMToken(fcmToken);
-        }
-      } catch (fcmError) {
-        console.warn('Failed to register FCM token:', fcmError);
-        // Don't throw - login should succeed even if FCM registration fails
-      }
   } catch (error: any) {
     // Log error details for debugging
     console.error('Login error:', {

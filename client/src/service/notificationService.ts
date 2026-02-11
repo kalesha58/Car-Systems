@@ -1,8 +1,6 @@
-import messaging from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
-import { tokenStorage } from '@state/storage';
 
 /**
  * Create Notifee notification channel for Android
@@ -54,79 +52,17 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 /**
- * Get FCM token
+ * Get FCM token (no-op: Firebase removed)
  */
 export const getFCMToken = async (): Promise<string | null> => {
-  try {
-    const hasPermission = await requestNotificationPermission();
-    if (!hasPermission) {
-      console.warn('Notification permission not granted');
-      return null;
-    }
-
-    const token = await messaging().getToken();
-    console.log('FCM Token:', token);
-    return token;
-  } catch (error) {
-    console.error('Error getting FCM token:', error);
-    return null;
-  }
+  return null;
 };
 
 /**
- * Register FCM token with backend
+ * Register FCM token with backend (no-op: Firebase removed)
  */
-export const registerFCMToken = async (token: string): Promise<boolean> => {
-  try {
-    // Check if user is authenticated before attempting registration
-    const accessToken = tokenStorage.getString('accessToken');
-    if (!accessToken) {
-      console.log('User not authenticated, skipping FCM token registration');
-      return false;
-    }
-
-    const response = await appAxios.post('/user/fcm-token', { fcmToken: token });
-    console.log('FCM token registered successfully', response.data);
-    return true;
-  } catch (error: any) {
-    console.error('Error registering FCM token:', error);
-
-    // Log detailed error information for debugging
-    if (error.response) {
-      // API responded with error status
-      const status = error.response.status;
-      const statusText = error.response.statusText || 'Unknown';
-      const errorData = error.response.data;
-      const errorMessage = errorData?.message || errorData?.Response?.ReturnMessage || 'Unknown error';
-
-      // Don't log errors for unauthenticated users (expected behavior)
-      if (status === 401) {
-        console.log('FCM token registration skipped: User not authenticated');
-        return false;
-      }
-
-      console.error('FCM Registration API Error:', {
-        status,
-        statusText,
-        message: errorMessage,
-        data: errorData,
-      });
-    } else if (error.request) {
-      // Request made but no response received
-      console.error('FCM Registration Network Error: No response received from server', {
-        message: error.message,
-        code: error.code,
-      });
-    } else {
-      // Error setting up request
-      console.error('FCM Registration Request Error:', {
-        message: error.message,
-        stack: error.stack,
-      });
-    }
-
-    return false;
-  }
+export const registerFCMToken = async (_token: string): Promise<boolean> => {
+  return false;
 };
 
 /**
@@ -234,48 +170,7 @@ export const initializeNotifications = async (): Promise<void> => {
     // Create notification channel
     await createNotifeeChannel();
 
-    // Get FCM token (works without auth)
-    const token = await getFCMToken();
-    if (token) {
-      // Only register token if user is authenticated
-      // Token will be registered after login via authService
-      const accessToken = tokenStorage.getString('accessToken');
-      if (accessToken) {
-        await registerFCMToken(token);
-      } else {
-        console.log('FCM token obtained but not registered: User not authenticated');
-      }
-    }
-
-    // Setup token refresh listener
-    messaging().onTokenRefresh(async (newToken) => {
-      console.log('FCM token refreshed:', newToken);
-      // Only register if authenticated
-      const accessToken = tokenStorage.getString('accessToken');
-      if (accessToken) {
-        await registerFCMToken(newToken);
-      }
-    });
-
-    // Setup foreground message handler - Use Notifee to display
-    messaging().onMessage(async (remoteMessage) => {
-      console.log('Foreground message received:', remoteMessage);
-
-      if (remoteMessage.notification) {
-        // Extract image URL from notification (FCM sends it in notification.imageUrl)
-        const imageUrl = (remoteMessage.notification as any).imageUrl ||
-          remoteMessage.data?.imageUrl;
-
-        await displayNotifeeNotification(
-          remoteMessage.notification.title || 'Car Connect',
-          remoteMessage.notification.body || '',
-          remoteMessage.data,
-          imageUrl,
-        );
-      }
-    });
-
-    // Setup Notifee event handlers (replaces Firebase's onNotificationOpenedApp and getInitialNotification)
+    // Setup Notifee event handlers
     notifee.onForegroundEvent(async ({ type, detail }: Event) => {
       if (type === EventType.PRESS) {
         console.log('Notification pressed (foreground):', detail.notification);
