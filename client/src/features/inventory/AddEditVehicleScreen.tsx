@@ -29,11 +29,11 @@ import {
   ICreateDealerVehicleRequest,
   IUpdateDealerVehicleRequest,
 } from '@service/dealerService';
-import {uploadImage} from '@service/postService';
+import {uploadImagesBatch} from '@service/postService';
 import {getDropdownOptions} from '@service/dropdownService';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 
-const MAX_IMAGES = 10;
+const MAX_IMAGES = 2;
 
 interface RouteParams {
   vehicle?: IDealerVehicle;
@@ -171,20 +171,12 @@ const AddEditVehicleScreen: React.FC = () => {
     }
 
     setIsUploadingImages(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (const uri of imageUris) {
-        if (uri.startsWith('http')) {
-          uploadedUrls.push(uri);
-        } else {
-          const url = await uploadImage(uri);
-          uploadedUrls.push(url);
-        }
-      }
-      return uploadedUrls;
-    } catch (error) {
-      throw new Error('Failed to upload images. Please try again.');
+      const urls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+      return urls;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Failed to upload images. Please try again.');
+      throw err;
     } finally {
       setIsUploadingImages(false);
     }
@@ -431,6 +423,9 @@ const AddEditVehicleScreen: React.FC = () => {
       marginBottom: screenHeight * 0.008,
       opacity: 0.8,
     },
+    required: {
+      color: colors.error,
+    },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
       borderRadius: 8,
@@ -598,7 +593,7 @@ const AddEditVehicleScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.vehicleType')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.vehicleType')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('vehicleType')}>
@@ -608,7 +603,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.brand')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.brand')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -621,7 +616,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.model')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.model')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -634,7 +629,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.year')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.year')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -648,7 +643,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.price')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.price')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -662,7 +657,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.availability')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.availability')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => openDropdown('availability')}>
@@ -764,7 +759,7 @@ const AddEditVehicleScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.images')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.images')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
             <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>

@@ -438,7 +438,7 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
   }
 };
 
-const UPLOAD_BATCH_TIMEOUT_MS = 30000;
+const UPLOAD_BATCH_TIMEOUT_MS = 60000;
 
 /**
  * Upload multiple images in a single request (batch). Use for vehicle images to avoid

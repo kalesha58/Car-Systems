@@ -29,12 +29,12 @@ import {
   ICreateDealerServiceRequest,
   IUpdateDealerServiceRequest,
 } from '@service/dealerService';
-import {uploadImage} from '@service/postService';
+import {uploadImagesBatch} from '@service/postService';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {IService} from '../../types/service/IService';
 
-const MAX_IMAGES = 10;
+const MAX_IMAGES = 2;
 
 type ServiceType = 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
 
@@ -188,20 +188,12 @@ const AddEditServiceScreen: React.FC = () => {
     }
 
     setIsUploadingImages(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (const uri of imageUris) {
-        if (uri.startsWith('http')) {
-          uploadedUrls.push(uri);
-        } else {
-          const url = await uploadImage(uri);
-          uploadedUrls.push(url);
-        }
-      }
-      return uploadedUrls;
-    } catch (error) {
-      throw new Error('Failed to upload images. Please try again.');
+      const urls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+      return urls;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Failed to upload images. Please try again.');
+      throw err;
     } finally {
       setIsUploadingImages(false);
     }
@@ -343,6 +335,9 @@ const AddEditServiceScreen: React.FC = () => {
       color: colors.text,
       marginBottom: screenHeight * 0.008,
       opacity: 0.8,
+    },
+    required: {
+      color: colors.error,
     },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
@@ -517,7 +512,7 @@ const AddEditServiceScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.serviceName')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.serviceName')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -530,7 +525,7 @@ const AddEditServiceScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.price')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.price')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -544,7 +539,7 @@ const AddEditServiceScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.durationMinutes')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.durationMinutes')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -559,7 +554,7 @@ const AddEditServiceScreen: React.FC = () => {
 
         <View style={styles.section}>
           <View style={styles.switchContainer}>
-            <CustomText style={styles.switchLabel}>{t('dealer.homeService')} *</CustomText>
+            <CustomText style={styles.switchLabel}>{t('dealer.homeService')} <CustomText style={styles.required}>*</CustomText></CustomText>
             <Switch
               value={homeService}
               onValueChange={setHomeService}

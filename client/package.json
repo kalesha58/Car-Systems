@@ -1,6 +1,6 @@
 {
-  "name": "CarConnect",
-  "version": "0.0.1",
+  "name": "motonode",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -13,9 +13,9 @@
     "pod-install": "cd ios && cross-env RCT_NEW_ARCH_ENABLED=1 bundle exec pod install",
     "android:apk": "cd android && gradlew.bat assembleRelease && cd ..",
     "android:apk:debug": "cd android && gradlew.bat assembleDebug && cd ..",
-    "android:bundle": "react-native build-android --mode=release",
     "remove:android:bundle": "rimraf android/app/src/main/assets/index.android.bundle",
     "create:android:bundle": "npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "android:bundle": "react-native build-android --mode=release",
     "react-native:clean": "npx react-native clean",
     "cache:clean": "npm cache clear --force"
   },
@@ -48,6 +48,7 @@
     "react-native-mmkv": "^3.2.0",
     "react-native-reanimated": "^4.0.0",
     "react-native-reanimated-carousel": "^3.5.1",
+    "react-native-rename": "^3.2.17",
     "react-native-responsive-fontsize": "^0.5.1",
     "react-native-rolling-bar": "^1.0.0",
     "react-native-safe-area-context": "^5.5.2",

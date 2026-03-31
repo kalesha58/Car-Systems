@@ -28,7 +28,7 @@ import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropd
 import { getDropdownOptions } from '@service/dropdownService';
 import { storage } from '@state/storage';
 
-const MAX_IMAGES = 3;
+const MAX_IMAGES = 2;
 const MIN_IMAGES = 1;
 
 interface RouteParams {
@@ -701,9 +701,6 @@ const AddUserVehicleScreen: React.FC = () => {
           <CustomText style={styles.label}>
             RC Document (Optional)
           </CustomText>
-          <CustomText style={styles.descriptionText}>
-            Upload Registration Certificate document
-          </CustomText>
           {rcDocumentUri ? (
             <View style={styles.imagesContainer}>
               <View style={styles.imageWrapper}>
@@ -729,9 +726,6 @@ const AddUserVehicleScreen: React.FC = () => {
         <View style={styles.section}>
           <CustomText style={styles.label}>
             Bike Licence (Optional)
-          </CustomText>
-          <CustomText style={styles.descriptionText}>
-            Upload Driving License document
           </CustomText>
           {bikeLicenceUri ? (
             <View style={styles.imagesContainer}>

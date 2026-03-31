@@ -222,28 +222,29 @@ const PrivacyCenterScreen: FC = () => {
           </CustomText>
         </PolicySection>
 
-        <PolicySection number={5} title="Your Rights & Choices">
+        <PolicySection number={5} title="Data retention & deletion">
           <CustomText style={styles.sectionContent}>
-            You have the right to access, correct, or delete your personal information at any
-            time. You may also opt out of receiving promotional communications from us. To exercise
-            these rights, please contact our privacy team through the app settings or email us
-            directly.
+            We keep your data only as long as needed to provide the service and comply with law.
+            You can request deletion of your account and associated data at any time from Profile
+            settings or by contacting us. We delete or anonymize your personal data after processing
+            your request, except where we must retain it for legal or security reasons.
           </CustomText>
         </PolicySection>
 
-        <PolicySection number={6} title="Cookies & Tracking">
+        <PolicySection number={6} title="Your rights & choices">
           <CustomText style={styles.sectionContent}>
-            We use cookies and similar tracking technologies to collect and use personal information
-            about you, including to serve interest-based advertising. You can manage your cookie
-            preferences through your browser settings or our cookie consent manager.
+            You have the right to access, correct, or delete your personal information. You may opt
+            out of promotional communications. To exercise these rights or request account deletion,
+            use the support section in the app or contact our privacy team at the email in Contact Us.
           </CustomText>
         </PolicySection>
 
-        <PolicySection number={7} title="Contact Us">
+        <PolicySection number={7} title="Contact us">
           <CustomText style={styles.sectionContent}>
-            If you have any questions about this Privacy Policy or our data practices, please
-            contact us at privacy@example.com or through the support section in your account
-            settings. We aim to respond to all inquiries within 48 hours.
+            For privacy questions or to request access, correction, or deletion of your data,
+            contact our privacy team through the support section in your account settings or at the
+            email address published in our full Privacy Policy (available on the web and in the
+            Play Store listing). We aim to respond within a reasonable time.
           </CustomText>
         </PolicySection>
 

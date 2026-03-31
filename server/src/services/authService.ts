@@ -120,6 +120,11 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     throw new UnauthorizedError('Invalid credentials');
   }
 
+  if (signUpUser.status !== 'active') {
+    logger.warn(`Login blocked for inactive/suspended user: ${trimmedEmail}`);
+    throw new UnauthorizedError('This account is not active');
+  }
+
   // Compare provided password with hashed password
   const isPasswordValid = await bcrypt.compare(trimmedPassword, signUpUser.password);
 
@@ -401,6 +406,10 @@ export const googleAuth = async (data: IGoogleAuthRequest): Promise<ILoginRespon
       throw new UnauthorizedError('Account not found. Please register first.');
     }
 
+    if (user.status !== 'active') {
+      throw new UnauthorizedError('This account is not active');
+    }
+
     // Update googleId if missing (for users who registered with email/password first)
     if (!user.googleId) {
       user.googleId = googleUser.googleId;
@@ -444,6 +453,10 @@ export const refreshToken = async (refreshTokenString: string): Promise<{ access
 
     if (!user) {
       throw new UnauthorizedError('User no longer exists');
+    }
+
+    if (user.status !== 'active') {
+      throw new UnauthorizedError('This account is not active');
     }
 
     // Generate new tokens with the same payload

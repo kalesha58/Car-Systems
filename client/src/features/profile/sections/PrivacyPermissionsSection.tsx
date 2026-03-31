@@ -66,11 +66,12 @@ const PrivacyPermissionsSection: FC = () => {
   const checkPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
-        const storageGranted = await PermissionsAndroid.check(
+        // On Android 13+ we don't declare/request READ_MEDIA_* for photo picking.
+        // The app should use the system photo picker flow instead.
+        const storageGranted =
           Platform.Version >= 33
-            ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
-            : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        );
+            ? true
+            : await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE);
         
         const notificationGranted = Platform.Version >= 33
           ? await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
@@ -109,20 +110,21 @@ const PrivacyPermissionsSection: FC = () => {
   const requestStoragePermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
       try {
-        let permission;
         if (Platform.Version >= 33) {
-          permission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
-        } else {
-          permission = PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
+          setPermissions(prev => ({ ...prev, storage: true }));
+          return true;
         }
 
-        const granted = await PermissionsAndroid.request(permission, {
-          title: 'Storage Permission',
-          message: 'Car Connect needs access to your storage to select images and files.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        });
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission',
+            message: 'Car Connect needs access to your storage to select images and files.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
 
         const isGranted = granted === PermissionsAndroid.RESULTS.GRANTED;
         setPermissions(prev => ({ ...prev, storage: isGranted }));

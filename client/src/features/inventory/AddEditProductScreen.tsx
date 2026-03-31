@@ -28,11 +28,11 @@ import {
   ICreateDealerProductRequest,
   IUpdateDealerProductRequest,
 } from '@service/dealerService';
-import {uploadImage} from '@service/postService';
+import {uploadImagesBatch} from '@service/postService';
 import {getDropdownOptions} from '@service/dropdownService';
 import {IProduct} from '../../types/product/IProduct';
 
-const MAX_IMAGES = 10;
+const MAX_IMAGES = 2;
 
 interface RouteParams {
   product?: IProduct;
@@ -150,32 +150,13 @@ const AddEditProductScreen: React.FC = () => {
     }
 
     setIsUploadingImages(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (let i = 0; i < imageUris.length; i++) {
-        const uri = imageUris[i];
-        // Check if it's already a URL (http:// or https://) - skip upload
-        if (uri.startsWith('http://') || uri.startsWith('https://')) {
-          uploadedUrls.push(uri);
-        } else {
-          // It's a local file, upload it
-          try {
-            const url = await uploadImage(uri);
-            uploadedUrls.push(url);
-          } catch (uploadError: any) {
-            console.error(`Failed to upload image ${i + 1}:`, uploadError);
-            // Provide more specific error message
-            const errorMessage = uploadError?.message || 'Failed to upload image';
-            throw new Error(`${errorMessage}. Please check the image and try again.`);
-          }
-        }
-      }
-      return uploadedUrls;
-    } catch (error: any) {
-      console.error('Error in uploadImages:', error);
-      // Re-throw with the original error message if available
-      throw error instanceof Error ? error : new Error(error?.message || 'Failed to upload images. Please try again.');
+      const urls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+      return urls;
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Failed to upload images. Please try again.');
+      console.error('Error in uploadImages:', err);
+      throw err;
     } finally {
       setIsUploadingImages(false);
     }
@@ -359,6 +340,9 @@ const AddEditProductScreen: React.FC = () => {
       marginBottom: screenHeight * 0.008,
       opacity: 0.8,
     },
+    required: {
+      color: colors.error,
+    },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
       borderRadius: 8,
@@ -510,7 +494,7 @@ const AddEditProductScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.productName')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.productName')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -523,7 +507,7 @@ const AddEditProductScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.brand')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.brand')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -536,7 +520,7 @@ const AddEditProductScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.price')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.price')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -550,7 +534,7 @@ const AddEditProductScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.stock')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.stock')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <View style={styles.textInputContainer}>
             <TextInput
               style={styles.textInput}
@@ -564,7 +548,7 @@ const AddEditProductScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.category')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.category')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <TouchableOpacity style={styles.dropdownButton} onPress={() => openDropdown('category')}>
             <CustomText style={styles.dropdownButtonText}>{getSelectedLabel()}</CustomText>
             <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
@@ -596,7 +580,7 @@ const AddEditProductScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.images')} *</CustomText>
+          <CustomText style={styles.label}>{t('dealer.images')} <CustomText style={styles.required}>*</CustomText></CustomText>
           <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
             <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
             <CustomText style={styles.buttonText}>

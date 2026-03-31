@@ -1,4 +1,4 @@
-import {Share, Platform} from 'react-native';
+import { Share, Platform } from 'react-native';
 
 export interface ShareOptions {
   title?: string;
@@ -8,9 +8,9 @@ export interface ShareOptions {
 
 export const shareContent = async (options: ShareOptions): Promise<boolean> => {
   try {
-    const {title, message, url} = options;
+    const { title, message, url } = options;
     const content = {
-      title: title || 'Car Connect',
+      title: title || 'motonode',
       message: url ? `${message}\n${url}` : message,
     };
 
@@ -30,9 +30,9 @@ export const shareContent = async (options: ShareOptions): Promise<boolean> => {
 
 export const shareCategory = async (categoryName: string): Promise<boolean> => {
   return shareContent({
-    title: `Check out ${categoryName} on Car Connect`,
-    message: `Browse ${categoryName} products, vehicles, and services on Car Connect!`,
-    url: `carconnect://category/${categoryName}`,
+    title: `Check out ${categoryName} on motonode`,
+    message: `Browse ${categoryName} products, vehicles, and services on motonode!`,
+    url: `motonode://category/${categoryName}`,
   });
 };
 
@@ -41,9 +41,9 @@ export const shareProduct = async (
   productId: string,
 ): Promise<boolean> => {
   return shareContent({
-    title: `Check out ${productName} on Car Connect`,
-    message: `View ${productName} on Car Connect!`,
-    url: `carconnect://product/${productId}`,
+    title: `Check out ${productName} on motonode`,
+    message: `View ${productName} on motonode!`,
+    url: `motonode://product/${productId}`,
   });
 };
 

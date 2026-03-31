@@ -83,13 +83,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.carconnect"
+    namespace "com.motonode"
     defaultConfig {
-        applicationId "com.carconnect"
+        applicationId "com.motonode"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 12
+        versionName "1.6"
     }
     signingConfigs {
         release {

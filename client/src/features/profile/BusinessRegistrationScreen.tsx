@@ -23,8 +23,8 @@ import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
 import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import DocumentPicker, { DocumentPickerResponse } from 'react-native-document-picker';
-import { uploadImage, uploadDocument } from '@service/postService';
-import { storage } from '@state/storage';
+import { uploadImagesBatch, uploadDocument } from '@service/postService';
+import { storage, getBusinessRegistrationDraftKey, clearBusinessRegistrationDraft } from '@state/storage';
 import {
   createBusinessRegistration,
   updateBusinessRegistration,
@@ -54,8 +54,7 @@ const PAYOUT_TYPES: IDropdownOption[] = [
   { label: 'Bank Account', value: 'BANK' },
 ];
 
-const MAX_SHOP_PHOTOS = 10;
-const BR_DRAFT_STORAGE_KEY = 'business-registration:draft:v1';
+const MAX_SHOP_PHOTOS = 2;
 
 import { useAuthStore } from '@state/authStore';
 import { refetchUser } from '@service/authService';
@@ -66,7 +65,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const { colors } = useTheme();
   const { showSuccess, showError } = useToast();
   const { t } = useTranslation();
-  const { setUser } = useAuthStore();
+  const { setUser, user } = useAuthStore();
 
   const { isEdit, registrationData } = route.params || {};
 
@@ -115,10 +114,15 @@ const BusinessRegistrationScreen: React.FC = () => {
 
   // Use a ref (instead of useMemo) so Fast Refresh is less likely to complain
   // about hook order changes while we iterate on this screen.
+  // Per-user key so a new dealer never loads the previous user's draft (avoids stale file URIs → network error).
   const mmkvDraftRef = useRef<any>(undefined);
   if (mmkvDraftRef.current === undefined) {
     try {
-      const raw = storage.getString(BR_DRAFT_STORAGE_KEY);
+      const draftKey = user?.id ? getBusinessRegistrationDraftKey(user.id) : null;
+      let raw = draftKey ? storage.getString(draftKey) : null;
+      if (!raw) {
+        raw = storage.getString('business-registration:draft:v1');
+      }
       mmkvDraftRef.current = raw ? JSON.parse(raw) : null;
     } catch {
       mmkvDraftRef.current = null;
@@ -145,7 +149,20 @@ const BusinessRegistrationScreen: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const initialDraft = (draft ?? mmkvDraftRef.current ?? {}) as any;
+  const rawDraft = (draft ?? mmkvDraftRef.current ?? {}) as any;
+  const initialDraft = useMemo(() => {
+    if (!rawDraft || typeof rawDraft !== 'object') return rawDraft ?? {};
+    const isRemoteUri = (uri: string | null | undefined): boolean =>
+      !!uri && (uri.startsWith('http://') || uri.startsWith('https://'));
+    return {
+      ...rawDraft,
+      shopPhotoUris: Array.isArray(rawDraft.shopPhotoUris)
+        ? rawDraft.shopPhotoUris.filter((u: string) => isRemoteUri(u))
+        : undefined,
+      idDocUri: isRemoteUri(rawDraft.idDocUri) ? rawDraft.idDocUri : undefined,
+      panDocUri: isRemoteUri(rawDraft.panDocUri) ? rawDraft.panDocUri : undefined,
+    };
+  }, []);
   const [businessName, setBusinessName] = useState(initialDraft?.businessName ?? registrationData?.businessName ?? '');
   const [type, setType] = useState(initialDraft?.type ?? registrationData?.type ?? '');
   const [address, setAddress] = useState(initialDraft?.address ?? registrationData?.address ?? '');
@@ -190,7 +207,9 @@ const BusinessRegistrationScreen: React.FC = () => {
     };
   }, [registrationData?.documents]);
 
-  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(initialDraft?.shopPhotoUris ?? existingShopPhotos);
+  const [shopPhotoUris, setShopPhotoUris] = useState<string[]>(
+    (initialDraft?.shopPhotoUris?.length ? initialDraft.shopPhotoUris : undefined) ?? existingShopPhotos,
+  );
   const [idDocUri, setIdDocUri] = useState<string | null>(initialDraft?.idDocUri ?? existingDocs.idDoc);
   const [panDocUri, setPanDocUri] = useState<string | null>(initialDraft?.panDocUri ?? existingDocs.panDoc);
   const [idDocMimeType, setIdDocMimeType] = useState<string | null>(initialDraft?.idDocMimeType ?? existingDocs.idDocMimeType);
@@ -235,9 +254,10 @@ const BusinessRegistrationScreen: React.FC = () => {
       state,
     };
 
-    // 1) MMKV (survives activity recreation)
+    // 1) MMKV (survives activity recreation). Per-user key so another dealer never loads this draft.
     try {
-      storage.set(BR_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+      const draftKey = user?.id ? getBusinessRegistrationDraftKey(user.id) : 'business-registration:draft:v1';
+      storage.set(draftKey, JSON.stringify(payload));
     } catch { }
 
     // 2) Nav params (helps within navigation state)
@@ -802,27 +822,9 @@ const BusinessRegistrationScreen: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Upload shop photos sequentially with individual error handling (same pattern as AddEditProductScreen)
-      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = [];
-      
-      for (let i = 0; i < shopPhotoUris.length; i++) {
-        const uri = shopPhotoUris[i];
-        try {
-          // Check if it's already a URL (http:// or https://) - skip upload
-          if (uri.startsWith('http://') || uri.startsWith('https://')) {
-            uploadedShopPhotos.push({ url: uri });
-          } else {
-            // It's a local file, upload it
-            const url = await uploadImage(uri);
-            uploadedShopPhotos.push({ url });
-          }
-        } catch (uploadError: any) {
-          console.error(`Failed to upload shop photo ${i + 1}:`, uploadError);
-          // Provide more specific error message
-          const errorMessage = uploadError?.message || 'Failed to upload image';
-          throw new Error(`${errorMessage}. Please check the image and try again.`);
-        }
-      }
+      // Upload shop photos via batch API (same as Add Product / Add Vehicle) to avoid sequential timeouts
+      const shopPhotoUrls = await uploadImagesBatch(shopPhotoUris.map((uri) => ({ uri })));
+      const uploadedShopPhotos: IBusinessRegistrationPhoto[] = shopPhotoUrls.map((url) => ({ url }));
       console.log('[BusinessRegistrationScreen] Uploaded shop photos:', uploadedShopPhotos);
 
       // Upload documents only if they are provided (documents are optional)
@@ -918,7 +920,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         await updateBusinessRegistration(registrationData.id, data);
         showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
         try {
-          storage.delete(BR_DRAFT_STORAGE_KEY);
+          clearBusinessRegistrationDraft(user?.id);
         } catch { }
 
         // Also refetch user on edit to ensure latest state
@@ -932,7 +934,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         });
         showSuccess(t('dealer.businessRegistrationSubmitted') || 'Business registration submitted successfully. Your request is pending admin approval.');
         try {
-          storage.delete(BR_DRAFT_STORAGE_KEY);
+          clearBusinessRegistrationDraft(user?.id);
         } catch { }
 
         // Refetch user to update local state (e.g. from user to dealer)
@@ -949,14 +951,20 @@ const BusinessRegistrationScreen: React.FC = () => {
           goBack();
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting business registration:', error);
-      const errorMessage =
-        error?.response?.data?.Response?.ReturnMessage ||
-        error?.response?.data?.message ||
-        error?.message ||
-        t('dealer.operationFailed') ||
-        'Operation failed. Please try again.';
+      const err = error as { code?: string; message?: string; response?: { data?: { Response?: { ReturnMessage?: string }; message?: string } } };
+      const isNetworkError =
+        typeof error === 'object' &&
+        error !== null &&
+        (err?.code === 'ERR_NETWORK' || err?.message === 'Network Error');
+      const errorMessage = isNetworkError
+        ? t('dealer.networkError') || 'Cannot reach server. Check your internet connection and try again. If the problem continues, the server may be temporarily unavailable.'
+        : err?.response?.data?.Response?.ReturnMessage ||
+          err?.response?.data?.message ||
+          err?.message ||
+          t('dealer.operationFailed') ||
+          'Operation failed. Please try again.';
       showError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -981,6 +989,9 @@ const BusinessRegistrationScreen: React.FC = () => {
       color: colors.text,
       marginBottom: screenHeight * 0.008,
       opacity: 0.8,
+    },
+    required: {
+      color: colors.error || '#ef4444',
     },
     textInputContainer: {
       backgroundColor: colors.cardBackground,
@@ -1277,7 +1288,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.businessName') || 'Business Name'} *
+              {t('dealer.businessName') || 'Business Name'} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             {isEdit && (
               <View
@@ -1336,7 +1347,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.businessType') || 'Business Type'} *
+              {t('dealer.businessType') || 'Business Type'} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             {isEdit && (
               <View
@@ -1391,7 +1402,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           <View style={styles.labelRow}>
             <View style={{ flex: 1 }}>
               <View style={[styles.labelRow, { marginBottom: 0 }]}>
-                <CustomText style={styles.label}>{t('dealer.address') || 'Address'} *</CustomText>
+                <CustomText style={styles.label}>{t('dealer.address') || 'Address'} <CustomText style={styles.required}>*</CustomText></CustomText>
                 {isEdit && (
                   <View
                     style={
@@ -1505,7 +1516,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} *</CustomText>
+            <CustomText style={styles.label}>{t('dealer.phone') || 'Phone'} <CustomText style={styles.required}>*</CustomText></CustomText>
             {isEdit && (
               <View
                 style={
@@ -1563,7 +1574,7 @@ const BusinessRegistrationScreen: React.FC = () => {
 
         <View style={styles.section}>
           <View style={styles.labelRow}>
-            <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'} *</CustomText>
+            <CustomText style={styles.label}>{t('dealer.gst') || 'GST Number'} <CustomText style={styles.required}>*</CustomText></CustomText>
             {isEdit && (
               <View
                 style={
@@ -1677,7 +1688,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           <View style={styles.section}>
             <View style={styles.labelRow}>
               <CustomText style={styles.label}>
-                {t('dealer.upiId') || 'UPI ID'} *
+                {t('dealer.upiId') || 'UPI ID'} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
             </View>
             <View style={[styles.textInputContainer, fieldErrors.upiId && styles.textInputContainerError]}>
@@ -1714,7 +1725,7 @@ const BusinessRegistrationScreen: React.FC = () => {
             <View style={styles.section}>
               <View style={styles.labelRow}>
                 <CustomText style={styles.label}>
-                  {t('dealer.accountNumber') || 'Account Number'} *
+                  {t('dealer.accountNumber') || 'Account Number'} <CustomText style={styles.required}>*</CustomText>
                 </CustomText>
               </View>
               <View style={styles.textInputContainer}>
@@ -1733,7 +1744,7 @@ const BusinessRegistrationScreen: React.FC = () => {
             <View style={styles.section}>
               <View style={styles.labelRow}>
                 <CustomText style={styles.label}>
-                  {t('dealer.ifsc') || 'IFSC Code'} *
+                  {t('dealer.ifsc') || 'IFSC Code'} <CustomText style={styles.required}>*</CustomText>
                 </CustomText>
               </View>
               <View style={[styles.textInputContainer, fieldErrors.ifsc && styles.textInputContainerError]}>
@@ -1767,7 +1778,7 @@ const BusinessRegistrationScreen: React.FC = () => {
             <View style={styles.section}>
               <View style={styles.labelRow}>
                 <CustomText style={styles.label}>
-                  {t('dealer.accountName') || 'Account Holder Name'} *
+                  {t('dealer.accountName') || 'Account Holder Name'} <CustomText style={styles.required}>*</CustomText>
                 </CustomText>
               </View>
               <View style={[styles.textInputContainer, fieldErrors.accountName && styles.textInputContainerError]}>
@@ -1801,7 +1812,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.shopPhotos') || 'Shop Photos'} *
+              {t('dealer.shopPhotos') || 'Shop Photos'} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             {isEdit && (
               <View
@@ -1878,7 +1889,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.documents') || 'Documents'} *
+              {t('dealer.documents') || 'Documents'} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             {isEdit && (
               <View

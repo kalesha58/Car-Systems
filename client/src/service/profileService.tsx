@@ -144,3 +144,20 @@ export const updatePrivacySettings = async (
       'Failed to update privacy settings',
   );
 };
+
+/**
+ * Delete the currently logged in user account.
+ */
+export const deleteAccount = async (): Promise<void> => {
+  const response = await appAxios.delete('/profile/account');
+
+  if (response.data?.success) {
+    return;
+  }
+
+  throw new Error(
+    response.data?.Response?.ReturnMessage ||
+      response.data?.message ||
+      'Failed to delete account',
+  );
+};

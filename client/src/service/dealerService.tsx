@@ -342,6 +342,8 @@ export interface ICreateBusinessRegistrationRequest {
   documents: IBusinessRegistrationDocumentFile[];
 }
 
+const BUSINESS_REGISTRATION_TIMEOUT_MS = 90000;
+
 export const createBusinessRegistration = async (
   data: ICreateBusinessRegistrationRequest,
 ): Promise<IBusinessRegistration> => {
@@ -349,6 +351,7 @@ export const createBusinessRegistration = async (
     const response = await appAxios.post<IBusinessRegistrationResponse>(
       '/dealer/business-registration',
       data,
+      { timeout: BUSINESS_REGISTRATION_TIMEOUT_MS },
     );
     if (response.data.success && response.data.Response) {
       return response.data.Response;
@@ -367,6 +370,7 @@ export const updateBusinessRegistration = async (
     const response = await appAxios.put<IBusinessRegistrationResponse>(
       `/dealer/business-registration/${registrationId}`,
       data,
+      { timeout: BUSINESS_REGISTRATION_TIMEOUT_MS },
     );
     if (response.data.success && response.data.Response) {
       return response.data.Response;

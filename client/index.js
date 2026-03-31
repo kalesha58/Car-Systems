@@ -12,8 +12,8 @@ const createNotificationChannel = async () => {
   if (Platform.OS === 'android') {
     try {
       const channelId = await notifee.createChannel({
-        id: 'carconnect_notifications',
-        name: 'CarConnect Notifications',
+        id: 'motonode_notifications',
+        name: 'motonode Notifications',
         importance: AndroidImportance.HIGH,
         sound: 'default',
         vibration: true,
@@ -22,10 +22,10 @@ const createNotificationChannel = async () => {
       return channelId;
     } catch (error) {
       console.error('Error creating notification channel:', error);
-      return 'carconnect_notifications';
+      return 'motonode_notifications';
     }
   }
-  return 'carconnect_notifications';
+  return 'motonode_notifications';
 };
 
 // Initialize channel immediately

@@ -34,14 +34,9 @@
 }
 
 # Keep application classes
--keep class com.carconnect.** { *; }
--keep class com.carconnect.MainApplication { *; }
--keep class com.carconnect.MainActivity { *; }
--keep class com.carconnect.FirebaseMessagingService { *; }
-
-# React Native Firebase
--keep class io.invertase.firebase.** { *; }
--dontwarn io.invertase.firebase.**
+-keep class com.motonode.** { *; }
+-keep class com.motonode.MainApplication { *; }
+-keep class com.motonode.MainActivity { *; }
 
 # Notifee
 -keep class io.invertase.notifee.** { *; }

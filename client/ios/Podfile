@@ -13,11 +13,11 @@ if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
   use_frameworks! :linkage => linkage.to_sym
 else
-  # Use static frameworks to support Swift pods (Firebase) with static libraries
+  # Use static frameworks to support Swift pods with static libraries
   use_frameworks! :linkage => :static
 end
 
-target 'CarConnect' do
+target 'motonode' do
   config = use_native_modules!
 
   # Enable Google Maps for react-native-maps

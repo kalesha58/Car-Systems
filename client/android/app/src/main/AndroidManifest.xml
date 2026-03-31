@@ -4,10 +4,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- Google Play policy: do not declare READ_MEDIA_IMAGES/VIDEO for one-time/infrequent use.
+         Keep photo access working via the system photo picker. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -18,7 +20,7 @@
       android:icon="@mipmap/ic_launcher"
       android:allowBackup="false"
       android:theme="@style/AppTheme"
-      android:usesCleartextTraffic="true"
+      android:usesCleartextTraffic="false"
       android:hardwareAccelerated="true"
       android:supportsRtl="true">
       
@@ -26,31 +28,6 @@
           android:name="com.google.android.geo.API_KEY"
           android:value="AIzaSyA6GTR1erzNtNl5tD02_mnADtYzF860HjA" />
       
-      <!-- Firebase Messaging Default Notification Channel -->
-      <meta-data
-          android:name="com.google.firebase.messaging.default_notification_channel_id"
-          android:value="carconnect_notifications"
-          tools:replace="android:value" />
-      
-      <!-- Firebase Messaging Default Notification Icon -->
-      <meta-data
-          android:name="com.google.firebase.messaging.default_notification_icon"
-          android:resource="@android:drawable/ic_dialog_info" />
-      
-      <!-- Firebase Messaging Default Notification Color -->
-      <meta-data
-          android:name="com.google.firebase.messaging.default_notification_color"
-          android:resource="@android:color/holo_blue_dark"
-          tools:replace="android:resource" />
-      
-      <!-- Firebase Messaging Service -->
-      <service
-          android:name="com.carconnect.FirebaseMessagingService"
-          android:exported="false">
-          <intent-filter>
-              <action android:name="com.google.firebase.MESSAGING_EVENT" />
-          </intent-filter>
-      </service>
       
       <activity
         android:name=".MainActivity"
@@ -68,7 +45,7 @@
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="carconnect" />
+            <data android:scheme="motonode" />
         </intent-filter>
       </activity>
     </application>

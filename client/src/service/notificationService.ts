@@ -8,15 +8,15 @@ import { appAxios } from './apiInterceptors';
 export const createNotifeeChannel = async (): Promise<string> => {
   if (Platform.OS === 'android') {
     const channelId = await notifee.createChannel({
-      id: 'carconnect_notifications',
-      name: 'CarConnect Notifications',
+      id: 'motonode_notifications',
+      name: 'motonode Notifications',
       importance: AndroidImportance.HIGH,
       sound: 'default',
       vibration: true,
     });
     return channelId;
   }
-  return 'carconnect_notifications';
+  return 'motonode_notifications';
 };
 
 /**
@@ -30,7 +30,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
           {
             title: 'Notification Permission',
-            message: 'Car Connect needs permission to send you notifications about your orders',
+            message: 'motonode needs permission to send you notifications about your orders',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -52,21 +52,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 /**
- * Get FCM token (no-op: Firebase removed)
- */
-export const getFCMToken = async (): Promise<string | null> => {
-  return null;
-};
-
-/**
- * Register FCM token with backend (no-op: Firebase removed)
- */
-export const registerFCMToken = async (_token: string): Promise<boolean> => {
-  return false;
-};
-
-/**
- * Display notification using Notifee
+ * Request notification permissions
  */
 export const displayNotifeeNotification = async (
   title: string,

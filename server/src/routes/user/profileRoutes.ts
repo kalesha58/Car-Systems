@@ -1,7 +1,14 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { uploadSingle } from '../../middleware/uploadMiddleware';
-import { getProfileController, updateProfileController, getUserStatsController, getPrivacySettingsController, updatePrivacySettingsController } from '../../controllers/user/profileController';
+import {
+  getProfileController,
+  updateProfileController,
+  getUserStatsController,
+  getPrivacySettingsController,
+  updatePrivacySettingsController,
+  deleteAccountController,
+} from '../../controllers/user/profileController';
 
 const router = Router();
 
@@ -140,6 +147,8 @@ router.get('/privacy-settings', getPrivacySettingsController);
  *         description: Unauthorized
  */
 router.put('/privacy-settings', updatePrivacySettingsController);
+
+router.delete('/account', deleteAccountController);
 
 export default router;
 

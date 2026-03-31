@@ -6,7 +6,7 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import { resetAndNavigate} from '@utils/NavigationUtils';
 import GeoLocation from '@react-native-community/geolocation';
 import {useAuthStore} from '@state/authStore';
-import {tokenStorage, storage} from '@state/storage';
+import { tokenStorage, storage, clearBusinessRegistrationDraft } from '@state/storage';
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_tokens} from '@service/authService';
 import {getBusinessRegistrationByUserId} from '@service/dealerService';
@@ -168,6 +168,8 @@ const SplashScreen: FC = () => {
 
         if (decodedRefreshToken?.exp < currentTime) {
           tokenStorage.clearAll();
+          const currentUser = useAuthStore.getState().user;
+          clearBusinessRegistrationDraft(currentUser?.id);
           const { logout } = useAuthStore.getState();
           logout();
           resetAndNavigate('CustomerLogin');
@@ -184,6 +186,8 @@ const SplashScreen: FC = () => {
             currentUser = useAuthStore.getState().user;
           } catch (error) {
             tokenStorage.clearAll();
+            const currentUserBeforeLogout = useAuthStore.getState().user;
+            clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
             resetAndNavigate('CustomerLogin');
@@ -197,6 +201,8 @@ const SplashScreen: FC = () => {
             currentUser = useAuthStore.getState().user;
           } catch (error) {
             tokenStorage.clearAll();
+            const currentUserBeforeLogout = useAuthStore.getState().user;
+            clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
             resetAndNavigate('CustomerLogin');
@@ -212,12 +218,16 @@ const SplashScreen: FC = () => {
         }
       } catch (decodeError) {
         tokenStorage.clearAll();
+        const currentUser = useAuthStore.getState().user;
+        clearBusinessRegistrationDraft(currentUser?.id);
         const { logout } = useAuthStore.getState();
         logout();
         resetAndNavigate('CustomerLogin');
       }
     } catch (error) {
       tokenStorage.clearAll();
+      const currentUser = useAuthStore.getState().user;
+      clearBusinessRegistrationDraft(currentUser?.id);
       const { logout } = useAuthStore.getState();
       logout();
       resetAndNavigate('CustomerLogin');

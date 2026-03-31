@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { BASE_URL } from './config';
-import { tokenStorage } from '@state/storage';
+import { tokenStorage, clearBusinessRegistrationDraft } from '@state/storage';
 import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
@@ -139,8 +139,12 @@ export const refresh_tokens = async () => {
         tokenStorage.set('refreshToken', new_refresh_token)
         return new_access_token;
     } catch (error) {
-        tokenStorage.clearAll()
-        resetAndNavigate("CustomerLogin")
+        tokenStorage.clearAll();
+        const currentUser = useAuthStore.getState().user;
+        clearBusinessRegistrationDraft(currentUser?.id);
+        const { logout } = useAuthStore.getState();
+        logout();
+        resetAndNavigate("CustomerLogin");
         throw error;
     }
 }
@@ -187,6 +191,8 @@ export const refetchUser = async (setUser: any) => {
         }
     } catch (error) {
         tokenStorage.clearAll();
+        const currentUser = useAuthStore.getState().user;
+        clearBusinessRegistrationDraft(currentUser?.id);
         const { logout } = useAuthStore.getState();
         logout();
         throw error;

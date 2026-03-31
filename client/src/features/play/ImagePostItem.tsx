@@ -347,9 +347,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
         : shareText;
 
       await shareContent({
-        title: 'Car Connect Post',
+        title: 'motonode Post',
         message: shareUrl,
-        url: post?.id ? `carconnect://post/${post.id}` : undefined,
+        url: post?.id ? `motonode://post/${post.id}` : undefined,
       });
     } catch (error) {
       console.error('Error sharing post:', error);

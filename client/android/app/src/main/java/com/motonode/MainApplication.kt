@@ -1,4 +1,4 @@
-package com.carconnect
+package com.motonode
 
 import android.app.Application
 import com.facebook.react.PackageList

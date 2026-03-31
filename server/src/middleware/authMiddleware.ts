@@ -66,6 +66,10 @@ export const authMiddleware = async (
       throw new UnauthorizedError('User no longer exists');
     }
 
+    if (user.status !== 'active') {
+      throw new UnauthorizedError('This account is not active');
+    }
+
     // Attach user info to request
     req.user = {
       userId: decoded.userId,

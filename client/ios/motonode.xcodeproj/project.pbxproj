@@ -21,25 +21,25 @@
 		DD6863910DB643B1A0C8B6B5 /* Okra-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8054C726DB9F414BBC0F400A /* Okra-Bold.ttf */; };
 		DEDC569D3A604153B2B81108 /* Okra-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 19AD504CF773473FAFFEF745 /* Okra-Regular.ttf */; };
 		E2DFE8279A46447093F4A8A4 /* Gilroy-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DD6AAA856B014170BF38EF0A /* Gilroy-Heavy.ttf */; };
-		FE6C10886366972FEBB8FD88 /* Pods_CarConnect.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 134379DD98EBEDA4F740769C /* Pods_CarConnect.framework */; };
+		FE6C10886366972FEBB8FD88 /* Pods_motonode.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 134379DD98EBEDA4F740769C /* Pods_motonode.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		091D3637D9E64D08B6E693F8 /* Okra-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Okra-Medium.ttf"; path = "../src/assets/fonts/Okra-Medium.ttf"; sourceTree = "<group>"; };
 		0B3A4131CB41469F9571C3B8 /* Okra-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Okra-ExtraBold.ttf"; path = "../src/assets/fonts/Okra-ExtraBold.ttf"; sourceTree = "<group>"; };
-		134379DD98EBEDA4F740769C /* Pods_CarConnect.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CarConnect.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07F961A680F5B00A75B9A /* CarConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CarConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CarConnect/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CarConnect/Info.plist; sourceTree = "<group>"; };
-		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = CarConnect/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		134379DD98EBEDA4F740769C /* Pods_motonode.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_motonode.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* motonode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = motonode.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = motonode/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = motonode/Info.plist; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = motonode/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		19AD504CF773473FAFFEF745 /* Okra-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Okra-Regular.ttf"; path = "../src/assets/fonts/Okra-Regular.ttf"; sourceTree = "<group>"; };
 		301F3173E4284CA8BE022448 /* Okra-MediumLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Okra-MediumLight.ttf"; path = "../src/assets/fonts/Okra-MediumLight.ttf"; sourceTree = "<group>"; };
-		3B4392A12AC88292D35C810B /* Pods-CarConnect.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CarConnect.debug.xcconfig"; path = "Target Support Files/Pods-CarConnect/Pods-CarConnect.debug.xcconfig"; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-motonode.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-motonode.debug.xcconfig"; path = "Target Support Files/Pods-motonode/Pods-motonode.debug.xcconfig"; sourceTree = "<group>"; };
 		56FF2E4E392A4ADDA52596A3 /* Gilroy-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Gilroy-Regular.ttf"; path = "../src/assets/fonts/Gilroy-Regular.ttf"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-CarConnect.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CarConnect.release.xcconfig"; path = "Target Support Files/Pods-CarConnect/Pods-CarConnect.release.xcconfig"; sourceTree = "<group>"; };
-		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CarConnect/AppDelegate.swift; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-motonode.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-motonode.release.xcconfig"; path = "Target Support Files/Pods-motonode/Pods-motonode.release.xcconfig"; sourceTree = "<group>"; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = motonode/AppDelegate.swift; sourceTree = "<group>"; };
 		8054C726DB9F414BBC0F400A /* Okra-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Okra-Bold.ttf"; path = "../src/assets/fonts/Okra-Bold.ttf"; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CarConnect/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = motonode/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		939A73A1489540B6A60A8151 /* Gilroy-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Gilroy-Medium.ttf"; path = "../src/assets/fonts/Gilroy-Medium.ttf"; sourceTree = "<group>"; };
 		9872EA5C4ABA48A38C9B9BAF /* Gilroy-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Gilroy-Bold.ttf"; path = "../src/assets/fonts/Gilroy-Bold.ttf"; sourceTree = "<group>"; };
 		BE5BAD1FE77C4B46931A2DCE /* Gilroy-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Gilroy-Light.ttf"; path = "../src/assets/fonts/Gilroy-Light.ttf"; sourceTree = "<group>"; };
@@ -52,14 +52,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FE6C10886366972FEBB8FD88 /* Pods_CarConnect.framework in Frameworks */,
+				FE6C10886366972FEBB8FD88 /* Pods_motonode.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* CarConnect */ = {
+		13B07FAE1A68108700A75B9A /* motonode */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -68,7 +68,7 @@
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 			);
-			name = CarConnect;
+			name = motonode;
 			sourceTree = "<group>";
 		};
 		1E0293AA399B4B6C961FE2A2 /* Resources */ = {
@@ -93,7 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				134379DD98EBEDA4F740769C /* Pods_CarConnect.framework */,
+				134379DD98EBEDA4F740769C /* Pods_motonode.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -108,7 +108,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* CarConnect */,
+				13B07FAE1A68108700A75B9A /* motonode */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -123,7 +123,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* CarConnect.app */,
+				13B07F961A680F5B00A75B9A /* motonode.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -131,8 +131,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-CarConnect.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-CarConnect.release.xcconfig */,
+				3B4392A12AC88292D35C810B /* Pods-motonode.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-motonode.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -140,9 +140,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* CarConnect */ = {
+		13B07F861A680F5B00A75B9A /* motonode */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CarConnect" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "motonode" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
@@ -156,9 +156,9 @@
 			);
 			dependencies = (
 			);
-			name = CarConnect;
-			productName = CarConnect;
-			productReference = 13B07F961A680F5B00A75B9A /* CarConnect.app */;
+			name = motonode;
+			productName = motonode;
+			productReference = 13B07F961A680F5B00A75B9A /* motonode.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -174,7 +174,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CarConnect" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "motonode" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -187,7 +187,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* CarConnect */,
+				13B07F861A680F5B00A75B9A /* motonode */,
 			);
 		};
 /* End PBXProject section */
@@ -238,15 +238,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
@@ -264,7 +264,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-CarConnect-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-motonode-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -277,15 +277,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CarConnect/Pods-CarConnect-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-motonode/Pods-motonode-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -304,26 +304,27 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-CarConnect.debug.xcconfig */;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-motonode.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = CarConnect/Info.plist;
+				INFOPLIST_FILE = motonode/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = motonode;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = CarConnect;
+				PRODUCT_BUNDLE_IDENTIFIER = com.motonode;
+				PRODUCT_NAME = motonode;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -332,25 +333,26 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-CarConnect.release.xcconfig */;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-motonode.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = CarConnect/Info.plist;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = motonode/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = motonode;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = CarConnect;
+				PRODUCT_BUNDLE_IDENTIFIER = com.motonode;
+				PRODUCT_NAME = motonode;
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -529,7 +531,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CarConnect" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "motonode" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -538,7 +540,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CarConnect" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "motonode" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

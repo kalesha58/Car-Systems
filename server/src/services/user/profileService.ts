@@ -239,3 +239,56 @@ export const getPrivacySettings = async (
     throw error;
   }
 };
+
+/**
+ * Deactivate and anonymize user account data.
+ * This preserves historical relational data while removing PII and login access.
+ */
+export const deleteUserAccount = async (userId: string): Promise<void> => {
+  try {
+    const user = await SignUp.findById(userId).select('+password');
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const timestamp = Date.now();
+    const anonymizedEmail = `deleted_${user.id}_${timestamp}@deleted.motonode.local`;
+    const anonymizedPhone = `9${String(timestamp).slice(-9)}`;
+
+    if (user.profileImage) {
+      try {
+        const urlParts = user.profileImage.split('/');
+        const publicIdWithExtension = urlParts.slice(-2).join('/');
+        const publicId = publicIdWithExtension.split('.')[0];
+        await deleteFromCloudinary(publicId);
+      } catch (deleteError) {
+        logger.warn('Unable to delete profile image during account deletion:', deleteError);
+      }
+    }
+
+    user.name = 'Deleted User';
+    user.email = anonymizedEmail;
+    user.phone = anonymizedPhone;
+    user.password = `deleted_${timestamp}_${Math.random().toString(36).slice(2)}`;
+    user.status = 'inactive';
+    user.profileImage = undefined;
+    user.googleId = undefined;
+    user.fcmToken = undefined;
+    user.resetPasswordCode = undefined;
+    user.resetPasswordCodeExpires = undefined;
+    user.privacySettings = {
+      isPrivate: true,
+      hidePhone: true,
+      hideEmail: true,
+      hideVehicleNumber: true,
+    };
+
+    await user.save();
+
+    logger.info(`Account deleted for userId: ${userId}`);
+  } catch (error) {
+    logger.error('Error deleting user account:', error);
+    throw error;
+  }
+};

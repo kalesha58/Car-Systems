@@ -1,6 +1,13 @@
 import { Response, NextFunction } from 'express';
 import { IAuthRequest, IMulterFile } from '../../middleware/authMiddleware';
-import { getUserProfile, updateUserProfile, getUserStats, updatePrivacySettings, getPrivacySettings } from '../../services/user/profileService';
+import {
+  getUserProfile,
+  updateUserProfile,
+  getUserStats,
+  updatePrivacySettings,
+  getPrivacySettings,
+  deleteUserAccount,
+} from '../../services/user/profileService';
 import { uploadToCloudinary } from '../../config/cloudinary';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
@@ -211,6 +218,38 @@ export const updatePrivacySettingsController = async (
     res.status(200).json({
       success: true,
       Response: settings,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Delete current user account
+ */
+export const deleteAccountController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    await deleteUserAccount(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'Account deleted successfully',
+      },
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

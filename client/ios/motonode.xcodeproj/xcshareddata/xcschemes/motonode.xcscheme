@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "CarConnect.app"
-               BlueprintName = "CarConnect"
-               ReferencedContainer = "container:CarConnect.xcodeproj">
+               BuildableName = "motonode.app"
+               BlueprintName = "motonode"
+               ReferencedContainer = "container:motonode.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "CarConnectTests.xctest"
-               BlueprintName = "CarConnectTests"
-               ReferencedContainer = "container:CarConnect.xcodeproj">
+               BuildableName = "motonodeTests.xctest"
+               BlueprintName = "motonodeTests"
+               ReferencedContainer = "container:motonode.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "CarConnect.app"
-            BlueprintName = "CarConnect"
-            ReferencedContainer = "container:CarConnect.xcodeproj">
+            BuildableName = "motonode.app"
+            BlueprintName = "motonode"
+            ReferencedContainer = "container:motonode.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "CarConnect.app"
-            BlueprintName = "CarConnect"
-            ReferencedContainer = "container:CarConnect.xcodeproj">
+            BuildableName = "motonode.app"
+            BlueprintName = "motonode"
+            ReferencedContainer = "container:motonode.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

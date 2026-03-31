@@ -307,10 +307,11 @@ const DealerTabs: FC = () => {
     );
   }
 
-  // Check if Drive tab should be shown based on business type
+  // Show Drive tab only for business types that offer test drives (vehicle/bike sales)
+  const BUSINESS_TYPES_WITH_TEST_DRIVE = ['Automobile Showroom', 'Bike Dealer'];
   const shouldShowDriveTab = (businessType: string | undefined): boolean => {
-    if (!businessType) return true;
-    return businessType !== 'Vehicle Wash Station' && businessType !== 'Detailing Center';
+    if (!businessType) return false;
+    return BUSINESS_TYPES_WITH_TEST_DRIVE.includes(businessType);
   };
 
   const showDriveTab = shouldShowDriveTab(businessRegistration?.type);
@@ -487,7 +488,7 @@ const Navigation: FC = () => {
   // Deep linking configuration
   // React Navigation will automatically handle deep links
   const linking = {
-    prefixes: ['carconnect://'],
+    prefixes: ['motonode://'],
     config: {
       screens: {
         ProductDetail: {

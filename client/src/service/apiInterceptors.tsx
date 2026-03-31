@@ -5,8 +5,11 @@ import { Alert } from "react-native";
 import { tokenStorage } from "@state/storage";
 
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 60000;
+
 export const appAxios = axios.create({
-    baseURL: BASE_URL
+    baseURL: BASE_URL,
+    timeout: DEFAULT_REQUEST_TIMEOUT_MS,
 })
 
 appAxios.interceptors.request.use(async config => {

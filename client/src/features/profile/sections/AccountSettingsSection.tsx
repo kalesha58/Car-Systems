@@ -1,4 +1,4 @@
-import { View, StyleSheet, Switch } from 'react-native';
+import { View, StyleSheet, Switch, Alert } from 'react-native';
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -11,17 +11,23 @@ import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
 import { getBusinessRegistrationByUserId, updateStoreStatus, IBusinessRegistration } from '@service/dealerService';
 import { useToast } from '@hooks/useToast';
+import { deleteAccount } from '@service/profileService';
+import { useCartStore } from '@state/cartStore';
+import { clearBusinessRegistrationDraft, storage, tokenStorage } from '@state/storage';
+import { resetAndNavigate } from '@utils/NavigationUtils';
 
 const AccountSettingsSection: FC = () => {
   const { t } = useTranslation();
   const { themeMode, toggleTheme } = useThemeStore();
   const { colors, isDark } = useTheme();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const { clearCart } = useCartStore();
   const { showSuccess, showError } = useToast();
   const isDealer = user?.role?.includes('dealer');
   const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
   const [storeOpen, setStoreOpen] = useState<boolean>(true);
   const [isUpdatingStoreStatus, setIsUpdatingStoreStatus] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Fetch business registration for dealers
   useEffect(() => {
@@ -83,6 +89,56 @@ const AccountSettingsSection: FC = () => {
       setIsUpdatingStoreStatus(false);
     }
   }, [businessRegistration, storeOpen, isUpdatingStoreStatus, t, showSuccess, showError]);
+
+  const handleConfirmDeleteAccount = useCallback(async () => {
+    if (isDeletingAccount) {
+      return;
+    }
+
+    try {
+      setIsDeletingAccount(true);
+      const currentUserId = user?.id;
+
+      await deleteAccount();
+
+      clearCart();
+      logout();
+      tokenStorage.clearAll();
+      storage.clearAll();
+      clearBusinessRegistrationDraft(currentUserId);
+
+      showSuccess(t('profile.accountDeleted') || 'Your account has been deleted.');
+      resetAndNavigate('CustomerLogin');
+    } catch (error) {
+      showError(
+        error instanceof Error
+          ? error.message
+          : t('profile.deleteAccountFailed') || 'Failed to delete account. Please try again.',
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  }, [isDeletingAccount, user?.id, clearCart, logout, showSuccess, showError, t]);
+
+  const handleDeleteAccountPress = useCallback(() => {
+    Alert.alert(
+      t('profile.deleteAccountTitle') || 'Delete Account',
+      t('profile.deleteAccountDescription') ||
+        'This action is permanent. Your account and personal data will be deleted.',
+      [
+        {
+          text: t('profile.cancel') || 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: t('profile.deleteAccountAction') || 'Delete Account',
+          style: 'destructive',
+          onPress: handleConfirmDeleteAccount,
+        },
+      ],
+      { cancelable: true },
+    );
+  }, [handleConfirmDeleteAccount, t]);
 
   const styles = StyleSheet.create({
     container: {
@@ -185,6 +241,15 @@ const AccountSettingsSection: FC = () => {
       onPress: () => navigate('PrivacyCenter'),
     });
   }
+
+  menuItems.push({
+    icon: 'trash-outline',
+    label: isDeletingAccount
+      ? t('profile.deletingAccount') || 'Deleting Account...'
+      : t('profile.deleteAccountAction') || 'Delete Account',
+    onPress: handleDeleteAccountPress,
+    showChevron: false,
+  });
 
   return (
     <View style={styles.container}>
