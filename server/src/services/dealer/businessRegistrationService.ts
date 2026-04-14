@@ -123,10 +123,12 @@ export const createBusinessRegistration = async (
       throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
     }
 
-    // Validate required uploads (shop photos)
+    // Shop photos are optional - validation removed
+    /*
     if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
       throw new AppError('At least one shop photo is required', 400);
     }
+    */
     // Documents are optional - no validation needed
 
     // Validate payout information if provided
@@ -341,8 +343,9 @@ export const updateBusinessRegistration = async (
 
     if ((data as any).shopPhotos !== undefined) {
       const photos = (data as any).shopPhotos;
-      if (!Array.isArray(photos) || photos.length < 1) {
-        throw new AppError('At least one shop photo is required', 400);
+      // Shop photos are optional - allow empty array
+      if (!Array.isArray(photos)) {
+        throw new AppError('Shop photos must be an array', 400);
       }
       logger.info('Updating shopPhotos', {
         registrationId: id,

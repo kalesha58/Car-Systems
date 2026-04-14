@@ -609,9 +609,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         return undefined;
 
       case 'shopPhotos':
-        if (!shopPhotoUris || shopPhotoUris.length === 0) {
-          return t('dealer.shopPhotosRequired') || 'At least one shop photo is required';
-        }
+        // Shop photos are optional - no validation needed
         return undefined;
 
       case 'idDoc':
@@ -706,8 +704,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       phone: !!phone.trim() && isValidPhone(phone),
       gst: isGstValid,
       payout: payoutValid,
-      shopPhotos: shopPhotoUris.length > 0,
-      // Documents are optional - not included in validation
+      // Shop photos and documents are optional
     };
 
     const isValid = Object.values(validations).every(v => v === true);
@@ -782,11 +779,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       return;
     }
 
-    if (shopPhotoUris.length < 1) {
-      showError(t('dealer.shopPhotosRequired') || 'At least one shop photo is required');
-      return;
-    }
-    // Documents are optional - no validation needed
+    // Shop photos and documents are optional - no validation needed
 
     // Validate payout fields if payout type is selected
     if (payoutType) {
@@ -1812,7 +1805,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.shopPhotos') || 'Shop Photos'} <CustomText style={styles.required}>*</CustomText>
+              {t('dealer.shopPhotos') || 'Shop Photos'}
             </CustomText>
             {isEdit && (
               <View
@@ -1889,7 +1882,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <CustomText style={styles.label}>
-              {t('dealer.documents') || 'Documents'} <CustomText style={styles.required}>*</CustomText>
+              {t('dealer.documents') || 'Documents'}
             </CustomText>
             {isEdit && (
               <View
