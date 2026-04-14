@@ -4,14 +4,14 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import React, {FC} from 'react';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import React, { FC } from 'react';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
-import {useAuthStore} from '@state/authStore';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '@hooks/useTheme';
-import {navigate} from '@utils/NavigationUtils';
+import { useAuthStore } from '@state/authStore';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@hooks/useTheme';
+import { navigate } from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { shouldHidePhone, shouldHideEmail, maskPhone, maskEmail } from '@utils/privacyUtils';
 
@@ -28,9 +28,9 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
   ordersCount,
   isDealer = false,
 }) => {
-  const {user} = useAuthStore();
-  const {t} = useTranslation();
-  const {colors, isDark} = useTheme();
+  const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const { colors, isDark } = useTheme();
 
   const getInitialLetter = (): string => {
     if (user?.name) {
@@ -150,7 +150,7 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
         <View style={styles.profileImageContainer}>
           {user?.profileImage ? (
             <Image
-              source={{uri: user.profileImage}}
+              source={{ uri: user.profileImage }}
               style={styles.profileImage}
               resizeMode="cover"
             />
@@ -162,21 +162,21 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
             </View>
           )}
         </View>
-        
+
         <View style={styles.statsContainer}>
           {!isDealer && postsCount !== undefined && (
             <View style={styles.statItem}>
               <CustomText style={styles.statNumber}>{postsCount}</CustomText>
-              <CustomText style={styles.statLabel}>Posts</CustomText>
+              <CustomText style={styles.statLabel}>{t('profile.posts')}</CustomText>
             </View>
           )}
           <View style={styles.statItem}>
             <CustomText style={styles.statNumber}>{vehiclesCount}</CustomText>
-            <CustomText style={styles.statLabel}>Vehicles</CustomText>
+            <CustomText style={styles.statLabel}>{t('profile.vehicles')}</CustomText>
           </View>
           <View style={styles.statItem}>
             <CustomText style={styles.statNumber}>{ordersCount}</CustomText>
-            <CustomText style={styles.statLabel}>Orders</CustomText>
+            <CustomText style={styles.statLabel}>{t('profile.orders')}</CustomText>
           </View>
         </View>
       </View>
@@ -196,13 +196,13 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
           style={styles.actionButton}
           onPress={handleEditProfile}
           activeOpacity={0.7}>
-          <CustomText style={styles.actionButtonText}>Edit profile</CustomText>
+          <CustomText style={styles.actionButtonText}>{t('profile.editProfile')}</CustomText>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleShareProfile}
           activeOpacity={0.7}>
-          <CustomText style={styles.actionButtonText}>Share profile</CustomText>
+          <CustomText style={styles.actionButtonText}>{t('profile.shareProfile')}</CustomText>
         </TouchableOpacity>
       </View>
     </View>
