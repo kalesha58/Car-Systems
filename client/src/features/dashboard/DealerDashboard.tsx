@@ -38,7 +38,6 @@ import {
   calculateCancellationRate,
 } from '@utils/analytics';
 import AnimatedHeader from './AnimatedHeader';
-import StickySearchBar from './StickySearchBar';
 import AdCarousal from '@components/dashboard/AdCarousal';
 import { adData } from '@utils/dummyData';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
@@ -409,9 +408,8 @@ const DealerDashboard: React.FC = () => {
               title={dealer?.businessName || user?.name || ''}
               subtitle={dealer?.address || ''}
             />
-            <StickySearchBar showCategoryButtons={false} />
             
-            {/* Train Effect Below Search Bar */}
+            {/* Train effect below header */}
             {seasonalTheme.animations.overlay && (
               <View style={styles.trainEffectBelow}>
                 <LottieView

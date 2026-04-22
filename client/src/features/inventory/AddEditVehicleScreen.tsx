@@ -143,7 +143,10 @@ const AddEditVehicleScreen: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        // Downscale/compress to reduce upload payload and avoid 413 errors.
+        quality: 0.65,
+        maxWidth: 1600,
+        maxHeight: 1600,
         includeBase64: false,
         selectionLimit: MAX_IMAGES - imageUris.length,
       },

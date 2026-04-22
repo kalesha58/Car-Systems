@@ -388,6 +388,10 @@ const ChatScreen: React.FC = () => {
     (navigation as any).navigate('ChatMessage', { chatId });
   };
 
+  const handleStartNewChat = () => {
+    (navigation as any).navigate('UserSelection');
+  };
+
   const renderChatItem = ({ item }: { item: IChat }) => {
     const chatName =
       item.type === 'group'
@@ -531,6 +535,22 @@ const ChatScreen: React.FC = () => {
   const renderHeaderRight = () => {
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {selectedTab === 'messages' && (
+          <>
+            <TouchableOpacity
+              onPress={handleStartNewChat}
+              style={{ marginRight: 10, padding: 4 }}
+              activeOpacity={0.7}>
+              <Icon name="add-circle-outline" size={RFValue(22)} color={colors.secondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleStartNewChat}
+              style={{ marginRight: 12, padding: 4 }}
+              activeOpacity={0.7}>
+              <Icon name="search-outline" size={RFValue(20)} color={colors.text} />
+            </TouchableOpacity>
+          </>
+        )}
         {selectedTab === 'groups' && (
           <TouchableOpacity
             onPress={() => (navigation as any).navigate('CreateGroup')}
@@ -591,14 +611,7 @@ const ChatScreen: React.FC = () => {
         />
       )}
 
-      {selectedTab === 'messages' && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => (navigation as any).navigate('UserSelection')}
-          activeOpacity={0.8}>
-          <Icon name="add" size={RFValue(24)} color={colors.white} />
-        </TouchableOpacity>
-      )}
+      {/* FAB removed and moved to header as search button per user request */}
 
     </View>
   );

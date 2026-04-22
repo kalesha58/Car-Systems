@@ -14,6 +14,7 @@ import {
   ScrollView,
   PanResponder,
   GestureResponderEvent,
+  Pressable,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts } from '@utils/Constants';
@@ -50,6 +51,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const bigHeartScale = useRef(new Animated.Value(0)).current;
+  const bigHeartOpacity = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef(0);
   const modalTranslateY = useRef(new Animated.Value(0)).current;
   const screenHeight = Dimensions.get('window').height;
   const imageHeight = screenHeight * 0.5;
@@ -145,11 +149,11 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     });
 
     return () => {
-      socket.emit('leavePost', post.id);
+      socket.emit('leavePost', post?.id);
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [post.id]);
+  }, [post?.id]);
 
   // Update local state when post prop changes
   useEffect(() => {
@@ -203,6 +207,36 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     return count.toString();
   };
 
+  const animateBigHeart = () => {
+    bigHeartScale.setValue(0);
+    bigHeartOpacity.setValue(1);
+    Animated.sequence([
+      Animated.spring(bigHeartScale, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bigHeartOpacity, {
+        toValue: 0,
+        duration: 200,
+        delay: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_PRESS_DELAY = 300;
+    if (now - lastTap.current < DOUBLE_PRESS_DELAY) {
+      if (!isLiked) {
+        handleLike();
+      }
+      animateBigHeart();
+    }
+    lastTap.current = now;
+  };
+
   const handleLike = async () => {
     const previousLiked = isLiked;
     const previousCount = likeCount;
@@ -211,7 +245,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     setIsLiked(!previousLiked);
     setLikeCount(previousLiked ? previousCount - 1 : previousCount + 1);
 
-    // Animate heart icon
+    // Animate small heart icon
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1.3,
@@ -477,13 +511,11 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             {/* Optional: Music/Audio indicator - can be added if data exists */}
           </View>
         </View>
-        <TouchableOpacity activeOpacity={0.7}>
-          <Icon name="ellipsis-vertical" size={RFValue(16)} color={iconColor} />
-        </TouchableOpacity>
+        {/* Three dots removed per user request */}
       </View>
 
       {/* Image/Content Section */}
-      <View style={styles.imageContainer}>
+      <Pressable onPress={handleDoubleTap} style={styles.imageContainer}>
         {post.images && post.images.length > 0 ? (
           <ImageCarousel images={post.images} height={imageHeight} />
         ) : (
@@ -497,7 +529,20 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             </CustomText>
           </View>
         )}
-      </View>
+        
+        {/* Big Heart Overlay Animation */}
+        <Animated.View 
+          pointerEvents="none"
+          style={[
+            styles.bigHeartContainer,
+            {
+              opacity: bigHeartOpacity,
+              transform: [{ scale: bigHeartScale }]
+            }
+          ]}>
+          <Icon name="heart" size={RFValue(80)} color="#ff3040" shadowColor="rgba(0,0,0,0.3)" />
+        </Animated.View>
+      </Pressable>
 
       {/* Engagement Section - matching reference with icons and counts */}
       <View style={[styles.engagementSection, { backgroundColor: postBackground }]}>
@@ -732,7 +777,18 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
 const styles = StyleSheet.create({
   container: {
     width: screenWidth,
-    marginBottom: 0, // No margin between posts - full screen like reference
+    marginBottom: 0,
+    overflow: 'hidden',
+  },
+  bigHeartContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   postHeader: {
     flexDirection: 'row',

@@ -12,7 +12,8 @@
     "seed:coupons": "ts-node src/scripts/seedCouponData.ts",
     "seed:vehicle-types": "ts-node src/scripts/seedVehicleTypes.ts",
     "seed:products": "ts-node src/scripts/seedProducts.ts",
-    "seed:vehicles": "ts-node src/scripts/seedVehicleModels.ts"
+    "seed:vehicles": "ts-node src/scripts/seedVehicleModels.ts",
+    "seed:dealer-drive": "ts-node src/scripts/seedDealerDriveData.ts"
   },
   "keywords": [],
   "author": "",

@@ -32,11 +32,12 @@ import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreview
 import InventoryItemSkeleton from './InventoryItemSkeleton';
 
 const InventoryScreen: React.FC = () => {
+  type InventoryTab = 'products' | 'vehicles' | 'services';
   const navigation = useNavigation();
   const {colors: theme} = useTheme();
   const {t} = useTranslation();
   const {user} = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>('products');
+  const [activeTab, setActiveTab] = useState<InventoryTab>('products');
   const [products, setProducts] = useState<IProduct[]>([]);
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
   const [services, setServices] = useState<IService[]>([]);
@@ -49,38 +50,38 @@ const InventoryScreen: React.FC = () => {
   const pagerRef = useRef<ScrollView>(null);
 
   // Filter tabs based on business type
-  const tabOrder = useMemo(() => {
+  const tabOrder = useMemo<InventoryTab[]>(() => {
     const businessType = businessRegistration?.type;
     // Automobile Showroom: Show products, vehicles, and car automobile services
     if (businessType === 'Automobile Showroom') {
-      return ['products', 'vehicles', 'services'] as const;
+      return ['products', 'vehicles', 'services'];
     }
     // Bike Dealer: Show products, vehicles, and bike automobile services
     if (businessType === 'Bike Dealer') {
-      return ['products', 'vehicles', 'services'] as const;
+      return ['products', 'vehicles', 'services'];
     }
     // Vehicle Wash Station: Show car wash services only
     if (businessType === 'Vehicle Wash Station') {
-      return ['services'] as const;
+      return ['services'];
     }
     // Detailing Center: Show car detailing services only
     if (businessType === 'Detailing Center') {
-      return ['services'] as const;
+      return ['services'];
     }
     // Spare Parts Dealer: Show products only
     if (businessType === 'Spare Parts Dealer') {
-      return ['products'] as const;
+      return ['products'];
     }
     // Mechanic Workshop: Show services only
     if (businessType === 'Mechanic Workshop') {
-      return ['services'] as const;
+      return ['services'];
     }
     // Riding Gear Store: Show products and services (gear products, not vehicles)
     if (businessType === 'Riding Gear Store') {
-      return ['products', 'services'] as const;
+      return ['products', 'services'];
     }
     // Default: Show all tabs
-    return ['products', 'vehicles', 'services'] as const;
+    return ['products', 'vehicles', 'services'];
   }, [businessRegistration?.type]);
   
   const activeIndex = useMemo(() => tabOrder.indexOf(activeTab), [activeTab, tabOrder]);
@@ -164,10 +165,10 @@ const InventoryScreen: React.FC = () => {
     }
   };
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (registration?: IBusinessRegistration | null) => {
     try {
       setLoading(true);
-      const businessType = businessRegistration?.type;
+      const businessType = registration?.type;
       
       // Build service filters based on business type
       const serviceFilters: any = { limit: 1000 };
@@ -201,45 +202,51 @@ const InventoryScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [businessRegistration?.type]);
+  }, []);
 
-  const fetchBusinessRegistration = useCallback(async () => {
+  const fetchBusinessRegistration = useCallback(async (): Promise<IBusinessRegistration | null> => {
     if (!user?.id) {
       setLoadingRegistration(false);
-      return;
+      return null;
     }
     try {
       setLoadingRegistration(true);
       const registration = await getBusinessRegistrationByUserId(user.id);
       setBusinessRegistration(registration);
+      return registration;
     } catch (error) {
       console.error('Error fetching business registration:', error);
       setBusinessRegistration(null);
+      return null;
     } finally {
       setLoadingRegistration(false);
     }
   }, [user?.id]);
 
+  const loadInventoryWithRegistration = useCallback(async () => {
+    const registration = await fetchBusinessRegistration();
+    await fetchData(registration || null);
+  }, [fetchBusinessRegistration, fetchData]);
+
   useEffect(() => {
-    fetchData();
-    fetchBusinessRegistration();
-  }, [fetchData, fetchBusinessRegistration]);
+    loadInventoryWithRegistration();
+  }, [loadInventoryWithRegistration]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchData();
-      fetchBusinessRegistration();
-    }, [fetchData, fetchBusinessRegistration]),
+      loadInventoryWithRegistration();
+    }, [loadInventoryWithRegistration]),
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    const registration = await fetchBusinessRegistration();
+    await fetchData(registration || null);
     setRefreshing(false);
-  }, [fetchData]);
+  }, [fetchBusinessRegistration, fetchData]);
 
   const scrollToTab = useCallback(
-    (tab: (typeof tabOrder)[number]) => {
+    (tab: InventoryTab) => {
       const index = tabOrder.indexOf(tab);
       if (index < 0) return;
       setActiveTab(tab);

@@ -419,6 +419,10 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
       throw new Error(errorMessage);
     }
 
+    if (error?.response?.status === 413) {
+      throw new Error('Image is too large to upload. Please choose a smaller image and try again.');
+    }
+
     if (error?.response?.status === 401) {
       throw new Error('Unauthorized. Please log in and try again.');
     }
@@ -505,6 +509,8 @@ export const uploadImagesBatch = async (images: IUploadImageInput[]): Promise<st
         const url = await uploadImage(img.uri);
         uploadedUrls.push(url);
       }
+    } else if (status === 413) {
+      throw new Error('One or more selected images are too large to upload. Please choose smaller images and try again.');
     } else {
       throw batchError;
     }

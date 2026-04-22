@@ -48,7 +48,7 @@ export const seasonalThemes: Record<SeasonType, ISeasonalTheme> = {
         animations: {
             background: require('@assets/animations/Sakura fall.json'),
         },
-        enabled: false, // Not yet implemented
+        enabled: true, 
     },
     summer: {
         season: 'summer',
@@ -95,15 +95,34 @@ export const seasonalThemes: Record<SeasonType, ISeasonalTheme> = {
  * SINGLE POINT OF CONFIGURATION
  * Change this value to switch the entire app's seasonal theme
  */
-export const CURRENT_SEASON: SeasonType = 'winter';
+export const CURRENT_SEASON: SeasonType = 'default'; 
 
 /**
  * Get the current active seasonal theme
  */
 export const getCurrentSeasonalTheme = (): ISeasonalTheme => {
-    const theme = seasonalThemes[CURRENT_SEASON];
+    const month = new Date().getMonth(); // 0-11 (Jan is 0)
+    let season: SeasonType;
 
-    // Fallback to default if season is disabled
+    // Automatic Season Detection
+    // Spring: March (2), April (3), May (4)
+    // Summer: June (5), July (6), August (7)
+    // Autumn: September (8), October (9), November (10)
+    // Winter: December (11), January (0), February (1)
+    
+    if (month >= 2 && month <= 4) {
+        season = 'spring';
+    } else if (month >= 5 && month <= 7) {
+        season = 'summer';
+    } else if (month >= 8 && month <= 10) {
+        season = 'autumn';
+    } else {
+        season = 'winter';
+    }
+
+    const theme = seasonalThemes[season];
+
+    // Fallback to default if specific season is disabled
     if (!theme.enabled) {
         return seasonalThemes.default;
     }

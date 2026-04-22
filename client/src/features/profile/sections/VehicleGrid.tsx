@@ -24,7 +24,7 @@ interface VehicleGridProps {
 const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshing = false, onVehiclePress}) => {
   const {colors, isDark} = useTheme();
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3; // 3 columns with no gap (like Instagram)
+  const itemSize = (screenWidth - 40 - 12) / 3; // Accounting for container padding and gaps
 
   const styles = StyleSheet.create({
     container: {
@@ -33,12 +33,22 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
     grid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
+      paddingHorizontal: 16,
+      paddingBottom: 20,
     },
     vehicleItem: {
       width: itemSize,
       height: itemSize,
       backgroundColor: colors.cardBackground,
-      position: 'relative',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 6,
+      marginRight: 6,
+      shadowColor: colors.black,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     vehicleImage: {
       width: '100%',
@@ -49,17 +59,16 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      padding: 4,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      padding: 6,
     },
     vehicleInfo: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
     },
     vehicleText: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      fontSize: RFValue(8.5),
+      fontFamily: Fonts.Bold,
       color: '#fff',
       flex: 1,
     },
@@ -106,13 +115,13 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
     },
   });
 
-  const renderVehicleItem = (item: IUserVehicle) => {
+  const renderVehicleItem = (item: IUserVehicle, index: number) => {
     const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={styles.vehicleItem}
+        style={[styles.vehicleItem, { marginRight: index % 3 === 2 ? 0 : 6 }]}
         onPress={() => onVehiclePress?.(item)}
         activeOpacity={0.8}>
         {firstImage ? (
@@ -190,7 +199,7 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {vehicles.map((item) => renderVehicleItem(item))}
+        {vehicles.map((item, index) => renderVehicleItem(item, index))}
       </View>
     </View>
   );

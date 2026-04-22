@@ -44,16 +44,7 @@ const ProfileSettings = () => {
     resetAndNavigate('CustomerLogin');
   };
 
-  const handleSwitchAccount = () => {
-    // Navigate to account switcher or show account selection modal
-    // For now, we'll show an alert - this can be enhanced later
-    navigation.navigate('Profile' as never);
-  };
 
-  const handleSettingsPress = () => {
-    // Already on settings page, could scroll to top or show additional options
-    // For now, do nothing as we're already here
-  };
 
   const styles = useMemo(
     () =>
@@ -88,27 +79,21 @@ const ProfileSettings = () => {
   return (
     <View style={styles.container}>
       <CollapsibleContainer
-        style={[styles.container, { marginTop: insets.top || 0 }]}>
+        style={styles.container}>
         <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
           <View style={{ backgroundColor: colors.background }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: insets.top || 0, backgroundColor: colors.cardBackground, borderBottomWidth: 0.6, borderColor: colors.border }}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 10, height: 60 }}>
-                {hasMultipleAccounts ? (
-                  <Pressable onPress={handleSwitchAccount} style={{ padding: 4 }}>
-                    <Icon name="swap-horizontal-outline" color={colors.text} size={RFValue(20)} />
-                  </Pressable>
-                ) : (
-                  <View style={{ width: RFValue(20) }} />
-                )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: (insets.top || 0) + 4, backgroundColor: colors.cardBackground, borderBottomWidth: 0.6, borderColor: colors.border }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, height: 52 }}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
+                  <Icon name="arrow-back" color={colors.text} size={RFValue(22)} />
+                </TouchableOpacity>
                 <CustomText
                   style={{ textAlign: 'center', flex: 1 }}
                   variant="h5"
                   fontFamily={Fonts.SemiBold}>
                   {t('profile.settings') || 'Settings'}
                 </CustomText>
-                <Pressable onPress={handleSettingsPress} style={{ padding: 4 }}>
-                  <Icon name="settings-outline" color={colors.text} size={RFValue(20)} />
-                </Pressable>
+                <View style={{ width: RFValue(22) }} />
               </View>
             </View>
           </View>

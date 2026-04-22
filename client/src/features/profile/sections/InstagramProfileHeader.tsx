@@ -51,94 +51,146 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      paddingHorizontal: 16,
-      paddingTop: 12,
-      paddingBottom: 20,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      paddingBottom: 24,
+      backgroundColor: colors.background,
     },
     topSection: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 24,
     },
     profileImageContainer: {
-      width: 86,
-      height: 86,
-      borderRadius: 43,
-      position: 'relative',
-      overflow: 'hidden',
-      marginRight: 16,
-      backgroundColor: colors.cardBackground,
+      width: 90,
+      height: 90,
+      borderRadius: 45,
+      padding: 3, // Space for the ring
+      backgroundColor: isDark ? colors.border : '#F0F0F0', // Outer ring
+      marginRight: 20,
+      shadowColor: colors.black,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    profileImageInner: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 42,
       borderWidth: 2,
-      borderColor: isDark ? colors.border : '#DBDBDB',
+      borderColor: colors.background, // Inner spacer ring
+      overflow: 'hidden',
     },
     profileImage: {
       width: '100%',
       height: '100%',
-      borderRadius: 43,
     },
     placeholderContainer: {
       width: '100%',
       height: '100%',
-      borderRadius: 43,
+      borderRadius: 42,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors.cardBackground,
     },
     placeholderText: {
-      color: colors.textSecondary,
-      fontSize: RFValue(32),
+      color: colors.secondary,
+      fontSize: RFValue(34),
+      textShadowColor: 'rgba(0, 0, 0, 0.1)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2,
+    },
+    statsWrapper: {
+      flex: 1,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+      borderRadius: 16,
+      paddingVertical: 12,
+      paddingHorizontal: 8,
     },
     statsContainer: {
-      flex: 1,
       flexDirection: 'row',
       justifyContent: 'space-around',
+      alignItems: 'center',
     },
     statItem: {
       alignItems: 'center',
+      flex: 1,
+    },
+    statDivider: {
+      width: 1,
+      height: '60%',
+      backgroundColor: colors.border,
+      opacity: 0.3,
     },
     statNumber: {
+      fontSize: RFValue(15),
+      fontFamily: Fonts.Bold,
+      color: colors.text,
+    },
+    statLabel: {
+      fontSize: RFValue(9),
+      fontFamily: Fonts.Medium,
+      color: colors.textSecondary,
+      marginTop: 2,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    infoSection: {
+      marginBottom: 16,
+    },
+    userName: {
       fontSize: RFValue(16),
       fontFamily: Fonts.Bold,
       color: colors.text,
-      marginBottom: 2,
+      marginBottom: 6,
     },
-    statLabel: {
-      fontSize: RFValue(12),
+    bioItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+      gap: 8,
+    },
+    bioText: {
+      fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
       color: colors.textSecondary,
     },
-    infoSection: {
-      marginBottom: 12,
-    },
-    userName: {
-      fontSize: RFValue(14),
-      fontFamily: Fonts.Bold,
-      color: colors.text,
-      marginBottom: 4,
-    },
-    bioText: {
-      fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
-      color: colors.text,
-      lineHeight: RFValue(18),
-    },
     actionButtons: {
       flexDirection: 'row',
-      marginTop: 12,
-      gap: 8,
+      marginTop: 8,
+      gap: 12,
     },
-    actionButton: {
-      flex: 1,
-      height: 32,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: isDark ? colors.border : '#DBDBDB',
+    primaryButton: {
+      flex: 1.5,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.secondary,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDark ? colors.cardBackground : colors.white,
+      shadowColor: colors.secondary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 4,
     },
-    actionButtonText: {
-      fontSize: RFValue(13),
+    primaryButtonText: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+      color: colors.white,
+    },
+    secondaryButton: {
+      flex: 1,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+    },
+    secondaryButtonText: {
+      fontSize: RFValue(11),
       fontFamily: Fonts.SemiBold,
       color: colors.text,
     },
@@ -148,35 +200,43 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.topSection}>
         <View style={styles.profileImageContainer}>
-          {user?.profileImage ? (
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.placeholderContainer}>
-              <CustomText variant="h2" fontFamily={Fonts.Bold} style={styles.placeholderText}>
-                {getInitialLetter()}
-              </CustomText>
-            </View>
-          )}
+          <View style={styles.profileImageInner}>
+            {user?.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.profileImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.placeholderContainer}>
+                <CustomText variant="h2" fontFamily={Fonts.Bold} style={styles.placeholderText}>
+                  {getInitialLetter()}
+                </CustomText>
+              </View>
+            )}
+          </View>
         </View>
 
-        <View style={styles.statsContainer}>
-          {!isDealer && postsCount !== undefined && (
+        <View style={styles.statsWrapper}>
+          <View style={styles.statsContainer}>
+            {!isDealer && postsCount !== undefined && (
+              <>
+                <View style={styles.statItem}>
+                  <CustomText style={styles.statNumber}>{postsCount}</CustomText>
+                  <CustomText style={styles.statLabel}>{t('profile.posts')}</CustomText>
+                </View>
+                <View style={styles.statDivider} />
+              </>
+            )}
             <View style={styles.statItem}>
-              <CustomText style={styles.statNumber}>{postsCount}</CustomText>
-              <CustomText style={styles.statLabel}>{t('profile.posts')}</CustomText>
+              <CustomText style={styles.statNumber}>{vehiclesCount}</CustomText>
+              <CustomText style={styles.statLabel}>{t('profile.vehicles')}</CustomText>
             </View>
-          )}
-          <View style={styles.statItem}>
-            <CustomText style={styles.statNumber}>{vehiclesCount}</CustomText>
-            <CustomText style={styles.statLabel}>{t('profile.vehicles')}</CustomText>
-          </View>
-          <View style={styles.statItem}>
-            <CustomText style={styles.statNumber}>{ordersCount}</CustomText>
-            <CustomText style={styles.statLabel}>{t('profile.orders')}</CustomText>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <CustomText style={styles.statNumber}>{ordersCount}</CustomText>
+              <CustomText style={styles.statLabel}>{t('profile.orders')}</CustomText>
+            </View>
           </View>
         </View>
       </View>
@@ -184,25 +244,31 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
       <View style={styles.infoSection}>
         <CustomText style={styles.userName}>{user?.name || 'User'}</CustomText>
         {user?.email && !shouldHideEmail() && (
-          <CustomText style={styles.bioText}>{maskEmail(user.email)}</CustomText>
+          <View style={styles.bioItem}>
+            <Icon name="mail-outline" size={RFValue(12)} color={colors.textSecondary} />
+            <CustomText style={styles.bioText}>{maskEmail(user.email)}</CustomText>
+          </View>
         )}
         {user?.phone && !shouldHidePhone() && (
-          <CustomText style={styles.bioText}>{maskPhone(user.phone)}</CustomText>
+          <View style={styles.bioItem}>
+            <Icon name="call-outline" size={RFValue(12)} color={colors.textSecondary} />
+            <CustomText style={styles.bioText}>{maskPhone(user.phone)}</CustomText>
+          </View>
         )}
       </View>
 
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={styles.actionButton}
+          style={styles.primaryButton}
           onPress={handleEditProfile}
-          activeOpacity={0.7}>
-          <CustomText style={styles.actionButtonText}>{t('profile.editProfile')}</CustomText>
+          activeOpacity={0.8}>
+          <CustomText style={styles.primaryButtonText}>{t('profile.editProfile')}</CustomText>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.actionButton}
+          style={styles.secondaryButton}
           onPress={handleShareProfile}
           activeOpacity={0.7}>
-          <CustomText style={styles.actionButtonText}>{t('profile.shareProfile')}</CustomText>
+          <CustomText style={styles.secondaryButtonText}>{t('profile.shareProfile')}</CustomText>
         </TouchableOpacity>
       </View>
     </View>

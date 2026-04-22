@@ -204,7 +204,7 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: seasonalTheme.colors.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderRadius: 12 }]}>
       {/* Overlay animation (train, sleigh, etc.) above All Inventory - if available */}
       {seasonalTheme.animations.overlay && (
         <View style={styles.trainContainer}>
@@ -219,11 +219,11 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
       )}
 
       <View style={styles.header}>
-        <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
+        <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.text }}>
           All Inventory
         </CustomText>
         <TouchableOpacity onPress={handleViewAll}>
-          <CustomText variant="h8" fontFamily={Fonts.Medium} style={{ color: colors.white }}>
+          <CustomText variant="h8" fontFamily={Fonts.Medium} style={{ color: colors.secondary }}>
             View All →
           </CustomText>
         </TouchableOpacity>

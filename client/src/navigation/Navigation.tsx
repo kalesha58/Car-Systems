@@ -60,6 +60,7 @@ import LiquidTabBar from '@components/navigation/LiquidTabBar';
 import ForgotPassword from '@features/auth/ForgotPassword';
 import MetAIChatScreen from '@features/support/MetAIChatScreen';
 import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
+import PrivacyPermissionsScreen from '@features/profile/PrivacyPermissionsScreen';
 import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
 import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
 import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
@@ -615,6 +616,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="PrivacyCenter"
             component={PrivacyCenterScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="PrivacyPermissions"
+            component={PrivacyPermissionsScreen}
             options={{
               animation: 'slide_from_right',
             }}

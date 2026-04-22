@@ -137,9 +137,15 @@ const PlayScreen: React.FC = () => {
       {/* Header with message and post icons */}
       <View style={[styles.header, { backgroundColor: screenBackground }]}>
         <CustomText fontSize={RFValue(14)} fontFamily={Fonts.Bold} style={{ color: headerTextColor }}>
-          Play
+          motonode
         </CustomText>
         <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigate('UserSelection')}
+            activeOpacity={0.7}>
+            <Icon name="search" size={RFValue(20)} color={headerIconColor} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => navigate('CreateNewPost')}

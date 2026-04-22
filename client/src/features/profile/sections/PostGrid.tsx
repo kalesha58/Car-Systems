@@ -22,7 +22,7 @@ interface PostGridProps {
 const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
   const {colors, isDark} = useTheme();
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = screenWidth / 3; // 3 columns with no gap (like Instagram)
+  const itemSize = (screenWidth - 40 - 12) / 3; // Matching gaps in VehicleGrid
 
   const styles = StyleSheet.create({
     container: {
@@ -31,11 +31,22 @@ const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
     grid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
+      paddingHorizontal: 16,
+      paddingBottom: 20,
     },
     postItem: {
       width: itemSize,
       height: itemSize,
       backgroundColor: colors.cardBackground,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 6,
+      marginRight: 6,
+      shadowColor: colors.black,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     postImage: {
       width: '100%',
@@ -75,13 +86,13 @@ const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
     },
   });
 
-  const renderPostItem = (item: IPost) => {
+  const renderPostItem = (item: IPost, index: number) => {
     const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={styles.postItem}
+        style={[styles.postItem, { marginRight: index % 3 === 2 ? 0 : 6 }]}
         onPress={() => onPostPress?.(item)}
         activeOpacity={0.8}>
         {firstImage ? (
@@ -136,7 +147,7 @@ const PostGrid: FC<PostGridProps> = ({posts, loading = false, onPostPress}) => {
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {posts.map((item) => renderPostItem(item))}
+        {posts.map((item, index) => renderPostItem(item, index))}
       </View>
     </View>
   );

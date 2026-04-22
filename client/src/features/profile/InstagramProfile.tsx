@@ -225,11 +225,9 @@ const InstagramProfile: React.FC = () => {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          paddingHorizontal: 16,
-          paddingTop: insets.top + 8,
+          paddingHorizontal: 20,
+          paddingTop: insets.top + 12,
           paddingBottom: 12,
-          borderBottomWidth: 0.5,
-          borderBottomColor: isDark ? colors.border : '#DBDBDB',
           backgroundColor: colors.background,
         },
         headerRight: {
@@ -246,41 +244,49 @@ const InstagramProfile: React.FC = () => {
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: 12,
-          borderTopWidth: 0.5,
-          borderBottomWidth: 0.5,
-          borderColor: isDark ? colors.border : '#DBDBDB',
-          gap: 32,
+          paddingVertical: 14,
+          backgroundColor: colors.background,
+          gap: 16,
         },
         gridNavIcon: {
-          padding: 8,
-          position: 'relative',
+          flex: 1,
+          alignItems: 'center',
+          paddingVertical: 10,
+          borderRadius: 12,
+          marginHorizontal: 12,
         },
         gridNavIconActive: {
-          borderBottomWidth: 1,
-          borderBottomColor: colors.text,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
         },
         gridNavIconInactive: {
-          opacity: 0.5,
+          opacity: 0.4,
+        },
+        tabIndicator: {
+          position: 'absolute',
+          bottom: 0,
+          width: '40%',
+          height: 3,
+          backgroundColor: colors.secondary,
+          borderRadius: 3,
         },
         floatingButton: {
           position: 'absolute',
-          bottom: 20,
+          bottom: 24,
           right: 20,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
+          width: 58,
+          height: 58,
+          borderRadius: 29,
           backgroundColor: colors.secondary,
           justifyContent: 'center',
           alignItems: 'center',
-          shadowColor: colors.black,
+          shadowColor: colors.secondary,
           shadowOffset: {
             width: 0,
-            height: 4,
+            height: 6,
           },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          shadowOpacity: 0.4,
+          shadowRadius: 10,
+          elevation: 10,
           zIndex: 1000,
         },
       }),
@@ -328,20 +334,30 @@ const InstagramProfile: React.FC = () => {
               <TouchableOpacity
                 style={[
                   styles.gridNavIcon,
-                  activeTab === 'businessInfo' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                  activeTab === 'businessInfo' && styles.gridNavIconActive,
                 ]}
                 onPress={() => setActiveTab('businessInfo')}
                 activeOpacity={0.7}>
-                <Icon name="business-outline" size={RFValue(24)} color={colors.text} />
+                <Icon 
+                  name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
+                  size={RFValue(22)} 
+                  color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
+                />
+                {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.gridNavIcon,
-                  activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                  activeTab === 'vehicles' && styles.gridNavIconActive,
                 ]}
                 onPress={() => setActiveTab('vehicles')}
                 activeOpacity={0.7}>
-                <Icon name="car" size={RFValue(24)} color={colors.text} />
+                <Icon 
+                  name={activeTab === 'vehicles' ? "car" : "car-outline"} 
+                  size={RFValue(22)} 
+                  color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
+                />
+                {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
               </TouchableOpacity>
             </>
           ) : (
@@ -349,20 +365,30 @@ const InstagramProfile: React.FC = () => {
               <TouchableOpacity
                 style={[
                   styles.gridNavIcon,
-                  activeTab === 'posts' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                  activeTab === 'posts' && styles.gridNavIconActive,
                 ]}
                 onPress={() => setActiveTab('posts')}
                 activeOpacity={0.7}>
-                <Icon name="grid" size={RFValue(24)} color={colors.text} />
+                <Icon 
+                  name={activeTab === 'posts' ? "grid" : "grid-outline"} 
+                  size={RFValue(22)} 
+                  color={activeTab === 'posts' ? colors.secondary : colors.text} 
+                />
+                {activeTab === 'posts' && <View style={styles.tabIndicator} />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.gridNavIcon,
-                  activeTab === 'vehicles' ? styles.gridNavIconActive : styles.gridNavIconInactive,
+                  activeTab === 'vehicles' && styles.gridNavIconActive,
                 ]}
                 onPress={() => setActiveTab('vehicles')}
                 activeOpacity={0.7}>
-                <Icon name="car" size={RFValue(24)} color={colors.text} />
+                <Icon 
+                  name={activeTab === 'vehicles' ? "car" : "car-outline"} 
+                  size={RFValue(22)} 
+                  color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
+                />
+                {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
               </TouchableOpacity>
             </>
           )}

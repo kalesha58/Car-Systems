@@ -18,7 +18,7 @@ import {Fonts, Colors} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import {useTheme} from '@hooks/useTheme';
-import {uploadImage, createPost} from '@service/postService';
+import {uploadImagesBatch, createPost} from '@service/postService';
 import {ICreatePostRequest} from '../../types/post/IPost';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
@@ -183,7 +183,10 @@ const CreateNewPost: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        quality: 0.8,
+        // Downscale and compress to avoid server 413 payload errors.
+        quality: 0.5,
+        maxWidth: 1600,
+        maxHeight: 1600,
         includeBase64: false,
         selectionLimit: MAX_IMAGES - imageUris.length,
       },
@@ -231,16 +234,10 @@ const CreateNewPost: React.FC = () => {
     }
 
     setIsUploadingImages(true);
-    const uploadedUrls: string[] = [];
-
     try {
-      for (const uri of imageUris) {
-        const url = await uploadImage(uri);
-        uploadedUrls.push(url);
-      }
-      return uploadedUrls;
-    } catch (error) {
-      throw new Error('Failed to upload images. Please try again.');
+      return await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+    } catch (error: any) {
+      throw new Error(error?.message || 'Failed to upload images. Please try again.');
     } finally {
       setIsUploadingImages(false);
     }
@@ -300,9 +297,9 @@ const CreateNewPost: React.FC = () => {
           params: { refresh: true },
         });
       }, 2500);
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
-      showError('Failed to create post. Please try again.');
+      showError(error?.message || 'Failed to create post. Please try again.');
     }
   };
 

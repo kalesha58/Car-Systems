@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import React, {FC, useState, useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
@@ -55,7 +54,12 @@ const EditProfile: FC = () => {
   };
 
   const handleImagePicker = (response: ImagePickerResponse) => {
-    if (response.didCancel || response.errorCode) {
+    if (response.didCancel) {
+      return;
+    }
+
+    if (response.errorCode) {
+      showError(response.errorMessage || t('profile.updateFailed'));
       return;
     }
 
@@ -114,80 +118,125 @@ const EditProfile: FC = () => {
       backgroundColor: colors.background,
     },
     scrollViewContent: {
-      padding: 16,
-      paddingBottom: 100,
+      paddingHorizontal: 16,
+      paddingTop: 20,
+      paddingBottom: 120,
     },
     profileImageContainer: {
       alignItems: 'center',
       marginBottom: 24,
-      marginTop: 20,
+    },
+    avatarOuterRing: {
+      width: 132,
+      height: 132,
+      borderRadius: 66,
+      backgroundColor: `${colors.secondary}18`,
+      borderWidth: 2,
+      borderColor: `${colors.secondary}35`,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 14,
     },
     imageWrapper: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
+      width: 116,
+      height: 116,
+      borderRadius: 58,
       position: 'relative',
       overflow: 'hidden',
-      marginBottom: 12,
+      backgroundColor: colors.cardBackground,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     profileImage: {
       width: '100%',
       height: '100%',
-      borderRadius: 50,
+      borderRadius: 58,
     },
     placeholderContainer: {
       width: '100%',
       height: '100%',
-      borderRadius: 50,
+      borderRadius: 58,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors.primary,
     },
     placeholderText: {
       color: '#fff',
-      fontSize: RFValue(32),
+      fontSize: RFValue(34),
+    },
+    cameraBadgeButton: {
+      position: 'absolute',
+      right: 4,
+      bottom: 6,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: colors.secondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.background,
     },
     editImageButton: {
-      backgroundColor: colors.secondary,
-      paddingHorizontal: 16,
+      backgroundColor: `${colors.secondary}15`,
+      paddingHorizontal: 14,
       paddingVertical: 8,
-      borderRadius: 8,
+      borderRadius: 999,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
+      borderWidth: 1,
+      borderColor: `${colors.secondary}35`,
     },
     editImageButtonText: {
-      color: colors.white,
+      color: colors.secondary,
       fontFamily: Fonts.Medium,
       fontSize: RFValue(9),
     },
     formContainer: {
-      gap: 16,
+      gap: 14,
+      backgroundColor: colors.cardBackground,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 1},
+      shadowOpacity: 0.08,
+      shadowRadius: 2,
+      elevation: 2,
     },
     inputGroup: {
-      marginBottom: 16,
+      marginBottom: 0,
     },
     label: {
       marginBottom: 6,
       fontFamily: Fonts.Medium,
-      color: colors.text,
-      fontSize: RFValue(8),
-      opacity: 0.8,
+      color: colors.textSecondary,
+      fontSize: RFValue(8.5),
+      opacity: 0.95,
     },
-    input: {
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
       backgroundColor: colors.cardBackground,
       borderRadius: 8,
-      paddingHorizontal: 12,
+      paddingHorizontal: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      minHeight: 48,
+    },
+    input: {
+      flex: 1,
       paddingVertical: 10,
+      paddingHorizontal: 8,
       fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
       color: colors.text,
-      borderWidth: 1,
-      borderColor: colors.border,
     },
     inputReadOnly: {
       backgroundColor: colors.backgroundSecondary,
-      color: colors.textSecondary,
+      opacity: 0.9,
     },
     readOnlyNote: {
       marginTop: 4,
@@ -198,10 +247,15 @@ const EditProfile: FC = () => {
     saveButton: {
       backgroundColor: colors.secondary,
       borderRadius: 8,
-      paddingVertical: 12,
+      paddingVertical: 14,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 16,
+      marginTop: 22,
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.15,
+      shadowRadius: 6,
+      elevation: 4,
     },
     saveButtonDisabled: {
       opacity: 0.6,
@@ -240,7 +294,10 @@ const EditProfile: FC = () => {
               launchCamera(
                 {
                   mediaType: 'photo',
-                  quality: 0.8,
+                  quality: 0.5,
+                  maxWidth: 1600,
+                  maxHeight: 1600,
+                  assetRepresentationMode: 'compatible',
                   includeBase64: false,
                 },
                 handleImagePicker,
@@ -256,8 +313,12 @@ const EditProfile: FC = () => {
               launchImageLibrary(
                 {
                   mediaType: 'photo',
-                  quality: 0.8,
+                  quality: 0.5,
+                  maxWidth: 1600,
+                  maxHeight: 1600,
+                  assetRepresentationMode: 'compatible',
                   includeBase64: false,
+                  selectionLimit: 1,
                 },
                 handleImagePicker,
               );
@@ -269,32 +330,41 @@ const EditProfile: FC = () => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}>
         <View style={styles.profileImageContainer}>
-          <View style={styles.imageWrapper}>
-            {profileImageUri ? (
-              <Image
-                source={{uri: profileImageUri}}
-                style={styles.profileImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.placeholderContainer}>
-                <CustomText variant="h1" fontFamily={Fonts.Bold} style={styles.placeholderText}>
-                  {getInitialLetter()}
-                </CustomText>
-              </View>
-            )}
-            {isUploading && (
-              <View style={styles.loadingOverlay}>
-                <ActivityIndicator size="small" color={colors.white} />
-              </View>
-            )}
+          <View style={styles.avatarOuterRing}>
+            <View style={styles.imageWrapper}>
+              {profileImageUri ? (
+                <Image
+                  source={{uri: profileImageUri}}
+                  style={styles.profileImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <CustomText variant="h1" fontFamily={Fonts.Bold} style={styles.placeholderText}>
+                    {getInitialLetter()}
+                  </CustomText>
+                </View>
+              )}
+              {isUploading && (
+                <View style={styles.loadingOverlay}>
+                  <ActivityIndicator size="small" color={colors.white} />
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.cameraBadgeButton}
+                onPress={showImagePickerOptions}
+                disabled={isUploading}
+                activeOpacity={0.85}>
+                <Icon name="camera" size={RFValue(12)} color={colors.white} />
+              </TouchableOpacity>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.editImageButton}
             onPress={showImagePickerOptions}
             disabled={isUploading}
             activeOpacity={0.8}>
-            <Icon name="camera" size={RFValue(14)} color={colors.white} />
+            <Icon name="camera-outline" size={RFValue(14)} color={colors.secondary} />
             <CustomText style={styles.editImageButtonText}>
               {t('profile.changePhoto')}
             </CustomText>
@@ -306,26 +376,32 @@ const EditProfile: FC = () => {
             <CustomText style={styles.label}>
               {t('profile.name')}
             </CustomText>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder={t('profile.enterName')}
-              placeholderTextColor={colors.textSecondary}
-              editable={!isLoading}
-            />
+            <View style={styles.inputContainer}>
+              <Icon name="account-outline" size={RFValue(14)} color={colors.textSecondary} />
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder={t('profile.enterName')}
+                placeholderTextColor={colors.textSecondary}
+                editable={!isLoading}
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
             <CustomText style={styles.label}>
               {t('profile.email')}
             </CustomText>
-            <TextInput
-              style={[styles.input, styles.inputReadOnly]}
-              value={email}
-              editable={false}
-              placeholderTextColor={colors.textSecondary}
-            />
+            <View style={[styles.inputContainer, styles.inputReadOnly]}>
+              <Icon name="email-outline" size={RFValue(14)} color={colors.textSecondary} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                editable={false}
+                placeholderTextColor={colors.textSecondary}
+              />
+            </View>
             <CustomText style={styles.readOnlyNote}>
               {t('profile.emailReadOnly')}
             </CustomText>
