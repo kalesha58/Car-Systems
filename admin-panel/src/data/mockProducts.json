@@ -1,0 +1,67 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "Premium Car Wax",
+      "category": "Car Care",
+      "description": "High-quality car wax for long-lasting shine",
+      "price": 29.99,
+      "stock": 150,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["wax", "premium", "shine"],
+      "createdDate": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "name": "Car Floor Mats",
+      "category": "Interior",
+      "description": "Durable all-weather floor mats",
+      "price": 49.99,
+      "stock": 200,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["mats", "interior", "protection"],
+      "createdDate": "2024-01-20T11:00:00Z"
+    },
+    {
+      "id": "3",
+      "name": "LED Headlights",
+      "category": "Lighting",
+      "description": "Bright LED headlight bulbs",
+      "price": 79.99,
+      "stock": 0,
+      "status": "out_of_stock",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["led", "lighting", "headlights"],
+      "createdDate": "2024-02-01T09:00:00Z"
+    },
+    {
+      "id": "4",
+      "name": "Car Phone Mount",
+      "category": "Accessories",
+      "description": "Universal phone mount for dashboard",
+      "price": 19.99,
+      "stock": 300,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["mount", "phone", "accessories"],
+      "createdDate": "2024-02-10T14:00:00Z"
+    },
+    {
+      "id": "5",
+      "name": "Car Battery Charger",
+      "category": "Electronics",
+      "description": "12V automatic battery charger",
+      "price": 89.99,
+      "stock": 50,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["battery", "charger", "electronics"],
+      "createdDate": "2024-02-15T10:30:00Z"
+    }
+  ],
+  "categories": ["Car Care", "Interior", "Lighting", "Accessories", "Electronics"],
+  "total": 5
+}
+

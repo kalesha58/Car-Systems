@@ -1,0 +1,46 @@
+{
+  "categories": [
+    {
+      "id": "1",
+      "name": "Car Care",
+      "description": "Products for car maintenance and care",
+      "productCount": 25,
+      "status": "active",
+      "createdDate": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "name": "Interior",
+      "description": "Interior accessories and products",
+      "productCount": 30,
+      "status": "active",
+      "createdDate": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "3",
+      "name": "Lighting",
+      "description": "Car lighting products",
+      "productCount": 20,
+      "status": "active",
+      "createdDate": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "4",
+      "name": "Accessories",
+      "description": "Various car accessories",
+      "productCount": 45,
+      "status": "active",
+      "createdDate": "2024-01-01T10:00:00Z"
+    },
+    {
+      "id": "5",
+      "name": "Electronics",
+      "description": "Car electronics and gadgets",
+      "productCount": 36,
+      "status": "active",
+      "createdDate": "2024-01-01T10:00:00Z"
+    }
+  ],
+  "total": 5
+}
+

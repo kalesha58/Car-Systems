@@ -1,0 +1,31 @@
+{
+  "stats": {
+    "totalUsers": 1250,
+    "totalDealers": 45,
+    "totalOrders": 3420,
+    "totalProducts": 156
+  },
+  "usersPerMonth": [
+    { "month": "Jan", "users": 120 },
+    { "month": "Feb", "users": 150 },
+    { "month": "Mar", "users": 180 },
+    { "month": "Apr", "users": 200 },
+    { "month": "May", "users": 220 },
+    { "month": "Jun", "users": 250 }
+  ],
+  "ordersPerMonth": [
+    { "month": "Jan", "orders": 450 },
+    { "month": "Feb", "orders": 520 },
+    { "month": "Mar", "orders": 580 },
+    { "month": "Apr", "orders": 620 },
+    { "month": "May", "orders": 680 },
+    { "month": "Jun", "orders": 750 }
+  ],
+  "orderStatus": [
+    { "name": "Completed", "value": 2450, "percentage": 71.6 },
+    { "name": "Processing", "value": 680, "percentage": 19.9 },
+    { "name": "Pending", "value": 210, "percentage": 6.1 },
+    { "name": "Cancelled", "value": 80, "percentage": 2.4 }
+  ]
+}
+
