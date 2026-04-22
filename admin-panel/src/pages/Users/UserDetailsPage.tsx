@@ -11,7 +11,7 @@ import { getUserById, getUserOrders, type IUserOrdersResponse, updateUserStatus 
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { Building2, Edit } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { IUserDetails } from '../../types/user';
@@ -35,6 +35,23 @@ export const UserDetailsPage = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchedIdRef = useRef<string | null>(null);
+
+  const loadDealerBusinessRegistration = useCallback(async () => {
+    if (!isDealerContext || !id) return;
+    try {
+      const regData = await getBusinessRegistrationByUserId(id);
+      if (regData.Response) {
+        setBusinessRegistrationData(regData.Response);
+        setHasBusinessRegistration(true);
+      } else {
+        setBusinessRegistrationData(null);
+        setHasBusinessRegistration(false);
+      }
+    } catch {
+      setBusinessRegistrationData(null);
+      setHasBusinessRegistration(false);
+    }
+  }, [id, isDealerContext]);
 
   useEffect(() => {
     if (!id) return;
@@ -85,20 +102,8 @@ export const UserDetailsPage = () => {
 
 
 
-        // Use isBusinessRegistration flag from user data for dealers
         if (isDealerContext && id) {
-          try {
-            const regData = await getBusinessRegistrationByUserId(id);
-            if (regData.Response) {
-              setBusinessRegistrationData(regData.Response);
-              setHasBusinessRegistration(true);
-            } else {
-              setHasBusinessRegistration(false);
-            }
-          } catch (err) {
-            // console.error('Failed to fetch business registration', err);
-            setHasBusinessRegistration(false);
-          }
+          await loadDealerBusinessRegistration();
         }
       } catch (error) {
         if ((error as { name?: string })?.name !== 'AbortError') {
@@ -118,7 +123,7 @@ export const UserDetailsPage = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [id, isDealerContext, showToast]);
+  }, [id, isDealerContext, showToast, loadDealerBusinessRegistration]);
 
   const handleUpdateBusinessStatus = async (status: 'approved' | 'rejected') => {
     if (!businessRegistrationData?.id) return;
@@ -268,7 +273,7 @@ export const UserDetailsPage = () => {
           {isDealerContext ? 'Dealer Details' : 'User Details'}
         </h1>
         <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
-          {/*isDealerContext && !hasBusinessRegistration && (
+          {isDealerContext && hasBusinessRegistration === false && (
             <Button
               variant="primary"
               onClick={() => setShowBusinessRegistrationModal(true)}
@@ -276,7 +281,7 @@ export const UserDetailsPage = () => {
             >
               Register Business
             </Button>
-          )*/}
+          )}
           <Button
             variant={user.status === 'active' ? 'danger' : 'primary'}
             onClick={() => setShowBlockModal(true)}
@@ -428,7 +433,16 @@ export const UserDetailsPage = () => {
         )}
       </div>
 
-
+      {isDealerContext && hasBusinessRegistration === false && (
+        <div style={{ marginBottom: theme.spacing.xl }}>
+          <Card title="Business Registration">
+            <p style={{ margin: 0, color: theme.colors.textSecondary, fontSize: '0.95rem', lineHeight: 1.5 }}>
+              No business registration on file for this dealer. Use Register Business to add details, or open Edit
+              dealer to manage registration from the dealer form.
+            </p>
+          </Card>
+        </div>
+      )}
 
       {isDealerContext && businessRegistrationData && (
         <div style={{ marginBottom: theme.spacing.xl }}>
@@ -551,7 +565,8 @@ export const UserDetailsPage = () => {
                       </div>
                     )}
                     
-                    {businessRegistrationData.payout.type === 'Bank Transfer' && businessRegistrationData.payout.bank && (
+                    {(businessRegistrationData.payout.type === 'BANK' || businessRegistrationData.payout.type === 'Bank Transfer') &&
+                      businessRegistrationData.payout.bank && (
                       <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                          <div>
                           <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
@@ -566,7 +581,9 @@ export const UserDetailsPage = () => {
                             IFSC Code
                           </strong>
                           <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
-                            {businessRegistrationData.payout.bank.ifscCode || 'N/A'}
+                            {businessRegistrationData.payout.bank.ifsc ||
+                              businessRegistrationData.payout.bank.ifscCode ||
+                              'N/A'}
                           </p>
                         </div>
                          <div>
@@ -575,14 +592,6 @@ export const UserDetailsPage = () => {
                           </strong>
                           <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
                             {businessRegistrationData.payout.bank.accountName || 'N/A'}
-                          </p>
-                        </div>
-                         <div>
-                          <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
-                            Bank Name
-                          </strong>
-                          <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
-                            {businessRegistrationData.payout.bank.bankName || 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -681,12 +690,12 @@ export const UserDetailsPage = () => {
           hasExistingRegistration={hasBusinessRegistration === true}
           onClose={async () => {
             setShowBusinessRegistrationModal(false);
-            // Refresh user data to get updated isBusinessRegistration flag
             if (id) {
               try {
                 const userData = await getUserById(id);
                 const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
                 setHasBusinessRegistration(isBusinessRegistered);
+                await loadDealerBusinessRegistration();
               } catch (error) {
                 console.error('Error refreshing user data:', error);
                 setHasBusinessRegistration(false);
@@ -696,12 +705,12 @@ export const UserDetailsPage = () => {
           dealerId={id || ''}
           onSuccess={async () => {
             setShowBusinessRegistrationModal(false);
-            // Refresh user data to get updated isBusinessRegistration flag
             if (id) {
               try {
                 const userData = await getUserById(id);
                 const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
                 setHasBusinessRegistration(isBusinessRegistered);
+                await loadDealerBusinessRegistration();
               } catch (error) {
                 console.error('Error refreshing user data:', error);
               }

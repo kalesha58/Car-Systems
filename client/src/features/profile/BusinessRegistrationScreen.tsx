@@ -34,6 +34,7 @@ import {
   IBusinessRegistrationPhoto,
 } from '@service/dealerService';
 import { resetAndNavigate, goBack } from '@utils/NavigationUtils';
+import { resetDealerNavigationFromRegistration } from '../../auth/postAuthRouting';
 import { getCurrentLocationWithAddress } from '@utils/addressUtils';
 import { ILocationData } from '../../types/address/IAddress';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -169,7 +170,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [pincode, setPincode] = useState(initialDraft?.pincode ?? '');
   const [nearLandmark, setNearLandmark] = useState(initialDraft?.nearLandmark ?? '');
   const [state, setState] = useState(initialDraft?.state ?? '');
-  const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? '');
+  const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? user?.phone ?? '');
   const [gst, setGst] = useState(initialDraft?.gst ?? registrationData?.gst ?? '');
 
   // Initialize payout details
@@ -910,15 +911,14 @@ const BusinessRegistrationScreen: React.FC = () => {
       });
 
       if (isEdit && registrationData?.id) {
-        await updateBusinessRegistration(registrationData.id, data);
+        const updated = await updateBusinessRegistration(registrationData.id, data);
         showSuccess(t('dealer.businessRegistrationUpdated') || 'Business registration updated successfully');
         try {
           clearBusinessRegistrationDraft(user?.id);
         } catch { }
 
-        // Also refetch user on edit to ensure latest state
         await refetchUser(setUser);
-        goBack();
+        resetDealerNavigationFromRegistration(updated);
       } else {
         const registration = await createBusinessRegistration(data);
         console.log('Business registration created successfully:', {
@@ -933,14 +933,10 @@ const BusinessRegistrationScreen: React.FC = () => {
         // Refetch user to update local state (e.g. from user to dealer)
         await refetchUser(setUser);
 
-        // Navigate based on context
-        if (registration.status === 'pending' || registration.status === 'approved') {
-          setTimeout(async () => {
-            console.log('Navigating to DealerTabs after business registration submission');
-            await resetAndNavigate('DealerTabs');
-          }, 500);
+        // Route from API response so pending dealers never bounce through DealerTabs → failed fetch → BusinessRegistration
+        if (registration.status === 'pending' || registration.status === 'approved' || registration.status === 'rejected') {
+          resetDealerNavigationFromRegistration(registration);
         } else {
-          // If manually coming here to add, just go back or to details
           goBack();
         }
       }
@@ -1557,7 +1553,7 @@ const BusinessRegistrationScreen: React.FC = () => {
                 setFieldErrors(prev => ({ ...prev, phone: error }));
               }}
               keyboardType="phone-pad"
-              editable={!isEdit || (canUpdateFields && editableFields.includes('phone'))}
+              editable={(!isEdit && !user?.phone) || (isEdit && canUpdateFields && editableFields.includes('phone'))}
             />
           </View>
           {fieldErrors.phone && (

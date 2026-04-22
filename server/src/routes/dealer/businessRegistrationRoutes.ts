@@ -81,6 +81,50 @@ const checkDealerRoleForUpdate = async (
   }
 };
 
+/**
+ * Limit cross-user reads: admin and owner always; other callers only if registration exists and is approved
+ * (needed for customer flows that read a dealer's store status by userId).
+ */
+const authorizeGetBusinessRegistrationByUserId = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Authentication required',
+        },
+      });
+      return;
+    }
+    const requestedUserId = req.params.userId;
+    if (req.user.role.includes('admin') || req.user.userId === requestedUserId) {
+      next();
+      return;
+    }
+    const reg = await BusinessRegistration.findOne({ userId: requestedUserId });
+    if (!reg) {
+      next();
+      return;
+    }
+    if (reg.status === 'approved') {
+      next();
+      return;
+    }
+    res.status(403).json({
+      success: false,
+      Response: {
+        ReturnMessage: 'You can only access your own business registration',
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // POST route - only needs auth + dealer role, NOT existing business registration
 router.post('/', checkDealerRole, createBusinessRegistrationController);
 /**
@@ -107,7 +151,7 @@ router.post('/', checkDealerRole, createBusinessRegistrationController);
  *       403:
  *         description: Forbidden - Dealer access required
  */
-router.get('/user/:userId', getBusinessRegistrationByUserIdController);
+router.get('/user/:userId', authorizeGetBusinessRegistrationByUserId, getBusinessRegistrationByUserIdController);
 
 // All other routes require approved business registration
 // Publicly accessible route (authenticated users) to get registration details
@@ -274,95 +318,6 @@ router.use(dealerMiddleware);
  *         description: Forbidden - Dealer access required or business registration not approved
  */
 router.patch('/:id/store-status', updateStoreStatusController);
-
-/**
- * @swagger
- * /api/dealer/business-registration:
- *   post:
- *     summary: Create business registration
- *     tags: [Dealer]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [businessName, type, address, phone]
- *             properties:
- *               businessName:
- *                 type: string
- *               type:
- *                 type: string
- *                 enum: [Automobile Showroom, Vehicle Wash Station, Detailing Center, Mechanic Workshop, Spare Parts Dealer, Riding Gear Store]
- *               address:
- *                 type: string
- *               phone:
- *                 type: string
- *               gst:
- *                 type: string
- *               payout:
- *                 type: object
- *                 description: Payout credentials (optional)
- *                 properties:
- *                   type:
- *                     type: string
- *                     enum: [UPI, BANK]
- *                   upiId:
- *                     type: string
- *                     description: "Required if type is UPI. Format: username@paymentprovider"
- *                     example: "user@paytm"
- *                   bank:
- *                     type: object
- *                     description: Required if type is BANK
- *                     properties:
- *                       accountNumber:
- *                         type: string
- *                         description: Bank account number
- *                       ifsc:
- *                         type: string
- *                         description: "IFSC code (format: XXXX0XXXXX)"
- *                         example: "HDFC0001234"
- *                       accountName:
- *                         type: string
- *                         description: Account holder name
- *     responses:
- *       201:
- *         description: Business registration created successfully
- *       400:
- *         description: Validation error
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Dealer access required
- */
-router.post('/', createBusinessRegistrationController);
-
-/**
- * @swagger
- * /api/dealer/business-registration/{id}:
- *   get:
- *     summary: Get business registration by ID
- *     tags: [Dealer]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Business registration retrieved successfully
- *       404:
- *         description: Business registration not found
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Dealer access required
- */
 
 /**
  * @swagger

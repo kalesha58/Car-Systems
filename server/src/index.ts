@@ -50,7 +50,14 @@ app.use(
   cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
+    // Include custom headers used by admin-panel / clients (preflight must echo these or the browser blocks the request)
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'ngrok-skip-browser-warning',
+      'x-skip-toast',
+      'Accept',
+    ],
     credentials: true,
   }),
 );

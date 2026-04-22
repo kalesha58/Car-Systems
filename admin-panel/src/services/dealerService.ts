@@ -11,6 +11,7 @@ export interface IDealerListQueryParams {
   limit?: number;
   search?: string;
   status?: string;
+  dealerType?: string;
   location?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -229,7 +230,7 @@ export const getBusinessRegistrationById = async (businessRegistrationId: string
  */
 export const getBusinessRegistrationByUserId = async (userId: string): Promise<IBusinessRegistrationResponse> => {
   try {
-    const response = await apiClient.get<IBusinessRegistrationResponse>(`/api/dealer/business-registration/user/${userId}`, {
+    const response = await apiClient.get<IBusinessRegistrationResponse>(`/admin/dealers/${userId}/business-registration`, {
       headers: { 'x-skip-toast': 'true' }
     });
     return response.data;

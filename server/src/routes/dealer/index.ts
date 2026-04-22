@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import dealerOnboardingRoutes from './dealerOnboardingRoutes';
 import businessRegistrationRoutes from './businessRegistrationRoutes';
 import orderRoutes from './orderRoutes';
 import vehicleRoutes from './vehicleRoutes';
@@ -11,6 +12,9 @@ import customerEnquiryRoutes from './customerEnquiryRoutes';
 import serviceBookingRoutes from './serviceBookingRoutes';
 
 const router = Router();
+
+// Dealer self-service onboarding (no /business-registration prefix)
+router.use(dealerOnboardingRoutes);
 
 // Mount all dealer route modules
 router.use('/business-registration', businessRegistrationRoutes);

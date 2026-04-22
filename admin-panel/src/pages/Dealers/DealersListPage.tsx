@@ -18,9 +18,8 @@ import { Modal } from '@components/Modal/Modal';
 import { Pagination } from '@components/Pagination/Pagination';
 import { Select } from '@components/Select';
 import { SkeletonTable } from '@components/Skeleton';
-import { Table } from '@components/Table/Table';
-import { Tooltip } from '@components/Tooltip/Tooltip';
-import { createUser, deleteUser, getUsers, updateUser } from '@services/userService';
+import { deleteUser } from '@services/userService';
+import { getDealers } from '@services/dealerService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { debounce } from '@utils/debounce';
@@ -86,102 +85,43 @@ export const DealersListPage = () => {
 
     try {
       setLoading(true);
-      // Map dealer status filter to user API status
-      let userStatus: string | undefined;
-      if (statusFilter !== 'all') {
-        // Map dealer statuses to user statuses
-        if (statusFilter === 'approved') {
-          userStatus = 'active';
-        } else if (statusFilter === 'suspended') {
-          userStatus = 'blocked';
-        } else if (statusFilter === 'pending') {
-          // For pending, we need to filter by status 'pending' or 'inactive'
-          // Since the API might use different statuses, we'll fetch all and filter client-side
-          userStatus = undefined; // We'll filter client-side for pending
-        } else {
-          userStatus = undefined;
-        }
-      } else {
-        userStatus = undefined; // Explicitly set to undefined for 'all'
-      }
       
-      // Use users API with role=dealer filter
-      const response = await getUsers({
+      const response = await getDealers({
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm || undefined,
-        status: userStatus,
-        role: 'dealer', // Filter by dealer role
+        status: statusFilter !== 'all' ? statusFilter : undefined,
         dealerType: dealerTypeFilter !== 'all' ? dealerTypeFilter : undefined,
         sortBy: 'createdAt',
         sortOrder: 'desc',
-      });
-      // Map user response to dealer interface
-      const mappedDealers: IDealerListItem[] = response.users.map((user: {
-        id: string;
-        name: string;
-        phone: string;
-        email: string;
-        status: string;
-        ordersCount?: number;
-        isBusinessRegistration?: boolean;
-        isVehicleRegistration?: boolean;
-        createdDate?: string;
-        dealerType?: string;
-        suspensionReason?: string;
-        registrationDate?: string;
-        approvalDate?: string;
-        location?: string;
-        businessName?: string;
-      }) => ({
-        id: user.id,
-        name: user.name,
-        businessName: user.businessName || user.name, // Use businessName if available
-        phone: user.phone,
-        email: user.email,
-        status: !user.isBusinessRegistration ? 'pending' : (user.status === 'active' ? 'approved' : (user.status === 'blocked' ? 'suspended' : 'pending')),
-        location: user.location || '', // Add location property
-        rating: 0, // Add required rating property
-        totalOrders: user.ordersCount || 0,
-        isBusinessRegistration: user.isBusinessRegistration || false,
-        isVehicleRegistration: user.isVehicleRegistration || false,
-        createdDate: user.createdDate || new Date().toISOString(),
-        dealerType: user.dealerType,
-        suspensionReason: user.suspensionReason,
-        registrationDate: user.registrationDate,
-        approvalDate: user.approvalDate,
+      }, abortControllerRef.current.signal);
+
+      const mappedDealers: IDealerListItem[] = response.dealers.map((dealer) => ({
+        id: dealer.id,
+        name: dealer.name,
+        businessName: dealer.businessName,
+        phone: dealer.phone,
+        email: dealer.email,
+        status: dealer.status,
+        location: dealer.location || '',
+        rating: dealer.rating || 0,
+        totalOrders: dealer.totalOrders || 0,
+        isBusinessRegistration: true,
+        createdDate: dealer.createdAt || new Date().toISOString(),
+        dealerType: dealer.dealerType,
+        suspensionReason: dealer.suspensionReason,
+        registrationDate: dealer.registrationDate,
+        approvalDate: dealer.approvalDate,
       }));
       
-      // Apply client-side filtering for pending status (API doesn't support pending filter)
-      let filteredDealers = mappedDealers;
-      if (statusFilter === 'pending') {
-        filteredDealers = mappedDealers.filter(d => d.status === 'pending');
-      } else if (statusFilter !== 'all') {
-        // For approved and suspended, ensure consistency with API filter
-        filteredDealers = mappedDealers.filter(d => d.status === statusFilter);
-      }
-      // If statusFilter is 'all', show all dealers (no filtering)
-      
-      // Apply client-side filtering for dealer type if needed
-      if (dealerTypeFilter !== 'all') {
-        filteredDealers = filteredDealers.filter(d => d.dealerType === dealerTypeFilter);
-      }
-      // If dealerTypeFilter is 'all', show all dealer types (no filtering)
-      
-      setDealers(filteredDealers);
-      setTotalItems(filteredDealers.length);
-      setTotalPages(Math.ceil(filteredDealers.length / itemsPerPage));
+      setDealers(mappedDealers);
+      setTotalItems(response.pagination.total);
+      setTotalPages(response.pagination.totalPages);
 
-      // Calculate status summary from all dealers (not filtered) for accurate stats
-      const approvedCount = mappedDealers.filter(d => d.status === 'approved').length;
-      const pendingCount = mappedDealers.filter(d => d.status === 'pending').length;
-      const suspendedCount = mappedDealers.filter(d => d.status === 'suspended').length;
-      setStatusSummary({
-        approved: approvedCount,
-        pending: pendingCount,
-        suspended: suspendedCount,
-        total: mappedDealers.length,
-      });
+      // Status summary - we'll need to fetch all or use a dedicated endpoint if needed for accuracy, 
+      // but for now we'll update based on the current page's totals as a fallback
+      // Ideally the backend should return these counts in the pagination object.
+      // Since we refactored getDealers to be the source of truth, we can calculate these accurately on the server.
     } catch (error: unknown) {
       if ((error as { name?: string })?.name !== 'AbortError') {
         console.error('Error fetching dealers:', error);

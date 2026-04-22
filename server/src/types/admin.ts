@@ -91,7 +91,10 @@ export interface IUserWithBusinessRegistration {
 
 // Dealer Management Types
 export interface IDealer {
+  /** SignUp user id (use for admin URLs, business-registration by user, user details). */
   id: string;
+  /** BusinessRegistration document id when present (e.g. status PATCH by registration id). */
+  businessRegistrationId?: string;
   name: string;
   businessName: string;
   email: string;

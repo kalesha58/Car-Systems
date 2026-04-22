@@ -25,6 +25,8 @@ import { errorHandler, IAppError } from '../../utils/errorHandler';
 export const getDealersController = async (req: IAuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await getDealers(req.query as any);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
     res.status(200).json(result);
   } catch (error) {
     errorHandler(error as IAppError, res);
@@ -34,6 +36,8 @@ export const getDealersController = async (req: IAuthRequest, res: Response, nex
 export const getDealerByIdController = async (req: IAuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const dealer = await getDealerById(req.params.id);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
     res.status(200).json(dealer);
   } catch (error) {
     errorHandler(error as IAppError, res);

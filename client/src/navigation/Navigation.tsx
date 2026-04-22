@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef, resetAndNavigate, navigate } from '@utils/NavigationUtils';
+import { resetNavigationForDealerOnboarding } from '../auth/postAuthRouting';
 import { useAuthStore } from '@state/authStore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -12,6 +13,7 @@ import CustomText from '@components/ui/CustomText';
 import SplashScreen from '@features/auth/SplashScreen';
 import DeliveryLogin from '@features/auth/DeliveryLogin';
 import CustomerLogin from '@features/auth/CustomerLogin';
+import DealerPendingApprovalScreen from '@features/auth/DealerPendingApprovalScreen';
 import ProductDashboard from '@features/dashboard/ProductDashboard';
 import DealerDashboard from '@features/dashboard/DealerDashboard';
 import PlayScreen from '@features/play/PlayScreen';
@@ -248,10 +250,7 @@ const DealerTabs: FC = () => {
   };
 
   useEffect(() => {
-    // Prevent multiple checks if already checked
-    if (businessRegistration !== null && !isChecking) {
-      return;
-    }
+    let cancelled = false;
 
     const checkBusinessRegistration = async () => {
       const userId = user?.id || user?._id;
@@ -261,45 +260,41 @@ const DealerTabs: FC = () => {
       }
 
       try {
-        const { getBusinessRegistrationByUserId } = await import('@service/dealerService');
-        const registration = await getBusinessRegistrationByUserId(userId);
-        setBusinessRegistration(registration);
-
-        // Only redirect if no registration exists OR status is rejected
-        // Allow access if registration exists (even if pending or approved)
-        // Use setTimeout to prevent navigation during render
-        if (!registration || (registration && registration.status === 'rejected')) {
-          setTimeout(() => {
-            resetAndNavigate('BusinessRegistration');
-          }, 100);
+        const { fetchDealerMeOnboarding, resolveDealerOnboardingDestination } = await import('../auth/postAuthRouting');
+        const snapshot = await fetchDealerMeOnboarding();
+        if (cancelled) {
           return;
         }
-      } catch (error) {
-        console.error('Error checking business registration:', error);
-        // On error, check if it's a 404 (no registration) - redirect to registration
-        // Otherwise allow access (might be network error)
-        const errorStatus = (error as any)?.response?.status;
-        if (errorStatus === 404) {
-          setTimeout(() => {
-            resetAndNavigate('BusinessRegistration');
-          }, 100);
+        const dest = resolveDealerOnboardingDestination(snapshot);
+        if (dest !== 'DealerTabs') {
+          setTimeout(() => resetAndNavigate(dest), 0);
           return;
-        } else {
-          // Network error or other - allow access, will be handled by dashboard
-          setIsChecking(false);
+        }
+        setBusinessRegistration({
+          type: snapshot.businessType || undefined,
+          status: snapshot.status,
+          id: snapshot.registrationId,
+        });
+      } catch (error) {
+        console.error('Error checking dealer onboarding:', error);
+        if (!cancelled) {
+          setTimeout(() => resetAndNavigate('BusinessRegistration'), 0);
         }
         return;
       } finally {
-        setIsChecking(false);
+        if (!cancelled) {
+          setIsChecking(false);
+        }
       }
     };
 
     checkBusinessRegistration();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, user?._id]);
 
-  // Show loading while checking registration
-  // Only block if checking OR if registration doesn't exist or is rejected
-  const shouldBlock = isChecking || !businessRegistration || (businessRegistration && businessRegistration.status === 'rejected');
+  const shouldBlock = isChecking || !businessRegistration;
   if (shouldBlock) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
@@ -442,7 +437,7 @@ const Navigation: FC = () => {
     if (userRole === 'user') {
       resetAndNavigate('MainTabs');
     } else if (userRole === 'dealer') {
-      resetAndNavigate('DealerTabs');
+      void resetNavigationForDealerOnboarding();
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     }
@@ -467,6 +462,7 @@ const Navigation: FC = () => {
               'AddEditService',
               'BusinessRegistration',
               'BusinessRegistrationDetails',
+              'DealerPendingApproval',
             ];
             const isDealerScreen = dealerScreens.includes(currentRouteName) || currentRouteName.includes('Dealer');
 
@@ -595,6 +591,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="BusinessRegistration"
             component={BusinessRegistrationScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="DealerPendingApproval"
+            component={DealerPendingApprovalScreen}
             options={{
               animation: 'slide_from_right',
             }}

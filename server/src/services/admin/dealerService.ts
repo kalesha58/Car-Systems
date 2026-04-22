@@ -1,6 +1,7 @@
 import { Dealer, IDealerDocument } from '../../models/Dealer';
 import { Order } from '../../models/Order';
-import { BusinessRegistration } from '../../models/BusinessRegistration';
+import { BusinessRegistration, IBusinessRegistrationDocument } from '../../models/BusinessRegistration';
+import { SignUp, ISignUpDocument } from '../../models/SignUp';
 import {
   IGetDealersRequest,
   ICreateDealerRequest,
@@ -52,6 +53,44 @@ const dealerToIDealer = (dealerDoc: IDealerDocument,  businessRegistration?: any
   };
 };
 
+const toIdString = (v: unknown): string => {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'object' && v !== null && 'toString' in v && typeof (v as { toString: () => string }).toString === 'function') {
+    return (v as { toString: () => string }).toString();
+  }
+  return String(v);
+};
+
+const mapBusinessRegistrationToDealer = (
+  reg: IBusinessRegistrationDocument,
+  user: ISignUpDocument | null | undefined,
+): IDealer => {
+  let finalStatus: 'approved' | 'pending' | 'suspended' | 'rejected' = reg.status as 'approved' | 'pending' | 'rejected';
+  if (reg.status === 'approved') {
+    const st = user?.status as string | undefined;
+    if (st === 'inactive' || st === 'suspended' || st === 'blocked') {
+      finalStatus = 'suspended';
+    }
+  }
+  const userIdStr = (user && toIdString(user._id)) || toIdString(reg.userId);
+  return {
+    id: userIdStr,
+    businessRegistrationId: (reg._id as any).toString(),
+    name: user?.name || reg.businessName,
+    businessName: reg.businessName,
+    email: user?.email || '',
+    phone: reg.phone || user?.phone || '',
+    status: finalStatus,
+    location: reg.location ? `${reg.location.latitude},${reg.location.longitude}` : reg.address,
+    address: reg.address,
+    dealerType: reg.type,
+    registrationDate: reg.createdAt?.toISOString(),
+    approvalDate: reg.status === 'approved' ? reg.updatedAt?.toISOString() : undefined,
+    createdAt: reg.createdAt?.toISOString() || new Date().toISOString(),
+  };
+};
+
 /**
  * Get all dealers with pagination and filters
  */
@@ -59,74 +98,80 @@ export const getDealers = async (
   query: IGetDealersRequest,
 ): Promise<{ dealers: IDealer[]; pagination: IPaginationResponse }> => {
   try {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
+    const page = Math.max(1, Number.parseInt(String(query.page ?? '1'), 10) || 1);
+    const limitRaw = Number.parseInt(String(query.limit ?? '10'), 10) || 10;
+    const limit = Math.min(100, Math.max(1, limitRaw));
     const skip = (page - 1) * limit;
 
-    const filter: any = {};
+    const clauses: Record<string, unknown>[] = [];
 
-    
-    let matchingUserIds: string[] = [];
-    if (query.dealerType) {
-      const matchingRegs = await BusinessRegistration.find({ type: query.dealerType });
-      matchingUserIds = matchingRegs.map((reg: any) => reg.userId);
-      
-      // Get users with these userIds to get their emails
-      const { SignUp } = await import('../../models/SignUp');
-      const users = await SignUp.find({ _id: { $in: matchingUserIds } });
-      const matchingEmails = users.map((u: any) => u.email);
-      
-      // Filter dealers by email
-      filter.email = { $in: matchingEmails };
+    if (query.status === 'suspended') {
+      const suspendedUsers = await SignUp.find({
+        role: { $in: ['dealer'] },
+        status: { $in: ['inactive', 'suspended', 'blocked'] },
+      }).select('_id');
+      const ids = suspendedUsers.map((u) => toIdString(u._id));
+      if (ids.length === 0) {
+        return {
+          dealers: [],
+          pagination: { page, limit, total: 0, totalPages: 0 },
+        };
+      }
+      clauses.push({ userId: { $in: ids }, status: 'approved' });
+    } else if (query.status && query.status !== 'all') {
+      clauses.push({ status: query.status });
     }
 
-    const sortBy = query.sortBy || 'createdAt';
-    const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
-    const sort: any = { [sortBy]: sortOrder };
+    if (query.dealerType && query.dealerType !== 'all') {
+      clauses.push({ type: query.dealerType });
+    }
 
-    const [dealers, total] = await Promise.all([
-      Dealer.find(filter).sort(sort).skip(skip).limit(limit),
-      Dealer.countDocuments(filter),
+    if (query.search?.trim()) {
+      const search = query.search.trim();
+      const users = await SignUp.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { phone: { $regex: search, $options: 'i' } },
+        ],
+      }).select('_id');
+      const userIds = users.map((u) => toIdString(u._id));
+      clauses.push({
+        $or: [{ businessName: { $regex: search, $options: 'i' } }, { userId: { $in: userIds } }],
+      });
+    }
+
+    const filter: Record<string, unknown> =
+      clauses.length > 1 ? { $and: clauses } : clauses.length === 1 ? clauses[0]! : {};
+
+    const sortBy = query.sortBy === 'name' ? 'businessName' : query.sortBy || 'createdAt';
+    const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+    const sort: Record<string, 1 | -1> = { [sortBy]: sortOrder };
+
+    const [registrations, total] = await Promise.all([
+      BusinessRegistration.find(filter).sort(sort).skip(skip).limit(limit),
+      BusinessRegistration.countDocuments(filter),
     ]);
 
-     // Get users to match with dealers by email
-     const { SignUp } = await import('../../models/SignUp');
-     const dealerEmails = dealers.map((d: any) => d.email);
-     const users = await SignUp.find({ email: { $in: dealerEmails } });
- 
-     // Create a map of email to userId (_id from SignUp)
-     const emailToUserIdMap = new Map();
-     users.forEach((user: any) => {
-       emailToUserIdMap.set(user.email, (user._id as any).toString());
-     });
- 
-     // Get business registrations for these users
-     const userIds = Array.from(emailToUserIdMap.values());
-     const businessRegistrations = await BusinessRegistration.find({
-       userId: { $in: userIds }
-     });
- 
-     // Create a map of userId to business registration
-     const registrationMap = new Map();
-     businessRegistrations.forEach((reg: any) => {
-       registrationMap.set(reg.userId, reg);
-     });
- 
-     // Map dealers with their business registrations
-     const dealersWithRegistrations = dealers.map((dealer: any) => {
-       const userId = emailToUserIdMap.get(dealer.email);
-       const businessReg = userId ? registrationMap.get(userId) : null;
-       return dealerToIDealer(dealer, businessReg);
-     });
- 
+    const registrationUserIds = [...new Set(registrations.map((reg) => toIdString(reg.userId)))];
+    const users = await SignUp.find({ _id: { $in: registrationUserIds } });
+
+    const userMap = new Map<string, ISignUpDocument>();
+    users.forEach((u) => {
+      userMap.set(toIdString(u._id), u);
+    });
+
+    const mappedDealers: IDealer[] = registrations.map((reg) =>
+      mapBusinessRegistrationToDealer(reg, userMap.get(toIdString(reg.userId))),
+    );
 
     return {
-      dealers: dealersWithRegistrations,
+      dealers: mappedDealers,
       pagination: {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 0,
       },
     };
   } catch (error) {
@@ -137,29 +182,52 @@ export const getDealers = async (
 
 /**
  * Get dealer by ID
+ * Accepts SignUp user id (preferred), BusinessRegistration document id, or legacy Dealer document id.
  */
 export const getDealerById = async (dealerId: string): Promise<IDealer> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
+    const userById = await SignUp.findById(dealerId);
+    if (userById?.role?.includes('dealer')) {
+      const reg = await BusinessRegistration.findOne({ userId: toIdString(userById._id) });
+      if (reg) {
+        const dealerData = mapBusinessRegistrationToDealer(reg, userById);
+        const orderDealerIds = [toIdString(reg._id), dealerId].filter(Boolean);
+        dealerData.orders = await Order.find({ dealerId: { $in: orderDealerIds } }).limit(10);
+        return dealerData;
+      }
+      return {
+        id: toIdString(userById._id),
+        name: userById.name,
+        businessName: userById.name,
+        email: userById.email,
+        phone: userById.phone,
+        status: 'pending',
+        createdAt: userById.createdAt?.toISOString() || new Date().toISOString(),
+      };
+    }
 
+    const regByDoc = await BusinessRegistration.findById(dealerId);
+    if (regByDoc) {
+      const user = await SignUp.findById(regByDoc.userId);
+      const dealerData = mapBusinessRegistrationToDealer(regByDoc, user || undefined);
+      const orderDealerIds = [toIdString(regByDoc._id), toIdString(regByDoc.userId)].filter(Boolean);
+      dealerData.orders = await Order.find({ dealerId: { $in: orderDealerIds } }).limit(10);
+      return dealerData;
+    }
+
+    const dealer = await Dealer.findById(dealerId);
     if (!dealer) {
       throw new NotFoundError('Dealer not found');
     }
 
-    // Get user by email to find userId
-    const { SignUp } = await import('../../models/SignUp');
     const user = await SignUp.findOne({ email: dealer.email });
-
-    // Get business registration for this user
     let businessReg = null;
     if (user) {
-      const userId = (user._id as any).toString();
+      const userId = toIdString(user._id);
       businessReg = await BusinessRegistration.findOne({ userId });
     }
 
     const dealerData = dealerToIDealer(dealer, businessReg);
-
-    // Get dealer orders
     const orders = await Order.find({ dealerId: dealerId }).limit(10);
     dealerData.orders = orders;
 
@@ -249,18 +317,27 @@ export const deleteDealer = async (dealerId: string): Promise<void> => {
  */
 export const approveDealer = async (dealerId: string): Promise<IDealer> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
-
-    if (!dealer) {
-      throw new NotFoundError('Dealer not found');
+    const legacy = await Dealer.findById(dealerId);
+    if (legacy) {
+      legacy.status = 'approved';
+      await legacy.save();
+      logger.info(`Dealer approved (legacy): ${legacy.email}`);
+      return dealerToIDealer(legacy);
     }
 
-    dealer.status = 'approved';
-    await dealer.save();
+    let reg = await BusinessRegistration.findOne({ userId: dealerId });
+    if (!reg) {
+      reg = await BusinessRegistration.findById(dealerId);
+    }
+    if (reg) {
+      reg.status = 'approved';
+      await reg.save();
+      const user = await SignUp.findById(reg.userId);
+      logger.info(`Business registration approved for userId: ${reg.userId}`);
+      return mapBusinessRegistrationToDealer(reg, user || undefined);
+    }
 
-    logger.info(`Dealer approved: ${dealer.email}`);
-
-    return dealerToIDealer(dealer);
+    throw new NotFoundError('Dealer not found');
   } catch (error) {
     logger.error('Error approving dealer:', error);
     throw error;
@@ -272,19 +349,30 @@ export const approveDealer = async (dealerId: string): Promise<IDealer> => {
  */
 export const rejectDealer = async (dealerId: string, reason: string): Promise<IDealer> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
-
-    if (!dealer) {
-      throw new NotFoundError('Dealer not found');
+    const legacy = await Dealer.findById(dealerId);
+    if (legacy) {
+      legacy.status = 'rejected';
+      legacy.rejectionReason = reason;
+      await legacy.save();
+      logger.info(`Dealer rejected (legacy): ${legacy.email}`);
+      return dealerToIDealer(legacy);
     }
 
-    dealer.status = 'rejected';
-    dealer.rejectionReason = reason;
-    await dealer.save();
+    let reg = await BusinessRegistration.findOne({ userId: dealerId });
+    if (!reg) {
+      reg = await BusinessRegistration.findById(dealerId);
+    }
+    if (reg) {
+      reg.status = 'rejected';
+      await reg.save();
+      const user = await SignUp.findById(reg.userId);
+      logger.info(`Business registration rejected for userId: ${reg.userId}`);
+      const mapped = mapBusinessRegistrationToDealer(reg, user || undefined);
+      mapped.suspensionReason = reason;
+      return mapped;
+    }
 
-    logger.info(`Dealer rejected: ${dealer.email}`);
-
-    return dealerToIDealer(dealer);
+    throw new NotFoundError('Dealer not found');
   } catch (error) {
     logger.error('Error rejecting dealer:', error);
     throw error;
@@ -296,19 +384,33 @@ export const rejectDealer = async (dealerId: string, reason: string): Promise<ID
  */
 export const suspendDealer = async (dealerId: string, reason: string): Promise<IDealer> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
-
-    if (!dealer) {
-      throw new NotFoundError('Dealer not found');
+    const legacy = await Dealer.findById(dealerId);
+    if (legacy) {
+      legacy.status = 'suspended';
+      legacy.suspensionReason = reason;
+      await legacy.save();
+      logger.info(`Dealer suspended (legacy): ${legacy.email}`);
+      return dealerToIDealer(legacy);
     }
 
-    dealer.status = 'suspended';
-    dealer.suspensionReason = reason;
-    await dealer.save();
+    let reg = await BusinessRegistration.findOne({ userId: dealerId });
+    if (!reg) {
+      reg = await BusinessRegistration.findById(dealerId);
+    }
+    if (reg) {
+      const user = await SignUp.findById(reg.userId);
+      if (user) {
+        user.status = 'suspended';
+        await user.save();
+      }
+      const mapped = mapBusinessRegistrationToDealer(reg, user || undefined);
+      mapped.status = 'suspended';
+      mapped.suspensionReason = reason;
+      logger.info(`Dealer user suspended for userId: ${reg.userId}`);
+      return mapped;
+    }
 
-    logger.info(`Dealer suspended: ${dealer.email}`);
-
-    return dealerToIDealer(dealer);
+    throw new NotFoundError('Dealer not found');
   } catch (error) {
     logger.error('Error suspending dealer:', error);
     throw error;
@@ -324,26 +426,47 @@ export const getDealerOrders = async (
   limit: number = 10,
 ): Promise<{ orders: any[]; pagination: IPaginationResponse }> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
+    const pageNum = Math.max(1, Number.parseInt(String(page), 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number.parseInt(String(limit), 10) || 10));
+    const skip = (pageNum - 1) * limitNum;
 
-    if (!dealer) {
+    const dealerIds: string[] = [];
+
+    const legacy = await Dealer.findById(dealerId);
+    if (legacy) {
+      dealerIds.push(dealerId);
+    }
+
+    const user = await SignUp.findById(dealerId);
+    if (user?.role?.includes('dealer')) {
+      const br = await BusinessRegistration.findOne({ userId: toIdString(user._id) });
+      if (br) dealerIds.push(toIdString(br._id));
+    }
+
+    const reg = await BusinessRegistration.findById(dealerId);
+    if (reg) {
+      dealerIds.push(toIdString(reg._id));
+    }
+
+    const uniqueDealerIds = [...new Set(dealerIds.filter(Boolean))];
+    if (uniqueDealerIds.length === 0) {
       throw new NotFoundError('Dealer not found');
     }
 
-    const skip = (page - 1) * limit;
+    const orderQuery = { dealerId: { $in: uniqueDealerIds } };
 
     const [orders, total] = await Promise.all([
-      Order.find({ dealerId: dealerId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Order.countDocuments({ dealerId: dealerId }),
+      Order.find(orderQuery).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Order.countDocuments(orderQuery),
     ]);
 
     return {
       orders,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limitNum) || 0,
       },
     };
   } catch (error) {

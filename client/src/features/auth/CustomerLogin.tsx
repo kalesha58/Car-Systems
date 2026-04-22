@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
-  Switch,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -27,8 +26,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
 import { customerLogin, customerSignup } from '@service/authService';
-import { getBusinessRegistrationByUserId } from '@service/dealerService';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { resetNavigationForDealerOnboarding } from '../../auth/postAuthRouting';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@hooks/useToast';
@@ -58,6 +56,8 @@ const CustomerLogin = () => {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [isSignupMode, setIsSignupMode] = useState(false);
+  /** Signup step 1: explicit choice; step 2: credentials (server role = userType). */
+  const [signupStep, setSignupStep] = useState<'chooseAccountType' | 'enterDetails'>('chooseAccountType');
   const [userType, setUserType] = useState<'user' | 'dealer'>('user');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -95,18 +95,6 @@ const CustomerLogin = () => {
     }
 
     return null;
-  };
-
-  const navigateByRole = (userRole: string | null) => {
-    if (userRole === 'user') {
-      resetAndNavigate('MainTabs');
-    } else if (userRole === 'dealer') {
-      resetAndNavigate('DealerTabs');
-    } else if (userRole === 'admin') {
-      resetAndNavigate('MainTabs');
-    } else {
-      resetAndNavigate('CustomerLogin');
-    }
   };
 
   useEffect(() => {
@@ -165,6 +153,9 @@ const CustomerLogin = () => {
 
   const isFormValid = (): boolean => {
     if (isSignupMode) {
+      if (signupStep === 'chooseAccountType') {
+        return false;
+      }
       const cleanPhone = phone.replace(/[^0-9]/g, '');
       return (
         name.trim().length >= 2 &&
@@ -175,6 +166,16 @@ const CustomerLogin = () => {
       );
     }
     return email.trim().length > 0 && password.length >= 8;
+  };
+
+  const toggleSignupMode = () => {
+    if (isSignupMode) {
+      setIsSignupMode(false);
+      setSignupStep('chooseAccountType');
+    } else {
+      setIsSignupMode(true);
+      setSignupStep('chooseAccountType');
+    }
   };
 
   const handleAuth = async () => {
@@ -191,41 +192,10 @@ const CustomerLogin = () => {
         // For dealers, check if they have business registration
         // Try both 'id' and '_id' fields as the user object might have either
         const userId = currentUser.id || currentUser._id;
-        if (userRole === 'dealer' && userId) {
-          try {
-            // Ensure userId is a string to avoid type mismatches
-            const userIdString = String(userId);
-            const businessRegistration = await getBusinessRegistrationByUserId(userIdString);
-
-            // Check if dealer has business registration
-            // Navigate to BusinessRegistration if: no registration exists OR status is rejected
-            // Navigate to DealerTabs if: registration exists AND (status is pending OR approved)
-            if (!businessRegistration) {
-              // No registration exists - navigate to business registration screen
-              resetAndNavigate('BusinessRegistration');
-            } else if (businessRegistration.status === 'rejected') {
-              // Registration was rejected - navigate to business registration screen to resubmit
-              resetAndNavigate('BusinessRegistration');
-            } else if (businessRegistration.status === 'pending' || businessRegistration.status === 'approved') {
-              // Has registration with status pending or approved - navigate to dealer dashboard
-              resetAndNavigate('DealerTabs');
-            } else {
-              // Unknown status - navigate to registration
-              resetAndNavigate('BusinessRegistration');
-            }
-          } catch (error: any) {
-            // Handle network errors or other unexpected errors
-            // For network errors, allow access to dealer tabs (will show appropriate messages)
-            const errorStatus = error?.response?.status;
-            // If it's a network error (no status) or server error (5xx), allow access
-            // The dealer dashboard will handle showing appropriate messages
-            if (!errorStatus || (errorStatus >= 500)) {
-              resetAndNavigate('DealerTabs');
-            } else {
-              // For other errors (like 403), redirect to registration
-              resetAndNavigate('BusinessRegistration');
-            }
-          }
+        if (userRole === 'admin') {
+          resetAndNavigate('MainTabs');
+        } else if (userRole === 'dealer' && userId) {
+          await resetNavigationForDealerOnboarding();
         } else {
           // For regular users (not dealers), check if they have vehicles
           const userId = currentUser.id || currentUser._id;
@@ -305,11 +275,12 @@ const CustomerLogin = () => {
       // Navigate to login screen after successful signup
       setTimeout(() => {
         setIsSignupMode(false);
+        setSignupStep('chooseAccountType');
         setName('');
         setEmail('');
         setPassword('');
         setPhone('');
-        setUserType('user'); // Reset to default
+        setUserType('user');
       }, 1500);
     } catch (error: any) {
       const errorMessage =
@@ -362,148 +333,194 @@ const CustomerLogin = () => {
                   {t('auth.loginOrSignUp')}
                 </CustomText>
 
-                {isSignupMode && (
-                  <CustomInput
-                    onChangeText={setName}
-                    onClear={() => setName('')}
-                    value={name}
-                    placeholder={t('auth.name')}
-                    inputMode="text"
-                    left={
-                      <Ionicons
-                        name="person"
-                        color={colors.secondary}
-                        style={{ marginLeft: 10 }}
-                        size={RFValue(18)}
-                      />
-                    }
-                    right={false}
-                  />
-                )}
-
-                <CustomInput
-                  onChangeText={setEmail}
-                  onClear={() => setEmail('')}
-                  value={email}
-                  placeholder={t('auth.email')}
-                  inputMode="email"
-                    left={
-                      <Ionicons
-                        name="mail"
-                        color={colors.secondary}
-                        style={{ marginLeft: 10 }}
-                        size={RFValue(18)}
-                      />
-                    }
-                  right={false}
-                />
-
-                {isSignupMode && (
-                  <CustomInput
-                    onChangeText={handlePhoneChange}
-                    onClear={() => setPhone('')}
-                    value={phone}
-                    placeholder={t('auth.phone')}
-                    inputMode="tel"
-                    keyboardType="numeric"
-                    maxLength={10}
-                    left={
-                      <Ionicons
-                        name="call"
-                        color={colors.secondary}
-                        style={{ marginLeft: 10 }}
-                        size={RFValue(18)}
-                      />
-                    }
-                    right={false}
-                  />
-                )}
-
-                <CustomInput
-                  onChangeText={setPassword}
-                  onClear={() => setPassword('')}
-                  value={password}
-                  placeholder={t('auth.password')}
-                  secureTextEntry={!showPassword}
-                  left={
-                    <Ionicons
-                      name="key-sharp"
-                      color={colors.secondary}
-                      style={{ marginLeft: 10 }}
-                      size={RFValue(18)}
-                    />
-                  }
-                  right={false}
-                  rightIcon={
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={{
-                        padding: getResponsiveValue(8, 10, 12),
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name={showPassword ? "eye-off" : "eye"}
-                        color={colors.secondary}
-                        size={RFValue(getResponsiveValue(22, 24, 26))}
-                      />
-                    </TouchableOpacity>
-                  }
-                />
-
-                {isSignupMode && (
-                  <View style={styles.toggleContainer}>
+                {isSignupMode && signupStep === 'enterDetails' && (
+                  <View
+                    style={{
+                      width: '100%',
+                      marginTop: getResponsiveValue(8, 10, 12),
+                      marginBottom: getResponsiveValue(4, 6, 8),
+                      paddingVertical: getResponsiveValue(10, 12, 14),
+                      paddingHorizontal: 12,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.backgroundSecondary,
+                    }}>
+                    <CustomText
+                      variant="h4"
+                      fontFamily={Fonts.Bold}
+                      style={{ color: colors.text, textAlign: 'center' }}>
+                      {userType === 'dealer' ? t('auth.signupAsDealer') : t('auth.signupAsCustomer')}
+                    </CustomText>
                     <CustomText
                       variant="h6"
                       fontFamily={Fonts.Medium}
-                      style={[styles.toggleTitle, { color: colors.text }]}>
-                      Account Type
+                      style={{
+                        color: colors.textSecondary,
+                        textAlign: 'center',
+                        marginTop: 6,
+                      }}>
+                      {userType === 'dealer' ? t('auth.signupDealerHint') : t('auth.signupCustomerHint')}
                     </CustomText>
-                    <View style={[styles.toggleRow, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
-                      <TouchableOpacity
-                        onPress={() => setUserType('user')}
-                        style={[
-                          styles.toggleOption,
-                          userType === 'user' && [styles.toggleOptionActive, { backgroundColor: colors.secondary + '15' }],
-                        ]}
-                        activeOpacity={0.7}>
-                        <CustomText
-                          variant="h6"
-                          fontFamily={userType === 'user' ? Fonts.SemiBold : Fonts.Medium}
-                          style={userType === 'user' 
-                            ? [styles.toggleLabel, { color: colors.secondary }]
-                            : [styles.toggleLabel, { color: colors.disabled }]}>
-                          Customer
-                        </CustomText>
-                      </TouchableOpacity>
-                      <Switch
-                        value={userType === 'dealer'}
-                        onValueChange={(value) => setUserType(value ? 'dealer' : 'user')}
-                        trackColor={{ false: colors.border, true: colors.secondary }}
-                        thumbColor={colors.white}
-                        ios_backgroundColor={colors.border}
-                      />
-                      <TouchableOpacity
-                        onPress={() => setUserType('dealer')}
-                        style={[
-                          styles.toggleOption,
-                          userType === 'dealer' && [styles.toggleOptionActive, { backgroundColor: colors.secondary + '15' }],
-                        ]}
-                        activeOpacity={0.7}>
-                        <CustomText
-                          variant="h6"
-                          fontFamily={userType === 'dealer' ? Fonts.SemiBold : Fonts.Medium}
-                          style={userType === 'dealer' 
-                            ? [styles.toggleLabel, { color: colors.secondary }]
-                            : [styles.toggleLabel, { color: colors.disabled }]}>
-                          Dealer
-                        </CustomText>
-                      </TouchableOpacity>
-                    </View>
                   </View>
+                )}
+
+                {isSignupMode && signupStep === 'chooseAccountType' && (
+                  <View style={{ width: '100%', marginTop: getResponsiveValue(8, 10, 12) }}>
+                    <CustomText
+                      variant="h5"
+                      fontFamily={Fonts.SemiBold}
+                      style={{ color: colors.text, marginBottom: 8, textAlign: 'center' }}>
+                      Choose account type
+                    </CustomText>
+                    <CustomText
+                      variant="h6"
+                      fontFamily={Fonts.Medium}
+                      style={{ color: colors.textSecondary, marginBottom: 16, textAlign: 'center' }}>
+                      Tap one option, then enter your details on the next step.
+                    </CustomText>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setUserType('user');
+                        setSignupStep('enterDetails');
+                      }}
+                      style={[
+                        styles.accountTypeCard,
+                        { borderColor: colors.border, backgroundColor: colors.backgroundSecondary },
+                      ]}>
+                      <Ionicons name="person-circle-outline" size={RFValue(36)} color={colors.secondary} />
+                      <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.text, marginTop: 8 }}>
+                        Customer
+                      </CustomText>
+                      <CustomText variant="h6" fontFamily={Fonts.Medium} style={{ color: colors.textSecondary, marginTop: 4, textAlign: 'center' }}>
+                        Shop, book services, and manage your garage
+                      </CustomText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setUserType('dealer');
+                        setSignupStep('enterDetails');
+                      }}
+                      style={[
+                        styles.accountTypeCard,
+                        { borderColor: colors.border, backgroundColor: colors.backgroundSecondary, marginTop: 12 },
+                      ]}>
+                      <Ionicons name="storefront-outline" size={RFValue(36)} color={colors.secondary} />
+                      <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={{ color: colors.text, marginTop: 8 }}>
+                        Dealer
+                      </CustomText>
+                      <CustomText variant="h6" fontFamily={Fonts.Medium} style={{ color: colors.textSecondary, marginTop: 4, textAlign: 'center' }}>
+                        Sell inventory after business registration is approved by admin
+                      </CustomText>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {(!isSignupMode || (isSignupMode && signupStep === 'enterDetails')) && (
+                  <>
+                    {isSignupMode && signupStep === 'enterDetails' && (
+                      <TouchableOpacity
+                        onPress={() => setSignupStep('chooseAccountType')}
+                        style={{ alignSelf: 'flex-start', marginBottom: 10, marginTop: 4 }}>
+                        <CustomText variant="h6" fontFamily={Fonts.SemiBold} style={{ color: colors.secondary }}>
+                          Change account type
+                        </CustomText>
+                      </TouchableOpacity>
+                    )}
+
+                    {isSignupMode && signupStep === 'enterDetails' && (
+                      <CustomInput
+                        onChangeText={setName}
+                        onClear={() => setName('')}
+                        value={name}
+                        placeholder={t('auth.name')}
+                        inputMode="text"
+                        left={
+                          <Ionicons
+                            name="person"
+                            color={colors.secondary}
+                            style={{ marginLeft: 10 }}
+                            size={RFValue(18)}
+                          />
+                        }
+                        right={false}
+                      />
+                    )}
+
+                    <CustomInput
+                      onChangeText={setEmail}
+                      onClear={() => setEmail('')}
+                      value={email}
+                      placeholder={t('auth.email')}
+                      inputMode="email"
+                      left={
+                        <Ionicons
+                          name="mail"
+                          color={colors.secondary}
+                          style={{ marginLeft: 10 }}
+                          size={RFValue(18)}
+                        />
+                      }
+                      right={false}
+                    />
+
+                    {isSignupMode && signupStep === 'enterDetails' && (
+                      <CustomInput
+                        onChangeText={handlePhoneChange}
+                        onClear={() => setPhone('')}
+                        value={phone}
+                        placeholder={t('auth.phone')}
+                        inputMode="tel"
+                        keyboardType="numeric"
+                        maxLength={10}
+                        left={
+                          <Ionicons
+                            name="call"
+                            color={colors.secondary}
+                            style={{ marginLeft: 10 }}
+                            size={RFValue(18)}
+                          />
+                        }
+                        right={false}
+                      />
+                    )}
+
+                    <CustomInput
+                      onChangeText={setPassword}
+                      onClear={() => setPassword('')}
+                      value={password}
+                      placeholder={t('auth.password')}
+                      secureTextEntry={!showPassword}
+                      left={
+                        <Ionicons
+                          name="key-sharp"
+                          color={colors.secondary}
+                          style={{ marginLeft: 10 }}
+                          size={RFValue(18)}
+                        />
+                      }
+                      right={false}
+                      rightIcon={
+                        <TouchableOpacity
+                          onPress={() => setShowPassword(!showPassword)}
+                          style={{
+                            padding: getResponsiveValue(8, 10, 12),
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          activeOpacity={0.7}>
+                          <Ionicons
+                            name={showPassword ? 'eye-off' : 'eye'}
+                            color={colors.secondary}
+                            size={RFValue(getResponsiveValue(22, 24, 26))}
+                          />
+                        </TouchableOpacity>
+                      }
+                    />
+                  </>
                 )}
 
                 {!isSignupMode && (
@@ -524,15 +541,17 @@ const CustomerLogin = () => {
                   </TouchableOpacity>
                 )}
 
-                <CustomButton
-                  disabled={!isFormValid()}
-                  onPress={isSignupMode ? handleSignup : handleAuth}
-                  loading={loading}
-                  title={isSignupMode ? t('auth.signUp') : 'Continue'}
-                />
+                {!(isSignupMode && signupStep === 'chooseAccountType') && (
+                  <CustomButton
+                    disabled={!isFormValid()}
+                    onPress={isSignupMode ? handleSignup : handleAuth}
+                    loading={loading}
+                    title={isSignupMode ? t('auth.signUp') : 'Continue'}
+                  />
+                )}
 
                 <TouchableOpacity
-                  onPress={() => setIsSignupMode(!isSignupMode)}
+                  onPress={toggleSignupMode}
                   style={styles.signupButton}>
                   <CustomText
                     variant="h6"
@@ -672,6 +691,13 @@ const styles = StyleSheet.create({
   },
   toggleLabelActive: {
     // Color will be set dynamically
+  },
+  accountTypeCard: {
+    width: '100%',
+    borderRadius: getResponsiveValue(14, 16, 18),
+    borderWidth: 1.5,
+    padding: getResponsiveValue(16, 18, 20),
+    alignItems: 'center',
   },
 });
 

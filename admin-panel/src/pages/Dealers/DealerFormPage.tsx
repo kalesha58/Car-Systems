@@ -1,6 +1,6 @@
 import { Breadcrumbs } from '@components/Breadcrumbs/Breadcrumbs';
-// import { BusinessRegistrationModal } from '@components/BusinessRegistrationModal/BusinessRegistrationModal';
-// import { BusinessRegistrationViewModal } from '@components/BusinessRegistrationViewModal/BusinessRegistrationViewModal';
+import { BusinessRegistrationModal } from '@components/BusinessRegistrationModal/BusinessRegistrationModal';
+import { BusinessRegistrationViewModal } from '@components/BusinessRegistrationViewModal/BusinessRegistrationViewModal';
 import { Button } from '@components/Button/Button';
 import { Card } from '@components/Card/Card';
 
@@ -8,6 +8,7 @@ import { Input } from '@components/Input/Input';
 
 
 
+import { LoadingSpinner } from '@components/LoadingSpinner/LoadingSpinner';
 import { SkeletonCard } from '@components/Skeleton';
 
 import { createUser, getUserById, updateUser } from '@services/userService';
@@ -16,7 +17,7 @@ import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { formatPhoneInput, getEmailError, getPhoneError } from '@utils/validation';
 import { motion } from 'framer-motion';
-import { /* AlertCircle, */ /* Building2, */ /* Edit, Eye */ } from 'lucide-react';
+import { AlertCircle, Building2, Edit, Eye } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -39,11 +40,9 @@ export const DealerFormPage = () => {
   });
   const [userFormErrors, setUserFormErrors] = useState<Record<string, string>>({});
 
-  /*
   const [showBusinessRegistrationModal, setShowBusinessRegistrationModal] = useState(false);
   const [showBusinessRegistrationViewModal, setShowBusinessRegistrationViewModal] = useState(false);
   const [hasBusinessRegistration, setHasBusinessRegistration] = useState<boolean | null>(null);
-  const [_businessRegistrationId, setBusinessRegistrationId] = useState<string | null>(null);
   const [businessRegistrationData, setBusinessRegistrationData] = useState<{
     id: string;
     businessName: string;
@@ -56,7 +55,6 @@ export const DealerFormPage = () => {
     createdAt?: string;
     updatedAt?: string;
   } | null>(null);
-  */
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
@@ -91,13 +89,9 @@ export const DealerFormPage = () => {
           role: Array.isArray(userRole) ? userRole : ['user', 'dealer'],
         });
 
-        // Use isBusinessRegistration flag from user data
         if (id) {
-          // const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
-          // setHasBusinessRegistration(isBusinessRegistered);
-          
-          // Don't fetch business registration details automatically - only fetch when user clicks view/edit
-
+          const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
+          setHasBusinessRegistration(isBusinessRegistered);
         }
       } catch (error) {
         if ((error as { name?: string })?.name !== 'AbortError') {
@@ -510,8 +504,6 @@ export const DealerFormPage = () => {
         </Card>
       </motion.div>
 
-      {/* Business Registration Status */}
-      {/*
       {isEdit && id && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -568,9 +560,6 @@ export const DealerFormPage = () => {
                           const response = await getBusinessRegistrationByUserId(id);
                           if (response.Response) {
                             setBusinessRegistrationData(response.Response);
-                            if (response.Response.id) {
-                              setBusinessRegistrationId(response.Response.id);
-                            }
                             setShowBusinessRegistrationViewModal(true);
                           } else {
                             showToast('Business registration not found', 'error');
@@ -635,27 +624,18 @@ export const DealerFormPage = () => {
           </Card>
         </motion.div>
       )}
-      */}
 
-
-
-      {/* Business Registration Modal */}
-      {/*
       {isEdit && id && (
         <BusinessRegistrationModal
           isOpen={showBusinessRegistrationModal}
           hasExistingRegistration={hasBusinessRegistration === true}
           onClose={async () => {
             setShowBusinessRegistrationModal(false);
-            // Refresh user data to get updated isBusinessRegistration flag
             if (id) {
               try {
                 const userData = await getUserById(id);
                 const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
                 setHasBusinessRegistration(isBusinessRegistered);
-                if (isBusinessRegistered) {
-                  fetchVehicles(id);
-                }
               } catch (error) {
                 console.error('Error refreshing user data:', error);
                 setHasBusinessRegistration(false);
@@ -665,17 +645,11 @@ export const DealerFormPage = () => {
           dealerId={id || ''}
           onSuccess={async () => {
             setShowBusinessRegistrationModal(false);
-            // Refresh user data to get updated isBusinessRegistration flag
             if (id) {
               try {
                 const userData = await getUserById(id);
                 const isBusinessRegistered = (userData as { isBusinessRegistration?: boolean }).isBusinessRegistration === true;
                 setHasBusinessRegistration(isBusinessRegistered);
-                // Fetch vehicles if business registration is now complete
-                if (isBusinessRegistered) {
-                  fetchVehicles(id);
-                }
-                // Success toast is already shown in the modal component, no need to show it again
               } catch (error) {
                 console.error('Error refreshing user data:', error);
                 showToast('Business registration completed, but failed to refresh status', 'warning');
@@ -684,10 +658,7 @@ export const DealerFormPage = () => {
           }}
         />
       )}
-      */}
 
-      {/* Business Registration View Modal */}
-      {/*
       {isEdit && id && (
         <BusinessRegistrationViewModal
           isOpen={showBusinessRegistrationViewModal}
@@ -695,7 +666,6 @@ export const DealerFormPage = () => {
           data={businessRegistrationData}
         />
       )}
-      */}
     </motion.div>
   );
 };

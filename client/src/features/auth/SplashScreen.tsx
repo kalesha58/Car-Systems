@@ -9,7 +9,7 @@ import {useAuthStore} from '@state/authStore';
 import { tokenStorage, storage, clearBusinessRegistrationDraft } from '@state/storage';
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_tokens} from '@service/authService';
-import {getBusinessRegistrationByUserId} from '@service/dealerService';
+import {resetNavigationForDealerOnboarding} from '../../auth/postAuthRouting';
 
 GeoLocation.setRNConfiguration({
   skipPermissionRequests: false,
@@ -96,54 +96,7 @@ const SplashScreen: FC = () => {
         resetAndNavigate('AddUserVehicle');
       }
     } else if (userRole === 'dealer') {
-      // Check if dealer has business registration
-      if (userId) {
-        try {
-          console.log('SplashScreen: Checking business registration for dealer userId:', userId);
-          // Ensure userId is a string
-          const userIdString = String(userId);
-          const businessRegistration = await getBusinessRegistrationByUserId(userIdString);
-          console.log('SplashScreen: Business registration check result:', { 
-            hasRegistration: !!businessRegistration, 
-            status: businessRegistration?.status,
-            registration: businessRegistration
-          });
-          
-          // Check if dealer has business registration
-          // Navigate to BusinessRegistration if: no registration exists OR status is rejected
-          // Navigate to DealerTabs if: registration exists AND (status is pending OR approved)
-          if (!businessRegistration) {
-            // No registration exists - navigate to business registration screen
-            console.log('SplashScreen: ❌ No business registration found - Navigating to BusinessRegistration');
-            resetAndNavigate('BusinessRegistration');
-          } else if (businessRegistration.status === 'rejected') {
-            // Registration was rejected - navigate to business registration screen to resubmit
-            console.log('SplashScreen: ❌ Business registration rejected - Navigating to BusinessRegistration');
-            resetAndNavigate('BusinessRegistration');
-          } else if (businessRegistration.status === 'pending' || businessRegistration.status === 'approved') {
-            // Has registration with status pending or approved - navigate to dealer dashboard
-            console.log('SplashScreen: ✅ Business registration found with status:', businessRegistration.status, '- Navigating to DealerTabs');
-            resetAndNavigate('DealerTabs');
-          } else {
-            // Unknown status - log and navigate to registration
-            console.warn('SplashScreen: ⚠️ Unknown business registration status:', businessRegistration.status, '- Navigating to BusinessRegistration');
-            resetAndNavigate('BusinessRegistration');
-          }
-        } catch (error: any) {
-          // If check fails with 404, redirect to registration
-          // Otherwise allow access (might be network error)
-          const errorStatus = error?.response?.status;
-          if (errorStatus === 404) {
-            resetAndNavigate('BusinessRegistration');
-          } else {
-            // Network error or other - navigate to tabs, will be handled there
-            console.error('Error checking business registration:', error);
-            resetAndNavigate('DealerTabs');
-          }
-        }
-      } else {
-        resetAndNavigate('DealerTabs');
-      }
+      await resetNavigationForDealerOnboarding();
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     } else {

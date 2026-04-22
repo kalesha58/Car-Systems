@@ -6,10 +6,8 @@ import { BusinessRegistration } from '../models/BusinessRegistration';
 /**
  * Dealer authorization middleware
  * Verifies that the authenticated user has dealer role and business registration
- * Uses BusinessRegistration as the source of truth for dealer operations
- * 
- * TODO: Add admin approval workflow - check for approved status once admin panel is implemented
- * For now, business registrations are auto-approved on creation
+ * Uses BusinessRegistration as the source of truth for dealer operations.
+ * Inventory and other dealer write APIs require status === 'approved' (admin approves in admin panel).
  */
 export const dealerMiddleware = async (
   req: IAuthRequest,
