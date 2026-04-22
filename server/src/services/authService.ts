@@ -14,7 +14,7 @@ import {
   IResetPasswordRequest,
   IGoogleAuthRequest,
 } from '../types/auth';
-import { AppError, ConflictError, UnauthorizedError, NotFoundError } from '../utils/errorHandler';
+import { AppError, ConflictError, UnauthorizedError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
 import { sendPasswordResetCodeEmail, sendPasswordResetSuccessEmail } from '../utils/emailService';
 
@@ -56,17 +56,18 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
  */
 export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
   const { name, email, phone, password, role } = data;
+  const normalizedEmail = email.trim().toLowerCase();
 
   // Validate role if provided (must be 'user' or 'dealer')
   const validRole = role && (role === 'user' || role === 'dealer') ? role : 'user';
 
   // Check if user already exists with email or phone
   const existingUser = await SignUp.findOne({
-    $or: [{ email: email.toLowerCase() }, { phone }],
+    $or: [{ email: normalizedEmail }, { phone }],
   });
 
   if (existingUser) {
-    if (existingUser.email === email.toLowerCase()) {
+    if (existingUser.email === normalizedEmail) {
       throw new ConflictError('User with this email already exists');
     }
     if (existingUser.phone === phone) {
@@ -77,7 +78,7 @@ export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
   // Create new user with the specified role (defaults to 'user' if not provided)
   const signUpUser = new SignUp({
     name: name.trim(),
-    email: email.toLowerCase(),
+    email: normalizedEmail,
     phone,
     password,
     role: [validRole], // Set role as array with single value
@@ -106,30 +107,33 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     throw new AppError('Password is required', 400);
   }
 
-  // Trim email to handle any whitespace issues
-  const trimmedEmail = email.trim().toLowerCase();
-  const trimmedPassword = password.trim();
+  // Normalize email; keep password as-is because spaces are valid characters in passwords.
+  const normalizedEmail = email.trim().toLowerCase();
+  const rawEmailLowercase = email.toLowerCase();
 
-  logger.info(`Login attempt for email: ${trimmedEmail}, password length: ${trimmedPassword.length}`);
+  logger.info(`Login attempt for email: ${normalizedEmail}, password length: ${password.length}`);
 
   // Find user by email and explicitly select password field (since it has select: false)
-  const signUpUser = await SignUp.findOne({ email: trimmedEmail }).select('+password');
+  const emailCandidates = rawEmailLowercase === normalizedEmail
+    ? [normalizedEmail]
+    : [normalizedEmail, rawEmailLowercase];
+  const signUpUser = await SignUp.findOne({ email: { $in: emailCandidates } }).select('+password');
 
   if (!signUpUser) {
-    logger.warn(`Login failed: User not found for email: ${trimmedEmail}`);
+    logger.warn(`Login failed: User not found for email: ${normalizedEmail}`);
     throw new UnauthorizedError('Invalid credentials');
   }
 
   if (signUpUser.status !== 'active') {
-    logger.warn(`Login blocked for inactive/suspended user: ${trimmedEmail}`);
+    logger.warn(`Login blocked for inactive/suspended user: ${normalizedEmail}`);
     throw new UnauthorizedError('This account is not active');
   }
 
   // Compare provided password with hashed password
-  const isPasswordValid = await bcrypt.compare(trimmedPassword, signUpUser.password);
+  const isPasswordValid = await bcrypt.compare(password, signUpUser.password);
 
   if (!isPasswordValid) {
-    logger.warn(`Login failed: Invalid password for email: ${trimmedEmail}`);
+    logger.warn(`Login failed: Invalid password for email: ${normalizedEmail}`);
     throw new UnauthorizedError('Invalid credentials');
   }
 
@@ -157,17 +161,18 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
  */
 export const forgotPassword = async (data: IForgotPasswordRequest): Promise<{ success: boolean; message: string }> => {
   const { email } = data;
+  const normalizedEmail = email.trim().toLowerCase();
 
   if (!email) {
     throw new AppError('Email is required', 400);
   }
 
   // Find user by email and select resetPasswordCode and resetPasswordCodeExpires
-  const user = await SignUp.findOne({ email: email.toLowerCase() }).select('+resetPasswordCode +resetPasswordCodeExpires');
+  const user = await SignUp.findOne({ email: normalizedEmail }).select('+resetPasswordCode +resetPasswordCodeExpires');
 
   if (!user) {
     // Don't reveal if user exists or not for security
-    logger.warn(`Password reset requested for non-existent email: ${email}`);
+    logger.warn(`Password reset requested for non-existent email: ${normalizedEmail}`);
     return {
       success: true,
       message: 'If an account with that email exists, a password reset code has been sent.',
@@ -214,6 +219,7 @@ export const forgotPassword = async (data: IForgotPasswordRequest): Promise<{ su
  */
 export const resetPassword = async (data: IResetPasswordRequest): Promise<{ success: boolean; message: string }> => {
   const { email, code, password, confirmPassword } = data;
+  const normalizedEmail = email.trim().toLowerCase();
 
   if (!email) {
     throw new AppError('Email is required', 400);
@@ -240,7 +246,7 @@ export const resetPassword = async (data: IResetPasswordRequest): Promise<{ succ
 
   // Find user with valid code and not expired
   const user = await SignUp.findOne({
-    email: email.toLowerCase(),
+    email: normalizedEmail,
     resetPasswordCode: hashedCode,
     resetPasswordCodeExpires: { $gt: new Date() },
   }).select('+resetPasswordCode +resetPasswordCodeExpires +password');

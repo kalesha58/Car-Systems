@@ -344,6 +344,8 @@
     "businessRegistrationSubmitted": "व्यावसायिक पंजीकरण सफलतापूर्वक जमा किया गया। आपका अनुरोध व्यवस्थापक अनुमोदन के लिए लंबित है।",
     "failedToSubmitRegistration": "व्यावसायिक पंजीकरण जमा करने में विफल। कृपया पुनः प्रयास करें।",
     "businessInformation": "व्यवसाय की जानकारी",
+    "status": "आवेदन की स्थिति",
+    "storeStatus": "स्टोर की स्थिति",
     "payoutDetails": "भुगतान विवरण",
     "registeredOn": "पंजीकृत तिथि",
     "lastUpdated": "अंतिम अद्यतन",

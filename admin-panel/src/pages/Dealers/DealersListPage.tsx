@@ -18,7 +18,9 @@ import { Modal } from '@components/Modal/Modal';
 import { Pagination } from '@components/Pagination/Pagination';
 import { Select } from '@components/Select';
 import { SkeletonTable } from '@components/Skeleton';
-import { deleteUser } from '@services/userService';
+import { Table } from '@components/Table/Table';
+import { Tooltip } from '@components/Tooltip/Tooltip';
+import { createUser, deleteUser, updateUser } from '@services/userService';
 import { getDealers } from '@services/dealerService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
@@ -27,6 +29,14 @@ import { extractErrorMessage } from '@utils/errorHandler';
 
 import { IDealerListItem } from '../../types/dealer';
 import { IUserListItem } from '../../types/user';
+
+const DEALER_ROW_STATUSES: IDealerListItem['status'][] = ['approved', 'pending', 'suspended', 'rejected'];
+
+function normalizeDealerListStatus(status: string): IDealerListItem['status'] {
+  return (DEALER_ROW_STATUSES as string[]).includes(status)
+    ? (status as IDealerListItem['status'])
+    : 'pending';
+}
 
 export const DealersListPage = () => {
   const navigate = useNavigate();
@@ -102,7 +112,7 @@ export const DealersListPage = () => {
         businessName: dealer.businessName,
         phone: dealer.phone,
         email: dealer.email,
-        status: dealer.status,
+        status: normalizeDealerListStatus(dealer.status),
         location: dealer.location || '',
         rating: dealer.rating || 0,
         totalOrders: dealer.totalOrders || 0,
@@ -113,15 +123,17 @@ export const DealersListPage = () => {
         registrationDate: dealer.registrationDate,
         approvalDate: dealer.approvalDate,
       }));
-      
+
       setDealers(mappedDealers);
       setTotalItems(response.pagination.total);
       setTotalPages(response.pagination.totalPages);
 
-      // Status summary - we'll need to fetch all or use a dedicated endpoint if needed for accuracy, 
-      // but for now we'll update based on the current page's totals as a fallback
-      // Ideally the backend should return these counts in the pagination object.
-      // Since we refactored getDealers to be the source of truth, we can calculate these accurately on the server.
+      setStatusSummary({
+        total: response.pagination.total,
+        approved: mappedDealers.filter((d) => d.status === 'approved').length,
+        pending: mappedDealers.filter((d) => d.status === 'pending' || d.status === 'rejected').length,
+        suspended: mappedDealers.filter((d) => d.status === 'suspended').length,
+      });
     } catch (error: unknown) {
       if ((error as { name?: string })?.name !== 'AbortError') {
         console.error('Error fetching dealers:', error);
@@ -468,7 +480,7 @@ export const DealersListPage = () => {
           >
             <span>Active Dealers</span>
             <strong>{displaySummary.active}</strong>
-            <small>Healthy accounts</small>
+            <small>Approved on this page</small>
           </motion.div>
           <motion.div
             className="users-page__stat-card users-page__stat-card--inactive"
@@ -477,7 +489,7 @@ export const DealersListPage = () => {
           >
             <span>Inactive Dealers</span>
             <strong>{displaySummary.inactive}</strong>
-            <small>Need attention</small>
+            <small>Pending, rejected, or suspended on this page</small>
           </motion.div>
         </div>
       </motion.div>

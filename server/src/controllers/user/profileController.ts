@@ -73,6 +73,10 @@ export const updateProfileController = async (
       updateData.phone = req.body.phone;
     }
 
+    if (req.body.profileImage) {
+      updateData.profileImage = req.body.profileImage;
+    }
+
     // Handle image upload if provided
     if (req.file) {
       try {

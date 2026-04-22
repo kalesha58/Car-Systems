@@ -689,7 +689,7 @@ const InventoryScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, {backgroundColor: theme.background}]}>
-      <CustomHeader title={t('dealer.inventory')} />
+      <CustomHeader title={t('dealer.inventory')} showNotificationIcon={false} />
       {renderBanner()}
       
       {/* Only show tabs if more than one tab is available */}

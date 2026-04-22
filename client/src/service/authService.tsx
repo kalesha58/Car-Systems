@@ -7,13 +7,10 @@ import { appAxios } from './apiInterceptors';
 
 export const customerLogin = async (email: string, password: string) => {
   try {
-    // Trim email and password to remove any whitespace that might cause authentication issues
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    
+    // Send credentials exactly as entered by the user.
     const response = await appAxios.post('/auth/login', {
-      email: trimmedEmail,
-      password: trimmedPassword,
+      email,
+      password,
     });
 
       const data = response.data;
@@ -72,11 +69,7 @@ export const customerSignup = async (
   role?: 'user' | 'dealer'
 ) => {
   try {
-    // Trim all fields to remove any whitespace
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    
+    // Send all fields exactly as entered by the user.
     const requestBody: {
       name: string;
       email: string;
@@ -84,10 +77,10 @@ export const customerSignup = async (
       password: string;
       role?: 'user' | 'dealer';
     } = {
-      name: trimmedName,
-      email: trimmedEmail,
+      name,
+      email,
       phone,
-      password: trimmedPassword,
+      password,
     };
 
     // Only include role if provided (defaults to 'user' on backend)
@@ -106,13 +99,10 @@ export const customerSignup = async (
 
 export const deliveryLogin = async(email: string, password: string)=>{
     try {
-        // Trim email and password to remove any whitespace
-        const trimmedEmail = email.trim();
-        const trimmedPassword = password.trim();
-        
+        // Send credentials exactly as entered by the user.
         const response = await axios.post(`${BASE_URL}/delivery/login`, { 
-            email: trimmedEmail, 
-            password: trimmedPassword 
+            email, 
+            password
         })
         const { accessToken,refreshToken,deliveryPartner}=response.data
         tokenStorage.set("accessToken", accessToken)

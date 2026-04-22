@@ -54,7 +54,8 @@ export function resolveDealerOnboardingDestination(
     return 'BusinessRegistration';
   }
   if (snapshot.status === 'pending') {
-    return 'DealerPendingApproval';
+    // Keep pending dealers in the dealer dashboard flow; feature-level permissions still gate inventory actions.
+    return 'DealerTabs';
   }
   if (snapshot.status === 'approved') {
     return 'DealerTabs';

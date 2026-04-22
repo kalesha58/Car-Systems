@@ -344,6 +344,8 @@
     "businessRegistrationSubmitted": "Business registration submitted successfully. Your request is pending admin approval.",
     "failedToSubmitRegistration": "Failed to submit business registration. Please try again.",
     "businessInformation": "Business Information",
+    "status": "Application status",
+    "storeStatus": "Store status",
     "payoutDetails": "Payout Details",
     "registeredOn": "Registered On",
     "lastUpdated": "Last Updated",

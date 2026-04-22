@@ -6,12 +6,12 @@ import { Platform } from "react-native"
 // export const SOCKET_URL = 'https://car-systems.onrender.com';
 // export const BASE_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev/api';
 // export const SOCKET_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev';
-//export const BASE_URL = 'https://car-systems.onrender.com/api';
-//export const SOCKET_URL = 'https://car-systems.onrender.com';
 
 //export const BASE_URL = 'http://82.29.162.228:3007/api';
 //export const SOCKET_URL = 'http://82.29.162.228:3007';
 
+// export const BASE_URL = 'https://car-systems.onrender.com/api';
+// export const SOCKET_URL = 'https://car-systems.onrender.com';
 
 export const BASE_URL = 'https://api.motonode.in/api';
 export const SOCKET_URL = 'https://api.motonode.in';

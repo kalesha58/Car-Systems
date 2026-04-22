@@ -37,13 +37,10 @@ const WalletSection = () => {
       label: t('profile.myOrders'), 
       onPress: () => navigation.navigate('OrdersList' as never) 
     });
-  } else {
-    // For dealers, show support
-    items.push({ 
-      icon: 'help-circle-outline', 
-      label: t('common.support') || 'Need help?', 
-      onPress: () => {} 
-    });
+  }
+
+  if (items.length === 0) {
+    return null;
   }
 
   return (

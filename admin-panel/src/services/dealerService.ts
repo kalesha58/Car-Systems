@@ -31,6 +31,11 @@ export interface IDealerListResponse {
     createdAt?: string;
     rating?: number;
     totalOrders?: number;
+    dealerType?: string;
+    suspensionReason?: string;
+    registrationDate?: string;
+    approvalDate?: string;
+    businessRegistrationId?: string;
   }>;
   pagination: {
     page: string | number;

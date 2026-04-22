@@ -12,6 +12,7 @@ import NotificationIcon from '@components/common/NotificationIcon';
 interface CustomHeaderProps {
   title: string;
   search?: boolean;
+  showNotificationIcon?: boolean;
   rightComponent?: ReactNode;
   onSearchPress?: () => void;
   transparent?: boolean;
@@ -21,6 +22,7 @@ interface CustomHeaderProps {
 const CustomHeader: FC<CustomHeaderProps> = ({
   title,
   search,
+  showNotificationIcon = true,
   rightComponent,
   onSearchPress,
   transparent = false,
@@ -80,7 +82,7 @@ const CustomHeader: FC<CustomHeaderProps> = ({
                   <Icon name="search" color={colors.text} size={RFValue(20)} />
                 </Pressable>
               )}
-              {!search && <NotificationIcon />}
+              {!search && showNotificationIcon && <NotificationIcon />}
             </>
           )}
         </View>

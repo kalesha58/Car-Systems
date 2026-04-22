@@ -54,6 +54,20 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
     }
   };
 
+  const registrationStatusLabel = (status: string | undefined) => {
+    const s = status?.toLowerCase();
+    if (s === 'pending') {
+      return t('dealer.pending');
+    }
+    if (s === 'approved') {
+      return t('dealer.approved');
+    }
+    if (s === 'rejected') {
+      return t('dealer.rejected');
+    }
+    return status ?? '';
+  };
+
   const handleDocumentPress = (url: string) => {
     if (url) {
       Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
@@ -296,7 +310,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
 
         <View style={[styles.infoRow, styles.infoRowLast]}>
           <CustomText style={styles.infoLabel}>
-            {t('dealer.status') || 'Status'}
+            {t('dealer.status', {defaultValue: 'Application status'})}
           </CustomText>
           <View
             style={[
@@ -305,7 +319,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
             ]}>
             <CustomText
               style={[styles.statusText, {color: getStatusColor(businessRegistration.status)}]}>
-              {businessRegistration.status}
+              {registrationStatusLabel(businessRegistration.status)}
             </CustomText>
           </View>
         </View>
@@ -314,7 +328,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
       {/* Store Status */}
       <View style={styles.card}>
         <CustomText style={styles.cardTitle}>
-          {t('dealer.storeStatus') || 'Store Status'}
+          {t('dealer.storeStatus', {defaultValue: 'Store status'})}
         </CustomText>
         <View style={[styles.infoRow, styles.infoRowLast]}>
           <CustomText style={styles.infoLabel}>

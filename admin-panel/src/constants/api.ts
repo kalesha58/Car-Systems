@@ -5,8 +5,8 @@
 
 //export const API_BASE_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev';
 //export const API_BASE_URL = 'http://localhost:4001/';
-export const API_BASE_URL = 'https://car-systems.onrender.com/';
-//export const API_BASE_URL= 'https://api.motonode.in/';
+// export const API_BASE_URL = 'https://car-systems.onrender.com/';
+export const API_BASE_URL = 'https://api.motonode.in/';
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
