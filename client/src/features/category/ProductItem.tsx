@@ -56,52 +56,46 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
   const styles = StyleSheet.create({
     container: {
-      width: '45%',
-      borderRadius: 10,
+      width: '46%',
+      borderRadius: 16,
       backgroundColor: colors.cardBackground,
-      marginBottom: 10,
-      marginLeft: 10,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
-      position: 'relative',
+      marginBottom: 16,
+      marginLeft: '2.5%',
+      borderWidth: 1,
+      borderColor: colors.border + '50',
+      overflow: 'hidden',
     },
     imageContainer: {
-      height: screenHeight * 0.12,
+      height: screenHeight * 0.15,
       width: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 12,
-      backgroundColor: '#f4f4f4',
-      borderTopLeftRadius: 10,
-      borderTopRightRadius: 10,
-      overflow: 'hidden',
+      backgroundColor: '#f9f9f9',
       position: 'relative',
     },
     actionButtons: {
       position: 'absolute',
-      top: 6,
-      right: 6,
-      flexDirection: 'row',
-      gap: 6,
+      top: 8,
+      right: 8,
+      flexDirection: 'column',
+      gap: 8,
     },
     actionButton: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     },
     image: {
       height: '100%',
       width: '100%',
-      aspectRatio: 1 / 1,
       resizeMode: 'contain',
     },
     placeholderImage: {
@@ -110,26 +104,19 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
       backgroundColor: '#f4f4f4',
     },
     content: {
-      flex: 1,
-      paddingHorizontal: 12,
-      paddingTop: 10,
-      paddingBottom: 12,
+      padding: 12,
     },
     dealerBadge: {
-      flexDirection: 'row',
-      padding: 4,
-      borderRadius: 4,
-      alignItems: 'center',
-      backgroundColor: colors.backgroundSecondary,
-      alignSelf: 'flex-start',
       marginBottom: 4,
     },
     priceContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: 10,
-      marginTop: 'auto',
+      marginTop: 8,
+    },
+    priceInfo: {
+      flex: 1,
     },
   });
 
@@ -167,8 +154,8 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
             activeOpacity={0.8}>
             <Icon
               name={favorite ? 'heart' : 'heart-outline'}
-              color={favorite ? '#ff3040' : '#fff'}
-              size={RFValue(14)}
+              color={favorite ? '#ff3040' : colors.text}
+              size={RFValue(16)}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -177,8 +164,8 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
             activeOpacity={0.8}>
             <Icon
               name={inCompare ? 'git-compare' : 'git-compare-outline'}
-              color={inCompare ? Colors.secondary : '#fff'}
-              size={RFValue(14)}
+              color={inCompare ? Colors.secondary : colors.text}
+              size={RFValue(16)}
             />
           </TouchableOpacity>
         </View>
@@ -186,34 +173,37 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
       <View style={styles.content}>
         {item.dealer && (
-          <Pressable
+          <TouchableOpacity
             style={styles.dealerBadge}
             onPress={handleDealerPress}
-            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-            <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
+            activeOpacity={0.7}>
+            <CustomText 
+              fontSize={RFValue(9)} 
+              fontFamily={Fonts.Medium}
+              style={{color: Colors.secondary}}>
               {item.dealer.businessName}
             </CustomText>
-          </Pressable>
+          </TouchableOpacity>
         )}
 
         <CustomText
-          fontFamily={Fonts.Medium}
+          fontFamily={Fonts.SemiBold}
           variant="h8"
           numberOfLines={2}
-          style={{marginVertical: 4}}>
+          style={{marginBottom: 4, height: RFValue(32)}}>
           {item.name}
         </CustomText>
 
         <View style={styles.priceContainer}>
-          <View>
-            <CustomText variant="h8" fontFamily={Fonts.Medium}>
+          <View style={styles.priceInfo}>
+            <CustomText variant="h7" fontFamily={Fonts.Bold}>
               ₹{item.price?.toLocaleString()}
             </CustomText>
             {item.originalPrice && item.originalPrice > item.price && (
               <CustomText
                 fontFamily={Fonts.Medium}
-                variant="h8"
-                style={{opacity: 0.8, textDecorationLine: 'line-through'}}>
+                fontSize={RFValue(9)}
+                style={{opacity: 0.6, textDecorationLine: 'line-through'}}>
                 ₹{item.originalPrice.toLocaleString()}
               </CustomText>
             )}

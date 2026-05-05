@@ -17,6 +17,10 @@ interface CustomHeaderProps {
   onSearchPress?: () => void;
   transparent?: boolean;
   showBackButton?: boolean;
+  backgroundColor?: string;
+  titleColor?: string;
+  iconColor?: string;
+  onBackPress?: () => void;
 }
 
 const CustomHeader: FC<CustomHeaderProps> = ({
@@ -27,6 +31,10 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   onSearchPress,
   transparent = false,
   showBackButton = true,
+  backgroundColor,
+  titleColor,
+  iconColor,
+  onBackPress,
 }) => {
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
@@ -39,13 +47,14 @@ const CustomHeader: FC<CustomHeaderProps> = ({
       height: 60,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: transparent ? 'transparent' : colors.cardBackground,
-      borderBottomWidth: transparent ? 0 : 0.6,
+      backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground),
+      borderBottomWidth: backgroundColor ? 0 : (transparent ? 0 : 0.6),
       borderColor: colors.border,
     },
     text: {
       textAlign: 'center',
       flex: 1,
+      color: titleColor || colors.text,
     },
     iconButton: {
       padding: 4,
@@ -53,16 +62,18 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   });
 
   return (
-    <View style={{paddingTop: transparent ? insets.top : insets.top, backgroundColor: transparent ? 'transparent' : colors.cardBackground}}>
+    <View style={{paddingTop: insets.top, backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground)}}>
       <View style={styles.flexRow}>
         {showBackButton ? (
           <Pressable 
             onPress={() => {
-              if (navigation.canGoBack()) {
+              if (onBackPress) {
+                onBackPress();
+              } else if (navigation.canGoBack()) {
                 navigation.goBack();
               }
             }}>
-            <Icon name="chevron-back" color={colors.text} size={RFValue(16)} />
+            <Icon name="chevron-back" color={iconColor || colors.text} size={RFValue(16)} />
           </Pressable>
         ) : (
           <View style={{width: RFValue(16)}} />
@@ -79,10 +90,10 @@ const CustomHeader: FC<CustomHeaderProps> = ({
             <>
               {search && (
                 <Pressable onPress={onSearchPress} style={styles.iconButton}>
-                  <Icon name="search" color={colors.text} size={RFValue(20)} />
+                  <Icon name="search" color={iconColor || colors.text} size={RFValue(20)} />
                 </Pressable>
               )}
-              {!search && showNotificationIcon && <NotificationIcon />}
+              {!search && showNotificationIcon && <NotificationIcon color={iconColor} />}
             </>
           )}
         </View>

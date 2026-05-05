@@ -9,10 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   Switch,
+  Platform,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
@@ -67,7 +70,8 @@ const getAllowedServiceTypes = (businessType: string | undefined): ServiceType[]
 const AddEditServiceScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
+  const insets = useSafeAreaInsets();
   const {showSuccess, showError} = useToast();
   const {t} = useTranslation();
   const {businessRegistration} = useBusinessRegistration();
@@ -141,7 +145,7 @@ const AddEditServiceScreen: React.FC = () => {
       {
         mediaType: 'photo',
         // Downscale/compress to reduce upload payload and avoid 413 errors.
-        quality: 0.65,
+        quality: 0.8,
         maxWidth: 1600,
         maxHeight: 1600,
         includeBase64: false,
@@ -320,90 +324,172 @@ const AddEditServiceScreen: React.FC = () => {
     parseInt(durationMinutes) >= 1 &&
     !isSubmitting;
 
+  const cardShadow = {
+    shadowColor: colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: isDark ? 0.35 : 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.backgroundSecondary,
     },
     scrollContent: {
-      padding: screenWidth * 0.04,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingTop: screenHeight * 0.018,
       paddingBottom: screenHeight * 0.05,
     },
+    formCard: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: RFValue(14),
+      padding: screenWidth * 0.04,
+      borderWidth: isDark ? 1 : 0,
+      borderColor: colors.border,
+      ...cardShadow,
+    },
+    row: {
+      flexDirection: 'row',
+      gap: screenWidth * 0.03,
+    },
+    halfField: {
+      flex: 1,
+      minWidth: 0,
+    },
     section: {
-      marginBottom: screenHeight * 0.02,
+      marginBottom: screenHeight * 0.022,
     },
     label: {
-      fontSize: RFValue(8),
+      fontSize: RFValue(9),
       fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginBottom: screenHeight * 0.008,
-      opacity: 0.8,
+      color: colors.textSecondary,
+      marginBottom: screenHeight * 0.01,
+      letterSpacing: 0.2,
     },
     required: {
       color: colors.error,
     },
+    helpText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Regular,
+      color: colors.error,
+      marginTop: screenHeight * 0.008,
+    },
     textInputContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.01,
-      minHeight: screenHeight * 0.05,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.012,
+      minHeight: screenHeight * 0.056,
+      ...cardShadow,
     },
     textInput: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.text,
+      paddingVertical: 0,
     },
     textInputMultiline: {
-      minHeight: screenHeight * 0.12,
+      minHeight: screenHeight * 0.14,
       textAlignVertical: 'top',
+      paddingTop: 2,
     },
     switchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
+      paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.012,
+      minHeight: screenHeight * 0.056,
+      ...cardShadow,
     },
     switchLabel: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.text,
+      flex: 1,
+      marginRight: screenWidth * 0.02,
+    },
+    hintRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
+      borderRadius: RFValue(12),
+      borderWidth: 1,
+      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.014,
+      ...cardShadow,
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      justifyContent: 'center',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
+      borderRadius: RFValue(12),
       borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.016,
+      ...cardShadow,
     },
     buttonText: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Medium,
+      color: colors.winterBlueDark,
+      marginLeft: screenWidth * 0.025,
+    },
+    chipGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: screenWidth * 0.025,
+      marginTop: screenHeight * 0.012,
+    },
+    chipPill: {
+      paddingHorizontal: screenWidth * 0.04,
+      paddingVertical: screenHeight * 0.012,
+      borderRadius: RFValue(10),
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      ...cardShadow,
+    },
+    chipPillSelected: {
+      borderColor: colors.secondary,
+      backgroundColor: colors.secondary + '22',
+    },
+    chipPillText: {
+      fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
       color: colors.text,
-      marginLeft: screenWidth * 0.02,
+    },
+    chipPillTextSelected: {
+      color: colors.secondary,
     },
     imagesContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.02,
-      marginTop: screenHeight * 0.01,
+      gap: screenWidth * 0.03,
+      marginTop: screenHeight * 0.012,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.25,
-      height: screenWidth * 0.25,
-      borderRadius: 8,
+      width: screenWidth * 0.26,
+      height: screenWidth * 0.26,
+      borderRadius: RFValue(12),
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...cardShadow,
     },
     image: {
       width: '100%',
@@ -412,30 +498,31 @@ const AddEditServiceScreen: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 4,
-      right: 4,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      borderRadius: 12,
-      width: 24,
-      height: 24,
+      top: 6,
+      right: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      borderRadius: 14,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
     },
     locationContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.014,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: screenHeight * 0.01,
+      marginTop: screenHeight * 0.012,
+      ...cardShadow,
     },
     locationText: {
       flex: 1,
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Regular,
       color: colors.text,
       marginLeft: screenWidth * 0.02,
@@ -448,54 +535,52 @@ const AddEditServiceScreen: React.FC = () => {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: colors.background,
+      backgroundColor: colors.cardBackground,
       paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.015,
-      paddingBottom: screenHeight * 0.02,
-      borderTopWidth: 1,
+      paddingVertical: screenHeight * 0.018,
+      paddingBottom: screenHeight * 0.028,
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
       shadowColor: colors.black,
-      shadowOffset: {
-        width: 0,
-        height: -2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 5,
+      shadowOffset: {width: 0, height: -4},
+      shadowOpacity: isDark ? 0.4 : 0.12,
+      shadowRadius: 12,
+      elevation: 12,
     },
     editDeleteRow: {
       flexDirection: 'row',
-      gap: screenWidth * 0.02,
+      gap: screenWidth * 0.025,
     },
-    submitButton: {
-      backgroundColor: colors.secondary,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-      gap: screenWidth * 0.02,
+    submitButtonTouchable: {
+      borderRadius: RFValue(14),
+      overflow: 'hidden',
+      width: '100%',
     },
     editButton: {
       flex: 1,
+      minWidth: 0,
     },
     submitButtonDisabled: {
       backgroundColor: colors.disabled,
-      opacity: 0.6,
     },
     submitButtonText: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
     deleteButton: {
       backgroundColor: colors.error,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+      borderRadius: RFValue(14),
+      paddingVertical: screenHeight * 0.018,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
+      shadowColor: colors.error,
+      shadowOffset: {width: 0, height: 3},
+      shadowOpacity: 0.35,
+      shadowRadius: 6,
+      elevation: 4,
     },
     deleteButtonHalf: {
       flex: 1,
@@ -505,314 +590,402 @@ const AddEditServiceScreen: React.FC = () => {
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
+    primaryGradient: {
+      paddingVertical: screenHeight * 0.018,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: screenWidth * 0.02,
+    },
+    primaryButtonShadow: {
+      shadowColor: colors.secondary,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.35,
+      shadowRadius: 8,
+      elevation: 6,
+      alignSelf: 'stretch',
+    },
+    fullWidthPrimary: {
+      width: '100%',
+    },
   });
+
+  const gradientPrimary: [string, string] = [
+    colors.secondary,
+    isDark ? '#0b5c16' : '#095a14',
+  ];
+  const stickyFooterBottomOffset = Math.max(
+    insets.bottom + (Platform.OS === 'android' ? 8 : 0),
+    screenHeight * 0.012,
+  );
+  const stickyFooterContentHeight = isEditMode ? 132 : 112;
+  const scrollBottomInset = stickyFooterBottomOffset + stickyFooterContentHeight;
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={isEditMode ? t('dealer.editService') : t('dealer.addService')} />
+      <CustomHeader
+        title={isEditMode ? t('dealer.editService') : t('dealer.addService')}
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+        showNotificationIcon={false}
+        rightComponent={<View style={{width: RFValue(28)}} />}
+      />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
+        contentContainerStyle={[styles.scrollContent, {paddingBottom: scrollBottomInset}]}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.serviceName')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterServiceName')}
-              placeholderTextColor={colors.disabled}
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.price')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterPrice')}
-              placeholderTextColor={colors.disabled}
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.durationMinutes')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterDuration')}
-              placeholderTextColor={colors.disabled}
-              value={durationMinutes}
-              onChangeText={setDurationMinutes}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.switchContainer}>
-            <CustomText style={styles.switchLabel}>{t('dealer.homeService')} <CustomText style={styles.required}>*</CustomText></CustomText>
-            <Switch
-              value={homeService}
-              onValueChange={setHomeService}
-              trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
-              thumbColor={homeService ? colors.secondary : colors.disabled}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
-          <View style={[styles.button, !isExistingServiceTypeAllowed && {opacity: 0.6}]}>
-            <Icon name="construct-outline" size={RFValue(16)} color={colors.text} />
-            <CustomText style={styles.buttonText}>
-              {serviceType || t('dealer.selectServiceType')}
-            </CustomText>
-          </View>
-          {!isExistingServiceTypeAllowed && (
-            <CustomText style={[styles.label, {color: colors.error, fontSize: RFValue(7), marginTop: screenHeight * 0.005}]}>
-              {t('dealer.serviceTypeNotAllowed') || 'This service type is not allowed for your business type. You can edit other fields but cannot change the service type.'}
-            </CustomText>
-          )}
-          <View style={styles.imagesContainer}>
-            {allowedServiceTypes.map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.button,
-                  serviceType === type && {backgroundColor: colors.secondary + '20', borderColor: colors.secondary},
-                  !isExistingServiceTypeAllowed && isEditMode && {opacity: 0.5},
-                ]}
-                onPress={() => {
-                  if (!isExistingServiceTypeAllowed && isEditMode) {
-                    return; // Disable changing service type if existing type is not allowed
-                  }
-                  setServiceType(type);
-                  if (type === 'car_automobile') {
-                    setVehicleType('Car');
-                  } else if (type === 'bike_automobile') {
-                    setVehicleType('Bike');
-                  } else {
-                    setVehicleType(undefined);
-                    setVehicleModel('');
-                    setVehicleBrand('');
-                  }
-                }}
-                disabled={!isExistingServiceTypeAllowed && isEditMode}>
-                <CustomText style={[styles.buttonText, serviceType === type && {color: colors.secondary}]}>
-                  {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </CustomText>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {(serviceType === 'car_automobile' || serviceType === 'bike_automobile') && (
+        <View style={styles.formCard}>
           <View style={styles.section}>
-            <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
-            <View style={styles.button}>
-              <Icon name="car-outline" size={RFValue(16)} color={colors.text} />
-              <CustomText style={styles.buttonText}>
-                {vehicleType || t('dealer.selectVehicleType')}
+            <CustomText style={styles.label}>
+              {t('dealer.serviceName')} <CustomText style={styles.required}>*</CustomText>
+            </CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder={t('dealer.enterServiceName')}
+                placeholderTextColor={colors.disabled}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.section, styles.row]}>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.price')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterPrice')}
+                  placeholderTextColor={colors.disabled}
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.durationMinutes')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterDuration')}
+                  placeholderTextColor={colors.disabled}
+                  value={durationMinutes}
+                  onChangeText={setDurationMinutes}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.switchContainer}>
+              <CustomText style={styles.switchLabel}>
+                {t('dealer.homeService')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <Switch
+                value={homeService}
+                onValueChange={setHomeService}
+                trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+                thumbColor={homeService ? colors.secondary : colors.disabled}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
+            <View style={[styles.hintRow, !isExistingServiceTypeAllowed && {opacity: 0.65}]}>
+              <Icon name="construct-outline" size={RFValue(18)} color={colors.winterBlueDark} />
+              <CustomText
+                style={[
+                  styles.buttonText,
+                  ...(!serviceType ? [{color: colors.disabled}] : []),
+                ]}>
+                {serviceType || t('dealer.selectServiceType')}
               </CustomText>
             </View>
-            <View style={styles.imagesContainer}>
-              {(['Car', 'Bike'] as const).map((type) => (
+            {!isExistingServiceTypeAllowed && (
+              <CustomText style={styles.helpText}>
+                {t('dealer.serviceTypeNotAllowed') ||
+                  'This service type is not allowed for your business type. You can edit other fields but cannot change the service type.'}
+              </CustomText>
+            )}
+            <View style={styles.chipGrid}>
+              {allowedServiceTypes.map(type => (
                 <TouchableOpacity
                   key={type}
                   style={[
-                    styles.button,
-                    vehicleType === type && {backgroundColor: colors.secondary + '20', borderColor: colors.secondary},
+                    styles.chipPill,
+                    serviceType === type && styles.chipPillSelected,
+                    !isExistingServiceTypeAllowed && isEditMode && {opacity: 0.5},
                   ]}
                   onPress={() => {
-                    setVehicleType(type);
-                    if (serviceType === 'car_automobile' && type !== 'Car') {
-                      setServiceType('bike_automobile');
-                    } else if (serviceType === 'bike_automobile' && type !== 'Bike') {
-                      setServiceType('car_automobile');
+                    if (!isExistingServiceTypeAllowed && isEditMode) {
+                      return;
                     }
-                  }}>
-                  <CustomText style={[styles.buttonText, vehicleType === type && {color: colors.secondary}]}>
-                    {type}
+                    setServiceType(type);
+                    if (type === 'car_automobile') {
+                      setVehicleType('Car');
+                    } else if (type === 'bike_automobile') {
+                      setVehicleType('Bike');
+                    } else {
+                      setVehicleType(undefined);
+                      setVehicleModel('');
+                      setVehicleBrand('');
+                    }
+                  }}
+                  disabled={!isExistingServiceTypeAllowed && isEditMode}
+                  activeOpacity={0.75}>
+                  <CustomText
+                    style={[
+                      styles.chipPillText,
+                      serviceType === type && styles.chipPillTextSelected,
+                    ]}>
+                    {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </CustomText>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-        )}
 
-        {serviceType === 'bike_automobile' && (
-          <>
+          {(serviceType === 'car_automobile' || serviceType === 'bike_automobile') && (
             <View style={styles.section}>
-              <CustomText style={styles.label}>{t('dealer.vehicleBrand')}</CustomText>
+              <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
+              <View style={styles.hintRow}>
+                <Icon name="car-outline" size={RFValue(18)} color={colors.winterBlueDark} />
+                <CustomText
+                  style={[
+                    styles.buttonText,
+                    ...(!vehicleType ? [{color: colors.disabled}] : []),
+                  ]}>
+                  {vehicleType || t('dealer.selectVehicleType')}
+                </CustomText>
+              </View>
+              <View style={styles.chipGrid}>
+                {(['Car', 'Bike'] as const).map(type => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[
+                      styles.chipPill,
+                      vehicleType === type && styles.chipPillSelected,
+                    ]}
+                    onPress={() => {
+                      setVehicleType(type);
+                      if (serviceType === 'car_automobile' && type !== 'Car') {
+                        setServiceType('bike_automobile');
+                      } else if (serviceType === 'bike_automobile' && type !== 'Bike') {
+                        setServiceType('car_automobile');
+                      }
+                    }}
+                    activeOpacity={0.75}>
+                    <CustomText
+                      style={[
+                        styles.chipPillText,
+                        vehicleType === type && styles.chipPillTextSelected,
+                      ]}>
+                      {type}
+                    </CustomText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {serviceType === 'bike_automobile' && (
+            <>
+              <View style={styles.section}>
+                <CustomText style={styles.label}>{t('dealer.vehicleBrand')}</CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={t('dealer.enterVehicleBrand')}
+                    placeholderTextColor={colors.disabled}
+                    value={vehicleBrand}
+                    onChangeText={setVehicleBrand}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <CustomText style={styles.label}>{t('dealer.vehicleModel')}</CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={t('dealer.enterVehicleModel')}
+                    placeholderTextColor={colors.disabled}
+                    value={vehicleModel}
+                    onChangeText={setVehicleModel}
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
+          {(serviceType === 'car_wash' || serviceType === 'car_detailing') && (
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
               <View style={styles.textInputContainer}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('dealer.enterVehicleBrand')}
+                  placeholder={t('dealer.enterSubCategory')}
                   placeholderTextColor={colors.disabled}
-                  value={vehicleBrand}
-                  onChangeText={setVehicleBrand}
+                  value={serviceSubCategory}
+                  onChangeText={setServiceSubCategory}
                 />
               </View>
             </View>
+          )}
 
-            <View style={styles.section}>
-              <CustomText style={styles.label}>{t('dealer.vehicleModel')}</CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder={t('dealer.enterVehicleModel')}
-                  placeholderTextColor={colors.disabled}
-                  value={vehicleModel}
-                  onChangeText={setVehicleModel}
-                />
-              </View>
-            </View>
-          </>
-        )}
-
-        {(serviceType === 'car_wash' || serviceType === 'car_detailing') && (
           <View style={styles.section}>
-            <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
+            <CustomText style={styles.label}>{t('dealer.category')}</CustomText>
             <View style={styles.textInputContainer}>
               <TextInput
                 style={styles.textInput}
-                placeholder={t('dealer.enterSubCategory')}
+                placeholder={t('dealer.enterCategory')}
                 placeholderTextColor={colors.disabled}
-                value={serviceSubCategory}
-                onChangeText={setServiceSubCategory}
+                value={category}
+                onChangeText={setCategory}
               />
             </View>
           </View>
-        )}
 
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.category')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterCategory')}
-              placeholderTextColor={colors.disabled}
-              value={category}
-              onChangeText={setCategory}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={[styles.textInput, styles.textInputMultiline]}
-              placeholder={t('dealer.enterDescription')}
-              placeholderTextColor={colors.disabled}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.images')}</CustomText>
-          <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
-            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
-            <CustomText style={styles.buttonText}>
-              {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
-            </CustomText>
-          </TouchableOpacity>
-          {imageUris.length > 0 && (
-            <View style={styles.imagesContainer}>
-              {imageUris.map((uri, index) => (
-                <View key={index} style={styles.imageWrapper}>
-                  <Image source={{uri}} style={styles.image} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => removeImage(index)}>
-                    <Icon name="close" size={RFValue(12)} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              ))}
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={[styles.textInput, styles.textInputMultiline]}
+                placeholder={t('dealer.enterDescription')}
+                placeholderTextColor={colors.disabled}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
             </View>
-          )}
-        </View>
+          </View>
 
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.location')}</CustomText>
-          {!location ? (
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleLocationPicker}
-              disabled={isGettingLocation}>
-              {isGettingLocation ? (
-                <ActivityIndicator size="small" color={colors.text} />
-              ) : (
-                <Icon name="location-outline" size={RFValue(16)} color={colors.text} />
-              )}
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.images')}</CustomText>
+            <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.8}>
+              <Icon name="images-outline" size={RFValue(20)} color={colors.winterBlueDark} />
               <CustomText style={styles.buttonText}>
-                {isGettingLocation ? t('dealer.gettingLocation') : t('dealer.addLocation')}
+                {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
               </CustomText>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.locationContainer}>
-              <Icon name="location" size={RFValue(16)} color={colors.secondary} />
-              <CustomText style={styles.locationText} numberOfLines={2}>
-                {location.address || location.formattedAddress}
-              </CustomText>
-              <TouchableOpacity style={styles.removeLocationButton} onPress={removeLocation}>
-                <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+            {imageUris.length > 0 && (
+              <View style={styles.imagesContainer}>
+                {imageUris.map((uri, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{uri}} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => removeImage(index)}>
+                      <Icon name="close" size={RFValue(14)} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={[styles.section, {marginBottom: 0}]}>
+            <CustomText style={styles.label}>{t('dealer.location')}</CustomText>
+            {!location ? (
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleLocationPicker}
+                disabled={isGettingLocation}
+                activeOpacity={0.8}>
+                {isGettingLocation ? (
+                  <ActivityIndicator size="small" color={colors.winterBlueDark} />
+                ) : (
+                  <Icon name="location-outline" size={RFValue(20)} color={colors.winterBlueDark} />
+                )}
+                <CustomText style={styles.buttonText}>
+                  {isGettingLocation ? t('dealer.gettingLocation') : t('dealer.addLocation')}
+                </CustomText>
               </TouchableOpacity>
-            </View>
-          )}
+            ) : (
+              <View style={styles.locationContainer}>
+                <Icon name="location" size={RFValue(18)} color={colors.secondary} />
+                <CustomText style={styles.locationText} numberOfLines={2}>
+                  {location.address || location.formattedAddress}
+                </CustomText>
+                <TouchableOpacity style={styles.removeLocationButton} onPress={removeLocation}>
+                  <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Sticky Button Container */}
-      <View style={styles.stickyButtonContainer}>
+      <View style={[styles.stickyButtonContainer, {bottom: stickyFooterBottomOffset}]}>
         {isEditMode ? (
           <View style={styles.editDeleteRow}>
-            <TouchableOpacity
-              style={[styles.submitButton, styles.editButton, !isFormValid && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={!isFormValid}>
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Icon name="create-outline" size={RFValue(16)} color="#fff" />
-                  <CustomText style={styles.submitButtonText}>
-                    {t('dealer.updateService')}
-                  </CustomText>
-                </>
-              )}
-            </TouchableOpacity>
+            <View
+              style={[
+                styles.editButton,
+                (isFormValid || isSubmitting) && styles.primaryButtonShadow,
+              ]}>
+              <TouchableOpacity
+                style={styles.submitButtonTouchable}
+                onPress={handleSubmit}
+                disabled={!isFormValid}
+                activeOpacity={0.88}>
+                {isSubmitting ? (
+                  <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                    <ActivityIndicator size="small" color="#fff" />
+                  </LinearGradient>
+                ) : isFormValid ? (
+                  <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                    <Icon name="create-outline" size={RFValue(18)} color="#fff" />
+                    <CustomText style={styles.submitButtonText}>{t('dealer.updateService')}</CustomText>
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.primaryGradient, styles.submitButtonDisabled]}>
+                    <Icon name="create-outline" size={RFValue(18)} color="rgba(255,255,255,0.85)" />
+                    <CustomText style={styles.submitButtonText}>{t('dealer.updateService')}</CustomText>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={[styles.deleteButton, styles.deleteButtonHalf]}
               onPress={handleDelete}
-              disabled={isSubmitting}>
-              <Icon name="trash-outline" size={RFValue(16)} color="#fff" />
+              disabled={isSubmitting}
+              activeOpacity={0.88}>
+              <Icon name="trash-outline" size={RFValue(17)} color="#fff" />
               <CustomText style={styles.deleteButtonText}>{t('dealer.deleteService')}</CustomText>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={!isFormValid}>
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <CustomText style={styles.submitButtonText}>
-                {t('dealer.createService')}
-              </CustomText>
-            )}
-          </TouchableOpacity>
+          <View style={[styles.primaryButtonShadow, styles.fullWidthPrimary]}>
+            <TouchableOpacity
+              style={styles.submitButtonTouchable}
+              onPress={handleSubmit}
+              disabled={!isFormValid}
+              activeOpacity={0.88}>
+              {isSubmitting ? (
+                <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </LinearGradient>
+              ) : isFormValid ? (
+                <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                  <CustomText style={styles.submitButtonText}>{t('dealer.createService')}</CustomText>
+                </LinearGradient>
+              ) : (
+                <View style={[styles.primaryGradient, styles.submitButtonDisabled]}>
+                  <CustomText style={styles.submitButtonText}>{t('dealer.createService')}</CustomText>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     </View>

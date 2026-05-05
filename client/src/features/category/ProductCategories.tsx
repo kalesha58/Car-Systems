@@ -353,7 +353,7 @@ const ProductCategories = () => {
         if (fetchedItems.length > 0) {
           console.log('[All Products] First product sample:', {
             id: fetchedItems[0].id,
-            name: fetchedItems[0].name,
+            name: (fetchedItems[0] as IProduct).name,
             dealerId: (fetchedItems[0] as IProduct).dealerId,
             dealer: (fetchedItems[0] as IProduct).dealer,
           });
@@ -461,6 +461,9 @@ const ProductCategories = () => {
 
   const handleFilterApply = (appliedFilters: IFilterState) => {
     setFilters(appliedFilters);
+    if (appliedFilters.sort) {
+      setCurrentSort(appliedFilters.sort as SortOption);
+    }
   };
 
   const handleFilterPress = () => {
@@ -781,51 +784,43 @@ const ProductCategories = () => {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: colors.backgroundSecondary,
-      borderRadius: 10,
-      borderWidth: 0.6,
-      borderColor: colors.border,
-      marginHorizontal: 10,
-      marginTop: 10,
-      marginBottom: 10,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginTop: 8,
+      marginBottom: 4,
       paddingHorizontal: 12,
-      minHeight: 50,
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     searchInput: {
       flex: 1,
-      fontSize: RFValue(14),
+      fontSize: RFValue(13),
       fontFamily: Fonts.Medium,
       color: colors.text,
-      paddingVertical: 12,
-      paddingHorizontal: 8,
+      marginLeft: 8,
     },
     searchIconButton: {
-      padding: 8,
+      padding: 4,
     },
     searchDivider: {
       width: 1,
-      height: 24,
+      height: 20,
       backgroundColor: colors.border,
       marginHorizontal: 8,
     },
-    searchResultsInfo: {
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      paddingBottom: 4,
-    },
     headerButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       justifyContent: 'center',
       alignItems: 'center',
-    },
-    iconButton: {
-      padding: 4,
+      backgroundColor: colors.backgroundSecondary,
     },
     compareButton: {
       position: 'absolute',
-      bottom: 20,
-      left: 20,
+      bottom: 24,
+      right: 24,
       width: 56,
       height: 56,
       borderRadius: 28,
@@ -851,140 +846,106 @@ const ProductCategories = () => {
       borderWidth: 2,
       borderColor: '#fff',
     },
+    filterSection: {
+      backgroundColor: colors.background,
+      paddingBottom: 8,
+    },
   });
 
   return (
     <View style={styles.mainContainer}>
       <CustomHeader 
         title={getHeaderTitle()} 
-        search 
-        onSearchPress={handleSearchPress}
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
         rightComponent={
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-            <ViewToggle viewMode={viewMode} onToggle={setViewMode} />
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
             <TouchableOpacity
-              style={[styles.headerButton, {backgroundColor: colors.backgroundSecondary}]}
-              onPress={() => setSortModalVisible(true)}
+              style={[styles.headerButton, {backgroundColor: 'rgba(255, 255, 255, 0.2)'}]}
+              onPress={() => setFilterModalVisible(true)}
               activeOpacity={0.7}>
-              <Icon name="swap-vertical-outline" color={colors.text} size={RFValue(18)} />
+              <Icon name="options-outline" color="#fff" size={RFValue(18)} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.headerButton, {backgroundColor: colors.backgroundSecondary}]}
+              style={[styles.headerButton, {backgroundColor: 'rgba(255, 255, 255, 0.2)'}]}
               onPress={handleWishlistPress}
               activeOpacity={0.7}>
-              <Icon name="heart-outline" color={colors.text} size={RFValue(18)} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleSearchPress}
-              activeOpacity={0.7}>
-              <Icon name="search" color={colors.text} size={RFValue(20)} />
+              <Icon name="heart-outline" color="#fff" size={RFValue(18)} />
             </TouchableOpacity>
           </View>
         }
       />
       <View style={styles.subContainer}>
         <View style={styles.contentContainer}>
-        {categoriesLoading ? (
-            <View style={{height: 60, backgroundColor: colors.cardBackground}} />
-        ) : (
-            <CategoryTabs
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
-              categoryCounts={categoryCounts}
-          />
-        )}
-
-          <Breadcrumbs
-            category={selectedCategory}
-            onCategoryPress={() => setSelectedCategory(categories[0])}
-          />
-          
-          {searchVisible && (
-            <View>
-              <View style={styles.searchContainer}>
-                <Icon name="search" color={colors.text} size={RFValue(20)} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={getSearchPlaceholder()}
-                  placeholderTextColor={colors.text + '80'}
-                  value={searchQuery}
-                  onChangeText={handleSearch}
-                  autoFocus
-                  returnKeyType="search"
+          {/* Permanent Search Bar */}
+          <View style={styles.searchContainer}>
+            <Icon name="search" color={colors.text} size={RFValue(18)} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={getSearchPlaceholder()}
+              placeholderTextColor={colors.text + '80'}
+              value={searchQuery}
+              onChangeText={handleSearch}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity 
+                onPress={() => handleSearch('')}
+                style={styles.searchIconButton}>
+                <Icon 
+                  name="close-circle" 
+                  color={colors.text} 
+                  size={RFValue(18)} 
                 />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity 
-                    onPress={() => handleSearch('')}
-                    style={styles.searchIconButton}>
-                    <Icon 
-                      name="close-circle" 
-                      color={colors.text} 
-                      size={RFValue(20)} 
-                    />
-                  </TouchableOpacity>
-                )}
-                <View style={styles.searchDivider} />
-                <TouchableOpacity
-                  style={styles.searchIconButton}
-                  onPress={handleVoiceSearch}
-                  disabled={isVoiceSearching || !isVoiceSearchAvailable()}
-                  activeOpacity={0.7}>
-                  {isVoiceSearching ? (
-                    <ActivityIndicator size="small" color={colors.text} />
-                  ) : (
-                    <Icon
-                      name="mic"
-                      color={isVoiceSearchAvailable() ? colors.text : colors.disabled}
-                      size={RFValue(20)}
-                    />
-                  )}
-                </TouchableOpacity>
-              </View>
-              {!searchQuery.trim() && (
-                <>
-                  <RecentSearches
-                    onSelectSearch={handleSelectSearch}
-                    visible={true}
-                  />
-                  <Suggestions
-                    onSelectSuggestion={handleSelectSearch}
-                    visible={true}
-                  />
-                </>
+              </TouchableOpacity>
+            )}
+            <View style={styles.searchDivider} />
+            <TouchableOpacity
+              style={styles.searchIconButton}
+              onPress={handleVoiceSearch}
+              disabled={isVoiceSearching || !isVoiceSearchAvailable()}
+              activeOpacity={0.7}>
+              {isVoiceSearching ? (
+                <ActivityIndicator size="small" color={colors.text} />
+              ) : (
+                <Icon
+                  name="mic"
+                  color={isVoiceSearchAvailable() ? colors.text : colors.disabled}
+                  size={RFValue(18)}
+                />
               )}
-              {searchQuery.trim() && (
-                <View style={styles.searchResultsInfo}>
-                  <CustomText variant="h7" fontFamily={Fonts.Medium} style={{opacity: 0.7}}>
-                    {sortedItems.length} {sortedItems.length === 1 ? 'result' : 'results'} found
-                    {selectedCategory?.name && ` in ${selectedCategory.name}`}
-                  </CustomText>
-                </View>
-              )}
-            </View>
+            </TouchableOpacity>
+          </View>
+
+          {categoriesLoading ? (
+            <View style={{height: 60, backgroundColor: colors.background}} />
+          ) : (
+            <CategoryTabs
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
+              categoryCounts={categoryCounts}
+            />
           )}
           
-          <QuickFilters
-            onSelectFilter={handleQuickFilter}
-            activeFilter={{...filters, sort: currentSort}}
-          />
-          
-          <FilterBar
-            onFilterPress={handleFilterPress}
-            onTypePress={handleTypePress}
-            onBrandPress={handleBrandPress}
-            selectedType={getSelectedTypeLabel()}
-            selectedBrand={getSelectedBrandLabel()}
-          />
-          
-          <FilterChips
-            filters={filters}
-            onRemoveFilter={handleRemoveFilter}
-            onClearAll={handleClearAllFilters}
-            typeLabel={getSelectedTypeLabel()}
-            brandLabel={getSelectedBrandLabel()}
-          />
+          <View style={{paddingHorizontal: 16, paddingVertical: 8}}>
+            <FilterChips
+              filters={filters}
+              onRemoveFilter={handleRemoveFilter}
+              onClearAll={handleClearAllFilters}
+              typeLabel={getSelectedTypeLabel()}
+              brandLabel={getSelectedBrandLabel()}
+            />
+          </View>
+
+          {searchQuery.trim() !== '' && (
+            <View style={{paddingHorizontal: 16, paddingVertical: 4}}>
+              <CustomText variant="h8" fontFamily={Fonts.Medium} style={{opacity: 0.6}}>
+                Showing {sortedItems.length} results for "{searchQuery}"
+              </CustomText>
+            </View>
+          )}
           
           {itemsLoading ? (
             <ProductList 

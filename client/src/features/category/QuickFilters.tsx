@@ -58,11 +58,9 @@ const QuickFilters: FC<IQuickFiltersProps> = ({onSelectFilter, activeFilter}) =>
 
   const styles = StyleSheet.create({
     container: {
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      backgroundColor: colors.cardBackground,
-      borderBottomWidth: 0.5,
-      borderBottomColor: colors.border,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
     },
     scrollView: {
       flexDirection: 'row',
@@ -70,16 +68,16 @@ const QuickFilters: FC<IQuickFiltersProps> = ({onSelectFilter, activeFilter}) =>
     filterButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 14,
+      paddingHorizontal: 12,
       paddingVertical: 8,
-      borderRadius: 20,
-      marginRight: 8,
+      borderRadius: 10,
+      marginRight: 10,
       backgroundColor: colors.backgroundSecondary,
       borderWidth: 1,
       borderColor: colors.border,
     },
     activeFilterButton: {
-      backgroundColor: Colors.secondary + '20',
+      backgroundColor: Colors.secondary + '15',
       borderColor: Colors.secondary,
     },
     filterIcon: {

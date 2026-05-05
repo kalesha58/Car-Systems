@@ -56,6 +56,7 @@ const PAYOUT_TYPES: IDropdownOption[] = [
 ];
 
 const MAX_SHOP_PHOTOS = 2;
+const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 import { useAuthStore } from '@state/authStore';
 import { refetchUser } from '@service/authService';
@@ -306,6 +307,35 @@ const BusinessRegistrationScreen: React.FC = () => {
     state,
   ]);
 
+  const getValidImagePickerAssets = (
+    assets: NonNullable<ImagePickerResponse['assets']>,
+    allowMultiple: boolean = false,
+  ) => {
+    const oversizedAssets = assets.filter(
+      asset => typeof asset.fileSize === 'number' && asset.fileSize > MAX_UPLOAD_FILE_SIZE_BYTES,
+    );
+
+    if (oversizedAssets.length > 0) {
+      showError(
+        allowMultiple
+          ? 'Some selected images are too large. Please keep each file under 5MB.'
+          : 'Selected image is too large. Please pick a file under 5MB.',
+      );
+    }
+
+    return assets.filter(
+      asset => !asset.fileSize || asset.fileSize <= MAX_UPLOAD_FILE_SIZE_BYTES,
+    );
+  };
+
+  const isDocumentWithinSizeLimit = (file: DocumentPickerResponse) => {
+    if (typeof file.size === 'number' && file.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
+      showError('Selected file is too large. Please pick a file under 5MB.');
+      return false;
+    }
+    return true;
+  };
+
   const pickShopPhotos = () => {
     // Ensure draft is saved BEFORE opening gallery (in case Android recreates activity)
     persistDraft();
@@ -327,6 +357,8 @@ const BusinessRegistrationScreen: React.FC = () => {
       {
         mediaType: 'photo',
         quality: 0.8,
+        maxWidth: 1600,
+        maxHeight: 1600,
         includeBase64: false,
         selectionLimit: MAX_SHOP_PHOTOS - shopPhotoUris.length,
       },
@@ -339,7 +371,7 @@ const BusinessRegistrationScreen: React.FC = () => {
           assetsCount: response.assets?.length || 0,
         });
         if (response.didCancel || response.errorCode) return;
-        const selected = response.assets || [];
+        const selected = getValidImagePickerAssets(response.assets || [], true);
         if (selected.length < 1) return;
         const newUris = selected.map(a => a.uri || '').filter(Boolean);
         if (newUris.length < 1) return;
@@ -386,6 +418,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         });
 
         if (!uri) return;
+        if (!isDocumentWithinSizeLimit(file)) return;
 
         // Validate file type (image or PDF)
         const isImage = mimeType.startsWith('image/');
@@ -839,7 +872,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         } catch (error: any) {
           console.error('Error uploading ID document:', error);
           const errorMessage = error?.message || 'Failed to upload ID document';
-          showError(`${errorMessage}. Please check the document and try again.`);
+          showError(errorMessage);
           setIsSubmitting(false);
           return;
         }
@@ -859,7 +892,7 @@ const BusinessRegistrationScreen: React.FC = () => {
         } catch (error: any) {
           console.error('Error uploading PAN document:', error);
           const errorMessage = error?.message || 'Failed to upload PAN document';
-          showError(`${errorMessage}. Please check the document and try again.`);
+          showError(errorMessage);
           setIsSubmitting(false);
           return;
         }
@@ -1251,7 +1284,12 @@ const BusinessRegistrationScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={isEdit ? (t('dealer.updateRegistration') || 'Update Registration') : (t('dealer.businessRegistration') || 'Business Registration')} />
+      <CustomHeader
+        title={isEdit ? (t('dealer.updateRegistration') || 'Update Registration') : (t('dealer.businessRegistration') || 'Business Registration')}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: screenHeight * 0.12 }]}

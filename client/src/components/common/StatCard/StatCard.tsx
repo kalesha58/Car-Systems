@@ -42,6 +42,9 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
     if (icon === 'bag-outline' || icon === 'cart-outline' || icon === 'receipt-outline') {
       return isDark ? ['#A78BFA', '#8B5CF6'] : ['#9B59B6', '#8E44AD']; // Purple gradient
     }
+    if (icon === 'cash-outline') {
+      return isDark ? ['#14B8A6', '#0D9488'] : ['#0D9488', '#0F766E']; // Teal — revenue / AOV
+    }
     if (icon === 'stats-chart-outline' || icon === 'analytics-outline') {
       return isDark ? ['#F59E0B', '#D97706'] : ['#F59E0B', '#D97706']; // Orange/Amber gradient
     }
@@ -55,19 +58,19 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
   const styles = StyleSheet.create({
     card: {
       backgroundColor: colors.cardBackground,
-      borderRadius: 16,
-      padding: 12,
-      marginBottom: 8,
+      borderRadius: 18,
+      padding: 14,
+      marginBottom: 4,
       borderWidth: 1,
-      borderColor: isDark ? colors.border : 'transparent',
+      borderColor: isDark ? colors.border : 'rgba(15, 23, 42, 0.06)',
       ...(isDark
         ? {}
         : {
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 4,
+          shadowColor: '#0f172a',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.07,
+          shadowRadius: 14,
+          elevation: 5,
         }),
     },
     header: {
@@ -77,9 +80,9 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
       marginBottom: 12,
     },
     iconContainer: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 12,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -87,9 +90,10 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
       gap: 4,
     },
     value: {
-      fontSize: RFValue(16),
+      fontSize: RFValue(17),
       color: colors.text,
       fontFamily: Fonts.Bold,
+      letterSpacing: -0.2,
     },
     label: {
       fontSize: RFValue(10),

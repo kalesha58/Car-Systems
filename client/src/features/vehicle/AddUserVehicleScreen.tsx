@@ -8,11 +8,14 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
+import LinearGradient from 'react-native-linear-gradient';
 import { screenHeight, screenWidth } from '@utils/Scaling';
 import { Fonts, Colors } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
@@ -20,7 +23,6 @@ import CustomHeader from '@components/ui/CustomHeader';
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
-// Removed ICreateVehicleRequest import as it might not be exported
 import { createUserVehicle } from '@service/vehicleService';
 import { uploadImage, uploadImagesBatch } from '@service/postService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
@@ -30,6 +32,7 @@ import { storage } from '@state/storage';
 
 const MAX_IMAGES = 2;
 const MIN_IMAGES = 1;
+const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 interface RouteParams {
   fromLogin?: boolean;
@@ -38,7 +41,8 @@ interface RouteParams {
 const AddUserVehicleScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { showSuccess, showError } = useToast();
   const { t } = useTranslation();
   const params = (route.params as RouteParams) || {};
@@ -46,7 +50,7 @@ const AddUserVehicleScreen: React.FC = () => {
 
   const [vehicleType, setVehicleType] = useState<'Bike' | 'Car'>('Bike');
   const [brand, setBrand] = useState('');
-  const [brandId, setBrandId] = useState(''); // Store ID for fetching models
+  const [brandId, setBrandId] = useState('');
   const [model, setModel] = useState('');
   const [numberPlate, setNumberPlate] = useState('');
   const [year, setYear] = useState('');
@@ -57,7 +61,6 @@ const AddUserVehicleScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  // Dropdown states
   const [brandOptions, setBrandOptions] = useState<IDropdownOption[]>([]);
   const [modelOptions, setModelOptions] = useState<IDropdownOption[]>([]);
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
@@ -65,14 +68,12 @@ const AddUserVehicleScreen: React.FC = () => {
   const [isLoadingBrands, setIsLoadingBrands] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
-  // Fetch Brands when vehicle type changes
   useEffect(() => {
     const fetchBrands = async () => {
       setIsLoadingBrands(true);
       try {
         const response = await getDropdownOptions(vehicleType);
         setBrandOptions(response.brands || []);
-        // Reset selections
         setBrand('');
         setBrandId('');
         setModel('');
@@ -87,7 +88,6 @@ const AddUserVehicleScreen: React.FC = () => {
     fetchBrands();
   }, [vehicleType]);
 
-  // Fetch Models when brand changes
   useEffect(() => {
     const fetchModels = async () => {
       if (!brandId) {
@@ -97,8 +97,6 @@ const AddUserVehicleScreen: React.FC = () => {
 
       setIsLoadingModels(true);
       try {
-        // Find the brand object to get its ID if we only have name, 
-        // but here we are storing brandId directly from selection
         const response = await getDropdownOptions(vehicleType, brandId);
         setModelOptions(response.models || []);
         setModel('');
@@ -111,6 +109,27 @@ const AddUserVehicleScreen: React.FC = () => {
 
     fetchModels();
   }, [brandId, vehicleType]);
+
+  const getAssetsWithinSizeLimit = (
+    assets: Asset[],
+    fileLabel: string,
+    allowMultiple: boolean = false,
+  ): Asset[] => {
+    const oversizedAssets = assets.filter(
+      (asset) => typeof asset.fileSize === 'number' && asset.fileSize > MAX_UPLOAD_FILE_SIZE_BYTES,
+    );
+
+    if (oversizedAssets.length > 0) {
+      const message = allowMultiple
+        ? `Some selected ${fileLabel} are too large. Please keep each file under 5MB.`
+        : `${fileLabel} is too large. Please select a file under 5MB.`;
+      showError(message);
+    }
+
+    return assets.filter(
+      (asset) => !asset.fileSize || asset.fileSize <= MAX_UPLOAD_FILE_SIZE_BYTES,
+    );
+  };
 
   const handleImagePicker = () => {
     if (imageUris.length >= MAX_IMAGES) {
@@ -133,8 +152,10 @@ const AddUserVehicleScreen: React.FC = () => {
         }
 
         const selectedImages = response.assets || [];
-        if (selectedImages.length > 0) {
-          const newUris = selectedImages.map(asset => asset.uri || '').filter(Boolean);
+        const validImages = getAssetsWithinSizeLimit(selectedImages, 'images', true);
+
+        if (validImages.length > 0) {
+          const newUris = validImages.map(asset => asset.uri || '').filter(Boolean);
           setImageUris(prev => [...prev, ...newUris]);
         }
       },
@@ -157,8 +178,10 @@ const AddUserVehicleScreen: React.FC = () => {
         }
 
         const selectedImages = response.assets || [];
-        if (selectedImages.length > 0 && selectedImages[0].uri) {
-          setRcDocumentUri(selectedImages[0].uri);
+        const validImages = getAssetsWithinSizeLimit(selectedImages, 'RC document');
+
+        if (validImages.length > 0 && validImages[0].uri) {
+          setRcDocumentUri(validImages[0].uri);
         }
       },
     );
@@ -180,8 +203,10 @@ const AddUserVehicleScreen: React.FC = () => {
         }
 
         const selectedImages = response.assets || [];
-        if (selectedImages.length > 0 && selectedImages[0].uri) {
-          setBikeLicenceUri(selectedImages[0].uri);
+        const validImages = getAssetsWithinSizeLimit(selectedImages, 'licence document');
+
+        if (validImages.length > 0 && validImages[0].uri) {
+          setBikeLicenceUri(validImages[0].uri);
         }
       },
     );
@@ -202,7 +227,6 @@ const AddUserVehicleScreen: React.FC = () => {
       return urls;
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to upload images. Please try again.');
-      console.error('Error in uploadImages:', err);
       throw err;
     } finally {
       setIsUploadingImages(false);
@@ -223,19 +247,20 @@ const AddUserVehicleScreen: React.FC = () => {
       return url;
     } catch (uploadError: any) {
       console.error('Failed to upload document:', uploadError);
-      const errorMessage = uploadError?.message || 'Failed to upload document';
-      throw new Error(`${errorMessage}. Please check the document and try again.`);
+      const message =
+        uploadError instanceof Error && uploadError.message
+          ? uploadError.message
+          : 'Failed to upload document';
+      throw new Error(message);
     }
   };
 
   const handleSkip = () => {
-    // Store flag that user has skipped adding vehicle
     storage.set('hasSkippedVehicle', 'true');
     resetAndNavigate('MainTabs');
   };
 
   const handleSubmit = async () => {
-    // Validation
     if (!brand.trim()) {
       showError('Brand is required');
       return;
@@ -276,11 +301,10 @@ const AddUserVehicleScreen: React.FC = () => {
         return;
       }
 
-      // Upload documents if provided
       const rcDocumentUrl = await uploadDocument(rcDocumentUri);
       const bikeLicenceUrl = await uploadDocument(bikeLicenceUri);
 
-      const createData: any = { // Changed to any to avoid type import issues
+      const createData: any = {
         brand: brand.trim(),
         model: model.trim(),
         numberPlate: numberPlate.trim().toUpperCase(),
@@ -296,7 +320,6 @@ const AddUserVehicleScreen: React.FC = () => {
       await createUserVehicle(createData);
       showSuccess('Vehicle added successfully');
 
-      // Clear the skip flag since user has now added a vehicle
       storage.delete('hasSkippedVehicle');
 
       setTimeout(() => {
@@ -324,43 +347,59 @@ const AddUserVehicleScreen: React.FC = () => {
     imageUris.length <= MAX_IMAGES &&
     !isSubmitting;
 
+  const cardShadow = {
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: isDark ? 0.35 : 0.08,
+    shadowRadius: 10,
+    elevation: 4,
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    contentContainer: {
+      flex: 1,
       backgroundColor: colors.background,
+      borderTopLeftRadius: 25,
+      borderTopRightRadius: 25,
+      overflow: 'hidden',
     },
     scrollContent: {
-      padding: screenWidth * 0.04,
-      paddingBottom: screenHeight * 0.2,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingTop: screenHeight * 0.02,
+      paddingBottom: screenHeight * 0.15,
+    },
+    formCard: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: RFValue(16),
+      padding: screenWidth * 0.045,
+      ...cardShadow,
     },
     section: {
       marginBottom: screenHeight * 0.02,
     },
     label: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(9),
       fontFamily: Fonts.Medium,
-      color: colors.text,
+      color: colors.textSecondary,
       marginBottom: screenHeight * 0.008,
-      opacity: 0.8,
-    },
-    labelRequired: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginBottom: screenHeight * 0.008,
+      letterSpacing: 0.3,
     },
     required: {
       color: colors.error,
     },
     textInputContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.01,
-      minHeight: screenHeight * 0.05,
-      justifyContent: 'center',
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.012,
+      minHeight: screenHeight * 0.055,
+      ...cardShadow,
     },
     textInput: {
       fontSize: RFValue(11),
@@ -368,34 +407,79 @@ const AddUserVehicleScreen: React.FC = () => {
       color: colors.text,
       padding: 0,
     },
+    dropdownButton: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.014,
+      minHeight: screenHeight * 0.055,
+      ...cardShadow,
+    },
+    typeContainer: {
+      flexDirection: 'row',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
+      padding: 4,
+      marginBottom: screenHeight * 0.02,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    typeButton: {
+      flex: 1,
+      paddingVertical: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: RFValue(8),
+    },
+    typeButtonActive: {
+      backgroundColor: colors.secondary,
+    },
+    typeText: {
+      fontSize: RFValue(12),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+    },
+    typeTextActive: {
+      color: colors.white,
+      fontFamily: Fonts.SemiBold,
+    },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      justifyContent: 'center',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.016,
+      ...cardShadow,
     },
     buttonText: {
       fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginLeft: screenWidth * 0.02,
+      color: colors.secondary,
+      marginLeft: screenWidth * 0.025,
     },
     imagesContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.02,
-      marginTop: screenHeight * 0.01,
+      gap: screenWidth * 0.03,
+      marginTop: screenHeight * 0.012,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.25,
-      height: screenWidth * 0.25,
-      borderRadius: 8,
+      width: screenWidth * 0.26,
+      height: screenWidth * 0.26,
+      borderRadius: RFValue(12),
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     image: {
       width: '100%',
@@ -404,12 +488,12 @@ const AddUserVehicleScreen: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 4,
-      right: 4,
+      top: 6,
+      right: 6,
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      borderRadius: 12,
-      width: 24,
-      height: 24,
+      borderRadius: 14,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -418,27 +502,27 @@ const AddUserVehicleScreen: React.FC = () => {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: colors.background,
+      backgroundColor: colors.cardBackground,
       paddingHorizontal: screenWidth * 0.04,
       paddingVertical: screenHeight * 0.015,
-      paddingBottom: screenHeight * 0.03,
-      borderTopWidth: 1,
+      paddingBottom: Math.max(insets.bottom, 20),
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
       shadowColor: colors.black,
-      shadowOffset: { width: 0, height: -2 },
+      shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 5,
+      shadowRadius: 10,
+      elevation: 10,
     },
     buttonRow: {
       flexDirection: 'row',
-      gap: screenWidth * 0.02,
+      gap: screenWidth * 0.03,
     },
     skipButton: {
-      flex: 1,
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+      flex: 0.8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(14),
+      height: 54,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
@@ -450,23 +534,24 @@ const AddUserVehicleScreen: React.FC = () => {
       color: colors.text,
     },
     submitButton: {
-      flex: 1,
-      backgroundColor: Colors.secondary,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+      flex: 1.2,
+      borderRadius: RFValue(14),
+      overflow: 'hidden',
+    },
+    submitButtonGradient: {
+      height: 54,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
     },
     submitButtonDisabled: {
-      backgroundColor: colors.disabled,
       opacity: 0.6,
     },
     submitButtonText: {
       fontSize: RFValue(11),
       fontFamily: Fonts.SemiBold,
-      color: '#fff',
+      color: colors.white,
     },
     descriptionText: {
       fontSize: RFValue(9),
@@ -475,306 +560,336 @@ const AddUserVehicleScreen: React.FC = () => {
       marginTop: screenHeight * 0.005,
       fontStyle: 'italic',
     },
-    dropdownButton: {
+    sectionHeaderRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      width: '100%',
+      marginBottom: screenHeight * 0.008,
     },
-    typeContainer: {
-      flexDirection: 'row',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      padding: 4,
-      marginBottom: screenHeight * 0.02,
+    sectionHint: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.Medium,
+      color: colors.textSecondary,
+      marginTop: screenHeight * 0.006,
+    },
+    statusChip: {
       borderWidth: 1,
       borderColor: colors.border,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(16),
+      paddingHorizontal: 10,
+      paddingVertical: 4,
     },
-    typeButton: {
-      flex: 1,
-      paddingVertical: 8,
+    statusChipText: {
+      fontSize: RFValue(8),
+      fontFamily: Fonts.SemiBold,
+      color: colors.textSecondary,
+    },
+    docPlaceholderButton: {
+      borderStyle: 'dashed',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: RFValue(12),
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 6,
+      height: screenWidth * 0.26,
+      gap: 4,
     },
-    typeButtonActive: {
-      backgroundColor: Colors.secondary,
-    },
-    typeText: {
-      fontSize: RFValue(12),
+    docPlaceholderText: {
+      fontSize: RFValue(8),
       fontFamily: Fonts.Medium,
-      color: colors.text,
-    },
-    typeTextActive: {
-      color: '#fff',
-      fontFamily: Fonts.SemiBold,
+      color: colors.textSecondary,
     },
   });
 
+  const gradientColors: [string, string] = [
+    colors.secondary,
+    isDark ? '#0b5c16' : '#095a14',
+  ];
+
   return (
     <View style={styles.container}>
-      <CustomHeader title="Add Your Vehicle" showBackButton={!fromLogin} />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader
+        title="Add Your Vehicle"
+        showBackButton={!fromLogin}
+        showNotificationIcon={false}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
+      <View style={styles.contentContainer}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
 
-        {/* Vehicle Type Selection */}
-        <View style={styles.section}>
-          <CustomText style={styles.labelRequired}>
-            Vehicle Type <CustomText style={styles.required}>*</CustomText>
-          </CustomText>
-          <View style={styles.typeContainer}>
-            <TouchableOpacity
-              style={[styles.typeButton, vehicleType === 'Bike' && styles.typeButtonActive]}
-              onPress={() => setVehicleType('Bike')}
-              activeOpacity={0.7}
-            >
-              <CustomText style={[styles.typeText, vehicleType === 'Bike' ? styles.typeTextActive : {}]}>
-                Bike
+          <View style={styles.formCard}>
+            {/* Vehicle Type Selection */}
+            <View style={styles.section}>
+              <CustomText style={styles.label}>
+                VEHICLE TYPE <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.typeButton, vehicleType === 'Car' && styles.typeButtonActive]}
-              onPress={() => setVehicleType('Car')}
-              activeOpacity={0.7}
-            >
-              <CustomText style={[styles.typeText, vehicleType === 'Car' ? styles.typeTextActive : {}]}>
-                Car
-              </CustomText>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Brand Dropdown */}
-        <View style={styles.section}>
-          <CustomText style={styles.labelRequired}>
-            Brand <CustomText style={styles.required}>*</CustomText>
-          </CustomText>
-          <TouchableOpacity
-            style={[
-              styles.textInputContainer,
-              (isLoadingBrands || brandOptions.length === 0) && { opacity: 0.6 }
-            ]}
-            onPress={() => {
-              if (isLoadingBrands) {
-                showError('Loading brands, please wait...');
-                return;
-              }
-              if (brandOptions.length === 0) {
-                showError('No brands available. Please try again.');
-                return;
-              }
-              setShowBrandDropdown(true);
-            }}
-            disabled={isLoadingBrands || brandOptions.length === 0}
-          >
-            <View style={styles.dropdownButton}>
-              <CustomText style={{
-                ...styles.textInput,
-                color: brand ? colors.text : colors.disabled
-              }}>
-                {isLoadingBrands ? 'Loading brands...' : (brand || 'Select Brand')}
-              </CustomText>
-              <Icon name="chevron-down" size={RFValue(14)} color={colors.text} />
+              <View style={styles.typeContainer}>
+                <TouchableOpacity
+                  style={[styles.typeButton, vehicleType === 'Bike' && styles.typeButtonActive]}
+                  onPress={() => setVehicleType('Bike')}
+                  activeOpacity={0.75}
+                >
+                  <CustomText style={[styles.typeText, vehicleType === 'Bike' ? styles.typeTextActive : {}]}>
+                    Bike
+                  </CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeButton, vehicleType === 'Car' && styles.typeButtonActive]}
+                  onPress={() => setVehicleType('Car')}
+                  activeOpacity={0.75}
+                >
+                  <CustomText style={[styles.typeText, vehicleType === 'Car' ? styles.typeTextActive : {}]}>
+                    Car
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
             </View>
-          </TouchableOpacity>
-        </View>
 
-        {/* Model Dropdown */}
-        <View style={styles.section}>
-          <CustomText style={styles.labelRequired}>
-            Model <CustomText style={styles.required}>*</CustomText>
-          </CustomText>
-          <TouchableOpacity
-            style={[
-              styles.textInputContainer,
-              (!brand || modelOptions.length === 0) && { opacity: 0.6 }
-            ]}
-            onPress={() => {
-              if (isLoadingModels) {
-                showError('Loading models, please wait...');
-                return;
-              }
-              if (!brand) {
-                showError('Please select a brand first');
-                return;
-              }
-              if (modelOptions.length === 0) {
-                showError('No models available for this brand');
-                return;
-              }
-              setShowModelDropdown(true);
-            }}
-            disabled={!brand || isLoadingModels || modelOptions.length === 0}
-          >
-            <View style={styles.dropdownButton}>
-              <CustomText style={{
-                ...styles.textInput,
-                color: model ? colors.text : colors.disabled
-              }}>
-                {model || 'Select Model'}
+            {/* Brand Dropdown */}
+            <View style={styles.section}>
+              <CustomText style={styles.label}>
+                BRAND <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <Icon name="chevron-down" size={RFValue(14)} color={colors.text} />
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  (isLoadingBrands || brandOptions.length === 0) && { opacity: 0.6 }
+                ]}
+                onPress={() => {
+                  if (isLoadingBrands) {
+                    showError('Loading brands, please wait...');
+                    return;
+                  }
+                  if (brandOptions.length === 0) {
+                    showError('No brands available. Please try again.');
+                    return;
+                  }
+                  setShowBrandDropdown(true);
+                }}
+                disabled={isLoadingBrands || brandOptions.length === 0}
+                activeOpacity={0.75}
+              >
+                <CustomText style={{
+                  ...styles.textInput,
+                  color: brand ? colors.text : colors.disabled
+                }}>
+                  {isLoadingBrands ? 'Loading brands...' : (brand || 'Select Brand')}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(16)} color={colors.secondary} />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.section}>
-          <CustomText style={styles.labelRequired}>
-            Number Plate <CustomText style={styles.required}>*</CustomText>
-          </CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter number plate"
-              placeholderTextColor={colors.disabled}
-              value={numberPlate}
-              onChangeText={(text) => setNumberPlate(text.toUpperCase())}
-              autoCapitalize="characters"
-            />
-          </View>
-          <CustomText style={styles.descriptionText}>
-            6-15 alphanumeric characters (e.g., AB12CD3456)
-          </CustomText>
-        </View>
+            {/* Model Dropdown */}
+            <View style={styles.section}>
+              <CustomText style={styles.label}>
+                MODEL <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  (!brand || modelOptions.length === 0) && { opacity: 0.6 }
+                ]}
+                onPress={() => {
+                  if (isLoadingModels) {
+                    showError('Loading models, please wait...');
+                    return;
+                  }
+                  if (!brand) {
+                    showError('Please select a brand first');
+                    return;
+                  }
+                  if (modelOptions.length === 0) {
+                    showError('No models available for this brand');
+                    return;
+                  }
+                  setShowModelDropdown(true);
+                }}
+                disabled={!brand || isLoadingModels || modelOptions.length === 0}
+                activeOpacity={0.75}
+              >
+                <CustomText style={{
+                  ...styles.textInput,
+                  color: model ? colors.text : colors.disabled
+                }}>
+                  {model || 'Select Model'}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(16)} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
 
-        <View style={styles.section}>
-          <CustomText style={styles.label}>Year</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter manufacturing year (optional)"
-              placeholderTextColor={colors.disabled}
-              value={year}
-              onChangeText={setYear}
-              keyboardType="numeric"
-              maxLength={4}
-            />
-          </View>
-        </View>
+            {/* Number Plate */}
+            <View style={styles.section}>
+              <CustomText style={styles.label}>
+                NUMBER PLATE <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Enter number plate"
+                  placeholderTextColor={colors.disabled}
+                  value={numberPlate}
+                  onChangeText={(text) => setNumberPlate(text.toUpperCase())}
+                  autoCapitalize="characters"
+                />
+              </View>
+              <CustomText style={styles.descriptionText}>
+                6-15 alphanumeric characters (e.g., AB12CD3456)
+              </CustomText>
+            </View>
 
-        <View style={styles.section}>
-          <CustomText style={styles.label}>Color</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter vehicle color (optional)"
-              placeholderTextColor={colors.disabled}
-              value={color}
-              onChangeText={setColor}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.labelRequired}>
-            Images <CustomText style={styles.required}>*</CustomText>
-          </CustomText>
-          <CustomText style={styles.descriptionText}>
-            Add {MIN_IMAGES}-{MAX_IMAGES} images of your vehicle
-          </CustomText>
-          <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
-            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
-            <CustomText style={styles.buttonText}>
-              Add Images ({imageUris.length}/{MAX_IMAGES})
-            </CustomText>
-          </TouchableOpacity>
-          {imageUris.length > 0 && (
-            <View style={styles.imagesContainer}>
-              {imageUris.map((uri, index) => (
-                <View key={index} style={styles.imageWrapper}>
-                  <Image source={{ uri }} style={styles.image} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => removeImage(index)}>
-                    <Icon name="close" size={RFValue(12)} color="#fff" />
-                  </TouchableOpacity>
+            {/* Year & Color Row */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={[styles.section, { flex: 1 }]}>
+                <CustomText style={styles.label}>YEAR</CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="2023"
+                    placeholderTextColor={colors.disabled}
+                    value={year}
+                    onChangeText={setYear}
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
                 </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* RC Document Section */}
-        <View style={styles.section}>
-          <CustomText style={styles.label}>
-            RC Document (Optional)
-          </CustomText>
-          {rcDocumentUri ? (
-            <View style={styles.imagesContainer}>
-              <View style={styles.imageWrapper}>
-                <Image source={{ uri: rcDocumentUri }} style={styles.image} />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => setRcDocumentUri(null)}>
-                  <Icon name="close" size={RFValue(12)} color="#fff" />
-                </TouchableOpacity>
+              </View>
+              <View style={[styles.section, { flex: 1 }]}>
+                <CustomText style={styles.label}>COLOR</CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="White"
+                    placeholderTextColor={colors.disabled}
+                    value={color}
+                    onChangeText={setColor}
+                  />
+                </View>
               </View>
             </View>
-          ) : (
-            <TouchableOpacity style={styles.button} onPress={handleRcDocumentPicker}>
-              <Icon name="document-text-outline" size={RFValue(16)} color={colors.text} />
-              <CustomText style={styles.buttonText}>
-                Add RC Document
-              </CustomText>
-            </TouchableOpacity>
-          )}
-        </View>
 
-        {/* Bike Licence Section */}
-        <View style={styles.section}>
-          <CustomText style={styles.label}>
-            Bike Licence (Optional)
-          </CustomText>
-          {bikeLicenceUri ? (
-            <View style={styles.imagesContainer}>
-              <View style={styles.imageWrapper}>
-                <Image source={{ uri: bikeLicenceUri }} style={styles.image} />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => setBikeLicenceUri(null)}>
-                  <Icon name="close" size={RFValue(12)} color="#fff" />
-                </TouchableOpacity>
+            {/* Images */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <CustomText style={styles.label}>
+                  IMAGES <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <View style={styles.statusChip}>
+                  <CustomText style={styles.statusChipText}>
+                    {imageUris.length}/{MAX_IMAGES} selected
+                  </CustomText>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.75}>
+                <Icon name="image-outline" size={RFValue(18)} color={colors.secondary} />
+                <CustomText style={styles.buttonText}>
+                  Add Images ({imageUris.length}/{MAX_IMAGES})
+                </CustomText>
+              </TouchableOpacity>
+              <CustomText style={styles.sectionHint}>
+                Upload clear vehicle photos. Max file size: 5MB each.
+              </CustomText>
+              {imageUris.length > 0 && (
+                <View style={styles.imagesContainer}>
+                  {imageUris.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{ uri }} style={styles.image} />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => removeImage(index)}>
+                        <Icon name="close" size={RFValue(14)} color={colors.white} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Documents */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={[styles.section, { flex: 1 }]}>
+                <CustomText style={styles.label}>RC DOCUMENT</CustomText>
+                {rcDocumentUri ? (
+                  <View style={styles.imageWrapper}>
+                    <Image source={{ uri: rcDocumentUri }} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => setRcDocumentUri(null)}>
+                      <Icon name="close" size={RFValue(14)} color={colors.white} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.docPlaceholderButton} onPress={handleRcDocumentPicker} activeOpacity={0.75}>
+                    <Icon name="document-text-outline" size={RFValue(18)} color={colors.secondary} />
+                    <CustomText style={styles.docPlaceholderText}>Tap to upload</CustomText>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View style={[styles.section, { flex: 1 }]}>
+                <CustomText style={styles.label}>LICENCE</CustomText>
+                {bikeLicenceUri ? (
+                  <View style={styles.imageWrapper}>
+                    <Image source={{ uri: bikeLicenceUri }} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => setBikeLicenceUri(null)}>
+                      <Icon name="close" size={RFValue(14)} color={colors.white} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.docPlaceholderButton} onPress={handleBikeLicencePicker} activeOpacity={0.75}>
+                    <Icon name="card-outline" size={RFValue(18)} color={colors.secondary} />
+                    <CustomText style={styles.docPlaceholderText}>Tap to upload</CustomText>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
-          ) : (
-            <TouchableOpacity style={styles.button} onPress={handleBikeLicencePicker}>
-              <Icon name="card-outline" size={RFValue(16)} color={colors.text} />
-              <CustomText style={styles.buttonText}>
-                Add Bike Licence
-              </CustomText>
-            </TouchableOpacity>
-          )}
-        </View>
-      </ScrollView>
+            <CustomText style={styles.sectionHint}>
+              Optional documents help speed up verification.
+            </CustomText>
+          </View>
+        </ScrollView>
 
-      {/* Sticky Button Container */}
-      <View style={styles.stickyButtonContainer}>
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={handleSkip}
-            disabled={isSubmitting}>
-            <CustomText style={styles.skipButtonText}>Skip</CustomText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={!isFormValid}>
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Icon name="checkmark-circle-outline" size={RFValue(16)} color="#fff" />
-                <CustomText style={styles.submitButtonText}>Submit Vehicle</CustomText>
-              </>
-            )}
-          </TouchableOpacity>
+        {/* Sticky Button Container */}
+        <View style={styles.stickyButtonContainer}>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={handleSkip}
+              disabled={isSubmitting}
+              activeOpacity={0.75}>
+              <CustomText style={styles.skipButtonText}>Skip</CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={!isFormValid}
+              activeOpacity={0.85}>
+              <LinearGradient
+                colors={gradientColors}
+                style={styles.submitButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}>
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <>
+                    <Icon name="checkmark-circle-outline" size={RFValue(16)} color={colors.white} />
+                    <CustomText style={styles.submitButtonText}>Submit Vehicle</CustomText>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
-      {/* Dropdown Modals */}
       <CustomDropdownModal
         visible={showBrandDropdown}
         onClose={() => setShowBrandDropdown(false)}
@@ -799,13 +914,6 @@ const AddUserVehicleScreen: React.FC = () => {
         options={modelOptions}
         selectedValue={model}
         onSelect={(value) => {
-          // Model value is the name itself in the dropdown options usually, or check API response.
-          // Assuming model dropdown returns value as name or ID. 
-          // If the backend returns model name as value, we are good.
-          // In dropdownRoutes, it usually maps _id to value and name to label.
-          // Let's assume value is not the name but the ID.
-          // But for vehicle creation we pass the name string (model: string).
-          // So we should find label.
           const selectedOption = modelOptions.find(opt => opt.value === value);
           if (selectedOption) {
             setModel(selectedOption.label);

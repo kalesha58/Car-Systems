@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  StatusBar,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {getDealerOrders} from '@service/dealerService';
@@ -295,6 +296,14 @@ const DealerOrdersList: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    contentContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 25,
+      borderTopRightRadius: 25,
+      overflow: 'hidden',
     },
     content: {
       padding: 10,
@@ -510,18 +519,33 @@ const DealerOrdersList: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, {backgroundColor: colors.background}]}>
-        <CustomHeader title={t('orders')} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.secondary} />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+        <CustomHeader
+          title={t('orders')}
+          backgroundColor={colors.secondary}
+          titleColor={colors.white}
+          iconColor={colors.white}
+        />
+        <View style={styles.contentContainer}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
-      <CustomHeader title={t('orders')} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader
+        title={t('orders')}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
+      <View style={styles.contentContainer}>
       
       {/* Tab Bar */}
       <View style={styles.tabContainer}>
@@ -640,6 +664,7 @@ const DealerOrdersList: React.FC = () => {
           }
         />
       )}
+      </View>
     </View>
   );
 };

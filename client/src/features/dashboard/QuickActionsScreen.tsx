@@ -8,6 +8,7 @@ import {
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  StatusBar,
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
@@ -176,7 +177,14 @@ const QuickActionsScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: theme.secondary,
+    },
+    contentContainer: {
+      flex: 1,
       backgroundColor: theme.background,
+      borderTopLeftRadius: 25,
+      borderTopRightRadius: 25,
+      overflow: 'hidden',
     },
     header: {
       paddingHorizontal: 20,
@@ -321,7 +329,14 @@ const QuickActionsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={t('dealer.quickActions') || 'Quick Actions'} />
+      <StatusBar barStyle="light-content" backgroundColor={theme.secondary} />
+      <CustomHeader
+        title={t('dealer.quickActions') || 'Quick Actions'}
+        backgroundColor={theme.secondary}
+        titleColor={theme.white}
+        iconColor={theme.white}
+      />
+      <View style={styles.contentContainer}>
       
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -481,6 +496,7 @@ const QuickActionsScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 };

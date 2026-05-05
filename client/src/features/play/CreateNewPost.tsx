@@ -1,120 +1,178 @@
-import React, {useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   Image,
   ActivityIndicator,
   Alert,
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
-import CustomHeader from '@components/ui/CustomHeader';
 import {useTheme} from '@hooks/useTheme';
 import {uploadImagesBatch, createPost} from '@service/postService';
 import {ICreatePostRequest} from '../../types/post/IPost';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {useToast} from '@hooks/useToast';
+import {useAuthStore} from '@state/authStore';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const MAX_IMAGES = 10;
 const MAX_TEXT_LENGTH = 5000;
 
 const CreateNewPost: React.FC = () => {
   const navigation = useNavigation();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
   const {showSuccess, showError} = useToast();
+  const {user} = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [location, setLocation] = useState<ILocationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isOptionsExpanded, setIsOptionsExpanded] = useState(true);
 
-  const styles = StyleSheet.create({
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => {
+      setIsKeyboardVisible(true);
+      setIsOptionsExpanded(false);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    contentContainer: {
+      flex: 1,
       backgroundColor: colors.background,
+      borderTopLeftRadius: 25,
+      borderTopRightRadius: 25,
+      overflow: 'hidden',
     },
-    scrollContent: {
-      padding: screenWidth * 0.04,
-      paddingBottom: screenHeight * 0.12,
+    header: {
+      height: 56,
+      paddingHorizontal: screenWidth * 0.04,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.secondary,
     },
-    section: {
-      marginBottom: screenHeight * 0.02,
-    },
-    label: {
-      fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+    headerCenterTitle: {
+      fontSize: RFValue(12),
       color: colors.text,
-      marginBottom: screenHeight * 0.008,
-      opacity: 0.8,
+      fontFamily: Fonts.SemiBold,
     },
-    requiredLabel: {
-      fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
-      color: colors.error,
-      marginLeft: 4,
+    postButton: {
+      minWidth: 60,
+      height: 32,
+      borderRadius: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.white,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
-    textInputContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.01,
-      minHeight: screenHeight * 0.12,
+    postButtonDisabled: {
+      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+      elevation: 0,
+    },
+    postButtonText: {
+      color: colors.secondary,
+      fontFamily: Fonts.Bold,
+      fontSize: RFValue(10),
+    },
+    postButtonTextDisabled: {
+      color: 'rgba(255, 255, 255, 0.5)',
+    },
+    content: {
+      paddingHorizontal: screenWidth * 0.04,
+      paddingTop: 24,
+      paddingBottom: 20,
+    },
+    userRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 14,
+    },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: isDark ? colors.backgroundTertiary : '#ECEFF3',
+      overflow: 'hidden',
+    },
+    avatarImage: {
+      width: '100%',
+      height: '100%',
+    },
+    avatarText: {
+      color: colors.text,
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+    },
+    userName: {
+      marginLeft: 10,
+      fontSize: RFValue(10),
+      color: colors.text,
+      fontFamily: Fonts.SemiBold,
     },
     textInput: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(12),
       fontFamily: Fonts.Regular,
       color: colors.text,
       textAlignVertical: 'top',
-      lineHeight: RFValue(16),
+      lineHeight: RFValue(18),
+      paddingVertical: 10,
+      minHeight: screenHeight * 0.25,
     },
     characterCount: {
       fontSize: RFValue(8),
       fontFamily: Fonts.Regular,
       color: colors.disabled,
-      marginTop: screenHeight * 0.008,
+      marginTop: 10,
       textAlign: 'right',
     },
-    button: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderStyle: 'dashed',
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
-    },
-    buttonText: {
-      fontSize: RFValue(9),
-      fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginLeft: screenWidth * 0.02,
-    },
-    imagesContainer: {
+    mediaPreviewContainer: {
+      marginTop: 14,
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.02,
-      marginTop: screenHeight * 0.01,
+      gap: 10,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.25,
-      height: screenWidth * 0.25,
-      borderRadius: 8,
+      width: (screenWidth - screenWidth * 0.08 - 20) / 3,
+      height: (screenWidth - screenWidth * 0.08 - 20) / 3,
+      borderRadius: RFValue(12),
       overflow: 'hidden',
     },
     image: {
@@ -124,55 +182,116 @@ const CreateNewPost: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 4,
-      right: 4,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      borderRadius: 12,
-      width: 24,
-      height: 24,
-      justifyContent: 'center',
+      top: 6,
+      right: 6,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(0,0,0,0.56)',
       alignItems: 'center',
+      justifyContent: 'center',
     },
-    locationContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+    locationCard: {
+      marginTop: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginTop: screenHeight * 0.01,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
     },
     locationText: {
       flex: 1,
-      fontSize: RFValue(10),
-      fontFamily: Fonts.Regular,
+      marginLeft: 8,
       color: colors.text,
-      marginLeft: screenWidth * 0.02,
+      fontSize: RFValue(9),
+      fontFamily: Fonts.Medium,
     },
-    removeLocationButton: {
-      padding: 6,
+    bottomTray: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      backgroundColor: colors.background,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingTop: 10,
+      paddingBottom: Math.max(insets.bottom, 10),
     },
-    submitButton: {
-      backgroundColor: Colors.secondary,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+    dragHandle: {
+      width: 42,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: isDark ? '#374151' : '#D1D5DB',
+      alignSelf: 'center',
+      marginBottom: 12,
+    },
+    trayHeader: {
+      fontSize: RFValue(10),
+      color: colors.text,
+      fontFamily: Fonts.SemiBold,
+      marginBottom: 10,
+    },
+    tileGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    tile: {
+      width: '48.5%',
+      borderRadius: 11,
+      backgroundColor: isDark ? colors.backgroundTertiary : '#F3F4F6',
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      marginBottom: 8,
+    },
+    tileTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    tileTitle: {
+      fontSize: RFValue(9),
+      color: colors.text,
+      fontFamily: Fonts.SemiBold,
+    },
+    compactTray: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingBottom: 4,
+    },
+    compactIcons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+    },
+    compactAction: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: screenHeight * 0.02,
+      backgroundColor: isDark ? colors.backgroundTertiary : '#EEF2FF',
     },
-    submitButtonDisabled: {
-      backgroundColor: colors.disabled,
-      opacity: 0.5,
+    optionIconBadge: {
+      width: 20,
+      height: 20,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    submitButtonText: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
-      color: '#fff',
+    locationRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
     },
-  });
+  }), [colors, isDark, insets.bottom]);
+
+  const fullName = user?.name || user?.fullName || 'User';
+  const avatarUrl = user?.profileImage || user?.image || user?.avatar;
+  const avatarInitial = fullName.trim().charAt(0).toUpperCase() || 'U';
 
   const handleImagePicker = () => {
     if (imageUris.length >= MAX_IMAGES) {
@@ -183,7 +302,6 @@ const CreateNewPost: React.FC = () => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        // Downscale and compress to avoid server 413 payload errors.
         quality: 0.5,
         maxWidth: 1600,
         maxHeight: 1600,
@@ -228,46 +346,20 @@ const CreateNewPost: React.FC = () => {
     setLocation(null);
   };
 
-  const uploadImages = async (): Promise<string[]> => {
-    if (imageUris.length === 0) {
-      return [];
-    }
-
-    setIsUploadingImages(true);
-    try {
-      return await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
-    } catch (error: any) {
-      throw new Error(error?.message || 'Failed to upload images. Please try again.');
-    } finally {
-      setIsUploadingImages(false);
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!text.trim()) {
-      showError('Please enter some text for your post.');
-      return;
-    }
-
-    if (text.trim().length > MAX_TEXT_LENGTH) {
-      showError(`Text must be less than ${MAX_TEXT_LENGTH} characters.`);
-      return;
-    }
-
-    if (imageUris.length === 0) {
-      showError('Please add at least one image to create a post.');
+    if (!text.trim() && imageUris.length === 0) {
+      showError('Please add some text or at least one image.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const uploadedImageUrls = await uploadImages();
-
-      if (uploadedImageUrls.length === 0) {
-        showError('Failed to upload images. Please try again.');
-        setIsLoading(false);
-        return;
+      let uploadedImageUrls: string[] = [];
+      if (imageUris.length > 0) {
+        setIsUploadingImages(true);
+        uploadedImageUrls = await uploadImagesBatch(imageUris.map(uri => ({uri})));
+        setIsUploadingImages(false);
       }
 
       const postData: ICreatePostRequest = {
@@ -283,135 +375,179 @@ const CreateNewPost: React.FC = () => {
       };
 
       await createPost(postData);
-
       setIsLoading(false);
       
-      // Small delay to ensure state updates complete before showing toast
-      setTimeout(() => {
-        showSuccess('Post created successfully', 3000);
-      }, 100);
+      showSuccess('Post created successfully');
       
       setTimeout(() => {
         (navigation as any).navigate('MainTabs', {
           screen: 'Play',
           params: { refresh: true },
         });
-      }, 2500);
+      }, 1500);
     } catch (error: any) {
       setIsLoading(false);
+      setIsUploadingImages(false);
       showError(error?.message || 'Failed to create post. Please try again.');
     }
   };
 
   const isSubmitting = isLoading || isUploadingImages;
-  const isFormValid = text.trim().length > 0 && !isSubmitting;
+  const isFormValid = (text.trim().length > 0 || imageUris.length > 0) && !isSubmitting;
+
+  const optionItems = [
+    {id: 'photo', label: 'Photo/Video', icon: 'image-outline', color: '#38bdf8', onPress: handleImagePicker},
+    {id: 'gif', label: 'Gif', icon: 'sparkles-outline', color: '#60a5fa', onPress: () => showError('GIF option coming soon.')},
+    {id: 'poll', label: 'Poll', icon: 'list-outline', color: '#34d399', onPress: () => showError('Poll option coming soon.')},
+    {id: 'adoption', label: 'Adoption', icon: 'newspaper-outline', color: '#f43f5e', onPress: () => showError('Adoption option coming soon.')},
+    {id: 'location', label: 'Location', icon: 'location-outline', color: '#f59e0b', onPress: handleLocationPicker},
+    {id: 'event', label: 'Event', icon: 'calendar-outline', color: '#a78bfa', onPress: () => showError('Event option coming soon.')},
+  ];
 
   return (
-    <View style={styles.container}>
-      <CustomHeader title="Create New Post" />
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <CustomText style={styles.label}>Post Text</CustomText>
-            <CustomText style={styles.requiredLabel}>*</CustomText>
-          </View>
-          <View style={styles.textInputContainer}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+
+      <View style={{paddingTop: insets.top, backgroundColor: colors.secondary}}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={{padding: 4}}>
+            <Icon name="close" size={RFValue(20)} color={colors.white} />
+          </TouchableOpacity>
+          <CustomText style={[styles.headerCenterTitle, {color: colors.white, fontSize: RFValue(14)}]}>Create Post</CustomText>
+          <TouchableOpacity
+            style={[styles.postButton, !isFormValid && styles.postButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={!isFormValid}
+            activeOpacity={0.8}>
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={colors.secondary} />
+            ) : (
+              <CustomText style={[styles.postButtonText, !isFormValid && styles.postButtonTextDisabled]}>
+                Post
+              </CustomText>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.contentContainer}>
+        <ScrollView 
+          style={{ flex: 1 }} 
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+            <View style={styles.userRow}>
+              <View style={styles.avatar}>
+                {avatarUrl ? (
+                  <Image source={{uri: avatarUrl}} style={styles.avatarImage} />
+                ) : (
+                  <CustomText style={styles.avatarText}>{avatarInitial}</CustomText>
+                )}
+              </View>
+              <CustomText style={styles.userName}>{fullName}</CustomText>
+            </View>
+
             <TextInput
               style={styles.textInput}
-              placeholder="What's on your mind? Share your thoughts..."
-              placeholderTextColor={colors.disabled}
               value={text}
               onChangeText={setText}
-              multiline
               maxLength={MAX_TEXT_LENGTH}
+              multiline
+              placeholder="What do you want to talk about?"
+              placeholderTextColor={colors.disabled}
             />
-          </View>
-          <CustomText style={styles.characterCount}>
-            {text.length} / {MAX_TEXT_LENGTH} characters
-          </CustomText>
-        </View>
 
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <CustomText style={styles.label}>Images</CustomText>
-            <CustomText style={styles.requiredLabel}>*</CustomText>
-          </View>
-          <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.7}>
-            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
-            <CustomText style={styles.buttonText}>
-              {imageUris.length === 0 
-                ? `Add Images (up to ${MAX_IMAGES})` 
-                : `Add More Images (${imageUris.length}/${MAX_IMAGES})`}
+            <CustomText style={styles.characterCount}>
+              {text.length}/{MAX_TEXT_LENGTH}
             </CustomText>
-          </TouchableOpacity>
-          {imageUris.length > 0 && (
-            <View style={styles.imagesContainer}>
-              {imageUris.map((uri, index) => (
-                <View key={index} style={styles.imageWrapper}>
-                  <Image source={{uri}} style={styles.image} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => removeImage(index)}
-                    activeOpacity={0.8}>
-                    <Icon name="close" size={RFValue(12)} color="#fff" />
-                  </TouchableOpacity>
+
+            {imageUris.length > 0 && (
+              <View style={styles.mediaPreviewContainer}>
+                {imageUris.map((uri, index) => (
+                  <View key={`${uri}-${index}`} style={styles.imageWrapper}>
+                    <Image source={{uri}} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => removeImage(index)}
+                      activeOpacity={0.8}>
+                      <Icon name="close" size={RFValue(12)} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {!!location && (
+              <View style={styles.locationCard}>
+                <View style={styles.locationRow}>
+                  <Icon name="location" size={RFValue(14)} color={colors.secondary} />
+                  <CustomText style={styles.locationText} numberOfLines={2}>
+                    {location.address || location.formattedAddress}
+                  </CustomText>
                 </View>
+                <TouchableOpacity onPress={removeLocation} activeOpacity={0.7}>
+                  <Icon name="close-circle" size={RFValue(17)} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            )}
+        </ScrollView>
+      </View>
+
+      <View style={styles.bottomTray}>
+        {!isKeyboardVisible && isOptionsExpanded && (
+          <>
+            <View style={styles.dragHandle} />
+            <CustomText style={styles.trayHeader}>Add to your post</CustomText>
+            <View style={styles.tileGrid}>
+              {optionItems.map(item => (
+                <TouchableOpacity key={item.id} style={styles.tile} onPress={item.onPress} activeOpacity={0.8}>
+                  <View style={styles.tileTopRow}>
+                    <View style={[styles.optionIconBadge, {backgroundColor: `${item.color}20`}]}>
+                      {item.id === 'location' && isGettingLocation ? (
+                        <ActivityIndicator size="small" color={item.color} />
+                      ) : (
+                        <Icon name={item.icon} size={RFValue(12)} color={item.color} />
+                      )}
+                    </View>
+                    <Icon name="add" size={RFValue(12)} color={colors.text} />
+                  </View>
+                  <CustomText style={styles.tileTitle}>{item.label}</CustomText>
+                </TouchableOpacity>
               ))}
             </View>
-          )}
-        </View>
+          </>
+        )}
 
-        <View style={styles.section}>
-          <CustomText style={styles.label}>Location (Optional)</CustomText>
-          {!location ? (
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleLocationPicker}
-              disabled={isGettingLocation}
-              activeOpacity={0.7}>
-              {isGettingLocation ? (
-                <ActivityIndicator size="small" color={colors.text} />
-              ) : (
-                <Icon name="location-outline" size={RFValue(16)} color={colors.text} />
-              )}
-              <CustomText style={styles.buttonText}>
-                {isGettingLocation ? 'Getting location...' : 'Add Location'}
-              </CustomText>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.locationContainer}>
-              <Icon name="location" size={RFValue(14)} color={Colors.secondary} />
-              <CustomText style={styles.locationText} numberOfLines={2}>
-                {location.address || location.formattedAddress}
-              </CustomText>
-              <TouchableOpacity
-                style={styles.removeLocationButton}
-                onPress={removeLocation}
-                activeOpacity={0.7}>
-                <Icon name="close-circle" size={RFValue(18)} color={colors.error} />
-              </TouchableOpacity>
+        {(isKeyboardVisible || !isOptionsExpanded) && (
+          <View style={styles.compactTray}>
+            <View style={styles.compactIcons}>
+              {optionItems.map(item => (
+                <TouchableOpacity key={item.id} style={styles.compactAction} onPress={item.onPress} activeOpacity={0.8}>
+                  {item.id === 'location' && isGettingLocation ? (
+                    <ActivityIndicator size="small" color={item.color} />
+                  ) : (
+                    <Icon name={item.icon} size={RFValue(11)} color={item.color} />
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
-          )}
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={!isFormValid}
-          activeOpacity={0.8}>
-          {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <CustomText style={styles.submitButtonText}>Create Post</CustomText>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+            <TouchableOpacity
+              onPress={() => setIsOptionsExpanded(prev => !prev)}
+              activeOpacity={0.8}>
+              <Icon
+                name={isOptionsExpanded ? 'chevron-down' : 'chevron-up'}
+                size={RFValue(16)}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 export default CreateNewPost;
-

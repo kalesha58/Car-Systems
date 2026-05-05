@@ -154,19 +154,25 @@ const ChatScreen: React.FC = () => {
       StyleSheet.create({
         container: {
           flex: 1,
+          backgroundColor: colors.secondary,
+        },
+        contentContainer: {
+          flex: 1,
           backgroundColor: colors.background,
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+          overflow: 'hidden',
         },
         tabsContainer: {
           flexDirection: 'row',
           paddingHorizontal: 16,
-          paddingVertical: 12,
-          borderBottomWidth: 1,
+          backgroundColor: colors.background,
+          borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
-          backgroundColor: colors.cardBackground,
         },
         tab: {
           flex: 1,
-          paddingVertical: 12,
+          paddingVertical: 14,
           alignItems: 'center',
           borderBottomWidth: 2,
           borderBottomColor: 'transparent',
@@ -175,23 +181,25 @@ const ChatScreen: React.FC = () => {
           borderBottomColor: colors.secondary,
         },
         tabText: {
-          fontSize: RFValue(14),
+          fontSize: RFValue(12),
           fontFamily: Fonts.Medium,
+          color: colors.textSecondary,
         },
         activeTabText: {
           color: colors.secondary,
           fontFamily: Fonts.SemiBold,
         },
         listContent: {
-          padding: 16,
+          paddingBottom: 20,
         },
         chatItem: {
           flexDirection: 'row',
-          padding: 12,
-          marginBottom: 12,
-          backgroundColor: colors.cardBackground,
-          borderRadius: 12,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
           alignItems: 'center',
+          backgroundColor: colors.background,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
         },
         groupActions: {
           flexDirection: 'row',
@@ -204,125 +212,121 @@ const ChatScreen: React.FC = () => {
           backgroundColor: colors.backgroundSecondary,
         },
         avatar: {
-          width: 50,
-          height: 50,
-          borderRadius: 25,
-          backgroundColor: colors.border,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: colors.backgroundSecondary,
           marginRight: 12,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         avatarImage: {
-          width: 50,
-          height: 50,
-          borderRadius: 25,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          marginRight: 12,
         },
         chatContent: {
           flex: 1,
         },
         chatName: {
-          fontSize: RFValue(16),
+          fontSize: RFValue(12),
           fontFamily: Fonts.SemiBold,
-          marginBottom: 4,
+          color: colors.text,
+          marginBottom: 2,
         },
         lastMessage: {
-          fontSize: RFValue(12),
+          fontSize: RFValue(10),
           fontFamily: Fonts.Regular,
-          color: colors.disabled,
+          color: colors.textSecondary,
         },
         timeContainer: {
           alignItems: 'flex-end',
+          marginLeft: 8,
         },
         timeText: {
-          fontSize: RFValue(10),
+          fontSize: RFValue(9),
           fontFamily: Fonts.Regular,
-          color: colors.disabled,
+          color: colors.textSecondary,
           marginBottom: 4,
         },
         unreadBadge: {
           backgroundColor: colors.secondary,
           borderRadius: 10,
-          minWidth: 20,
-          height: 20,
-          paddingHorizontal: 6,
+          minWidth: 18,
+          height: 18,
+          paddingHorizontal: 4,
           alignItems: 'center',
           justifyContent: 'center',
         },
         unreadText: {
           color: colors.white,
-          fontSize: RFValue(10),
+          fontSize: RFValue(8),
           fontFamily: Fonts.SemiBold,
         },
         followButton: {
           paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 16,
+          paddingVertical: 4,
+          borderRadius: 12,
           backgroundColor: colors.secondary,
-          marginTop: 4,
+          marginTop: 6,
+          alignSelf: 'flex-start',
         },
         followButtonText: {
           color: colors.white,
-          fontSize: RFValue(12),
+          fontSize: RFValue(10),
           fontFamily: Fonts.SemiBold,
         },
         requestedButton: {
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 16,
-          backgroundColor: colors.border,
-          marginTop: 4,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 12,
+          backgroundColor: colors.backgroundSecondary,
+          marginTop: 6,
+          alignSelf: 'flex-start',
         },
         requestedButtonText: {
-          color: colors.disabled,
-          fontSize: RFValue(12),
+          color: colors.textSecondary,
+          fontSize: RFValue(10),
           fontFamily: Fonts.Medium,
         },
         emptyContainer: {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 40,
+          padding: 60,
         },
         emptyText: {
-          fontSize: RFValue(14),
+          fontSize: RFValue(12),
           fontFamily: Fonts.Regular,
-          color: colors.disabled,
+          color: colors.textSecondary,
           textAlign: 'center',
-        },
-        fab: {
-          position: 'absolute',
-          right: 20,
-          bottom: 20,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: colors.secondary,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
+          lineHeight: RFValue(18),
         },
         notificationIcon: {
-          marginRight: 16,
+          marginRight: 12,
           position: 'relative',
         },
         notificationBadge: {
           position: 'absolute',
-          top: -4,
-          right: -4,
-          backgroundColor: colors.secondary,
-          borderRadius: 10,
-          minWidth: 20,
-          height: 20,
+          top: -2,
+          right: -2,
+          backgroundColor: colors.error,
+          borderRadius: 8,
+          minWidth: 16,
+          height: 16,
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 4,
+          paddingHorizontal: 3,
+          borderWidth: 1.5,
+          borderColor: colors.secondary,
         },
         notificationBadgeText: {
           color: colors.white,
-          fontSize: RFValue(10),
-          fontFamily: Fonts.SemiBold,
+          fontSize: RFValue(8),
+          fontFamily: Fonts.Bold,
         },
       }),
     [colors],
@@ -338,34 +342,21 @@ const ChatScreen: React.FC = () => {
       return;
     }
 
-    // Check if already has pending request
-    if (pendingRequestMap.has(groupId)) {
-      return;
-    }
-
-    if (requestingGroups.has(groupId)) {
+    if (pendingRequestMap.has(groupId) || requestingGroups.has(groupId)) {
       return;
     }
 
     try {
       setRequestingGroups(prev => new Set(prev).add(groupId));
-
       const response = await requestToJoinGroup(groupId);
-
-      // Add to pending requests map
       setPendingRequestMap(prev => new Map(prev).set(groupId, response.id));
       showSuccess('Join request sent successfully');
-
-      // Reload chats to update isMember status if admin approved quickly
       loadChats();
       loadPendingRequests();
     } catch (error: any) {
-      // If error is "already have pending request", update the map
       const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.response?.data?.message || '';
       if (errorMessage.includes('already have a pending join request') || errorMessage.includes('pending join request')) {
-        // Try to load pending requests to sync state
         loadPendingRequests();
-        // Don't show error, just update state
       } else {
         showError(errorMessage || 'Failed to send join request');
       }
@@ -380,7 +371,6 @@ const ChatScreen: React.FC = () => {
 
   const handleShareGroup = (groupId?: string, groupName?: string) => {
     if (!groupId) return;
-    // Implement share functionality
     showSuccess('Share functionality coming soon');
   };
 
@@ -411,17 +401,16 @@ const ChatScreen: React.FC = () => {
       const days = Math.floor(hours / 24);
 
       if (minutes < 1) return 'Just now';
-      if (minutes < 60) return `${minutes}m ago`;
-      if (hours < 24) return `${hours}h ago`;
-      if (days < 7) return `${days}d ago`;
-      return date.toLocaleDateString();
+      if (minutes < 60) return `${minutes}m`;
+      if (hours < 24) return `${hours}h`;
+      if (days < 7) return `${days}d`;
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     };
 
     const hasPendingRequest = item.groupId ? pendingRequestMap.has(item.groupId) : false;
     const isRequesting = item.groupId ? requestingGroups.has(item.groupId) : false;
-    // Show follow button only if: it's a group, user can follow, user is not a member, and no pending request
     const showFollowButton = item.type === 'group' && item.canFollow && !item.isMember && !hasPendingRequest;
-    const isGroup = item.type === 'group' && item.isMember;
+    const isGroupMember = item.type === 'group' && item.isMember;
 
     return (
       <View style={styles.chatItem}>
@@ -433,12 +422,12 @@ const ChatScreen: React.FC = () => {
             <Image source={{ uri: avatar }} style={styles.avatarImage} />
           ) : (
             <View style={styles.avatar}>
-              <Icon name="person" size={RFValue(24)} color={colors.disabled} />
+              <Icon name={item.type === 'group' ? 'people' : 'person'} size={RFValue(20)} color={colors.disabled} />
             </View>
           )}
           <View style={styles.chatContent}>
-            <CustomText style={styles.chatName}>{chatName}</CustomText>
-            {item.lastMessage && (
+            <CustomText style={styles.chatName} numberOfLines={1}>{chatName}</CustomText>
+            {item.lastMessage ? (
               <CustomText style={styles.lastMessage} numberOfLines={1}>
                 {item.lastMessage.messageType === 'image'
                   ? '📷 Image'
@@ -446,10 +435,12 @@ const ChatScreen: React.FC = () => {
                     ? '📍 Location'
                     : item.lastMessage.text}
               </CustomText>
-            )}
+            ) : item.type === 'group' ? (
+              <CustomText style={styles.lastMessage}>Group chat</CustomText>
+            ) : null}
             {hasPendingRequest && (
               <View style={styles.requestedButton}>
-                <CustomText style={styles.requestedButtonText}>Pending</CustomText>
+                <CustomText style={styles.requestedButtonText}>Pending approval</CustomText>
               </View>
             )}
             {showFollowButton && (
@@ -459,7 +450,7 @@ const ChatScreen: React.FC = () => {
                 disabled={isRequesting}
                 activeOpacity={0.7}>
                 <CustomText style={styles.followButtonText}>
-                  {isRequesting ? 'Requesting...' : 'Follow'}
+                  {isRequesting ? 'Requesting...' : 'Follow group'}
                 </CustomText>
               </TouchableOpacity>
             )}
@@ -470,7 +461,7 @@ const ChatScreen: React.FC = () => {
                 {formatTime(item.lastMessage.createdAt)}
               </CustomText>
             )}
-            {(item.unreadCount || 0) > 0 && (
+            {!!item.unreadCount && item.unreadCount > 0 && (
               <View style={styles.unreadBadge}>
                 <CustomText style={styles.unreadText}>
                   {item.unreadCount > 99 ? '99+' : String(item.unreadCount)}
@@ -478,20 +469,21 @@ const ChatScreen: React.FC = () => {
               </View>
             )}
           </View>
+
         </TouchableOpacity>
-        {isGroup && (
+        {isGroupMember && (
           <View style={styles.groupActions}>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleShareGroup(item.groupId, item.groupName)}
               activeOpacity={0.7}>
-              <Icon name="share-outline" size={RFValue(20)} color={colors.secondary} />
+              <Icon name="share-outline" size={RFValue(18)} color={colors.secondary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleMessageGroup(item.id)}
               activeOpacity={0.7}>
-              <Icon name="chatbubble-outline" size={RFValue(20)} color={colors.secondary} />
+              <Icon name="chatbubble-outline" size={RFValue(18)} color={colors.secondary} />
             </TouchableOpacity>
           </View>
         )}
@@ -501,11 +493,11 @@ const ChatScreen: React.FC = () => {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Icon name="chatbubbles-outline" size={RFValue(64)} color={colors.disabled} />
+      <Icon name="chatbubbles-outline" size={RFValue(64)} color={colors.border} />
       <CustomText style={[styles.emptyText, { marginTop: 16 }]}>
         {selectedTab === 'messages'
-          ? 'No messages yet'
-          : 'No groups yet\nCreate a group to get started'}
+          ? 'No conversations yet.\nStart chatting with your friends!'
+          : 'You haven\'t joined any groups yet.\nFollow groups to see them here.'}
       </CustomText>
     </View>
   );
@@ -520,7 +512,7 @@ const ChatScreen: React.FC = () => {
         onPress={() => (navigation as any).navigate('JoinRequests', { groupId: firstGroupWithRequests })}
         style={styles.notificationIcon}
         activeOpacity={0.7}>
-        <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
+        <Icon name="notifications-outline" size={RFValue(22)} color={colors.white} />
         {totalPendingRequests > 0 && (
           <View style={styles.notificationBadge}>
             <CustomText style={styles.notificationBadgeText}>
@@ -539,24 +531,24 @@ const ChatScreen: React.FC = () => {
           <>
             <TouchableOpacity
               onPress={handleStartNewChat}
-              style={{ marginRight: 10, padding: 4 }}
+              style={{ marginRight: 8, padding: 4 }}
               activeOpacity={0.7}>
-              <Icon name="add-circle-outline" size={RFValue(22)} color={colors.secondary} />
+              <Icon name="add-circle-outline" size={RFValue(22)} color={colors.white} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleStartNewChat}
-              style={{ marginRight: 12, padding: 4 }}
+              style={{ marginRight: 8, padding: 4 }}
               activeOpacity={0.7}>
-              <Icon name="search-outline" size={RFValue(20)} color={colors.text} />
+              <Icon name="search-outline" size={RFValue(20)} color={colors.white} />
             </TouchableOpacity>
           </>
         )}
         {selectedTab === 'groups' && (
           <TouchableOpacity
             onPress={() => (navigation as any).navigate('CreateGroup')}
-            style={{ marginRight: 12, padding: 4 }}
+            style={{ marginRight: 8, padding: 4 }}
             activeOpacity={0.7}>
-            <Icon name="add-circle-outline" size={RFValue(24)} color={colors.secondary} />
+            <Icon name="add-circle-outline" size={RFValue(24)} color={colors.white} />
           </TouchableOpacity>
         )}
         {renderNotificationIcon()}
@@ -566,56 +558,63 @@ const ChatScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Chat" rightComponent={renderHeaderRight()} />
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'messages' && styles.activeTab]}
-          onPress={() => setSelectedTab('messages')}>
-          <CustomText
-            style={
-              selectedTab === 'messages'
-                ? [styles.tabText, styles.activeTabText]
-                : styles.tabText
-            }>
-            Messages
-          </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'groups' && styles.activeTab]}
-          onPress={() => setSelectedTab('groups')}>
-          <CustomText
-            style={
-              selectedTab === 'groups'
-                ? [styles.tabText, styles.activeTabText]
-                : styles.tabText
-            }>
-            Groups
-          </CustomText>
-        </TouchableOpacity>
-      </View>
-
-      {loading ? (
-        <View style={styles.listContent}>
-          <ChatListSkeleton />
+      <CustomHeader
+        title="Chat"
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+        rightComponent={renderHeaderRight()}
+      />
+      <View style={styles.contentContainer}>
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'messages' && styles.activeTab]}
+            onPress={() => setSelectedTab('messages')}>
+            <CustomText
+              style={
+                selectedTab === 'messages'
+                  ? [styles.tabText, styles.activeTabText]
+                  : styles.tabText
+              }>
+              Messages
+            </CustomText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, selectedTab === 'groups' && styles.activeTab]}
+            onPress={() => setSelectedTab('groups')}>
+            <CustomText
+              style={
+                selectedTab === 'groups'
+                  ? [styles.tabText, styles.activeTabText]
+                  : styles.tabText
+              }>
+              Groups
+            </CustomText>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={selectedTab === 'messages' ? directChats : groupChats}
-          renderItem={renderChatItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={renderEmpty}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.secondary} />
-          }
-        />
-      )}
 
-      {/* FAB removed and moved to header as search button per user request */}
-
+        {loading ? (
+          <View style={{ padding: 16 }}>
+            <ChatListSkeleton />
+          </View>
+        ) : (
+          <FlatList
+            data={selectedTab === 'messages' ? directChats : groupChats}
+            renderItem={renderChatItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.secondary} />
+            }
+          />
+        )}
+      </View>
     </View>
   );
 };
 
 export default ChatScreen;
+
 

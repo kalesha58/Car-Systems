@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -28,7 +29,7 @@ import NotificationItemSkeleton from './NotificationItemSkeleton';
 
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showError, showSuccess } = useToast();
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,19 +39,16 @@ const NotificationScreen: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
 
-  // Use refs to store toast functions to avoid dependency issues
   const showErrorRef = useRef(showError);
   const showSuccessRef = useRef(showSuccess);
   const isLoadingRef = useRef(false);
 
-  // Update refs when toast functions change
   useEffect(() => {
     showErrorRef.current = showError;
     showSuccessRef.current = showSuccess;
   }, [showError, showSuccess]);
 
   const loadNotifications = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
-    // Guard against concurrent calls
     if (isLoadingRef.current && !refresh && pageNum === 1) {
       return;
     }
@@ -119,12 +117,8 @@ const NotificationScreen: React.FC = () => {
         );
       }
 
-      // Navigate based on notification type
       if (notification.type === 'order_update' && notification.data?.orderId) {
         navigate('LiveTracking', { orderId: notification.data.orderId });
-      } else if (notification.type === 'service_update' && notification.data?.serviceId) {
-        // Navigate to service details if needed
-        // navigate('ServiceDetail', { serviceId: notification.data.serviceId });
       }
     } catch (error: any) {
       showError('Failed to mark notification as read');
@@ -160,7 +154,7 @@ const NotificationScreen: React.FC = () => {
         style={[
           styles.notificationItem,
           { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-          isUnread && { backgroundColor: colors.backgroundSecondary },
+          isUnread && { backgroundColor: isDark ? colors.backgroundSecondary : colors.secondary + '08' },
         ]}
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}>
@@ -222,7 +216,14 @@ const NotificationScreen: React.FC = () => {
       StyleSheet.create({
         container: {
           flex: 1,
+          backgroundColor: colors.secondary,
+        },
+        contentContainer: {
+          flex: 1,
           backgroundColor: colors.background,
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+          overflow: 'hidden',
         },
         notificationItem: {
           padding: 16,
@@ -276,6 +277,10 @@ const NotificationScreen: React.FC = () => {
           alignItems: 'center',
           gap: 16,
         },
+        markAllText: {
+          color: colors.white,
+          fontSize: RFValue(11),
+        }
       }),
     [colors],
   );
@@ -287,14 +292,14 @@ const NotificationScreen: React.FC = () => {
       <View style={styles.headerRight}>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={handleMarkAllAsRead}>
-            <CustomText style={{ color: colors.secondary, fontSize: RFValue(12) }} fontFamily={Fonts.Medium}>
+            <CustomText style={styles.markAllText} fontFamily={Fonts.Medium}>
               Mark all read
             </CustomText>
           </TouchableOpacity>
         )}
       </View>
     ),
-    [unreadCount, handleMarkAllAsRead, colors, styles],
+    [unreadCount, handleMarkAllAsRead, styles.headerRight, styles.markAllText],
   );
 
   const renderSkeletonItem = ({ index }: { index: number }) => (
@@ -303,36 +308,45 @@ const NotificationScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Notifications" rightComponent={headerRight} />
-      {loading && notifications.length === 0 ? (
-        <FlatList
-          data={[1, 2, 3, 4, 5, 6, 7, 8]}
-          renderItem={renderSkeletonItem}
-          keyExtractor={(item) => `skeleton-${item}`}
-        />
-      ) : notifications.length === 0 ? (
-        <EmptyState
-          icon="notifications-outline"
-          title="No notifications"
-          message="You don't have any notifications yet"
-        />
-      ) : (
-        <FlatList
-          data={notifications}
-          renderItem={renderNotificationItem}
-          keyExtractor={item => item.id}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.secondary} />}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={{ padding: 16 }}>
-                <ActivityIndicator size="small" color={colors.secondary} />
-              </View>
-            ) : null
-          }
-        />
-      )}
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader 
+        title="Notifications" 
+        rightComponent={headerRight} 
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
+      <View style={styles.contentContainer}>
+        {loading && notifications.length === 0 ? (
+          <FlatList
+            data={[1, 2, 3, 4, 5, 6, 7, 8]}
+            renderItem={renderSkeletonItem}
+            keyExtractor={(item) => `skeleton-${item}`}
+          />
+        ) : notifications.length === 0 ? (
+          <EmptyState
+            icon="notifications-outline"
+            title="No notifications"
+            message="You don't have any notifications yet"
+          />
+        ) : (
+          <FlatList
+            data={notifications}
+            renderItem={renderNotificationItem}
+            keyExtractor={item => item.id}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.secondary} />}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={{ padding: 16 }}>
+                  <ActivityIndicator size="small" color={colors.secondary} />
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </View>
     </View>
   );
 };

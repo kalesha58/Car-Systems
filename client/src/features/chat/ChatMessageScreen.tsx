@@ -620,34 +620,36 @@ const ChatMessageScreen: React.FC = () => {
           paddingTop: 16,
         },
         messageBubble: {
-          maxWidth: '80%',
-          padding: 6,
-          paddingHorizontal: 10,
-          borderRadius: 12,
-          marginBottom: 4,
+          maxWidth: '85%',
+          paddingVertical: 8,
+          paddingHorizontal: 12,
+          borderRadius: 20,
+          marginBottom: 8,
           elevation: 1,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.08,
+          shadowOpacity: 0.05,
           shadowRadius: 1,
         },
         sentMessage: {
           backgroundColor: colors.secondary,
           alignSelf: 'flex-end',
-          borderBottomRightRadius: 2,
+          borderBottomRightRadius: 4,
           marginLeft: 40,
         },
         receivedMessage: {
           backgroundColor: colors.cardBackground,
           alignSelf: 'flex-start',
-          borderBottomLeftRadius: 2,
+          borderBottomLeftRadius: 4,
           marginRight: 40,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         messageText: {
-          fontSize: RFValue(14),
+          fontSize: RFValue(13),
           fontFamily: Fonts.Regular,
           color: colors.white,
-          marginBottom: 2,
+          lineHeight: RFValue(18),
         },
         receivedMessageText: {
           color: colors.text,
@@ -655,103 +657,94 @@ const ChatMessageScreen: React.FC = () => {
         messageImage: {
           width: 220,
           height: 220,
-          borderRadius: 8,
-          marginBottom: 4,
+          borderRadius: 12,
+          marginBottom: 6,
         },
         messageLocation: {
-          padding: 8,
-          backgroundColor: colors.background,
-          borderRadius: 8,
-          marginTop: 4,
+          padding: 10,
+          backgroundColor: colors.backgroundSecondary,
+          borderRadius: 12,
+          marginBottom: 6,
+          flexDirection: 'row',
+          alignItems: 'center',
         },
         locationText: {
-          fontSize: RFValue(12),
+          fontSize: RFValue(11),
           fontFamily: Fonts.Regular,
           color: colors.text,
-        },
-        messageDataContainer: {
-          flexDirection: 'row',
-          alignItems: 'flex-end',
-          justifyContent: 'flex-end',
-          flexWrap: 'wrap',
-          minWidth: 50,
+          marginLeft: 6,
         },
         messageTime: {
-          fontSize: RFValue(9),
+          fontSize: RFValue(8),
           fontFamily: Fonts.Regular,
-          color: 'rgba(255,255,255,0.7)',
-          marginLeft: 4,
-          alignSelf: 'flex-end',
+          color: 'rgba(255,255,255,0.6)',
+          textAlign: 'right',
+          marginTop: 2,
         },
         receivedMessageTime: {
-          color: colors.disabled,
+          color: colors.textSecondary,
         },
         senderName: {
-          fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          fontSize: RFValue(10),
+          fontFamily: Fonts.SemiBold,
           marginBottom: 2,
+          color: colors.secondary,
         },
         inputContainer: {
           flexDirection: 'row',
-          paddingHorizontal: 8,
-          paddingVertical: 8,
-          backgroundColor: colors.cardBackground,
-          alignItems: 'flex-end',
+          paddingHorizontal: 10,
+          paddingVertical: 10,
+          backgroundColor: colors.background,
+          alignItems: 'center',
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
+        },
+        inputWrapper: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: colors.backgroundSecondary,
+          borderRadius: 24,
+          paddingHorizontal: 14,
+          marginHorizontal: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         input: {
           flex: 1,
-          backgroundColor: colors.background,
-          borderRadius: 24,
-          paddingHorizontal: 16,
           paddingVertical: 10,
-          fontSize: RFValue(14),
+          fontSize: RFValue(12),
           fontFamily: Fonts.Regular,
           color: colors.text,
-          marginHorizontal: 8,
           maxHeight: 100,
           minHeight: 40,
         },
         sendButton: {
-          width: 48,
-          height: 48,
-          borderRadius: 24,
+          width: 46,
+          height: 46,
+          borderRadius: 23,
           backgroundColor: colors.secondary,
           justifyContent: 'center',
           alignItems: 'center',
         },
-        attachButton: {
-          width: 40,
-          height: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        emojiButton: {
-          width: 40,
-          height: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginRight: 4,
-        },
-        cameraButton: {
-          width: 40,
-          height: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
+        iconButton: {
+          padding: 8,
         },
         typingIndicator: {
           paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingVertical: 12,
         },
         typingText: {
-          fontSize: RFValue(12),
+          fontSize: RFValue(10),
           fontFamily: Fonts.Regular,
           fontStyle: 'italic',
-          color: colors.disabled,
+          color: colors.textSecondary,
         },
         loadingContainer: {
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
+          backgroundColor: colors.background,
         },
       }),
     [colors],
@@ -759,14 +752,11 @@ const ChatMessageScreen: React.FC = () => {
 
   const renderMessage = ({ item }: { item: IMessage }) => {
     const isSent = item.from === user?.id;
-    const showTime = true;
     const isGroupChat = chat?.type === 'group';
     const showSenderName = isGroupChat && !isSent && item.fromUserName;
 
-    // Build style arrays conditionally to avoid TypeScript errors
     const messageTextStyles: any[] = [
       styles.messageText,
-      { marginRight: 8, maxWidth: '85%' }
     ];
     if (!isSent) {
       messageTextStyles.push(styles.receivedMessageText);
@@ -776,145 +766,92 @@ const ChatMessageScreen: React.FC = () => {
     if (!isSent) {
       messageTimeStyles.push(styles.receivedMessageTime);
     }
-    if (!item.text || (item.messageType === 'image' && item.text === 'Image')) {
-      messageTimeStyles.push({ marginLeft: 'auto' });
-    }
 
     return (
-      <View style={{ marginBottom: 8 }}>
+      <View style={{ marginBottom: 4 }}>
         {showSenderName && (
-          <CustomText
-            style={[
-              styles.senderName,
-              { color: colors.text, opacity: 0.7, marginBottom: 4, marginLeft: 4 },
-            ]}>
+          <CustomText style={[styles.senderName, { marginLeft: 12 }]}>
             {item.fromUserName || 'Unknown User'}
           </CustomText>
         )}
-        <View
-          style={[
-            styles.messageBubble,
-            isSent ? styles.sentMessage : styles.receivedMessage,
-          ]}>
-        {item.messageType === 'image' && item.imageUrl && (
-          <View style={{ position: 'relative' }}>
-            <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
-            {(item as any).isUploading && (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-                <ActivityIndicator size="large" color={colors.white} />
-              </View>
-            )}
-          </View>
-        )}
-        {item.messageType === 'location' && item.location && (
-          <View style={{ position: 'relative' }}>
-            <View style={styles.messageLocation}>
-              <Icon name="location" size={RFValue(16)} color={colors.secondary} />
-              <CustomText style={styles.locationText}>
-                {item.location.address || 'Location shared'}
-              </CustomText>
+        <View style={[styles.messageBubble, isSent ? styles.sentMessage : styles.receivedMessage]}>
+          {item.messageType === 'image' && item.imageUrl && (
+            <View style={{ position: 'relative' }}>
+              <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
+              {(item as any).isUploading && (
+                <View style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  borderRadius: 12,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <ActivityIndicator size="large" color={colors.white} />
+                </View>
+              )}
             </View>
-            {(item as any).isUploading && (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                borderRadius: 8,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-                <ActivityIndicator size="small" color={colors.white} />
+          )}
+          {item.messageType === 'location' && item.location && (
+            <View style={{ position: 'relative' }}>
+              <View style={styles.messageLocation}>
+                <Icon name="location" size={RFValue(14)} color={colors.secondary} />
+                <CustomText style={styles.locationText} numberOfLines={1}>
+                  {item.location.address || 'Location shared'}
+                </CustomText>
               </View>
-            )}
-          </View>
-        )}
-
-        <View style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end'
-        }}>
-          {item.text && (item.messageType !== 'image' || item.text !== 'Image') && (
-            <CustomText style={messageTextStyles}>
-              {item.text}
-            </CustomText>
+              {(item as any).isUploading && (
+                <View style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                  borderRadius: 12,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                  <ActivityIndicator size="small" color={colors.white} />
+                </View>
+              )}
+            </View>
           )}
 
-          <CustomText style={messageTimeStyles}>
-            {formatTime(item.createdAt)}
-          </CustomText>
+          <View>
+            {item.text && (item.messageType !== 'image' || item.text !== 'Image') && (
+              <CustomText style={messageTextStyles}>
+                {item.text}
+              </CustomText>
+            )}
+            <CustomText style={messageTimeStyles}>
+              {formatTime(item.createdAt)}
+            </CustomText>
+          </View>
         </View>
-      </View>
       </View>
     );
   };
 
+
   if (loading) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Chat" />
+        <CustomHeader
+          title="Chat"
+          backgroundColor={colors.secondary}
+          titleColor={colors.white}
+          iconColor={colors.white}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.secondary} />
         </View>
       </View>
     );
   }
-
-  const headerRight = () => {
-    if (chat?.type === 'group') {
-      return (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={() => setShowGroupInfo(!showGroupInfo)}
-            style={{ marginRight: 12, padding: 4 }}
-            activeOpacity={0.7}>
-            <Icon name="information-circle-outline" size={RFValue(24)} color={colors.text} />
-          </TouchableOpacity>
-          {chat.isOwner && chat.groupId && (
-            <TouchableOpacity
-              onPress={() => (navigation as any).navigate('JoinRequests', { groupId: chat.groupId })}
-              style={{ marginRight: 16, position: 'relative' }}>
-              <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
-              {pendingRequestCount > 0 && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    backgroundColor: colors.secondary,
-                    borderRadius: 10,
-                    minWidth: 20,
-                    height: 20,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    paddingHorizontal: 4,
-                  }}>
-                  <CustomText style={{ color: colors.white, fontSize: RFValue(10), fontFamily: Fonts.SemiBold }}>
-                    {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
-                  </CustomText>
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
-        </View>
-      );
-    }
-    return null;
-  };
 
   const renderGroupInfo = () => {
     if (!showGroupInfo || chat?.type !== 'group') return null;
@@ -923,9 +860,9 @@ const ChatMessageScreen: React.FC = () => {
 
     return (
       <View style={{
-        backgroundColor: colors.cardBackground,
+        backgroundColor: colors.background,
         padding: 16,
-        borderBottomWidth: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: colors.border,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
@@ -933,27 +870,29 @@ const ChatMessageScreen: React.FC = () => {
             {groupImage ? (
               <Image 
                 source={{ uri: groupImage }} 
-                style={{ width: 60, height: 60, borderRadius: 30 }}
+                style={{ width: 60, height: 60, borderRadius: 30, borderWidth: 1, borderColor: colors.border }}
               />
             ) : (
               <View style={{
                 width: 60,
                 height: 60,
                 borderRadius: 30,
-                backgroundColor: colors.border,
+                backgroundColor: colors.backgroundSecondary,
                 justifyContent: 'center',
                 alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colors.border,
               }}>
-                <Icon name="camera" size={RFValue(24)} color={colors.disabled} />
+                <Icon name="camera" size={RFValue(24)} color={colors.textSecondary} />
               </View>
             )}
           </TouchableOpacity>
           <View style={{ marginLeft: 12, flex: 1 }}>
-            <CustomText style={{ fontSize: RFValue(18), fontFamily: Fonts.SemiBold }}>
+            <CustomText style={{ fontSize: RFValue(16), fontFamily: Fonts.SemiBold, color: colors.text }}>
               {chat.groupName || 'Group'}
             </CustomText>
-            <CustomText style={{ fontSize: RFValue(12), color: colors.disabled, marginTop: 4 }}>
-              {loadingMembers ? 'Loading...' : `${groupMembers.length} ${groupMembers.length === 1 ? 'member' : 'members'}`}
+            <CustomText style={{ fontSize: RFValue(11), color: colors.textSecondary, marginTop: 2 }}>
+              {loadingMembers ? 'Loading members...' : `${groupMembers.length} ${groupMembers.length === 1 ? 'member' : 'members'}`}
             </CustomText>
           </View>
         </View>
@@ -963,13 +902,13 @@ const ChatMessageScreen: React.FC = () => {
             flexDirection: 'row',
             alignItems: 'center',
             paddingVertical: 12,
-            borderTopWidth: 1,
+            borderTopWidth: StyleSheet.hairlineWidth,
             borderTopColor: colors.border,
           }}
           onPress={handleAddMembers}
           activeOpacity={0.7}>
-          <Icon name="person-add-outline" size={RFValue(20)} color={colors.text} />
-          <CustomText style={{ marginLeft: 12, fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
+          <Icon name="person-add-outline" size={RFValue(18)} color={colors.secondary} />
+          <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
             Add Members
           </CustomText>
         </TouchableOpacity>
@@ -979,23 +918,21 @@ const ChatMessageScreen: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingVertical: 12,
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
         }}>
-          <CustomText style={{ fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
-            Privacy
-          </CustomText>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Switch
-              value={chat.privacy === 'public'}
-              onValueChange={(value: boolean) => handleTogglePrivacy(value ? 'public' : 'private')}
-              trackColor={{ false: colors.border, true: colors.secondary }}
-              thumbColor={colors.white}
-            />
-            <CustomText style={{ marginLeft: 8, fontSize: RFValue(12), color: colors.disabled }}>
-              {chat.privacy === 'public' ? 'Public' : 'Private'}
+            <Icon name="lock-closed-outline" size={RFValue(18)} color={colors.secondary} />
+            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
+              Privacy ({chat.privacy === 'public' ? 'Public' : 'Private'})
             </CustomText>
           </View>
+          <Switch
+            value={chat.privacy === 'public'}
+            onValueChange={(value: boolean) => handleTogglePrivacy(value ? 'public' : 'private')}
+            trackColor={{ false: colors.border, true: colors.secondary }}
+            thumbColor={colors.white}
+          />
         </View>
 
         {chat.isOwner && (
@@ -1004,7 +941,7 @@ const ChatMessageScreen: React.FC = () => {
               flexDirection: 'row',
               alignItems: 'center',
               paddingVertical: 12,
-              borderTopWidth: 1,
+              borderTopWidth: StyleSheet.hairlineWidth,
               borderTopColor: colors.border,
             }}
             onPress={() => {
@@ -1012,13 +949,62 @@ const ChatMessageScreen: React.FC = () => {
               (navigation as any).navigate('EditGroup', { chatId: chat.id });
             }}
             activeOpacity={0.7}>
-            <Icon name="settings-outline" size={RFValue(20)} color={colors.text} />
-            <CustomText style={{ marginLeft: 12, fontSize: RFValue(14), fontFamily: Fonts.Medium }}>
+            <Icon name="settings-outline" size={RFValue(18)} color={colors.secondary} />
+            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
               Edit Group Settings
             </CustomText>
           </TouchableOpacity>
         )}
       </View>
+    );
+  };
+
+  const headerRight = () => {
+
+    if (chat?.type === 'group') {
+      return (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={() => setShowGroupInfo(!showGroupInfo)}
+            style={styles.iconButton}
+            activeOpacity={0.7}>
+            <Icon name="information-circle-outline" size={RFValue(22)} color={colors.white} />
+          </TouchableOpacity>
+          {chat.isOwner && chat.groupId && (
+            <TouchableOpacity
+              onPress={() => (navigation as any).navigate('JoinRequests', { groupId: chat.groupId })}
+              style={{ marginRight: 8, position: 'relative', padding: 4 }}>
+              <Icon name="notifications-outline" size={RFValue(22)} color={colors.white} />
+              {pendingRequestCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    backgroundColor: colors.error,
+                    borderRadius: 8,
+                    minWidth: 16,
+                    height: 16,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingHorizontal: 3,
+                    borderWidth: 1,
+                    borderColor: colors.secondary,
+                  }}>
+                  <CustomText style={{ color: colors.white, fontSize: RFValue(8), fontFamily: Fonts.Bold }}>
+                    {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
+                  </CustomText>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      );
+    }
+    return (
+      <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+        <Icon name="videocam-outline" size={RFValue(22)} color={colors.white} />
+      </TouchableOpacity>
     );
   };
 
@@ -1033,6 +1019,9 @@ const ChatMessageScreen: React.FC = () => {
             ? chat.groupName || 'Group'
             : chat?.participantNames?.find(n => n !== user?.name) || 'Chat'
         }
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
         rightComponent={headerRight()}
       />
       {renderGroupInfo()}
@@ -1060,33 +1049,34 @@ const ChatMessageScreen: React.FC = () => {
       <View style={[
         styles.inputContainer,
         {
-          paddingBottom: 8 + keyboardOffsetHeight + (Platform.OS === 'android' ? Math.max(0, insets.bottom) : 0)
+          paddingBottom: 16 + keyboardOffsetHeight + (Platform.OS === 'android' ? Math.max(12, insets.bottom) : 0)
         }
       ]}>
-        <TouchableOpacity
-          style={styles.emojiButton}
-          activeOpacity={0.7}>
-          <Icon name="happy-outline" size={RFValue(26)} color={colors.disabled} />
+
+        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
+          <Icon name="happy-outline" size={RFValue(24)} color={colors.textSecondary} />
         </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          value={messageText}
-          onChangeText={text => {
-            setMessageText(text);
-            handleTyping();
-          }}
-          placeholder="Message"
-          placeholderTextColor={colors.disabled}
-          multiline
-        />
-        {!messageText.trim() && (
-          <TouchableOpacity
-            style={styles.attachButton}
-            onPress={() => setShowAttachmentModal(true)}
-            activeOpacity={0.7}>
-            <Icon name="attach" size={RFValue(26)} color={colors.disabled} />
-          </TouchableOpacity>
-        )}
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            value={messageText}
+            onChangeText={text => {
+              setMessageText(text);
+              handleTyping();
+            }}
+            placeholder="Type a message..."
+            placeholderTextColor={colors.disabled}
+            multiline
+          />
+          {!messageText.trim() && (
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setShowAttachmentModal(true)}
+              activeOpacity={0.7}>
+              <Icon name="paper-plane-outline" style={{transform: [{rotate: '45deg'}]}} size={RFValue(20)} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
         {messageText.trim() ? (
           <TouchableOpacity
             style={styles.sendButton}
@@ -1096,17 +1086,18 @@ const ChatMessageScreen: React.FC = () => {
             {sending ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Icon name="send" size={RFValue(20)} color={colors.white} />
+              <Icon name="send" size={RFValue(18)} color={colors.white} />
             )}
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.sendButton}
             activeOpacity={0.7}>
-            <Icon name="mic" size={RFValue(24)} color={colors.white} />
+            <Icon name="mic" size={RFValue(22)} color={colors.white} />
           </TouchableOpacity>
         )}
       </View>
+
 
       <AttachmentModal
         visible={showAttachmentModal}

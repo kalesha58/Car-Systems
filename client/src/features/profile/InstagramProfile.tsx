@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import React, {useState, useEffect, useMemo} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -26,6 +27,7 @@ import {getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/d
 import {IPost} from '../../types/post/IPost';
 import {IUserVehicle} from '../../types/vehicle/IVehicle';
 import {useTranslation} from 'react-i18next';
+import CustomHeader from '@components/ui/CustomHeader';
 
 type TabType = 'posts' | 'vehicles' | 'businessInfo';
 
@@ -219,7 +221,7 @@ const InstagramProfile: React.FC = () => {
       StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: colors.background,
+          backgroundColor: colors.secondary,
         },
         header: {
           flexDirection: 'row',
@@ -239,6 +241,10 @@ const InstagramProfile: React.FC = () => {
         },
         content: {
           flex: 1,
+          backgroundColor: colors.background,
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+          overflow: 'hidden',
         },
         gridNav: {
           flexDirection: 'row',
@@ -295,17 +301,22 @@ const InstagramProfile: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerRight}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader
+        title={t('profile.title')}
+        showBackButton={false}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+        rightComponent={
           <TouchableOpacity
-            style={styles.headerButton}
+            style={{padding: 4}}
             onPress={handleSettingsPress}
             activeOpacity={0.7}>
-            <Icon name="settings-outline" size={RFValue(24)} color={colors.text} />
+            <Icon name="settings-outline" size={RFValue(22)} color={colors.white} />
           </TouchableOpacity>
-        </View>
-      </View>
+        }
+      />
 
       {/* Content */}
       <ScrollView
@@ -321,45 +332,26 @@ const InstagramProfile: React.FC = () => {
         }>
         {/* Profile Header with Stats */}
         <InstagramProfileHeader
-          postsCount={isDealer ? undefined : stats.postsCount}
-          vehiclesCount={stats.vehiclesCount}
-          ordersCount={stats.ordersCount}
           isDealer={isDealer}
         />
 
         {/* Grid Navigation */}
         <View style={styles.gridNav}>
           {isDealer ? (
-            <>
-              <TouchableOpacity
-                style={[
-                  styles.gridNavIcon,
-                  activeTab === 'businessInfo' && styles.gridNavIconActive,
-                ]}
-                onPress={() => setActiveTab('businessInfo')}
-                activeOpacity={0.7}>
-                <Icon 
-                  name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
-                  size={RFValue(22)} 
-                  color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
-                />
-                {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.gridNavIcon,
-                  activeTab === 'vehicles' && styles.gridNavIconActive,
-                ]}
-                onPress={() => setActiveTab('vehicles')}
-                activeOpacity={0.7}>
-                <Icon 
-                  name={activeTab === 'vehicles' ? "car" : "car-outline"} 
-                  size={RFValue(22)} 
-                  color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
-                />
-                {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity
+              style={[
+                styles.gridNavIcon,
+                activeTab === 'businessInfo' && styles.gridNavIconActive,
+              ]}
+              onPress={() => setActiveTab('businessInfo')}
+              activeOpacity={0.7}>
+              <Icon 
+                name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
+                size={RFValue(22)} 
+                color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
+              />
+              {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
+            </TouchableOpacity>
           ) : (
             <>
               <TouchableOpacity
@@ -401,6 +393,7 @@ const InstagramProfile: React.FC = () => {
           <BusinessRegistrationInfo
             businessRegistration={businessRegistration}
             loading={businessInfoLoading}
+            ordersCount={stats.ordersCount}
           />
         ) : (
           <VehicleGrid
@@ -426,4 +419,3 @@ const InstagramProfile: React.FC = () => {
 };
 
 export default InstagramProfile;
-

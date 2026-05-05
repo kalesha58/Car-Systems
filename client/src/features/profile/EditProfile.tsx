@@ -6,32 +6,33 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
-import React, {FC, useState, useEffect} from 'react';
-import {useNavigation} from '@react-navigation/native';
-import {launchImageLibrary, launchCamera, ImagePickerResponse} from 'react-native-image-picker';
+import React, { FC, useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { Fonts } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import AttachmentModal from '@components/common/AttachmentModal';
-import {useAuthStore} from '@state/authStore';
-import {useTranslation} from 'react-i18next';
-import {updateProfile, updateProfileImage} from '@service/profileService';
-import {useTheme} from '@hooks/useTheme';
-import {useToast} from '@hooks/useToast';
+import { useAuthStore } from '@state/authStore';
+import { useTranslation } from 'react-i18next';
+import { updateProfile, updateProfileImage } from '@service/profileService';
+import { useTheme } from '@hooks/useTheme';
+import { useToast } from '@hooks/useToast';
 
 const EditProfile: FC = () => {
-  const {user, setUser} = useAuthStore();
-  const {t} = useTranslation();
+  const { user, setUser } = useAuthStore();
+  const { t } = useTranslation();
   const navigation = useNavigation();
-  const {colors} = useTheme();
-  const {showSuccess, showError} = useToast();
+  const { colors } = useTheme();
+  const { showSuccess, showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [imagePickerVisible, setImagePickerVisible] = useState(false);
-  
+
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [profileImageUri, setProfileImageUri] = useState<string | null>(
@@ -94,7 +95,7 @@ const EditProfile: FC = () => {
 
       // Update name if changed
       if (name.trim() !== user?.name) {
-        const updatedProfile = await updateProfile({name: name.trim()});
+        const updatedProfile = await updateProfile({ name: name.trim() });
         setUser(updatedProfile);
       }
 
@@ -103,8 +104,8 @@ const EditProfile: FC = () => {
     } catch (error: any) {
       showError(
         error?.response?.data?.message ||
-          error?.message ||
-          t('profile.updateFailed'),
+        error?.message ||
+        t('profile.updateFailed'),
       );
     } finally {
       setIsLoading(false);
@@ -115,7 +116,14 @@ const EditProfile: FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    content: {
+      flex: 1,
       backgroundColor: colors.background,
+      borderTopLeftRadius: 25,
+      borderTopRightRadius: 25,
+      overflow: 'hidden',
     },
     scrollViewContent: {
       paddingHorizontal: 16,
@@ -201,7 +209,7 @@ const EditProfile: FC = () => {
       borderColor: colors.border,
       padding: 14,
       shadowColor: '#000',
-      shadowOffset: {width: 0, height: 1},
+      shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.08,
       shadowRadius: 2,
       elevation: 2,
@@ -252,7 +260,7 @@ const EditProfile: FC = () => {
       justifyContent: 'center',
       marginTop: 22,
       shadowColor: '#000',
-      shadowOffset: {width: 0, height: 4},
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.15,
       shadowRadius: 6,
       elevation: 4,
@@ -280,148 +288,157 @@ const EditProfile: FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={t('profile.editProfile')} />
-      <AttachmentModal
-        visible={imagePickerVisible}
-        onClose={() => setImagePickerVisible(false)}
-        options={[
-          {
-            id: 'camera',
-            label: t('profile.camera'),
-            icon: 'camera-outline',
-            color: colors.secondary,
-            onPress: () => {
-              launchCamera(
-                {
-                  mediaType: 'photo',
-                  quality: 0.5,
-                  maxWidth: 1600,
-                  maxHeight: 1600,
-                  assetRepresentationMode: 'compatible',
-                  includeBase64: false,
-                },
-                handleImagePicker,
-              );
-            },
-          },
-          {
-            id: 'gallery',
-            label: t('profile.gallery'),
-            icon: 'images-outline',
-            color: colors.primary || colors.secondary,
-            onPress: () => {
-              launchImageLibrary(
-                {
-                  mediaType: 'photo',
-                  quality: 0.5,
-                  maxWidth: 1600,
-                  maxHeight: 1600,
-                  assetRepresentationMode: 'compatible',
-                  includeBase64: false,
-                  selectionLimit: 1,
-                },
-                handleImagePicker,
-              );
-            },
-          },
-        ]}
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader
+        title={t('profile.editProfile')}
+        showNotificationIcon={false}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
       />
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.profileImageContainer}>
-          <View style={styles.avatarOuterRing}>
-            <View style={styles.imageWrapper}>
-              {profileImageUri ? (
-                <Image
-                  source={{uri: profileImageUri}}
-                  style={styles.profileImage}
-                  resizeMode="cover"
+      <View style={styles.content}>
+        <AttachmentModal
+          visible={imagePickerVisible}
+          onClose={() => setImagePickerVisible(false)}
+          options={[
+            {
+              id: 'camera',
+              label: t('profile.camera'),
+              icon: 'camera-outline',
+              color: colors.secondary,
+              onPress: () => {
+                launchCamera(
+                  {
+                    mediaType: 'photo',
+                    quality: 0.5,
+                    maxWidth: 1600,
+                    maxHeight: 1600,
+                    assetRepresentationMode: 'compatible',
+                    includeBase64: false,
+                  },
+                  handleImagePicker,
+                );
+              },
+            },
+            {
+              id: 'gallery',
+              label: t('profile.gallery'),
+              icon: 'images-outline',
+              color: colors.primary || colors.secondary,
+              onPress: () => {
+                launchImageLibrary(
+                  {
+                    mediaType: 'photo',
+                    quality: 0.5,
+                    maxWidth: 1600,
+                    maxHeight: 1600,
+                    assetRepresentationMode: 'compatible',
+                    includeBase64: false,
+                    selectionLimit: 1,
+                  },
+                  handleImagePicker,
+                );
+              },
+            },
+          ]}
+        />
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.profileImageContainer}>
+            <View style={styles.avatarOuterRing}>
+              <View style={styles.imageWrapper}>
+                {profileImageUri ? (
+                  <Image
+                    source={{ uri: profileImageUri }}
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.placeholderContainer}>
+                    <CustomText variant="h1" fontFamily={Fonts.Bold} style={styles.placeholderText}>
+                      {getInitialLetter()}
+                    </CustomText>
+                  </View>
+                )}
+                {isUploading && (
+                  <View style={styles.loadingOverlay}>
+                    <ActivityIndicator size="small" color={colors.white} />
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.cameraBadgeButton}
+                  onPress={showImagePickerOptions}
+                  disabled={isUploading}
+                  activeOpacity={0.85}>
+                  <Icon name="camera" size={RFValue(12)} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.editImageButton}
+              onPress={showImagePickerOptions}
+              disabled={isUploading}
+              activeOpacity={0.8}>
+              <Icon name="camera-outline" size={RFValue(14)} color={colors.secondary} />
+              <CustomText style={styles.editImageButtonText}>
+                {t('profile.changePhoto')}
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <CustomText style={styles.label}>
+                {t('profile.name')}
+              </CustomText>
+              <View style={styles.inputContainer}>
+                <Icon name="account-outline" size={RFValue(14)} color={colors.textSecondary} />
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder={t('profile.enterName')}
+                  placeholderTextColor={colors.textSecondary}
+                  editable={!isLoading}
                 />
-              ) : (
-                <View style={styles.placeholderContainer}>
-                  <CustomText variant="h1" fontFamily={Fonts.Bold} style={styles.placeholderText}>
-                    {getInitialLetter()}
-                  </CustomText>
-                </View>
-              )}
-              {isUploading && (
-                <View style={styles.loadingOverlay}>
-                  <ActivityIndicator size="small" color={colors.white} />
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.cameraBadgeButton}
-                onPress={showImagePickerOptions}
-                disabled={isUploading}
-                activeOpacity={0.85}>
-                <Icon name="camera" size={RFValue(12)} color={colors.white} />
-              </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <CustomText style={styles.label}>
+                {t('profile.email')}
+              </CustomText>
+              <View style={[styles.inputContainer, styles.inputReadOnly]}>
+                <Icon name="email-outline" size={RFValue(14)} color={colors.textSecondary} />
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  editable={false}
+                  placeholderTextColor={colors.textSecondary}
+                />
+              </View>
+              <CustomText style={styles.readOnlyNote}>
+                {t('profile.emailReadOnly')}
+              </CustomText>
             </View>
           </View>
+
           <TouchableOpacity
-            style={styles.editImageButton}
-            onPress={showImagePickerOptions}
-            disabled={isUploading}
+            style={[styles.saveButton, (isLoading || isUploading) && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={isLoading || isUploading}
             activeOpacity={0.8}>
-            <Icon name="camera-outline" size={RFValue(14)} color={colors.secondary} />
-            <CustomText style={styles.editImageButtonText}>
-              {t('profile.changePhoto')}
-            </CustomText>
+            {isLoading || isUploading ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <CustomText style={styles.saveButtonText}>
+                {t('profile.save')}
+              </CustomText>
+            )}
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <CustomText style={styles.label}>
-              {t('profile.name')}
-            </CustomText>
-            <View style={styles.inputContainer}>
-              <Icon name="account-outline" size={RFValue(14)} color={colors.textSecondary} />
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder={t('profile.enterName')}
-                placeholderTextColor={colors.textSecondary}
-                editable={!isLoading}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <CustomText style={styles.label}>
-              {t('profile.email')}
-            </CustomText>
-            <View style={[styles.inputContainer, styles.inputReadOnly]}>
-              <Icon name="email-outline" size={RFValue(14)} color={colors.textSecondary} />
-              <TextInput
-                style={styles.input}
-                value={email}
-                editable={false}
-                placeholderTextColor={colors.textSecondary}
-              />
-            </View>
-            <CustomText style={styles.readOnlyNote}>
-              {t('profile.emailReadOnly')}
-            </CustomText>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.saveButton, (isLoading || isUploading) && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isLoading || isUploading}
-          activeOpacity={0.8}>
-          {isLoading || isUploading ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <CustomText style={styles.saveButtonText}>
-              {t('profile.save')}
-            </CustomText>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </View>
   );
 };

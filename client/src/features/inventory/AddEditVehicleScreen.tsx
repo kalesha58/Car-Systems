@@ -9,13 +9,16 @@ import {
   ActivityIndicator,
   Alert,
   Switch,
+  Platform,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LinearGradient from 'react-native-linear-gradient';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
@@ -42,7 +45,8 @@ interface RouteParams {
 const AddEditVehicleScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
+  const insets = useSafeAreaInsets();
   const {showSuccess, showError} = useToast();
   const {t} = useTranslation();
   const params = (route.params as RouteParams) || {};
@@ -144,7 +148,7 @@ const AddEditVehicleScreen: React.FC = () => {
       {
         mediaType: 'photo',
         // Downscale/compress to reduce upload payload and avoid 413 errors.
-        quality: 0.65,
+        quality: 0.8,
         maxWidth: 1600,
         maxHeight: 1600,
         includeBase64: false,
@@ -407,106 +411,150 @@ const AddEditVehicleScreen: React.FC = () => {
     imageUris.length > 0 &&
     !isSubmitting;
 
+  const cardShadow = {
+    shadowColor: colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: isDark ? 0.35 : 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.backgroundSecondary,
     },
     scrollContent: {
-      padding: screenWidth * 0.04,
+      paddingHorizontal: screenWidth * 0.04,
+      paddingTop: screenHeight * 0.018,
       paddingBottom: screenHeight * 0.05,
     },
+    formCard: {
+      backgroundColor: colors.cardBackground,
+      borderRadius: RFValue(14),
+      padding: screenWidth * 0.04,
+      borderWidth: isDark ? 1 : 0,
+      borderColor: colors.border,
+      ...cardShadow,
+    },
+    row: {
+      flexDirection: 'row',
+      gap: screenWidth * 0.03,
+    },
+    halfField: {
+      flex: 1,
+      minWidth: 0,
+    },
     section: {
-      marginBottom: screenHeight * 0.02,
+      marginBottom: screenHeight * 0.022,
     },
     label: {
-      fontSize: RFValue(8),
+      fontSize: RFValue(9),
       fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginBottom: screenHeight * 0.008,
-      opacity: 0.8,
+      color: colors.textSecondary,
+      marginBottom: screenHeight * 0.01,
+      letterSpacing: 0.2,
     },
     required: {
       color: colors.error,
     },
     textInputContainer: {
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.01,
-      minHeight: screenHeight * 0.05,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.012,
+      minHeight: screenHeight * 0.056,
+      ...cardShadow,
     },
     textInput: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.text,
+      paddingVertical: 0,
     },
     textInputMultiline: {
-      minHeight: screenHeight * 0.12,
+      minHeight: screenHeight * 0.14,
       textAlignVertical: 'top',
+      paddingTop: 2,
     },
     dropdownButton: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.014,
+      minHeight: screenHeight * 0.056,
+      ...cardShadow,
     },
     dropdownButtonText: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.text,
+      flex: 1,
+      marginRight: screenWidth * 0.02,
+    },
+    dropdownPlaceholder: {
+      color: colors.disabled,
     },
     switchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
+      paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.012,
+      minHeight: screenHeight * 0.056,
+      ...cardShadow,
     },
     switchLabel: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
       color: colors.text,
+      flex: 1,
+      marginRight: screenWidth * 0.02,
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.cardBackground,
-      borderRadius: 8,
+      justifyContent: 'center',
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
+      borderRadius: RFValue(12),
       borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.03,
-      paddingVertical: screenHeight * 0.012,
+      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      paddingHorizontal: screenWidth * 0.035,
+      paddingVertical: screenHeight * 0.016,
+      ...cardShadow,
     },
     buttonText: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
-      color: colors.text,
-      marginLeft: screenWidth * 0.02,
+      color: colors.winterBlueDark,
+      marginLeft: screenWidth * 0.025,
     },
     imagesContainer: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: screenWidth * 0.02,
-      marginTop: screenHeight * 0.01,
+      gap: screenWidth * 0.03,
+      marginTop: screenHeight * 0.012,
     },
     imageWrapper: {
       position: 'relative',
-      width: screenWidth * 0.25,
-      height: screenWidth * 0.25,
-      borderRadius: 8,
+      width: screenWidth * 0.26,
+      height: screenWidth * 0.26,
+      borderRadius: RFValue(12),
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...cardShadow,
     },
     image: {
       width: '100%',
@@ -515,12 +563,12 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     removeImageButton: {
       position: 'absolute',
-      top: 4,
-      right: 4,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      borderRadius: 12,
-      width: 24,
-      height: 24,
+      top: 6,
+      right: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.55)',
+      borderRadius: 14,
+      width: 28,
+      height: 28,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -529,54 +577,52 @@ const AddEditVehicleScreen: React.FC = () => {
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: colors.background,
+      backgroundColor: colors.cardBackground,
       paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.015,
-      paddingBottom: screenHeight * 0.02,
-      borderTopWidth: 1,
+      paddingVertical: screenHeight * 0.018,
+      paddingBottom: screenHeight * 0.028,
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
       shadowColor: colors.black,
-      shadowOffset: {
-        width: 0,
-        height: -2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 5,
+      shadowOffset: {width: 0, height: -4},
+      shadowOpacity: isDark ? 0.4 : 0.12,
+      shadowRadius: 12,
+      elevation: 12,
     },
     editDeleteRow: {
       flexDirection: 'row',
-      gap: screenWidth * 0.02,
+      gap: screenWidth * 0.025,
     },
-    submitButton: {
-      backgroundColor: Colors.secondary,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'row',
-      gap: screenWidth * 0.02,
+    submitButtonTouchable: {
+      borderRadius: RFValue(14),
+      overflow: 'hidden',
+      width: '100%',
     },
     editButton: {
       flex: 1,
+      minWidth: 0,
     },
     submitButtonDisabled: {
       backgroundColor: colors.disabled,
-      opacity: 0.6,
     },
     submitButtonText: {
-      fontSize: RFValue(10),
+      fontSize: RFValue(11),
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
     deleteButton: {
       backgroundColor: colors.error,
-      borderRadius: 8,
-      paddingVertical: screenHeight * 0.015,
+      borderRadius: RFValue(14),
+      paddingVertical: screenHeight * 0.018,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
+      shadowColor: colors.error,
+      shadowOffset: {width: 0, height: 3},
+      shadowOpacity: 0.35,
+      shadowRadius: 6,
+      elevation: 4,
     },
     deleteButtonHalf: {
       flex: 1,
@@ -586,246 +632,343 @@ const AddEditVehicleScreen: React.FC = () => {
       fontFamily: Fonts.SemiBold,
       color: '#fff',
     },
+    primaryGradient: {
+      paddingVertical: screenHeight * 0.018,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: screenWidth * 0.02,
+    },
+    primaryButtonShadow: {
+      shadowColor: colors.secondary,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.35,
+      shadowRadius: 8,
+      elevation: 6,
+      alignSelf: 'stretch',
+    },
+    fullWidthPrimary: {
+      width: '100%',
+    },
   });
+
+  const gradientPrimary: [string, string] = [
+    colors.secondary,
+    isDark ? '#0b5c16' : '#095a14',
+  ];
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={isEditMode ? t('dealer.editVehicle') : t('dealer.addVehicle')} />
+      <CustomHeader
+        title={isEditMode ? t('dealer.editVehicle') : t('dealer.addVehicle')}
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+        showNotificationIcon={false}
+        rightComponent={<View style={{width: RFValue(28)}} />}
+      />
       <ScrollView
         style={styles.container}
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.vehicleType')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => openDropdown('vehicleType')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('vehicleType')}</CustomText>
-            <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.brand')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterBrand')}
-              placeholderTextColor={colors.disabled}
-              value={brand}
-              onChangeText={setBrand}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.model')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterModel')}
-              placeholderTextColor={colors.disabled}
-              value={vehicleModel}
-              onChangeText={setVehicleModel}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.year')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterYear')}
-              placeholderTextColor={colors.disabled}
-              value={year}
-              onChangeText={setYear}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.price')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterPrice')}
-              placeholderTextColor={colors.disabled}
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.availability')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => openDropdown('availability')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('availability')}</CustomText>
-            <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.numberPlate')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterNumberPlate')}
-              placeholderTextColor={colors.disabled}
-              value={numberPlate}
-              onChangeText={setNumberPlate}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.mileage')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterMileage')}
-              placeholderTextColor={colors.disabled}
-              value={mileage}
-              onChangeText={setMileage}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.color')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('dealer.enterColor')}
-              placeholderTextColor={colors.disabled}
-              value={color}
-              onChangeText={setColor}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.fuelType')}</CustomText>
-          <TouchableOpacity style={styles.dropdownButton} onPress={() => openDropdown('fuelType')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('fuelType')}</CustomText>
-            <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.transmission')}</CustomText>
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => openDropdown('transmission')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('transmission')}</CustomText>
-            <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.condition')}</CustomText>
-          <TouchableOpacity style={styles.dropdownButton} onPress={() => openDropdown('condition')}>
-            <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('condition')}</CustomText>
-            <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.switchContainer}>
-            <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
-            <Switch
-              value={allowTestDrive}
-              onValueChange={setAllowTestDrive}
-              trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
-              thumbColor={allowTestDrive ? colors.secondary : colors.disabled}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
-          <View style={styles.textInputContainer}>
-            <TextInput
-              style={[styles.textInput, styles.textInputMultiline]}
-              placeholder={t('dealer.enterDescription')}
-              placeholderTextColor={colors.disabled}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <CustomText style={styles.label}>{t('dealer.images')} <CustomText style={styles.required}>*</CustomText></CustomText>
-          <TouchableOpacity style={styles.button} onPress={handleImagePicker}>
-            <Icon name="image-outline" size={RFValue(16)} color={colors.text} />
-            <CustomText style={styles.buttonText}>
-              {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
+        <View style={styles.formCard}>
+          <View style={styles.section}>
+            <CustomText style={styles.label}>
+              {t('dealer.vehicleType')} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
-          </TouchableOpacity>
-          {imageUris.length > 0 && (
-            <View style={styles.imagesContainer}>
-              {imageUris.map((uri, index) => (
-                <View key={index} style={styles.imageWrapper}>
-                  <Image source={{uri}} style={styles.image} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => removeImage(index)}>
-                    <Icon name="close" size={RFValue(12)} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              ))}
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => openDropdown('vehicleType')}
+              activeOpacity={0.75}>
+              <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('vehicleType')}</CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.section, styles.row]}>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterBrand')}
+                  placeholderTextColor={colors.disabled}
+                  value={brand}
+                  onChangeText={setBrand}
+                />
+              </View>
             </View>
-          )}
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.model')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterModel')}
+                  placeholderTextColor={colors.disabled}
+                  value={vehicleModel}
+                  onChangeText={setVehicleModel}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.section, styles.row]}>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.year')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterYear')}
+                  placeholderTextColor={colors.disabled}
+                  value={year}
+                  onChangeText={setYear}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                {t('dealer.price')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterPrice')}
+                  placeholderTextColor={colors.disabled}
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>
+              {t('dealer.availability')} <CustomText style={styles.required}>*</CustomText>
+            </CustomText>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => openDropdown('availability')}
+              activeOpacity={0.75}>
+              <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('availability')}</CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.section, styles.row]}>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>{t('dealer.numberPlate')}</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterNumberPlate')}
+                  placeholderTextColor={colors.disabled}
+                  value={numberPlate}
+                  onChangeText={setNumberPlate}
+                />
+              </View>
+            </View>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>{t('dealer.mileage')}</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder={t('dealer.enterMileage')}
+                  placeholderTextColor={colors.disabled}
+                  value={mileage}
+                  onChangeText={setMileage}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.color')}</CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder={t('dealer.enterColor')}
+                placeholderTextColor={colors.disabled}
+                value={color}
+                onChangeText={setColor}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.fuelType')}</CustomText>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => openDropdown('fuelType')}
+              activeOpacity={0.75}>
+              <CustomText
+                style={[
+                  styles.dropdownButtonText,
+                  ...(!fuelType ? [styles.dropdownPlaceholder] : []),
+                ]}>
+                {getSelectedLabel('fuelType')}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.transmission')}</CustomText>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => openDropdown('transmission')}
+              activeOpacity={0.75}>
+              <CustomText
+                style={[
+                  styles.dropdownButtonText,
+                  ...(!transmission ? [styles.dropdownPlaceholder] : []),
+                ]}>
+                {getSelectedLabel('transmission')}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.condition')}</CustomText>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => openDropdown('condition')}
+              activeOpacity={0.75}>
+              <CustomText
+                style={[
+                  styles.dropdownButtonText,
+                  ...(!condition ? [styles.dropdownPlaceholder] : []),
+                ]}>
+                {getSelectedLabel('condition')}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.switchContainer}>
+              <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
+              <Switch
+                value={allowTestDrive}
+                onValueChange={setAllowTestDrive}
+                trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+                thumbColor={allowTestDrive ? colors.secondary : colors.disabled}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
+            <View style={styles.textInputContainer}>
+              <TextInput
+                style={[styles.textInput, styles.textInputMultiline]}
+                placeholder={t('dealer.enterDescription')}
+                placeholderTextColor={colors.disabled}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+              />
+            </View>
+          </View>
+
+          <View style={[styles.section, {marginBottom: 0}]}>
+            <CustomText style={styles.label}>
+              {t('dealer.images')} <CustomText style={styles.required}>*</CustomText>
+            </CustomText>
+            <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.8}>
+              <Icon name="images-outline" size={RFValue(20)} color={colors.winterBlueDark} />
+              <CustomText style={styles.buttonText}>
+                {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
+              </CustomText>
+            </TouchableOpacity>
+            {imageUris.length > 0 && (
+              <View style={styles.imagesContainer}>
+                {imageUris.map((uri, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{uri}} style={styles.image} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => removeImage(index)}>
+                      <Icon name="close" size={RFValue(14)} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Sticky Button Container */}
-      <View style={styles.stickyButtonContainer}>
+      <View style={[styles.stickyButtonContainer, {paddingBottom: Math.max(insets.bottom, screenHeight * 0.028)}]}>
         {isEditMode ? (
           <View style={styles.editDeleteRow}>
-            <TouchableOpacity
-              style={[styles.submitButton, styles.editButton, !isFormValid && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={!isFormValid}>
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Icon name="create-outline" size={RFValue(16)} color="#fff" />
-                  <CustomText style={styles.submitButtonText}>
-                    {t('dealer.updateVehicle')}
-                  </CustomText>
-                </>
-              )}
-            </TouchableOpacity>
+            <View
+              style={[
+                styles.editButton,
+                (isFormValid || isSubmitting) && styles.primaryButtonShadow,
+              ]}>
+              <TouchableOpacity
+                style={styles.submitButtonTouchable}
+                onPress={handleSubmit}
+                disabled={!isFormValid}
+                activeOpacity={0.88}>
+                {isSubmitting ? (
+                  <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                    <ActivityIndicator size="small" color="#fff" />
+                  </LinearGradient>
+                ) : isFormValid ? (
+                  <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                    <Icon name="create-outline" size={RFValue(18)} color="#fff" />
+                    <CustomText style={styles.submitButtonText}>{t('dealer.updateVehicle')}</CustomText>
+                  </LinearGradient>
+                ) : (
+                  <View style={[styles.primaryGradient, styles.submitButtonDisabled]}>
+                    <Icon name="create-outline" size={RFValue(18)} color="rgba(255,255,255,0.85)" />
+                    <CustomText style={styles.submitButtonText}>{t('dealer.updateVehicle')}</CustomText>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={[styles.deleteButton, styles.deleteButtonHalf]}
               onPress={handleDelete}
-              disabled={isSubmitting}>
-              <Icon name="trash-outline" size={RFValue(16)} color="#fff" />
+              disabled={isSubmitting}
+              activeOpacity={0.88}>
+              <Icon name="trash-outline" size={RFValue(17)} color="#fff" />
               <CustomText style={styles.deleteButtonText}>{t('dealer.deleteVehicle')}</CustomText>
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
-            onPress={handleSubmit}
-            disabled={!isFormValid}>
-            {isSubmitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <CustomText style={styles.submitButtonText}>
-                {t('dealer.createVehicle')}
-              </CustomText>
-            )}
-          </TouchableOpacity>
+          <View style={[styles.primaryButtonShadow, styles.fullWidthPrimary]}>
+            <TouchableOpacity
+              style={styles.submitButtonTouchable}
+              onPress={handleSubmit}
+              disabled={!isFormValid}
+              activeOpacity={0.88}>
+              {isSubmitting ? (
+                <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </LinearGradient>
+              ) : isFormValid ? (
+                <LinearGradient colors={gradientPrimary} style={styles.primaryGradient}>
+                  <CustomText style={styles.submitButtonText}>{t('dealer.createVehicle')}</CustomText>
+                </LinearGradient>
+              ) : (
+                <View style={[styles.primaryGradient, styles.submitButtonDisabled]}>
+                  <CustomText style={styles.submitButtonText}>{t('dealer.createVehicle')}</CustomText>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 

@@ -1,6 +1,6 @@
 import { Fonts } from "@utils/Constants";
 import { FC } from "react";
-import { StyleSheet, Text, TextStyle } from "react-native";
+import { StyleSheet, Text, TextStyle, StyleProp } from "react-native";
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 
@@ -18,7 +18,7 @@ interface Props {
     "body";
     fontFamily?: Fonts;
     fontSize?: number;
-    style?: TextStyle | TextStyle[];
+    style?: StyleProp<TextStyle>;
     children?: React.ReactNode;
     numberOfLines?: number;
     onLayout?: (event: object) => void

@@ -19,11 +19,13 @@ import SkeletonLoader from '@components/ui/SkeletonLoader';
 interface BusinessRegistrationInfoProps {
   businessRegistration: IBusinessRegistration | null;
   loading?: boolean;
+  ordersCount?: number;
 }
 
 const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
   businessRegistration,
   loading = false,
+  ordersCount = 0,
 }) => {
   const {colors, isDark} = useTheme();
   const {t} = useTranslation();
@@ -84,7 +86,6 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
     () =>
       StyleSheet.create({
         container: {
-          flex: 1,
           backgroundColor: colors.background,
           paddingHorizontal: 16,
           paddingTop: 16,
@@ -264,7 +265,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {/* Basic Information */}
       <View style={styles.card}>
         <CustomText style={styles.cardTitle}>
@@ -307,6 +308,15 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
             <CustomText style={styles.infoValue}>{businessRegistration.gst}</CustomText>
           </View>
         )}
+        
+        <View style={styles.infoRow}>
+          <CustomText style={styles.infoLabel}>
+            {t('profile.orders') || 'Total Orders'}
+          </CustomText>
+          <CustomText style={[styles.infoValue, {fontFamily: Fonts.Bold, color: colors.secondary}]}>
+            {ordersCount}
+          </CustomText>
+        </View>
 
         <View style={[styles.infoRow, styles.infoRowLast]}>
           <CustomText style={styles.infoLabel}>
@@ -504,7 +514,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
           </View>
         )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

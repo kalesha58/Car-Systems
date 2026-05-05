@@ -1,7 +1,7 @@
 import {View, Text, StyleSheet, Image, Alert} from 'react-native';
 import React, {FC, useEffect} from 'react';
 import {Colors} from '@utils/Constants';
-import Logo from '@assets/images/logo.jpeg';
+import Logo from '@assets/images/logo.png';
 import {screenHeight, screenWidth} from '@utils/Scaling';
 import { resetAndNavigate} from '@utils/NavigationUtils';
 import GeoLocation from '@react-native-community/geolocation';

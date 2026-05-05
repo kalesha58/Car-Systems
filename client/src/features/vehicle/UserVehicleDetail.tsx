@@ -9,6 +9,7 @@ import {
   View,
   RefreshControl,
   Alert,
+  StatusBar,
 } from 'react-native';
 import {RouteProp, useRoute} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
@@ -65,6 +66,11 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
       marginBottom: 12,
       borderWidth: 1,
       borderColor: colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
     },
     cardContent: {
       flexDirection: 'row',
@@ -80,7 +86,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: hasDocument ? Colors.secondary + '20' : colors.border,
+      backgroundColor: hasDocument ? colors.secondary + '20' : colors.backgroundSecondary,
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
@@ -92,12 +98,12 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
       fontSize: RFValue(14),
       fontFamily: Fonts.SemiBold,
       color: colors.text,
-      marginBottom: 4,
+      marginBottom: 2,
     },
     documentStatus: {
       fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
-      color: hasDocument ? Colors.secondary : colors.disabled,
+      color: hasDocument ? colors.secondary : colors.disabled,
     },
     actionButtons: {
       flexDirection: 'row',
@@ -107,20 +113,20 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderRadius: 8,
-      minWidth: 80,
+      minWidth: 70,
       alignItems: 'center',
       justifyContent: 'center',
     },
     viewButton: {
-      backgroundColor: Colors.secondary + '20',
+      backgroundColor: colors.secondary + '15',
     },
     uploadButton: {
-      backgroundColor: Colors.secondary,
+      backgroundColor: colors.secondary,
     },
     buttonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Medium,
-      color: Colors.secondary,
+      fontFamily: Fonts.Bold,
+      color: colors.secondary,
     },
     uploadButtonText: {
       color: '#fff',
@@ -134,14 +140,14 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
           <View style={styles.iconContainer}>
             <Icon
               name={icon}
-              size={RFValue(24)}
-              color={hasDocument ? Colors.secondary : colors.disabled}
+              size={RFValue(22)}
+              color={hasDocument ? colors.secondary : colors.disabled}
             />
           </View>
           <View style={styles.textSection}>
             <CustomText style={styles.documentLabel}>{label}</CustomText>
             <CustomText style={styles.documentStatus}>
-              {hasDocument ? 'Uploaded' : 'Not uploaded'}
+              {hasDocument ? 'Verified' : 'Not uploaded'}
             </CustomText>
           </View>
         </View>
@@ -163,7 +169,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <CustomText style={[styles.buttonText, styles.uploadButtonText]}>
-                {hasDocument ? 'Update' : 'Add'}
+                {hasDocument ? 'Edit' : 'Add'}
               </CustomText>
             )}
           </TouchableOpacity>
@@ -177,7 +183,7 @@ const UserVehicleDetail: React.FC = () => {
   const route = useRoute<RouteProp<UserVehicleDetailRouteParams, 'UserVehicleDetail'>>();
   const {vehicleId} = route.params;
 
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
   const {showError, showSuccess} = useToast();
   const screenWidth = Dimensions.get('window').width;
 
@@ -248,10 +254,7 @@ const UserVehicleDetail: React.FC = () => {
 
         setUploadingDoc(type);
         try {
-          // Upload image
           const imageUrl = await uploadImage(uri);
-
-          // Update vehicle documents
           const currentDocuments: IVehicleDocuments = vehicle?.documents || {};
           const updatedDocuments: IVehicleDocuments = {
             ...currentDocuments,
@@ -327,7 +330,14 @@ const UserVehicleDetail: React.FC = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {flex: 1, backgroundColor: colors.background},
+        container: {flex: 1, backgroundColor: colors.secondary},
+        contentContainer: {
+          flex: 1,
+          backgroundColor: colors.background,
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+          overflow: 'hidden',
+        },
         content: {paddingBottom: 120},
         imageCarousel: {
           width: '100%',
@@ -361,190 +371,192 @@ const UserVehicleDetail: React.FC = () => {
         },
         activeDot: {
           width: 20,
-          backgroundColor: Colors.secondary,
+          backgroundColor: colors.secondary,
         },
-        detailsContainer: {padding: 16},
+        detailsContainer: {padding: 20},
         titleRow: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginTop: 12,
+          marginTop: 8,
         },
-        title: {flex: 1, marginRight: 8},
+        title: {flex: 1, marginRight: 8, color: colors.text},
         sectionTitle: {
-          marginTop: 24,
-          marginBottom: 12,
+          marginTop: 28,
+          marginBottom: 16,
           fontFamily: Fonts.Bold,
-          fontSize: RFValue(16),
+          fontSize: RFValue(15),
           color: colors.text,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
         },
         detailRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
-          marginTop: 12,
-          paddingVertical: 8,
+          paddingVertical: 14,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
         },
-        detailLabel: {color: colors.disabled, fontSize: RFValue(12), fontFamily: Fonts.Regular},
+        detailLabel: {color: colors.disabled, fontSize: RFValue(12), fontFamily: Fonts.Medium},
         detailValue: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          fontFamily: Fonts.SemiBold,
           color: colors.text,
         },
         documentsSection: {
-          marginTop: 8,
+          marginTop: 4,
         },
         emptyState: {
-          padding: 40,
+          padding: 60,
           alignItems: 'center',
           justifyContent: 'center',
         },
         emptyText: {
-          fontSize: RFValue(12),
+          fontSize: RFValue(14),
           color: colors.disabled,
           textAlign: 'center',
-          marginTop: 8,
+          marginTop: 12,
         },
-        skeletonImage: {
-          width: screenWidth,
-          height: screenWidth * 0.8,
-          backgroundColor: colors.backgroundSecondary,
-        },
-        skeletonTitle: {marginTop: 12, marginBottom: 8},
-        skeletonDetail: {marginTop: 12},
       }),
     [colors, screenWidth],
   );
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Vehicle Details" />
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadVehicle(true)}
-            tintColor={colors.secondary}
-            colors={[colors.secondary]}
-          />
-        }>
-        {/* Image Carousel */}
-        <View style={styles.imageCarousel}>
-          {loading ? (
-            <SkeletonLoader width={screenWidth} height={screenWidth * 0.8} borderRadius={0} />
-          ) : images.length > 0 ? (
-            <>
-              <ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleImageScroll}
-                scrollEventThrottle={16}
-                decelerationRate="fast"
-                snapToOffsets={snapOffsets}
-                snapToAlignment="start">
-                {images.map((imageUri, index) => (
-                  <Image
-                    key={index}
-                    source={{uri: imageUri}}
-                    style={styles.image}
-                    resizeMode="cover"
-                  />
-                ))}
-              </ScrollView>
-              {images.length > 1 && (
-                <View style={styles.pagination}>
-                  {images.map((_, index) => (
-                    <View
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader 
+        title="Vehicle Details" 
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
+      <View style={styles.contentContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadVehicle(true)}
+              tintColor={colors.secondary}
+              colors={[colors.secondary]}
+            />
+          }>
+          {/* Image Carousel */}
+          <View style={styles.imageCarousel}>
+            {loading ? (
+              <SkeletonLoader width={screenWidth} height={screenWidth * 0.8} borderRadius={0} />
+            ) : images.length > 0 ? (
+              <>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onScroll={handleImageScroll}
+                  scrollEventThrottle={16}
+                  decelerationRate="fast"
+                  snapToOffsets={snapOffsets}
+                  snapToAlignment="start">
+                  {images.map((imageUri, index) => (
+                    <Image
                       key={index}
-                      style={[styles.dot, index === currentImageIndex && styles.activeDot]}
+                      source={{uri: imageUri}}
+                      style={styles.image}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </ScrollView>
+                {images.length > 1 && (
+                  <View style={styles.pagination}>
+                    {images.map((_, index) => (
+                      <View
+                        key={index}
+                        style={[styles.dot, index === currentImageIndex && styles.activeDot]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={[styles.image, {justifyContent: 'center', alignItems: 'center'}]}>
+                <Icon name="car-outline" size={RFValue(48)} color={colors.disabled} />
+              </View>
+            )}
+          </View>
+
+          <View style={styles.detailsContainer}>
+            {loading ? (
+              <>
+                <SkeletonLoader width="70%" height={24} borderRadius={4} style={{marginTop: 12, marginBottom: 8}} />
+                <SkeletonLoader width="100%" height={16} borderRadius={4} style={{marginTop: 12}} />
+                <SkeletonLoader width="80%" height={16} borderRadius={4} style={{marginTop: 12}} />
+              </>
+            ) : vehicle ? (
+              <>
+                {/* Vehicle Title */}
+                <View style={styles.titleRow}>
+                  <CustomText fontFamily={Fonts.Bold} variant="h4" style={styles.title}>
+                    {vehicle.brand} {vehicle.model}
+                  </CustomText>
+                </View>
+
+                {/* Vehicle Details */}
+                <CustomText style={styles.sectionTitle}>
+                  Vehicle Information
+                </CustomText>
+
+                {vehicle.numberPlate && !shouldHideVehicleNumber() && (
+                  <View style={styles.detailRow}>
+                    <CustomText style={styles.detailLabel}>Number Plate</CustomText>
+                    <CustomText style={styles.detailValue}>{maskVehicleNumber(vehicle.numberPlate)}</CustomText>
+                  </View>
+                )}
+
+                {vehicle.year && (
+                  <View style={styles.detailRow}>
+                    <CustomText style={styles.detailLabel}>Year</CustomText>
+                    <CustomText style={styles.detailValue}>{vehicle.year}</CustomText>
+                  </View>
+                )}
+
+                {vehicle.color && (
+                  <View style={styles.detailRow}>
+                    <CustomText style={styles.detailLabel}>Color</CustomText>
+                    <CustomText style={styles.detailValue}>{vehicle.color}</CustomText>
+                  </View>
+                )}
+
+                {/* Documents Section */}
+                <CustomText style={styles.sectionTitle}>
+                  Documents
+                </CustomText>
+
+                <View style={styles.documentsSection}>
+                  {documentTypes.map((type) => (
+                    <DocumentCard
+                      key={type}
+                      type={type}
+                      label={getDocumentLabel(type)}
+                      icon={getDocumentIcon(type)}
+                      documentUrl={vehicle.documents?.[type]}
+                      onUpload={() => handleDocumentUpload(type)}
+                      onView={() => handleDocumentView(type)}
+                      isUploading={uploadingDoc === type}
+                      colors={colors}
                     />
                   ))}
                 </View>
-              )}
-            </>
-          ) : (
-            <View style={[styles.image, {justifyContent: 'center', alignItems: 'center'}]}>
-              <Icon name="car-outline" size={RFValue(48)} color={colors.disabled} />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.detailsContainer}>
-          {loading ? (
-            <>
-              <SkeletonLoader width="70%" height={24} borderRadius={4} style={styles.skeletonTitle} />
-              <SkeletonLoader width="100%" height={16} borderRadius={4} style={styles.skeletonDetail} />
-              <SkeletonLoader width="80%" height={16} borderRadius={4} style={styles.skeletonDetail} />
-            </>
-          ) : vehicle ? (
-            <>
-              {/* Vehicle Title */}
-              <View style={styles.titleRow}>
-                <CustomText fontFamily={Fonts.Bold} variant="h4" style={styles.title}>
-                  {vehicle.brand} {vehicle.model}
-                </CustomText>
+              </>
+            ) : (
+              <View style={styles.emptyState}>
+                <Icon name="alert-circle-outline" size={RFValue(48)} color={colors.disabled} />
+                <CustomText style={styles.emptyText}>Vehicle not found</CustomText>
               </View>
-
-              {/* Vehicle Details */}
-              <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                Vehicle Information
-              </CustomText>
-
-              {vehicle.numberPlate && !shouldHideVehicleNumber() && (
-                <View style={styles.detailRow}>
-                  <CustomText style={styles.detailLabel}>Number Plate</CustomText>
-                  <CustomText style={styles.detailValue}>{maskVehicleNumber(vehicle.numberPlate)}</CustomText>
-                </View>
-              )}
-
-              {vehicle.year && (
-                <View style={styles.detailRow}>
-                  <CustomText style={styles.detailLabel}>Year</CustomText>
-                  <CustomText style={styles.detailValue}>{vehicle.year}</CustomText>
-                </View>
-              )}
-
-              {vehicle.color && (
-                <View style={styles.detailRow}>
-                  <CustomText style={styles.detailLabel}>Color</CustomText>
-                  <CustomText style={styles.detailValue}>{vehicle.color}</CustomText>
-                </View>
-              )}
-
-              {/* Documents Section */}
-              <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                Documents
-              </CustomText>
-
-              <View style={styles.documentsSection}>
-                {documentTypes.map((type) => (
-                  <DocumentCard
-                    key={type}
-                    type={type}
-                    label={getDocumentLabel(type)}
-                    icon={getDocumentIcon(type)}
-                    documentUrl={vehicle.documents?.[type]}
-                    onUpload={() => handleDocumentUpload(type)}
-                    onView={() => handleDocumentView(type)}
-                    isUploading={uploadingDoc === type}
-                    colors={colors}
-                  />
-                ))}
-              </View>
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <Icon name="alert-circle-outline" size={RFValue(48)} color={colors.disabled} />
-              <CustomText style={styles.emptyText}>Vehicle not found</CustomText>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+            )}
+          </View>
+        </ScrollView>
+      </View>
 
       {/* Document Viewer Modal */}
       {viewingDocument && (

@@ -319,7 +319,12 @@ const EditGroupScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Edit Group" />
+        <CustomHeader 
+          title="Edit Group" 
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.secondary} />
         </View>
@@ -329,7 +334,12 @@ const EditGroupScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Edit Group" />
+      <CustomHeader 
+        title="Edit Group" 
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+      />
       <FlatList
         data={[...membersToShow, ...nonMembers]}
         renderItem={({item}) => renderUserItem({item})}

@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
@@ -50,6 +51,7 @@ const CreateGroupScreen: React.FC = () => {
   
   const {colors} = useTheme();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const {showError, showSuccess} = useToast();
 
   useEffect(() => {
@@ -398,7 +400,12 @@ const CreateGroupScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Create Group" />
+        <CustomHeader 
+          title="Create Group" 
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.secondary} />
         </View>
@@ -409,7 +416,12 @@ const CreateGroupScreen: React.FC = () => {
   if (showFriends) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Add Members" />
+        <CustomHeader 
+          title="Add Members" 
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
+        />
         <View style={styles.content}>
           <TextInput
             style={styles.searchInput}
@@ -446,7 +458,12 @@ const CreateGroupScreen: React.FC = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-      <CustomHeader title="Create Group" />
+      <CustomHeader 
+        title="Create Group" 
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+      />
       <ScrollView style={styles.content} contentContainerStyle={{paddingBottom: 100}}>
         <View style={styles.inputContainer}>
           <CustomText style={styles.label}>Group Name</CustomText>
@@ -564,7 +581,7 @@ const CreateGroupScreen: React.FC = () => {
         </View>
       </ScrollView>
       
-      <View style={styles.createButtonContainer}>
+      <View style={[styles.createButtonContainer, {paddingBottom: Math.max(insets.bottom, 12)}]}>
         <TouchableOpacity
           style={[
             styles.createButton,

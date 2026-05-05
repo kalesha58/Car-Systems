@@ -17,7 +17,7 @@ import {useTheme} from '@hooks/useTheme';
 import {getDropdownOptions, IDropdownOption} from '@service/dropdownService';
 import PriceRangeSlider from '@components/ui/PriceRangeSlider';
 
-type FilterCategory = 'Type' | 'Brand' | 'Price';
+type FilterCategory = 'Sort' | 'Type' | 'Brand' | 'Price';
 
 interface IFilterModalProps {
   visible: boolean;
@@ -32,6 +32,7 @@ export interface IFilterState {
   brand?: string;
   minPrice?: number;
   maxPrice?: number;
+  sort?: string;
 }
 
 const FilterModal: FC<IFilterModalProps> = ({
@@ -42,7 +43,7 @@ const FilterModal: FC<IFilterModalProps> = ({
   productCount = 0,
 }) => {
   const {colors} = useTheme();
-  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('Type');
+  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('Sort');
   const [dropdownOptions, setDropdownOptions] = useState<{
     vehicleTypes: IDropdownOption[];
     brands: IDropdownOption[];
@@ -142,6 +143,53 @@ const FilterModal: FC<IFilterModalProps> = ({
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={colors.secondary} />
+        </View>
+      );
+    }
+    if (selectedCategory === 'Sort') {
+      const sortOptions = [
+        {label: 'New Arrivals', value: 'newest', icon: 'sparkles-outline'},
+        {label: 'Best Deals', value: 'popularity', icon: 'flash-outline'},
+        {label: 'Top Rated', value: 'top_rated', icon: 'star-outline'},
+        {label: 'Price: Low to High', value: 'price_low_high', icon: 'trending-up-outline'},
+        {label: 'Price: High to Low', value: 'price_high_low', icon: 'trending-down-outline'},
+      ];
+
+      return (
+        <View>
+          {sortOptions.map(option => {
+            const isSelected = filters.sort === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value}
+                style={styles.optionItem}
+                onPress={() => setFilters(prev => ({...prev, sort: option.value}))}
+                activeOpacity={0.7}>
+                <View style={styles.radioContainer}>
+                  <Icon 
+                    name={option.icon} 
+                    color={isSelected ? colors.secondary : colors.textSecondary} 
+                    size={RFValue(16)} 
+                    style={{marginRight: 10}}
+                  />
+                  <CustomText
+                    variant="h6"
+                    fontFamily={Fonts.Medium}
+                    style={[styles.optionText, {color: isSelected ? colors.secondary : colors.text}]}>
+                    {option.label}
+                  </CustomText>
+                  {isSelected && (
+                    <Icon 
+                      name="checkmark-circle" 
+                      color={colors.secondary} 
+                      size={RFValue(18)} 
+                      style={{marginLeft: 'auto'}}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       );
     }
@@ -284,137 +332,102 @@ const FilterModal: FC<IFilterModalProps> = ({
   const styles = StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
       justifyContent: 'flex-end',
     },
     modalContainer: {
       backgroundColor: colors.cardBackground,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      maxHeight: screenHeight * 0.75,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      maxHeight: screenHeight * 0.8,
       overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: -10},
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+      elevation: 20,
+    },
+    modalHeader: {
+      paddingHorizontal: 20,
+      paddingVertical: 18,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '50',
+    },
+    closeButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.backgroundSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalContent: {
       flexDirection: 'row',
-      height: screenHeight * 0.5,
+      height: screenHeight * 0.55,
     },
     leftPanel: {
-      width: '32%',
-      borderRightWidth: 1,
-      borderRightColor: colors.border,
-      paddingRight: 8,
-      height: '100%',
+      width: '30%',
+      backgroundColor: colors.backgroundSecondary + '50',
+      paddingTop: 10,
     },
     rightPanel: {
       flex: 1,
-      paddingLeft: 12,
-      paddingRight: 12,
-      height: '100%',
+      paddingHorizontal: 20,
+      paddingTop: 10,
     },
     categoryItem: {
-      paddingVertical: 12,
-      paddingHorizontal: 10,
-      marginBottom: 2,
-      borderRadius: 6,
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderLeftWidth: 4,
+      borderLeftColor: 'transparent',
     },
     categoryItemSelected: {
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: colors.cardBackground,
+      borderLeftColor: colors.secondary,
     },
     categoryText: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(12),
+      color: colors.textSecondary,
     },
-    modalHeader: {
-      paddingHorizontal: 12,
-      paddingTop: 16,
-      paddingBottom: 12,
-      alignItems: 'center',
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    closeButton: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
-      alignSelf: 'center',
-      marginBottom: 10,
+    categoryTextSelected: {
+      color: colors.secondary,
+      fontFamily: Fonts.Bold,
     },
     optionItem: {
-      paddingVertical: 12,
-      borderBottomWidth: 0.5,
-      borderBottomColor: colors.border,
+      paddingVertical: 18,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border + '30',
     },
     radioContainer: {
       flexDirection: 'row',
       alignItems: 'center',
     },
-    radio: {
-      width: 18,
-      height: 18,
-      borderRadius: 9,
-      borderWidth: 1.5,
-      marginRight: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    radioSelected: {
-      borderWidth: 1.5,
-    },
-    radioInner: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-    },
     optionText: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(12),
+      flex: 1,
     },
     priceContainer: {
-      paddingVertical: 12,
+      paddingVertical: 20,
     },
     priceTitle: {
-      marginBottom: 8,
-      fontSize: RFValue(12),
+      marginBottom: 10,
+      fontSize: RFValue(14),
     },
     priceRangeText: {
-      marginBottom: 20,
-      fontSize: RFValue(11),
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: 40,
-      minHeight: 200,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: 40,
-      minHeight: 200,
-    },
-    emptyText: {
-      fontSize: RFValue(12),
-      textAlign: 'center',
+      marginBottom: 30,
+      fontSize: RFValue(13),
+      color: colors.secondary,
     },
     actionButtonsContainer: {
       backgroundColor: colors.cardBackground,
+      paddingHorizontal: 20,
+      paddingTop: 15,
+      paddingBottom: 30,
       borderTopWidth: 1,
-      borderTopColor: colors.border,
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 20,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: -2,
-      },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 5,
+      borderTopColor: colors.border + '50',
     },
     actionButtons: {
       flexDirection: 'row',
@@ -422,29 +435,36 @@ const FilterModal: FC<IFilterModalProps> = ({
     },
     clearButton: {
       flex: 1,
-      paddingVertical: 14,
-      borderRadius: 8,
-      backgroundColor: colors.cardBackground,
+      height: 52,
+      borderRadius: 14,
+      backgroundColor: 'transparent',
       borderWidth: 1.5,
-      borderColor: colors.secondary,
+      borderColor: colors.border,
       alignItems: 'center',
       justifyContent: 'center',
     },
     applyButton: {
-      flex: 1,
-      paddingVertical: 14,
-      borderRadius: 8,
+      flex: 2,
+      height: 52,
+      borderRadius: 14,
       backgroundColor: colors.secondary,
       alignItems: 'center',
       justifyContent: 'center',
+      shadowColor: colors.secondary,
+      shadowOffset: {width: 0, height: 4},
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
     },
     clearButtonText: {
-      color: colors.secondary,
+      color: colors.text,
       fontSize: RFValue(13),
+      fontFamily: Fonts.SemiBold,
     },
     applyButtonText: {
       color: '#fff',
       fontSize: RFValue(13),
+      fontFamily: Fonts.Bold,
     },
   });
 
@@ -459,6 +479,12 @@ const FilterModal: FC<IFilterModalProps> = ({
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
+                <CustomText
+                  variant="h4"
+                  fontFamily={Fonts.Bold}
+                  style={{color: colors.text}}>
+                  Filters
+                </CustomText>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={onClose}
@@ -466,15 +492,9 @@ const FilterModal: FC<IFilterModalProps> = ({
                   <Icon
                     name="close"
                     color={colors.text}
-                    size={RFValue(16)}
+                    size={RFValue(18)}
                   />
                 </TouchableOpacity>
-                <CustomText
-                  variant="h4"
-                  fontFamily={Fonts.SemiBold}
-                  style={{color: colors.text}}>
-                  Filters
-                </CustomText>
               </View>
 
               <View style={styles.modalContent}>
@@ -482,7 +502,7 @@ const FilterModal: FC<IFilterModalProps> = ({
                   <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{paddingTop: 8}}>
-                    {(['Type', 'Brand', 'Price'] as FilterCategory[]).map(category => {
+                    {(['Sort', 'Type', 'Brand', 'Price'] as FilterCategory[]).map(category => {
                       const isSelected = selectedCategory === category;
                       return (
                         <TouchableOpacity
@@ -495,10 +515,9 @@ const FilterModal: FC<IFilterModalProps> = ({
                           activeOpacity={0.7}>
                           <CustomText
                             variant="h6"
-                            fontFamily={isSelected ? Fonts.SemiBold : Fonts.Medium}
                             style={[
                               styles.categoryText,
-                              {color: isSelected ? colors.secondary : colors.text},
+                              isSelected && styles.categoryTextSelected,
                             ]}>
                             {category}
                           </CustomText>
@@ -511,7 +530,7 @@ const FilterModal: FC<IFilterModalProps> = ({
                 <View style={styles.rightPanel}>
                   <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{paddingBottom: 16, flexGrow: 1}}>
+                    contentContainerStyle={{paddingBottom: 20, flexGrow: 1}}>
                     {renderFilterOptions()}
                   </ScrollView>
                 </View>
@@ -523,22 +542,16 @@ const FilterModal: FC<IFilterModalProps> = ({
                     style={styles.clearButton}
                     onPress={handleClearAll}
                     activeOpacity={0.8}>
-                    <CustomText
-                      variant="h6"
-                      fontFamily={Fonts.SemiBold}
-                      style={styles.clearButtonText}>
-                      Clear all
+                    <CustomText style={styles.clearButtonText}>
+                      Reset
                     </CustomText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.applyButton}
                     onPress={handleApply}
                     activeOpacity={0.8}>
-                    <CustomText
-                      variant="h6"
-                      fontFamily={Fonts.SemiBold}
-                      style={styles.applyButtonText}>
-                      Show {productCount} products
+                    <CustomText style={styles.applyButtonText}>
+                      Show {productCount} results
                     </CustomText>
                   </TouchableOpacity>
                 </View>

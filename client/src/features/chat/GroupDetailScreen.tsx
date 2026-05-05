@@ -367,7 +367,12 @@ const GroupDetailScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Group Details" />
+        <CustomHeader 
+          title="Group Details" 
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
+        />
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           <ActivityIndicator size="large" color={colors.secondary} />
         </View>
@@ -378,7 +383,12 @@ const GroupDetailScreen: React.FC = () => {
   if (!group) {
     return (
       <View style={styles.container}>
-        <CustomHeader title="Group Details" />
+        <CustomHeader 
+          title="Group Details" 
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
+        />
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40}}>
           <CustomText style={{color: colors.disabled}}>Group not found</CustomText>
         </View>
@@ -391,6 +401,9 @@ const GroupDetailScreen: React.FC = () => {
       <View style={styles.container}>
         <CustomHeader
           title="Add Members"
+          backgroundColor="#0d8320"
+          titleColor="#fff"
+          iconColor="#fff"
           onBackPress={() => setShowAddMembers(false)}
         />
         <View style={styles.content}>
@@ -432,13 +445,16 @@ const GroupDetailScreen: React.FC = () => {
     <View style={styles.container}>
       <CustomHeader
         title={group.name}
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
         rightComponent={
           group.ownerId === user?.id ? (
             <TouchableOpacity
               onPress={() => setShowAddMembers(true)}
               style={{padding: 8}}
               activeOpacity={0.7}>
-              <Icon name="person-add-outline" size={RFValue(24)} color={colors.secondary} />
+              <Icon name="person-add-outline" size={RFValue(24)} color="#fff" />
             </TouchableOpacity>
           ) : null
         }

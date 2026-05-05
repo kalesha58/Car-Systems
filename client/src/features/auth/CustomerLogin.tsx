@@ -319,13 +319,10 @@ const CustomerLogin = () => {
 
               <View style={[styles.content, { backgroundColor: colors.cardBackground }]}>
                 <Image
-                  source={require('@assets/images/logo.jpeg')}
+                  source={require('@assets/images/logo.png')}
                   style={styles.logo}
+                  resizeMode="contain"
                 />
-
-                <CustomText variant="h2" fontFamily={Fonts.Bold} style={{ color: colors.text }}>
-                  MotoNode
-                </CustomText>
                 <CustomText
                   variant="h5"
                   fontFamily={Fonts.SemiBold}
@@ -615,11 +612,10 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   logo: {
-    height: getResponsiveValue(50, 60, 70),
-    width: getResponsiveValue(50, 60, 70),
-    borderRadius: getResponsiveValue(20, 24, 28),
+    height: getResponsiveValue(62, 72, 82),
+    width: getResponsiveValue(62, 72, 82),
     marginTop: 0,
-    marginBottom: getResponsiveValue(10, 12, 14),
+    marginBottom: getResponsiveValue(6, 8, 10),
   },
   subContainer: {
     flex: 1,

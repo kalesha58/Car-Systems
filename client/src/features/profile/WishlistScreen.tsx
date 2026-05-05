@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -18,7 +19,7 @@ import {useFavoritesStore} from '@state/favoritesStore';
 import {getProducts} from '@service/productService';
 import {getDealerVehicles} from '@service/vehicleService';
 import {getServices} from '@service/serviceService';
-import ProductItem from '@features/category/ProductItem';
+import ProductListItem from '@features/category/ProductListItem';
 import VehicleItem from '@features/category/VehicleItem';
 import ServiceItem from '@features/category/ServiceItem';
 import EmptyState from '@components/common/EmptyState/EmptyState';
@@ -90,8 +91,8 @@ const WishlistScreen: React.FC = () => {
     setRefreshing(false);
   }, [fetchData]);
 
-  const renderProductItem = ({item, index}: {item: IProduct; index: number}) => (
-    <ProductItem item={item} index={index} />
+  const renderProductItem = ({item}: {item: IProduct}) => (
+    <ProductListItem item={item} />
   );
 
   const renderVehicleItem = ({item, index}: {item: IDealerVehicle; index: number}) => (
@@ -135,37 +136,59 @@ const WishlistScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
+      backgroundColor: colors.secondary,
+    },
+    contentContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      overflow: 'hidden',
+    },
+    tabContainerOuter: {
+      paddingHorizontal: 12,
+      paddingTop: 10,
+      paddingBottom: 2,
       backgroundColor: colors.background,
     },
     tabContainer: {
       flexDirection: 'row',
       backgroundColor: colors.cardBackground,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
+      borderRadius: 14,
+      padding: 4,
+      shadowColor: colors.black,
+      shadowOffset: {width: 0, height: 2},
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 2,
     },
     tab: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 12,
+      paddingVertical: 10,
       paddingHorizontal: 8,
-      borderBottomWidth: 2,
-      borderBottomColor: 'transparent',
+      borderRadius: 10,
       gap: 6,
     },
     activeTab: {
-      borderBottomColor: colors.secondary,
-      backgroundColor: colors.secondary + '10',
+      backgroundColor: colors.secondary + '15',
     },
     tabText: {
       fontSize: RFValue(12),
       fontFamily: Fonts.Medium,
     },
     listContent: {
-      padding: 10,
+      paddingHorizontal: 10,
+      paddingTop: 12,
+      paddingBottom: 22,
       flexDirection: 'row',
       flexWrap: 'wrap',
+    },
+    productListContent: {
+      paddingTop: 8,
+      paddingBottom: 22,
     },
     loadingContainer: {
       flex: 1,
@@ -176,123 +199,132 @@ const WishlistScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={t('wishlist.title')} />
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'products' && styles.activeTab]}
-          onPress={() => setActiveTab('products')}>
-          <Icon
-            name="cube-outline"
-            size={RFValue(16)}
-            color={activeTab === 'products' ? colors.secondary : colors.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{
-              color: activeTab === 'products' ? colors.secondary : colors.textSecondary,
-            }}>
-            {t('wishlist.products')}
-          </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'vehicles' && styles.activeTab]}
-          onPress={() => setActiveTab('vehicles')}>
-          <Icon
-            name="car-outline"
-            size={RFValue(16)}
-            color={activeTab === 'vehicles' ? colors.secondary : colors.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{
-              color: activeTab === 'vehicles' ? colors.secondary : colors.textSecondary,
-            }}>
-            {t('wishlist.vehicles')}
-          </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'services' && styles.activeTab]}
-          onPress={() => setActiveTab('services')}>
-          <Icon
-            name="construct-outline"
-            size={RFValue(16)}
-            color={activeTab === 'services' ? colors.secondary : colors.textSecondary}
-          />
-          <CustomText
-            variant="h6"
-            fontFamily={Fonts.SemiBold}
-            style={{
-              color: activeTab === 'services' ? colors.secondary : colors.textSecondary,
-            }}>
-            {t('wishlist.services')}
-          </CustomText>
-        </TouchableOpacity>
-      </View>
-
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.secondary} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader
+        title={t('wishlist.title')}
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+      />
+      <View style={styles.contentContainer}>
+        <View style={styles.tabContainerOuter}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'products' && styles.activeTab]}
+              onPress={() => setActiveTab('products')}>
+              <Icon
+                name="cube-outline"
+                size={RFValue(16)}
+                color={activeTab === 'products' ? colors.secondary : colors.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{
+                  color: activeTab === 'products' ? colors.secondary : colors.textSecondary,
+                }}>
+                {t('wishlist.products')}
+              </CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'vehicles' && styles.activeTab]}
+              onPress={() => setActiveTab('vehicles')}>
+              <Icon
+                name="car-outline"
+                size={RFValue(16)}
+                color={activeTab === 'vehicles' ? colors.secondary : colors.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{
+                  color: activeTab === 'vehicles' ? colors.secondary : colors.textSecondary,
+                }}>
+                {t('wishlist.vehicles')}
+              </CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'services' && styles.activeTab]}
+              onPress={() => setActiveTab('services')}>
+              <Icon
+                name="construct-outline"
+                size={RFValue(16)}
+                color={activeTab === 'services' ? colors.secondary : colors.textSecondary}
+              />
+              <CustomText
+                variant="h6"
+                fontFamily={Fonts.SemiBold}
+                style={{
+                  color: activeTab === 'services' ? colors.secondary : colors.textSecondary,
+                }}>
+                {t('wishlist.services')}
+              </CustomText>
+            </TouchableOpacity>
+          </View>
         </View>
-      ) : (
-        <>
-          {activeTab === 'products' && (
-            <FlatList
-              data={favoriteProducts}
-              renderItem={renderProductItem}
-              keyExtractor={item => item.id || (item as any)._id}
-              contentContainerStyle={styles.listContent}
-              numColumns={2}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmptyState}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={colors.secondary}
-                />
-              }
-            />
-          )}
-          {activeTab === 'vehicles' && (
-            <FlatList
-              data={favoriteVehicles}
-              renderItem={renderVehicleItem}
-              keyExtractor={item => item.id || (item as any)._id}
-              contentContainerStyle={styles.listContent}
-              numColumns={2}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmptyState}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={colors.secondary}
-                />
-              }
-            />
-          )}
-          {activeTab === 'services' && (
-            <FlatList
-              data={favoriteServices}
-              renderItem={renderServiceItem}
-              keyExtractor={item => item.id || (item as any)._id}
-              contentContainerStyle={styles.listContent}
-              numColumns={2}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={renderEmptyState}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={colors.secondary}
-                />
-              }
-            />
-          )}
-        </>
-      )}
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+          </View>
+        ) : (
+          <>
+            {activeTab === 'products' && (
+              <FlatList
+                data={favoriteProducts}
+                renderItem={renderProductItem}
+                keyExtractor={item => item.id || (item as any)._id}
+                contentContainerStyle={styles.productListContent}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={renderEmptyState}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor={colors.secondary}
+                  />
+                }
+              />
+            )}
+            {activeTab === 'vehicles' && (
+              <FlatList
+                data={favoriteVehicles}
+                renderItem={renderVehicleItem}
+                keyExtractor={item => item.id || (item as any)._id}
+                contentContainerStyle={styles.listContent}
+                numColumns={2}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={renderEmptyState}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor={colors.secondary}
+                  />
+                }
+              />
+            )}
+            {activeTab === 'services' && (
+              <FlatList
+                data={favoriteServices}
+                renderItem={renderServiceItem}
+                keyExtractor={item => item.id || (item as any)._id}
+                contentContainerStyle={styles.listContent}
+                numColumns={2}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={renderEmptyState}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor={colors.secondary}
+                  />
+                }
+              />
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 };

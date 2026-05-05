@@ -1,4 +1,4 @@
-import { View, StyleSheet, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import React, { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
@@ -19,12 +19,7 @@ import { useTheme } from '@hooks/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {
-  CollapsibleContainer,
-  CollapsibleScrollView,
-  CollapsibleHeaderContainer,
-  withCollapsibleContext,
-} from '@r0b0t3d/react-native-collapsible';
+import { withCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 
 const ProfileSettings = () => {
   const { logout, user } = useAuthStore();
@@ -34,8 +29,6 @@ const ProfileSettings = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  const hasMultipleAccounts = user?.role && user.role.length > 1;
-
   const handleLogout = () => {
     clearCart();
     logout();
@@ -44,30 +37,31 @@ const ProfileSettings = () => {
     resetAndNavigate('CustomerLogin');
   };
 
-
-
   const styles = useMemo(
     () =>
       StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: colors.background,
+          backgroundColor: colors.secondary,
         },
-        content: {
+        contentContainer: {
+          flex: 1,
           backgroundColor: colors.background,
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+          overflow: 'hidden',
         },
         scrollViewContent: {
-          paddingTop: 0,
           paddingBottom: 100,
-          paddingHorizontal: 0,
         },
         logoutButton: {
           backgroundColor: colors.secondary,
-          borderRadius: 10,
+          borderRadius: 12,
           paddingVertical: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 20,
+          marginTop: 30,
+          marginHorizontal: 16,
         },
         logoutText: {
           color: colors.white,
@@ -78,60 +72,47 @@ const ProfileSettings = () => {
 
   return (
     <View style={styles.container}>
-      <CollapsibleContainer
-        style={styles.container}>
-        <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
-          <View style={{ backgroundColor: colors.background }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: (insets.top || 0) + 4, backgroundColor: colors.cardBackground, borderBottomWidth: 0.6, borderColor: colors.border }}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, height: 52 }}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ padding: 4 }}>
-                  <Icon name="arrow-back" color={colors.text} size={RFValue(22)} />
-                </TouchableOpacity>
-                <CustomText
-                  style={{ textAlign: 'center', flex: 1 }}
-                  variant="h5"
-                  fontFamily={Fonts.SemiBold}>
-                  {t('profile.settings') || 'Settings'}
-                </CustomText>
-                <View style={{ width: RFValue(22) }} />
-              </View>
-            </View>
-          </View>
-        </CollapsibleHeaderContainer>
-
-        <CollapsibleScrollView
-          style={styles.content}
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <CustomHeader 
+        title={t('profile.settings') || 'Settings'} 
+        backgroundColor={colors.secondary}
+        titleColor={colors.white}
+        iconColor={colors.white}
+        showNotificationIcon={false}
+      />
+      
+      <View style={styles.contentContainer}>
+        <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}>
-          <View style={{ paddingHorizontal: 0, paddingTop: 16 }}>
+          
+          <View style={{ paddingHorizontal: 0, paddingTop: 20 }}>
             <View style={{ paddingHorizontal: 16 }}>
               <WalletSection />
             </View>
-            <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+            <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
               <LanguageSection />
             </View>
           </View>
+          
           <AccountSettingsSection />
           <PrivacyPermissionsSection />
           <ActivitySection />
           <FeedbackSection />
 
-          <View style={{ paddingHorizontal: 16 }}>
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={handleLogout}
-              activeOpacity={0.8}>
-              <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
-                {t('profile.logOut')}
-              </CustomText>
-            </TouchableOpacity>
-          </View>
-        </CollapsibleScrollView>
-      </CollapsibleContainer>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}>
+            <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.logoutText}>
+              {t('profile.logOut')}
+            </CustomText>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
     </View>
   );
 };
 
 export default withCollapsibleContext(ProfileSettings);
-
-

@@ -11,6 +11,7 @@ import {
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  StatusBar,
 } from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
@@ -688,8 +689,16 @@ const InventoryScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: theme.background}]}>
-      <CustomHeader title={t('dealer.inventory')} showNotificationIcon={false} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.secondary} />
+      <CustomHeader
+        title={t('dealer.inventory')}
+        showNotificationIcon={false}
+        backgroundColor={theme.secondary}
+        titleColor={theme.white}
+        iconColor={theme.white}
+      />
+      <View style={[styles.content, {backgroundColor: theme.background}]}>
       {renderBanner()}
       
       {/* Only show tabs if more than one tab is available */}
@@ -837,6 +846,7 @@ const InventoryScreen: React.FC = () => {
         images={previewImages}
         onClose={() => setIsImagePreviewVisible(false)}
       />
+      </View>
     </View>
   );
 };
@@ -844,6 +854,14 @@ const InventoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.secondary,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    overflow: 'hidden',
   },
   tabContainer: {
     flexDirection: 'row',

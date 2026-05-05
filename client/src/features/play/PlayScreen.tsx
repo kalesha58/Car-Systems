@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
@@ -46,27 +47,22 @@ const PlayScreen: React.FC = () => {
       }
       setHasLoadedOnce(true);
     } catch (error) {
-      // Handle error silently
       setHasLoadedOnce(true);
     } finally {
       if (showSkeleton) setLoading(false);
     }
   }, []);
 
-  // Initial load (skeleton)
   useEffect(() => {
     fetchPosts({ showSkeleton: true });
   }, [fetchPosts]);
 
-  // Only refetch when explicitly requested (e.g. after creating a post)
   useFocusEffect(
     React.useCallback(() => {
       const params = (route.params || {}) as PlayRouteParams;
       if (params.refresh) {
-        // fetch without forcing skeleton if we already have posts
         const shouldShowSkeleton = posts.length === 0;
         fetchPosts({ showSkeleton: shouldShowSkeleton });
-        // clear flag so it doesn't refetch on every focus
         (navigation as any).setParams?.({ refresh: false });
       }
     }, [route.params, fetchPosts, posts.length]),
@@ -98,8 +94,8 @@ const PlayScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={isDark ? colors.white : Colors.secondary}
-            colors={isDark ? [colors.white] : [Colors.secondary]}
+            tintColor={colors.secondary}
+            colors={[colors.secondary]}
           />
         }
       />
@@ -107,9 +103,8 @@ const PlayScreen: React.FC = () => {
   };
 
   const renderEmptyState = () => {
-    const screenBackground = isDark ? colors.black : colors.white;
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: screenBackground }]}>
+      <View style={styles.emptyContainer}>
         <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
         <CustomText
           fontSize={RFValue(15)}
@@ -127,18 +122,23 @@ const PlayScreen: React.FC = () => {
     );
   };
 
-  // Theme-aware background: black for dark mode, white for light mode (matching reference)
-  const screenBackground = isDark ? colors.black : colors.white;
-  const headerTextColor = isDark ? colors.white : colors.text;
-  const headerIconColor = isDark ? colors.white : colors.text;
+  const headerTextColor = colors.white;
+  const headerIconColor = colors.white;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: screenBackground }]} edges={['top']}>
-      {/* Header with message and post icons */}
-      <View style={[styles.header, { backgroundColor: screenBackground }]}>
-        <CustomText fontSize={RFValue(14)} fontFamily={Fonts.Bold} style={{ color: headerTextColor }}>
-          motonode
-        </CustomText>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.secondary }]} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.secondary }]}>
+        <View style={styles.logoContainer}>
+          <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={styles.motoText}>
+            Moto
+            <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={styles.nodeText}>
+              node
+            </CustomText>
+          </CustomText>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.iconButton}
@@ -161,29 +161,32 @@ const PlayScreen: React.FC = () => {
         </View>
       </View>
 
-      {(loading && posts.length === 0) || (!hasLoadedOnce && posts.length === 0) ? (
-        renderSkeletonList()
-      ) : (
-        <FlatList
-          data={posts}
-          renderItem={renderPostItem}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.listContent,
-            posts.length === 0 && styles.emptyListContent
-          ]}
-          ListEmptyComponent={!loading ? renderEmptyState : null}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-            tintColor={isDark ? colors.white : Colors.secondary}
-            colors={isDark ? [colors.white] : [Colors.secondary]}
-            />
-          }
-        />
-      )}
+      {/* Main Content Container with Curved Top */}
+      <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
+        {(loading && posts.length === 0) || (!hasLoadedOnce && posts.length === 0) ? (
+          renderSkeletonList()
+        ) : (
+          <FlatList
+            data={posts}
+            renderItem={renderPostItem}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.listContent,
+              posts.length === 0 && styles.emptyListContent
+            ]}
+            ListEmptyComponent={!loading ? renderEmptyState : null}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.secondary}
+                colors={[colors.secondary]}
+              />
+            }
+          />
+        )}
+      </View>
     </SafeAreaView >
   );
 };
@@ -199,6 +202,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: screenWidth * 0.04,
     paddingVertical: screenHeight * 0.012,
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    opacity: 0.8,
+  },
+  motoText: {
+    color: '#000000',
+  },
+  nodeText: {
+    color: '#E31E24',
+    fontStyle: 'italic',
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -207,8 +222,14 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 4,
   },
+  contentContainer: {
+    flex: 1,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    overflow: 'hidden',
+  },
   listContent: {
-    // No padding between posts - full screen like reference
+    paddingBottom: screenHeight * 0.05,
   },
   emptyListContent: {
     flexGrow: 1,
@@ -222,4 +243,3 @@ const styles = StyleSheet.create({
 });
 
 export default PlayScreen;
-

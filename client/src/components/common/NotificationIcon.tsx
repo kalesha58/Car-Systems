@@ -10,9 +10,10 @@ import CustomText from '@components/ui/CustomText';
 
 interface NotificationIconProps {
   onPress?: () => void;
+  color?: string;
 }
 
-const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress }) => {
+const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress, color }) => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -23,7 +24,6 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress }) => {
       setUnreadCount(count);
     } catch (error) {
       console.error('Error loading unread count:', error);
-      // Set to 0 on error to avoid showing stale data
       setUnreadCount(0);
     }
   }, []);
@@ -31,20 +31,16 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress }) => {
   useFocusEffect(
     useCallback(() => {
       loadUnreadCount();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []), // Empty deps - loadUnreadCount is stable and doesn't need to be in deps
+    }, [loadUnreadCount]),
   );
 
   useEffect(() => {
-    // Initial load
     loadUnreadCount();
-    // Refresh count every 30 seconds
     const interval = setInterval(() => {
       loadUnreadCount();
     }, 30000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps - only run once on mount
+  }, [loadUnreadCount]);
 
   const handlePress = () => {
     if (onPress) {
@@ -86,7 +82,7 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={handlePress} style={styles.iconButton} activeOpacity={0.7}>
-        <Icon name="notifications-outline" size={RFValue(24)} color={colors.text} />
+        <Icon name="notifications-outline" size={RFValue(24)} color={color || colors.text} />
       </TouchableOpacity>
       {unreadCount > 0 && (
         <View style={styles.badge}>
