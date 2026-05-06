@@ -35,9 +35,10 @@ import { shareContent } from '@utils/shareUtils';
 
 interface IImagePostItemProps {
   post: IPost;
+  onUserBlocked?: () => void;
 }
 
-const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
+const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) => {
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
@@ -408,7 +409,8 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
   const handleBlockAuthor = async () => {
     try {
       await blockUser(post.userId);
-      Alert.alert('User blocked', 'This user will be hidden from your feed.');
+      onUserBlocked?.();
+      Alert.alert('User blocked', 'This user has been hidden from your feed.');
     } catch (error) {
       Alert.alert('Error', 'Unable to block this user right now.');
     }
@@ -580,7 +582,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
               transform: [{ scale: bigHeartScale }]
             }
           ]}>
-          <Icon name="heart" size={RFValue(80)} color="#ff3040" shadowColor="rgba(0,0,0,0.3)" />
+          <Icon name="heart" size={RFValue(80)} color="#ff3040" />
         </Animated.View>
       </Pressable>
 

@@ -78,8 +78,15 @@ const PlayScreen: React.FC = () => {
   }, [fetchPosts]);
 
   const renderPostItem = React.useCallback(({ item }: { item: IPost }) => {
-    return <ImagePostItem post={item} />;
-  }, []);
+    return (
+      <ImagePostItem
+        post={item}
+        onUserBlocked={() => {
+          void fetchPosts({ showSkeleton: false });
+        }}
+      />
+    );
+  }, [fetchPosts]);
 
   const renderSkeletonList = () => {
     const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
