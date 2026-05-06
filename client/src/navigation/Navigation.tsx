@@ -69,6 +69,7 @@ import PreBookingManagementScreen from '@features/dashboard/PreBookingManagement
 import QuickActionsScreen from '@features/dashboard/QuickActionsScreen';
 import TestDriveBookingScreen from '@features/vehicle/TestDriveBookingScreen';
 import PreBookingScreen from '@features/vehicle/PreBookingScreen';
+import SignupPoliciesScreen from '@features/auth/SignupPoliciesScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -633,6 +634,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="TermsAndConditions"
             component={TermsAndConditionsScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="SignupPolicies"
+            component={SignupPoliciesScreen}
             options={{
               animation: 'slide_from_right',
             }}

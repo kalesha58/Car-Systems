@@ -312,7 +312,12 @@ const ServiceDetail: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Service Details" />
+      <CustomHeader
+        title="Service Details"
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+      />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Image Carousel */}
@@ -471,16 +476,6 @@ const ServiceDetail: React.FC = () => {
                     )}
                   </View>
                   <View style={styles.dealerActions}>
-                    <TouchableOpacity
-                      style={styles.dealerActionButton}
-                      onPress={onChatPress}
-                      disabled={isChatDisabled}>
-                      <Icon
-                        name="chatbubbles-outline"
-                        size={RFValue(20)}
-                        color={isChatDisabled ? colors.disabled : colors.secondary}
-                      />
-                    </TouchableOpacity>
                     {service.dealer.phone && (
                       <TouchableOpacity style={styles.dealerActionButton}>
                         <Icon name="call-outline" size={RFValue(20)} color={Colors.secondary} />
@@ -595,16 +590,7 @@ const ServiceDetail: React.FC = () => {
             {service ? `₹${service.price?.toLocaleString()}` : '—'}
           </CustomText>
         </View>
-        <TouchableOpacity
-          disabled={isChatDisabled}
-          onPress={onChatPress}
-          activeOpacity={0.8}
-          style={[styles.chatButton, isChatDisabled ? { opacity: 0.6 } : null]}>
-          <Icon name="chatbubbles-outline" size={RFValue(18)} color={colors.white} />
-          <CustomText fontFamily={Fonts.SemiBold} style={{ color: colors.white }}>
-            {chatLoading ? 'Opening…' : 'Chat Dealer'}
-          </CustomText>
-        </TouchableOpacity>
+        {/* Chat Dealer button removed per request */}
       </View>
 
     </View>

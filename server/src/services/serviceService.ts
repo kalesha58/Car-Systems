@@ -28,11 +28,12 @@ const serviceToIService = (serviceDoc: IServiceDocument): IService => {
     images: serviceDoc.images,
     location: serviceDoc.location,
     isActive: serviceDoc.isActive !== undefined ? serviceDoc.isActive : true,
-    serviceType: serviceDoc.serviceType as 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general' | undefined,
+    serviceType: serviceDoc.serviceType as 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'tire_service' | 'battery_service' | 'general' | undefined,
     vehicleType: serviceDoc.vehicleType as 'Car' | 'Bike' | undefined,
     vehicleModel: serviceDoc.vehicleModel,
     vehicleBrand: serviceDoc.vehicleBrand,
     serviceSubCategory: serviceDoc.serviceSubCategory,
+    servicePackage: serviceDoc.servicePackage as 'premium' | 'basic' | undefined,
     slotDurationMinutes: serviceDoc.slotDurationMinutes,
     slotBookingEnabled: serviceDoc.slotBookingEnabled !== undefined ? serviceDoc.slotBookingEnabled : false,
     createdAt: serviceDoc.createdAt?.toISOString() || new Date().toISOString(),
@@ -83,6 +84,10 @@ export const getServices = async (
 
     if (query.serviceSubCategory) {
       filter.serviceSubCategory = { $regex: query.serviceSubCategory, $options: 'i' };
+    }
+
+    if ((query as any).servicePackage) {
+      filter.servicePackage = (query as any).servicePackage;
     }
 
     if (query.search) {

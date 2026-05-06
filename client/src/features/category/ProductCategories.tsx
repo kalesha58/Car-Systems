@@ -1,4 +1,4 @@
-import {View, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Alert} from 'react-native';
+import {View, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, Alert, ScrollView} from 'react-native';
 import React, {useEffect, useState, useMemo, useCallback, useRef} from 'react';
 import {useRoute} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
@@ -6,6 +6,8 @@ import CustomText from '@components/ui/CustomText';
 import Sidebar from './Sidebar';
 import SidebarSkeleton from './SidebarSkeleton';
 import CategoryTabs from './CategoryTabs';
+import SubcategoryTabs from './SubcategoryTabs';
+import PackageChips from './PackageChips';
 import ProductList from './ProductList';
 import FilterBar from './FilterBar';
 import FilterModal, {IFilterState} from './FilterModal';
@@ -36,6 +38,7 @@ import {startVoiceSearch, isVoiceSearchAvailable} from '@utils/voiceSearch';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
 import {useNavigation} from '@react-navigation/native';
+import {getSectionById, SPARE_PARTS_BRANDS} from '../../config/serviceCategoryConfig';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -63,7 +66,7 @@ const ProductCategories = () => {
   const [selectedCategory, setSelectedCategory] = useState<ICategoryItem | null>(null);
   const [items, setItems] = useState<ItemType[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
-  const [itemsLoading, setItemsLoading] = useState<boolean>(false);
+  const [itemsLoading, setItemsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [filters, setFilters] = useState<IFilterState>({});
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -75,6 +78,13 @@ const ProductCategories = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isVoiceSearching, setIsVoiceSearching] = useState<boolean>(false);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  // Subcategory & package filter state
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string | null>(null);
+  // Spare parts vehicle type & brand filter
+  const [sparePartsVehicleType, setSparePartsVehicleType] = useState<'Car' | 'Bike'>('Car');
+  const [sparePartsBrand, setSparePartsBrand] = useState<string | null>(null);
   const [dropdownOptions, setDropdownOptions] = useState<{
     vehicleTypes: Array<{label: string; value: string}>;
     brands: Array<{label: string; value: string}>;
@@ -127,6 +137,48 @@ const ProductCategories = () => {
             image: allServicesImage,
             type: 'services' as CategoryType,
           },
+          {
+            _id: 'car-service',
+            name: 'Car Service',
+            image: require('@assets/services/car_service.png'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'bike-service',
+            name: 'Bike Service',
+            image: require('@assets/services/bike_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'car-wash',
+            name: 'Vehicle Wash',
+            image: require('@assets/services/car_wash.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'bike-wash',
+            name: 'Bike Wash',
+            image: require('@assets/services/bike_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'ppf-detailing',
+            name: 'PPF & Detailing',
+            image: require('@assets/services/ppf_detailing.png'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'tire-service',
+            name: 'Tire Service',
+            image: require('@assets/services/tier_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'battery-service',
+            name: 'Battery Service',
+            image: require('@assets/services/batery_sevices.jpg'),
+            type: 'services' as CategoryType,
+          },
           ...backendCategories,
         ];
 
@@ -152,6 +204,48 @@ const ProductCategories = () => {
             _id: 'all-services',
             name: t('categories.allServices'),
             image: allServicesImage,
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'car-service',
+            name: 'Car Service',
+            image: require('@assets/services/car_service.png'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'bike-service',
+            name: 'Bike Service',
+            image: require('@assets/services/bike_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'car-wash',
+            name: 'Vehicle Wash',
+            image: require('@assets/services/car_wash.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'bike-wash',
+            name: 'Bike Wash',
+            image: require('@assets/services/bike_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'ppf-detailing',
+            name: 'PPF & Detailing',
+            image: require('@assets/services/ppf_detailing.png'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'tire-service',
+            name: 'Tire Service',
+            image: require('@assets/services/tier_service.jpg'),
+            type: 'services' as CategoryType,
+          },
+          {
+            _id: 'battery-service',
+            name: 'Battery Service',
+            image: require('@assets/services/batery_sevices.jpg'),
             type: 'services' as CategoryType,
           },
         ];
@@ -191,6 +285,8 @@ const ProductCategories = () => {
 
     // Set the selected category if found
     if (categoryToSelect) {
+      setItemsLoading(true);
+      setItems([]);
       setSelectedCategory(categoryToSelect);
     }
 
@@ -287,12 +383,33 @@ const ProductCategories = () => {
       queryParams.dealerId = dealerId;
     }
     
-    // Apply service type and vehicle type filters from route params
-    if (routeParams?.serviceType && categoryType === 'services') {
-      queryParams.serviceType = routeParams.serviceType;
-    }
-    if (routeParams?.vehicleType && categoryType === 'services') {
-      queryParams.vehicleType = routeParams.vehicleType;
+    // Apply service type and vehicle type filters
+    if (categoryType === 'services') {
+      if (category._id === 'car-service') {
+        queryParams.serviceType = 'car_automobile';
+        queryParams.vehicleType = 'Car';
+      } else if (category._id === 'bike-service') {
+        queryParams.serviceType = 'bike_automobile';
+        queryParams.vehicleType = 'Bike';
+      } else if (category._id === 'car-wash') {
+        queryParams.serviceType = 'car_wash';
+      } else if (category._id === 'bike-wash') {
+        queryParams.serviceType = 'car_wash';
+        queryParams.vehicleType = 'Bike';
+      } else if (category._id === 'ppf-detailing') {
+        queryParams.serviceType = 'car_detailing';
+      } else if (category._id === 'tire-service') {
+        queryParams.serviceType = 'general';
+      } else if (category._id === 'battery-service') {
+        queryParams.serviceType = 'general';
+      } else {
+        if (routeParams?.serviceType) {
+          queryParams.serviceType = routeParams.serviceType;
+        }
+        if (routeParams?.vehicleType) {
+          queryParams.vehicleType = routeParams.vehicleType;
+        }
+      }
     }
     
     if (queryFilters.type) {
@@ -498,6 +615,49 @@ const ProductCategories = () => {
     return brandOption?.label;
   };
 
+  // Compute which categories to show in the tab bar based on route params.
+  // This makes the tab bar generic: it only shows tabs relevant to what the
+  // user selected on the home screen instead of showing all sections.
+  const visibleCategories = useMemo(() => {
+    if (!routeParams?.initialCategoryId && !routeParams?.initialCategoryType) {
+      // No route params → user opened Store tab directly → show all categories
+      return categories;
+    }
+
+    const id = routeParams.initialCategoryId;
+
+    if (id === 'all-products') {
+      // Show only product-type categories
+      return categories.filter(cat => cat.type === 'products');
+    }
+
+    if (id === 'all-vehicles') {
+      // Show only vehicle-type categories
+      return categories.filter(cat => cat.type === 'vehicles');
+    }
+
+    if (id === 'all-services') {
+      // Show all service-type sub-categories
+      return categories.filter(cat => cat.type === 'services');
+    }
+
+    if (id) {
+      // A specific sub-category was selected (e.g. 'car-wash') →
+      // only show that one tab so the screen stays focused on the selection.
+      const matched = categories.filter(cat => cat._id === id);
+      if (matched.length > 0) {
+        return matched;
+      }
+    }
+
+    // Fallback: respect initialCategoryType if no id match
+    if (routeParams.initialCategoryType) {
+      return categories.filter(cat => cat.type === routeParams.initialCategoryType);
+    }
+
+    return categories;
+  }, [categories, routeParams?.initialCategoryId, routeParams?.initialCategoryType]);
+
   // Filter items based on search query - works for all category types
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -635,9 +795,14 @@ const ProductCategories = () => {
   // Clear search when category changes
   useEffect(() => {
     setSearchQuery('');
+    // Also reset subcategory / package / brand filters on section switch
+    setSelectedSubcategoryId(null);
+    setSelectedPackage(null);
+    setSelectedDeliveryMode(null);
+    setSparePartsBrand(null);
   }, [selectedCategory?._id]);
 
-  // Sort items based on current sort option
+
   const sortedItems = useMemo(() => {
     if (!filteredItems || filteredItems.length === 0) {
       return filteredItems;
@@ -675,6 +840,69 @@ const ProductCategories = () => {
         return sorted;
     }
   }, [filteredItems, currentSort]);
+
+  // ── Derived: section config for the currently selected category ──────────
+  const currentSection = useMemo(() => {
+    if (!selectedCategory) return null;
+    return getSectionById(selectedCategory._id) ?? null;
+  }, [selectedCategory?._id]);
+
+  // ── Client-side subcategory / package / delivery-mode filter ─────────────
+  const subcategoryFilteredItems = useMemo(() => {
+    if (!currentSection || selectedCategory?.type !== 'services') {
+      return sortedItems;
+    }
+    let result = [...sortedItems];
+
+    // Filter by subcategory
+    if (selectedSubcategoryId) {
+      result = result.filter(item => {
+        const svc = item as IService;
+        return svc.serviceSubCategory === selectedSubcategoryId;
+      });
+    }
+
+    // Filter by package (Vehicle Wash)
+    if (selectedPackage && currentSection.hasPackages) {
+      result = result.filter(item => {
+        const svc = item as any;
+        return svc.servicePackage === selectedPackage;
+      });
+    }
+
+    // Filter by delivery mode (home vs store/dealer)
+    if (selectedDeliveryMode && currentSection.hasDeliveryModes) {
+      result = result.filter(item => {
+        const svc = item as IService;
+        const isHome = svc.homeService === true;
+        if (selectedDeliveryMode === 'home') return isHome;
+        return !isHome;
+      });
+    }
+
+    return result;
+  }, [sortedItems, currentSection, selectedSubcategoryId, selectedPackage, selectedDeliveryMode, selectedCategory?.type]);
+
+  // ── Spare Parts: filter by vehicleType + brand ───────────────────────────
+  const finalItems = useMemo(() => {
+    if (selectedCategory?.type !== 'products') {
+      return subcategoryFilteredItems;
+    }
+    let result = [...subcategoryFilteredItems];
+    if (sparePartsVehicleType) {
+      result = result.filter(item => {
+        const p = item as IProduct;
+        return !p.vehicleType || p.vehicleType.toLowerCase() === sparePartsVehicleType.toLowerCase();
+      });
+    }
+    if (sparePartsBrand) {
+      result = result.filter(item => {
+        const p = item as IProduct;
+        return p.brand?.toLowerCase() === sparePartsBrand.toLowerCase();
+      });
+    }
+    return result;
+  }, [subcategoryFilteredItems, selectedCategory?.type, sparePartsVehicleType, sparePartsBrand]);
 
   // Handle sort selection
   const handleSortSelect = (sort: SortOption) => {
@@ -920,15 +1148,95 @@ const ProductCategories = () => {
 
           {categoriesLoading ? (
             <View style={{height: 60, backgroundColor: colors.background}} />
-          ) : (
+          ) : visibleCategories.length > 1 ? (
             <CategoryTabs
-              categories={categories}
+              categories={visibleCategories}
               selectedCategory={selectedCategory}
-              onCategoryPress={(category: ICategoryItem) => setSelectedCategory(category)}
+              onCategoryPress={(category: ICategoryItem) => {
+                setItemsLoading(true);
+                setItems([]);
+                setSelectedCategory(category);
+              }}
               categoryCounts={categoryCounts}
             />
+          ) : null}
+
+          {/* ── Subcategory tabs (for service sections) ── */}
+          {!categoriesLoading && currentSection && currentSection.subcategories.length > 0 && (
+            <SubcategoryTabs
+              subcategories={currentSection.subcategories}
+              selectedId={selectedSubcategoryId}
+              onSelect={setSelectedSubcategoryId}
+            />
           )}
-          
+
+          {/* ── Package chips (Premium / Basic — for Vehicle Wash) ── */}
+          {!categoriesLoading && currentSection?.hasPackages && (currentSection.packages ?? []).length > 0 && (
+            <PackageChips
+              label="Package"
+              options={(currentSection.packages ?? []).map(p => ({value: p.value, label: p.label}))}
+              selectedValue={selectedPackage}
+              onSelect={setSelectedPackage}
+            />
+          )}
+
+          {/* ── Delivery mode chips (Home / Store / Dealer Center) ── */}
+          {!categoriesLoading && currentSection?.hasDeliveryModes && (currentSection.deliveryModes ?? []).length > 0 && (
+            <PackageChips
+              label="Service Mode"
+              options={(currentSection.deliveryModes ?? []).map(d => ({value: d.value, label: d.label}))}
+              selectedValue={selectedDeliveryMode}
+              onSelect={setSelectedDeliveryMode}
+            />
+          )}
+
+          {/* ── Spare Parts: Vehicle Type + Brand filter ── */}
+          {!categoriesLoading && selectedCategory?.type === 'products' && (
+            <View style={{paddingHorizontal: 16, paddingBottom: 4}}>
+              {/* Vehicle type toggle */}
+              <View style={{flexDirection: 'row', gap: 8, marginBottom: 6}}>
+                {(['Car', 'Bike'] as const).map(vt => (
+                  <TouchableOpacity
+                    key={vt}
+                    activeOpacity={0.75}
+                    onPress={() => { setSparePartsVehicleType(vt); setSparePartsBrand(null); }}
+                    style={{
+                      paddingVertical: 5, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1,
+                      backgroundColor: sparePartsVehicleType === vt ? Colors.secondary : colors.backgroundSecondary,
+                      borderColor: sparePartsVehicleType === vt ? Colors.secondary : colors.border,
+                    }}>
+                    <CustomText
+                      fontSize={RFValue(10)}
+                      fontFamily={sparePartsVehicleType === vt ? Fonts.SemiBold : Fonts.Medium}
+                      style={{color: sparePartsVehicleType === vt ? '#fff' : colors.text}}>
+                      {vt}
+                    </CustomText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {/* Brand chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap: 6}}>
+                {[{value: null, label: 'All Brands'}, ...SPARE_PARTS_BRANDS[sparePartsVehicleType].map(b => ({value: b, label: b}))].map(opt => (
+                  <TouchableOpacity
+                    key={opt.label}
+                    activeOpacity={0.75}
+                    onPress={() => setSparePartsBrand(opt.value)}
+                    style={{
+                      paddingVertical: 4, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1,
+                      backgroundColor: sparePartsBrand === opt.value ? Colors.secondary + '18' : colors.backgroundSecondary,
+                      borderColor: sparePartsBrand === opt.value ? Colors.secondary : colors.border,
+                    }}>
+                    <CustomText
+                      fontSize={RFValue(9)}
+                      fontFamily={sparePartsBrand === opt.value ? Fonts.SemiBold : Fonts.Regular}
+                      style={{color: sparePartsBrand === opt.value ? Colors.secondary : colors.text}}>
+                      {opt.label}
+                    </CustomText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
           <View style={{paddingHorizontal: 16, paddingVertical: 8}}>
             <FilterChips
               filters={filters}
@@ -942,7 +1250,7 @@ const ProductCategories = () => {
           {searchQuery.trim() !== '' && (
             <View style={{paddingHorizontal: 16, paddingVertical: 4}}>
               <CustomText variant="h8" fontFamily={Fonts.Medium} style={{opacity: 0.6}}>
-                Showing {sortedItems.length} results for "{searchQuery}"
+                Showing {finalItems.length} results for "{searchQuery}"
               </CustomText>
             </View>
           )}
@@ -956,7 +1264,7 @@ const ProductCategories = () => {
             />
           ) : (
             <>
-              {sortedItems.length === 0 ? (
+              {finalItems.length === 0 ? (
                 <EmptyState
                   hasSearchQuery={!!searchQuery.trim()}
                   searchQuery={searchQuery}
@@ -965,7 +1273,7 @@ const ProductCategories = () => {
                 />
               ) : (
               <ProductList 
-                  data={sortedItems || []} 
+                  data={finalItems || []} 
                 itemType={selectedCategory?.type || 'products'}
                 loading={false}
                   viewMode={viewMode}

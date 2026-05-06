@@ -14,6 +14,8 @@ import {
   Settings,
   ShoppingCart,
   Users,
+  Wrench,
+  ShieldAlert,
 } from 'lucide-react';
 import { useEffect,useState } from 'react';
 import { NavLink } from 'react-router-dom';
@@ -29,10 +31,12 @@ const navItems: INavItem[] = [
   { path: '/users', label: 'Users', icon: Users },
   { path: '/dealers', label: 'Dealers', icon: Building2 },
   { path: '/products', label: 'Products', icon: Package },
+  { path: '/services', label: 'Services', icon: Wrench },
   { path: '/vehicles', label: 'Vehicles', icon: CarFront },
   { path: '/orders', label: 'Orders', icon: ShoppingCart },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/settings', label: 'Categories', icon: Settings },
+  { path: '/moderation/reports', label: 'Moderation', icon: ShieldAlert },
 ];
 
 export const Sidebar = () => {

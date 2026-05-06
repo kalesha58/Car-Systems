@@ -30,6 +30,8 @@ import supportChatRoutes from './routes/user/supportChatRoutes';
 import userRoutes from './routes/user/userRoutes';
 import addressRoutes from './routes/user/addressRoutes';
 import notificationRoutes from './routes/user/notificationRoutes';
+import blockRoutes from './routes/user/blockRoutes';
+import reportRoutes from './routes/user/reportRoutes';
 import cartRoutes from './routes/user/cartRoutes';
 import couponRoutes from './routes/user/couponRoutes';
 import dealerInfoRoutes from './routes/user/dealerRoutes';
@@ -39,6 +41,7 @@ import { refreshTokenController } from './controllers/authController';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
 import webhookRoutes from './routes/webhookRoutes';
+import { getServiceCategoriesController } from './controllers/serviceCategoryController';
 import cors from 'cors';
 import { logger } from './utils/logger';
 
@@ -138,6 +141,8 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/dealer', dealerApiRoutes);
 app.use('/api/services', serviceRoutes);
+// Public service category config endpoint (no auth)
+app.get('/api/service-categories', getServiceCategoriesController);
 app.use('/api/profile', profileRoutes);
 app.use('/api/user/products', productRoutes);
 logger.info('[Routes] User products route mounted at /api/user/products');
@@ -169,6 +174,8 @@ logger.info('[Routes] Dealer routes registered:', {
 });
 // Mount notification routes after dealer routes to avoid route conflicts
 app.use('/api/user', notificationRoutes);
+app.use('/api/user/blocks', blockRoutes);
+app.use('/api/user/reports', reportRoutes);
 logger.info('[Routes] User notification route mounted at /api/user/fcm-token');
 app.use('/api/addresses', addressRoutes);
 logger.info('[Routes] Addresses route mounted at /api/addresses');

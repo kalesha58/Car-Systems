@@ -26,7 +26,7 @@ export const validateSignup = (
   next: NextFunction,
 ): void => {
   try {
-    const { name, email, phone, password, role } = req.body;
+    const { name, email, phone, password, role, termsAccepted, privacyAccepted, termsVersion, privacyVersion } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return next(new ValidationError('Name is required'));
@@ -69,6 +69,22 @@ export const validateSignup = (
       if (role !== 'user' && role !== 'dealer') {
         return next(new ValidationError('Role must be either "user" or "dealer"'));
       }
+    }
+
+    if (termsAccepted !== true) {
+      return next(new ValidationError('Terms of Use acceptance is required'));
+    }
+
+    if (privacyAccepted !== true) {
+      return next(new ValidationError('Privacy Policy acceptance is required'));
+    }
+
+    if (!termsVersion || typeof termsVersion !== 'string' || !termsVersion.trim()) {
+      return next(new ValidationError('Terms version is required'));
+    }
+
+    if (!privacyVersion || typeof privacyVersion !== 'string' || !privacyVersion.trim()) {
+      return next(new ValidationError('Privacy version is required'));
     }
 
     // Normalize phone number

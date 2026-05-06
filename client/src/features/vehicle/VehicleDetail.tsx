@@ -386,7 +386,12 @@ const VehicleDetail: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title="Vehicle Details" />
+      <CustomHeader
+        title="Vehicle Details"
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+      />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Image Carousel */}
@@ -562,16 +567,6 @@ const VehicleDetail: React.FC = () => {
                     )}
                   </View>
                   <View style={styles.dealerActions}>
-                    <TouchableOpacity
-                      style={styles.dealerActionButton}
-                      onPress={onChatPress}
-                      disabled={isChatDisabled}>
-                      <Icon
-                        name="chatbubbles-outline"
-                        size={RFValue(20)}
-                        color={isChatDisabled ? colors.disabled : colors.text}
-                      />
-                    </TouchableOpacity>
                     {vehicle.dealer.phone && (
                       <TouchableOpacity style={styles.dealerActionButton}>
                         <Icon name="call-outline" size={RFValue(20)} color={colors.text} />
@@ -795,16 +790,7 @@ const VehicleDetail: React.FC = () => {
               <Icon name="car-sport-outline" size={RFValue(16)} color="#fff" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            disabled={isChatDisabled}
-            onPress={onChatPress}
-            activeOpacity={0.8}
-            style={[styles.chatButton, isChatDisabled ? { opacity: 0.6 } : null]}>
-            <Icon name="chatbubbles-outline" size={RFValue(18)} color="#fff" />
-            <CustomText fontFamily={Fonts.SemiBold} style={{ color: '#fff' }}>
-              {chatLoading ? 'Opening…' : 'Chat'}
-            </CustomText>
-          </TouchableOpacity>
+          {/* Chat button removed per request */}
         </View>
       </View>
 

@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken } from '../services/authService';
-import { ISignupRequest, ILoginRequest, IForgotPasswordRequest, IResetPasswordRequest, IGoogleAuthRequest } from '../types/auth';
+import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
+import { ISignupRequest, ILoginRequest, IForgotPasswordRequest, IResetPasswordRequest, IGoogleAuthRequest, IPolicyAcceptanceRequest } from '../types/auth';
 import { logger } from '../utils/logger';
+import { IAuthRequest } from '../middleware/authMiddleware';
 
 /**
  * Signup controller
@@ -149,6 +150,33 @@ export const refreshTokenController = async (
     res.status(200).json(result);
   } catch (error) {
     logger.error('Refresh token controller error:', error);
+    next(error);
+  }
+};
+
+export const acceptPolicyController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    const payload: IPolicyAcceptanceRequest = req.body;
+    const result = await acceptPolicy(userId, payload);
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    logger.error('Accept policy controller error:', error);
     next(error);
   }
 };

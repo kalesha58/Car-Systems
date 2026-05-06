@@ -36,6 +36,8 @@ import {
   getGroupMembers,
   updateGroupImage,
   editGroupChat,
+  blockChatUser,
+  reportChatMessage,
 } from '@service/chatService';
 import {
   initializeSocket,
@@ -960,6 +962,9 @@ const ChatMessageScreen: React.FC = () => {
   };
 
   const headerRight = () => {
+    const directParticipantId = chat?.type === 'direct'
+      ? chat.participants.find((participantId) => participantId !== user?.id)
+      : undefined;
 
     if (chat?.type === 'group') {
       return (
@@ -1002,9 +1007,42 @@ const ChatMessageScreen: React.FC = () => {
       );
     }
     return (
-      <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-        <Icon name="videocam-outline" size={RFValue(22)} color={colors.white} />
-      </TouchableOpacity>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          activeOpacity={0.7}
+          onPress={async () => {
+            if (!directParticipantId) return;
+            try {
+              await blockChatUser(directParticipantId);
+              showSuccess('User blocked successfully');
+              navigation.goBack();
+            } catch (error: any) {
+              showError(error?.response?.data?.message || 'Failed to block user');
+            }
+          }}>
+          <Icon name="ban-outline" size={RFValue(22)} color={colors.white} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          activeOpacity={0.7}
+          onPress={async () => {
+            const lastMessage = messages[messages.length - 1];
+            if (!lastMessage) return;
+            try {
+              await reportChatMessage({
+                targetId: lastMessage.id,
+                reason: 'Abusive message',
+                targetOwnerId: lastMessage.from,
+              });
+              showSuccess('Message reported');
+            } catch (error: any) {
+              showError(error?.response?.data?.message || 'Failed to report message');
+            }
+          }}>
+          <Icon name="flag-outline" size={RFValue(22)} color={colors.white} />
+        </TouchableOpacity>
+      </View>
     );
   };
 

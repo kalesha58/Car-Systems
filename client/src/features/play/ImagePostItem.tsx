@@ -15,6 +15,7 @@ import {
   PanResponder,
   GestureResponderEvent,
   Pressable,
+  Alert,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts } from '@utils/Constants';
@@ -24,7 +25,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import ImageCarousel from './ImageCarousel';
 import { IPost, IComment } from '../../types/post/IPost';
 import { useTheme } from '@hooks/useTheme';
-import { likePost, unlikePost, addComment, likeComment, unlikeComment } from '@service/postService';
+import { blockUser, likePost, unlikePost, addComment, likeComment, unlikeComment, reportContent } from '@service/postService';
 import { SOCKET_URL } from '@service/config';
 import { io, Socket } from 'socket.io-client';
 import { formatRelativeTime } from '@utils/timeUtils';
@@ -390,6 +391,43 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
     }
   };
 
+  const handleReportPost = async () => {
+    try {
+      await reportContent({
+        targetType: 'post',
+        targetId: post.id,
+        targetOwnerId: post.userId,
+        reason: 'Objectionable content',
+      });
+      Alert.alert('Reported', 'Thanks. We will review this content.');
+    } catch (error) {
+      Alert.alert('Error', 'Unable to report content right now.');
+    }
+  };
+
+  const handleBlockAuthor = async () => {
+    try {
+      await blockUser(post.userId);
+      Alert.alert('User blocked', 'This user will be hidden from your feed.');
+    } catch (error) {
+      Alert.alert('Error', 'Unable to block this user right now.');
+    }
+  };
+
+  const handleOpenPostActions = () => {
+    const actions = [
+      { text: 'Report', onPress: handleReportPost },
+    ] as Array<{ text: string; onPress: () => void; style?: 'default' | 'cancel' | 'destructive' }>;
+
+    if (user?.id !== post.userId) {
+      actions.push({ text: 'Block', style: 'destructive', onPress: handleBlockAuthor });
+    }
+
+    actions.push({ text: 'Cancel', style: 'cancel', onPress: () => undefined });
+
+    Alert.alert('Post actions', 'Choose an action', actions);
+  };
+
   const renderCommentItem = ({ item }: { item: IComment }) => {
     const isLiked = item.isLiked || false;
     const likes = item.likes || 0;
@@ -511,7 +549,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post }) => {
             {/* Optional: Music/Audio indicator - can be added if data exists */}
           </View>
         </View>
-        {/* Three dots removed per user request */}
+        <TouchableOpacity onPress={handleOpenPostActions} activeOpacity={0.7}>
+          <Icon name="ellipsis-horizontal" size={RFValue(18)} color={iconColor} />
+        </TouchableOpacity>
       </View>
 
       {/* Image/Content Section */}

@@ -754,7 +754,7 @@ const AddEditServiceScreen: React.FC = () => {
             </View>
           </View>
 
-          {(serviceType === 'car_automobile' || serviceType === 'bike_automobile') && (
+          {(serviceType === 'car_automobile' || serviceType === 'bike_automobile' || serviceType === 'car_wash') && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
               <View style={styles.hintRow}>

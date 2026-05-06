@@ -7,6 +7,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
 import LinearGradient from 'react-native-linear-gradient';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 interface PolicySectionProps {
   number: number;
@@ -75,6 +76,8 @@ const PolicySection: FC<PolicySectionProps> = ({ number, title, children }) => {
 const TermsAndConditionsScreen: FC = () => {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   const styles = StyleSheet.create({
     container: {
@@ -166,7 +169,17 @@ const TermsAndConditionsScreen: FC = () => {
 
   return (
     <View style={styles.container}>
-      <CustomHeader title={t('profile.termsPolicies')} />
+      <CustomHeader
+        title={t('profile.termsPolicies')}
+        showNotificationIcon={false}
+        onBackPress={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+          } else {
+            navigation.navigate(route?.params?.returnTo || 'ProfileSettings');
+          }
+        }}
+      />
       <View style={styles.backgroundContainer}>
         <LinearGradient
           colors={[colors.secondary + '20', colors.primary + '10']}

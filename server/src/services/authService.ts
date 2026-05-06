@@ -13,6 +13,7 @@ import {
   IForgotPasswordRequest,
   IResetPasswordRequest,
   IGoogleAuthRequest,
+  IPolicyAcceptanceRequest,
 } from '../types/auth';
 import { AppError, ConflictError, UnauthorizedError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
@@ -21,6 +22,8 @@ import { sendPasswordResetCodeEmail, sendPasswordResetSuccessEmail } from '../ut
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d';
 const GOOGLE_CLIENT_ID: string = process.env.GOOGLE_CLIENT_ID || '';
+const CURRENT_TERMS_VERSION: string = process.env.CURRENT_TERMS_VERSION || '2026-05';
+const CURRENT_PRIVACY_VERSION: string = process.env.CURRENT_PRIVACY_VERSION || '2026-05';
 
 /**
  * Generate JWT token for user
@@ -55,7 +58,7 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
  * Signup a new user
  */
 export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
-  const { name, email, phone, password, role } = data;
+  const { name, email, phone, password, role, termsAccepted, privacyAccepted, termsVersion, privacyVersion } = data;
   const normalizedEmail = email.trim().toLowerCase();
 
   // Validate role if provided (must be 'user' or 'dealer')
@@ -82,6 +85,10 @@ export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
     phone,
     password,
     role: [validRole], // Set role as array with single value
+    termsAcceptedAt: termsAccepted ? new Date() : undefined,
+    privacyAcceptedAt: privacyAccepted ? new Date() : undefined,
+    termsVersion,
+    privacyVersion,
   });
 
   await signUpUser.save();
@@ -137,6 +144,10 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     throw new UnauthorizedError('Invalid credentials');
   }
 
+  const requiresPolicyAcceptance =
+    signUpUser.termsVersion !== CURRENT_TERMS_VERSION ||
+    signUpUser.privacyVersion !== CURRENT_PRIVACY_VERSION;
+
   logger.info(`User logged in: ${signUpUser.email}`);
 
   // Generate token
@@ -153,7 +164,33 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
   return ({
     Response: userToIUser(signUpUser),
     token,
+    requiresPolicyAcceptance,
+    currentTermsVersion: CURRENT_TERMS_VERSION,
+    currentPrivacyVersion: CURRENT_PRIVACY_VERSION,
   });
+};
+
+export const acceptPolicy = async (userId: string, data: IPolicyAcceptanceRequest): Promise<IAuthResponse> => {
+  const { termsVersion, privacyVersion } = data;
+
+  if (!termsVersion?.trim() || !privacyVersion?.trim()) {
+    throw new AppError('Both terms and privacy versions are required', 400);
+  }
+
+  const user = await SignUp.findById(userId);
+  if (!user) {
+    throw new UnauthorizedError('User not found');
+  }
+
+  user.termsVersion = termsVersion.trim();
+  user.privacyVersion = privacyVersion.trim();
+  user.termsAcceptedAt = new Date();
+  user.privacyAcceptedAt = new Date();
+  await user.save();
+
+  return {
+    Response: userToIUser(user),
+  };
 };
 
 /**

@@ -21,6 +21,10 @@ export interface ISignupRequest {
   phone: string;
   password: string;
   role?: 'user' | 'dealer'; // Optional, defaults to 'user'
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  termsVersion: string;
+  privacyVersion: string;
 }
 
 export interface ILoginRequest {
@@ -34,6 +38,14 @@ export interface IAuthResponse {
 export interface ILoginResponse {
   Response: IUser;
   token: string;
+  requiresPolicyAcceptance?: boolean;
+  currentTermsVersion?: string;
+  currentPrivacyVersion?: string;
+}
+
+export interface IPolicyAcceptanceRequest {
+  termsVersion: string;
+  privacyVersion: string;
 }
 export interface IJwtPayload {
   userId: string;

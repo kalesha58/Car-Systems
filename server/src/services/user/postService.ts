@@ -10,6 +10,7 @@ import {
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { emitToPostRoom } from '../socket/socketService';
+import { getBlockedUserIdsForUser, isBlockedEitherDirection } from './blockService';
 
 /**
  * Convert post document to IPost interface with user info
@@ -144,15 +145,21 @@ export const createPost = async (
 export const getPosts = async (userId?: string, currentUserId?: string): Promise<IPostsResponse> => {
   const query = userId ? { userId } : {};
   const posts = await Post.find(query).sort({ createdAt: -1 });
+  const blockedUserIds = currentUserId ? await getBlockedUserIdsForUser(currentUserId) : new Set<string>();
+  const visiblePosts = currentUserId
+    ? posts.filter((post) => !blockedUserIds.has(post.userId))
+    : posts;
 
   // Get all unique userIds from posts
-  const userIds = [...new Set(posts.map((p) => p.userId))];
+  const userIds = [...new Set(visiblePosts.map((p) => p.userId))];
 
   // Get all unique userIds from comments
   const commentUserIds = new Set<string>();
-  posts.forEach((post) => {
+  visiblePosts.forEach((post) => {
     (post.comments || []).forEach((comment) => {
-      commentUserIds.add(comment.userId);
+      if (!currentUserId || !blockedUserIds.has(comment.userId)) {
+        commentUserIds.add(comment.userId);
+      }
     });
   });
 
@@ -183,7 +190,12 @@ export const getPosts = async (userId?: string, currentUserId?: string): Promise
 
   // Convert posts with user info
   const postsWithUser = await Promise.all(
-    posts.map((post) => postToIPostWithUser(post, userMap, currentUserId, commentUserMap))
+    visiblePosts.map((post) => {
+      if (currentUserId) {
+        post.comments = (post.comments || []).filter((comment) => !blockedUserIds.has(comment.userId));
+      }
+      return postToIPostWithUser(post, userMap, currentUserId, commentUserMap);
+    })
   );
 
   return {
@@ -201,11 +213,18 @@ export const getPostById = async (postId: string, currentUserId?: string): Promi
     throw new NotFoundError('Post not found');
   }
 
+  if (currentUserId) {
+    const blocked = await isBlockedEitherDirection(currentUserId, post.userId);
+    if (blocked) {
+      throw new NotFoundError('Post not found');
+    }
+  }
+
   // Get all unique userIds from comments
   const commentUserIds = new Set<string>();
-  (post.comments || []).forEach((comment) => {
-    commentUserIds.add(comment.userId);
-  });
+  const blockedUserIds = currentUserId ? await getBlockedUserIdsForUser(currentUserId) : new Set<string>();
+  post.comments = (post.comments || []).filter((comment) => !blockedUserIds.has(comment.userId));
+  (post.comments || []).forEach((comment) => commentUserIds.add(comment.userId));
 
   // Fetch comment authors in batch
   const commentUsers = await SignUp.find({ _id: { $in: Array.from(commentUserIds) } }).select('_id name profileImage');
@@ -380,6 +399,11 @@ export const addComment = async (
 
   if (!post) {
     throw new NotFoundError('Post not found');
+  }
+
+  const postBlocked = await isBlockedEitherDirection(userId, post.userId);
+  if (postBlocked) {
+    throw new AppError('You cannot comment on this user', 403);
   }
 
   // If replying to a comment, verify parent comment exists

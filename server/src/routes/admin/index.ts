@@ -10,6 +10,7 @@ import settingsRoutes from './settingsRoutes';
 import serviceRoutes from './serviceRoutes';
 import addressRoutes from './addressRoutes';
 import payoutRoutes from './payoutRoutes';
+import moderationRoutes from './moderationRoutes';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/settings', settingsRoutes);
 router.use('/services', serviceRoutes);
 router.use('/addresses', addressRoutes);
 router.use('/payouts', payoutRoutes);
+router.use('/moderation', moderationRoutes);
 
 export default router;
 

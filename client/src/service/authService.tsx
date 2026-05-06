@@ -5,7 +5,16 @@ import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
 
-export const customerLogin = async (email: string, password: string) => {
+export const CURRENT_TERMS_VERSION = '2026-05';
+export const CURRENT_PRIVACY_VERSION = '2026-05';
+
+export interface ILoginResult {
+    requiresPolicyAcceptance?: boolean;
+    currentTermsVersion?: string;
+    currentPrivacyVersion?: string;
+}
+
+export const customerLogin = async (email: string, password: string): Promise<ILoginResult> => {
   try {
     // Send credentials exactly as entered by the user.
     const response = await appAxios.post('/auth/login', {
@@ -48,6 +57,11 @@ export const customerLogin = async (email: string, password: string) => {
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
+      return {
+        requiresPolicyAcceptance: Boolean(responseData.requiresPolicyAcceptance),
+        currentTermsVersion: responseData.currentTermsVersion,
+        currentPrivacyVersion: responseData.currentPrivacyVersion,
+      };
   } catch (error: any) {
     // Log error details for debugging
     console.error('Login error:', {
@@ -66,7 +80,9 @@ export const customerSignup = async (
   email: string,
   phone: string,
   password: string,
-  role?: 'user' | 'dealer'
+  role?: 'user' | 'dealer',
+  termsVersion: string = CURRENT_TERMS_VERSION,
+  privacyVersion: string = CURRENT_PRIVACY_VERSION,
 ) => {
   try {
     // Send all fields exactly as entered by the user.
@@ -76,11 +92,19 @@ export const customerSignup = async (
       phone: string;
       password: string;
       role?: 'user' | 'dealer';
+      termsAccepted: boolean;
+      privacyAccepted: boolean;
+      termsVersion: string;
+      privacyVersion: string;
     } = {
       name,
       email,
       phone,
       password,
+      termsAccepted: true,
+      privacyAccepted: true,
+      termsVersion,
+      privacyVersion,
     };
 
     // Only include role if provided (defaults to 'user' on backend)
@@ -95,6 +119,16 @@ export const customerSignup = async (
   } catch (error) {
     throw error;
   }
+};
+
+export const acceptLatestPolicy = async (
+  termsVersion: string = CURRENT_TERMS_VERSION,
+  privacyVersion: string = CURRENT_PRIVACY_VERSION,
+) => {
+  await appAxios.post('/auth/policy-acceptance', {
+    termsVersion,
+    privacyVersion,
+  });
 };
 
 export const deliveryLogin = async(email: string, password: string)=>{

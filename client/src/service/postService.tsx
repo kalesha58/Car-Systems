@@ -626,3 +626,21 @@ export const unlikeComment = async (
     throw error;
   }
 };
+
+export const blockUser = async (targetUserId: string): Promise<void> => {
+  await appAxios.post(`/user/blocks/${targetUserId}`);
+};
+
+export const unblockUser = async (targetUserId: string): Promise<void> => {
+  await appAxios.delete(`/user/blocks/${targetUserId}`);
+};
+
+export const reportContent = async (payload: {
+  targetType: 'post' | 'comment' | 'message' | 'user';
+  targetId: string;
+  reason: string;
+  note?: string;
+  targetOwnerId?: string;
+}): Promise<void> => {
+  await appAxios.post('/user/reports', payload);
+};

@@ -22,6 +22,7 @@ import { Group } from '../../models/Group';
 import { AppError, NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { emitToChatRoom } from '../socket/socketService';
+import { getBlockedUserIdsForUser, isBlockedEitherDirection } from './blockService';
 
 /**
  * Convert chat document to IChat interface
@@ -170,6 +171,11 @@ export const getOrCreateDirectChat = async (
     throw new AppError('Cannot create chat with yourself', 400);
   }
 
+  const blocked = await isBlockedEitherDirection(userId, otherUserId);
+  if (blocked) {
+    throw new AppError('Cannot start chat with this user', 403);
+  }
+
   // Check if direct chat already exists
   const existingChat = await Chat.findOne({
     type: 'direct',
@@ -201,6 +207,7 @@ export const getOrCreateDirectChat = async (
  * Get user's chats (direct + group)
  */
 export const getUserChats = async (userId: string): Promise<IChatsResponse> => {
+  const blockedIds = await getBlockedUserIdsForUser(userId);
   // Get direct chats
   const directChats = await Chat.find({
     type: 'direct',
@@ -236,7 +243,13 @@ export const getUserChats = async (userId: string): Promise<IChatsResponse> => {
     (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
   );
 
-  const chatsWithData = await Promise.all(allChats.map((chat) => chatToIChat(chat, userId)));
+  const visibleChats = allChats.filter((chat) => {
+    if (chat.type !== 'direct') return true;
+    const otherParticipant = chat.participants.find((participantId) => participantId !== userId);
+    return otherParticipant ? !blockedIds.has(otherParticipant) : true;
+  });
+
+  const chatsWithData = await Promise.all(visibleChats.map((chat) => chatToIChat(chat, userId)));
 
   return {
     Response: chatsWithData,
@@ -278,6 +291,16 @@ export const getChatById = async (chatId: string, userId: string): Promise<IChat
       }
     } else {
       throw new AppError('You are not a participant of this chat', 403);
+    }
+  }
+
+  if (chat.type === 'direct') {
+    const otherParticipant = chat.participants.find((participantId) => participantId !== userId);
+    if (otherParticipant) {
+      const blocked = await isBlockedEitherDirection(userId, otherParticipant);
+      if (blocked) {
+        throw new AppError('You cannot view this chat', 403);
+      }
     }
   }
 
@@ -573,6 +596,26 @@ export const getChatMessages = async (
       }
     } else {
       throw new AppError('You are not a participant of this chat', 403);
+    }
+  }
+
+  if (chat.type === 'direct') {
+    const otherParticipant = chat.participants.find((participantId) => participantId !== userId);
+    if (otherParticipant) {
+      const blocked = await isBlockedEitherDirection(userId, otherParticipant);
+      if (blocked) {
+        throw new AppError('You cannot view messages in this chat', 403);
+      }
+    }
+  }
+
+  if (chat.type === 'direct') {
+    const otherParticipant = chat.participants.find((participantId) => participantId !== userId);
+    if (otherParticipant) {
+      const blocked = await isBlockedEitherDirection(userId, otherParticipant);
+      if (blocked) {
+        throw new AppError('Messaging is disabled because one of you has blocked the other', 403);
+      }
     }
   }
 

@@ -24,6 +24,10 @@ export interface ISignUpDocument extends Document {
   googleId?: string;
   fcmToken?: string;
   privacySettings?: IPrivacySettings;
+  termsAcceptedAt?: Date;
+  privacyAcceptedAt?: Date;
+  termsVersion?: string;
+  privacyVersion?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -100,6 +104,20 @@ const signUpSchema = new Schema<ISignUpDocument>(
         hideEmail: false,
         hideVehicleNumber: false,
       },
+    },
+    termsAcceptedAt: {
+      type: Date,
+    },
+    privacyAcceptedAt: {
+      type: Date,
+    },
+    termsVersion: {
+      type: String,
+      trim: true,
+    },
+    privacyVersion: {
+      type: String,
+      trim: true,
     },
   },
   {

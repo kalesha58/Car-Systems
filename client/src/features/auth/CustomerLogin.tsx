@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Platform,
   Dimensions,
+  Alert,
 } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -25,7 +26,7 @@ import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
-import { customerLogin, customerSignup } from '@service/authService';
+import { acceptLatestPolicy, CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION, customerLogin, customerSignup } from '@service/authService';
 import { resetNavigationForDealerOnboarding } from '../../auth/postAuthRouting';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
@@ -65,6 +66,7 @@ const CustomerLogin = () => {
   const [errorModalTitle, setErrorModalTitle] = useState('Login Failed');
   const [errorModalMessage, setErrorModalMessage] = useState('');
   const [gestureSequence, setGestureSequence] = useState<string[]>([]);
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const { t } = useTranslation();
@@ -163,6 +165,7 @@ const CustomerLogin = () => {
         isValidEmail(email.trim()) &&
         cleanPhone.length === 10 &&
         password.length >= 8
+        && acceptedPolicies
       );
     }
     return email.trim().length > 0 && password.length >= 8;
@@ -182,7 +185,26 @@ const CustomerLogin = () => {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      await customerLogin(email, password);
+      const loginResult = await customerLogin(email, password);
+      if (loginResult.requiresPolicyAcceptance) {
+        Alert.alert(
+          'Policy Update Required',
+          'Please review and accept the latest Terms of Use and Privacy Policy to continue.',
+          [
+            { text: 'View Terms', onPress: () => navigate('SignupPolicies', { initialTab: 'terms' }) },
+            { text: 'View Privacy', onPress: () => navigate('SignupPolicies', { initialTab: 'privacy' }) },
+            {
+              text: 'Accept & Continue',
+              onPress: async () => {
+                await acceptLatestPolicy(
+                  loginResult.currentTermsVersion || CURRENT_TERMS_VERSION,
+                  loginResult.currentPrivacyVersion || CURRENT_PRIVACY_VERSION,
+                );
+              },
+            },
+          ],
+        );
+      }
       showSuccess(t('auth.loginSuccess'));
 
       const currentUser = useAuthStore.getState().user;
@@ -270,7 +292,7 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
-      await customerSignup(name, email, cleanPhone, password, userType);
+      await customerSignup(name, email, cleanPhone, password, userType, CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION);
       showSuccess(t('auth.signupSuccess'));
       // Navigate to login screen after successful signup
       setTimeout(() => {
@@ -281,6 +303,7 @@ const CustomerLogin = () => {
         setPassword('');
         setPhone('');
         setUserType('user');
+        setAcceptedPolicies(false);
       }, 1500);
     } catch (error: any) {
       const errorMessage =
@@ -517,6 +540,32 @@ const CustomerLogin = () => {
                         </TouchableOpacity>
                       }
                     />
+                    {isSignupMode && signupStep === 'enterDetails' && (
+                      <TouchableOpacity
+                        onPress={() => setAcceptedPolicies((prev) => !prev)}
+                        style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, marginBottom: 4 }}>
+                        <Ionicons
+                          name={acceptedPolicies ? 'checkbox' : 'square-outline'}
+                          color={colors.secondary}
+                          size={RFValue(18)}
+                          style={{ marginTop: 2 }}
+                        />
+                        <View style={{ marginLeft: 8, flex: 1 }}>
+                          <CustomText style={{ color: colors.textSecondary }} fontSize={RFValue(9)}>
+                            I agree to the Terms of Use and Privacy Policy.
+                          </CustomText>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                            <TouchableOpacity onPress={() => navigate('SignupPolicies', { initialTab: 'terms' })}>
+                              <CustomText style={{ color: colors.secondary }} fontSize={RFValue(9)}>Terms</CustomText>
+                            </TouchableOpacity>
+                            <CustomText style={{ color: colors.textSecondary, marginHorizontal: 4 }} fontSize={RFValue(9)}>|</CustomText>
+                            <TouchableOpacity onPress={() => navigate('SignupPolicies', { initialTab: 'privacy' })}>
+                              <CustomText style={{ color: colors.secondary }} fontSize={RFValue(9)}>Privacy</CustomText>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    )}
                   </>
                 )}
 

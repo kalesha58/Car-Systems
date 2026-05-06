@@ -255,3 +255,19 @@ export const updateGroupImage = async (
     throw error;
   }
 };
+
+export const reportChatMessage = async (payload: {
+  targetId: string;
+  reason: string;
+  note?: string;
+  targetOwnerId?: string;
+}) => {
+  await appAxios.post('/user/reports', {
+    targetType: 'message',
+    ...payload,
+  });
+};
+
+export const blockChatUser = async (targetUserId: string) => {
+  await appAxios.post(`/user/blocks/${targetUserId}`);
+};

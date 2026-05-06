@@ -7,7 +7,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
 import LinearGradient from 'react-native-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 interface PolicySectionProps {
   number: number;
@@ -76,7 +76,8 @@ const PolicySection: FC<PolicySectionProps> = ({ number, title, children }) => {
 const PrivacyCenterScreen: FC = () => {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   const styles = StyleSheet.create({
     container: {
@@ -170,11 +171,12 @@ const PrivacyCenterScreen: FC = () => {
     <View style={styles.container}>
       <CustomHeader
         title={t('profile.privacyCenter')}
+        showNotificationIcon={false}
         onBackPress={() => {
           if (navigation.canGoBack()) {
             navigation.goBack();
           } else {
-            navigation.navigate('ProfileSettings' as never);
+            navigation.navigate(route?.params?.returnTo || 'ProfileSettings');
           }
         }}
       />

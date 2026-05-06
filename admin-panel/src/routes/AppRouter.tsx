@@ -27,6 +27,9 @@ const OrderDetailsPage = lazy(() => import('@pages/Orders/OrderDetailsPage').the
 const ReportsPage = lazy(() => import('@pages/Reports/ReportsPage').then(module => ({ default: module.ReportsPage })));
 const CategoriesPage = lazy(() => import('@pages/Settings/CategoriesPage').then(module => ({ default: module.CategoriesPage })));
 const NotFoundPage = lazy(() => import('@pages/NotFound/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
+const ServicesListPage = lazy(() => import('@pages/Services/ServicesListPage').then(module => ({ default: module.ServicesListPage })));
+const ServiceFormPage = lazy(() => import('@pages/Services/ServiceFormPage').then(module => ({ default: module.ServiceFormPage })));
+const ModerationReportsPage = lazy(() => import('@pages/Moderation/ModerationReportsPage').then(module => ({ default: module.ModerationReportsPage })));
 const DeleteAccountPage = lazy(() =>
   import('@pages/Public/DeleteAccountPage').then(module => ({ default: module.DeleteAccountPage })),
 );
@@ -248,6 +251,39 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <CategoriesPage />
+              </Suspense>
+            }
+          />
+          {/* Services */}
+          <Route
+            path="services"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ServicesListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="services/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ServiceFormPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="services/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ServiceFormPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="moderation/reports"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ModerationReportsPage />
               </Suspense>
             }
           />

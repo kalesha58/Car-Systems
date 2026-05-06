@@ -39,13 +39,13 @@ const CategoryButtons: FC = () => {
       categoryId: 'bike-service',
     },
     {
-      id: 'car-wash',
-      label: 'Car Wash',
+      id: 'vehicle-wash',
+      label: 'Vehicle Wash',
       imageSource: require('@assets/services/car_wash.jpg'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'car-wash',
+      categoryId: 'vehicle-wash',
     },
     {
       id: 'tire-service',
@@ -54,7 +54,25 @@ const CategoryButtons: FC = () => {
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'all-services',
+      categoryId: 'tire-service',
+    },
+    {
+      id: 'ppf-detailing',
+      label: 'PPF & Detailing',
+      imageSource: require('@assets/services/ppf_detailing.png'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
+      categoryType: 'services',
+      categoryId: 'ppf-detailing',
+    },
+    {
+      id: 'spare-parts',
+      label: 'Spare Parts',
+      imageSource: require('@assets/services/spare_parts.png'),
+      backgroundColor: colors.cardBackground || '#FFFFFF',
+      textColor: colors.text || '#000000',
+      categoryType: 'products',
+      categoryId: '69de8a197f4ddefdad034e5c',
     },
     {
       id: 'battery-service',
@@ -63,7 +81,7 @@ const CategoryButtons: FC = () => {
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
-      categoryId: 'all-services',
+      categoryId: 'battery-service',
     },
   ];
 
@@ -80,8 +98,14 @@ const CategoryButtons: FC = () => {
     } else if (button.id === 'bike-service') {
       params.serviceType = 'bike_automobile';
       params.vehicleType = 'Bike';
-    } else if (button.id === 'car-wash') {
+    } else if (button.id === 'vehicle-wash') {
       params.serviceType = 'car_wash';
+    } else if (button.id === 'tire-service') {
+      params.serviceType = 'tire_service';
+    } else if (button.id === 'battery-service') {
+      params.serviceType = 'battery_service';
+    } else if (button.id === 'ppf-detailing') {
+      params.serviceType = 'car_detailing';
     }
     
     navigate('Category', {

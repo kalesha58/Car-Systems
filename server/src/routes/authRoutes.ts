@@ -5,6 +5,7 @@ import {
   forgotPasswordController,
   resetPasswordController,
   googleAuthController,
+  acceptPolicyController,
 } from '../controllers/authController';
 import {
   validateSignup,
@@ -13,6 +14,7 @@ import {
   validateResetPassword,
   validateGoogleAuth,
 } from '../middleware/validationMiddleware';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -218,6 +220,7 @@ router.post('/reset-password', validateResetPassword, resetPasswordController);
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/google', validateGoogleAuth, googleAuthController);
+router.post('/policy-acceptance', authMiddleware, acceptPolicyController);
 
 export default router;
 
