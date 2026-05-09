@@ -1,6 +1,7 @@
 import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
+import { tokenStorage } from '@state/storage';
 
 /**
  * Create Notifee notification channel for Android
@@ -73,6 +74,7 @@ export const displayNotifeeNotification = async (
       },
       importance: AndroidImportance.HIGH,
       sound: 'default',
+      vibration: true,
     };
 
     // Add large icon if valid
@@ -272,6 +274,16 @@ export interface IGetNotificationsParams {
 export const getNotifications = async (
   params: IGetNotificationsParams = {},
 ): Promise<IGetNotificationsResponse> => {
+  const accessToken = tokenStorage.getString('accessToken');
+  if (!accessToken) {
+    return {
+      notifications: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 0,
+    };
+  }
   try {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append('page', params.page.toString());
@@ -290,6 +302,8 @@ export const getNotifications = async (
  * Mark notification as read
  */
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  const accessToken = tokenStorage.getString('accessToken');
+  if (!accessToken) return;
   try {
     await appAxios.put(`/user/notifications/${notificationId}/read`);
   } catch (error: any) {
@@ -302,6 +316,8 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
  * Mark all notifications as read
  */
 export const markAllNotificationsAsRead = async (): Promise<{ count: number }> => {
+  const accessToken = tokenStorage.getString('accessToken');
+  if (!accessToken) return { count: 0 };
   try {
     const response = await appAxios.put('/user/notifications/read-all');
     return response.data.Response;
@@ -315,6 +331,10 @@ export const markAllNotificationsAsRead = async (): Promise<{ count: number }> =
  * Get unread notification count
  */
 export const getUnreadNotificationCount = async (): Promise<number> => {
+  const accessToken = tokenStorage.getString('accessToken');
+  if (!accessToken) {
+    return 0;
+  }
   try {
     const response = await appAxios.get('/user/notifications/unread-count');
     return response.data.Response.count || 0;

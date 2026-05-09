@@ -37,6 +37,7 @@ const InstagramProfile: React.FC = () => {
   const insets = useSafeAreaInsets();
   const {t} = useTranslation();
   const isDealer = user?.role?.includes('dealer');
+  const isGuest = user?.isGuest;
   const [activeTab, setActiveTab] = useState<TabType>(isDealer ? 'businessInfo' : 'posts');
   const [stats, setStats] = useState<IUserStats>({
     postsCount: 0,
@@ -52,6 +53,49 @@ const InstagramProfile: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async (showRefreshing = false) => {
+    if (isGuest) {
+      setStats({
+        postsCount: 3,
+        vehiclesCount: 1,
+        ordersCount: 0,
+      });
+      setPosts([
+        {
+          id: 'dummy_1',
+          caption: 'My Dream Car! 🏎️',
+          mediaUrl: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800',
+          mediaType: 'image',
+          likesCount: 120,
+          commentsCount: 12,
+          user: { name: 'Guest' },
+          createdAt: new Date().toISOString()
+        } as any,
+        {
+          id: 'dummy_2',
+          caption: 'Sunday Drive ☀️',
+          mediaUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&q=80&w=800',
+          mediaType: 'image',
+          likesCount: 85,
+          commentsCount: 5,
+          user: { name: 'Guest' },
+          createdAt: new Date().toISOString()
+        } as any,
+        {
+          id: 'dummy_3',
+          caption: 'New Wash! ✨',
+          mediaUrl: 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?auto=format&fit=crop&q=80&w=800',
+          mediaType: 'image',
+          likesCount: 210,
+          commentsCount: 18,
+          user: { name: 'Guest' },
+          createdAt: new Date().toISOString()
+        } as any
+      ]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
     try {
       if (showRefreshing) {
         setRefreshing(true);
@@ -89,6 +133,7 @@ const InstagramProfile: React.FC = () => {
   };
 
   const fetchBusinessRegistration = async (showRefreshing = false) => {
+    if (isGuest) return;
     try {
       if (showRefreshing) {
         setRefreshing(true);
@@ -110,6 +155,20 @@ const InstagramProfile: React.FC = () => {
   };
 
   const fetchVehicles = async () => {
+    if (isGuest) {
+      setVehicles([
+        {
+          id: 'dummy_v1',
+          make: 'Tesla',
+          model: 'Model S',
+          year: 2023,
+          color: 'Midnight Silver',
+          vehicleNumber: 'GUEST-001',
+          image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&q=80&w=800'
+        } as any
+      ]);
+      return;
+    }
     // Only fetch if not already loaded
     if (vehicles.length > 0) {
       return;
@@ -135,7 +194,7 @@ const InstagramProfile: React.FC = () => {
         fetchBusinessRegistration();
       }
     }
-  }, [user?.id, isDealer]);
+  }, [user?.id, isDealer, isGuest]);
 
   useEffect(() => {
     // Fetch vehicles when vehicles tab is selected
@@ -146,11 +205,12 @@ const InstagramProfile: React.FC = () => {
     if (activeTab === 'businessInfo' && isDealer && user?.id) {
       fetchBusinessRegistration();
     }
-  }, [activeTab, user?.id, isDealer]);
+  }, [activeTab, user?.id, isDealer, isGuest]);
 
   // Refresh vehicles when screen comes into focus (e.g., after adding a vehicle)
   useFocusEffect(
     React.useCallback(() => {
+      if (isGuest) return;
       if (activeTab === 'vehicles' && user?.id) {
         // Force refresh vehicles when screen is focused
         const refreshVehicles = async () => {
@@ -171,10 +231,15 @@ const InstagramProfile: React.FC = () => {
       if (activeTab === 'businessInfo' && isDealer && user?.id) {
         fetchBusinessRegistration();
       }
-    }, [activeTab, user?.id, isDealer]),
+    }, [activeTab, user?.id, isDealer, isGuest]),
   );
 
   const handleRefresh = async () => {
+    if (isGuest) {
+      setRefreshing(true);
+      setTimeout(() => setRefreshing(false), 1000);
+      return;
+    }
     if (activeTab === 'posts') {
       await fetchData(true);
     } else if (activeTab === 'businessInfo' && isDealer) {
@@ -196,6 +261,7 @@ const InstagramProfile: React.FC = () => {
   };
 
   const handlePostPress = (post: IPost) => {
+    if (isGuest) return;
     // Navigate to Play screen to view the post
     navigate('MainTabs', {
       screen: 'Play',
@@ -204,6 +270,7 @@ const InstagramProfile: React.FC = () => {
   };
 
   const handleVehiclePress = (vehicle: IUserVehicle) => {
+    if (isGuest) return;
     navigate('UserVehicleDetail', {vehicleId: vehicle.id});
   };
 
@@ -309,12 +376,14 @@ const InstagramProfile: React.FC = () => {
         titleColor={colors.white}
         iconColor={colors.white}
         rightComponent={
-          <TouchableOpacity
-            style={{padding: 4}}
-            onPress={handleSettingsPress}
-            activeOpacity={0.7}>
-            <Icon name="settings-outline" size={RFValue(22)} color={colors.white} />
-          </TouchableOpacity>
+          user ? (
+            <TouchableOpacity
+              style={{padding: 4}}
+              onPress={handleSettingsPress}
+              activeOpacity={0.7}>
+              <Icon name="settings-outline" size={RFValue(22)} color={colors.white} />
+            </TouchableOpacity>
+          ) : null
         }
       />
 
@@ -331,63 +400,105 @@ const InstagramProfile: React.FC = () => {
           />
         }>
         {/* Profile Header with Stats */}
-        <InstagramProfileHeader
-          isDealer={isDealer}
-        />
+        {user && (
+          <InstagramProfileHeader
+            isDealer={isDealer}
+          />
+        )}
 
         {/* Grid Navigation */}
-        <View style={styles.gridNav}>
-          {isDealer ? (
-            <TouchableOpacity
-              style={[
-                styles.gridNavIcon,
-                activeTab === 'businessInfo' && styles.gridNavIconActive,
-              ]}
-              onPress={() => setActiveTab('businessInfo')}
-              activeOpacity={0.7}>
-              <Icon 
-                name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
-                size={RFValue(22)} 
-                color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
-              />
-              {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
-            </TouchableOpacity>
-          ) : (
-            <>
+        {user && (
+          <View style={styles.gridNav}>
+            {isDealer ? (
               <TouchableOpacity
                 style={[
                   styles.gridNavIcon,
-                  activeTab === 'posts' && styles.gridNavIconActive,
+                  activeTab === 'businessInfo' && styles.gridNavIconActive,
                 ]}
-                onPress={() => setActiveTab('posts')}
+                onPress={() => setActiveTab('businessInfo')}
                 activeOpacity={0.7}>
                 <Icon 
-                  name={activeTab === 'posts' ? "grid" : "grid-outline"} 
+                  name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
                   size={RFValue(22)} 
-                  color={activeTab === 'posts' ? colors.secondary : colors.text} 
+                  color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
                 />
-                {activeTab === 'posts' && <View style={styles.tabIndicator} />}
+                {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.gridNavIcon,
-                  activeTab === 'vehicles' && styles.gridNavIconActive,
-                ]}
-                onPress={() => setActiveTab('vehicles')}
-                activeOpacity={0.7}>
-                <Icon 
-                  name={activeTab === 'vehicles' ? "car" : "car-outline"} 
-                  size={RFValue(22)} 
-                  color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
-                />
-                {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={[
+                    styles.gridNavIcon,
+                    activeTab === 'posts' && styles.gridNavIconActive,
+                  ]}
+                  onPress={() => setActiveTab('posts')}
+                  activeOpacity={0.7}>
+                  <Icon 
+                    name={activeTab === 'posts' ? "grid" : "grid-outline"} 
+                    size={RFValue(22)} 
+                    color={activeTab === 'posts' ? colors.secondary : colors.text} 
+                  />
+                  {activeTab === 'posts' && <View style={styles.tabIndicator} />}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.gridNavIcon,
+                    activeTab === 'vehicles' && styles.gridNavIconActive,
+                  ]}
+                  onPress={() => setActiveTab('vehicles')}
+                  activeOpacity={0.7}>
+                  <Icon 
+                    name={activeTab === 'vehicles' ? "car" : "car-outline"} 
+                    size={RFValue(22)} 
+                    color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
+                  />
+                  {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        )}
 
-        {/* Content Grid */}
-        {activeTab === 'posts' ? (
+        {/* Guest View or Content Grid */}
+        {!user ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, marginTop: 40 }}>
+            <View style={{ 
+              width: 100, 
+              height: 100, 
+              borderRadius: 50, 
+              backgroundColor: colors.backgroundSecondary, 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              marginBottom: 20
+            }}>
+              <Icon name="person-circle-outline" size={80} color={colors.disabled} />
+            </View>
+            <CustomText variant="h5" fontFamily={Fonts.Bold} style={{ textAlign: 'center', color: colors.text }}>
+              Welcome to Motonode
+            </CustomText>
+            <CustomText variant="h8" fontFamily={Fonts.Regular} style={{ textAlign: 'center', color: colors.disabled, marginTop: 10, lineHeight: 20 }}>
+              Login to see your profile, manage your vehicles, and track your car service history.
+            </CustomText>
+            
+            <TouchableOpacity 
+              onPress={() => navigate('CustomerLogin')}
+              style={{
+                backgroundColor: colors.secondary,
+                paddingHorizontal: 40,
+                paddingVertical: 14,
+                borderRadius: 30,
+                marginTop: 30,
+                width: '100%',
+                alignItems: 'center'
+              }}
+              activeOpacity={0.8}
+            >
+              <CustomText variant="h7" fontFamily={Fonts.Bold} style={{ color: colors.white }}>
+                Login / Signup
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        ) : activeTab === 'posts' ? (
           <PostGrid posts={posts} loading={loading} onPostPress={handlePostPress} />
         ) : activeTab === 'businessInfo' ? (
           <BusinessRegistrationInfo
@@ -406,7 +517,7 @@ const InstagramProfile: React.FC = () => {
       </ScrollView>
 
       {/* Floating Add Vehicle Button - Only show when vehicles tab is active */}
-      {activeTab === 'vehicles' && (
+      {activeTab === 'vehicles' && !isGuest && (
         <TouchableOpacity
           style={styles.floatingButton}
           onPress={handleAddVehicle}

@@ -32,6 +32,7 @@ import { formatRelativeTime } from '@utils/timeUtils';
 import { useAuthStore } from '@state/authStore';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import { shareContent } from '@utils/shareUtils';
+import { withAuth } from '@utils/AuthGuard';
 
 interface IImagePostItemProps {
   post: IPost;
@@ -240,84 +241,88 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
   };
 
   const handleLike = async () => {
-    const previousLiked = isLiked;
-    const previousCount = likeCount;
+    withAuth(async () => {
+      const previousLiked = isLiked;
+      const previousCount = likeCount;
 
-    // Optimistic update
-    setIsLiked(!previousLiked);
-    setLikeCount(previousLiked ? previousCount - 1 : previousCount + 1);
+      // Optimistic update
+      setIsLiked(!previousLiked);
+      setLikeCount(previousLiked ? previousCount - 1 : previousCount + 1);
 
-    // Animate small heart icon
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.3,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+      // Animate small heart icon
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.3,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
 
-    try {
-      if (!post?.id) return;
-      if (previousLiked) {
-        const response = await unlikePost(post.id);
-        if (response.success && response.Response) {
-          setIsLiked(response.Response.isLiked || false);
-          setLikeCount(response.Response.likes || 0);
+      try {
+        if (!post?.id) return;
+        if (previousLiked) {
+          const response = await unlikePost(post.id);
+          if (response.success && response.Response) {
+            setIsLiked(response.Response.isLiked || false);
+            setLikeCount(response.Response.likes || 0);
+          }
+        } else {
+          const response = await likePost(post.id);
+          if (response.success && response.Response) {
+            setIsLiked(response.Response.isLiked || false);
+            setLikeCount(response.Response.likes || 0);
+          }
         }
-      } else {
-        const response = await likePost(post.id);
-        if (response.success && response.Response) {
-          setIsLiked(response.Response.isLiked || false);
-          setLikeCount(response.Response.likes || 0);
-        }
+      } catch (error) {
+        // Rollback on error
+        setIsLiked(previousLiked);
+        setLikeCount(previousCount);
+        console.error('Error toggling like:', error);
       }
-    } catch (error) {
-      // Rollback on error
-      setIsLiked(previousLiked);
-      setLikeCount(previousCount);
-      console.error('Error toggling like:', error);
-    }
+    }, 'Please login to like this post.');
   };
 
   const handleComment = async () => {
-    if (!commentText.trim() || isSubmitting || !post?.id) return;
+    withAuth(async () => {
+      if (!commentText.trim() || isSubmitting || !post?.id) return;
 
-    setIsSubmitting(true);
-    const previousCount = commentCount;
-    const previousComments = [...comments];
-    const replyToId = replyingTo;
+      setIsSubmitting(true);
+      const previousCount = commentCount;
+      const previousComments = [...comments];
+      const replyToId = replyingTo;
 
-    // Optimistic update
-    setCommentCount(previousCount + 1);
+      // Optimistic update
+      setCommentCount(previousCount + 1);
 
-    try {
-      // Remove @username prefix if replying
-      const textToSend = replyingTo ? commentText.replace(/^@\w+\s/, '').trim() : commentText.trim();
-      const response = await addComment(post.id, textToSend, replyToId || undefined);
-      if (response.success && response.Response) {
-        setCommentCount(response.Response.comments?.length || 0);
-        setComments(response.Response.comments || []);
-        setCommentText('');
-        setReplyingTo(null);
-        // Don't close modal - keep it open to see the comment
-      } else {
+      try {
+        // Remove @username prefix if replying
+        const textToSend = replyingTo ? commentText.replace(/^@\w+\s/, '').trim() : commentText.trim();
+        const response = await addComment(post.id, textToSend, replyToId || undefined);
+        if (response.success && response.Response) {
+          setCommentCount(response.Response.comments?.length || 0);
+          setComments(response.Response.comments || []);
+          setCommentText('');
+          setReplyingTo(null);
+          // Don't close modal - keep it open to see the comment
+        } else {
+          // Rollback on error
+          setCommentCount(previousCount);
+          setComments(previousComments);
+        }
+      } catch (error) {
         // Rollback on error
         setCommentCount(previousCount);
         setComments(previousComments);
+        console.error('Error adding comment:', error);
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      // Rollback on error
-      setCommentCount(previousCount);
-      setComments(previousComments);
-      console.error('Error adding comment:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    }, 'Please login to add a comment.');
   };
 
   const handleEmojiReaction = (emoji: string) => {
@@ -325,95 +330,105 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
   };
 
   const handleCommentLike = async (commentId: string) => {
-    if (!post?.id) return;
+    withAuth(async () => {
+      if (!post?.id) return;
 
-    const comment = comments.find(c => c.id === commentId);
-    if (!comment) return;
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment) return;
 
-    const previousLiked = comment.isLiked || false;
-    const previousCount = comment.likes || 0;
+      const previousLiked = comment.isLiked || false;
+      const previousCount = comment.likes || 0;
 
-    // Optimistic update
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? {
-            ...c,
-            isLiked: !previousLiked,
-            likes: previousLiked ? previousCount - 1 : previousCount + 1,
-          }
-          : c
-      )
-    );
-
-    try {
-      if (previousLiked) {
-        await unlikeComment(post.id, commentId);
-      } else {
-        await likeComment(post.id, commentId);
-      }
-      // Real-time update will handle the state update via socket
-    } catch (error) {
-      // Rollback on error
+      // Optimistic update
       setComments((prev) =>
         prev.map((c) =>
           c.id === commentId
             ? {
               ...c,
-              isLiked: previousLiked,
-              likes: previousCount,
+              isLiked: !previousLiked,
+              likes: previousLiked ? previousCount - 1 : previousCount + 1,
             }
             : c
         )
       );
-      console.error('Error toggling comment like:', error);
-    }
+
+      try {
+        if (previousLiked) {
+          await unlikeComment(post.id, commentId);
+        } else {
+          await likeComment(post.id, commentId);
+        }
+        // Real-time update will handle the state update via socket
+      } catch (error) {
+        // Rollback on error
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? {
+                ...c,
+                isLiked: previousLiked,
+                likes: previousCount,
+              }
+              : c
+          )
+        );
+        console.error('Error toggling comment like:', error);
+      }
+    }, 'Please login to like this comment.');
   };
 
   const handleReply = (commentId: string, userName: string) => {
-    setReplyingTo(commentId);
-    setCommentText(`@${userName} `);
+    withAuth(() => {
+      setReplyingTo(commentId);
+      setCommentText(`@${userName} `);
+    }, 'Please login to reply to this comment.');
   };
 
   const handleShare = async () => {
-    try {
-      const shareText = post?.text || 'Check out this post!';
-      const shareUrl = post?.images && post.images.length > 0
-        ? `Check out this post with ${post.images.length} image${post.images.length > 1 ? 's' : ''}!`
-        : shareText;
+    withAuth(async () => {
+      try {
+        const shareText = post?.text || 'Check out this post!';
+        const shareUrl = post?.images && post.images.length > 0
+          ? `Check out this post with ${post.images.length} image${post.images.length > 1 ? 's' : ''}!`
+          : shareText;
 
-      await shareContent({
-        title: 'motonode Post',
-        message: shareUrl,
-        url: post?.id ? `motonode://post/${post.id}` : undefined,
-      });
-    } catch (error) {
-      console.error('Error sharing post:', error);
-    }
+        await shareContent({
+          title: 'motonode Post',
+          message: shareUrl,
+          url: post?.id ? `motonode://post/${post.id}` : undefined,
+        });
+      } catch (error) {
+        console.error('Error sharing post:', error);
+      }
+    }, 'Please login to share this post.');
   };
 
   const handleReportPost = async () => {
-    try {
-      await reportContent({
-        targetType: 'post',
-        targetId: post.id,
-        targetOwnerId: post.userId,
-        reason: 'Objectionable content',
-      });
-      Alert.alert('Reported', 'Thanks. We will review this content.');
-    } catch (error) {
-      Alert.alert('Error', 'Unable to report content right now.');
-    }
+    withAuth(async () => {
+      try {
+        await reportContent({
+          targetType: 'post',
+          targetId: post.id,
+          targetOwnerId: post.userId,
+          reason: 'Objectionable content',
+        });
+        Alert.alert('Reported', 'Thanks. We will review this content.');
+      } catch (error) {
+        Alert.alert('Error', 'Unable to report content right now.');
+      }
+    }, 'Please login to report this post.');
   };
 
   const handleBlockAuthor = async () => {
-    try {
-      await blockUser(post.userId);
-      onUserBlocked?.();
-      Alert.alert('User blocked', 'This user has been hidden from your feed.');
-    } catch (error) {
-      Alert.alert('Error', 'Unable to block this user right now.');
-    }
+    withAuth(async () => {
+      try {
+        await blockUser(post.userId);
+        onUserBlocked?.();
+        Alert.alert('User blocked', 'This user has been hidden from your feed.');
+      } catch (error) {
+        Alert.alert('Error', 'Unable to block this user right now.');
+      }
+    }, 'Please login to block this user.');
   };
 
   const handleOpenPostActions = () => {

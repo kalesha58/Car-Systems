@@ -1,7 +1,12 @@
 import {appAxios} from './apiInterceptors';
 import {IAddress, IAddressFormData} from '../types/address/IAddress';
+import { tokenStorage } from '@state/storage';
 
 export const getSavedAddresses = async (): Promise<IAddress[]> => {
+  const accessToken = tokenStorage.getString('accessToken');
+  if (!accessToken) {
+    return [];
+  }
   const response = await appAxios.get('/addresses');
   if (response.data && response.data.success && response.data.addresses) {
     return response.data.addresses;

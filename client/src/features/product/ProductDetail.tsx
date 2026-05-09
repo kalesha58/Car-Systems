@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   Dimensions,
   ScrollView,
   Alert,
+  Animated as RNAnimated,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -19,7 +20,7 @@ import { getProductById } from '@service/productService';
 import { getBusinessRegistrationByUserId } from '@service/dealerService';
 import { IProduct } from '../../types/product/IProduct';
 import ProductImageCarousel from '@components/product/ProductImageCarousel';
-import AnimatedProductHeader from '@components/product/AnimatedProductHeader';
+import CustomHeader from '@components/ui/CustomHeader';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useCartStore } from '@state/cartStore';
 import {
@@ -28,6 +29,7 @@ import {
   CollapsibleHeaderContainer,
   withCollapsibleContext,
   StickyView,
+  useCollapsibleContext,
 } from '@r0b0t3d/react-native-collapsible';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '@hooks/useToast';
@@ -38,6 +40,7 @@ import type { IDealer } from '../../types/dealer/IDealer';
 import RelatedProducts from '@features/cart/RelatedProducts';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import { shareProduct } from '@utils/shareUtils';
+import { withAuth } from '@utils/AuthGuard';
 
 type ProductDetailRouteParams = {
   ProductDetail: {
@@ -56,6 +59,7 @@ const ProductDetail: React.FC = () => {
   const [dealer, setDealer] = useState<IDealer | null>(null);
   const [loadingDealer, setLoadingDealer] = useState<boolean>(false);
   const [storeOpen, setStoreOpen] = useState<boolean>(true);
+  const { scrollY } = useCollapsibleContext();
   const { colors } = useTheme();
   const { addItem } = useCartStore();
   const insets = useSafeAreaInsets();
@@ -71,17 +75,14 @@ const ProductDetail: React.FC = () => {
         if (response.success && response.Response) {
           let productData: IProduct | null = null;
           const responseData = response.Response as any;
-          // Check if Response has products array (list response)
           if (responseData.products && Array.isArray(responseData.products)) {
             productData = responseData.products[0] || null;
           }
-          // Check if Response is a single product object
           else if (responseData.id || responseData._id) {
             productData = responseData as IProduct;
           }
           if (productData) {
             setProduct(productData);
-            // Fetch dealer information if dealerId is available
             if (productData.dealerId) {
               fetchDealerInfo(productData.dealerId);
             }
@@ -92,7 +93,6 @@ const ProductDetail: React.FC = () => {
           setError('Product not found');
         }
       } catch (err: any) {
-        // Check if error is due to closed store
         if (err?.response?.data?.message?.includes('closed') || err?.message?.includes('closed')) {
           setError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
         } else {
@@ -111,27 +111,19 @@ const ProductDetail: React.FC = () => {
   const fetchDealerInfo = async (dealerId: string) => {
     try {
       setLoadingDealer(true);
-
-      // Fetch business registration to check storeOpen status
-      // dealerId in products is actually the userId
       try {
         const businessRegistration = await getBusinessRegistrationByUserId(dealerId);
         if (businessRegistration) {
           setStoreOpen(businessRegistration.storeOpen !== undefined ? businessRegistration.storeOpen : true);
         } else {
-          // No registration found - default to open
           setStoreOpen(true);
         }
       } catch (regErr) {
-        // Business registration not found or error - default to open
         console.log('Error fetching business registration:', regErr);
         setStoreOpen(true);
       }
-
-      // Fetch dealer info for display
       const response = await getDealerById(dealerId);
       if (response.success && response.Response) {
-        // Handle both single dealer and dealer list response
         const dealerData = Array.isArray(response.Response.dealers)
           ? response.Response.dealers[0]
           : (response.Response as any);
@@ -147,67 +139,59 @@ const ProductDetail: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    if (!product) return;
-
-    // Check if store is closed
-    if (!storeOpen) {
-      showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
-      return;
-    }
-
-    // Check stock availability
-    if (product.stock === 0) {
-      showError('Product is out of stock');
-      return;
-    }
-
-    const productWithId = { ...product, _id: product.id };
-    addItem(productWithId);
-
-    // Show success toast
-    showSuccess('Product added to cart successfully', 2000);
+    withAuth(() => {
+      if (!product) return;
+      if (!storeOpen) {
+        showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
+        return;
+      }
+      if (product.stock === 0) {
+        showError('Product is out of stock');
+        return;
+      }
+      const productWithId = { ...product, _id: product.id };
+      addItem(productWithId);
+      showSuccess('Product added to cart successfully', 2000);
+    }, 'Please login to add items to your cart.');
   };
 
   const handleBuyNow = () => {
-    if (!product) return;
-
-    // Check if store is closed
-    if (!storeOpen) {
-      showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
-      return;
-    }
-
-    // Check stock availability
-    if (product.stock === 0) {
-      showError('Product is out of stock');
-      return;
-    }
-
-    // Add to cart first
-    const productWithId = { ...product, _id: product.id };
-    addItem(productWithId);
-
-    // Navigate to cart immediately
-    setTimeout(() => {
-      try {
-        (navigation as any).navigate('MainTabs', {
-          screen: 'Cart',
-        });
-      } catch (error) {
-        try {
-          (navigation as any).navigate('MainTabs');
-          setTimeout(() => {
-            (navigation as any).navigate('Cart');
-          }, 100);
-        } catch (err) {
-          console.error('Error navigating to cart:', err);
-        }
+    withAuth(() => {
+      if (!product) return;
+      if (!storeOpen) {
+        showError(t('dealer.storeCurrentlyClosed') || 'This store is currently closed. Products are not available.');
+        return;
       }
-    }, 300);
+      if (product.stock === 0) {
+        showError('Product is out of stock');
+        return;
+      }
+      const productWithId = { ...product, _id: product.id };
+      addItem(productWithId);
+      setTimeout(() => {
+        try {
+          (navigation as any).navigate('MainTabs', {
+            screen: 'Cart',
+          });
+        } catch (error) {
+          try {
+            (navigation as any).navigate('MainTabs');
+            setTimeout(() => {
+              (navigation as any).navigate('Cart');
+            }, 100);
+          } catch (err) {
+            console.error('Error navigating to cart:', err);
+          }
+        }
+      }, 300);
+    }, 'Please login to proceed with purchase.');
   };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
+    withAuth(() => {
+      setIsWishlisted(!isWishlisted);
+      // In a real app, you'd also call a service here to save it
+    }, 'Please login to save products to your wishlist.');
   };
 
   const handleShare = async () => {
@@ -232,14 +216,12 @@ const ProductDetail: React.FC = () => {
 
   const hasDiscount = product && product.originalPrice && product.originalPrice > product.price;
 
-  // Responsive calculations
   const screenWidth = Dimensions.get('window').width;
   const screenHeight = Dimensions.get('window').height;
   const isTablet = screenWidth >= 768;
   const isDesktop = screenWidth >= 1024;
   const isSmallMobile = screenWidth < 360;
 
-  // Responsive values
   const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) => {
     if (isDesktop && desktop !== undefined) return desktop;
     if (isTablet && tablet !== undefined) return tablet;
@@ -706,27 +688,40 @@ const ProductDetail: React.FC = () => {
     );
   }
 
+  const rightHeaderComponent = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <TouchableOpacity onPress={handleShare}>
+        <Icon name="share-outline" color="#fff" size={RFValue(20)} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleWishlist}>
+        <Icon
+          name={isWishlisted ? 'heart' : 'heart-outline'}
+          color={isWishlisted ? colors.error : "#fff"}
+          size={RFValue(20)}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      <AnimatedProductHeader
-        productName={product.name}
-        price={product.price}
-        originalPrice={product.originalPrice}
-        imageUrl={product.images?.[0]}
-        productId={product.id}
-        isWishlisted={isWishlisted}
-        onWishlistPress={handleWishlist}
+      <CustomHeader
+        title={product.name}
+        backgroundColor="#0d8320"
+        titleColor="#fff"
+        iconColor="#fff"
+        rightComponent={rightHeaderComponent}
       />
       <CollapsibleContainer
-        style={[styles.container, { marginTop: insets.top || 0 }]}>
+        style={styles.container}>
         <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
           <ProductImageCarousel
             images={product.images || []}
-            productName={product.name}
-            productPrice={product.price}
+            scrollY={scrollY}
             productId={product.id}
             isWishlisted={isWishlisted}
             onWishlistPress={handleWishlist}
+            showFloatingButtons={false}
           />
 
           <StickyView style={{ backgroundColor: colors.background, paddingTop: 0, marginTop: 0 }}>

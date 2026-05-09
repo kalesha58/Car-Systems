@@ -100,7 +100,7 @@ const SplashScreen: FC = () => {
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     } else {
-      resetAndNavigate('CustomerLogin');
+      resetAndNavigate('MainTabs');
     }
   };
 
@@ -110,7 +110,7 @@ const SplashScreen: FC = () => {
       const refreshToken = tokenStorage.getString('refreshToken') as string;
 
       if (!accessToken || !refreshToken) {
-        resetAndNavigate('CustomerLogin');
+        resetAndNavigate('MainTabs');
         return;
       }
 
@@ -143,7 +143,7 @@ const SplashScreen: FC = () => {
             clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
-            resetAndNavigate('CustomerLogin');
+            resetAndNavigate('MainTabs');
             return;
           }
         }
@@ -158,7 +158,7 @@ const SplashScreen: FC = () => {
             clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
-            resetAndNavigate('CustomerLogin');
+            resetAndNavigate('MainTabs');
             return;
           }
         }
@@ -167,7 +167,7 @@ const SplashScreen: FC = () => {
           const userRole = checkUserRole(currentUser.role);
           await navigateByRole(userRole, currentUser.id);
         } else {
-          resetAndNavigate('CustomerLogin');
+          resetAndNavigate('MainTabs');
         }
       } catch (decodeError) {
         tokenStorage.clearAll();
@@ -175,7 +175,7 @@ const SplashScreen: FC = () => {
         clearBusinessRegistrationDraft(currentUser?.id);
         const { logout } = useAuthStore.getState();
         logout();
-        resetAndNavigate('CustomerLogin');
+        resetAndNavigate('MainTabs');
       }
     } catch (error) {
       tokenStorage.clearAll();
@@ -183,7 +183,7 @@ const SplashScreen: FC = () => {
       clearBusinessRegistrationDraft(currentUser?.id);
       const { logout } = useAuthStore.getState();
       logout();
-      resetAndNavigate('CustomerLogin');
+      resetAndNavigate('MainTabs');
     }
   };
 
@@ -207,7 +207,7 @@ const SplashScreen: FC = () => {
     const fallbackTimeout = setTimeout(() => {
       const accessToken = tokenStorage.getString('accessToken') as string;
       if (!accessToken) {
-        resetAndNavigate('CustomerLogin');
+        resetAndNavigate('MainTabs');
       }
     }, 3000);
 

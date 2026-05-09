@@ -27,8 +27,12 @@ const CompactProductGrid: FC = () => {
         if (response?.success && response?.Response?.products) {
           setProducts(response.Response.products.slice(0, 8));
         }
-      } catch (error) {
-        console.error('Error fetching best sellers:', error);
+      } catch (error: any) {
+        if (error?.response?.status === 401) {
+          // Silent fail for guests
+        } else {
+          console.error('Error fetching best sellers:', error);
+        }
         setProducts([]);
       } finally {
         setLoading(false);

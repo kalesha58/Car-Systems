@@ -22,6 +22,7 @@ import { openDealerChat } from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import { useNavigation } from '@react-navigation/native';
 import PreBookingModal from '@components/vehicle/PreBookingModal';
+import { withAuth } from '@utils/AuthGuard';
 
 type VehicleDetailRouteParams = {
   VehicleDetail: {
@@ -488,7 +489,9 @@ const VehicleDetail: React.FC = () => {
                   {vehicle?.availability === 'available' && (
                     <TouchableOpacity
                       style={styles.headerActionButton}
-                      onPress={() => setShowPreBookingModal(true)}
+                      onPress={() => {
+                        withAuth(() => setShowPreBookingModal(true), 'Please login to pre-book this vehicle.');
+                      }}
                       activeOpacity={0.7}>
                       <Icon name="bookmark-outline" size={RFValue(18)} color={colors.text} />
                     </TouchableOpacity>
@@ -783,7 +786,9 @@ const VehicleDetail: React.FC = () => {
           {vehicle?.allowTestDrive && (
             <TouchableOpacity
               onPress={() => {
-                (navigation as any).navigate('TestDriveBooking', { vehicleId: vehicle.id });
+                withAuth(() => {
+                  (navigation as any).navigate('TestDriveBooking', { vehicleId: vehicle.id });
+                }, 'Please login to book a test drive.');
               }}
               activeOpacity={0.8}
               style={[styles.actionButton, styles.testDriveButton]}>

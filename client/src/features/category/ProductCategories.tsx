@@ -99,6 +99,7 @@ const ProductCategories = () => {
     data: ItemType[];
     timestamp: number;
   }>>(new Map());
+  const hasFailedAuthRef = useRef(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -313,6 +314,11 @@ const ProductCategories = () => {
 
   // Update category counts
   const updateCategoryCounts = useCallback(async () => {
+    // If we've already tried and got a 401, don't keep hammering the API as a guest
+    if (!useAuthStore.getState().user && hasFailedAuthRef.current) {
+      return;
+    }
+
     try {
       const counts: Record<string, number> = {};
       for (const category of categories) {
@@ -320,18 +326,28 @@ const ProductCategories = () => {
           if (category.type === 'products') {
             const response = await getProducts(
               category._id !== 'all-products' ? {category: category.name} : {},
-            ).catch(() => ({Response: {products: []}}));
+            ).catch((err) => {
+              if (err?.response?.status === 401) {
+                hasFailedAuthRef.current = true;
+              }
+              return {Response: {products: []}};
+            });
             counts[category._id] = response.Response?.products?.length || 0;
           } else if (category.type === 'vehicles') {
-            console.log('[Category Counts] Fetching vehicle count for:', category._id);
             const response = await getDealerVehicles({limit: 1000}).catch((err) => {
-              console.error('[Category Counts] Error fetching vehicles:', err);
+              if (err?.response?.status === 401) {
+                hasFailedAuthRef.current = true;
+              }
               return {Response: {vehicles: []}};
             });
             counts[category._id] = response.Response?.vehicles?.length || 0;
-            console.log('[Category Counts] Vehicle count for', category._id, ':', counts[category._id]);
           } else if (category.type === 'services') {
-            const response = await getServices().catch(() => ({Response: {services: []}}));
+            const response = await getServices().catch((err) => {
+              if (err?.response?.status === 401) {
+                hasFailedAuthRef.current = true;
+              }
+              return {Response: {services: []}};
+            });
             counts[category._id] = response.Response?.services?.length || 0;
           }
         } catch (error) {
@@ -501,8 +517,12 @@ const ProductCategories = () => {
 
       console.log(`[${categoryType}] Fetched ${fetchedItems.length} items for category:`, category._id);
       return fetchedItems;
-    } catch (error) {
-      console.error(`[${categoryType}] Error fetching items for category ${category._id}:`, error);
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        console.warn(`[${categoryType}] Authentication required for category ${category._id}. Guest access might be limited on the backend.`);
+      } else {
+        console.error(`[${categoryType}] Error fetching items for category ${category._id}:`, error);
+      }
       // Return cached data if available, even if expired
       const cached = apiCacheRef.current.get(cacheKey);
       if (cached) {

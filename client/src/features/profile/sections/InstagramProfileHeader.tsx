@@ -25,6 +25,7 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const isGuest = user?.isGuest;
 
   const getInitialLetter = (): string => {
     if (user?.name) {
@@ -34,11 +35,19 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
   };
 
   const handleEditProfile = () => {
-    navigate('EditProfile');
+    if (isGuest) {
+      navigate('CustomerLogin');
+    } else {
+      navigate('EditProfile');
+    }
   };
 
   const handleShareProfile = () => {
-    console.log('Share profile');
+    if (isGuest) {
+      navigate('CustomerLogin');
+    } else {
+      console.log('Share profile');
+    }
   };
 
   const styles = StyleSheet.create({
@@ -191,13 +200,17 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
           style={styles.primaryButton}
           onPress={handleEditProfile}
           activeOpacity={0.8}>
-          <CustomText style={styles.primaryButtonText}>{t('profile.editProfile')}</CustomText>
+          <CustomText style={styles.primaryButtonText}>
+            {isGuest ? 'Login / Signup' : t('profile.editProfile')}
+          </CustomText>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.secondaryButton}
           onPress={handleShareProfile}
           activeOpacity={0.7}>
-          <CustomText style={styles.secondaryButtonText}>{t('profile.shareProfile')}</CustomText>
+          <CustomText style={styles.secondaryButtonText}>
+            {isGuest ? 'Join Community' : t('profile.shareProfile')}
+          </CustomText>
         </TouchableOpacity>
       </View>
     </View>

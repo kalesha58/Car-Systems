@@ -21,6 +21,7 @@ import PlayPostSkeleton from './PlayPostSkeleton';
 import { navigate } from '@utils/NavigationUtils';
 import { useTheme } from '@hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
+import { withAuth } from '@utils/AuthGuard';
 
 type PlayRouteParams = {
   refresh?: boolean;
@@ -149,19 +150,19 @@ const PlayScreen: React.FC = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => navigate('UserSelection')}
+            onPress={() => withAuth(() => navigate('UserSelection'))}
             activeOpacity={0.7}>
             <Icon name="search" size={RFValue(20)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => navigate('CreateNewPost')}
+            onPress={() => withAuth(() => navigate('CreateNewPost'), 'Please login to share your car posts.')}
             activeOpacity={0.7}>
             <Icon name="add" size={RFValue(20)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => navigate('Chat')}
+            onPress={() => withAuth(() => navigate('Chat'))}
             activeOpacity={0.7}>
             <Icon name="chatbubble-outline" size={RFValue(20)} color={headerIconColor} />
           </TouchableOpacity>

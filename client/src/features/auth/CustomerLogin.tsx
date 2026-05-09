@@ -52,6 +52,7 @@ const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) =
 };
 
 const CustomerLogin = () => {
+  const { setUser } = useAuthStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -314,6 +315,19 @@ const CustomerLogin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGuestEntry = () => {
+    setUser({
+      id: 'guest_user',
+      name: 'Guest User',
+      email: 'guest@motonode.com',
+      role: ['guest'],
+      isGuest: true,
+      address: 'Browsing as Guest',
+      phone: '9999999999'
+    });
+    resetAndNavigate('MainTabs');
   };
 
   return (
@@ -604,6 +618,17 @@ const CustomerLogin = () => {
                     fontFamily={Fonts.Medium}
                     style={[styles.signupButtonText, { color: colors.secondary }]}>
                     {isSignupMode ? t('auth.alreadyHaveAccount') : t('auth.dontHaveAccount')}
+                  </CustomText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleGuestEntry}
+                  style={[styles.signupButton, { marginTop: 0 }]}>
+                  <CustomText
+                    variant="h6"
+                    fontFamily={Fonts.SemiBold}
+                    style={{ color: colors.textSecondary, opacity: 0.7 }}>
+                    Continue as Guest
                   </CustomText>
                 </TouchableOpacity>
               </View>

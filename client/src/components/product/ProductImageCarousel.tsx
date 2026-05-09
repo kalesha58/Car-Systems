@@ -28,6 +28,7 @@ interface IProductImageCarouselProps {
   productId?: string;
   isWishlisted: boolean;
   onWishlistPress: () => void;
+  showFloatingButtons?: boolean;
 }
 
 const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
@@ -37,6 +38,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
   productId,
   isWishlisted,
   onWishlistPress,
+  showFloatingButtons = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -184,18 +186,22 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
           style={styles.image}
           resizeMode="contain"
         />
-        <Pressable onPress={() => goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
-        </Pressable>
-        <View style={styles.topRightIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
-            <Icon
-              name={isWishlisted ? 'heart' : 'heart-outline'}
-              size={RFValue(getResponsiveValue(20, 24, 28))}
-              color={isWishlisted ? colors.error : colors.text}
-            />
-          </TouchableOpacity>
-        </View>
+        {showFloatingButtons && (
+          <>
+            <Pressable onPress={() => goBack()} style={styles.backButton}>
+              <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
+            </Pressable>
+            <View style={styles.topRightIcons}>
+              <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
+                <Icon
+                  name={isWishlisted ? 'heart' : 'heart-outline'}
+                  size={RFValue(getResponsiveValue(20, 24, 28))}
+                  color={isWishlisted ? colors.error : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </Animated.View>
     );
   }
@@ -221,18 +227,22 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
           />
         ))}
       </ScrollView>
-      <Pressable onPress={() => goBack()} style={styles.backButton}>
-        <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
-      </Pressable>
-      <View style={styles.topRightIcons}>
-        <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
-          <Icon
-            name={isWishlisted ? 'heart' : 'heart-outline'}
-            size={RFValue(getResponsiveValue(20, 24, 28))}
-            color={isWishlisted ? colors.error : colors.text}
-          />
-        </TouchableOpacity>
-      </View>
+      {showFloatingButtons && (
+        <>
+          <Pressable onPress={() => goBack()} style={styles.backButton}>
+            <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
+          </Pressable>
+          <View style={styles.topRightIcons}>
+            <TouchableOpacity style={styles.iconButton} onPress={onWishlistPress}>
+              <Icon
+                name={isWishlisted ? 'heart' : 'heart-outline'}
+                size={RFValue(getResponsiveValue(20, 24, 28))}
+                color={isWishlisted ? colors.error : colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
       <View style={styles.pagination}>
         {images.map((_, index) => (
           <View

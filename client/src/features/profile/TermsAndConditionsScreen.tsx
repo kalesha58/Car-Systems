@@ -173,11 +173,12 @@ const TermsAndConditionsScreen: FC = () => {
         title={t('profile.termsPolicies')}
         showNotificationIcon={false}
         onBackPress={() => {
-          if (navigation.canGoBack()) {
-            navigation.goBack();
-          } else {
-            navigation.navigate(route?.params?.returnTo || 'ProfileSettings');
+          const returnTo = route?.params?.returnTo;
+          if (returnTo) {
+            navigation.navigate(returnTo);
+            return;
           }
+          navigation.navigate('ProfileSettings');
         }}
       />
       <View style={styles.backgroundContainer}>

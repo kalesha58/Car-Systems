@@ -36,6 +36,7 @@ import { ICoupon } from '@types/coupon/ICoupon';
 import { getSavedAddresses } from '@service/addressService';
 import { getDealerById, getBusinessRegistrationById } from '@service/dealerService';
 import ThemedModal from '@components/ui/ThemedModal';
+import { withAuth } from '@utils/AuthGuard';
 
 // Generate idempotency key
 const generateIdempotencyKey = (): string => {
@@ -218,105 +219,107 @@ const CartScreen: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (currentOrder !== null) {
-      const orderStatus = currentOrder.status?.toUpperCase() || '';
-      const isOrderCompleted = 
-        orderStatus === 'DELIVERED' || 
-        orderStatus === 'CANCELLED_BY_USER' || 
-        orderStatus === 'CANCELLED_BY_DEALER' ||
-        orderStatus === 'REFUND_COMPLETED';
-      
-      if (!isOrderCompleted) {
-        showInfoModal(
-          'Order in Progress',
-          'Please wait for your current order to be delivered before placing a new order.',
-          'warning',
+    withAuth(async () => {
+      if (currentOrder !== null) {
+        const orderStatus = currentOrder.status?.toUpperCase() || '';
+        const isOrderCompleted = 
+          orderStatus === 'DELIVERED' || 
+          orderStatus === 'CANCELLED_BY_USER' || 
+          orderStatus === 'CANCELLED_BY_DEALER' ||
+          orderStatus === 'REFUND_COMPLETED';
+        
+        if (!isOrderCompleted) {
+          showInfoModal(
+            'Order in Progress',
+            'Please wait for your current order to be delivered before placing a new order.',
+            'warning',
+          );
+          return;
+        } else {
+          setCurrentOrder(null);
+        }
+      }
+
+      if (cart.length === 0) {
+        Alert.alert('Add any items to place order');
+        return;
+      }
+
+      if (!selectedAddress) {
+        Alert.alert('Please select a delivery address');
+        return;
+      }
+
+      const shippingAddress = parseAddressToShippingAddress(selectedAddress);
+
+      const orderItems = cart.map(item => ({
+        productId: item.item?.id || item._id.toString(),
+        name: item.item?.name || '',
+        quantity: item.count,
+        price: item.item?.price || 0,
+        total: item.count * (item.item?.price || 0),
+      }));
+
+      if (!selectedPaymentMethod) {
+        Alert.alert('Please select a payment method');
+        return;
+      }
+
+      if (!acceptedTerms) {
+        Alert.alert('Please accept the terms and conditions');
+        return;
+      }
+
+      if (selectedPaymentMethod === 'upi' && dealerInfo && !dealerInfo.upiAvailable) {
+        Alert.alert(
+          'UPI Payment Unavailable',
+          upiDisabledReason || 'UPI payment is not available for this dealer.',
         );
         return;
-      } else {
-        setCurrentOrder(null);
       }
-    }
 
-    if (cart.length === 0) {
-      Alert.alert('Add any items to place order');
-      return;
-    }
-
-    if (!selectedAddress) {
-      Alert.alert('Please select a delivery address');
-      return;
-    }
-
-    const shippingAddress = parseAddressToShippingAddress(selectedAddress);
-
-    const orderItems = cart.map(item => ({
-      productId: item.item?.id || item._id.toString(),
-      name: item.item?.name || '',
-      quantity: item.count,
-      price: item.item?.price || 0,
-      total: item.count * (item.item?.price || 0),
-    }));
-
-    if (!selectedPaymentMethod) {
-      Alert.alert('Please select a payment method');
-      return;
-    }
-
-    if (!acceptedTerms) {
-      Alert.alert('Please accept the terms and conditions');
-      return;
-    }
-
-    if (selectedPaymentMethod === 'upi' && dealerInfo && !dealerInfo.upiAvailable) {
-      Alert.alert(
-        'UPI Payment Unavailable',
-        upiDisabledReason || 'UPI payment is not available for this dealer.',
-      );
-      return;
-    }
-
-    const orderData: ICreateOrderRequest = {
-      items: orderItems,
-      shippingAddress,
-      paymentMethod: selectedPaymentMethod,
-      dealerId: cart[0]?.item?.dealerId,
-      ...(deliveryInstructions && {deliveryInstructions}),
-      ...(deliveryPreference && Object.keys(deliveryPreference).length > 0 && {deliveryPreference}),
-    };
-
-    const idempotencyKey = generateIdempotencyKey();
-
-    setLoading(true);
-    try {
-      const headers = {
-        'Idempotency-Key': idempotencyKey,
+      const orderData: ICreateOrderRequest = {
+        items: orderItems,
+        shippingAddress,
+        paymentMethod: selectedPaymentMethod,
+        dealerId: cart[0]?.item?.dealerId,
+        ...(deliveryInstructions && {deliveryInstructions}),
+        ...(deliveryPreference && Object.keys(deliveryPreference).length > 0 && {deliveryPreference}),
       };
 
-      const response = await appAxios.post('/user/orders', orderData, { headers });
-      const data = response.data?.data;
+      const idempotencyKey = generateIdempotencyKey();
 
-      if (data !== null) {
-        setCurrentOrder(data);
-        if (selectedPaymentMethod === 'upi' && data.paymentAction) {
-          clearCart();
-          navigate('PaymentStatus', {
-            orderId: data.id,
-            paymentAction: data.paymentAction,
-          });
+      setLoading(true);
+      try {
+        const headers = {
+          'Idempotency-Key': idempotencyKey,
+        };
+
+        const response = await appAxios.post('/user/orders', orderData, { headers });
+        const data = response.data?.data;
+
+        if (data !== null) {
+          setCurrentOrder(data);
+          if (selectedPaymentMethod === 'upi' && data.paymentAction) {
+            clearCart();
+            navigate('PaymentStatus', {
+              orderId: data.id,
+              paymentAction: data.paymentAction,
+            });
+          } else {
+            clearCart();
+            navigate('OrderSuccess', { ...data });
+          }
         } else {
-          clearCart();
-          navigate('OrderSuccess', { ...data });
+          Alert.alert('There was an error');
         }
-      } else {
-        Alert.alert('There was an error');
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.message || 'Failed to create order';
+        Alert.alert('Error', errorMessage);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.Response?.ReturnMessage || error?.message || 'Failed to create order';
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    }, 'Please login to place an order.');
   };
 
   const styles = StyleSheet.create({
@@ -668,6 +671,12 @@ const CartScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
+        <ArrowButton
+          loading={loading}
+          price={estimatedGrandTotal}
+          title="Place Order"
+          onPress={handlePlaceOrder}
+        />
       </View>
     </View>
   );
