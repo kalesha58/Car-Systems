@@ -81,8 +81,8 @@ export const recordStoryViewController = async (
       res.status(400).json({ success: false, Response: { ReturnMessage: 'itemIndex is required' } });
       return;
     }
-    const result = await recordStoryView(viewerUserId, storyId, itemIndex);
-    res.status(200).json({ success: true, ...result });
+    await recordStoryView(viewerUserId, storyId, itemIndex);
+    res.status(200).json({ success: true });
   } catch (error) {
     errorHandler(error as IAppError, res);
   }

@@ -221,7 +221,7 @@ export const recordStoryView = async (
   viewerUserId: string,
   storyId: string,
   itemIndex: number,
-): Promise<{ success: true }> => {
+): Promise<void> => {
   const story = await Story.findById(storyId);
   if (!story || story.expiresAt.getTime() <= Date.now()) {
     throw new NotFoundError('Story not found');
@@ -236,7 +236,7 @@ export const recordStoryView = async (
   }
 
   if (viewerUserId === story.userId) {
-    return { success: true };
+    return;
   }
 
   await StoryView.findOneAndUpdate(
@@ -244,8 +244,6 @@ export const recordStoryView = async (
     { $set: { viewedAt: new Date() } },
     { upsert: true, new: true },
   );
-
-  return { success: true };
 };
 
 export const getStoryViewers = async (
@@ -266,10 +264,13 @@ export const getStoryViewers = async (
   const safeLimit = Math.min(100, Math.max(1, limit));
   const skip = (safePage - 1) * safeLimit;
 
-  const grouped = await StoryView.aggregate<{
-    _id: string;
-    lastViewedAt: Date;
-  }>([
+  type ViewerGroupRow = { _id: string; lastViewedAt: Date };
+  type ViewersFacetOutput = {
+    data: ViewerGroupRow[];
+    totalCount: { count: number }[];
+  };
+
+  const grouped = await StoryView.aggregate<ViewersFacetOutput>([
     { $match: { storyId } },
     { $sort: { viewedAt: -1 } },
     {
@@ -287,11 +288,11 @@ export const getStoryViewers = async (
     },
   ]);
 
-  const facet = grouped[0] || { data: [], totalCount: [] };
-  const rows = facet.data || [];
-  const total = facet.totalCount?.[0]?.count ?? 0;
+  const facet: ViewersFacetOutput = grouped[0] ?? { data: [], totalCount: [] };
+  const rows = facet.data;
+  const total = facet.totalCount[0]?.count ?? 0;
 
-  const viewerIds = rows.map((r) => r._id);
+  const viewerIds = rows.map((r: ViewerGroupRow) => r._id);
   const users = await SignUp.find({ _id: { $in: viewerIds } })
     .select('_id name profileImage')
     .lean();
@@ -301,7 +302,7 @@ export const getStoryViewers = async (
     userById.set(String(u._id), { name: u.name, profileImage: u.profileImage });
   });
 
-  const viewers: IStoryViewerEntry[] = rows.map((r) => {
+  const viewers: IStoryViewerEntry[] = rows.map((r: ViewerGroupRow) => {
     const info = userById.get(r._id);
     return {
       viewerUserId: r._id,
