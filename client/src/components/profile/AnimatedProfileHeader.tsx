@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Image, Pressable } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, headerTopInset } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
 import { goBack } from '@utils/NavigationUtils';
@@ -83,6 +83,7 @@ const AnimatedProfileHeader: React.FC = () => {
 
   const accountTitle = t('profile.yourAccount') || 'Your account';
   const truncatedTitle = accountTitle.length > 25 ? `${accountTitle.substring(0, 25)}...` : accountTitle;
+  const topInset = headerTopInset(insets.top);
 
   const styles = StyleSheet.create({
     statusBarBackground: {
@@ -90,7 +91,7 @@ const AnimatedProfileHeader: React.FC = () => {
       top: 0,
       left: 0,
       right: 0,
-      height: insets.top,
+      height: topInset,
       zIndex: 99,
     },
     container: {
@@ -101,13 +102,17 @@ const AnimatedProfileHeader: React.FC = () => {
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       position: 'absolute',
-      top: insets.top,
+      top: topInset,
       left: 0,
       right: 0,
       zIndex: 100,
     },
     backButton: {
       marginRight: 12,
+      width: MIN_TOUCH_TARGET,
+      height: MIN_TOUCH_TARGET,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     thumbnail: {
       width: 40,
@@ -145,7 +150,10 @@ const AnimatedProfileHeader: React.FC = () => {
     <>
       <Animated.View style={[styles.statusBarBackground, statusBarBackgroundStyle]} />
       <Animated.View style={[styles.container, headerAnimatedStyle, backgroundColorAnimatedStyle]}>
-        <Pressable onPress={() => goBack()} style={styles.backButton}>
+        <Pressable
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={() => goBack()}
+          style={styles.backButton}>
           <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
         </Pressable>
         <View style={styles.thumbnail}>

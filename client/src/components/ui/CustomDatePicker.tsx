@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -125,7 +125,16 @@ const CustomDatePicker: React.FC<ICustomDatePickerProps> = ({
           textAlign: 'center',
         },
         navButton: {
-          padding: 8,
+          minWidth: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        closeButton: {
+          minWidth: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         content: {
           padding: 16,
@@ -188,7 +197,7 @@ const CustomDatePicker: React.FC<ICustomDatePickerProps> = ({
                 <CustomText variant="h4" fontFamily={Fonts.SemiBold}>
                   Select Date
                 </CustomText>
-                <TouchableOpacity onPress={onClose}>
+                <TouchableOpacity onPress={onClose} style={styles.closeButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Icon name="close" size={RFValue(20)} color={colors.text} />
                 </TouchableOpacity>
               </View>
@@ -198,7 +207,8 @@ const CustomDatePicker: React.FC<ICustomDatePickerProps> = ({
                   <TouchableOpacity
                     style={styles.navButton}
                     onPress={() => navigateMonth('prev')}
-                    activeOpacity={0.7}>
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
                     <Icon name="chevron-back" size={RFValue(20)} color={colors.text} />
                   </TouchableOpacity>
                   <CustomText variant="h5" fontFamily={Fonts.SemiBold} style={styles.monthText}>
@@ -207,7 +217,8 @@ const CustomDatePicker: React.FC<ICustomDatePickerProps> = ({
                   <TouchableOpacity
                     style={styles.navButton}
                     onPress={() => navigateMonth('next')}
-                    activeOpacity={0.7}>
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
                     <Icon name="chevron-forward" size={RFValue(20)} color={colors.text} />
                   </TouchableOpacity>
                 </View>

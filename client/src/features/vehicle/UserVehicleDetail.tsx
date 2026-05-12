@@ -330,7 +330,7 @@ const UserVehicleDetail: React.FC = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: {flex: 1, backgroundColor: colors.secondary},
+        container: {flex: 1, backgroundColor: colors.background},
         contentContainer: {
           flex: 1,
           backgroundColor: colors.background,

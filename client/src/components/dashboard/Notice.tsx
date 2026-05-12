@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, SafeAreaView } from 'react-native'
 import React, { FC } from 'react'
 import { NoticeHeight } from '@utils/Scaling'
 import CustomText from '@components/ui/CustomText'
-import { Fonts } from '@utils/Constants'
+import { Fonts, headerTopInset } from '@utils/Constants'
 import { Defs, G, Path, Svg, Use } from 'react-native-svg'
 import { wavyData } from '@utils/dummyData'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -13,7 +13,7 @@ const Notice: FC = () => {
         <View style={{ height: NoticeHeight }}>
             <View style={styles.container}>
                 <View style={styles.noticeContainer}>
-                    <View style={{ padding: 10,paddingTop:insets?.top || 20 }}>
+                    <View style={{ padding: 10, paddingTop: headerTopInset(insets?.top || 0) + 6 }}>
                         <CustomText style={styles.heading} variant='h8' fontFamily={Fonts.SemiBold}>
                             It's raining near this location
                         </CustomText>

@@ -51,7 +51,7 @@ import {
 } from '@r0b0t3d/react-native-collapsible';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, headerTopInset } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import withLiveOrder from '@features/delivery/withLiveOrder';
 import CustomerEnquiriesCard from '@components/dashboard/CustomerEnquiriesCard';
@@ -395,7 +395,7 @@ const DealerDashboard: React.FC = () => {
           </TouchableOpacity>
         </Animated.View>
 
-        <CollapsibleContainer style={[styles.panelContainer, { marginTop: insets.top || 20 }]}>
+        <CollapsibleContainer style={[styles.panelContainer, { marginTop: headerTopInset(insets.top) || 12 }]}>
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {

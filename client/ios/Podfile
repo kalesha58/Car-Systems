@@ -12,9 +12,6 @@ linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
   use_frameworks! :linkage => linkage.to_sym
-else
-  # Use static frameworks to support Swift pods with static libraries
-  use_frameworks! :linkage => :static
 end
 
 target 'motonode' do
@@ -22,6 +19,7 @@ target 'motonode' do
 
   # Enable Google Maps for react-native-maps
   pod 'react-native-maps/Google', :path => '../node_modules/react-native-maps'
+  pod 'GoogleUtilities', :modular_headers => true
 
   use_react_native!(
     :path => config[:reactNativePath],

@@ -358,7 +358,7 @@ const AddUserVehicleScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.secondary,
+      backgroundColor: colors.background,
     },
     contentContainer: {
       flex: 1,

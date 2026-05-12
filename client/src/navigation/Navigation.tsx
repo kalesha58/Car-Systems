@@ -22,6 +22,7 @@ import CompareScreen from '@features/category/CompareScreen';
 import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
 import ProfileSettings from '@features/profile/ProfileSettings';
+import PaymentMethodsInfoScreen from '@features/profile/PaymentMethodsInfoScreen';
 import EditProfile from '@features/profile/EditProfile';
 import BusinessRegistrationScreen from '@features/profile/BusinessRegistrationScreen';
 import WishlistScreen from '@features/profile/WishlistScreen';
@@ -31,6 +32,7 @@ import AddressForm from '@features/address/AddressForm';
 import OrderSuccess from '@features/order/OrderSuccess';
 import ProductDetail from '@features/product/ProductDetail';
 import CreateNewPost from '@features/play/CreateNewPost';
+import StoryViewerScreen from '@features/play/StoryViewerScreen';
 import LiveTracking from '@features/map/LiveTracking';
 import OrdersList from '@features/order/OrdersList';
 import DealerOrdersList from '@features/order/DealerOrdersList';
@@ -576,6 +578,13 @@ const Navigation: FC = () => {
             }}
           />
           <Stack.Screen
+            name="PaymentMethodsInfo"
+            component={PaymentMethodsInfoScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
             name="EditProfile"
             component={EditProfile}
             options={{
@@ -697,6 +706,14 @@ const Navigation: FC = () => {
             component={CreateNewPost}
             options={{
               animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="StoryViewer"
+            component={StoryViewerScreen}
+            options={{
+              headerShown: false,
+              animation: 'fade',
             }}
           />
           <Stack.Screen

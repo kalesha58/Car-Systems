@@ -10,7 +10,7 @@ import {
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from './CustomText';
-import {Fonts} from '@utils/Constants';
+import {Fonts, headerTopInset} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -57,7 +57,6 @@ const SearchModal: FC<SearchModalProps> = ({
       backgroundColor: colors.cardBackground,
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
-      paddingTop: insets.top + 10,
       paddingBottom: 20,
       paddingHorizontal: 16,
     },
@@ -111,7 +110,7 @@ const SearchModal: FC<SearchModalProps> = ({
         style={styles.modalOverlay}
         activeOpacity={1}
         onPress={onClose}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { paddingTop: headerTopInset(insets.top) + 8 }]}>
           <View style={styles.header}>
             <CustomText style={styles.headerTitle} fontFamily={Fonts.SemiBold}>
               Search

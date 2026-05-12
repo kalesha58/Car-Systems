@@ -116,7 +116,8 @@ const EditProfile: FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.secondary,
+      /** Sheet sits on neutral base so keyboard resize does not flash brand green */
+      backgroundColor: colors.background,
     },
     content: {
       flex: 1,

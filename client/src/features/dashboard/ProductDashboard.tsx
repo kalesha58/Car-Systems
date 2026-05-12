@@ -25,7 +25,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
 import Animated, {useAnimatedStyle, withTiming} from 'react-native-reanimated';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import {Fonts, headerTopInset} from '@utils/Constants';
 import AnimatedHeader from './AnimatedHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Content from '@components/dashboard/Content';
@@ -131,7 +131,7 @@ const ProductDashboard = () => {
         </Animated.View>
 
         <CollapsibleContainer
-          style={[styles.panelContainer, {marginTop: insets.top || 20}]}>
+          style={[styles.panelContainer, {marginTop: headerTopInset(insets.top) || 12}]}>
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {

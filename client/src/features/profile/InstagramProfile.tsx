@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {useState, useEffect, useMemo} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, headerTopInset } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useAuthStore} from '@state/authStore';
 import {useTheme} from '@hooks/useTheme';
@@ -288,14 +288,14 @@ const InstagramProfile: React.FC = () => {
       StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: colors.secondary,
+          backgroundColor: colors.background,
         },
         header: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'flex-end',
           paddingHorizontal: 20,
-          paddingTop: insets.top + 12,
+          paddingTop: headerTopInset(insets.top) + 8,
           paddingBottom: 12,
           backgroundColor: colors.background,
         },
@@ -304,7 +304,10 @@ const InstagramProfile: React.FC = () => {
           alignItems: 'center',
         },
         headerButton: {
-          padding: 4,
+          minWidth: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         content: {
           flex: 1,
@@ -378,9 +381,12 @@ const InstagramProfile: React.FC = () => {
         rightComponent={
           user ? (
             <TouchableOpacity
-              style={{padding: 4}}
+              style={styles.headerButton}
               onPress={handleSettingsPress}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('profile.settings')}>
               <Icon name="settings-outline" size={RFValue(22)} color={colors.white} />
             </TouchableOpacity>
           ) : null

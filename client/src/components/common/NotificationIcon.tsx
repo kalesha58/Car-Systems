@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
 import { getUnreadNotificationCount } from '@service/notificationService';
@@ -56,7 +56,10 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress, color }) =
       marginRight: 8,
     },
     iconButton: {
-      padding: 8,
+      minWidth: MIN_TOUCH_TARGET,
+      minHeight: MIN_TOUCH_TARGET,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     badge: {
       position: 'absolute',
@@ -81,7 +84,7 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress, color }) =
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={handlePress} style={styles.iconButton} activeOpacity={0.7}>
+      <TouchableOpacity onPress={handlePress} style={styles.iconButton} activeOpacity={0.7} hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
         <Icon name="notifications-outline" size={RFValue(24)} color={color || colors.text} />
       </TouchableOpacity>
       {unreadCount > 0 && (

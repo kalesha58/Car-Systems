@@ -7,21 +7,26 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { screenHeight, screenWidth } from '@utils/Scaling';
-import { Colors, Fonts } from '@utils/Constants';
+import { Fonts, headerTopInset } from '@utils/Constants';
+import { playFeedText } from '@utils/playTypography';
 import { RFValue } from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getPosts } from '@service/postService';
+import { getStoryFeed } from '@service/storyService';
 import { IPost } from '../../types/post/IPost';
+import { IStoryFeedEntry } from '../../types/story/IStory';
 import ImagePostItem from './ImagePostItem';
 import PlayPostSkeleton from './PlayPostSkeleton';
+import PlayStoryRail from './PlayStoryRail';
 import { navigate } from '@utils/NavigationUtils';
 import { useTheme } from '@hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import { withAuth } from '@utils/AuthGuard';
+import { useTranslation } from 'react-i18next';
 
 type PlayRouteParams = {
   refresh?: boolean;
@@ -29,10 +34,14 @@ type PlayRouteParams = {
 };
 
 const PlayScreen: React.FC = () => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
   const [posts, setPosts] = useState<IPost[]>([]);
+  const [storyFeed, setStoryFeed] = useState<IStoryFeedEntry[]>([]);
+  const [storyLoading, setStoryLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -54,9 +63,26 @@ const PlayScreen: React.FC = () => {
     }
   }, []);
 
+  const fetchStoryFeed = React.useCallback(async () => {
+    setStoryLoading(true);
+    try {
+      const res = await getStoryFeed();
+      if (res.success !== false && Array.isArray(res.Response)) {
+        setStoryFeed(res.Response);
+      } else {
+        setStoryFeed([]);
+      }
+    } catch {
+      setStoryFeed([]);
+    } finally {
+      setStoryLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPosts({ showSkeleton: true });
-  }, [fetchPosts]);
+    void fetchStoryFeed();
+  }, [fetchPosts, fetchStoryFeed]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -64,19 +90,47 @@ const PlayScreen: React.FC = () => {
       if (params.refresh) {
         const shouldShowSkeleton = posts.length === 0;
         fetchPosts({ showSkeleton: shouldShowSkeleton });
+        void fetchStoryFeed();
         (navigation as any).setParams?.({ refresh: false });
       }
-    }, [route.params, fetchPosts, posts.length]),
+    }, [route.params, fetchPosts, fetchStoryFeed, posts.length]),
   );
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
-      await fetchPosts({ showSkeleton: false });
+      await Promise.all([fetchPosts({ showSkeleton: false }), fetchStoryFeed()]);
     } finally {
       setRefreshing(false);
     }
-  }, [fetchPosts]);
+  }, [fetchPosts, fetchStoryFeed]);
+
+  const handleStorySelect = React.useCallback(
+    (entry: IStoryFeedEntry) => {
+      withAuth(
+        () => {
+          if (entry.isOwn && entry.itemCount === 0) {
+            navigate('CreateNewPost');
+            return;
+          }
+          navigate('StoryViewer', { userId: entry.userId, userName: entry.userName });
+        },
+        t('play.story.loginToView'),
+      );
+    },
+    [t],
+  );
+
+  const listHeader = React.useMemo(
+    () => (
+      <PlayStoryRail
+        entries={storyFeed}
+        loading={storyLoading && storyFeed.length === 0}
+        onSelectEntry={handleStorySelect}
+      />
+    ),
+    [storyFeed, storyLoading, handleStorySelect],
+  );
 
   const renderPostItem = React.useCallback(({ item }: { item: IPost }) => {
     return (
@@ -85,9 +139,12 @@ const PlayScreen: React.FC = () => {
         onUserBlocked={() => {
           void fetchPosts({ showSkeleton: false });
         }}
+        onStoryMutated={() => {
+          void fetchStoryFeed();
+        }}
       />
     );
-  }, [fetchPosts]);
+  }, [fetchPosts, fetchStoryFeed]);
 
   const renderSkeletonList = () => {
     const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
@@ -115,26 +172,28 @@ const PlayScreen: React.FC = () => {
       <View style={styles.emptyContainer}>
         <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
         <CustomText
-          fontSize={RFValue(15)}
+          fontSize={RFValue(13)}
           fontFamily={Fonts.SemiBold}
-          style={{ color: colors.text, marginTop: 12, marginBottom: 6 }}>
+          style={[playFeedText.username, { color: colors.text, marginTop: 12, marginBottom: 6 }]}>
           No Posts Yet
         </CustomText>
         <CustomText
-          fontSize={RFValue(12)}
+          fontSize={RFValue(10)}
           fontFamily={Fonts.Regular}
-          style={{ color: colors.disabled, textAlign: 'center', paddingHorizontal: 28 }}>
+          style={[
+            playFeedText.body,
+            { color: colors.disabled, textAlign: 'center', paddingHorizontal: 28 },
+          ]}>
           Start following users to see their posts here
         </CustomText>
       </View>
     );
   };
 
-  const headerTextColor = colors.white;
   const headerIconColor = colors.white;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.secondary }]} edges={['top']}>
+    <View style={[styles.container, { backgroundColor: colors.secondary, paddingTop: headerTopInset(insets.top) }]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
       
       {/* Header */}
@@ -152,19 +211,19 @@ const PlayScreen: React.FC = () => {
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('UserSelection'))}
             activeOpacity={0.7}>
-            <Icon name="search" size={RFValue(20)} color={headerIconColor} />
+            <Icon name="search" size={RFValue(18)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('CreateNewPost'), 'Please login to share your car posts.')}
             activeOpacity={0.7}>
-            <Icon name="add" size={RFValue(20)} color={headerIconColor} />
+            <Icon name="add" size={RFValue(18)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('Chat'))}
             activeOpacity={0.7}>
-            <Icon name="chatbubble-outline" size={RFValue(20)} color={headerIconColor} />
+            <Icon name="chatbubble-outline" size={RFValue(18)} color={headerIconColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -184,6 +243,7 @@ const PlayScreen: React.FC = () => {
               posts.length === 0 && styles.emptyListContent
             ]}
             ListEmptyComponent={!loading ? renderEmptyState : null}
+            ListHeaderComponent={listHeader}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -195,7 +255,7 @@ const PlayScreen: React.FC = () => {
           />
         )}
       </View>
-    </SafeAreaView >
+    </View>
   );
 };
 
@@ -207,13 +267,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.012,
+    paddingHorizontal: screenWidth * 0.045,
+    paddingBottom: 8,
+    paddingTop: 2,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    opacity: 0.8,
+    opacity: 0.95,
   },
   motoText: {
     color: '#000000',
@@ -232,8 +293,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     overflow: 'hidden',
   },
   listContent: {

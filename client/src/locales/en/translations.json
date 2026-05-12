@@ -9,6 +9,7 @@
     "shareProfile": "Share Profile",
     "savedAddresses": "Saved Addresses",
     "savedCards": "Saved Credit / Debit & Gift Cards",
+    "paymentMethodsInfoParagraph": "Motonode checkout uses UPI or cash on delivery when the seller offers it. We do not collect or store your full card number in the app.",
     "notificationSettings": "Notification Settings",
     "privacyCenter": "Privacy Center",
     "myActivity": "MY ACTIVITY",
@@ -442,5 +443,25 @@
     "noVehiclesMessage": "You haven't added any vehicles to your wishlist yet",
     "noServices": "No Favorite Services",
     "noServicesMessage": "You haven't added any services to your wishlist yet"
+  },
+  "play": {
+    "story": {
+      "yourStory": "Your story",
+      "user": "User",
+      "loginToView": "Please login to view stories.",
+      "loginToShare": "Please login to share.",
+      "addToStatus": "Add to your status",
+      "shareExternally": "Share externally…",
+      "sharePost": "Share post",
+      "viewers": "Viewers",
+      "noViewersYet": "No viewers yet",
+      "statusAddedTitle": "Status",
+      "statusAdded": "Added to your status.",
+      "failedAdd": "Could not add to status.",
+      "noMedia": "This post has no photo or video for a status.",
+      "close": "Close",
+      "unavailable": "This story is unavailable.",
+      "videoInPost": "Video post — playback may be limited in status."
+    }
   }
 }

@@ -1,7 +1,7 @@
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {View, StyleSheet, Pressable} from 'react-native';
 import React, {FC, ReactNode} from 'react';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Fonts} from '@utils/Constants';
+import {Fonts, MIN_TOUCH_TARGET, headerTopInset} from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -43,8 +43,9 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   const styles = StyleSheet.create({
     flexRow: {
       justifyContent: 'space-between',
-      padding: 10,
-      height: 60,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      minHeight: 48,
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground),
@@ -57,15 +58,28 @@ const CustomHeader: FC<CustomHeaderProps> = ({
       color: titleColor || colors.text,
     },
     iconButton: {
-      padding: 4,
+      minWidth: MIN_TOUCH_TARGET,
+      minHeight: MIN_TOUCH_TARGET,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerBackPressable: {
+      minWidth: MIN_TOUCH_TARGET,
+      minHeight: MIN_TOUCH_TARGET,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
   });
 
   return (
-    <View style={{paddingTop: insets.top, backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground)}}>
+    <View style={{paddingTop: headerTopInset(insets.top), backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground)}}>
       <View style={styles.flexRow}>
         {showBackButton ? (
-          <Pressable 
+          <Pressable
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
+            style={styles.headerBackPressable}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
             onPress={() => {
               if (onBackPress) {
                 onBackPress();

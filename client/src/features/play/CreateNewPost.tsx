@@ -18,7 +18,7 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts} from '@utils/Constants';
+import { Fonts, headerTopInset, MIN_TOUCH_TARGET } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {uploadImagesBatch, createPost} from '@service/postService';
@@ -65,7 +65,8 @@ const CreateNewPost: React.FC = () => {
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.secondary,
+      /** Match main surface — avoids green filling gaps when the keyboard opens */
+      backgroundColor: colors.background,
     },
     contentContainer: {
       flex: 1,
@@ -411,9 +412,18 @@ const CreateNewPost: React.FC = () => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
       <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
 
-      <View style={{paddingTop: insets.top, backgroundColor: colors.secondary}}>
+      <View style={{paddingTop: headerTopInset(insets.top), backgroundColor: colors.secondary}}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={{padding: 4}}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{
+              minWidth: MIN_TOUCH_TARGET,
+              minHeight: MIN_TOUCH_TARGET,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
             <Icon name="close" size={RFValue(20)} color={colors.white} />
           </TouchableOpacity>
           <CustomText style={[styles.headerCenterTitle, {color: colors.white, fontSize: RFValue(14)}]}>Create Post</CustomText>

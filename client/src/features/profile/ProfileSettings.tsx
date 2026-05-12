@@ -1,5 +1,5 @@
 import { View, StyleSheet, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
 import { useCartStore } from '@state/cartStore';
@@ -16,18 +16,28 @@ import ActivitySection from './sections/ActivitySection';
 import FeedbackSection from './sections/FeedbackSection';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RFValue } from 'react-native-responsive-fontsize';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { withCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 
 const ProfileSettings = () => {
   const { logout, user } = useAuthStore();
   const { clearCart } = useCartStore();
   const { t } = useTranslation();
-  const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const navigation = useNavigation();
+
+  const isDealer = user?.role?.includes('dealer');
+
+  const handleSettingsBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    if (isDealer) {
+      navigation.navigate('DealerTabs' as never, { screen: 'Profile' } as never);
+    } else {
+      navigation.navigate('MainTabs' as never, { screen: 'Profile' } as never);
+    }
+  }, [navigation, isDealer]);
 
   const handleLogout = () => {
     clearCart();
@@ -42,7 +52,7 @@ const ProfileSettings = () => {
       StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: colors.secondary,
+          backgroundColor: colors.background,
         },
         contentContainer: {
           flex: 1,
@@ -79,6 +89,7 @@ const ProfileSettings = () => {
         titleColor={colors.white}
         iconColor={colors.white}
         showNotificationIcon={false}
+        onBackPress={handleSettingsBack}
       />
       
       <View style={styles.contentContainer}>

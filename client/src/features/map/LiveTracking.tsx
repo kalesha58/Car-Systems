@@ -159,7 +159,7 @@ const LiveTracking = () => {
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.secondary,
+      backgroundColor: colors.background,
     },
     scrollContent: {
       paddingBottom: 150,

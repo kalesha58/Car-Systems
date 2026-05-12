@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, headerTopInset } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
@@ -630,7 +630,7 @@ const ProductDetail: React.FC = () => {
     return (
       <View style={styles.container}>
         <CollapsibleContainer
-          style={[styles.container, { marginTop: insets.top || 0 }]}>
+          style={[styles.container, { marginTop: headerTopInset(insets.top) || 0 }]}>
           <CollapsibleHeaderContainer containerStyle={{ backgroundColor: 'transparent' }}>
             <SkeletonLoader width={screenWidth} height={screenHeight * 0.5} borderRadius={0} />
           </CollapsibleHeaderContainer>

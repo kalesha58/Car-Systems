@@ -854,7 +854,7 @@ const InventoryScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.secondary,
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,

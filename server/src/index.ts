@@ -15,6 +15,7 @@ import { initializeSocket } from './services/socket/socketService';
 import authRoutes from './routes/authRoutes';
 import vehicleRoutes from './routes/user/vehicleRoutes';
 import postRoutes from './routes/user/postRoutes';
+import storyRoutes from './routes/user/storyRoutes';
 import uploadRoutes from './routes/user/uploadRoutes';
 import dealerRoutes from './routes/dealerRoutes';
 import dealerApiRoutes from './routes/dealer';
@@ -84,6 +85,7 @@ app.get('/', (req: Request, res: Response) => {
       auth: '/api/auth',
       vehicles: '/api/vehicles',
       posts: '/api/posts',
+      stories: '/api/stories',
       upload: '/api/upload',
       dealers: '/api/dealers',
       services: '/api/services',
@@ -137,6 +139,8 @@ app.post('/api/refresh-token', refreshTokenController);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/posts', postRoutes);
 logger.info('[Routes] Post routes mounted at /api/posts');
+app.use('/api/stories', storyRoutes);
+logger.info('[Routes] Story routes mounted at /api/stories');
 app.use('/api/upload', uploadRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/dealer', dealerApiRoutes);

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
-  Image,
   Dimensions,
   TouchableOpacity,
   Modal,
@@ -13,19 +12,24 @@ import {
   FlatList,
   ScrollView,
   PanResponder,
-  GestureResponderEvent,
-  Pressable,
   Alert,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, headerTopInset } from '@utils/Constants';
+import { PLAY_UI_FONT, playFeedText } from '@utils/playTypography';
 import { screenHeight, screenWidth } from '@utils/Scaling';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImageCarousel from './ImageCarousel';
+import UserInitialAvatar from './UserInitialAvatar';
 import { IPost, IComment } from '../../types/post/IPost';
 import { useTheme } from '@hooks/useTheme';
 import { blockUser, likePost, unlikePost, addComment, likeComment, unlikeComment, reportContent } from '@service/postService';
+import { appendStoryFromPost } from '@service/storyService';
 import { SOCKET_URL } from '@service/config';
 import { io, Socket } from 'socket.io-client';
 import { formatRelativeTime } from '@utils/timeUtils';
@@ -33,15 +37,30 @@ import { useAuthStore } from '@state/authStore';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import { shareContent } from '@utils/shareUtils';
 import { withAuth } from '@utils/AuthGuard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+function captionWithoutLeadingUsername(raw: string, userName?: string | null): string {
+  const text = (raw || '').trim();
+  const name = (userName || '').trim();
+  if (!name || !text) return text;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`^@?${escaped}\\s*[:\\-–—]?\\s*`, 'i');
+  const next = text.replace(re, '').trim();
+  return next.length > 0 ? next : text;
+}
 
 interface IImagePostItemProps {
   post: IPost;
   onUserBlocked?: () => void;
+  onStoryMutated?: () => void;
 }
 
-const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) => {
+const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onStoryMutated }) => {
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const modalInsets = useSafeAreaInsets();
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
   const [isLiked, setIsLiked] = useState(post?.isLiked || false);
   const [isSaved, setIsSaved] = useState(false);
@@ -49,6 +68,8 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
   const [commentCount, setCommentCount] = useState(post?.comments?.length || 0);
   const [comments, setComments] = useState<IComment[]>(post?.comments || []);
   const [showCommentModal, setShowCommentModal] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [addStatusLoading, setAddStatusLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -56,10 +77,13 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const bigHeartScale = useRef(new Animated.Value(0)).current;
   const bigHeartOpacity = useRef(new Animated.Value(0)).current;
-  const lastTap = useRef(0);
   const modalTranslateY = useRef(new Animated.Value(0)).current;
-  const screenHeight = Dimensions.get('window').height;
-  const imageHeight = screenHeight * 0.5;
+  const isLikedRef = useRef(isLiked);
+  const handleLikeRef = useRef<() => void>(() => {});
+  const animateBigHeartRef = useRef<() => void>(() => {});
+  const windowDims = Dimensions.get('window');
+  const imageHeight = Math.min(windowDims.width * 1.04, windowDims.height * 0.46);
+  const commentAvatarSize = Math.round(screenWidth * 0.09);
 
   // Pan responder for swipe down to dismiss
   const panResponder = useRef(
@@ -227,18 +251,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
       }),
     ]).start();
   };
-
-  const handleDoubleTap = () => {
-    const now = Date.now();
-    const DOUBLE_PRESS_DELAY = 300;
-    if (now - lastTap.current < DOUBLE_PRESS_DELAY) {
-      if (!isLiked) {
-        handleLike();
-      }
-      animateBigHeart();
-    }
-    lastTap.current = now;
-  };
+  animateBigHeartRef.current = animateBigHeart;
 
   const handleLike = async () => {
     withAuth(async () => {
@@ -286,6 +299,26 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
       }
     }, 'Please login to like this post.');
   };
+  handleLikeRef.current = handleLike;
+  isLikedRef.current = isLiked;
+
+  const onImageDoubleTap = useCallback(() => {
+    if (!isLikedRef.current) {
+      handleLikeRef.current();
+    }
+    animateBigHeartRef.current();
+  }, []);
+
+  const doubleTapGesture = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(2)
+        .maxDuration(280)
+        .onEnd(() => {
+          runOnJS(onImageDoubleTap)();
+        }),
+    [onImageDoubleTap],
+  );
 
   const handleComment = async () => {
     withAuth(async () => {
@@ -384,23 +417,56 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
     }, 'Please login to reply to this comment.');
   };
 
-  const handleShare = async () => {
-    withAuth(async () => {
-      try {
-        const shareText = post?.text || 'Check out this post!';
-        const shareUrl = post?.images && post.images.length > 0
+  const handleShare = () => {
+    withAuth(() => setShareSheetVisible(true), t('play.story.loginToShare'));
+  };
+
+  const handleExternalShare = async () => {
+    setShareSheetVisible(false);
+    try {
+      const shareText = post?.text || 'Check out this post!';
+      const shareUrl =
+        post?.images && post.images.length > 0
           ? `Check out this post with ${post.images.length} image${post.images.length > 1 ? 's' : ''}!`
           : shareText;
 
-        await shareContent({
-          title: 'motonode Post',
-          message: shareUrl,
-          url: post?.id ? `motonode://post/${post.id}` : undefined,
-        });
-      } catch (error) {
-        console.error('Error sharing post:', error);
-      }
-    }, 'Please login to share this post.');
+      await shareContent({
+        title: 'motonode Post',
+        message: shareUrl,
+        url: post?.id ? `motonode://post/${post.id}` : undefined,
+      });
+    } catch (error) {
+      console.error('Error sharing post:', error);
+    }
+  };
+
+  const canAddToStatus = (post.images?.length ?? 0) > 0 || Boolean(post.video);
+
+  const handleAddToStatus = () => {
+    if (!canAddToStatus) {
+      Alert.alert(t('profile.error'), t('play.story.noMedia'));
+      return;
+    }
+    withAuth(() => {
+      void (async () => {
+        setAddStatusLoading(true);
+        try {
+          await appendStoryFromPost(post.id);
+          onStoryMutated?.();
+          setShareSheetVisible(false);
+          Alert.alert(t('play.story.statusAddedTitle'), t('play.story.statusAdded'));
+        } catch (error: any) {
+          const msg =
+            error?.response?.data?.Response?.ReturnMessage ||
+            error?.response?.data?.message ||
+            error?.message ||
+            t('play.story.failedAdd');
+          Alert.alert(t('profile.error'), msg);
+        } finally {
+          setAddStatusLoading(false);
+        }
+      })();
+    }, t('play.story.loginToShare'));
   };
 
   const handleReportPost = async () => {
@@ -453,33 +519,36 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
     return (
       <View style={[styles.commentItem, { backgroundColor: postBackground }]}>
         <View style={styles.commentLeft}>
-          <Image
-            source={
-              item.userAvatar
-                ? { uri: item.userAvatar }
-                : require('@assets/icons/bucket.png')
-            }
-            style={styles.commentAvatar}
+          <UserInitialAvatar
+            name={item.userName || ''}
+            userId={item.userId}
+            imageUri={item.userAvatar}
+            size={commentAvatarSize}
+            borderColor={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'}
+            borderWidth={StyleSheet.hairlineWidth}
+            fallbackBackgroundColor={colors.secondary}
+            initialsColor={colors.white}
+            containerStyle={{ marginRight: screenWidth * 0.03 }}
           />
           <View style={styles.commentContent}>
             <View style={styles.commentHeader}>
               <CustomText
-                fontSize={RFValue(12)}
+                fontSize={RFValue(11)}
                 fontFamily={Fonts.SemiBold}
-                style={{ color: textColor }}>
+                style={[playFeedText.username, { color: textColor }]}>
                 {userName}
               </CustomText>
               <CustomText
-                fontSize={RFValue(10)}
+                fontSize={RFValue(9)}
                 fontFamily={Fonts.Regular}
-                style={{ color: secondaryTextColor, marginLeft: 8 }}>
+                style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 8 }]}>
                 {formatRelativeTime(item.createdAt)}
               </CustomText>
             </View>
             <CustomText
-              fontSize={RFValue(12)}
+              fontSize={RFValue(11)}
               fontFamily={Fonts.Regular}
-              style={{ color: textColor, marginTop: 4, lineHeight: RFValue(18) }}>
+              style={[playFeedText.body, { color: textColor, marginTop: 4, lineHeight: RFValue(16) }]}>
               {item.text}
             </CustomText>
             <TouchableOpacity
@@ -487,9 +556,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
               activeOpacity={0.7}
               onPress={() => handleReply(item.id, userName)}>
               <CustomText
-                fontSize={RFValue(10)}
+                fontSize={RFValue(9)}
                 fontFamily={Fonts.Medium}
-                style={{ color: secondaryTextColor }}>
+                style={[playFeedText.meta, { color: secondaryTextColor }]}>
                 Reply
               </CustomText>
             </TouchableOpacity>
@@ -501,14 +570,14 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
           onPress={() => handleCommentLike(item.id)}>
           <Icon
             name={isLiked ? 'heart' : 'heart-outline'}
-            size={RFValue(16)}
+            size={RFValue(15)}
             color={isLiked ? '#ff3040' : iconColor}
           />
           {likes > 0 && (
             <CustomText
-              fontSize={RFValue(10)}
+              fontSize={RFValue(9)}
               fontFamily={Fonts.Regular}
-              style={{ color: secondaryTextColor, marginLeft: 4 }}>
+              style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 4 }]}>
               {likes}
             </CustomText>
           )}
@@ -521,15 +590,15 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
     return (
       <View style={[styles.emptyStateContainer, { backgroundColor: postBackground }]}>
         <CustomText
-          fontSize={RFValue(14)}
+          fontSize={RFValue(12)}
           fontFamily={Fonts.SemiBold}
-          style={{ color: textColor, marginBottom: 6 }}>
+          style={[playFeedText.username, { color: textColor, marginBottom: 6 }]}>
           No comments yet
         </CustomText>
         <CustomText
-          fontSize={RFValue(12)}
+          fontSize={RFValue(10)}
           fontFamily={Fonts.Regular}
-          style={{ color: secondaryTextColor }}>
+          style={[playFeedText.body, { color: secondaryTextColor }]}>
           Start the conversation.
         </CustomText>
       </View>
@@ -541,25 +610,30 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: postBackground }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: postBackground, borderBottomColor: colors.border },
+      ]}>
       {/* Post Header Section - matching reference */}
       <View style={[styles.postHeader, { backgroundColor: postBackground }]}>
         <View style={styles.headerLeft}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={
-                post?.userAvatar
-                  ? { uri: post.userAvatar }
-                  : require('@assets/icons/bucket.png')
-              }
-              style={styles.avatar}
-            />
-          </View>
+          <UserInitialAvatar
+            name={post?.userName || ''}
+            userId={post?.userId}
+            imageUri={post?.userAvatar}
+            size={40}
+            borderColor={isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'}
+            borderWidth={StyleSheet.hairlineWidth}
+            fallbackBackgroundColor={colors.secondary}
+            initialsColor={colors.white}
+            containerStyle={{ marginRight: 12 }}
+          />
           <View style={styles.userInfo}>
             <CustomText
               fontSize={RFValue(11)}
               fontFamily={Fonts.SemiBold}
-              style={{ color: textColor }}
+              style={[playFeedText.username, { color: textColor }]}
               numberOfLines={1}>
               {post?.userName || `User ${post?.userId?.substring(0, 8) || 'Unknown'}`}
             </CustomText>
@@ -572,34 +646,35 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
       </View>
 
       {/* Image/Content Section */}
-      <Pressable onPress={handleDoubleTap} style={styles.imageContainer}>
-        {post.images && post.images.length > 0 ? (
-          <ImageCarousel images={post.images} height={imageHeight} />
-        ) : (
-          <View style={[styles.placeholder, { height: imageHeight, backgroundColor: colors.backgroundSecondary }]}>
-            <Icon name="image-outline" size={RFValue(48)} color={colors.disabled} />
-            <CustomText
-              fontSize={RFValue(10)}
-              fontFamily={Fonts.Regular}
-              style={{ color: colors.disabled, marginTop: 12 }}>
-              No image available
-            </CustomText>
-          </View>
-        )}
-        
-        {/* Big Heart Overlay Animation */}
-        <Animated.View 
-          pointerEvents="none"
-          style={[
-            styles.bigHeartContainer,
-            {
-              opacity: bigHeartOpacity,
-              transform: [{ scale: bigHeartScale }]
-            }
-          ]}>
-          <Icon name="heart" size={RFValue(80)} color="#ff3040" />
-        </Animated.View>
-      </Pressable>
+      <GestureDetector gesture={doubleTapGesture}>
+        <View style={styles.imageContainer}>
+          {post.images && post.images.length > 0 ? (
+            <ImageCarousel images={post.images} width={windowDims.width} height={imageHeight} />
+          ) : (
+            <View style={[styles.placeholder, { height: imageHeight, backgroundColor: colors.backgroundSecondary }]}>
+              <Icon name="image-outline" size={RFValue(48)} color={colors.disabled} />
+              <CustomText
+                fontSize={RFValue(9)}
+                fontFamily={Fonts.Regular}
+                style={[playFeedText.meta, { color: colors.disabled, marginTop: 12 }]}>
+                No image available
+              </CustomText>
+            </View>
+          )}
+
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.bigHeartContainer,
+              {
+                opacity: bigHeartOpacity,
+                transform: [{ scale: bigHeartScale }],
+              },
+            ]}>
+            <Icon name="heart" size={RFValue(80)} color="#ff3040" />
+          </Animated.View>
+        </View>
+      </GestureDetector>
 
       {/* Engagement Section - matching reference with icons and counts */}
       <View style={[styles.engagementSection, { backgroundColor: postBackground }]}>
@@ -616,9 +691,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
               />
             </Animated.View>
             <CustomText
-              fontSize={RFValue(11)}
+              fontSize={RFValue(10)}
               fontFamily={Fonts.Regular}
-              style={{ color: textColor, marginLeft: 4 }}>
+              style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 5 }]}>
               {formatCount(likeCount)}
             </CustomText>
           </TouchableOpacity>
@@ -632,9 +707,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
             activeOpacity={0.7}>
             <Icon name="chatbubble-outline" size={RFValue(18)} color={iconColor} />
             <CustomText
-              fontSize={RFValue(11)}
+              fontSize={RFValue(10)}
               fontFamily={Fonts.Regular}
-              style={{ color: textColor, marginLeft: 4 }}>
+              style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 5 }]}>
               {formatCount(commentCount)}
             </CustomText>
           </TouchableOpacity>
@@ -648,105 +723,175 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
         </View>
       </View>
 
-      {/* Caption Section - matching reference */}
+      {/* Caption — body only; username is already in the post header */}
       {post?.text && (
         <View style={[styles.captionSection, { backgroundColor: postBackground }]}>
           <CustomText
             fontSize={RFValue(11)}
             fontFamily={Fonts.Regular}
-            style={{ color: textColor }}>
-            <CustomText
-              fontSize={RFValue(11)}
-              fontFamily={Fonts.SemiBold}
-              style={{ color: textColor }}>
-              {post?.userName || `User ${post?.userId?.substring(0, 8) || 'Unknown'}`}{' '}
-            </CustomText>
-            {post.text}
+            style={[playFeedText.body, { color: textColor, lineHeight: RFValue(16) }]}>
+            {captionWithoutLeadingUsername(post.text, post.userName)}
           </CustomText>
         </View>
       )}
 
-      {/* Comment Modal - Full Screen */}
+      {/* Share sheet */}
+      <Modal
+        visible={shareSheetVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShareSheetVisible(false)}>
+        <Pressable style={styles.shareBackdrop} onPress={() => setShareSheetVisible(false)}>
+          <Pressable
+            style={[
+              styles.shareSheet,
+              {
+                backgroundColor: colors.background,
+                paddingBottom: modalInsets.bottom + 20,
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}>
+            <CustomText
+              fontSize={RFValue(15)}
+              fontFamily={Fonts.SemiBold}
+              style={{ color: colors.text, marginBottom: 16 }}>
+              {t('play.story.sharePost')}
+            </CustomText>
+            <TouchableOpacity
+              style={[
+                styles.shareRow,
+                { borderColor: colors.border, opacity: canAddToStatus && !addStatusLoading ? 1 : 0.45 },
+              ]}
+              disabled={!canAddToStatus || addStatusLoading}
+              onPress={handleAddToStatus}
+              activeOpacity={0.75}>
+              {addStatusLoading ? (
+                <ActivityIndicator color={colors.secondary} />
+              ) : (
+                <>
+                  <Icon name="add-circle-outline" size={RFValue(22)} color={colors.secondary} />
+                  <CustomText style={[styles.shareRowText, { color: colors.text }]}>
+                    {t('play.story.addToStatus')}
+                  </CustomText>
+                </>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.shareRow, { borderColor: colors.border, marginTop: 10 }]}
+              onPress={() => {
+                void handleExternalShare();
+              }}
+              activeOpacity={0.75}>
+              <Icon name="share-outline" size={RFValue(22)} color={colors.text} />
+              <CustomText style={[styles.shareRowText, { color: colors.text }]}>
+                {t('play.story.shareExternally')}
+              </CustomText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ marginTop: 18, alignSelf: 'center', paddingVertical: 10 }}
+              onPress={() => setShareSheetVisible(false)}>
+              <CustomText style={{ color: colors.disabled, fontFamily: Fonts.Medium }}>
+                {t('profile.cancel')}
+              </CustomText>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Comment modal — full screen */}
       <Modal
         visible={showCommentModal}
-        transparent={true}
+        transparent={false}
         animationType="slide"
-        statusBarTranslucent={true}
+        statusBarTranslucent
+        {...(Platform.OS === 'ios' ? ({ presentationStyle: 'fullScreen' } as const) : {})}
         onRequestClose={() => {
           setShowCommentModal(false);
           setCommentText('');
         }}>
-        <View style={[styles.modalOverlay, { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.7)' }]}>
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalBackdrop}
-            onPress={() => {
-              setShowCommentModal(false);
-              setCommentText('');
-            }}
-          />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.modalContainer}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalKeyboardRoot}
+          keyboardVerticalOffset={0}>
+          <Animated.View
+            style={[
+              styles.modalFullscreen,
+              {
+                backgroundColor: postBackground,
+                transform: [{ translateY: modalTranslateY }],
+              },
+            ]}
+            {...panResponder.panHandlers}>
+            <View
+              style={[
+                styles.modalFullHeader,
+                {
+                  borderBottomColor: colors.border,
+                  paddingTop: headerTopInset(modalInsets.top) + 4,
+                },
+              ]}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Close comments"
+                onPress={() => {
+                  setShowCommentModal(false);
+                  setCommentText('');
+                }}
+                style={styles.modalHeaderIconSlot}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Icon name="close" size={RFValue(22)} color={textColor} />
+              </TouchableOpacity>
+              <CustomText
+                fontSize={RFValue(13)}
+                fontFamily={Fonts.SemiBold}
+                style={[playFeedText.username, { color: textColor }]}>
+                Comments
+              </CustomText>
+              <View style={styles.modalHeaderIconSlot} />
+            </View>
+
+            <View style={styles.commentListWrapper}>
+              <FlatList
+                data={comments}
+                renderItem={renderCommentItem}
+                keyExtractor={(item) => item.id}
+                ListEmptyComponent={renderEmptyState}
+                contentContainerStyle={[
+                  styles.commentListContainer,
+                  comments.length === 0 && styles.emptyListContainer,
+                ]}
+                style={styles.commentList}
+                showsVerticalScrollIndicator={false}
+              />
+            </View>
+
             <Animated.View
               style={[
-                styles.modalContent,
+                styles.inputSection,
                 {
                   backgroundColor: postBackground,
-                  transform: [{ translateY: modalTranslateY }]
-                }
-              ]}
-              {...panResponder.panHandlers}>
-              {/* Drag Handle */}
-              <View style={[styles.dragHandle, { backgroundColor: secondaryTextColor }]} />
-
-              {/* Header */}
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <View style={styles.closeButton} />
-                <CustomText
-                  fontSize={RFValue(13)}
-                  fontFamily={Fonts.SemiBold}
-                  style={{ color: textColor }}>
-                  Comments
-                </CustomText>
-                <View style={styles.menuButton} />
-              </View>
-
-              {/* Comment List */}
-              <View style={styles.commentListWrapper}>
-                <FlatList
-                  data={comments}
-                  renderItem={renderCommentItem}
-                  keyExtractor={(item) => item.id}
-                  ListEmptyComponent={renderEmptyState}
-                  contentContainerStyle={[
-                    styles.commentListContainer,
-                    comments.length === 0 && styles.emptyListContainer,
-                  ]}
-                  style={styles.commentList}
-                  showsVerticalScrollIndicator={false}
-                />
-              </View>
-
-              {/* Bottom Input Section */}
-              <Animated.View
-                style={[
-                  styles.inputSection,
-                  {
-                    backgroundColor: postBackground,
-                    borderTopColor: colors.border,
-                    transform: [{ translateY: keyboardOffsetHeight > 0 ? -keyboardOffsetHeight : 0 }]
-                  }
-                ]}>
+                  borderTopColor: colors.border,
+                  paddingBottom: Math.max(modalInsets.bottom, 10),
+                  transform: [{ translateY: keyboardOffsetHeight > 0 ? -keyboardOffsetHeight : 0 }],
+                },
+              ]}>
                 {/* User Avatar */}
-                <Image
-                  source={
-                    user?.profileImage
-                      ? { uri: user.profileImage }
-                      : require('@assets/icons/bucket.png')
+                <UserInitialAvatar
+                  name={
+                    (user?.name as string) ||
+                    (user?.userName as string) ||
+                    (user?.fullName as string) ||
+                    (typeof user?.email === 'string' ? user.email.split('@')[0] : '') ||
+                    ''
                   }
-                  style={styles.userAvatar}
+                  userId={(user?.id as string) || undefined}
+                  imageUri={(user?.profileImage as string) || null}
+                  size={commentAvatarSize}
+                  borderColor={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'}
+                  borderWidth={StyleSheet.hairlineWidth}
+                  fallbackBackgroundColor={colors.secondary}
+                  initialsColor={colors.white}
+                  containerStyle={{ marginRight: screenWidth * 0.03 }}
                 />
 
                 <View style={styles.inputWrapper}>
@@ -761,7 +906,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
                         onPress={() => handleEmojiReaction(emoji)}
                         style={styles.emojiButton}
                         activeOpacity={0.7}>
-                        <CustomText fontSize={RFValue(16)}>{emoji}</CustomText>
+                        <CustomText fontSize={RFValue(14)}>{emoji}</CustomText>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -771,9 +916,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
                     {replyingTo && (
                       <View style={[styles.replyingToIndicator, { backgroundColor: colors.backgroundSecondary }]}>
                         <CustomText
-                          fontSize={RFValue(11)}
+                          fontSize={RFValue(10)}
                           fontFamily={Fonts.Medium}
-                          style={{ color: colors.primary }}>
+                          style={[playFeedText.meta, { color: colors.primary }]}>
                           Replying to {comments.find(c => c.id === replyingTo)?.userName || 'user'}
                         </CustomText>
                         <TouchableOpacity
@@ -782,12 +927,20 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
                             setCommentText('');
                           }}
                           style={styles.cancelReplyButton}>
-                          <Icon name="close" size={RFValue(14)} color={textColor} />
+                          <Icon name="close" size={RFValue(12)} color={textColor} />
                         </TouchableOpacity>
                       </View>
                     )}
                     <TextInput
-                      style={[styles.commentInput, { color: textColor, backgroundColor: colors.backgroundSecondary, fontSize: RFValue(13) }]}
+                      style={[
+                        styles.commentInput,
+                        {
+                          color: textColor,
+                          backgroundColor: colors.backgroundSecondary,
+                          fontSize: RFValue(12),
+                          fontFamily: PLAY_UI_FONT,
+                        },
+                      ]}
                       placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                       placeholderTextColor={colors.disabled}
                       value={commentText}
@@ -805,9 +958,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
                         activeOpacity={0.7}
                         disabled={isSubmitting}>
                         {isSubmitting ? (
-                          <Icon name="hourglass-outline" size={RFValue(18)} color={colors.white} />
+                          <Icon name="hourglass-outline" size={RFValue(16)} color={colors.white} />
                         ) : (
-                          <Icon name="send" size={RFValue(18)} color={colors.white} />
+                          <Icon name="send" size={RFValue(16)} color={colors.white} />
                         )}
                       </TouchableOpacity>
                     ) : (
@@ -817,15 +970,14 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked }) =
                         }}
                         style={styles.emojiPickerButton}
                         activeOpacity={0.7}>
-                        <Icon name="happy-outline" size={RFValue(18)} color={textColor} />
+                        <Icon name="happy-outline" size={RFValue(16)} color={textColor} />
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
               </Animated.View>
-            </Animated.View>
-          </KeyboardAvoidingView>
-        </View>
+          </Animated.View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -836,6 +988,7 @@ const styles = StyleSheet.create({
     width: screenWidth,
     marginBottom: 0,
     overflow: 'hidden',
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   bigHeartContainer: {
     position: 'absolute',
@@ -851,24 +1004,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.012,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  avatarContainer: {
-    width: screenWidth * 0.08,
-    height: screenWidth * 0.08,
-    borderRadius: screenWidth * 0.08 / 2,
-    overflow: 'hidden',
-    marginRight: screenWidth * 0.025,
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
   },
   userInfo: {
     flex: 1,
@@ -886,13 +1028,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.012,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 10,
   },
   engagementLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: screenWidth * 0.03,
+    gap: 18,
   },
   engagementButton: {
     flexDirection: 'row',
@@ -911,60 +1054,29 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   captionSection: {
-    paddingHorizontal: screenWidth * 0.04,
-    paddingBottom: screenHeight * 0.015,
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    paddingBottom: 18,
   },
-  modalOverlay: {
+  modalKeyboardRoot: {
     flex: 1,
   },
-  modalContainer: {
+  modalFullscreen: {
     flex: 1,
-    justifyContent: 'flex-end',
-    position: 'relative',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  modalContent: {
     width: '100%',
-    height: screenHeight * 0.9,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    overflow: 'hidden',
   },
-  dragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 8,
-    opacity: 0.5,
-  },
-  modalHeader: {
+  modalFullHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: screenWidth * 0.04,
-    paddingVertical: screenHeight * 0.015,
-    borderBottomWidth: 1,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  closeButton: {
-    padding: 4,
-    width: 40,
-  },
-  menuButton: {
-    padding: 4,
-    width: 40,
-    alignItems: 'flex-end',
+  modalHeaderIconSlot: {
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   commentListWrapper: {
     flex: 1,
@@ -995,12 +1107,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
   },
-  commentAvatar: {
-    width: screenWidth * 0.09,
-    height: screenWidth * 0.09,
-    borderRadius: screenWidth * 0.09 / 2,
-    marginRight: screenWidth * 0.03,
-  },
   commentContent: {
     flex: 1,
     paddingRight: screenWidth * 0.02,
@@ -1027,12 +1133,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  userAvatar: {
-    width: screenWidth * 0.09,
-    height: screenWidth * 0.09,
-    borderRadius: screenWidth * 0.09 / 2,
-    marginRight: screenWidth * 0.03,
-  },
   inputWrapper: {
     flex: 1,
   },
@@ -1057,11 +1157,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    fontSize: RFValue(13),
-    fontFamily: Fonts.Regular,
+    fontSize: RFValue(12),
     maxHeight: 100,
     minHeight: 40,
-    lineHeight: RFValue(18),
+    lineHeight: RFValue(17),
   },
   emojiPickerButton: {
     padding: 4,
@@ -1073,6 +1172,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+  },
+  shareBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  shareSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
+  shareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  shareRowText: {
+    fontSize: RFValue(14),
+    fontFamily: Fonts.Medium,
+    flex: 1,
   },
 });
 

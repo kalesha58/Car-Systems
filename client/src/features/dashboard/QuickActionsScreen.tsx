@@ -177,7 +177,7 @@ const QuickActionsScreen: React.FC = () => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.secondary,
+      backgroundColor: theme.background,
     },
     contentContainer: {
       flex: 1,

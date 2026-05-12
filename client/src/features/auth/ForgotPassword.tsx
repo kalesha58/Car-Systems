@@ -15,7 +15,7 @@ import CustomText from '@components/ui/CustomText';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
 import ThemedModal from '@components/ui/ThemedModal';
-import { Colors, Fonts } from '@utils/Constants';
+import { Colors, Fonts, MIN_TOUCH_TARGET, headerTopInset } from '@utils/Constants';
 import { goBack, resetAndNavigate } from '@utils/NavigationUtils';
 import { requestPasswordReset, resetPasswordWithCode } from '@service/authService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -202,8 +202,13 @@ const ForgotPassword: FC = () => {
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.scrollContent}>
         <View style={styles.container}>
-          <View style={[styles.headerRow, { paddingTop: insets.top }]}>
-            <TouchableOpacity onPress={() => (step === 'email' ? goBack() : setStep('email'))} style={styles.backBtn}>
+          <View style={[styles.headerRow, { paddingTop: headerTopInset(insets.top) }]}>
+            <TouchableOpacity
+              onPress={() => (step === 'email' ? goBack() : setStep('email'))}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Go back">
               <Ionicons name="arrow-back" size={RFValue(18)} color="#111" />
             </TouchableOpacity>
             <View style={styles.headerTextWrap}>
@@ -381,7 +386,10 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   backBtn: {
-    padding: 8,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 8,
   },
   headerTextWrap: {

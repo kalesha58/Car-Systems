@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Image, Pressable, TouchableOpacity } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, headerTopInset } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
 import { goBack } from '@utils/NavigationUtils';
@@ -101,7 +101,7 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
       position: 'absolute',
-      top: insets.top,
+      top: headerTopInset(insets.top),
       left: 0,
       right: 0,
       zIndex: 100,
@@ -109,10 +109,10 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
     backButton: {
       marginRight: 12,
       padding: 6,
-      borderRadius: 20,
+      borderRadius: 22,
       backgroundColor: colors.backgroundSecondary,
-      width: 36,
-      height: 36,
+      width: MIN_TOUCH_TARGET,
+      height: MIN_TOUCH_TARGET,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -149,18 +149,21 @@ const AnimatedProductHeader: React.FC<IAnimatedProductHeaderProps> = ({
       gap: 12,
     },
     iconButton: {
-      width: 36,
-      height: 36,
+      width: MIN_TOUCH_TARGET,
+      height: MIN_TOUCH_TARGET,
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: 18,
+      borderRadius: MIN_TOUCH_TARGET / 2,
       backgroundColor: colors.backgroundSecondary,
     },
   });
 
   return (
     <Animated.View style={[styles.container, headerAnimatedStyle, backgroundColorAnimatedStyle]}>
-      <Pressable onPress={() => goBack()} style={styles.backButton}>
+      <Pressable
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        onPress={() => goBack()}
+        style={styles.backButton}>
         <Icon name="arrow-back" size={RFValue(20)} color={colors.text} />
       </Pressable>
       {imageUrl && (

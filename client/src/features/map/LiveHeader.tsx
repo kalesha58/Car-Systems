@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {View, StyleSheet, Pressable} from 'react-native';
 import React, {FC} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuthStore} from '@state/authStore';
@@ -6,7 +6,7 @@ import {navigate} from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import {Fonts, MIN_TOUCH_TARGET} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 
 const LiveHeader: FC<{
@@ -23,6 +23,7 @@ const LiveHeader: FC<{
     <SafeAreaView>
       <View style={styles.headerContainer}>
         <Pressable
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
           style={styles.backButton}
           onPress={() => {
             if (isCustomer) {
@@ -73,10 +74,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
     alignItems: 'center',
+    paddingHorizontal: MIN_TOUCH_TARGET + 12,
   },
   backButton: {
     position: 'absolute',
-    left: 20,
+    left: 12,
+    top: 10,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   titleTextWhite: {
     color: 'white',

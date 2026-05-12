@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Colors, Fonts } from '@utils/Constants';
+import { Colors, MIN_TOUCH_TARGET } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { goBack } from '@utils/NavigationUtils';
 import { useTheme } from '@hooks/useTheme';
@@ -47,12 +47,15 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
   const isTablet = screenWidth >= 768;
   const isDesktop = screenWidth >= 1024;
 
-  // Responsive carousel height
-  const carouselHeight = isDesktop
-    ? screenHeight * 0.6
-    : isTablet
-      ? screenHeight * 0.55
-      : screenHeight * 0.5;
+  // Width-based height with a screen cap: images use `contain`, so a very tall box
+  // (previously ~50% screen height) left large empty bands for typical wide product photos.
+  const carouselHeight = Math.round(
+    isDesktop
+      ? Math.min(screenWidth * 0.48, screenHeight * 0.42)
+      : isTablet
+        ? Math.min(screenWidth * 0.62, screenHeight * 0.4)
+        : Math.min(screenWidth * 0.88, screenHeight * 0.38),
+  );
 
   const { colors } = useTheme();
   const { scrollY } = useCollapsibleContext();
@@ -96,7 +99,7 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
     image: {
       width: screenWidth,
       height: carouselHeight,
-      resizeMode: 'cover',
+      resizeMode: 'contain',
     },
     pagination: {
       position: 'absolute',
@@ -123,8 +126,8 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
       position: 'absolute',
       top: getResponsiveValue(50, 60, 70),
       left: getResponsiveValue(16, 24, 32),
-      width: getResponsiveValue(40, 48, 52),
-      height: getResponsiveValue(40, 48, 52),
+      width: getResponsiveValue(MIN_TOUCH_TARGET, 48, 52),
+      height: getResponsiveValue(MIN_TOUCH_TARGET, 48, 52),
       borderRadius: getResponsiveValue(20, 24, 26),
       backgroundColor: colors.cardBackground,
       justifyContent: 'center',
@@ -188,7 +191,10 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
         />
         {showFloatingButtons && (
           <>
-            <Pressable onPress={() => goBack()} style={styles.backButton}>
+            <Pressable
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => goBack()}
+              style={styles.backButton}>
               <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
             </Pressable>
             <View style={styles.topRightIcons}>
@@ -217,7 +223,8 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
         scrollEventThrottle={16}
         decelerationRate="fast"
         snapToOffsets={snapOffsets}
-        snapToAlignment="start">
+        snapToAlignment="start"
+        style={{ height: carouselHeight }}>
         {images.map((imageUri, index) => (
           <Image
             key={index}
@@ -229,7 +236,10 @@ const ProductImageCarousel: React.FC<IProductImageCarouselProps> = ({
       </ScrollView>
       {showFloatingButtons && (
         <>
-          <Pressable onPress={() => goBack()} style={styles.backButton}>
+          <Pressable
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => goBack()}
+            style={styles.backButton}>
             <Icon name="arrow-back" size={RFValue(getResponsiveValue(20, 24, 28))} color={colors.text} />
           </Pressable>
           <View style={styles.topRightIcons}>

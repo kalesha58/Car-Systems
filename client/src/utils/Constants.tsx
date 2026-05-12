@@ -1,3 +1,17 @@
+import { Platform, StatusBar } from 'react-native';
+
+/** Tighter offset under status bar for app headers (full safe area often feels too tall). */
+export function headerTopInset(safeTop: number): number {
+  const base =
+    safeTop > 0
+      ? safeTop
+      : Platform.OS === 'android'
+        ? StatusBar.currentHeight ?? 0
+        : 0;
+  const relax = Platform.OS === 'ios' ? 10 : 8;
+  return Math.max(base - relax, 0);
+}
+
 export enum Colors {
     primary = '#f7ca49',
     primary_light = '#ffe141',
@@ -15,6 +29,9 @@ export enum Fonts {
     SemiBold = 'Gilroy-Medium',
     Bold = 'Gilroy-Bold',
 }
+
+/** Minimum tap area (pt) for primary header / nav controls — iPad & accessibility friendly */
+export const MIN_TOUCH_TARGET = 44;
 
 export const lightColors = [
     'rgba(255,255,255,1)',

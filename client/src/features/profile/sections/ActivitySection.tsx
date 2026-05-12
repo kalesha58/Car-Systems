@@ -1,4 +1,4 @@
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import React, { FC } from 'react';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -6,10 +6,15 @@ import CustomText from '@components/ui/CustomText';
 import ProfileMenuItem from './ProfileMenuItem';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@state/authStore';
 
 const ActivitySection: FC = () => {
   const { t } = useTranslation();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const navigation = useNavigation();
+  const { user } = useAuthStore();
+  const isDealer = user?.role?.includes('dealer');
 
   const styles = StyleSheet.create({
     container: {
@@ -40,12 +45,15 @@ const ActivitySection: FC = () => {
     {
       icon: 'create-outline',
       label: t('profile.reviews'),
-      onPress: () => { },
+      onPress: () =>
+        navigation.navigate(
+          (isDealer ? 'DealerOrdersList' : 'OrdersList') as never,
+        ),
     },
     {
       icon: 'chatbubble-ellipses-outline',
       label: t('profile.questionsAnswers'),
-      onPress: () => { },
+      onPress: () => navigation.navigate('MetAIChat' as never),
     },
   ];
 

@@ -187,7 +187,7 @@ const AccountSettingsSection: FC = () => {
     menuItems.push({
       icon: 'card-outline',
       label: t('profile.savedCards'),
-      onPress: () => { },
+      onPress: () => navigate('PaymentMethodsInfo'),
     });
   } else {
     menuItems.push({

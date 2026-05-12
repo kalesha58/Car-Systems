@@ -1,6 +1,6 @@
 import React, {useState, useRef} from 'react';
-import {View, StyleSheet, Image, Dimensions, ScrollView} from 'react-native';
-import {RFValue} from 'react-native-responsive-fontsize';
+import {View, StyleSheet, Image, Dimensions} from 'react-native';
+import {ScrollView} from 'react-native-gesture-handler';
 import {Colors} from '@utils/Constants';
 
 interface IImageCarouselProps {
@@ -50,12 +50,16 @@ const ImageCarousel: React.FC<IImageCarouselProps> = ({
         ref={scrollViewRef}
         horizontal
         pagingEnabled
+        bounces={false}
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         decelerationRate="fast"
         snapToOffsets={snapOffsets}
-        snapToAlignment="start">
+        snapToAlignment="start"
+        style={{width: carouselWidth, height: carouselHeight}}
+        contentContainerStyle={{flexGrow: 0}}>
         {images.map((imageUri, index) => (
           <Image
             key={index}

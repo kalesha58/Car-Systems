@@ -8,29 +8,28 @@ import {screenWidth} from '@utils/Scaling';
 
 const PlayPostSkeleton: FC = () => {
   const {colors} = useTheme();
-  const screenHeight = Dimensions.get('window').height;
-  const imageHeight = screenHeight * 0.5;
+  const windowDims = Dimensions.get('window');
+  const imageHeight = Math.min(windowDims.width * 1.04, windowDims.height * 0.46);
 
   const styles = StyleSheet.create({
     container: {
       width: screenWidth,
       backgroundColor: colors.background,
-      marginBottom: screenHeight * 0.018,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.01,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      gap: screenWidth * 0.03,
+      paddingHorizontal: 16,
+      paddingVertical: 11,
+      gap: 12,
     },
     avatarWrap: {
-      width: screenWidth * 0.085,
-      height: screenWidth * 0.085,
-      borderRadius: screenWidth * 0.085 / 2,
-      borderWidth: 1,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       padding: 1,
       overflow: 'hidden',
@@ -41,12 +40,12 @@ const PlayPostSkeleton: FC = () => {
       gap: 6,
     },
     nameLine: {
-      height: RFValue(12),
+      height: RFValue(10),
       width: '45%',
       borderRadius: 4,
     },
     dateLine: {
-      height: RFValue(10),
+      height: RFValue(8),
       width: '30%',
       borderRadius: 4,
     },
@@ -56,18 +55,18 @@ const PlayPostSkeleton: FC = () => {
       backgroundColor: colors.backgroundSecondary,
     },
     caption: {
-      paddingHorizontal: screenWidth * 0.04,
-      paddingTop: screenHeight * 0.01,
-      paddingBottom: screenHeight * 0.012,
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 18,
       gap: 6,
     },
     captionLine1: {
-      height: RFValue(11),
+      height: RFValue(10),
       width: '90%',
       borderRadius: 4,
     },
     captionLine2: {
-      height: RFValue(11),
+      height: RFValue(10),
       width: '70%',
       borderRadius: 4,
     },
@@ -77,7 +76,7 @@ const PlayPostSkeleton: FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatarWrap}>
-          <SkeletonLoader width="100%" height="100%" borderRadius={screenWidth * 0.085 / 2} />
+          <SkeletonLoader width="100%" height="100%" borderRadius={20} />
         </View>
         <View style={styles.userMeta}>
           <SkeletonLoader style={styles.nameLine} />

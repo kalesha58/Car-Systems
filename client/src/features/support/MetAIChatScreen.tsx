@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, MIN_TOUCH_TARGET } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
@@ -169,7 +169,12 @@ const MetAIChatScreen: React.FC = () => {
           justifyContent: 'center',
         },
         headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-        headerIconBtn: { paddingHorizontal: 8, paddingVertical: 6 },
+        headerIconBtn: {
+          minWidth: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
       }),
     [colors],
   );

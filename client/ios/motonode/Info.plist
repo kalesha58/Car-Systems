@@ -38,11 +38,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera to take profile pictures.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs access to your location even when in the background to provide location-based services.</string>
+	<string>Motonode uses your location for the same features as when you are using the app: live delivery and order maps, helping confirm delivery addresses, and optional location sharing in chat.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs access to your location even when in the background to provide location-based services.</string>
+	<string>Motonode uses your location for the same features as when you are using the app: live delivery and order maps, helping confirm delivery addresses, and optional location sharing in chat.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to your location to provide location-based services.</string>
+	<string>Motonode uses your location while you use the app to show your position on live delivery and order-tracking maps, to help drivers and customers see pickup and drop-off points, to suggest or confirm saved delivery addresses (for example by reading your current area when you add a delivery address), and to let you attach a place on the map in chat. For example, when you open live order tracking, we use your location to center the map so you can see how far your delivery is from you.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs access to save images to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

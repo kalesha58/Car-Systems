@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CustomText from './CustomText';
 import {useTheme} from '@hooks/useTheme';
-import {Fonts} from '@utils/Constants';
+import {Fonts, headerTopInset} from '@utils/Constants';
 import {IToast, ToastType} from '../../types/toast/IToast';
 
 interface IToastProps {
@@ -124,7 +124,7 @@ const Toast: React.FC<IToastProps> = ({toast, onDismiss}) => {
   const styles = StyleSheet.create({
     container: {
       position: 'absolute',
-      top: insets.top + 10,
+      top: headerTopInset(insets.top) + 8,
       left: 16,
       right: 16,
       zIndex: 9999,
