@@ -17,12 +17,13 @@ import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 
 interface IProductImageCarouselProps {
   images: string[];
-  scrollY?: Animated.SharedValue<number>;
+  scrollY?: SharedValue<number>;
   productName?: string;
   productPrice?: number;
   productId?: string;
