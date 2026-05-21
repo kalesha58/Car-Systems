@@ -1,3 +1,4 @@
+import firebase from '@react-native-firebase/app';
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import { appAxios } from './apiInterceptors';
@@ -20,8 +21,25 @@ const logPushError = (context: string, error: unknown) => {
   });
 };
 
+const warnIfFirebaseClientMisconfigured = (): void => {
+  if (!__DEV__) {
+    return;
+  }
+  try {
+    const { apiKey, appId } = firebase.app().options;
+    if (!apiKey || apiKey.includes('REPLACE') || !appId || appId.includes('REPLACE')) {
+      console.warn(
+        '[Push] Firebase client config looks invalid. Replace google-services.json / GoogleService-Info.plist — see client/firebase/README.md',
+      );
+    }
+  } catch {
+    // Native Firebase not ready yet
+  }
+};
+
 export const getFCMToken = async (): Promise<string | null> => {
   try {
+    warnIfFirebaseClientMisconfigured();
     if (Platform.OS === 'ios') {
       await messaging().registerDeviceForRemoteMessages();
     }
@@ -33,7 +51,9 @@ export const getFCMToken = async (): Promise<string | null> => {
   }
 };
 
-export const registerFCMTokenWithBackend = async (): Promise<boolean> => {
+export const registerFCMTokenWithBackend = async (options?: {
+  afterLogin?: boolean;
+}): Promise<boolean> => {
   const accessToken = tokenStorage.getString('accessToken');
   if (!accessToken) {
     return false;
@@ -51,7 +71,10 @@ export const registerFCMTokenWithBackend = async (): Promise<boolean> => {
   }
 
   try {
-    await appAxios.post('/user/fcm-token', { fcmToken });
+    await appAxios.post('/user/fcm-token', {
+      fcmToken,
+      ...(options?.afterLogin ? { afterLogin: true } : {}),
+    });
     console.log('[Push] FCM token registered with backend');
     return true;
   } catch (error) {
@@ -94,8 +117,7 @@ export const displayRemoteNotificationFromData = async (
     '';
   const imageUrl =
     remoteMessage.notification?.android?.imageUrl ||
-    remoteMessage.notification?.ios?.imageUrl ||
-    (remoteMessage.data?.imageUrl as string);
+    (remoteMessage.data?.imageUrl as string | undefined);
 
   await displayNotifeeNotification(title, body, remoteMessage.data || {}, imageUrl);
 };

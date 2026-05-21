@@ -124,7 +124,7 @@ backend/
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name (for file uploads)
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
-- `GREETING_NOTIFICATION_IMAGE_URL` - URL for greeting notification image (optional, has default fallback)
+- `GREETING_NOTIFICATION_IMAGE_URL` - HTTPS URL for login greeting push image (Motonode logo). Run `npm run upload:greeting-logo` once, then set this on Vercel.
 - `FIREBASE_SERVICE_ACCOUNT_PATH` - Path to Firebase Admin service account JSON (e.g. `motonode-admin.json` in the `server/` folder). Alternative: `FIREBASE_SERVICE_ACCOUNT_JSON` with the full JSON string.
 
 ### Razorpay (UPI / online checkout)

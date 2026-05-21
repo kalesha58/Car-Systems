@@ -58,7 +58,7 @@ export const customerLogin = async (email: string, password: string): Promise<IL
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
-      void registerFCMTokenWithBackend();
+      void registerFCMTokenWithBackend({ afterLogin: true });
       return {
         requiresPolicyAcceptance: Boolean(responseData.requiresPolicyAcceptance),
         currentTermsVersion: responseData.currentTermsVersion,

@@ -33,6 +33,9 @@ const router = Router();
  *                 type: string
  *                 description: Firebase Cloud Messaging token
  *                 example: "cXyZ123..."
+ *               afterLogin:
+ *                 type: boolean
+ *                 description: When true, sends login greeting push with Motonode logo
  *     responses:
  *       200:
  *         description: FCM token registered successfully

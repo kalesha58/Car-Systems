@@ -15,7 +15,8 @@
     "seed:vehicles": "ts-node src/scripts/seedVehicleModels.ts",
     "seed:dealer-drive": "ts-node src/scripts/seedDealerDriveData.ts",
     "seed:all-inventory": "ts-node src/scripts/seedAllInventory.ts",
-    "seed:categories": "ts-node src/scripts/seedCategories.ts"
+    "seed:categories": "ts-node src/scripts/seedCategories.ts",
+    "upload:greeting-logo": "ts-node src/scripts/uploadGreetingLogo.ts"
   },
   "keywords": [],
   "author": "",

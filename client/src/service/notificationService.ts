@@ -216,6 +216,11 @@ export const handleNotificationNavigation = async (data: Record<string, unknown>
 
   if (type === 'group_join_request' && groupId) {
     push('JoinRequests', { groupId });
+    return;
+  }
+
+  if (type === 'greeting') {
+    return;
   }
 };
 

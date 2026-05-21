@@ -7,4 +7,14 @@ Download from [Firebase Console](https://console.firebase.google.com/) → proje
 
 Example templates are in this folder. Replace placeholders before building.
 
+**Critical:** `package_name` in `google-services.json` must match `applicationId` in `android/app/build.gradle` (`com.motonode`). A file registered for `com.carconnect` causes `Please set a valid API key` on `getToken()`.
+
+Verify locally:
+
+```bash
+node scripts/verify-firebase-android-config.js
+```
+
+If push still fails after fixing the package name, register **Android app `com.motonode`** in Firebase Console and re-download `google-services.json` (do not reuse a `com.carconnect` app id).
+
 APNs: Project Settings → Cloud Messaging → upload your `.p8` key (Key ID + Team ID).

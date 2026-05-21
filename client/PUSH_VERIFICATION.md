@@ -1,6 +1,8 @@
 # Push notification E2E verification
 
-Prerequisites: replace placeholder Firebase configs with real files from [client/firebase/README.md](firebase/README.md). Server must log `Firebase Admin SDK initialized successfully`.
+Prerequisites: Firebase configs from [client/firebase/README.md](firebase/README.md). Run `npm run verify:firebase-android` in `client/`. Server must log `Firebase Admin SDK initialized successfully`.
+
+If Android shows `Please set a valid API key`, ensure `google-services.json` `package_name` is `com.motonode` (not `com.carconnect`).
 
 ## 1. Token registration
 
@@ -9,14 +11,29 @@ Prerequisites: replace placeholder Firebase configs with real files from [client
 3. Confirm `POST /api/user/fcm-token` returns 200 (server logs / network tab).
 4. Confirm MongoDB `SignUp.fcmToken` is set for the user.
 
-## 2. Test greeting (non-production only)
+## 2. Login greeting (Motonode logo)
+
+After a **successful login**, the app calls `POST /api/user/fcm-token` with `{ fcmToken, afterLogin: true }`. The server sends a welcome push with the Motonode logo (`GREETING_NOTIFICATION_IMAGE_URL` or the default Cloudinary URL from `npm run upload:greeting-logo`).
+
+1. Log in on a physical device (grant notification permission).
+2. Expect a notification titled `Welcome to motonode, {name}!` with the logo as the large / big-picture image.
+3. Cold start from Splash (session restore) does **not** send greeting (`afterLogin` omitted).
+
+Server setup (once):
 
 ```bash
-curl -X POST https://car-systems.onrender.com/api/user/test-greeting-notification \
+cd server && npm run upload:greeting-logo
+# Set GREETING_NOTIFICATION_IMAGE_URL on Vercel to the printed URL
+```
+
+### Test greeting (non-production only)
+
+```bash
+curl -X POST http://localhost:3000/api/user/test-greeting-notification \
   -H "Authorization: Bearer YOUR_JWT"
 ```
 
-Expect a push on the device.
+Expect a push on the device with the logo image.
 
 ## 3. Business notifications
 
@@ -38,6 +55,7 @@ Expect a push on the device.
 | `payment` | LiveTracking |
 | `chat` | ChatMessage |
 | `group_join_request` | JoinRequests |
+| `greeting` | No navigation (welcome only) |
 
 ## 6. Logout
 

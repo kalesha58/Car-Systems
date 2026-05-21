@@ -10,6 +10,7 @@
     "test": "jest",
     "link:fonts": "npx react-native-asset",
     "postinstall": "npx patch-package",
+    "verify:firebase-android": "node scripts/verify-firebase-android-config.js",
     "pod-install": "cd ios && cross-env RCT_NEW_ARCH_ENABLED=1 bundle exec pod install",
     "android:apk": "cd android && gradlew.bat assembleRelease && cd ..",
     "android:apk:debug": "cd android && gradlew.bat assembleDebug && cd ..",

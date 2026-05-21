@@ -33,7 +33,7 @@ export const registerFCMTokenController = async (
       return;
     }
 
-    const { fcmToken } = req.body;
+    const { fcmToken, afterLogin } = req.body;
 
     if (!fcmToken || typeof fcmToken !== 'string' || fcmToken.trim().length === 0) {
       throw new AppError('FCM token is required', 400);
@@ -53,17 +53,13 @@ export const registerFCMTokenController = async (
 
     logger.info(`FCM token registered for user: ${userId}`);
 
-    // Send greeting notification if this is the first time registering a token
-    if (isFirstTimeRegistration) {
-      try {
-        // Send asynchronously without awaiting to not block the response
-        sendGreetingNotification(userId).catch((error) => {
-          logger.error('Failed to send greeting notification after token registration:', error);
-        });
-      } catch (error) {
-        logger.error('Error sending greeting notification:', error);
-        // Don't fail token registration if notification fails
-      }
+    const shouldSendGreeting =
+      afterLogin === true || afterLogin === 'true' || isFirstTimeRegistration;
+
+    if (shouldSendGreeting) {
+      sendGreetingNotification(userId).catch((error) => {
+        logger.error('Failed to send greeting notification after token registration:', error);
+      });
     }
 
     res.status(200).json({

@@ -1,4 +1,5 @@
 import { getMessaging } from '../config/firebase';
+import { DEFAULT_GREETING_IMAGE_URL } from '../config/greetingNotification';
 import { SignUp } from '../models/SignUp';
 import { Notification, INotificationDocument, NotificationType } from '../models/Notification';
 import { logger } from '../utils/logger';
@@ -143,18 +144,30 @@ export const sendPushNotificationToUsers = async (
  */
 export const sendGreetingNotification = async (userId: string): Promise<void> => {
   try {
-    const imageUrl = process.env.GREETING_NOTIFICATION_IMAGE_URL || 
-      'https://res.cloudinary.com/dzguxkrky/image/upload/v1765692021/All-Vehicles_oiikhd.jpg';
-    
+    const user = await SignUp.findById(userId).select('name fcmToken').lean();
+    if (!user?.fcmToken) {
+      logger.warn(`Skipping greeting notification — no FCM token for user: ${userId}`);
+      return;
+    }
+
+    const imageUrl = DEFAULT_GREETING_IMAGE_URL;
+    const displayName = user.name?.trim() || 'there';
+    const title = `Welcome to motonode, ${displayName}!`;
+    const body =
+      'Explore vehicles, services, and connect with dealers near you.';
+
     await sendPushNotification(userId, {
-      title: 'Welcome to motonode!',
-      body: 'Explore vehicles, services, and connect with dealers near you.',
+      title,
+      body,
       imageUrl,
       data: {
         type: 'greeting',
+        imageUrl,
+        title,
+        body,
       },
     });
-    
+
     logger.info(`Greeting notification sent to user: ${userId}`);
   } catch (error) {
     logger.error('Error sending greeting notification:', error);
