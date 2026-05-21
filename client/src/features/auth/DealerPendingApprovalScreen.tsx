@@ -7,8 +7,8 @@ import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { resetAndNavigate } from '@utils/NavigationUtils';
-import { useAuthStore } from '@state/authStore';
 import { tokenStorage } from '@state/storage';
+import { logoutSession } from '@service/authService';
 import {
   fetchDealerMeOnboarding,
   resolveDealerOnboardingDestination,
@@ -16,7 +16,6 @@ import {
 
 const DealerPendingApprovalScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -34,8 +33,8 @@ const DealerPendingApprovalScreen: React.FC = () => {
     }
   }, []);
 
-  const handleSignOut = () => {
-    logout();
+  const handleSignOut = async () => {
+    await logoutSession();
     tokenStorage.clearAll();
     resetAndNavigate('CustomerLogin');
   };

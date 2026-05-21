@@ -15,9 +15,12 @@ If Android shows `Please set a valid API key`, ensure `google-services.json` `pa
 
 After a **successful login**, the app calls `POST /api/user/fcm-token` with `{ fcmToken, afterLogin: true }`. The server sends a welcome push with the Motonode logo (`GREETING_NOTIFICATION_IMAGE_URL` or the default Cloudinary URL from `npm run upload:greeting-logo`).
 
-1. Log in on a physical device (grant notification permission).
-2. Expect a notification titled `Welcome to motonode, {name}!` with the logo as the large / big-picture image.
-3. Cold start from Splash (session restore) does **not** send greeting (`afterLogin` omitted).
+1. Log in on a physical device — **allow notifications** when prompted.
+2. Expect a notification titled `Welcome to motonode, {name}!` with the Motonode logo.
+3. If the server cannot reach Firebase (`greetingSent: false`), the app shows the same welcome notification locally.
+4. Cold start from Splash (session restore) does **not** send greeting (`afterLogin` omitted).
+
+**Production server:** `FIREBASE_SERVICE_ACCOUNT_JSON` must be set on Render/Vercel or pushes never leave the API.
 
 Server setup (once):
 

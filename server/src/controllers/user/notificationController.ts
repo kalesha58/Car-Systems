@@ -56,16 +56,16 @@ export const registerFCMTokenController = async (
     const shouldSendGreeting =
       afterLogin === true || afterLogin === 'true' || isFirstTimeRegistration;
 
+    let greetingSent = false;
     if (shouldSendGreeting) {
-      sendGreetingNotification(userId).catch((error) => {
-        logger.error('Failed to send greeting notification after token registration:', error);
-      });
+      greetingSent = await sendGreetingNotification(userId, fcmToken.trim());
     }
 
     res.status(200).json({
       success: true,
       Response: {
         ReturnMessage: 'FCM token registered successfully',
+        greetingSent,
       },
     });
   } catch (error: any) {

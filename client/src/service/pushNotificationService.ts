@@ -3,6 +3,8 @@ import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messag
 import { Platform } from 'react-native';
 import { appAxios } from './apiInterceptors';
 import { tokenStorage } from '@state/storage';
+import { useAuthStore } from '@state/authStore';
+import { GREETING_NOTIFICATION_IMAGE_URL } from './greetingNotificationConfig';
 import {
   displayNotifeeNotification,
   requestNotificationPermission,
@@ -51,6 +53,24 @@ export const getFCMToken = async (): Promise<string | null> => {
   }
 };
 
+export const displayLocalWelcomeNotification = async (): Promise<void> => {
+  const user = useAuthStore.getState().user;
+  const displayName =
+    (typeof user?.name === 'string' && user.name.trim()) ||
+    (typeof user?.fullName === 'string' && user.fullName.trim()) ||
+    'there';
+  const title = `Welcome to motonode, ${displayName}!`;
+  const body =
+    'Explore vehicles, services, and connect with dealers near you.';
+
+  await displayNotifeeNotification(
+    title,
+    body,
+    { type: 'greeting', imageUrl: GREETING_NOTIFICATION_IMAGE_URL, title, body },
+    GREETING_NOTIFICATION_IMAGE_URL,
+  );
+};
+
 export const registerFCMTokenWithBackend = async (options?: {
   afterLogin?: boolean;
 }): Promise<boolean> => {
@@ -62,25 +82,47 @@ export const registerFCMTokenWithBackend = async (options?: {
   const hasPermission = await requestNotificationPermission();
   if (!hasPermission) {
     console.warn('[Push] Notification permission not granted');
+    if (options?.afterLogin) {
+      console.warn('[Push] Enable notifications in Settings to receive welcome alerts.');
+    }
     return false;
   }
 
   const fcmToken = await getFCMToken();
   if (!fcmToken) {
+    console.warn('[Push] Could not obtain FCM device token');
     return false;
   }
 
   try {
-    await appAxios.post('/user/fcm-token', {
+    const response = await appAxios.post('/user/fcm-token', {
       fcmToken,
       ...(options?.afterLogin ? { afterLogin: true } : {}),
     });
-    console.log('[Push] FCM token registered with backend');
+    const greetingSent = Boolean(response.data?.Response?.greetingSent);
+    console.log('[Push] FCM token registered with backend', { greetingSent });
+
+    if (options?.afterLogin && !greetingSent) {
+      tokenStorage.set('lastGreetingShownAt', String(Date.now()));
+      await displayLocalWelcomeNotification();
+    }
     return true;
   } catch (error) {
     logPushError('registerFCMTokenWithBackend', error);
+    if (options?.afterLogin) {
+      try {
+        await displayLocalWelcomeNotification();
+      } catch (localError) {
+        logPushError('displayLocalWelcomeNotification', localError);
+      }
+    }
     return false;
   }
+};
+
+const isUnauthorizedAxiosError = (error: unknown): boolean => {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  return status === 401 || status === 403;
 };
 
 export const clearFCMTokenOnBackend = async (): Promise<void> => {
@@ -91,6 +133,9 @@ export const clearFCMTokenOnBackend = async (): Promise<void> => {
   try {
     await appAxios.delete('/user/fcm-token');
   } catch (error) {
+    if (isUnauthorizedAxiosError(error)) {
+      return;
+    }
     logPushError('clearFCMTokenOnBackend', error);
   }
 };
@@ -136,6 +181,13 @@ export const setupForegroundPushHandler = (): void => {
     return;
   }
   foregroundUnsubscribe = messaging().onMessage(async remoteMessage => {
+    if (remoteMessage.data?.type === 'greeting') {
+      const lastShown = tokenStorage.getString('lastGreetingShownAt');
+      if (lastShown && Date.now() - Number(lastShown) < 8000) {
+        return;
+      }
+      tokenStorage.set('lastGreetingShownAt', String(Date.now()));
+    }
     await displayRemoteNotificationFromData(remoteMessage);
   });
 };

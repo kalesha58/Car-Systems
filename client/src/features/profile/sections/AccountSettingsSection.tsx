@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@state/themeStore';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
+import { logoutSession } from '@service/authService';
 import { getBusinessRegistrationByUserId, updateStoreStatus, IBusinessRegistration } from '@service/dealerService';
 import { useToast } from '@hooks/useToast';
 import { deleteAccount } from '@service/profileService';
@@ -20,7 +21,7 @@ const AccountSettingsSection: FC = () => {
   const { t } = useTranslation();
   const { themeMode, toggleTheme } = useThemeStore();
   const { colors, isDark } = useTheme();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { clearCart } = useCartStore();
   const { showSuccess, showError } = useToast();
   const isDealer = user?.role?.includes('dealer');
@@ -102,7 +103,7 @@ const AccountSettingsSection: FC = () => {
       await deleteAccount();
 
       clearCart();
-      logout();
+      await logoutSession();
       tokenStorage.clearAll();
       storage.clearAll();
       clearBusinessRegistrationDraft(currentUserId);
@@ -118,7 +119,7 @@ const AccountSettingsSection: FC = () => {
     } finally {
       setIsDeletingAccount(false);
     }
-  }, [isDeletingAccount, user?.id, clearCart, logout, showSuccess, showError, t]);
+  }, [isDeletingAccount, user?.id, clearCart, showSuccess, showError, t]);
 
   const handleDeleteAccountPress = useCallback(() => {
     Alert.alert(

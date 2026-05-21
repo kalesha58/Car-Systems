@@ -4,10 +4,19 @@ import { tokenStorage, clearBusinessRegistrationDraft } from '@state/storage';
 import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
-import { registerFCMTokenWithBackend } from './pushNotificationService';
+import {
+  registerFCMTokenWithBackend,
+  unregisterPushNotifications,
+} from './pushNotificationService';
 
 export const CURRENT_TERMS_VERSION = '2026-05';
 export const CURRENT_PRIVACY_VERSION = '2026-05';
+
+/** Clears FCM on the server (while JWT is valid), then clears auth store state. */
+export const logoutSession = async (): Promise<void> => {
+  await unregisterPushNotifications();
+  useAuthStore.getState().logout();
+};
 
 export interface ILoginResult {
     requiresPolicyAcceptance?: boolean;
@@ -58,7 +67,7 @@ export const customerLogin = async (email: string, password: string): Promise<IL
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
-      void registerFCMTokenWithBackend({ afterLogin: true });
+      await registerFCMTokenWithBackend({ afterLogin: true });
       return {
         requiresPolicyAcceptance: Boolean(responseData.requiresPolicyAcceptance),
         currentTermsVersion: responseData.currentTermsVersion,

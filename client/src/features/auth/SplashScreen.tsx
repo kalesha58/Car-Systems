@@ -23,12 +23,12 @@ interface DecodedToken {
   exp: number;
 }
 
-const navigateToLogin = () => {
+const navigateToLogin = async () => {
   const currentUser = useAuthStore.getState().user;
   clearBusinessRegistrationDraft(currentUser?.id);
-  void unregisterPushNotifications();
-  tokenStorage.clearAll();
+  await unregisterPushNotifications();
   useAuthStore.getState().logout();
+  tokenStorage.clearAll();
   resetAndNavigate('CustomerLogin');
 };
 

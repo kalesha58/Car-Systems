@@ -7,6 +7,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { storage, tokenStorage } from '@state/storage';
+import { logoutSession } from '@service/authService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
 import LanguageSection from './sections/LanguageSection';
@@ -19,7 +20,7 @@ import { useTheme } from '@hooks/useTheme';
 import { withCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 
 const ProfileSettings = () => {
-  const { logout, user } = useAuthStore();
+  const { user } = useAuthStore();
   const { clearCart } = useCartStore();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -39,10 +40,10 @@ const ProfileSettings = () => {
     }
   }, [navigation, isDealer]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearCart();
-    logout();
-    tokenStorage.clearAll(); // after logout so FCM clear API still has JWT
+    await logoutSession();
+    tokenStorage.clearAll();
     storage.clearAll();
     resetAndNavigate('CustomerLogin');
   };

@@ -141,22 +141,27 @@ export const sendPushNotificationToUsers = async (
 
 /**
  * Send greeting notification after login
+ * @returns true if FCM accepted the message
  */
-export const sendGreetingNotification = async (userId: string): Promise<void> => {
+export const sendGreetingNotification = async (
+  userId: string,
+  fcmToken?: string,
+): Promise<boolean> => {
   try {
     const user = await SignUp.findById(userId).select('name fcmToken').lean();
-    if (!user?.fcmToken) {
+    const token = fcmToken?.trim() || user?.fcmToken;
+    if (!token) {
       logger.warn(`Skipping greeting notification — no FCM token for user: ${userId}`);
-      return;
+      return false;
     }
 
     const imageUrl = DEFAULT_GREETING_IMAGE_URL;
-    const displayName = user.name?.trim() || 'there';
+    const displayName = user?.name?.trim() || 'there';
     const title = `Welcome to motonode, ${displayName}!`;
     const body =
       'Explore vehicles, services, and connect with dealers near you.';
 
-    await sendPushNotification(userId, {
+    const sent = await sendPushNotificationToToken(token, {
       title,
       body,
       imageUrl,
@@ -168,10 +173,15 @@ export const sendGreetingNotification = async (userId: string): Promise<void> =>
       },
     });
 
-    logger.info(`Greeting notification sent to user: ${userId}`);
+    if (sent) {
+      logger.info(`Greeting notification sent to user: ${userId}`);
+    } else {
+      logger.warn(`Greeting notification not delivered for user: ${userId}`);
+    }
+    return sent;
   } catch (error) {
     logger.error('Error sending greeting notification:', error);
-    // Don't throw - greeting notification failure shouldn't affect login
+    return false;
   }
 };
 
