@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIRequiresFullScreen</key>
-	<true/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -24,8 +22,26 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>motonode</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>phonepe</string>
+		<string>tez</string>
+		<string>paytmmp</string>
+		<string>bhim</string>
+		<string>amazonpay</string>
+		<string>credpay</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -65,12 +81,18 @@
 		<string>Gilroy-Medium.ttf</string>
 		<string>Gilroy-Regular.ttf</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -79,23 +101,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>phonepe</string>
-		<string>tez</string>
-		<string>paytmmp</string>
-		<string>bhim</string>
-		<string>amazonpay</string>
-		<string>credpay</string>
-	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>motonode</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>

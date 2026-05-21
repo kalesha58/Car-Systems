@@ -1,6 +1,11 @@
 import { appAxios } from './apiInterceptors';
 import { Platform } from 'react-native';
-import { IPostsResponse, IPostResponse, ICreatePostRequest } from '../types/post/IPost';
+import {
+  IPostsResponse,
+  IPostResponse,
+  ICreatePostRequest,
+  IUpdatePostRequest,
+} from '../types/post/IPost';
 import { IUploadImageInput, IUploadImagesResponse } from '../types/upload/IUpload';
 
 export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
@@ -552,6 +557,22 @@ export const createPost = async (
   } catch (error) {
     throw error;
   }
+};
+
+export const updatePost = async (
+  postId: string,
+  postData: IUpdatePostRequest,
+): Promise<IPostResponse> => {
+  try {
+    const response = await appAxios.put<IPostResponse>(`/posts/${postId}`, postData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deletePost = async (postId: string): Promise<void> => {
+  await appAxios.delete(`/posts/${postId}`);
 };
 
 /**

@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Switch,
   Platform,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -35,7 +36,7 @@ import {uploadImagesBatch} from '@service/postService';
 import {getDropdownOptions} from '@service/dropdownService';
 import {IProduct} from '../../types/product/IProduct';
 
-const MAX_IMAGES = 2;
+const MAX_IMAGES = 8;
 
 interface RouteParams {
   product?: IProduct;
@@ -56,6 +57,7 @@ const AddEditProductScreen: React.FC = () => {
   const [name, setName] = useState(product?.name || '');
   const [brand, setBrand] = useState(product?.brand || '');
   const [price, setPrice] = useState(product?.price?.toString() || '');
+  const [originalPrice, setOriginalPrice] = useState(product?.originalPrice?.toString() || '');
   const [stock, setStock] = useState(product?.stock?.toString() || '');
   const [category, setCategory] = useState(product?.category || '');
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | ''>(
@@ -63,6 +65,8 @@ const AddEditProductScreen: React.FC = () => {
   );
   const [description, setDescription] = useState(product?.description || '');
   const [returnPolicy, setReturnPolicy] = useState('');
+  const [deliveryTimeMinutes, setDeliveryTimeMinutes] = useState(product?.deliveryTimeMinutes?.toString() || '');
+  const [isSparePart, setIsSparePart] = useState(product?.isSparePart || false);
   const [imageUris, setImageUris] = useState<string[]>(product?.images || []);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -201,18 +205,29 @@ const AddEditProductScreen: React.FC = () => {
 
     try {
       const uploadedImageUrls = await uploadImages();
+      
+      let computedDiscount: number | undefined = undefined;
+      const parsedPrice = parseFloat(price);
+      const parsedOriginal = originalPrice ? parseFloat(originalPrice) : undefined;
+      if (parsedOriginal && parsedOriginal > parsedPrice) {
+        computedDiscount = Math.round(((parsedOriginal - parsedPrice) / parsedOriginal) * 100);
+      }
 
       if (isEditMode && product) {
         const updateData: IUpdateDealerProductRequest = {
           name: name.trim(),
           brand: brand.trim(),
-          price: parseFloat(price),
+          price: parsedPrice,
+          originalPrice: parsedOriginal,
+          discountPercentage: computedDiscount,
           stock: parseInt(stock),
           images: uploadedImageUrls,
           category,
           vehicleType: vehicleType || undefined,
           description: description.trim() || undefined,
           returnPolicy: returnPolicy.trim() || undefined,
+          deliveryTimeMinutes: deliveryTimeMinutes ? parseInt(deliveryTimeMinutes) : undefined,
+          isSparePart,
         };
 
         await updateDealerProduct(product.id, updateData);
@@ -221,13 +236,17 @@ const AddEditProductScreen: React.FC = () => {
         const createData: ICreateDealerProductRequest = {
           name: name.trim(),
           brand: brand.trim(),
-          price: parseFloat(price),
+          price: parsedPrice,
+          originalPrice: parsedOriginal,
+          discountPercentage: computedDiscount,
           stock: parseInt(stock),
           images: uploadedImageUrls,
           category,
           vehicleType: vehicleType || undefined,
           description: description.trim() || undefined,
           returnPolicy: returnPolicy.trim() || undefined,
+          deliveryTimeMinutes: deliveryTimeMinutes ? parseInt(deliveryTimeMinutes) : undefined,
+          isSparePart,
         };
 
         await createDealerProduct(createData);
@@ -442,9 +461,9 @@ const AddEditProductScreen: React.FC = () => {
     },
     imagesContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: screenWidth * 0.03,
       marginTop: screenHeight * 0.012,
+      paddingVertical: 4,
     },
     imageWrapper: {
       position: 'relative',
@@ -610,7 +629,22 @@ const AddEditProductScreen: React.FC = () => {
           <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>
-                {t('dealer.price')} <CustomText style={styles.required}>*</CustomText>
+                Original Price (₹)
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. 1500"
+                  placeholderTextColor={colors.disabled}
+                  value={originalPrice}
+                  onChangeText={setOriginalPrice}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                Sale Price (₹) <CustomText style={styles.required}>*</CustomText>
               </CustomText>
               <View style={styles.textInputContainer}>
                 <TextInput
@@ -623,6 +657,9 @@ const AddEditProductScreen: React.FC = () => {
                 />
               </View>
             </View>
+          </View>
+
+          <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>
                 {t('dealer.stock')} <CustomText style={styles.required}>*</CustomText>
@@ -634,6 +671,21 @@ const AddEditProductScreen: React.FC = () => {
                   placeholderTextColor={colors.disabled}
                   value={stock}
                   onChangeText={setStock}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.halfField}>
+              <CustomText style={styles.label}>
+                Delivery Time (Mins)
+              </CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. 60"
+                  placeholderTextColor={colors.disabled}
+                  value={deliveryTimeMinutes}
+                  onChangeText={setDeliveryTimeMinutes}
                   keyboardType="numeric"
                 />
               </View>
@@ -690,6 +742,20 @@ const AddEditProductScreen: React.FC = () => {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <View style={[styles.textInputContainer, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, minHeight: 48 }]}>
+              <CustomText style={[styles.label, { marginBottom: 0, fontSize: RFValue(11), color: colors.text }]}>
+                Is this a Spare Part?
+              </CustomText>
+              <Switch
+                value={isSparePart}
+                onValueChange={setIsSparePart}
+                trackColor={{ false: colors.disabled, true: colors.secondary + '80' }}
+                thumbColor={isSparePart ? colors.secondary : colors.disabled}
+              />
+            </View>
+          </View>
+
           <View style={[styles.section, {marginBottom: 0}]}>
             <CustomText style={styles.label}>
               {t('dealer.images')} <CustomText style={styles.required}>*</CustomText>
@@ -701,7 +767,7 @@ const AddEditProductScreen: React.FC = () => {
               </CustomText>
             </TouchableOpacity>
             {imageUris.length > 0 && (
-              <View style={styles.imagesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesContainer}>
                 {imageUris.map((uri, index) => (
                   <View key={index} style={styles.imageWrapper}>
                     <Image source={{uri}} style={styles.image} />
@@ -712,7 +778,7 @@ const AddEditProductScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>

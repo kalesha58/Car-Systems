@@ -16,7 +16,7 @@ The screenshots reveal **two layers of problems**:
 
 **Why it happened (likely causes, in order of likelihood):**
 
-1. **App category was set to "Finance"** (or left blank, causing Google to infer it from app features like Cashfree payment SDK). The Publishing overview screenshot shows "App category: Select app category (Auto & Vehicles app)" — meaning it was either set to Finance or never set at all. Google's classifier may have auto-detected the Cashfree SDK and flagged it as a financial app.
+1. **App category was set to "Finance"** (or left blank, causing Google to infer it from payment SDK features). The Publishing overview screenshot shows "App category: Select app category (Auto & Vehicles app)" — meaning it was either set to Finance or never set at all. Google's classifier may have auto-detected the Cashfree SDK and flagged it as a financial app.
 
 2. **Financial features declaration** — When setting up App content, if you (or auto-fill) declared that the app offers "financial products and services" (because it accepts payments), Google requires an Organization account. Accepting payments for goods/services (e-commerce) is **not the same as financial services** (banking, loans, investments, crypto), but if the declaration was made incorrectly, it triggers the requirement.
 
@@ -70,7 +70,7 @@ This is the most likely root cause.
    - **Does your app offer stock trading or investment funds?** → No
    - **Does your app offer cryptocurrency wallets or exchanges?** → No
    - **Does your app process payments?** → Yes (but this is e-commerce, not financial services)
-4. The key distinction: Cashfree is a **payment gateway for goods/services** (like Razorpay, Stripe). It is **not** a financial product. Do NOT declare the app as offering "financial products and services".
+4. The key distinction: Razorpay is a **payment gateway for goods/services** (like Stripe). It is **not** a financial product. Do NOT declare the app as offering "financial products and services".
 5. If you see a "Financial features" form with a direct question about financial services, answer it to reflect an automotive marketplace that accepts payments — not a financial institution.
 6. Save all declarations.
 
@@ -166,7 +166,7 @@ Go to **App content** → **Data safety** and fill in:
 - User IDs: Collected (internal user ID), required.
 
 **Financial info:**
-- Payment info: Collected via payment provider (Cashfree). Not handled directly by app; processed by payment provider. Mark as: collected by a third-party service provider.
+- Payment info: Collected via payment provider (Razorpay). Not handled directly by app; processed by payment provider. Mark as: collected by a third-party service provider.
 - Purchase history: Collected, required, for order history and app functionality.
 
 **Location:**
@@ -188,7 +188,7 @@ Go to **App content** → **Data safety** and fill in:
 
 #### Data sharing
 - Location (precise) is shared with other users during delivery or live location features — declare this.
-- Payment data is processed by Cashfree (third-party payment provider) — declare this.
+- Payment data is processed by Razorpay (third-party payment provider) — declare this.
 
 #### Security practices
 - Data is encrypted in transit: Yes (HTTPS/TLS, `usesCleartextTraffic="false"` in AndroidManifest).

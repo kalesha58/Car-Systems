@@ -31,34 +31,32 @@ export const initializeFirebase = (): void => {
         throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format');
       }
     } else {
-      // Option 2: Try loading from file path
-      const serviceAccountPath = path.join(
-        __dirname,
-        'motonode-d7ed1-firebase-adminsdk-fbsvc-f5e6115b0b.json',
+      // Option 2: Path from env (e.g. FIREBASE_SERVICE_ACCOUNT_PATH=motonode-admin.json)
+      const envPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+      const candidatePaths: string[] = [];
+
+      if (envPath) {
+        candidatePaths.push(
+          path.isAbsolute(envPath) ? envPath : path.join(process.cwd(), envPath),
+        );
+      }
+
+      candidatePaths.push(
+        path.join(process.cwd(), 'motonode-admin.json'),
+        path.join(__dirname, 'motonode-admin.json'),
       );
 
-      // Check if file exists in dist directory
-      if (!fs.existsSync(serviceAccountPath)) {
-        // Try alternative path (source directory)
-        const altPath = path.join(
-          process.cwd(),
-          'server',
-          'src',
-          'config',
-          'motonode-d7ed1-firebase-adminsdk-fbsvc-f5e6115b0b.json',
-        );
-        
-        if (fs.existsSync(altPath)) {
-          credential = admin.credential.cert(altPath);
-          logger.info('Firebase credentials loaded from alternative path');
-        } else {
-          logger.warn(`Firebase service account file not found at ${serviceAccountPath} or ${altPath}`);
-          logger.warn('Server will continue without Firebase. Push notifications will not be available.');
-          return; // Don't throw, allow server to continue
-        }
+      const resolvedPath = candidatePaths.find((p) => fs.existsSync(p));
+
+      if (resolvedPath) {
+        credential = admin.credential.cert(resolvedPath);
+        logger.info(`Firebase credentials loaded from ${resolvedPath}`);
       } else {
-        credential = admin.credential.cert(serviceAccountPath);
-        logger.info('Firebase credentials loaded from file');
+        logger.warn(
+          `Firebase service account file not found. Set FIREBASE_SERVICE_ACCOUNT_PATH or place motonode-admin.json in the server directory. Tried: ${candidatePaths.join(', ')}`,
+        );
+        logger.warn('Server will continue without Firebase. Push notifications will not be available.');
+        return;
       }
     }
 

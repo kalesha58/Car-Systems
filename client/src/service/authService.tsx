@@ -4,6 +4,7 @@ import { tokenStorage, clearBusinessRegistrationDraft } from '@state/storage';
 import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
+import { registerFCMTokenWithBackend } from './pushNotificationService';
 
 export const CURRENT_TERMS_VERSION = '2026-05';
 export const CURRENT_PRIVACY_VERSION = '2026-05';
@@ -57,6 +58,7 @@ export const customerLogin = async (email: string, password: string): Promise<IL
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
+      void registerFCMTokenWithBackend();
       return {
         requiresPolicyAcceptance: Boolean(responseData.requiresPolicyAcceptance),
         currentTermsVersion: responseData.currentTermsVersion,

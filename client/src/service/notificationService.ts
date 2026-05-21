@@ -2,6 +2,9 @@ import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-nat
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
 import { tokenStorage } from '@state/storage';
+import { navigate, push } from '@utils/NavigationUtils';
+import { getOrderById } from './orderService';
+import { useAuthStore } from '@state/authStore';
 
 /**
  * Create Notifee notification channel for Android
@@ -160,20 +163,8 @@ export const initializeNotifications = async (): Promise<void> => {
 
     // Setup Notifee event handlers
     notifee.onForegroundEvent(async ({ type, detail }: Event) => {
-      if (type === EventType.PRESS) {
-        console.log('Notification pressed (foreground):', detail.notification);
-        if (detail.notification?.data) {
-          handleNotificationNavigation(detail.notification.data);
-        }
-      }
-    });
-
-    notifee.onBackgroundEvent(async ({ type, detail }: Event) => {
-      if (type === EventType.PRESS) {
-        console.log('Notification pressed (background):', detail.notification);
-        if (detail.notification?.data) {
-          handleNotificationNavigation(detail.notification.data);
-        }
+      if (type === EventType.PRESS && detail.notification?.data) {
+        await handleNotificationNavigation(detail.notification.data);
       }
     });
 
@@ -182,7 +173,7 @@ export const initializeNotifications = async (): Promise<void> => {
     if (initialNotification) {
       console.log('App opened from notification:', initialNotification);
       if (initialNotification.notification.data) {
-        handleNotificationNavigation(initialNotification.notification.data);
+        await handleNotificationNavigation(initialNotification.notification.data);
       }
     }
 
@@ -193,32 +184,38 @@ export const initializeNotifications = async (): Promise<void> => {
 };
 
 /**
- * Handle navigation based on notification data
+ * Handle navigation based on notification data (FCM / Notifee tap)
  */
-const handleNotificationNavigation = (data: any) => {
-  if (!data) return;
+export const handleNotificationNavigation = async (data: Record<string, unknown> | undefined) => {
+  if (!data?.type) {
+    return;
+  }
 
-  // Import navigation dynamically to avoid circular dependencies
-  // Navigation will be handled by the app's navigation system
-  // For now, we'll use a navigation service or event emitter pattern
+  const type = String(data.type);
+  const orderId = data.orderId ? String(data.orderId) : undefined;
+  const chatId = data.chatId ? String(data.chatId) : undefined;
+  const groupId = data.groupId ? String(data.groupId) : undefined;
 
-  // Handle different notification types
-  if (data.type === 'order_update' && data.orderId) {
-    // Navigate to order details (LiveTracking screen)
-    console.log('Navigate to order:', data.orderId);
-    // You can emit an event here that the Navigation component listens to
-    // Or use a navigation service
-  } else if (data.type === 'payment' && data.orderId) {
-    // Navigate to payment/order status
-    console.log('Navigate to payment for order:', data.orderId);
-  } else if (data.type === 'chat' && data.chatId) {
-    // Navigate to chat (ChatMessage screen)
-    console.log('Navigate to chat:', data.chatId);
-  } else if (data.type === 'group_join_request' && data.groupId) {
-    // Navigate to join requests screen for the group
-    console.log('Navigate to join requests for group:', data.groupId);
-    // You can emit an event here to navigate to JoinRequestsScreen with groupId
+  if ((type === 'order_update' || type === 'payment') && orderId) {
+    try {
+      const order = await getOrderById(orderId);
+      if (order) {
+        useAuthStore.getState().setCurrentOrder(order);
+      }
+      navigate('LiveTracking');
+    } catch (error) {
+      console.error('[Push] Failed to open order from notification:', error);
+    }
+    return;
+  }
 
+  if (type === 'chat' && chatId) {
+    push('ChatMessage', { chatId });
+    return;
+  }
+
+  if (type === 'group_join_request' && groupId) {
+    push('JoinRequests', { groupId });
   }
 };
 

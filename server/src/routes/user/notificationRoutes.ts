@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   registerFCMTokenController,
+  clearFCMTokenController,
   testGreetingNotificationController,
   getNotificationsController,
   markNotificationAsReadController,
@@ -55,6 +56,22 @@ const router = Router();
  *         description: Unauthorized
  */
 router.post('/fcm-token', authMiddleware, registerFCMTokenController);
+
+/**
+ * @swagger
+ * /api/user/fcm-token:
+ *   delete:
+ *     summary: Clear FCM token (logout)
+ *     tags: [User Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: FCM token cleared successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.delete('/fcm-token', authMiddleware, clearFCMTokenController);
 
 /**
  * @swagger

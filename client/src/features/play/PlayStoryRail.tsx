@@ -16,6 +16,7 @@ import { playFeedText } from '@utils/playTypography';
 import UserInitialAvatar from './UserInitialAvatar';
 import { IStoryFeedEntry } from '../../types/story/IStory';
 import { useTheme } from '@hooks/useTheme';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const RING = 76;
 const INNER = 70;
@@ -32,14 +33,36 @@ const PlayStoryRail: React.FC<PlayStoryRailProps> = ({ entries, loading, onSelec
   const { t } = useTranslation();
 
   const renderItem: ListRenderItem<IStoryFeedEntry> = ({ item }) => {
-    const showRing = item.isOwn || (item.itemCount > 0 && item.hasUnseen);
-    const ringColors = showRing
+    const ownEmpty = item.isOwn && item.itemCount === 0;
+    const showGradientRing = item.isOwn ? item.itemCount > 0 : item.itemCount > 0 && item.hasUnseen;
+    const ringColors = showGradientRing
       ? [colors.secondary, '#FF6B6B', '#FFD93D', colors.secondary]
       : [isDark ? '#444' : '#ccc', isDark ? '#555' : '#ddd'];
 
     const label = item.isOwn
-      ? t('play.story.yourStory')
+      ? ownEmpty
+        ? t('play.story.addStatusLabel')
+        : t('play.story.yourStory')
       : (item.userName || '').split(' ')[0] || t('play.story.user');
+
+    const avatarBlock = (
+      <View style={styles.avatarStack}>
+        <UserInitialAvatar
+          name={item.userName || ''}
+          userId={item.userId}
+          imageUri={item.userAvatar}
+          size={AVATAR}
+          borderWidth={0}
+          fallbackBackgroundColor={colors.secondary}
+          initialsColor={colors.white}
+        />
+        {ownEmpty ? (
+          <View style={[styles.addBadge, { backgroundColor: colors.secondary, borderColor: colors.background }]}>
+            <Icon name="add" size={RFValue(14)} color={colors.white} />
+          </View>
+        ) : null}
+      </View>
+    );
 
     return (
       <TouchableOpacity
@@ -48,32 +71,51 @@ const PlayStoryRail: React.FC<PlayStoryRailProps> = ({ entries, loading, onSelec
         onPress={() => onSelectEntry(item)}
         accessibilityRole="button"
         accessibilityLabel={label}>
-        <LinearGradient
-          colors={ringColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.ringOuter, { width: RING, height: RING, borderRadius: RING / 2 }]}>
+        {ownEmpty ? (
           <View
             style={[
-              styles.ringInner,
+              styles.dashedRing,
               {
-                width: INNER,
-                height: INNER,
-                borderRadius: INNER / 2,
+                width: RING,
+                height: RING,
+                borderRadius: RING / 2,
+                borderColor: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.28)',
                 backgroundColor: colors.background,
               },
             ]}>
-            <UserInitialAvatar
-              name={item.userName || ''}
-              userId={item.userId}
-              imageUri={item.userAvatar}
-              size={AVATAR}
-              borderWidth={0}
-              fallbackBackgroundColor={colors.secondary}
-              initialsColor={colors.white}
-            />
+            <View
+              style={[
+                styles.ringInner,
+                {
+                  width: INNER,
+                  height: INNER,
+                  borderRadius: INNER / 2,
+                  backgroundColor: colors.background,
+                },
+              ]}>
+              {avatarBlock}
+            </View>
           </View>
-        </LinearGradient>
+        ) : (
+          <LinearGradient
+            colors={ringColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.ringOuter, { width: RING, height: RING, borderRadius: RING / 2 }]}>
+            <View
+              style={[
+                styles.ringInner,
+                {
+                  width: INNER,
+                  height: INNER,
+                  borderRadius: INNER / 2,
+                  backgroundColor: colors.background,
+                },
+              ]}>
+              {avatarBlock}
+            </View>
+          </LinearGradient>
+        )}
         <CustomText
           numberOfLines={1}
           fontSize={RFValue(9)}
@@ -105,7 +147,7 @@ const PlayStoryRail: React.FC<PlayStoryRailProps> = ({ entries, loading, onSelec
       <FlatList
         horizontal
         data={entries}
-        keyExtractor={(item) => `${item.isOwn ? 'own' : 'u'}-${item.userId}`}
+        keyExtractor={(entry) => `${entry.isOwn ? 'own' : 'u'}-${entry.userId}`}
         renderItem={renderItem}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -122,7 +164,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 12,
     paddingTop: 10,
-    gap: 4,
   },
   cell: {
     alignItems: 'center',
@@ -132,10 +173,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dashedRing: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+  },
   ringInner: {
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    overflow: 'visible',
+  },
+  avatarStack: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBadge: {
+    position: 'absolute',
+    right: -4,
+    bottom: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
   },
   loaderRow: {
     paddingVertical: 16,

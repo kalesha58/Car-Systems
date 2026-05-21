@@ -34,6 +34,7 @@ import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useRecentSearchesStore} from '@state/recentSearchesStore';
 import {useCompareStore} from '@state/compareStore';
+import {useAuthStore} from '@state/authStore';
 import {startVoiceSearch, isVoiceSearchAvailable} from '@utils/voiceSearch';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
@@ -115,7 +116,10 @@ const ProductCategories = () => {
           dropdownData.categories?.map(cat => ({
             _id: cat.value,
             name: cat.label,
-            image: null,
+            image:
+              cat.imageUrl && typeof cat.imageUrl === 'string' && cat.imageUrl.trim() !== ''
+                ? cat.imageUrl
+                : null,
             type: 'products' as CategoryType,
           })) || [];
 

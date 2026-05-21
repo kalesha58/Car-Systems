@@ -5,6 +5,7 @@ export interface IStoryItem {
   type: StoryMediaType;
   mediaUrl: string;
   caption?: string;
+  tags?: string[];
   sourcePostId?: string;
   createdAt: string;
 }
@@ -40,6 +41,7 @@ export interface IStoryDetailResponse {
 
 export interface IAppendStoryFromPostBody {
   caption?: string;
+  tags?: string[];
 }
 
 export interface IRecordStoryViewBody {

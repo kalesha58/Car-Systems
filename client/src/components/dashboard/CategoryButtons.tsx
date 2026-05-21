@@ -23,7 +23,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'car-service',
       label: 'Car Service',
-      imageSource: require('@assets/services/car_service.png'),
+      imageSource: require('@assets/services/car_service_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
@@ -32,7 +32,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'bike-service',
       label: 'Bike Service',
-      imageSource: require('@assets/services/bike_service.jpg'),
+      imageSource: require('@assets/services/bike_service_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
@@ -41,7 +41,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'vehicle-wash',
       label: 'Vehicle Wash',
-      imageSource: require('@assets/services/car_wash.jpg'),
+      imageSource: require('@assets/services/car_wash_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
@@ -50,7 +50,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'tire-service',
       label: 'Tire Service',
-      imageSource: require('@assets/services/tier_service.jpg'),
+      imageSource: require('@assets/services/tire_service_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
@@ -59,7 +59,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'ppf-detailing',
       label: 'PPF & Detailing',
-      imageSource: require('@assets/services/ppf_detailing.png'),
+      imageSource: require('@assets/services/ppf_detailing_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',
@@ -68,7 +68,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'spare-parts',
       label: 'Spare Parts',
-      imageSource: require('@assets/services/spare_parts.png'),
+      imageSource: require('@assets/services/spare_parts_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'products',
@@ -77,7 +77,7 @@ const CategoryButtons: FC = () => {
     {
       id: 'battery-service',
       label: 'Battery',
-      imageSource: require('@assets/services/batery_sevices.jpg'),
+      imageSource: require('@assets/services/battery_service_new.png'),
       backgroundColor: colors.cardBackground || '#FFFFFF',
       textColor: colors.text || '#000000',
       categoryType: 'services',

@@ -33,6 +33,7 @@ import OrderSuccess from '@features/order/OrderSuccess';
 import ProductDetail from '@features/product/ProductDetail';
 import CreateNewPost from '@features/play/CreateNewPost';
 import StoryViewerScreen from '@features/play/StoryViewerScreen';
+import StatusComposeScreen from '@features/play/StatusComposeScreen';
 import LiveTracking from '@features/map/LiveTracking';
 import OrdersList from '@features/order/OrdersList';
 import DealerOrdersList from '@features/order/DealerOrdersList';
@@ -711,6 +712,14 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="StoryViewer"
             component={StoryViewerScreen}
+            options={{
+              headerShown: false,
+              animation: 'fade',
+            }}
+          />
+          <Stack.Screen
+            name="StatusCompose"
+            component={StatusComposeScreen}
             options={{
               headerShown: false,
               animation: 'fade',

@@ -97,7 +97,7 @@ These notes are for the Apple Review team to help them test your app. Provide th
 *   **Marketplace**: A platform for buying/selling vehicles and automotive parts.
 *   **Service Booking**: Users can book workshop appointments (oil changes, car washes, etc.).
 *   **Social Connectivity**: In-app chat and groups for automotive enthusiasts.
-*   **Payments**: Secure e-commerce payments handled via Cashfree SDK. This is a standard e-commerce implementation, not a financial service.
+*   **Payments**: Secure e-commerce payments handled via Razorpay. This is a standard e-commerce implementation, not a financial service.
 
 ### Contact Information
 *   **Name**: kalesha Baig

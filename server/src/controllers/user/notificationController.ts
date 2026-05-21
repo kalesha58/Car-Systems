@@ -93,6 +93,47 @@ export const registerFCMTokenController = async (
 };
 
 /**
+ * Clear FCM token on logout
+ */
+export const clearFCMTokenController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    await SignUp.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
+    logger.info(`FCM token cleared for user: ${userId}`);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'FCM token cleared successfully',
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error clearing FCM token:', error);
+    res.status(500).json({
+      success: false,
+      Response: {
+        ReturnMessage: 'Failed to clear FCM token',
+      },
+    });
+  }
+};
+
+/**
  * Test greeting notification controller
  */
 export const testGreetingNotificationController = async (
@@ -101,6 +142,16 @@ export const testGreetingNotificationController = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      res.status(404).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Not found',
+        },
+      });
+      return;
+    }
+
     const userId = req.user?.userId;
 
     if (!userId) {

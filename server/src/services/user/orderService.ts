@@ -13,11 +13,16 @@ import { emitToOrderRoom } from '../socket/socketService';
 import { sendPushNotification, createNotification } from '../notificationService';
 
 export interface IPaymentAction {
-  type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
+  type: 'RAZORPAY_CHECKOUT' | 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
   paymentIntentId: string;
-  paymentSessionId?: string;
+  keyId?: string;
   amount: number;
   currency: string;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
   deeplink?: string;
   qrCode?: string;
   expiresAt?: string;
@@ -357,25 +362,29 @@ export const createUserOrder = async (
           data.dealerId,
         );
 
-        // Create payment action for frontend
+        const { getRazorpayKeyId } = await import('../../config/razorpay');
+
         paymentAction = {
-          type: 'UPI_INTENT',
-          paymentIntentId: paymentIntent.order_id, // Cashfree order_id
-          paymentSessionId: paymentIntent.payment_session_id, // Cashfree payment_session_id
+          type: 'RAZORPAY_CHECKOUT',
+          paymentIntentId: paymentIntent.order_id,
+          keyId: getRazorpayKeyId(),
           amount: paymentIntent.amount,
           currency: paymentIntent.currency || 'INR',
           expiresAt: updatedOrder.expiresAt?.toISOString(),
+          prefill: {
+            name: user.name,
+            email: user.email,
+            contact: user.phone,
+          },
         };
 
-        // Reload order from database to get latest state
         const refreshedOrder = await Order.findById(orderId);
         if (refreshedOrder) {
           Object.assign(order, refreshedOrder.toObject());
         }
 
         logger.info(`UPI payment intent created for order: ${order.orderNumber}`, {
-          cashfreeOrderId: paymentIntent.order_id,
-          paymentSessionId: paymentIntent.payment_session_id,
+          razorpayOrderId: paymentIntent.order_id,
         });
       } else if (data.paymentMethod === 'cash_on_delivery') {
         // Process COD order - add COD charge

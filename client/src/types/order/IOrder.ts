@@ -35,10 +35,16 @@ export interface ILocation {
 }
 
 export interface IPaymentAction {
-  type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
+  type: 'RAZORPAY_CHECKOUT' | 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
   paymentIntentId: string;
+  keyId?: string;
   amount: number;
   currency: string;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
   deeplink?: string;
   qrCode?: string;
   expiresAt?: string;

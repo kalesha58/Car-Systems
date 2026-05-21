@@ -1,26 +1,40 @@
-import { View, Text, StyleSheet, Image } from 'react-native'
-import React, { FC, useMemo } from 'react'
-import { imageData } from '@utils/dummyData'
-import AutoScroll from '@homielab/react-native-auto-scroll'
-import { screenWidth } from '@utils/Scaling'
-import { useTheme } from '@hooks/useTheme'
+import { View, StyleSheet, Image, type ImageSourcePropType } from 'react-native';
+import React, { FC, useMemo } from 'react';
+import AutoScroll from '@homielab/react-native-auto-scroll';
+import { screenWidth } from '@utils/Scaling';
+import { useTheme } from '@hooks/useTheme';
+
+const LOGIN_SLIDER_IMAGES: ImageSourcePropType[] = [
+  require('../../assets/category/1.png'),
+  require('../../assets/category/2.png'),
+  require('../../assets/category/3.png'),
+  require('../../assets/category/4.png'),
+  require('../../assets/category/5.png'),
+  require('../../assets/category/6.png'),
+  require('../../assets/category/7.png'),
+  require('../../assets/category/8.png'),
+  require('../../assets/category/9.png'),
+  require('../../assets/category/10.png'),
+  require('../../assets/category/11.png'),
+  require('../../assets/category/12.png'),
+];
 
 const ProductSlider = () => {
   const { colors } = useTheme();
 
-  const rows= useMemo(()=>{
-    const result=[]
-    for(let i=0; i < imageData.length; i+=4){
-        result.push(imageData.slice(i,i+4))
+  const rows = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < LOGIN_SLIDER_IMAGES.length; i += 4) {
+      result.push(LOGIN_SLIDER_IMAGES.slice(i, i + 4));
     }
-    return result
-  },[])
+    return result;
+  }, []);
 
   return (
     <View pointerEvents='none'>
         <AutoScroll duration={10000} endPaddingWidth={0} style={styles.autoScroll} >
             <View style={styles.gridContainer}>
-                    {rows?.map((row:any,rowIndex:number)=>{
+                    {rows?.map((row, rowIndex: number) => {
                         return(
                             <MemoizedRow key={rowIndex} row={row} rowIndex={rowIndex} backgroundColor={colors.backgroundSecondary} />
                         )
@@ -31,7 +45,11 @@ const ProductSlider = () => {
   )
 }
 
-const Row:FC<{row:typeof imageData; rowIndex:number; backgroundColor: string}>=({row,rowIndex, backgroundColor})=>{
+const Row: FC<{
+  row: ImageSourcePropType[];
+  rowIndex: number;
+  backgroundColor: string;
+}> = ({ row, rowIndex, backgroundColor }) => {
     return(
         <View style={styles.row}>
             {row?.map((image,imageIndex)=>{

@@ -5,6 +5,13 @@ export interface IDropdownOption {
   value: string;
 }
 
+/** Category from Mongo; optional fields power Store home tiles. */
+export interface IDropdownCategoryOption extends IDropdownOption {
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
+}
+
 export interface IDropdownResponse {
   vehicleTypes: IDropdownOption[];
   brands: IDropdownOption[];
@@ -14,7 +21,7 @@ export interface IDropdownResponse {
   transmission: IDropdownOption[];
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
-  categories: IDropdownOption[];
+  categories: IDropdownCategoryOption[];
 }
 
 export interface IDropdownApiResponse {

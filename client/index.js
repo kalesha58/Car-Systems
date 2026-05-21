@@ -3,11 +3,12 @@
  */
 
 import { AppRegistry, Platform } from 'react-native';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
+import { displayRemoteNotificationFromData } from './src/service/pushNotificationService';
 
-// Create notification channel for Android (must be called early, before handler registration)
 const createNotificationChannel = async () => {
   if (Platform.OS === 'android') {
     try {
@@ -28,7 +29,17 @@ const createNotificationChannel = async () => {
   return 'motonode_notifications';
 };
 
-// Initialize channel immediately
 createNotificationChannel();
+
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  await displayRemoteNotificationFromData(remoteMessage);
+});
+
+notifee.onBackgroundEvent(async ({ type, detail }) => {
+  if (type === EventType.PRESS && detail.notification?.data) {
+    const { handleNotificationNavigation } = require('./src/service/notificationService');
+    await handleNotificationNavigation(detail.notification.data);
+  }
+});
 
 AppRegistry.registerComponent(appName, () => App);

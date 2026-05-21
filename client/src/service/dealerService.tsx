@@ -464,6 +464,10 @@ export interface ICreateDealerProductRequest {
   specifications?: Record<string, any>;
   returnPolicy?: string;
   tags?: string[];
+  originalPrice?: number;
+  discountPercentage?: number;
+  isSparePart?: boolean;
+  deliveryTimeMinutes?: number;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -479,6 +483,10 @@ export interface IUpdateDealerProductRequest {
   returnPolicy?: string;
   tags?: string[];
   status?: string;
+  originalPrice?: number;
+  discountPercentage?: number;
+  isSparePart?: boolean;
+  deliveryTimeMinutes?: number;
 }
 
 export interface IDealerProductResponse {
@@ -624,6 +632,9 @@ export interface ICreateDealerServiceRequest {
   vehicleModel?: string;
   vehicleBrand?: string;
   serviceSubCategory?: string;
+  servicePackage?: 'premium' | 'basic';
+  slotDurationMinutes?: number;
+  slotBookingEnabled?: boolean;
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -645,6 +656,9 @@ export interface IUpdateDealerServiceRequest {
   vehicleModel?: string;
   vehicleBrand?: string;
   serviceSubCategory?: string;
+  servicePackage?: 'premium' | 'basic';
+  slotDurationMinutes?: number;
+  slotBookingEnabled?: boolean;
 }
 
 export interface IDealerServiceResponse {

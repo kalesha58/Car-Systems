@@ -16,6 +16,9 @@ const categoryToICategory = async (categoryDoc: ICategoryDocument): Promise<ICat
     status: categoryDoc.status,
     products: productCount,
     createdAt: categoryDoc.createdAt?.toISOString() || new Date().toISOString(),
+    imageUrl: categoryDoc.imageUrl,
+    sortOrder: categoryDoc.sortOrder,
+    tileGroup: categoryDoc.tileGroup,
   };
 };
 
@@ -37,7 +40,7 @@ export const getCategories = async (query: IGetCategoriesRequest): Promise<ICate
       filter.status = query.status;
     }
 
-    const categories = await Category.find(filter).sort({ name: 1 });
+    const categories = await Category.find(filter).sort({ sortOrder: 1, name: 1 });
 
     return await Promise.all(categories.map(categoryToICategory));
   } catch (error) {
@@ -77,8 +80,11 @@ export const createCategory = async (data: ICreateCategoryRequest): Promise<ICat
 
     const category = new Category({
       name: data.name,
-      description: data.description,  
+      description: data.description,
       status: data.status || 'active',
+      imageUrl: data.imageUrl,
+      sortOrder: data.sortOrder ?? 0,
+      tileGroup: data.tileGroup,
     });
 
     await category.save();
@@ -117,6 +123,11 @@ export const updateCategory = async (categoryId: string, data: IUpdateCategoryRe
     }
     if (data.description !== undefined) category.description = data.description;
     if (data.status !== undefined) category.status = data.status as any;
+    if (data.imageUrl !== undefined) category.imageUrl = data.imageUrl;
+    if (data.sortOrder !== undefined) category.sortOrder = data.sortOrder;
+    if (data.tileGroup !== undefined) {
+      category.tileGroup = data.tileGroup === null ? undefined : data.tileGroup;
+    }
 
     await category.save();
 

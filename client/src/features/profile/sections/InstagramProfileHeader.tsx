@@ -2,7 +2,6 @@ import {
   View,
   StyleSheet,
   Image,
-  TouchableOpacity,
 } from 'react-native';
 import React, { FC } from 'react';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -11,43 +10,30 @@ import CustomText from '@components/ui/CustomText';
 import { useAuthStore } from '@state/authStore';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
-import { navigate } from '@utils/NavigationUtils';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { shouldHidePhone, maskPhone } from '@utils/privacyUtils';
+import type { IUserStats } from '@service/profileService';
 
 interface InstagramProfileHeaderProps {
-  isDealer?: boolean;
+  stats?: IUserStats;
 }
 
 const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
-  isDealer = false,
+  stats,
 }) => {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
-  const isGuest = user?.isGuest;
+
+  const posts = stats?.postsCount ?? 0;
+  const vehicles = stats?.vehiclesCount ?? 0;
+  const orders = stats?.ordersCount ?? 0;
 
   const getInitialLetter = (): string => {
     if (user?.name) {
       return user.name.charAt(0).toUpperCase();
     }
     return 'U';
-  };
-
-  const handleEditProfile = () => {
-    if (isGuest) {
-      navigate('CustomerLogin');
-    } else {
-      navigate('EditProfile');
-    }
-  };
-
-  const handleShareProfile = () => {
-    if (isGuest) {
-      navigate('CustomerLogin');
-    } else {
-      console.log('Share profile');
-    }
   };
 
   const styles = StyleSheet.create({
@@ -59,14 +45,14 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     },
     topSection: {
       flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 16,
+      alignItems: 'flex-start',
+      marginBottom: 14,
       gap: 16,
     },
     profileImageContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 40,
+      width: 86,
+      height: 86,
+      borderRadius: 43,
       padding: 2,
       backgroundColor: isDark ? colors.border : '#F0F0F0',
       shadowColor: colors.black,
@@ -78,7 +64,7 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     profileImageInner: {
       width: '100%',
       height: '100%',
-      borderRadius: 38,
+      borderRadius: 41,
       borderWidth: 2,
       borderColor: colors.background,
       overflow: 'hidden',
@@ -90,7 +76,7 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     placeholderContainer: {
       width: '100%',
       height: '100%',
-      borderRadius: 38,
+      borderRadius: 41,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: colors.cardBackground,
@@ -102,58 +88,44 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 2,
     },
-    infoSection: {
+    statsBlock: {
       flex: 1,
-      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingTop: 4,
     },
-    userName: {
-      fontSize: RFValue(18),
+    statCell: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statNumber: {
+      fontSize: RFValue(17),
       fontFamily: Fonts.Bold,
       color: colors.text,
-      marginBottom: 4,
+    },
+    statLabel: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.Medium,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    userName: {
+      fontSize: RFValue(17),
+      fontFamily: Fonts.Bold,
+      color: colors.text,
+      marginBottom: 6,
     },
     bioItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 2,
+      marginBottom: 4,
       gap: 6,
     },
     bioText: {
-      fontSize: RFValue(11),
+      fontSize: RFValue(12),
       fontFamily: Fonts.Medium,
       color: colors.textSecondary,
-    },
-    actionButtons: {
-      flexDirection: 'row',
-      marginTop: 8,
-      gap: 10,
-    },
-    primaryButton: {
-      flex: 1,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.secondary,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    primaryButtonText: {
-      fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
-      color: colors.white,
-    },
-    secondaryButton: {
-      flex: 1,
-      height: 36,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    secondaryButtonText: {
-      fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
-      color: colors.text,
     },
   });
 
@@ -178,41 +150,43 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
           </View>
         </View>
 
-        <View style={styles.infoSection}>
-          <CustomText style={styles.userName}>{user?.name || 'User'}</CustomText>
-          {user?.phone && !shouldHidePhone() && (
-            <View style={styles.bioItem}>
-              <Icon name="call-outline" size={RFValue(12)} color={colors.textSecondary} />
-              <CustomText style={styles.bioText}>{maskPhone(user.phone)}</CustomText>
-            </View>
-          )}
-          {user?.email && (
-            <View style={styles.bioItem}>
-              <Icon name="mail-outline" size={RFValue(12)} color={colors.textSecondary} />
-              <CustomText style={styles.bioText} numberOfLines={1}>{user.email}</CustomText>
-            </View>
-          )}
+        <View style={styles.statsBlock}>
+          <View style={styles.statCell}>
+            <CustomText style={styles.statNumber}>{posts}</CustomText>
+            <CustomText style={styles.statLabel} numberOfLines={1}>
+              {t('profile.statPosts')}
+            </CustomText>
+          </View>
+          <View style={styles.statCell}>
+            <CustomText style={styles.statNumber}>{vehicles}</CustomText>
+            <CustomText style={styles.statLabel} numberOfLines={1}>
+              {t('profile.statVehicles')}
+            </CustomText>
+          </View>
+          <View style={styles.statCell}>
+            <CustomText style={styles.statNumber}>{orders}</CustomText>
+            <CustomText style={styles.statLabel} numberOfLines={1}>
+              {t('profile.statOrders')}
+            </CustomText>
+          </View>
         </View>
       </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handleEditProfile}
-          activeOpacity={0.8}>
-          <CustomText style={styles.primaryButtonText}>
-            {isGuest ? 'Login / Signup' : t('profile.editProfile')}
+      <CustomText style={styles.userName}>{user?.name || 'User'}</CustomText>
+      {user?.phone && !shouldHidePhone() && (
+        <View style={styles.bioItem}>
+          <Icon name="call-outline" size={RFValue(14)} color={colors.textSecondary} />
+          <CustomText style={styles.bioText}>{maskPhone(user.phone)}</CustomText>
+        </View>
+      )}
+      {user?.email && (
+        <View style={styles.bioItem}>
+          <Icon name="mail-outline" size={RFValue(14)} color={colors.textSecondary} />
+          <CustomText style={styles.bioText} numberOfLines={1}>
+            {user.email}
           </CustomText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={handleShareProfile}
-          activeOpacity={0.7}>
-          <CustomText style={styles.secondaryButtonText}>
-            {isGuest ? 'Join Community' : t('profile.shareProfile')}
-          </CustomText>
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
     </View>
   );
 };

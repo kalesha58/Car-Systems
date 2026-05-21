@@ -42,7 +42,7 @@ const ProfileSettings = () => {
   const handleLogout = () => {
     clearCart();
     logout();
-    tokenStorage.clearAll();
+    tokenStorage.clearAll(); // after logout so FCM clear API still has JWT
     storage.clearAll();
     resetAndNavigate('CustomerLogin');
   };

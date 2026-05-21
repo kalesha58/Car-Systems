@@ -2,9 +2,11 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   RefreshControl,
   StatusBar,
+  Platform,
 } from 'react-native';
 import React, {useState, useEffect, useMemo} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -154,12 +156,29 @@ const InstagramProfile: React.FC = () => {
     }
   };
 
+  const refreshPostsAndStats = React.useCallback(async () => {
+    if (isGuest || isDealer || !user?.id) {
+      return;
+    }
+    try {
+      const [statsData, postsData] = await Promise.all([getUserStats(), getPosts(user.id)]);
+      if (statsData) {
+        setStats(statsData);
+      }
+      if (postsData?.success && postsData?.Response) {
+        setPosts(postsData.Response);
+      }
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+    }
+  }, [isGuest, isDealer, user?.id]);
+
   const fetchVehicles = async () => {
     if (isGuest) {
       setVehicles([
         {
           id: 'dummy_v1',
-          make: 'Tesla',
+          brand: 'Tesla',
           model: 'Model S',
           year: 2023,
           color: 'Midnight Silver',
@@ -210,7 +229,9 @@ const InstagramProfile: React.FC = () => {
   // Refresh vehicles when screen comes into focus (e.g., after adding a vehicle)
   useFocusEffect(
     React.useCallback(() => {
-      if (isGuest) return;
+      if (isGuest) {
+        return;
+      }
       if (activeTab === 'vehicles' && user?.id) {
         // Force refresh vehicles when screen is focused
         const refreshVehicles = async () => {
@@ -231,7 +252,10 @@ const InstagramProfile: React.FC = () => {
       if (activeTab === 'businessInfo' && isDealer && user?.id) {
         fetchBusinessRegistration();
       }
-    }, [activeTab, user?.id, isDealer, isGuest]),
+      if (activeTab === 'posts' && user?.id && !isDealer) {
+        void refreshPostsAndStats();
+      }
+    }, [activeTab, user?.id, isDealer, isGuest, refreshPostsAndStats]),
   );
 
   const handleRefresh = async () => {
@@ -318,32 +342,33 @@ const InstagramProfile: React.FC = () => {
         },
         gridNav: {
           flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingVertical: 14,
+          alignItems: 'stretch',
           backgroundColor: colors.background,
-          gap: 16,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         },
-        gridNavIcon: {
+        gridNavTab: {
           flex: 1,
+        },
+        gridNavTabInner: {
           alignItems: 'center',
-          paddingVertical: 10,
-          borderRadius: 12,
-          marginHorizontal: 12,
-        },
-        gridNavIconActive: {
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-        },
-        gridNavIconInactive: {
-          opacity: 0.4,
+          justifyContent: 'center',
+          paddingVertical: 12,
+          position: 'relative',
+          minHeight: 48,
         },
         tabIndicator: {
           position: 'absolute',
           bottom: 0,
-          width: '40%',
-          height: 3,
+          alignSelf: 'center',
+          width: 52,
+          height: 2,
+          borderRadius: 1,
           backgroundColor: colors.secondary,
-          borderRadius: 3,
+        },
+        gridNavIconInactive: {
+          opacity: 0.42,
         },
         floatingButton: {
           position: 'absolute',
@@ -366,8 +391,11 @@ const InstagramProfile: React.FC = () => {
           zIndex: 1000,
         },
       }),
-    [colors, isDark, insets.top],
+    [colors, insets.top],
   );
+
+  const tabRipple =
+    Platform.OS === 'android' ? { color: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' } : undefined;
 
   return (
     <View style={styles.container}>
@@ -407,59 +435,57 @@ const InstagramProfile: React.FC = () => {
         }>
         {/* Profile Header with Stats */}
         {user && (
-          <InstagramProfileHeader
-            isDealer={isDealer}
-          />
+          <InstagramProfileHeader stats={stats} />
         )}
 
         {/* Grid Navigation */}
         {user && (
           <View style={styles.gridNav}>
             {isDealer ? (
-              <TouchableOpacity
-                style={[
-                  styles.gridNavIcon,
-                  activeTab === 'businessInfo' && styles.gridNavIconActive,
-                ]}
+              <Pressable
+                style={styles.gridNavTab}
                 onPress={() => setActiveTab('businessInfo')}
-                activeOpacity={0.7}>
-                <Icon 
-                  name={activeTab === 'businessInfo' ? "business" : "business-outline"} 
-                  size={RFValue(22)} 
-                  color={activeTab === 'businessInfo' ? colors.secondary : colors.text} 
-                />
-                {activeTab === 'businessInfo' && <View style={styles.tabIndicator} />}
-              </TouchableOpacity>
+                android_ripple={tabRipple}>
+                <View style={styles.gridNavTabInner}>
+                  <Icon
+                    name={activeTab === 'businessInfo' ? 'business' : 'business-outline'}
+                    size={RFValue(24)}
+                    color={activeTab === 'businessInfo' ? colors.secondary : colors.text}
+                    style={activeTab !== 'businessInfo' ? styles.gridNavIconInactive : undefined}
+                  />
+                  {activeTab === 'businessInfo' ? <View style={styles.tabIndicator} /> : null}
+                </View>
+              </Pressable>
             ) : (
               <>
-                <TouchableOpacity
-                  style={[
-                    styles.gridNavIcon,
-                    activeTab === 'posts' && styles.gridNavIconActive,
-                  ]}
+                <Pressable
+                  style={styles.gridNavTab}
                   onPress={() => setActiveTab('posts')}
-                  activeOpacity={0.7}>
-                  <Icon 
-                    name={activeTab === 'posts' ? "grid" : "grid-outline"} 
-                    size={RFValue(22)} 
-                    color={activeTab === 'posts' ? colors.secondary : colors.text} 
-                  />
-                  {activeTab === 'posts' && <View style={styles.tabIndicator} />}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.gridNavIcon,
-                    activeTab === 'vehicles' && styles.gridNavIconActive,
-                  ]}
+                  android_ripple={tabRipple}>
+                  <View style={styles.gridNavTabInner}>
+                    <Icon
+                      name={activeTab === 'posts' ? 'grid' : 'grid-outline'}
+                      size={RFValue(24)}
+                      color={activeTab === 'posts' ? colors.secondary : colors.text}
+                      style={activeTab !== 'posts' ? styles.gridNavIconInactive : undefined}
+                    />
+                    {activeTab === 'posts' ? <View style={styles.tabIndicator} /> : null}
+                  </View>
+                </Pressable>
+                <Pressable
+                  style={styles.gridNavTab}
                   onPress={() => setActiveTab('vehicles')}
-                  activeOpacity={0.7}>
-                  <Icon 
-                    name={activeTab === 'vehicles' ? "car" : "car-outline"} 
-                    size={RFValue(22)} 
-                    color={activeTab === 'vehicles' ? colors.secondary : colors.text} 
-                  />
-                  {activeTab === 'vehicles' && <View style={styles.tabIndicator} />}
-                </TouchableOpacity>
+                  android_ripple={tabRipple}>
+                  <View style={styles.gridNavTabInner}>
+                    <Icon
+                      name={activeTab === 'vehicles' ? 'car' : 'car-outline'}
+                      size={RFValue(24)}
+                      color={activeTab === 'vehicles' ? colors.secondary : colors.text}
+                      style={activeTab !== 'vehicles' ? styles.gridNavIconInactive : undefined}
+                    />
+                    {activeTab === 'vehicles' ? <View style={styles.tabIndicator} /> : null}
+                  </View>
+                </Pressable>
               </>
             )}
           </View>
@@ -505,7 +531,13 @@ const InstagramProfile: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : activeTab === 'posts' ? (
-          <PostGrid posts={posts} loading={loading} onPostPress={handlePostPress} />
+          <PostGrid
+            posts={posts}
+            loading={loading}
+            onPostPress={handlePostPress}
+            allowManagePosts={!isGuest && !isDealer}
+            onPostsChanged={refreshPostsAndStats}
+          />
         ) : activeTab === 'businessInfo' ? (
           <BusinessRegistrationInfo
             businessRegistration={businessRegistration}

@@ -213,6 +213,9 @@ export interface ICategory {
   status: string;
   products?: number;
   createdAt: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
 }
 
 export interface IGetCategoriesRequest {
@@ -224,12 +227,18 @@ export interface ICreateCategoryRequest {
   name: string;
   description?: string;
   status?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
 }
 
 export interface IUpdateCategoryRequest {
   name?: string;
   description?: string;
   status?: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services' | null;
 }
 
 // Order Types

@@ -7,6 +7,7 @@ export interface IStoryItemDocument {
   type: StoryMediaType;
   mediaUrl: string;
   caption?: string;
+  tags?: string[];
   sourcePostId?: string;
   createdAt: Date;
 }
@@ -25,6 +26,7 @@ const storyItemSchema = new Schema<IStoryItemDocument>(
     type: { type: String, enum: ['image', 'video'], required: true },
     mediaUrl: { type: String, required: true },
     caption: { type: String, trim: true, maxlength: 500 },
+    tags: { type: [String], default: [] },
     sourcePostId: { type: String },
     createdAt: { type: Date, default: Date.now },
   },

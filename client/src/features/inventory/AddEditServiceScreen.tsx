@@ -37,9 +37,18 @@ import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {IService} from '../../types/service/IService';
 
-const MAX_IMAGES = 2;
+const MAX_IMAGES = 8;
 
-type ServiceType = 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+type ServiceType = 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'tire_service' | 'battery_service' | 'general';
+
+const SERVICE_SUB_CATEGORIES: Record<string, string[]> = {
+  car_wash: ['Interior Wash', 'Exterior Wash', 'Full Body', 'Foam Wash', 'Dry Clean'],
+  car_detailing: ['PPF', 'Ceramic Coating', 'Paint Correction', 'Interior Detailing'],
+  car_automobile: ['Oil Change', 'Brake Service', 'AC Service', 'Full Service', 'GPS Install'],
+  bike_automobile: ['Oil Change', 'Chain Lube', 'Tyre Change', 'Full Service'],
+  tire_service: ['Puncture Fix', 'Tyre Rotation', 'Tyre Replacement', 'Wheel Alignment'],
+  battery_service: ['Battery Test', 'Battery Replacement', 'Jump Start', 'Charging'],
+};
 
 interface RouteParams {
   service?: IService;
@@ -47,7 +56,7 @@ interface RouteParams {
 
 const getAllowedServiceTypes = (businessType: string | undefined): ServiceType[] => {
   if (!businessType) {
-    return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+    return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
   }
 
   switch (businessType) {
@@ -56,14 +65,14 @@ const getAllowedServiceTypes = (businessType: string | undefined): ServiceType[]
     case 'Detailing Center':
       return ['car_detailing'];
     case 'Bike Dealer':
-      return ['bike_automobile'];
+      return ['bike_automobile', 'tire_service', 'battery_service'];
     case 'Automobile Showroom':
-      return ['car_automobile'];
+      return ['car_automobile', 'tire_service', 'battery_service'];
     case 'Mechanic Workshop':
     case 'Riding Gear Store':
-      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
     default:
-      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'general'];
+      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
   }
 };
 
@@ -95,11 +104,14 @@ const AddEditServiceScreen: React.FC = () => {
   const [category, setCategory] = useState(service?.category || '');
   const [description, setDescription] = useState(service?.description || '');
   const [isActive, setIsActive] = useState(service?.isActive !== undefined ? service.isActive : true);
-  const [serviceType, setServiceType] = useState<'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general' | undefined>(service?.serviceType);
+  const [serviceType, setServiceType] = useState<ServiceType | undefined>(service?.serviceType as ServiceType | undefined);
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | undefined>(service?.vehicleType);
   const [vehicleModel, setVehicleModel] = useState(service?.vehicleModel || '');
   const [vehicleBrand, setVehicleBrand] = useState(service?.vehicleBrand || '');
   const [serviceSubCategory, setServiceSubCategory] = useState(service?.serviceSubCategory || '');
+  const [servicePackage, setServicePackage] = useState<'premium' | 'basic'>(service?.servicePackage || 'basic');
+  const [slotBookingEnabled, setSlotBookingEnabled] = useState(service?.slotBookingEnabled || false);
+  const [slotDurationMinutes, setSlotDurationMinutes] = useState(service?.slotDurationMinutes?.toString() || '30');
   const [location, setLocation] = useState<ILocationData | null>(
     service?.location
       ? {
@@ -247,6 +259,9 @@ const AddEditServiceScreen: React.FC = () => {
           vehicleModel: vehicleModel.trim() || undefined,
           vehicleBrand: vehicleBrand.trim() || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
+          servicePackage,
+          slotBookingEnabled,
+          slotDurationMinutes: slotBookingEnabled ? parseInt(slotDurationMinutes) : undefined,
         };
 
         await updateDealerService(service.id, updateData);
@@ -273,6 +288,9 @@ const AddEditServiceScreen: React.FC = () => {
           vehicleModel: vehicleModel.trim() || undefined,
           vehicleBrand: vehicleBrand.trim() || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
+          servicePackage,
+          slotBookingEnabled,
+          slotDurationMinutes: slotBookingEnabled ? parseInt(slotDurationMinutes) : undefined,
         };
 
         await createDealerService(createData);
@@ -477,9 +495,9 @@ const AddEditServiceScreen: React.FC = () => {
     },
     imagesContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: screenWidth * 0.03,
       marginTop: screenHeight * 0.012,
+      paddingVertical: 4,
     },
     imageWrapper: {
       position: 'relative',
@@ -699,6 +717,61 @@ const AddEditServiceScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
+            <View style={styles.switchContainer}>
+              <CustomText style={styles.switchLabel}>
+                Enable Slot Booking
+              </CustomText>
+              <Switch
+                value={slotBookingEnabled}
+                onValueChange={setSlotBookingEnabled}
+                trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+                thumbColor={slotBookingEnabled ? colors.secondary : colors.disabled}
+              />
+            </View>
+            {slotBookingEnabled && (
+              <View style={{ marginTop: 12 }}>
+                <CustomText style={styles.label}>
+                  Slot Duration (Minutes) <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. 30"
+                    placeholderTextColor={colors.disabled}
+                    value={slotDurationMinutes}
+                    onChangeText={setSlotDurationMinutes}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <CustomText style={styles.label}>Service Package</CustomText>
+            <View style={styles.chipGrid}>
+              {(['basic', 'premium'] as const).map(pkg => (
+                <TouchableOpacity
+                  key={pkg}
+                  style={[
+                    styles.chipPill,
+                    servicePackage === pkg && styles.chipPillSelected,
+                  ]}
+                  onPress={() => setServicePackage(pkg)}
+                  activeOpacity={0.75}>
+                  <CustomText
+                    style={[
+                      styles.chipPillText,
+                      servicePackage === pkg && styles.chipPillTextSelected,
+                    ]}>
+                    {pkg.charAt(0).toUpperCase() + pkg.slice(1)}
+                  </CustomText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
             <View style={[styles.hintRow, !isExistingServiceTypeAllowed && {opacity: 0.65}]}>
               <Icon name="construct-outline" size={RFValue(18)} color={colors.winterBlueDark} />
@@ -827,7 +900,42 @@ const AddEditServiceScreen: React.FC = () => {
             </>
           )}
 
-          {(serviceType === 'car_wash' || serviceType === 'car_detailing') && (
+          {serviceType && serviceType !== 'general' && SERVICE_SUB_CATEGORIES[serviceType] && (
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
+              <View style={styles.chipGrid}>
+                {SERVICE_SUB_CATEGORIES[serviceType].map(subCat => (
+                  <TouchableOpacity
+                    key={subCat}
+                    style={[
+                      styles.chipPill,
+                      serviceSubCategory === subCat && styles.chipPillSelected,
+                    ]}
+                    onPress={() => setServiceSubCategory(subCat)}
+                    activeOpacity={0.75}>
+                    <CustomText
+                      style={[
+                        styles.chipPillText,
+                        serviceSubCategory === subCat && styles.chipPillTextSelected,
+                      ]}>
+                      {subCat}
+                    </CustomText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={[styles.textInputContainer, { marginTop: 12 }]}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Or type custom sub-category..."
+                  placeholderTextColor={colors.disabled}
+                  value={serviceSubCategory}
+                  onChangeText={setServiceSubCategory}
+                />
+              </View>
+            </View>
+          )}
+
+          {(!serviceType || serviceType === 'general') && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
               <View style={styles.textInputContainer}>
@@ -878,7 +986,7 @@ const AddEditServiceScreen: React.FC = () => {
               </CustomText>
             </TouchableOpacity>
             {imageUris.length > 0 && (
-              <View style={styles.imagesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesContainer}>
                 {imageUris.map((uri, index) => (
                   <View key={index} style={styles.imageWrapper}>
                     <Image source={{uri}} style={styles.image} />
@@ -889,7 +997,7 @@ const AddEditServiceScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
 

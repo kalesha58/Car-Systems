@@ -36,7 +36,18 @@ import {uploadImagesBatch} from '@service/postService';
 import {getDropdownOptions} from '@service/dropdownService';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 
-const MAX_IMAGES = 2;
+const MAX_IMAGES = 8;
+
+const COMMON_FEATURES = {
+  Car: [
+    'ABS', 'Airbags', 'Sunroof', 'Reverse Camera', 'Cruise Control', 
+    'Keyless Entry', 'Alloy Wheels', 'Leather Seats', 'Android Auto/CarPlay', 'GPS Tracker'
+  ],
+  Bike: [
+    'ABS', 'Disc Brakes', 'Alloy Wheels', 'Digital Console', 'Slipper Clutch',
+    'Tubeless Tyres', 'LED Headlights', 'GPS Tracker'
+  ]
+};
 
 interface RouteParams {
   vehicle?: IDealerVehicle;
@@ -76,6 +87,7 @@ const AddEditVehicleScreen: React.FC = () => {
     vehicle?.condition || '',
   );
   const [allowTestDrive, setAllowTestDrive] = useState(vehicle?.allowTestDrive || false);
+  const [features, setFeatures] = useState<string[]>(vehicle?.features || []);
   const [imageUris, setImageUris] = useState<string[]>(vehicle?.images || []);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -233,6 +245,7 @@ const AddEditVehicleScreen: React.FC = () => {
           description: description.trim() || undefined,
           condition: condition || undefined,
           allowTestDrive: allowTestDrive,
+          features: features.length > 0 ? features : undefined,
         };
 
         await updateDealerVehicle(vehicle.id, updateData);
@@ -254,6 +267,7 @@ const AddEditVehicleScreen: React.FC = () => {
           description: description.trim() || undefined,
           condition: condition || undefined,
           allowTestDrive: allowTestDrive,
+          features: features.length > 0 ? features : undefined,
         };
 
         await createDealerVehicle(createData);
@@ -542,9 +556,9 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     imagesContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: screenWidth * 0.03,
       marginTop: screenHeight * 0.012,
+      paddingVertical: 4,
     },
     imageWrapper: {
       position: 'relative',
@@ -867,6 +881,39 @@ const AddEditVehicleScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
+            <CustomText style={styles.label}>Features</CustomText>
+            <View style={styles.chipGrid}>
+              {COMMON_FEATURES[vehicleType].map(feature => {
+                const isSelected = features.includes(feature);
+                return (
+                  <TouchableOpacity
+                    key={feature}
+                    style={[
+                      styles.chipPill,
+                      isSelected && styles.chipPillSelected,
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setFeatures(features.filter(f => f !== feature));
+                      } else {
+                        setFeatures([...features, feature]);
+                      }
+                    }}
+                    activeOpacity={0.75}>
+                    <CustomText
+                      style={[
+                        styles.chipPillText,
+                        isSelected && styles.chipPillTextSelected,
+                      ]}>
+                      {feature}
+                    </CustomText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
             <View style={styles.textInputContainer}>
               <TextInput
@@ -891,7 +938,7 @@ const AddEditVehicleScreen: React.FC = () => {
               </CustomText>
             </TouchableOpacity>
             {imageUris.length > 0 && (
-              <View style={styles.imagesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesContainer}>
                 {imageUris.map((uri, index) => (
                   <View key={index} style={styles.imageWrapper}>
                     <Image source={{uri}} style={styles.image} />
@@ -902,7 +949,7 @@ const AddEditVehicleScreen: React.FC = () => {
                     </TouchableOpacity>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>

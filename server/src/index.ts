@@ -41,7 +41,7 @@ import preBookingRoutes from './routes/user/preBookingRoutes';
 import { refreshTokenController } from './controllers/authController';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
-import webhookRoutes from './routes/webhookRoutes';
+import webhookRoutes, { razorpayWebhookHandler } from './routes/webhookRoutes';
 import { getServiceCategoriesController } from './controllers/serviceCategoryController';
 import cors from 'cors';
 import { logger } from './utils/logger';
@@ -64,6 +64,13 @@ app.use(
     ],
     credentials: true,
   }),
+);
+
+// Razorpay webhook requires raw body for signature verification
+app.post(
+  '/api/webhooks/razorpay',
+  express.raw({ type: 'application/json' }),
+  razorpayWebhookHandler,
 );
 
 // Middleware

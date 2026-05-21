@@ -17,11 +17,13 @@ export const getStoryByUserId = async (userId: string): Promise<IStoryDetailResp
 
 export const appendStoryFromPost = async (
   postId: string,
-  caption?: string,
+  body?: { caption?: string; tags?: string[] },
 ): Promise<IStoryDetailResponse> => {
+  const payload =
+    body && (body.caption !== undefined || (body.tags && body.tags.length > 0)) ? body : {};
   const response = await appAxios.post<IStoryDetailResponse>(
     `/stories/items/from-post/${postId}`,
-    caption ? { caption } : {},
+    payload,
   );
   return response.data;
 };

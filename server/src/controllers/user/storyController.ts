@@ -57,7 +57,8 @@ export const appendStoryFromPostController = async (
       return;
     }
     const caption = typeof req.body?.caption === 'string' ? req.body.caption : undefined;
-    const result = await appendStoryItemFromPost(userId, postId, caption);
+    const tags = req.body?.tags;
+    const result = await appendStoryItemFromPost(userId, postId, { caption, tags });
     res.status(201).json({ success: true, ...result });
   } catch (error) {
     errorHandler(error as IAppError, res);

@@ -15,6 +15,8 @@ import {
   Alert,
   Pressable,
   ActivityIndicator,
+  Image,
+  Share,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -29,13 +31,13 @@ import UserInitialAvatar from './UserInitialAvatar';
 import { IPost, IComment } from '../../types/post/IPost';
 import { useTheme } from '@hooks/useTheme';
 import { blockUser, likePost, unlikePost, addComment, likeComment, unlikeComment, reportContent } from '@service/postService';
-import { appendStoryFromPost } from '@service/storyService';
 import { SOCKET_URL } from '@service/config';
 import { io, Socket } from 'socket.io-client';
 import { formatRelativeTime } from '@utils/timeUtils';
 import { useAuthStore } from '@state/authStore';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import { shareContent } from '@utils/shareUtils';
+import { navigate } from '@utils/NavigationUtils';
 import { withAuth } from '@utils/AuthGuard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +71,6 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
   const [comments, setComments] = useState<IComment[]>(post?.comments || []);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
-  const [addStatusLoading, setAddStatusLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -441,32 +442,36 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
   };
 
   const canAddToStatus = (post.images?.length ?? 0) > 0 || Boolean(post.video);
+  const thumbUri = post.images?.[0];
 
-  const handleAddToStatus = () => {
+  const handleSetAsStatus = () => {
     if (!canAddToStatus) {
       Alert.alert(t('profile.error'), t('play.story.noMedia'));
       return;
     }
+    setShareSheetVisible(false);
+    const previewUri = post.images?.[0] || post.video || '';
+    const mediaType: 'image' | 'video' =
+      post.images && post.images.length > 0 ? 'image' : post.video ? 'video' : 'image';
     withAuth(() => {
-      void (async () => {
-        setAddStatusLoading(true);
-        try {
-          await appendStoryFromPost(post.id);
-          onStoryMutated?.();
-          setShareSheetVisible(false);
-          Alert.alert(t('play.story.statusAddedTitle'), t('play.story.statusAdded'));
-        } catch (error: any) {
-          const msg =
-            error?.response?.data?.Response?.ReturnMessage ||
-            error?.response?.data?.message ||
-            error?.message ||
-            t('play.story.failedAdd');
-          Alert.alert(t('profile.error'), msg);
-        } finally {
-          setAddStatusLoading(false);
-        }
-      })();
+      navigate('StatusCompose', {
+        postId: post.id,
+        previewUri,
+        authorName: post.userName,
+        mediaType,
+      });
     }, t('play.story.loginToShare'));
+  };
+
+  const handleCopyPostLink = async () => {
+    const url = post?.id ? `motonode://post/${post.id}` : '';
+    if (!url) return;
+    setShareSheetVisible(false);
+    try {
+      await Share.share({ message: url, title: t('play.story.copyLink') });
+    } catch {
+      /* user dismissed */
+    }
   };
 
   const handleReportPost = async () => {
@@ -735,67 +740,127 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
         </View>
       )}
 
-      {/* Share sheet */}
+      {/* Share sheet — reference-style bottom sheet */}
       <Modal
         visible={shareSheetVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShareSheetVisible(false)}>
-        <Pressable style={styles.shareBackdrop} onPress={() => setShareSheetVisible(false)}>
-          <Pressable
-            style={[
-              styles.shareSheet,
-              {
-                backgroundColor: colors.background,
-                paddingBottom: modalInsets.bottom + 20,
+        <View style={styles.shareOverlayRoot}>
+          <Pressable style={styles.shareOverlayDim} onPress={() => setShareSheetVisible(false)} />
+          {(() => {
+            const shBg = isDark ? '#1c1c1e' : '#ffffff';
+            const shInk = isDark ? 'rgba(255,255,255,0.92)' : 'rgba(0,0,0,0.88)';
+            const shSub = isDark ? 'rgba(255,255,255,0.46)' : 'rgba(0,0,0,0.42)';
+            const shLine = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+            const shField = isDark ? '#262628' : '#f3f4f6';
+            const shIcon = shSub;
+            const shInset = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+            const shareElev = Platform.select({
+              ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: -4 },
+                shadowOpacity: isDark ? 0.42 : 0.08,
+                shadowRadius: 14,
               },
-            ]}
-            onPress={(e) => e.stopPropagation()}>
-            <CustomText
-              fontSize={RFValue(15)}
-              fontFamily={Fonts.SemiBold}
-              style={{ color: colors.text, marginBottom: 16 }}>
-              {t('play.story.sharePost')}
-            </CustomText>
-            <TouchableOpacity
-              style={[
-                styles.shareRow,
-                { borderColor: colors.border, opacity: canAddToStatus && !addStatusLoading ? 1 : 0.45 },
-              ]}
-              disabled={!canAddToStatus || addStatusLoading}
-              onPress={handleAddToStatus}
-              activeOpacity={0.75}>
-              {addStatusLoading ? (
-                <ActivityIndicator color={colors.secondary} />
-              ) : (
-                <>
-                  <Icon name="add-circle-outline" size={RFValue(22)} color={colors.secondary} />
-                  <CustomText style={[styles.shareRowText, { color: colors.text }]}>
-                    {t('play.story.addToStatus')}
+              android: { elevation: 22 },
+              default: {},
+            });
+            return (
+              <View
+                style={[
+                  styles.shareSheetCard,
+                  shareElev,
+                  {
+                    backgroundColor: shBg,
+                    paddingBottom: modalInsets.bottom + 12,
+                    borderTopColor: shLine,
+                  },
+                ]}>
+                <View style={[styles.shareGrab, { backgroundColor: shSub }]} />
+                <View style={styles.shareSheetHeaderRow}>
+                  {thumbUri ? (
+                    <Image source={{ uri: thumbUri }} style={styles.shareThumb} />
+                  ) : (
+                    <View style={[styles.shareThumb, styles.shareThumbPlaceholder, { backgroundColor: shField, borderColor: shLine }]}>
+                      <Icon name="image-outline" size={RFValue(13)} color={shIcon} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, marginHorizontal: 10 }}>
+                    <CustomText fontSize={RFValue(10)} fontFamily={Fonts.SemiBold} style={{ color: shInk, letterSpacing: -0.1 }}>
+                      {t('play.story.sharePost')}
+                    </CustomText>
+                    {post.userName ? (
+                      <CustomText fontSize={RFValue(8)} style={{ color: shSub, marginTop: 2 }} numberOfLines={1}>
+                        {t('play.story.sharePostBy', { name: post.userName })}
+                      </CustomText>
+                    ) : null}
+                  </View>
+                  <TouchableOpacity onPress={() => setShareSheetVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Icon name="close" size={RFValue(15)} color={shInk} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.shareSearchBar, { backgroundColor: shField, borderColor: shLine }]}>
+                  <Icon name="search-outline" size={RFValue(12)} color={shIcon} />
+                  <CustomText fontSize={RFValue(9)} style={{ color: shSub, marginLeft: 6 }}>
+                    {t('play.story.searchFriends')}
                   </CustomText>
-                </>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.shareRow, { borderColor: colors.border, marginTop: 10 }]}
-              onPress={() => {
-                void handleExternalShare();
-              }}
-              activeOpacity={0.75}>
-              <Icon name="share-outline" size={RFValue(22)} color={colors.text} />
-              <CustomText style={[styles.shareRowText, { color: colors.text }]}>
-                {t('play.story.shareExternally')}
-              </CustomText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ marginTop: 18, alignSelf: 'center', paddingVertical: 10 }}
-              onPress={() => setShareSheetVisible(false)}>
-              <CustomText style={{ color: colors.disabled, fontFamily: Fonts.Medium }}>
-                {t('profile.cancel')}
-              </CustomText>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
+                </View>
+
+                <CustomText style={[styles.shareSectionLabel, { color: shSub }]}>{t('play.story.sendTo')}</CustomText>
+                <View style={[styles.sendToRow, { backgroundColor: shField, borderColor: shLine }]}>
+                  <Icon name="people-outline" size={RFValue(13)} color={shIcon} />
+                  <CustomText fontSize={RFValue(9)} style={{ color: shSub, marginLeft: 8 }}>
+                    {t('play.story.noActiveContacts')}
+                  </CustomText>
+                </View>
+
+                <CustomText style={[styles.shareSectionLabel, { color: shSub, marginTop: 12 }]}>
+                  {t('play.story.moreOptions')}
+                </CustomText>
+
+                <View style={[styles.shareOptionsGroup, { backgroundColor: shInset, borderColor: shLine }]}>
+                  <TouchableOpacity
+                    style={[styles.shareOptionRow, { borderBottomColor: shLine }]}
+                    onPress={handleSetAsStatus}
+                    disabled={!canAddToStatus}
+                    activeOpacity={0.75}>
+                    <Icon name="time-outline" size={RFValue(13)} color={shIcon} />
+                    <CustomText fontSize={RFValue(9)} fontFamily={Fonts.Medium} style={{ color: shInk, marginLeft: 10, flex: 1, opacity: canAddToStatus ? 1 : 0.45 }}>
+                      {t('play.story.setAsStatus')}
+                    </CustomText>
+                    <Icon name="chevron-forward" size={RFValue(12)} color={shSub} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.shareOptionRow, { borderBottomColor: shLine }]}
+                    onPress={() => void handleCopyPostLink()}
+                    activeOpacity={0.75}>
+                    <Icon name="link-outline" size={RFValue(13)} color={shIcon} />
+                    <CustomText fontSize={RFValue(9)} fontFamily={Fonts.Medium} style={{ color: shInk, marginLeft: 10, flex: 1 }}>
+                      {t('play.story.copyLink')}
+                    </CustomText>
+                    <Icon name="chevron-forward" size={RFValue(12)} color={shSub} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.shareOptionRow}
+                    onPress={() => {
+                      void handleExternalShare();
+                    }}
+                    activeOpacity={0.75}>
+                    <Icon name="share-social-outline" size={RFValue(13)} color={shIcon} />
+                    <CustomText fontSize={RFValue(9)} fontFamily={Fonts.Medium} style={{ color: shInk, marginLeft: 10, flex: 1 }}>
+                      {t('play.story.shareVia')}
+                    </CustomText>
+                    <Icon name="chevron-forward" size={RFValue(12)} color={shSub} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })()}
+        </View>
       </Modal>
 
       {/* Comment modal — full screen */}
@@ -1173,31 +1238,78 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 8,
   },
-  shareBackdrop: {
+  shareOverlayRoot: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  shareSheet: {
+  shareOverlayDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  shareSheetCard: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    maxHeight: screenHeight * 0.52,
   },
-  shareRow: {
+  shareGrab: {
+    alignSelf: 'center',
+    width: 36,
+    height: 3,
+    borderRadius: 2,
+    marginBottom: 10,
+  },
+  shareSheetHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    marginBottom: 10,
+  },
+  shareThumb: {
+    width: 32,
+    height: 32,
+    borderRadius: 7,
+  },
+  shareThumbPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
   },
-  shareRowText: {
-    fontSize: RFValue(14),
-    fontFamily: Fonts.Medium,
-    flex: 1,
+  shareSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    marginBottom: 10,
+  },
+  shareSectionLabel: {
+    fontSize: RFValue(7),
+    fontFamily: Fonts.SemiBold,
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  sendToRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    paddingVertical: 11,
+  },
+  shareOptionsGroup: {
+    marginTop: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    borderRadius: 10,
+  },
+  shareOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 11,
+    paddingHorizontal: 10,
   },
 });
 

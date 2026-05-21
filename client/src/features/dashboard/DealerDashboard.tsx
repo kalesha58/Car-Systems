@@ -39,7 +39,6 @@ import {
 } from '@utils/analytics';
 import AnimatedHeader from './AnimatedHeader';
 import AdCarousal from '@components/dashboard/AdCarousal';
-import { adData } from '@utils/dummyData';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 import LottieView from 'lottie-react-native';
 import {
@@ -60,6 +59,15 @@ import WorkshopTasksCard from '@components/dashboard/WorkshopTasksCard';
 import VehicleWashBookingsCard from '@components/dashboard/VehicleWashBookingsCard';
 import StationOpenToggle from '@components/dashboard/StationOpenToggle';
 import DealerInventorySection from '@components/dashboard/DealerInventorySection';
+
+/** Static marketing images for the dealer home carousel (not loaded from dummyData). */
+const DEALER_PROMO_CAROUSEL_IMAGES = [
+  require('../../assets/products/c1.jpg'),
+  require('../../assets/products/c2.jpg'),
+  require('../../assets/products/c3.jpeg'),
+  require('../../assets/products/c2.jpg'),
+  require('../../assets/products/c1.jpg'),
+];
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -429,7 +437,7 @@ const DealerDashboard: React.FC = () => {
             style={styles.panelContainer}
             showsVerticalScrollIndicator={false}>
             <View style={styles.contentContainer}>
-              <AdCarousal adData={adData} />
+              <AdCarousal adData={DEALER_PROMO_CAROUSEL_IMAGES} />
 
               {isLoading ? (
                 <View style={styles.skeletonContainer}>

@@ -5,6 +5,7 @@ export interface IStoryItem {
   type: StoryMediaType;
   mediaUrl: string;
   caption?: string;
+  tags?: string[];
   sourcePostId?: string;
   createdAt: string;
 }

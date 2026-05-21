@@ -1,4 +1,13 @@
-// CRITICAL: Load environment variables FIRST
+/**
+ * Seed dealer services + products + Store home category tiles.
+ *
+ * Required env:
+ *   SEED_DEALER_USER_ID — Mongo ObjectId string of an existing dealer user (same as Product.userId / Service.dealerId).
+ *
+ * Run from server/:   SEED_DEALER_USER_ID='<your24hexid>' npm run seed:all-inventory
+ *
+ * Loads .env via ../config/env (set SEED_DEALER_USER_ID in .env or export in shell).
+ */
 import '../config/env';
 
 import { connectDatabase } from '../config/database';
@@ -8,10 +17,122 @@ import { Category } from '../models/Category';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
 
-const ADMIN_ID = '691cbd8a12e389e1bbf08b7f';
+const DEALER_ID = process.env.SEED_DEALER_USER_ID?.trim();
+
+if (!DEALER_ID) {
+  logger.error(
+    'Missing SEED_DEALER_USER_ID. Set it to your dealer user ObjectId (see script header), then re-run.',
+  );
+  process.exit(1);
+}
+
+if (!mongoose.Types.ObjectId.isValid(DEALER_ID)) {
+  logger.error('SEED_DEALER_USER_ID must be a valid 24-character Mongo ObjectId hex string.');
+  process.exit(1);
+}
+
+/** Store home tiles: must match client filters by tileGroup */
+const STORE_TILE_CATEGORIES: Array<{
+  name: string;
+  description: string;
+  imageUrl: string;
+  sortOrder: number;
+  tileGroup: 'products' | 'vehicles' | 'services';
+}> = [
+  {
+    name: 'Engine Oil & Lubricants',
+    description: 'Engine oils and lubricants',
+    imageUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 1,
+    tileGroup: 'products',
+  },
+  {
+    name: 'Car Care & Maintenance',
+    description: 'Car care products',
+    imageUrl: 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 2,
+    tileGroup: 'products',
+  },
+  {
+    name: 'Tires & Wheels',
+    description: 'Tyres and wheels',
+    imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 3,
+    tileGroup: 'products',
+  },
+  {
+    name: 'Brakes & Suspension',
+    description: 'Braking and suspension parts',
+    imageUrl: 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 4,
+    tileGroup: 'products',
+  },
+  {
+    name: 'Interior Accessories',
+    description: 'Interior accessories',
+    imageUrl: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 11,
+    tileGroup: 'vehicles',
+  },
+  {
+    name: 'Lighting & Electrical',
+    description: 'Lights and electrics',
+    imageUrl: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 12,
+    tileGroup: 'vehicles',
+  },
+  {
+    name: 'Filters & Belts',
+    description: 'Filters and belts',
+    imageUrl: 'https://images.unsplash.com/photo-1635322966219-b75ed372eb01?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 13,
+    tileGroup: 'vehicles',
+  },
+  {
+    name: 'Batteries & Chargers',
+    description: 'Batteries and chargers',
+    imageUrl: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 14,
+    tileGroup: 'vehicles',
+  },
+  {
+    name: 'Performance Parts',
+    description: 'Performance upgrades',
+    imageUrl: 'https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 15,
+    tileGroup: 'vehicles',
+  },
+  {
+    name: 'Workshop Tools',
+    description: 'Tools and equipment',
+    imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 21,
+    tileGroup: 'services',
+  },
+  {
+    name: 'Detailing & PPF',
+    description: 'Detailing and paint protection',
+    imageUrl: 'https://images.unsplash.com/photo-1630968319508-626a299664b9?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 22,
+    tileGroup: 'services',
+  },
+  {
+    name: 'Wash & Valeting',
+    description: 'Car wash packages',
+    imageUrl: 'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 23,
+    tileGroup: 'services',
+  },
+  {
+    name: 'Roadside & Tyre Care',
+    description: 'Tyre and roadside services',
+    imageUrl: 'https://images.unsplash.com/photo-1544133782-b6210f639347?q=80&w=400&auto=format&fit=crop',
+    sortOrder: 24,
+    tileGroup: 'services',
+  },
+];
 
 const SERVICES_DATA = [
-  // --- Car Service (serviceType: car_automobile, vehicleType: Car) ---
   {
     name: 'Comprehensive Car Checkup',
     price: 1500,
@@ -56,8 +177,6 @@ const SERVICES_DATA = [
     serviceSubCategory: 'exterior_work',
     images: ['https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1974&auto=format&fit=crop'],
   },
-
-  // --- Bike Service (serviceType: bike_automobile, vehicleType: Bike) ---
   {
     name: 'Full Bike General Service',
     price: 650,
@@ -80,8 +199,6 @@ const SERVICES_DATA = [
     serviceSubCategory: 'oil_change',
     images: ['https://images.unsplash.com/photo-1601633333333-333333333333?q=80&w=2070&auto=format&fit=crop'],
   },
-
-  // --- Vehicle Wash (serviceType: car_wash) ---
   {
     name: 'Basic Exterior Car Wash',
     price: 400,
@@ -104,8 +221,6 @@ const SERVICES_DATA = [
     servicePackage: 'premium',
     images: ['https://images.unsplash.com/photo-1607860108855-64acf2078ed9?q=80&w=2071&auto=format&fit=crop'],
   },
-
-  // --- Tyre Service (serviceType: tire_service) ---
   {
     name: 'Tubeless Puncture Fix',
     price: 250,
@@ -126,8 +241,6 @@ const SERVICES_DATA = [
     serviceSubCategory: 'new_tyre',
     images: ['https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=2000&auto=format&fit=crop'],
   },
-
-  // --- PPF & Detailing (serviceType: car_detailing) ---
   {
     name: 'Ceramic Coating - Gold',
     price: 25000,
@@ -148,8 +261,6 @@ const SERVICES_DATA = [
     serviceSubCategory: 'waxing',
     images: ['https://images.unsplash.com/photo-1630968319508-626a299664b9?q=80&w=2000&auto=format&fit=crop'],
   },
-
-  // --- Battery Service (serviceType: battery_service) ---
   {
     name: 'Battery Replacement (Amaron)',
     price: 5500,
@@ -159,12 +270,25 @@ const SERVICES_DATA = [
     serviceType: 'battery_service',
     serviceSubCategory: 'new_battery',
     images: ['https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1974&auto=format&fit=crop'],
-  }
+  },
 ];
 
-const PRODUCTS_DATA = [
-  // --- Maruti ---
+/** Store tile category name (must match STORE_TILE_CATEGORIES[].name) for Product.categoryId */
+type ProductSeed = {
+  storeCategoryName: string;
+  name: string;
+  brand: string;
+  price: number;
+  stock: number;
+  vehicleType: string;
+  description: string;
+  isSparePart: boolean;
+  images: string[];
+};
+
+const PRODUCTS_DATA: ProductSeed[] = [
   {
+    storeCategoryName: 'Brakes & Suspension',
     name: 'Maruti Suzuki Swift Front Brake Pad',
     brand: 'Maruti Suzuki',
     price: 1850,
@@ -174,8 +298,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Hyundai ---
   {
+    storeCategoryName: 'Filters & Belts',
     name: 'Hyundai Creta Oil Filter',
     brand: 'Hyundai',
     price: 650,
@@ -185,8 +309,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1635322966219-b75ed372eb01?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Tata ---
   {
+    storeCategoryName: 'Performance Parts',
     name: 'Tata Nexon Clutch Plate Kit',
     brand: 'Tata',
     price: 7200,
@@ -196,8 +320,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Honda (Car) ---
   {
+    storeCategoryName: 'Car Care & Maintenance',
     name: 'Honda City Cabin Air Filter',
     brand: 'Honda',
     price: 1100,
@@ -207,8 +331,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Toyota ---
   {
+    storeCategoryName: 'Lighting & Electrical',
     name: 'Toyota Innova Crysta Headlamp Bulb',
     brand: 'Toyota',
     price: 2400,
@@ -218,9 +342,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2070&auto=format&fit=crop'],
   },
-
-  // --- Hero (Bike) ---
   {
+    storeCategoryName: 'Interior Accessories',
     name: 'Hero Splendor Chain Sprocket Kit',
     brand: 'Hero MotoCorp',
     price: 1450,
@@ -230,8 +353,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1558981403-c5f91cbba527?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Bajaj ---
   {
+    storeCategoryName: 'Lighting & Electrical',
     name: 'Bajaj Pulsar 220 Spark Plug (Set of 2)',
     brand: 'Bajaj',
     price: 480,
@@ -241,8 +364,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1710130168142-d2ec07ed8434?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- TVS ---
   {
+    storeCategoryName: 'Brakes & Suspension',
     name: 'TVS Apache RTR 160 Front Disc Plate',
     brand: 'TVS',
     price: 2200,
@@ -252,8 +375,8 @@ const PRODUCTS_DATA = [
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1611633235555-45e252fe48c8?q=80&w=2070&auto=format&fit=crop'],
   },
-  // --- Royal Enfield ---
   {
+    storeCategoryName: 'Performance Parts',
     name: 'Royal Enfield Classic 350 Exhaust Pipe',
     brand: 'Royal Enfield',
     price: 5800,
@@ -262,65 +385,99 @@ const PRODUCTS_DATA = [
     description: 'Chrome finish long bottle silencer for Classic 350.',
     isSparePart: true,
     images: ['https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=2070&auto=format&fit=crop'],
-  }
+  },
 ];
-
 
 const seedAllInventory = async () => {
   try {
-    logger.info('🚀 Starting all-inventory seeding...');
+    logger.info('Starting all-inventory seeding for dealerId=%s', DEALER_ID);
 
     await connectDatabase();
-    logger.info('📦 Database connected');
+    logger.info('Database connected');
 
-    // 1. Get or create Spare Parts category
+    for (const row of STORE_TILE_CATEGORIES) {
+      await Category.findOneAndUpdate(
+        { name: row.name },
+        {
+          $set: {
+            name: row.name,
+            description: row.description,
+            status: 'active',
+            imageUrl: row.imageUrl,
+            sortOrder: row.sortOrder,
+            tileGroup: row.tileGroup,
+          },
+        },
+        { upsert: true, new: true },
+      );
+    }
+    logger.info('Upserted %s store tile categories', STORE_TILE_CATEGORIES.length);
+
     let sparePartsCat = await Category.findOne({ name: 'Spare Parts' });
     if (!sparePartsCat) {
       sparePartsCat = new Category({
         name: 'Spare Parts',
         description: 'Automotive replacement components and consumables',
         status: 'active',
+        sortOrder: 100,
       });
       await sparePartsCat.save();
-      logger.info('✅ Created "Spare Parts" category');
+      logger.info('Created "Spare Parts" category for product FK');
+    } else if (!sparePartsCat.description) {
+      sparePartsCat.description = 'Automotive replacement components and consumables';
+      sparePartsCat.sortOrder = 100;
+      await sparePartsCat.save();
     }
-    const sparePartsId = (sparePartsCat._id as any).toString();
+    const sparePartsId = (sparePartsCat._id as mongoose.Types.ObjectId).toString();
 
-    // 2. Clean up existing demo data for this admin
-    logger.info('🧹 Cleaning up old demo data...');
-    await Service.deleteMany({ dealerId: ADMIN_ID });
-    await Product.deleteMany({ userId: ADMIN_ID });
-    logger.info('✅ Cleanup complete');
+    const categoryIdByTileName = new Map<string, string>();
+    for (const row of STORE_TILE_CATEGORIES) {
+      const doc = await Category.findOne({ name: row.name });
+      if (doc) {
+        categoryIdByTileName.set(row.name, (doc._id as mongoose.Types.ObjectId).toString());
+      }
+    }
 
-    // 3. Seed Services
-    logger.info('⚙️ Seeding Services...');
-    const servicesToInsert = SERVICES_DATA.map(s => ({
+    const resolveProductCategoryId = (storeCategoryName: string): string => {
+      return categoryIdByTileName.get(storeCategoryName) ?? sparePartsId;
+    };
+
+    logger.info('Cleaning up old demo services/products for this dealer...');
+    await Service.deleteMany({ dealerId: DEALER_ID });
+    await Product.deleteMany({ userId: DEALER_ID });
+    logger.info('Cleanup complete');
+
+    logger.info('Seeding services...');
+    const servicesToInsert = SERVICES_DATA.map((s) => ({
       ...s,
-      dealerId: ADMIN_ID,
+      dealerId: DEALER_ID,
       isActive: true,
     }));
     await Service.insertMany(servicesToInsert);
-    logger.info(`✅ Seeded ${servicesToInsert.length} services`);
+    logger.info('Seeded %s services', servicesToInsert.length);
 
-    // 4. Seed Products
-    logger.info('🛠️ Seeding Products...');
-    const productsToInsert = PRODUCTS_DATA.map(p => ({
-      ...p,
-      userId: ADMIN_ID,
-      categoryId: sparePartsId,
-      status: 'active',
-    }));
+    logger.info('Seeding products (categoryId mapped to store tile categories)...');
+    const productsToInsert = PRODUCTS_DATA.map((p) => {
+      const { storeCategoryName, ...productFields } = p;
+      return {
+        ...productFields,
+        userId: DEALER_ID,
+        categoryId: resolveProductCategoryId(storeCategoryName),
+        status: 'active' as const,
+      };
+    });
     await Product.insertMany(productsToInsert);
-    logger.info(`✅ Seeded ${productsToInsert.length} products`);
+    logger.info('Seeded %s products', productsToInsert.length);
 
-    logger.info('✨ Seeding process finished successfully!');
+    logger.info('Seeding process finished successfully');
   } catch (error) {
-    logger.error('❌ Seeding failed:', error);
+    logger.error('Seeding failed:', error);
+    process.exitCode = 1;
   } finally {
     await mongoose.connection.close();
-    logger.info('🔌 Database connection closed');
-    process.exit(0);
+    logger.info('Database connection closed');
+    process.exit(process.exitCode ?? 0);
   }
 };
 
-seedAllInventory();
+void seedAllInventory();

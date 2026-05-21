@@ -75,7 +75,7 @@ export const sendPushNotificationToToken = async (
       android: {
         priority: 'high' as const,
         notification: {
-          channelId: 'carconnect_notifications',
+          channelId: 'motonode_notifications',
           sound: 'default',
           priority: 'high' as const,
           imageUrl: payload.imageUrl,
@@ -147,8 +147,8 @@ export const sendGreetingNotification = async (userId: string): Promise<void> =>
       'https://res.cloudinary.com/dzguxkrky/image/upload/v1765692021/All-Vehicles_oiikhd.jpg';
     
     await sendPushNotification(userId, {
-      title: 'Welcome to Car Connect!',
-      body: 'Explore our amazing collection of vehicles and connect with dealers.',
+      title: 'Welcome to motonode!',
+      body: 'Explore vehicles, services, and connect with dealers near you.',
       imageUrl,
       data: {
         type: 'greeting',

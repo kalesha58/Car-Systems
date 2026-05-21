@@ -9,6 +9,7 @@ import {useAuthStore} from '@state/authStore';
 import { tokenStorage, storage, clearBusinessRegistrationDraft } from '@state/storage';
 import {jwtDecode} from 'jwt-decode';
 import {refetchUser, refresh_tokens} from '@service/authService';
+import {registerFCMTokenWithBackend, unregisterPushNotifications} from '@service/pushNotificationService';
 import {resetNavigationForDealerOnboarding} from '../../auth/postAuthRouting';
 
 GeoLocation.setRNConfiguration({
@@ -21,6 +22,15 @@ GeoLocation.setRNConfiguration({
 interface DecodedToken {
   exp: number;
 }
+
+const navigateToLogin = () => {
+  const currentUser = useAuthStore.getState().user;
+  clearBusinessRegistrationDraft(currentUser?.id);
+  void unregisterPushNotifications();
+  tokenStorage.clearAll();
+  useAuthStore.getState().logout();
+  resetAndNavigate('CustomerLogin');
+};
 
 const SplashScreen: FC = () => {
   const {user, setUser} = useAuthStore();
@@ -54,6 +64,12 @@ const SplashScreen: FC = () => {
   };
 
   const navigateByRole = async (userRole: string | null, userId?: string) => {
+    const currentUser = useAuthStore.getState().user;
+    if (currentUser?.isGuest) {
+      navigateToLogin();
+      return;
+    }
+
     if (userRole === 'user') {
       // Check if user has skipped adding vehicle
       const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
@@ -100,7 +116,7 @@ const SplashScreen: FC = () => {
     } else if (userRole === 'admin') {
       resetAndNavigate('MainTabs');
     } else {
-      resetAndNavigate('MainTabs');
+      navigateToLogin();
     }
   };
 
@@ -110,7 +126,7 @@ const SplashScreen: FC = () => {
       const refreshToken = tokenStorage.getString('refreshToken') as string;
 
       if (!accessToken || !refreshToken) {
-        resetAndNavigate('MainTabs');
+        navigateToLogin();
         return;
       }
 
@@ -120,11 +136,11 @@ const SplashScreen: FC = () => {
         const currentTime = Date.now() / 1000;
 
         if (decodedRefreshToken?.exp < currentTime) {
-          tokenStorage.clearAll();
           const currentUser = useAuthStore.getState().user;
           clearBusinessRegistrationDraft(currentUser?.id);
           const { logout } = useAuthStore.getState();
           logout();
+          tokenStorage.clearAll();
           resetAndNavigate('CustomerLogin');
           Alert.alert('Session Expired', 'Please login again');
           return;
@@ -138,12 +154,12 @@ const SplashScreen: FC = () => {
             await refetchUser(setUser);
             currentUser = useAuthStore.getState().user;
           } catch (error) {
-            tokenStorage.clearAll();
             const currentUserBeforeLogout = useAuthStore.getState().user;
             clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
-            resetAndNavigate('MainTabs');
+            tokenStorage.clearAll();
+            navigateToLogin();
             return;
           }
         }
@@ -153,37 +169,28 @@ const SplashScreen: FC = () => {
             await refetchUser(setUser);
             currentUser = useAuthStore.getState().user;
           } catch (error) {
-            tokenStorage.clearAll();
             const currentUserBeforeLogout = useAuthStore.getState().user;
             clearBusinessRegistrationDraft(currentUserBeforeLogout?.id);
             const { logout } = useAuthStore.getState();
             logout();
-            resetAndNavigate('MainTabs');
+            tokenStorage.clearAll();
+            navigateToLogin();
             return;
           }
         }
 
         if (currentUser) {
+          void registerFCMTokenWithBackend();
           const userRole = checkUserRole(currentUser.role);
           await navigateByRole(userRole, currentUser.id);
         } else {
-          resetAndNavigate('MainTabs');
+          navigateToLogin();
         }
       } catch (decodeError) {
-        tokenStorage.clearAll();
-        const currentUser = useAuthStore.getState().user;
-        clearBusinessRegistrationDraft(currentUser?.id);
-        const { logout } = useAuthStore.getState();
-        logout();
-        resetAndNavigate('MainTabs');
+        navigateToLogin();
       }
     } catch (error) {
-      tokenStorage.clearAll();
-      const currentUser = useAuthStore.getState().user;
-      clearBusinessRegistrationDraft(currentUser?.id);
-      const { logout } = useAuthStore.getState();
-      logout();
-      resetAndNavigate('MainTabs');
+      navigateToLogin();
     }
   };
 
@@ -207,7 +214,7 @@ const SplashScreen: FC = () => {
     const fallbackTimeout = setTimeout(() => {
       const accessToken = tokenStorage.getString('accessToken') as string;
       if (!accessToken) {
-        resetAndNavigate('MainTabs');
+        navigateToLogin();
       }
     }, 3000);
 
@@ -217,6 +224,9 @@ const SplashScreen: FC = () => {
   }, []);
 
   useEffect(() => {
+    if (user?.isGuest) {
+      return;
+    }
     if (user && user.role) {
       const userRole = checkUserRole(user.role);
       if (userRole) {

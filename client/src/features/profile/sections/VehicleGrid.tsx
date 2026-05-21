@@ -3,16 +3,16 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
-import React, {FC, useMemo} from 'react';
+import React, {FC} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {IUserVehicle} from '../../../types/vehicle/IVehicle';
-import {Dimensions} from 'react-native';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
-import { shouldHideVehicleNumber, maskVehicleNumber } from '@utils/privacyUtils';
+import {shouldHideVehicleNumber, maskVehicleNumber} from '@utils/privacyUtils';
 
 interface VehicleGridProps {
   vehicles: IUserVehicle[];
@@ -21,10 +21,24 @@ interface VehicleGridProps {
   onVehiclePress?: (vehicle: IUserVehicle) => void;
 }
 
-const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshing = false, onVehiclePress}) => {
-  const {colors, isDark} = useTheme();
+const HAIR = StyleSheet.hairlineWidth;
+
+function vehicleThumbnailUri(item: IUserVehicle): string | null {
+  if (item.images && item.images.length > 0) {
+    return item.images[0];
+  }
+  const legacy = (item as {image?: string}).image;
+  return legacy ?? null;
+}
+
+const VehicleGrid: FC<VehicleGridProps> = ({
+  vehicles,
+  loading = false,
+  onVehiclePress,
+}) => {
+  const {colors} = useTheme();
   const screenWidth = Dimensions.get('window').width;
-  const itemSize = (screenWidth - 40 - 12) / 3; // Accounting for container padding and gaps
+  const colW = screenWidth / 3;
 
   const styles = StyleSheet.create({
     container: {
@@ -33,22 +47,19 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
     grid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      paddingHorizontal: 16,
-      paddingBottom: 20,
+      width: screenWidth,
     },
     vehicleItem: {
-      width: itemSize,
-      height: itemSize,
+      width: colW,
+      aspectRatio: 1,
       backgroundColor: colors.cardBackground,
-      borderRadius: 12,
       overflow: 'hidden',
-      marginBottom: 6,
-      marginRight: 6,
-      shadowColor: colors.black,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
+      borderRightWidth: HAIR,
+      borderBottomWidth: HAIR,
+      borderColor: colors.border,
+    },
+    vehicleItemLastCol: {
+      borderRightWidth: 0,
     },
     vehicleImage: {
       width: '100%',
@@ -59,8 +70,9 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      padding: 6,
+      backgroundColor: 'rgba(0, 0, 0, 0.58)',
+      paddingVertical: 6,
+      paddingHorizontal: 6,
     },
     vehicleInfo: {
       flexDirection: 'row',
@@ -76,11 +88,8 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingVertical: 60,
+      paddingVertical: 56,
       paddingHorizontal: 40,
-    },
-    emptyIcon: {
-      marginBottom: 16,
     },
     emptyTitle: {
       fontSize: RFValue(16),
@@ -98,12 +107,19 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
     skeletonGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
+      width: screenWidth,
     },
     skeletonItem: {
-      width: itemSize,
-      height: itemSize,
+      width: colW,
+      aspectRatio: 1,
       backgroundColor: colors.cardBackground,
+      borderRightWidth: HAIR,
+      borderBottomWidth: HAIR,
+      borderColor: colors.border,
       position: 'relative',
+    },
+    skeletonLastCol: {
+      borderRightWidth: 0,
     },
     skeletonOverlay: {
       position: 'absolute',
@@ -116,21 +132,18 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
   });
 
   const renderVehicleItem = (item: IUserVehicle, index: number) => {
-    const firstImage = item.images && item.images.length > 0 ? item.images[0] : null;
+    const firstImage = vehicleThumbnailUri(item);
+    const isLastCol = index % 3 === 2;
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={[styles.vehicleItem, { marginRight: index % 3 === 2 ? 0 : 6 }]}
+        style={[styles.vehicleItem, isLastCol && styles.vehicleItemLastCol]}
         onPress={() => onVehiclePress?.(item)}
-        activeOpacity={0.8}>
+        activeOpacity={0.85}>
         {firstImage ? (
           <>
-            <Image
-              source={{uri: firstImage}}
-              style={styles.vehicleImage}
-              resizeMode="cover"
-            />
+            <Image source={{uri: firstImage}} style={styles.vehicleImage} resizeMode="cover" />
             <View style={styles.vehicleOverlay}>
               <View style={styles.vehicleInfo}>
                 <CustomText style={styles.vehicleText} numberOfLines={1}>
@@ -145,8 +158,8 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
             </View>
           </>
         ) : (
-          <View style={[styles.vehicleItem, {justifyContent: 'center', alignItems: 'center'}]}>
-            <CustomText style={{color: colors.textSecondary, fontSize: RFValue(12), textAlign: 'center', padding: 8}}>
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', padding: 8}}>
+            <CustomText style={{color: colors.textSecondary, fontSize: RFValue(12), textAlign: 'center'}}>
               {item.brand} {item.model}
             </CustomText>
             {item.numberPlate && !shouldHideVehicleNumber() && (
@@ -162,9 +175,9 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIcon}>
-        <CustomText style={{fontSize: RFValue(48), color: colors.textSecondary}}>🚗</CustomText>
-      </View>
+      <CustomText style={{fontSize: RFValue(48), color: colors.textSecondary, marginBottom: 12}}>
+        🚗
+      </CustomText>
       <CustomText style={styles.emptyTitle}>No Vehicles Yet</CustomText>
       <CustomText style={styles.emptyText}>
         When you add vehicles, they'll appear here.
@@ -173,17 +186,18 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
   );
 
   if (loading) {
-    // Show 9 skeleton items (3x3 grid like Instagram)
     const skeletonCount = 9;
     return (
       <View style={styles.container}>
         <View style={styles.skeletonGrid}>
           {Array.from({length: skeletonCount}, (_, index) => (
-            <View key={`skeleton-${index}`} style={styles.skeletonItem}>
+            <View
+              key={`skeleton-${index}`}
+              style={[styles.skeletonItem, index % 3 === 2 && styles.skeletonLastCol]}>
               <SkeletonLoader width="100%" height="100%" borderRadius={0} />
               <View style={styles.skeletonOverlay}>
-                <SkeletonLoader width="70%" height={12} borderRadius={4} style={{marginBottom: 4}} />
-                <SkeletonLoader width="50%" height={10} borderRadius={4} />
+                <SkeletonLoader width="70%" height={12} borderRadius={0} style={{marginBottom: 4}} />
+                <SkeletonLoader width="50%" height={10} borderRadius={0} />
               </View>
             </View>
           ))}
@@ -198,12 +212,9 @@ const VehicleGrid: FC<VehicleGridProps> = ({vehicles, loading = false, refreshin
 
   return (
     <View style={styles.container}>
-      <View style={styles.grid}>
-        {vehicles.map((item, index) => renderVehicleItem(item, index))}
-      </View>
+      <View style={styles.grid}>{vehicles.map((item, index) => renderVehicleItem(item, index))}</View>
     </View>
   );
 };
 
 export default VehicleGrid;
-

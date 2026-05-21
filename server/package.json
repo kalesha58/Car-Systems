@@ -14,7 +14,8 @@
     "seed:products": "ts-node src/scripts/seedProducts.ts",
     "seed:vehicles": "ts-node src/scripts/seedVehicleModels.ts",
     "seed:dealer-drive": "ts-node src/scripts/seedDealerDriveData.ts",
-    "seed:all-inventory": "ts-node src/scripts/seedAllInventory.ts"
+    "seed:all-inventory": "ts-node src/scripts/seedAllInventory.ts",
+    "seed:categories": "ts-node src/scripts/seedCategories.ts"
   },
   "keywords": [],
   "author": "",
@@ -32,7 +33,7 @@
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.10",
-    "cashfree-pg": "^5.1.0",
+    "razorpay": "^2.9.6",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

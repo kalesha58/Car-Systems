@@ -17,8 +17,35 @@ import {
 
 const STORY_DURATION_MS = 24 * 60 * 60 * 1000;
 const MAX_CAPTION = 500;
+
+/** Remove expired stories and their view rows from the database (24h window is enforced by expiresAt). */
+export const pruneExpiredStories = async (): Promise<void> => {
+  const now = new Date();
+  const expired = await Story.find({ expiresAt: { $lte: now } }).select('_id').lean();
+  if (!expired.length) {
+    return;
+  }
+  const idStrings = expired.map((d) => String((d as { _id: unknown })._id));
+  await StoryView.deleteMany({ storyId: { $in: idStrings } });
+  await Story.deleteMany({ _id: { $in: expired.map((d) => (d as { _id: unknown })._id) } });
+  logger.info(`Pruned ${idStrings.length} expired stor(ies) from database`);
+};
+const MAX_TAGS = 8;
+const MAX_TAG_LEN = 24;
 const DEFAULT_VIEWERS_PAGE = 1;
 const DEFAULT_VIEWERS_LIMIT = 50;
+
+const normalizeStoryTags = (raw: unknown): string[] | undefined => {
+  if (!Array.isArray(raw)) return undefined;
+  const out: string[] = [];
+  for (const x of raw) {
+    if (typeof x !== 'string') continue;
+    const t = x.trim().replace(/^#+/, '').slice(0, MAX_TAG_LEN);
+    if (t.length > 0) out.push(t);
+  }
+  const uniq = [...new Set(out)].slice(0, MAX_TAGS);
+  return uniq.length > 0 ? uniq : undefined;
+};
 
 const storyDocToIStory = (doc: IStoryDocument | Record<string, unknown>): IStory => {
   const d = doc as IStoryDocument & { _id: { toString: () => string } };
@@ -28,6 +55,7 @@ const storyDocToIStory = (doc: IStoryDocument | Record<string, unknown>): IStory
     type: it.type,
     mediaUrl: it.mediaUrl,
     caption: it.caption,
+    tags: Array.isArray(it.tags) && it.tags.length > 0 ? [...it.tags] : undefined,
     sourcePostId: it.sourcePostId,
     createdAt: (it.createdAt instanceof Date ? it.createdAt : new Date(it.createdAt as any)).toISOString(),
   }));
@@ -44,6 +72,7 @@ const storyDocToIStory = (doc: IStoryDocument | Record<string, unknown>): IStory
 };
 
 export const getStoryFeed = async (currentUserId: string): Promise<IStoryFeedResponse> => {
+  await pruneExpiredStories();
   const blocked = await getBlockedUserIdsForUser(currentUserId);
   const blockedList = Array.from(blocked);
   const now = new Date();
@@ -139,6 +168,7 @@ export const getActiveStoryForUser = async (
   viewerUserId: string,
   targetUserId: string,
 ): Promise<IStoryDetailResponse> => {
+  await pruneExpiredStories();
   if (await isBlockedEitherDirection(viewerUserId, targetUserId)) {
     throw new NotFoundError('Story not found');
   }
@@ -159,7 +189,7 @@ export const getActiveStoryForUser = async (
 export const appendStoryItemFromPost = async (
   currentUserId: string,
   postId: string,
-  caption?: string,
+  opts?: { caption?: string; tags?: unknown },
 ): Promise<IStoryDetailResponse> => {
   const post = await Post.findById(postId);
   if (!post) {
@@ -183,9 +213,10 @@ export const appendStoryItemFromPost = async (
     throw new AppError('Post has no image or video for status', 400);
   }
 
-  const captionTrimmed = caption?.trim()
-    ? caption.trim().slice(0, MAX_CAPTION)
+  const captionTrimmed = opts?.caption?.trim()
+    ? opts.caption.trim().slice(0, MAX_CAPTION)
     : undefined;
+  const tagsNormalized = normalizeStoryTags(opts?.tags);
 
   const now = new Date();
   let story = await Story.findOne({
@@ -207,6 +238,7 @@ export const appendStoryItemFromPost = async (
     type,
     mediaUrl,
     caption: captionTrimmed,
+    tags: tagsNormalized ?? [],
     sourcePostId: postId,
     createdAt: new Date(),
   });

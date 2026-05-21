@@ -2,6 +2,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { mmkvStorage } from './storage';
+import { unregisterPushNotifications } from '@service/pushNotificationService';
 
 interface authStore {
     user: Record<string, any> | null;
@@ -18,7 +19,10 @@ export const useAuthStore = create<authStore>()(
             currentOrder:null,
             setCurrentOrder: (order) => set({ currentOrder: order }),
             setUser: (data) => set({ user: data }),
-            logout: () => set({ user: null, currentOrder: null })
+            logout: () => {
+                void unregisterPushNotifications();
+                set({ user: null, currentOrder: null });
+            },
         }),
         {
             name:'auth-storage',

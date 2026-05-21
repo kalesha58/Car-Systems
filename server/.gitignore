@@ -4,6 +4,10 @@ node_modules/
 # Environment variables
 .env
 
+# Firebase service account secrets (never commit)
+motonode-admin.json
+*-firebase-adminsdk*.json
+
 # Build output
 dist/
 

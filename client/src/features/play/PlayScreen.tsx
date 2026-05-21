@@ -113,7 +113,11 @@ const PlayScreen: React.FC = () => {
             navigate('CreateNewPost');
             return;
           }
-          navigate('StoryViewer', { userId: entry.userId, userName: entry.userName });
+          navigate('StoryViewer', {
+            userId: entry.userId,
+            userName: entry.userName,
+            userAvatar: entry.userAvatar,
+          });
         },
         t('play.story.loginToView'),
       );

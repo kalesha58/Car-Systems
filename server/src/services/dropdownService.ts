@@ -1,12 +1,28 @@
+import mongoose from 'mongoose';
 import { VehicleBrand } from '../models/VehicleBrand';
 import { VehicleModel } from '../models/VehicleModel';
 import { DropdownOption } from '../models/DropdownOption';
-import { Category } from '../models/Category';
+import { Category, CategoryTileGroup } from '../models/Category';
 import { logger } from '../utils/logger';
+
+type LeanCategory = {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: CategoryTileGroup;
+};
 
 export interface IDropdownOption {
   label: string;
   value: string;
+}
+
+/** Category row for storefront + forms; optional tile metadata from Mongo Category. */
+export interface IDropdownCategoryOption extends IDropdownOption {
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
 }
 
 export interface IDropdownResponse {
@@ -18,7 +34,7 @@ export interface IDropdownResponse {
   transmission: IDropdownOption[];
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
-  categories: IDropdownOption[];
+  categories: IDropdownCategoryOption[];
 }
 
 export const getDropdownOptions = async (
@@ -88,8 +104,10 @@ export const getDropdownOptions = async (
       .sort({ order: 1 })
       .lean();
 
-    // Fetch categories
-    const categories = await Category.find({ status: 'active' }).sort({ name: 1 }).lean();
+    // Fetch categories (Store tiles may include imageUrl, sortOrder, tileGroup)
+    const categories = await Category.find({ status: 'active' })
+      .sort({ sortOrder: 1, name: 1 })
+      .lean<LeanCategory[]>();
 
     // Map to IDropdownOption format
     return {
@@ -127,7 +145,10 @@ export const getDropdownOptions = async (
       })),
       categories: categories.map((category) => ({
         label: category.name,
-        value: (category._id as any).toString(),
+        value: category._id.toString(),
+        imageUrl: category.imageUrl,
+        sortOrder: category.sortOrder ?? 0,
+        tileGroup: category.tileGroup,
       })),
     };
   } catch (error) {

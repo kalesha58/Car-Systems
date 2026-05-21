@@ -5,6 +5,11 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import './src/config/i18n';
 import Navigation from '@navigation/Navigation';
 import { initializeNotifications } from '@service/notificationService';
+import {
+  setupPushMessaging,
+  registerFCMTokenWithBackend,
+  handleInitialNotificationOpen,
+} from '@service/pushNotificationService';
 import { tokenStorage } from '@state/storage';
 import { useThemeStore } from '@state/themeStore';
 import { useAuthStore } from '@state/authStore';
@@ -29,12 +34,15 @@ const App = () => {
       syncWithDeviceTheme();
     });
 
-    // Initialize notifications on app start
+    // Initialize notifications and FCM on app start
     initializeNotifications();
+    setupPushMessaging();
+    void handleInitialNotificationOpen();
 
     // Initialize socket and join notification room if user is authenticated
     const accessToken = tokenStorage.getString('accessToken');
     if (accessToken && user?.userId) {
+      void registerFCMTokenWithBackend();
       try {
         const socket = initializeSocket();
         if (socket) {
@@ -58,6 +66,7 @@ const App = () => {
       if (nextAppState === 'active') {
         const accessToken = tokenStorage.getString('accessToken');
         if (accessToken && user?.userId) {
+          void registerFCMTokenWithBackend();
           try {
             const socket = initializeSocket();
             if (socket?.connected) {

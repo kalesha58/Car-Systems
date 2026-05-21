@@ -4,11 +4,16 @@ import {appAxios} from '../../service/apiInterceptors';
 import {useAuthStore} from '../../state/authStore';
 
 export interface IPaymentAction {
-  type: 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
-  paymentIntentId: string; // Cashfree order_id
-  paymentSessionId?: string; // Cashfree payment_session_id
+  type: 'RAZORPAY_CHECKOUT' | 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
+  paymentIntentId: string;
+  keyId?: string;
   amount: number;
   currency: string;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
   deeplink?: string;
   qrCode?: string;
   expiresAt?: string;
@@ -19,8 +24,7 @@ export interface IPaymentAction {
  */
 export const initiateUPIPayment = async (paymentAction: IPaymentAction): Promise<boolean> => {
   try {
-    // For direct UPI deeplink (if needed, though Cashfree SDK handles most payment flows)
-    // Note: Cashfree SDK typically handles payment flow, but this can be used for direct UPI app integration
+    // Legacy direct UPI deeplink flow (Razorpay checkout is the primary path)
     if (paymentAction.type === 'UPI_INTENT' || paymentAction.type === 'DEEP_LINK') {
       const deeplink = paymentAction.deeplink;
       

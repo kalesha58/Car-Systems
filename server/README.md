@@ -125,8 +125,31 @@ backend/
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
 - `GREETING_NOTIFICATION_IMAGE_URL` - URL for greeting notification image (optional, has default fallback)
+- `FIREBASE_SERVICE_ACCOUNT_PATH` - Path to Firebase Admin service account JSON (e.g. `motonode-admin.json` in the `server/` folder). Alternative: `FIREBASE_SERVICE_ACCOUNT_JSON` with the full JSON string.
 
+### Razorpay (UPI / online checkout)
 
+Use **Test Mode** keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/):
 
+- `RAZORPAY_KEY_ID` - Public key (`rzp_test_...`)
+- `RAZORPAY_KEY_SECRET` - Secret key (server only)
+- `RAZORPAY_WEBHOOK_SECRET` - Webhook signing secret (configure webhook URL: `POST /api/webhooks/razorpay`)
+- `RAZORPAY_ENV` - Optional label (`test` / `live`)
+- `COD_CHARGE` - COD fee in rupees (default: `5`)
+- `PAYMENT_TIMEOUT_MINUTES` - UPI order expiry (default: `15`)
 
+### Seeding demo inventory (services, products, Store category tiles)
+
+The script `src/scripts/seedAllInventory.ts` is run as **`npm run seed:all-inventory`** from the `server/` directory.
+
+1. Ensure MongoDB is reachable (`MONGODB_URI` in `.env`).
+2. Create or pick a **dealer user** in the database and copy its `_id` as a 24-character hex string.
+3. Set **`SEED_DEALER_USER_ID`** to that id (in `.env` or in the shell), then run:
+
+```bash
+cd server
+SEED_DEALER_USER_ID='<your_dealer_user_object_id>' npm run seed:all-inventory
+```
+
+The script upserts Store home **category tiles** (with `imageUrl` / `tileGroup`) and the **Spare Parts** category, deletes existing **services** and **products** owned by that dealer id, then inserts the bundled demo catalog. Demo **products** are assigned to those tile categories (by name) so Store category taps return items—not only under Spare Parts.
 

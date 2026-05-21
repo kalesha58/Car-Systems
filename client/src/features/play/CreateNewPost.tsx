@@ -13,7 +13,7 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -21,8 +21,8 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import { Fonts, headerTopInset, MIN_TOUCH_TARGET } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
-import {uploadImagesBatch, createPost} from '@service/postService';
-import {ICreatePostRequest} from '../../types/post/IPost';
+import {uploadImagesBatch, createPost, updatePost, getPostById} from '@service/postService';
+import {ICreatePostRequest, IUpdatePostRequest} from '../../types/post/IPost';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {useToast} from '@hooks/useToast';
@@ -34,6 +34,8 @@ const MAX_TEXT_LENGTH = 5000;
 
 const CreateNewPost: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const editPostId = (route.params as {postId?: string} | undefined)?.postId;
   const {colors, isDark} = useTheme();
   const {showSuccess, showError} = useToast();
   const {user} = useAuthStore();
@@ -46,6 +48,58 @@ const CreateNewPost: React.FC = () => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isOptionsExpanded, setIsOptionsExpanded] = useState(true);
+  const [isLoadingPost, setIsLoadingPost] = useState(!!editPostId);
+
+  useEffect(() => {
+    if (!editPostId) {
+      setIsLoadingPost(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setIsLoadingPost(true);
+      try {
+        const res = await getPostById(editPostId);
+        if (cancelled) {
+          return;
+        }
+        const p = res?.Response;
+        if (p && typeof p.id === 'string') {
+          setText(p.text || '');
+          setImageUris(p.images && p.images.length > 0 ? [...p.images] : []);
+          if (p.location) {
+            const addr = p.location.address || '';
+            setLocation({
+              latitude: p.location.latitude,
+              longitude: p.location.longitude,
+              address: addr,
+              formattedAddress: addr,
+            });
+          } else {
+            setLocation(null);
+          }
+        } else {
+          showError('Could not load this post.');
+          navigation.goBack();
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const ax = err as {response?: {data?: {Response?: {ReturnMessage?: string}}}}; 
+          const msg =
+            ax?.response?.data?.Response?.ReturnMessage ||
+            (err instanceof Error ? err.message : null) ||
+            'Could not load this post.';
+          showError(msg);
+          navigation.goBack();
+        }
+      } finally {
+        setIsLoadingPost(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editPostId, navigation, showError]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', () => {
@@ -363,23 +417,38 @@ const CreateNewPost: React.FC = () => {
         setIsUploadingImages(false);
       }
 
+      const locationPayload = location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: location.address,
+          }
+        : undefined;
+
+      if (editPostId) {
+        const updateData: IUpdatePostRequest = {
+          text: text.trim(),
+          images: uploadedImageUrls,
+          ...(locationPayload !== undefined ? {location: locationPayload} : {}),
+        };
+        await updatePost(editPostId, updateData);
+        setIsLoading(false);
+        showSuccess('Post updated');
+        setTimeout(() => navigation.goBack(), 600);
+        return;
+      }
+
       const postData: ICreatePostRequest = {
         text: text.trim(),
         images: uploadedImageUrls,
-        location: location
-          ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-              address: location.address,
-            }
-          : undefined,
+        location: locationPayload,
       };
 
       await createPost(postData);
       setIsLoading(false);
-      
+
       showSuccess('Post created successfully');
-      
+
       setTimeout(() => {
         (navigation as any).navigate('MainTabs', {
           screen: 'Play',
@@ -389,7 +458,10 @@ const CreateNewPost: React.FC = () => {
     } catch (error: any) {
       setIsLoading(false);
       setIsUploadingImages(false);
-      showError(error?.message || 'Failed to create post. Please try again.');
+      const fallback = editPostId
+        ? 'Failed to update post. Please try again.'
+        : 'Failed to create post. Please try again.';
+      showError(error?.message || fallback);
     }
   };
 
@@ -426,17 +498,19 @@ const CreateNewPost: React.FC = () => {
             }}>
             <Icon name="close" size={RFValue(20)} color={colors.white} />
           </TouchableOpacity>
-          <CustomText style={[styles.headerCenterTitle, {color: colors.white, fontSize: RFValue(14)}]}>Create Post</CustomText>
+          <CustomText style={[styles.headerCenterTitle, {color: colors.white, fontSize: RFValue(14)}]}>
+            {editPostId ? 'Edit post' : 'Create Post'}
+          </CustomText>
           <TouchableOpacity
             style={[styles.postButton, !isFormValid && styles.postButtonDisabled]}
             onPress={handleSubmit}
-            disabled={!isFormValid}
+            disabled={!isFormValid || isLoadingPost}
             activeOpacity={0.8}>
             {isSubmitting ? (
               <ActivityIndicator size="small" color={colors.secondary} />
             ) : (
               <CustomText style={[styles.postButtonText, !isFormValid && styles.postButtonTextDisabled]}>
-                Post
+                {editPostId ? 'Save' : 'Post'}
               </CustomText>
             )}
           </TouchableOpacity>
@@ -444,6 +518,11 @@ const CreateNewPost: React.FC = () => {
       </View>
 
       <View style={styles.contentContainer}>
+        {isLoadingPost ? (
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 48}}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+          </View>
+        ) : (
         <ScrollView 
           style={{ flex: 1 }} 
           contentContainerStyle={styles.content}
@@ -504,10 +583,11 @@ const CreateNewPost: React.FC = () => {
               </View>
             )}
         </ScrollView>
+        )}
       </View>
 
       <View style={styles.bottomTray}>
-        {!isKeyboardVisible && isOptionsExpanded && (
+        {!isLoadingPost && !isKeyboardVisible && isOptionsExpanded && (
           <>
             <View style={styles.dragHandle} />
             <CustomText style={styles.trayHeader}>Add to your post</CustomText>
@@ -531,7 +611,7 @@ const CreateNewPost: React.FC = () => {
           </>
         )}
 
-        {(isKeyboardVisible || !isOptionsExpanded) && (
+        {!isLoadingPost && (isKeyboardVisible || !isOptionsExpanded) && (
           <View style={styles.compactTray}>
             <View style={styles.compactIcons}>
               {optionItems.map(item => (

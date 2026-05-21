@@ -40,7 +40,7 @@ We collect and process the following types of data:
 
 ### 2.3 Information from third parties
 
-- **Payment processing:** Our payment provider (e.g. Cashfree) may collect and process payment data in line with their privacy policy. We receive only what we need (e.g. transaction status, order identifiers).
+- **Payment processing:** Our payment provider (Razorpay) may collect and process payment data in line with their privacy policy. We receive only what we need (e.g. transaction status, order identifiers).
 - **Maps:** When you use map or location features, map providers may process location data according to their policies (e.g. Google Maps).
 
 We do not sell your personal or sensitive data to third parties.

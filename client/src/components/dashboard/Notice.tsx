@@ -4,8 +4,11 @@ import { NoticeHeight } from '@utils/Scaling'
 import CustomText from '@components/ui/CustomText'
 import { Fonts, headerTopInset } from '@utils/Constants'
 import { Defs, G, Path, Svg, Use } from 'react-native-svg'
-import { wavyData } from '@utils/dummyData'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+/** SVG path for the notice bottom wave (local to this screen). */
+const NOTICE_WAVE_PATH =
+  'M 0 2000 0 500 Q 62.5 280 125 500 t 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0   125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0 v1000 z'
 
 const Notice: FC = () => {
     const insets = useSafeAreaInsets()
@@ -33,7 +36,7 @@ const Notice: FC = () => {
                 style={styles.wave}
             >
                 <Defs>
-                    <Path id='wavepath' d={wavyData} />
+                    <Path id='wavepath' d={NOTICE_WAVE_PATH} />
                 </Defs>
                 <G>
                     <Use href="#wavepath" y="321" />
