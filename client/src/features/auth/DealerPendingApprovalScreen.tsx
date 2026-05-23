@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import CustomText from '@components/ui/CustomText';
@@ -9,6 +9,7 @@ import { useTheme } from '@hooks/useTheme';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { tokenStorage } from '@state/storage';
 import { logoutSession } from '@service/authService';
+import { processPendingLoginGreeting } from '@service/pushNotificationService';
 import {
   fetchDealerMeOnboarding,
   resolveDealerOnboardingDestination,
@@ -17,6 +18,10 @@ import {
 const DealerPendingApprovalScreen: React.FC = () => {
   const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    void processPendingLoginGreeting();
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

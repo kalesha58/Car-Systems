@@ -137,6 +137,8 @@ const AddEditProductScreen: React.FC = () => {
         maxWidth: 1600,
         maxHeight: 1600,
         includeBase64: false,
+        // Android: copy into app cache so fetch/FormData can read the file reliably
+        copyTo: 'cachesDirectory',
         selectionLimit: MAX_IMAGES - imageUris.length,
       },
       (response: ImagePickerResponse) => {

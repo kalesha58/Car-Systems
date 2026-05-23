@@ -17,6 +17,11 @@ import RazorpayService from '@services/payment/RazorpayService';
 import { verifyRazorpayPayment } from '@services/payment/paymentService';
 import { useAuthStore } from '@state/authStore';
 import { appAxios } from '@service/apiInterceptors';
+import { getOrderById } from '@service/orderService';
+import {
+  isValidRazorpayPaymentAction,
+  getInvalidPaymentActionMessage,
+} from '@utils/paymentAction';
 
 type PaymentStatusRouteParams = {
   PaymentStatus: {
@@ -30,14 +35,21 @@ const PaymentStatusScreen: React.FC = () => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const { user, setCurrentOrder } = useAuthStore();
-  const { orderId, paymentAction } = route.params;
+  const { orderId, paymentAction: routePaymentAction } = route.params;
+
+  const [checkoutAction, setCheckoutAction] = useState<IPaymentAction | null>(
+    isValidRazorpayPaymentAction(routePaymentAction) ? routePaymentAction : null,
+  );
+  const [resolvingCheckout, setResolvingCheckout] = useState(
+    !isValidRazorpayPaymentAction(routePaymentAction),
+  );
 
   const [status, setStatus] = useState<'processing' | 'success' | 'failed'>('processing');
   const [paymentStatus, setPaymentStatus] = useState<string>('pending');
   const [error, setError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
   const paymentInProgress = useRef(false);
-  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verifyAndNavigateRef = useRef(false);
 
   // Function to check payment status from server
@@ -82,6 +94,52 @@ const PaymentStatusScreen: React.FC = () => {
     setError(msg || 'Payment failed');
   };
 
+  const fetchCheckoutActionFromServer = async (): Promise<IPaymentAction | null> => {
+    try {
+      const response = await appAxios.post(`/user/orders/${orderId}/payment-action`);
+      const action = response.data?.data?.paymentAction as IPaymentAction | undefined;
+      if (isValidRazorpayPaymentAction(action)) {
+        return action;
+      }
+    } catch (fetchError) {
+      console.error('[Payment] Failed to load payment-action from server:', fetchError);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveCheckout = async () => {
+      if (isValidRazorpayPaymentAction(routePaymentAction)) {
+        setCheckoutAction(routePaymentAction);
+        setResolvingCheckout(false);
+        return;
+      }
+
+      setResolvingCheckout(true);
+      const action = await fetchCheckoutActionFromServer();
+      if (cancelled) {
+        return;
+      }
+
+      if (!action) {
+        setResolvingCheckout(false);
+        finalizeFailure(getInvalidPaymentActionMessage(routePaymentAction));
+        return;
+      }
+
+      setCheckoutAction(action);
+      setResolvingCheckout(false);
+    };
+
+    resolveCheckout();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, routePaymentAction]);
+
   // Listen for app state changes when returning from Razorpay checkout
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
@@ -113,18 +171,28 @@ const PaymentStatusScreen: React.FC = () => {
   }, [orderId, navigation, status]);
 
   useEffect(() => {
-    // Initiate Payment when screen loads
+    if (resolvingCheckout || !checkoutAction) {
+      return;
+    }
+
+    // Initiate Payment when checkout config is ready
     const startPayment = async () => {
       paymentInProgress.current = true;
       verifyAndNavigateRef.current = false;
       try {
+        if (!isValidRazorpayPaymentAction(checkoutAction)) {
+          console.error('❌ [Payment] Razorpay checkout config missing');
+          finalizeFailure(getInvalidPaymentActionMessage(checkoutAction));
+          return;
+        }
+
         console.log('🚀 [Payment] Starting Razorpay checkout', {
           orderId,
-          razorpayOrderId: paymentAction.paymentIntentId,
-          keyId: paymentAction.keyId,
-          amount: paymentAction.amount,
-          currency: paymentAction.currency,
-          type: paymentAction.type,
+          razorpayOrderId: checkoutAction.paymentIntentId,
+          keyId: checkoutAction.keyId,
+          amount: checkoutAction.amount,
+          currency: checkoutAction.currency,
+          type: checkoutAction.type,
         });
         console.log('👤 [Payment] User info:', {
           email: user?.email,
@@ -158,17 +226,11 @@ const PaymentStatusScreen: React.FC = () => {
           }
         }, 10000);
 
-        if (!paymentAction.keyId || !paymentAction.paymentIntentId) {
-          console.error('❌ [Payment] Razorpay checkout config missing');
-          finalizeFailure('Payment is not configured. Please try again.');
-          return;
-        }
+        console.log('🔑 [Payment] Razorpay Order ID:', checkoutAction.paymentIntentId);
+        console.log('💰 [Payment] Amount (paise):', checkoutAction.amount);
+        console.log('💰 [Payment] Amount (₹):', checkoutAction.amount / 100);
 
-        console.log('🔑 [Payment] Razorpay Order ID:', paymentAction.paymentIntentId);
-        console.log('💰 [Payment] Amount (paise):', paymentAction.amount);
-        console.log('💰 [Payment] Amount (₹):', paymentAction.amount / 100);
-
-        const paymentResponse = await RazorpayService.openCheckout(paymentAction);
+        const paymentResponse = await RazorpayService.openCheckout(checkoutAction);
 
         console.log('📥 [Payment] Received from Razorpay:', JSON.stringify(paymentResponse, null, 2));
 
@@ -258,7 +320,7 @@ const PaymentStatusScreen: React.FC = () => {
         fallbackTimerRef.current = null;
       }
     };
-  }, [orderId, paymentAction, navigation, user, colors.secondary]);
+  }, [orderId, checkoutAction, resolvingCheckout, navigation, user, colors.secondary]);
 
   const handleRetry = () => {
     setStatus('processing');
@@ -266,13 +328,18 @@ const PaymentStatusScreen: React.FC = () => {
     // Re-initiate payment
     const retryPayment = async () => {
       try {
-        if (!paymentAction.keyId || !paymentAction.paymentIntentId) {
-          setStatus('failed');
-          setError('Payment is not configured. Please try again.');
-          return;
+        let action = checkoutAction;
+        if (!isValidRazorpayPaymentAction(action)) {
+          action = await fetchCheckoutActionFromServer();
+          if (!action) {
+            setStatus('failed');
+            setError(getInvalidPaymentActionMessage(routePaymentAction));
+            return;
+          }
+          setCheckoutAction(action);
         }
 
-        const paymentResponse = await RazorpayService.openCheckout(paymentAction);
+        const paymentResponse = await RazorpayService.openCheckout(action);
 
         const verificationResult = await verifyRazorpayPayment(orderId, paymentResponse);
 
@@ -337,9 +404,9 @@ const PaymentStatusScreen: React.FC = () => {
               Please complete the payment
             </CustomText>
             <CustomText variant="h9" style={styles.amount}>
-              Amount: ₹{paymentAction.amount / 100}
+              Amount: ₹{(checkoutAction?.amount ?? routePaymentAction.amount) / 100}
             </CustomText>
-            {paymentAction.keyId && RazorpayService.isTestMode(paymentAction.keyId) && (
+            {checkoutAction?.keyId && RazorpayService.isTestMode(checkoutAction.keyId) && (
               <View style={[styles.testHintBox, { borderColor: colors.secondary }]}>
                 <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{ textAlign: 'center' }}>
                   Test mode

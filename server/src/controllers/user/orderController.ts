@@ -11,6 +11,7 @@ import {
   getUserOrderById,
   cancelUserOrder,
   requestReturn,
+  getPaymentActionForUserOrder,
 } from '../../services/user/orderService';
 import { verifyPayment } from '../../services/paymentService';
 
@@ -504,6 +505,39 @@ export const getOrderStatusController = async (
           paymentIntentId: (order as any).paymentIntentId,
         },
       },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Get or regenerate Razorpay checkout config for a pending UPI order
+ */
+export const getPaymentActionController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const orderId = req.params.id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        Response: {
+          ReturnMessage: 'Unauthorized',
+        },
+      });
+      return;
+    }
+
+    const paymentAction = await getPaymentActionForUserOrder(orderId, userId);
+
+    res.status(200).json({
+      success: true,
+      data: { paymentAction },
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

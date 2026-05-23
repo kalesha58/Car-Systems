@@ -23,10 +23,11 @@ import {createOrder} from '@service/orderService';
 import {ICreateOrderRequest, IShippingAddress} from '../../types/order/IOrder';
 import {navigate} from '@utils/NavigationUtils';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
+import {syncCurrentOrderBeforeCheckout} from '@utils/syncCurrentOrder';
 
 const ProductOrder = () => {
   const {getTotalPrice, cart, clearCart} = useCartStore();
-  const {user, setCurrentOrder, currentOrder} = useAuthStore();
+  const {user, setCurrentOrder} = useAuthStore();
   const totalItemPrice = getTotalPrice();
 
   const [loading, setLoading] = useState(false);
@@ -45,22 +46,13 @@ const ProductOrder = () => {
   };
 
   const handlePlaceOrder = async () => {
-    // Check if there's an active order (not delivered or cancelled)
-    if (currentOrder !== null) {
-      const orderStatus = currentOrder.status?.toUpperCase() || '';
-      const isOrderCompleted = 
-        orderStatus === 'DELIVERED' || 
-        orderStatus === 'CANCELLED_BY_USER' || 
-        orderStatus === 'CANCELLED_BY_DEALER' ||
-        orderStatus === 'REFUND_COMPLETED';
-      
-      if (!isOrderCompleted) {
-        Alert.alert('Order in Progress', 'Please wait for your current order to be delivered before placing a new order.');
-        return;
-      } else {
-        // Clear completed order to allow new order
-        setCurrentOrder(null);
-      }
+    const {canPlaceNewOrder} = await syncCurrentOrderBeforeCheckout();
+    if (!canPlaceNewOrder) {
+      Alert.alert(
+        'Order in Progress',
+        'Please wait for your current order to be delivered before placing a new order.',
+      );
+      return;
     }
 
     if (cart.length === 0) {

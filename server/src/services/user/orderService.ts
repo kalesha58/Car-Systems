@@ -11,6 +11,10 @@ import {
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
 import { sendPushNotification, createNotification } from '../notificationService';
+import { getRazorpayKeyId, isRazorpayEnabled } from '../../config/razorpay';
+import { createPaymentIntent } from '../payment/gatewayService';
+
+const RAZORPAY_ORDER_ID_PREFIX = 'order_';
 
 export interface IPaymentAction {
   type: 'RAZORPAY_CHECKOUT' | 'UPI_INTENT' | 'DEEP_LINK' | 'QR';
@@ -27,6 +31,149 @@ export interface IPaymentAction {
   qrCode?: string;
   expiresAt?: string;
 }
+
+type PaymentPrefillUser = {
+  name?: string;
+  email?: string;
+  phone?: string;
+};
+
+/**
+ * Build Razorpay checkout payload for mobile clients (public key + order id).
+ */
+export const buildRazorpayPaymentAction = (
+  paymentIntent: { order_id: string; amount: number; currency?: string },
+  user: PaymentPrefillUser,
+  expiresAt?: Date,
+): IPaymentAction => {
+  if (!isRazorpayEnabled()) {
+    throw new AppError(
+      'Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET on the server.',
+      503,
+    );
+  }
+
+  const keyId = getRazorpayKeyId();
+  if (!keyId.startsWith('rzp_')) {
+    throw new AppError('Razorpay public key is missing or invalid on the server.', 503);
+  }
+
+  if (!paymentIntent.order_id?.startsWith(RAZORPAY_ORDER_ID_PREFIX)) {
+    throw new AppError('Failed to create a valid Razorpay payment session.', 500);
+  }
+
+  return {
+    type: 'RAZORPAY_CHECKOUT',
+    paymentIntentId: paymentIntent.order_id,
+    keyId,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency || 'INR',
+    expiresAt: expiresAt?.toISOString(),
+    prefill: {
+      name: user.name,
+      email: user.email,
+      contact: user.phone,
+    },
+  };
+};
+
+export const assertRazorpayPaymentAction = (action: IPaymentAction): void => {
+  if (action.type !== 'RAZORPAY_CHECKOUT') {
+    throw new AppError(
+      'Payment API returned a legacy format. Redeploy the server with Razorpay enabled.',
+      503,
+    );
+  }
+  if (!action.keyId?.startsWith('rzp_')) {
+    throw new AppError('Razorpay public key is missing in payment response.', 503);
+  }
+  if (!action.paymentIntentId?.startsWith(RAZORPAY_ORDER_ID_PREFIX)) {
+    throw new AppError('Invalid Razorpay order id in payment response.', 500);
+  }
+};
+
+/**
+ * Resolve checkout config for a pending UPI order (retry / legacy Cashfree ids).
+ */
+export const getPaymentActionForUserOrder = async (
+  orderId: string,
+  userId: string,
+): Promise<IPaymentAction> => {
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new NotFoundError('Order not found');
+  }
+
+  if (order.userId !== userId) {
+    throw new AppError('Unauthorized to access this order', 403);
+  }
+
+  if (order.paymentMethod !== 'upi') {
+    throw new AppError('Payment action is only available for UPI orders', 400);
+  }
+
+  if (order.status !== 'PENDING_PAYMENT') {
+    throw new AppError(
+      `Cannot start payment for order in status: ${order.status}`,
+      400,
+    );
+  }
+
+  const user = await SignUp.findById(userId);
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  let paymentIntent: { order_id: string; amount: number; currency?: string };
+
+  if (order.paymentIntentId?.startsWith(RAZORPAY_ORDER_ID_PREFIX)) {
+    paymentIntent = {
+      order_id: order.paymentIntentId,
+      amount: Math.round(order.totalAmount * 100),
+      currency: 'INR',
+    };
+  } else {
+    const amountInPaise = Math.round(order.totalAmount * 100);
+    const created = await createPaymentIntent({
+      orderId,
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: order.orderNumber,
+      notes: {
+        orderNumber: order.orderNumber,
+        dealerId: order.dealerId || '',
+        mongoOrderId: orderId,
+        regenerated: 'true',
+      },
+    });
+
+    order.paymentIntentId = created.order_id;
+    const expiresAt = new Date();
+    const paymentTimeoutMinutes = parseInt(process.env.PAYMENT_TIMEOUT_MINUTES || '15', 10);
+    expiresAt.setMinutes(expiresAt.getMinutes() + paymentTimeoutMinutes);
+    order.expiresAt = expiresAt;
+
+    order.timeline.push({
+      status: 'PENDING_PAYMENT',
+      timestamp: new Date(),
+      notes: `Razorpay order regenerated: ${created.order_id}`,
+      actor: 'system',
+      actorId: 'system',
+    });
+
+    await order.save();
+    paymentIntent = created;
+  }
+
+  const action = buildRazorpayPaymentAction(
+    paymentIntent,
+    user,
+    order.expiresAt,
+  );
+  assertRazorpayPaymentAction(action);
+  return action;
+};
 
 export interface IUserOrder {
   id: string;
@@ -362,21 +509,12 @@ export const createUserOrder = async (
           data.dealerId,
         );
 
-        const { getRazorpayKeyId } = await import('../../config/razorpay');
-
-        paymentAction = {
-          type: 'RAZORPAY_CHECKOUT',
-          paymentIntentId: paymentIntent.order_id,
-          keyId: getRazorpayKeyId(),
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency || 'INR',
-          expiresAt: updatedOrder.expiresAt?.toISOString(),
-          prefill: {
-            name: user.name,
-            email: user.email,
-            contact: user.phone,
-          },
-        };
+        paymentAction = buildRazorpayPaymentAction(
+          paymentIntent,
+          user,
+          updatedOrder.expiresAt,
+        );
+        assertRazorpayPaymentAction(paymentAction);
 
         const refreshedOrder = await Order.findById(orderId);
         if (refreshedOrder) {

@@ -13,8 +13,12 @@ import '../config/env';
 import { connectDatabase } from '../config/database';
 import { Product } from '../models/Product';
 import { Service } from '../models/Service';
-import { Category } from '../models/Category';
 import { logger } from '../utils/logger';
+import {
+  buildStoreCategoryIdMap,
+  resolveProductCategoryId,
+  upsertStoreCategories,
+} from '../data/storeCategories';
 import mongoose from 'mongoose';
 
 const DEALER_ID = process.env.SEED_DEALER_USER_ID?.trim();
@@ -30,107 +34,6 @@ if (!mongoose.Types.ObjectId.isValid(DEALER_ID)) {
   logger.error('SEED_DEALER_USER_ID must be a valid 24-character Mongo ObjectId hex string.');
   process.exit(1);
 }
-
-/** Store home tiles: must match client filters by tileGroup */
-const STORE_TILE_CATEGORIES: Array<{
-  name: string;
-  description: string;
-  imageUrl: string;
-  sortOrder: number;
-  tileGroup: 'products' | 'vehicles' | 'services';
-}> = [
-  {
-    name: 'Engine Oil & Lubricants',
-    description: 'Engine oils and lubricants',
-    imageUrl: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 1,
-    tileGroup: 'products',
-  },
-  {
-    name: 'Car Care & Maintenance',
-    description: 'Car care products',
-    imageUrl: 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 2,
-    tileGroup: 'products',
-  },
-  {
-    name: 'Tires & Wheels',
-    description: 'Tyres and wheels',
-    imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 3,
-    tileGroup: 'products',
-  },
-  {
-    name: 'Brakes & Suspension',
-    description: 'Braking and suspension parts',
-    imageUrl: 'https://images.unsplash.com/photo-1625047509248-ec889cbff17f?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 4,
-    tileGroup: 'products',
-  },
-  {
-    name: 'Interior Accessories',
-    description: 'Interior accessories',
-    imageUrl: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 11,
-    tileGroup: 'vehicles',
-  },
-  {
-    name: 'Lighting & Electrical',
-    description: 'Lights and electrics',
-    imageUrl: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 12,
-    tileGroup: 'vehicles',
-  },
-  {
-    name: 'Filters & Belts',
-    description: 'Filters and belts',
-    imageUrl: 'https://images.unsplash.com/photo-1635322966219-b75ed372eb01?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 13,
-    tileGroup: 'vehicles',
-  },
-  {
-    name: 'Batteries & Chargers',
-    description: 'Batteries and chargers',
-    imageUrl: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 14,
-    tileGroup: 'vehicles',
-  },
-  {
-    name: 'Performance Parts',
-    description: 'Performance upgrades',
-    imageUrl: 'https://images.unsplash.com/photo-1486496146582-9ffcd0b2b2b7?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 15,
-    tileGroup: 'vehicles',
-  },
-  {
-    name: 'Workshop Tools',
-    description: 'Tools and equipment',
-    imageUrl: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 21,
-    tileGroup: 'services',
-  },
-  {
-    name: 'Detailing & PPF',
-    description: 'Detailing and paint protection',
-    imageUrl: 'https://images.unsplash.com/photo-1630968319508-626a299664b9?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 22,
-    tileGroup: 'services',
-  },
-  {
-    name: 'Wash & Valeting',
-    description: 'Car wash packages',
-    imageUrl: 'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 23,
-    tileGroup: 'services',
-  },
-  {
-    name: 'Roadside & Tyre Care',
-    description: 'Tyre and roadside services',
-    imageUrl: 'https://images.unsplash.com/photo-1544133782-b6210f639347?q=80&w=400&auto=format&fit=crop',
-    sortOrder: 24,
-    tileGroup: 'services',
-  },
-];
 
 const SERVICES_DATA = [
   {
@@ -273,7 +176,7 @@ const SERVICES_DATA = [
   },
 ];
 
-/** Store tile category name (must match STORE_TILE_CATEGORIES[].name) for Product.categoryId */
+/** Store tile category name (must match storeCategories.ts) for Product.categoryId */
 type ProductSeed = {
   storeCategoryName: string;
   name: string;
@@ -395,52 +298,10 @@ const seedAllInventory = async () => {
     await connectDatabase();
     logger.info('Database connected');
 
-    for (const row of STORE_TILE_CATEGORIES) {
-      await Category.findOneAndUpdate(
-        { name: row.name },
-        {
-          $set: {
-            name: row.name,
-            description: row.description,
-            status: 'active',
-            imageUrl: row.imageUrl,
-            sortOrder: row.sortOrder,
-            tileGroup: row.tileGroup,
-          },
-        },
-        { upsert: true, new: true },
-      );
-    }
-    logger.info('Upserted %s store tile categories', STORE_TILE_CATEGORIES.length);
+    const { tileCount } = await upsertStoreCategories({ setTileImageUrls: true });
+    logger.info('Upserted %s store tile categories (+ Spare Parts)', tileCount);
 
-    let sparePartsCat = await Category.findOne({ name: 'Spare Parts' });
-    if (!sparePartsCat) {
-      sparePartsCat = new Category({
-        name: 'Spare Parts',
-        description: 'Automotive replacement components and consumables',
-        status: 'active',
-        sortOrder: 100,
-      });
-      await sparePartsCat.save();
-      logger.info('Created "Spare Parts" category for product FK');
-    } else if (!sparePartsCat.description) {
-      sparePartsCat.description = 'Automotive replacement components and consumables';
-      sparePartsCat.sortOrder = 100;
-      await sparePartsCat.save();
-    }
-    const sparePartsId = (sparePartsCat._id as mongoose.Types.ObjectId).toString();
-
-    const categoryIdByTileName = new Map<string, string>();
-    for (const row of STORE_TILE_CATEGORIES) {
-      const doc = await Category.findOne({ name: row.name });
-      if (doc) {
-        categoryIdByTileName.set(row.name, (doc._id as mongoose.Types.ObjectId).toString());
-      }
-    }
-
-    const resolveProductCategoryId = (storeCategoryName: string): string => {
-      return categoryIdByTileName.get(storeCategoryName) ?? sparePartsId;
-    };
+    const categoryIdByTileName = await buildStoreCategoryIdMap();
 
     logger.info('Cleaning up old demo services/products for this dealer...');
     await Service.deleteMany({ dealerId: DEALER_ID });
@@ -462,7 +323,7 @@ const seedAllInventory = async () => {
       return {
         ...productFields,
         userId: DEALER_ID,
-        categoryId: resolveProductCategoryId(storeCategoryName),
+        categoryId: resolveProductCategoryId(storeCategoryName, categoryIdByTileName),
         status: 'active' as const,
       };
     });

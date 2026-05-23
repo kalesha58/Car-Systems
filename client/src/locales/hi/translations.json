@@ -116,7 +116,19 @@
     "emptyCart": "आपकी कार्ट खाली है",
     "addItems": "शुरू करने के लिए आइटम जोड़ें",
     "placeOrder": "ऑर्डर करें",
-    "total": "कुल"
+    "total": "कुल",
+    "selectAddressTitle": "डिलीवरी पता आवश्यक",
+    "selectAddressMessage": "ऑर्डर देने से पहले कृपया डिलीवरी पता चुनें।",
+    "selectAddressAction": "पता चुनें",
+    "acceptTermsTitle": "नियम और शर्तें",
+    "acceptTermsMessage": "ऑर्डर देने से पहले कृपया नियम और शर्तें स्वीकार करें।",
+    "acceptTermsAction": "मैं स्वीकार करता/करती हूँ",
+    "selectPaymentTitle": "भुगतान विधि आवश्यक",
+    "selectPaymentMessage": "ऑर्डर देने से पहले कृपया भुगतान विधि (UPI या कैश ऑन डिलीवरी) चुनें।",
+    "selectPaymentAction": "ठीक है",
+    "termsAgreement": "मैं नियम और शर्तें तथा गोपनीयता नीति से सहमत हूँ",
+    "viewTerms": "नियम और शर्तें",
+    "viewPrivacy": "गोपनीयता नीति"
   },
   "address": {
     "addressType": "पता प्रकार",

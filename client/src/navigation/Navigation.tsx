@@ -1,10 +1,11 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { View, AppState, ActivityIndicator, Image, Linking } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { navigationRef, resetAndNavigate, navigate } from '@utils/NavigationUtils';
 import { resetNavigationForDealerOnboarding } from '../auth/postAuthRouting';
+import { processPendingLoginGreeting } from '@service/pushNotificationService';
 import { useAuthStore } from '@state/authStore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -102,6 +103,12 @@ const MainTabs: FC = () => {
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const cartCount = cart.reduce((sum, item) => sum + item.count, 0);
+
+  useFocusEffect(
+    useCallback(() => {
+      void processPendingLoginGreeting();
+    }, []),
+  );
 
   const getInitialLetter = (): string => {
     if (user?.name) {
@@ -245,6 +252,12 @@ const DealerTabs: FC = () => {
   const { user } = useAuthStore();
   const [businessRegistration, setBusinessRegistration] = useState<any>(null);
   const [isChecking, setIsChecking] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      void processPendingLoginGreeting();
+    }, []),
+  );
 
   const getInitialLetter = (): string => {
     if (user?.name) {

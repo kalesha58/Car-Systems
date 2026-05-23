@@ -10,6 +10,7 @@ import {FC, useEffect, useRef, useMemo} from 'react';
 import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {io, Socket} from 'socket.io-client';
 import {useTheme} from '@hooks/useTheme';
+import {isFinishedOrderStatus} from '@utils/activeOrderUtils';
 
 const withLiveStatus = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
@@ -45,7 +46,11 @@ const withLiveStatus = <P extends object>(
         const orderId = currentOrder._id || currentOrder.id;
         const data = await getOrderById(orderId);
         if (data) {
-          setCurrentOrder(data);
+          if (isFinishedOrderStatus(data.status)) {
+            setCurrentOrder(null);
+          } else {
+            setCurrentOrder(data);
+          }
         }
       } catch (error) {
         // Error handling - no fallback per rules

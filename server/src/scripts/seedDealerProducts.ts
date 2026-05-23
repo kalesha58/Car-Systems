@@ -3,21 +3,34 @@ import '../config/env';
 
 import { connectDatabase } from '../config/database';
 import { Product } from '../models/Product';
-import { Category } from '../models/Category';
 import { logger } from '../utils/logger';
+import {
+  buildStoreCategoryIdMap,
+  resolveProductCategoryId,
+  upsertStoreCategories,
+} from '../data/storeCategories';
 import mongoose from 'mongoose';
 
-const DEALER_ID = '699aacb226a1ea5cb18dac0b';
+const DEALER_ID = process.env.SEED_DEALER_USER_ID?.trim();
+
+if (!DEALER_ID) {
+  logger.error(
+    'Missing SEED_DEALER_USER_ID. Set it to your dealer user ObjectId, then re-run.',
+  );
+  process.exit(1);
+}
+
+if (!mongoose.Types.ObjectId.isValid(DEALER_ID)) {
+  logger.error('SEED_DEALER_USER_ID must be a valid 24-character Mongo ObjectId hex string.');
+  process.exit(1);
+}
 
 /**
- * Data for seeding categories and products with high-quality, verified working images
+ * Demo products grouped by canonical store category names (see storeCategories.ts).
  */
 const categoriesAndProducts = [
   {
-    category: {
-      name: 'Car Care',
-      description: 'Premium cleaning and maintenance products for your vehicle',
-    },
+    storeCategoryName: 'Car Care & Maintenance',
     products: [
       {
         name: 'Aurora Gold Carnauba Wax',
@@ -25,13 +38,14 @@ const categoriesAndProducts = [
         price: 2450,
         stock: 85,
         images: ['https://images.unsplash.com/photo-1630968319508-626a299664b9?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Luxury automotive wax featuring Grade-1 Carnauba for a deep, wet-look shine and long-lasting protection.',
+        description:
+          'Luxury automotive wax featuring Grade-1 Carnauba for a deep, wet-look shine and long-lasting protection.',
         vehicleType: 'Car',
         tags: ['car-care', 'wax', 'premium', 'shine'],
         specifications: {
-          'Material': 'Grade-1 Carnauba',
-          'Volume': '200g',
-          'Durability': 'Up to 6 months',
+          Material: 'Grade-1 Carnauba',
+          Volume: '200g',
+          Durability: 'Up to 6 months',
         },
       },
       {
@@ -40,22 +54,20 @@ const categoriesAndProducts = [
         price: 8500,
         stock: 30,
         images: ['https://images.unsplash.com/photo-1711513503808-53380d724182?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Professional-grade 9H ceramic coating providing extreme hydrophobicity and chemical resistance.',
+        description:
+          'Professional-grade 9H ceramic coating providing extreme hydrophobicity and chemical resistance.',
         vehicleType: 'Car',
         tags: ['detailing', 'ceramic-coating', 'protection'],
         specifications: {
-          'Hardness': '9H',
-          'Volume': '50ml',
-          'Longevity': '2 Years',
+          Hardness: '9H',
+          Volume: '50ml',
+          Longevity: '2 Years',
         },
       },
     ],
   },
   {
-    category: {
-      name: 'Interior Accessories',
-      description: 'Enhance your driving comfort and interior aesthetics',
-    },
+    storeCategoryName: 'Interior Accessories',
     products: [
       {
         name: 'Heritage Tan Diamond Floor Mats',
@@ -63,13 +75,14 @@ const categoriesAndProducts = [
         price: 4800,
         stock: 45,
         images: ['https://images.unsplash.com/photo-1761846786526-706cf7015afb?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Custom-fit 5D diamond-stitched floor mats in premium synthetic tan leather for a sophisticated look.',
+        description:
+          'Custom-fit 5D diamond-stitched floor mats in premium synthetic tan leather for a sophisticated look.',
         vehicleType: 'Car',
         tags: ['interior', 'mats', 'luxury'],
         specifications: {
-          'Material': 'PU Leather',
-          'Fit': 'Custom-fit',
-          'Waterproof': 'Yes',
+          Material: 'PU Leather',
+          Fit: 'Custom-fit',
+          Waterproof: 'Yes',
         },
       },
       {
@@ -78,23 +91,21 @@ const categoriesAndProducts = [
         price: 18500,
         stock: 20,
         images: ['https://images.unsplash.com/photo-1773065558261-792b9d779fb1?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Large 12-inch high-definition Android screen with Wireless CarPlay and Android Auto integration.',
+        description:
+          'Large 12-inch high-definition Android screen with Wireless CarPlay and Android Auto integration.',
         vehicleType: 'Car',
         tags: ['electronics', 'dashboard', 'android', 'gps'],
         specifications: {
           'Screen Size': '12-inch',
-          'OS': 'Android 12',
-          'RAM': '4GB',
-          'Storage': '64GB',
+          OS: 'Android 12',
+          RAM: '4GB',
+          Storage: '64GB',
         },
       },
     ],
   },
   {
-    category: {
-      name: 'Exterior Accessories',
-      description: 'Style and aerodynamic upgrades for your vehicle',
-    },
+    storeCategoryName: 'Performance Parts',
     products: [
       {
         name: 'Gloss Carbon Fiber Front Grille',
@@ -102,22 +113,20 @@ const categoriesAndProducts = [
         price: 7200,
         stock: 15,
         images: ['https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Authentic 3K twill weave carbon fiber front grille with UV-resistant high gloss clear coat.',
+        description:
+          'Authentic 3K twill weave carbon fiber front grille with UV-resistant high gloss clear coat.',
         vehicleType: 'Car',
         tags: ['exterior', 'carbon-fiber', 'sport', 'aerodynamic'],
         specifications: {
-          'Material': 'Carbon Fiber',
-          'Finish': 'Glossy',
-          'Weave': '3K Twill',
+          Material: 'Carbon Fiber',
+          Finish: 'Glossy',
+          Weave: '3K Twill',
         },
       },
     ],
   },
   {
-    category: {
-      name: 'Spare Parts',
-      description: 'Essential replacement parts for vehicle reliability',
-    },
+    storeCategoryName: 'Spare Parts',
     products: [
       {
         name: 'Iridium Performance Spark Plugs',
@@ -125,22 +134,21 @@ const categoriesAndProducts = [
         price: 3200,
         stock: 120,
         images: ['https://images.unsplash.com/photo-1710130168142-d2ec07ed8434?q=80&w=2000&auto=format&fit=crop'],
-        description: 'High-performance iridium spark plugs designed for better ignition and fuel efficiency.',
+        description:
+          'High-performance iridium spark plugs designed for better ignition and fuel efficiency.',
         vehicleType: 'Car',
         tags: ['engine', 'sparks', 'maintenance'],
         specifications: {
-          'Material': 'Iridium',
+          Material: 'Iridium',
           'Pack Size': '4 Plugs',
-          'Durability': '100,000 miles',
+          Durability: '100,000 miles',
         },
+        isSparePart: true,
       },
     ],
   },
   {
-    category: {
-      name: 'Lighting',
-      description: 'Advanced automotive lighting solutions',
-    },
+    storeCategoryName: 'Lighting & Electrical',
     products: [
       {
         name: 'UltraBeam LED Headlight Assembly',
@@ -148,22 +156,20 @@ const categoriesAndProducts = [
         price: 22000,
         stock: 10,
         images: ['https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Full LED headlight replacement with integrated DRL and sequential indicators.',
+        description:
+          'Full LED headlight replacement with integrated DRL and sequential indicators.',
         vehicleType: 'Car',
         tags: ['lighting', 'led', 'safety'],
         specifications: {
-          'Technology': 'LED',
+          Technology: 'LED',
           'Color Temp': '6000K',
-          'Brightness': '12,000 Lumens',
+          Brightness: '12,000 Lumens',
         },
       },
     ],
   },
   {
-    category: {
-      name: 'Tyres & Wheels',
-      description: 'Performance tyres and stylish alloy wheels',
-    },
+    storeCategoryName: 'Tires & Wheels',
     products: [
       {
         name: 'Stealth-9 Matte Black Alloy Rim',
@@ -171,13 +177,14 @@ const categoriesAndProducts = [
         price: 45000,
         stock: 12,
         images: ['https://images.unsplash.com/photo-1611633235555-45e252fe48c8?q=80&w=2000&auto=format&fit=crop'],
-        description: 'Lightweight 19-inch forged alloy wheels with a stealth matte black finish and multi-spoke design.',
+        description:
+          'Lightweight 19-inch forged alloy wheels with a stealth matte black finish and multi-spoke design.',
         vehicleType: 'Car',
         tags: ['wheels', 'alloy', 'custom', 'rims'],
         specifications: {
-          'Diameter': '19-inch',
-          'Finish': 'Matte Black',
-          'Material': 'Forged Aluminum',
+          Diameter: '19-inch',
+          Finish: 'Matte Black',
+          Material: 'Forged Aluminum',
           'Set Size': '4 Wheels',
         },
       },
@@ -185,64 +192,49 @@ const categoriesAndProducts = [
   },
 ];
 
-/**
- * Seed data into the database
- */
 const seedDealerProducts = async (): Promise<void> => {
   try {
-    logger.info('Starting REVISED dealer product seeding with verified images...');
+    logger.info('Starting dealer product seeding for dealerId=%s', DEALER_ID);
 
-    // Connect to database
     await connectDatabase();
     logger.info('Database connected');
 
-    // 1. DELETE existing products for this dealer to ensure a clean state
-    logger.info(`Cleaning up existing products for dealer: ${DEALER_ID}...`);
+    await upsertStoreCategories({ setTileImageUrls: true });
+    const categoryIdByName = await buildStoreCategoryIdMap();
+
+    logger.info('Cleaning up existing products for dealer: %s...', DEALER_ID);
     const deleteResult = await Product.deleteMany({ userId: DEALER_ID });
-    logger.info(`✓ Successfully deleted ${deleteResult.deletedCount} existing products.`);
+    logger.info('Deleted %d existing products', deleteResult.deletedCount);
 
     let createdProductsCount = 0;
 
     for (const item of categoriesAndProducts) {
-      // 1. Find or create category
-      let category = await Category.findOne({ name: item.category.name });
-      
-      if (!category) {
-        category = new Category({
-          name: item.category.name,
-          description: item.category.description,
-          status: 'active',
-        });
-        await category.save();
-        logger.info(`✓ Created category: ${item.category.name}`);
-      } else {
-        logger.info(`- Category exists: ${item.category.name}`);
+      const categoryId = resolveProductCategoryId(item.storeCategoryName, categoryIdByName);
+      if (!categoryId) {
+        throw new Error(`Missing category id for "${item.storeCategoryName}"`);
       }
 
-      const categoryId = (category._id as any).toString();
-
-      // 2. Create products for this category
       for (const productData of item.products) {
+        const { isSparePart, ...fields } = productData as typeof productData & {
+          isSparePart?: boolean;
+        };
         const product = new Product({
-          ...productData,
-          categoryId: categoryId,
+          ...fields,
+          categoryId,
           userId: DEALER_ID,
           status: 'active',
+          ...(isSparePart !== undefined ? { isSparePart } : {}),
         });
 
         await product.save();
-        logger.info(`  ✓ Created product: ${productData.name}`);
+        logger.info('  Created product: %s → %s', productData.name, item.storeCategoryName);
         createdProductsCount++;
       }
     }
 
-    logger.info('========================================');
-    logger.info('Revised Seeding completed successfully!');
-    logger.info(`✓ Total Created: ${createdProductsCount} premium products for dealer ${DEALER_ID}`);
-    logger.info('========================================');
-
+    logger.info('Dealer product seeding complete: %d products', createdProductsCount);
   } catch (error) {
-    logger.error('Error in revised seeding:', error);
+    logger.error('Error in dealer product seeding:', error);
     throw error;
   } finally {
     await mongoose.connection.close();
@@ -251,8 +243,7 @@ const seedDealerProducts = async (): Promise<void> => {
   }
 };
 
-// Run the script
-seedDealerProducts().catch((error) => {
-  logger.error('Fatal error in revised seed script:', error);
+void seedDealerProducts().catch((error) => {
+  logger.error('Fatal error in dealer product seed script:', error);
   process.exit(1);
 });

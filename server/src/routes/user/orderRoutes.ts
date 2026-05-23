@@ -7,6 +7,7 @@ import {
   cancelOrderController,
   requestReturnController,
   getOrderStatusController,
+  getPaymentActionController,
 } from '../../controllers/user/orderController';
 import { authMiddleware } from '../../middleware/authMiddleware';
 import { idempotencyMiddleware } from '../../middleware/idempotencyMiddleware';
@@ -106,6 +107,17 @@ router.get('/:id/status', authMiddleware, getOrderStatusController);
  *         description: Order not found
  */
 router.post('/:id/verify-payment', authMiddleware, verifyPaymentController);
+
+/**
+ * @swagger
+ * /api/user/orders/{id}/payment-action:
+ *   post:
+ *     summary: Get Razorpay checkout config for a pending UPI order (retry / legacy sessions)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/:id/payment-action', authMiddleware, getPaymentActionController);
 
 /**
  * @swagger

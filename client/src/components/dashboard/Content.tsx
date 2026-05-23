@@ -9,50 +9,8 @@ import ContentSkeleton from './ContentSkeleton';
 import PromoOfferCards from './PromoOfferCards';
 import { useTheme } from '@hooks/useTheme';
 import { getDropdownOptions, type IDropdownCategoryOption } from '@service/dropdownService';
+import { STATIC_CATEGORY_IMAGES } from '@config/storeCategoryImages';
 import type { StoreCategoryTile } from '../../types/category/ICategoryItem';
-
-/**
- * Static fallback images bundled into the app.
- * Used when a category's imageUrl from the backend is missing or empty.
- * Keys must match the category name exactly (case-sensitive) as stored in MongoDB.
- * Includes both new seed names AND legacy DB category names as aliases.
- */
-const STATIC_CATEGORY_IMAGES: Record<string, number> = {
-  // ── NEW SEED NAMES (from seedAllInventory.ts) ─────────────────────────────
-  // Products
-  'Engine Oil & Lubricants': require('@assets/categories/products_engine_oil.png'),
-  'Car Care & Maintenance':  require('@assets/categories/products_car_care.png'),
-  'Tires & Wheels':          require('@assets/categories/products_tires_wheels.png'),
-  'Brakes & Suspension':     require('@assets/categories/products_brakes_suspension.png'),
-  // Vehicles
-  'Interior Accessories':    require('@assets/categories/vehicles_interior.png'),
-  'Lighting & Electrical':   require('@assets/categories/vehicles_lighting.png'),
-  'Filters & Belts':         require('@assets/categories/vehicles_filters_belts.png'),
-  'Batteries & Chargers':    require('@assets/categories/vehicles_batteries.png'),
-  'Performance Parts':       require('@assets/categories/vehicles_performance.png'),
-  // Services
-  'Workshop Tools':          require('@assets/categories/services_workshop_tools.png'),
-  'Detailing & PPF':         require('@assets/categories/services_detailing_ppf.png'),
-  'Wash & Valeting':         require('@assets/categories/services_wash_valeting.png'),
-  'Roadside & Tyre Care':    require('@assets/categories/services_roadside_tyre.png'),
-
-  // ── LEGACY / EXISTING DB NAMES (aliases so current DB is covered) ─────────
-  'Auto Mobiles':            require('@assets/categories/products_auto_mobiles.png'),
-  'Car Accessories':         require('@assets/categories/products_car_accessories.png'),
-  'Car Care':                require('@assets/categories/products_car_care.png'),
-  'Exterior Accessories':    require('@assets/categories/products_exterior_accessories.png'),
-  'Lighting':                require('@assets/categories/vehicles_lighting.png'),
-  'Oils & Lubricants':       require('@assets/categories/products_engine_oil.png'),
-  'Tyres & Wheels':          require('@assets/categories/products_tires_wheels.png'),
-  'Spare Parts':             require('@assets/categories/products_brakes_suspension.png'),
-  // Extra common aliases
-  'Car Service':             require('@assets/categories/products_car_care.png'),
-  'Bike Service':            require('@assets/categories/products_auto_mobiles.png'),
-  'Vehicle Wash':            require('@assets/categories/services_wash_valeting.png'),
-  'Tire Service':            require('@assets/categories/products_tires_wheels.png'),
-  'Battery Service':         require('@assets/categories/vehicles_batteries.png'),
-  'PPF & Detailing':         require('@assets/categories/services_detailing_ppf.png'),
-};
 
 const tileGroupOrder = (a: IDropdownCategoryOption, b: IDropdownCategoryOption) =>
   (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.label.localeCompare(b.label);

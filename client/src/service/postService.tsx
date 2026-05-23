@@ -1,4 +1,5 @@
 import { appAxios } from './apiInterceptors';
+import { postMultipart } from './multipartUpload';
 import { Platform } from 'react-native';
 import {
   IPostsResponse,
@@ -7,6 +8,99 @@ import {
   IUpdatePostRequest,
 } from '../types/post/IPost';
 import { IUploadImageInput, IUploadImagesResponse } from '../types/upload/IUpload';
+
+interface IPreparedLocalImage {
+  processedUri: string;
+  mimeType: string;
+  fileName: string;
+}
+
+/** Normalize local image URIs for React Native FormData (especially Android). */
+const prepareLocalImageUploadParts = (
+  imageUri: string,
+  options?: { fileNamePrefix?: string; fileName?: string; mimeType?: string },
+): IPreparedLocalImage => {
+  if (imageUri.startsWith('data:image/')) {
+    throw new Error(
+      'Base64 image format is not supported. Please select the image again from your gallery or camera.',
+    );
+  }
+
+  let processedUri = imageUri;
+  let fileExtension = 'jpg';
+  const isContentUri = imageUri.startsWith('content://');
+  const isFileUri = imageUri.startsWith('file://');
+
+  if (Platform.OS === 'ios') {
+    if (imageUri.startsWith('file://')) {
+      processedUri = imageUri;
+    } else if (imageUri.startsWith('/')) {
+      processedUri = `file://${imageUri}`;
+    } else {
+      processedUri = imageUri;
+    }
+    const uriParts = imageUri.split('.');
+    if (uriParts.length > 1) {
+      fileExtension = uriParts.pop()?.split('?')[0] || 'jpg';
+    }
+  } else if (Platform.OS === 'android') {
+    if (isContentUri) {
+      processedUri = imageUri;
+      fileExtension = 'jpg';
+    } else if (isFileUri) {
+      processedUri = imageUri;
+      const uriParts = imageUri.split('.');
+      if (uriParts.length > 1) {
+        const ext = uriParts.pop()?.split('?')[0];
+        if (ext && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext.toLowerCase())) {
+          fileExtension = ext.toLowerCase();
+        }
+      }
+    } else if (imageUri.startsWith('/')) {
+      processedUri = `file://${imageUri}`;
+      fileExtension = 'jpg';
+    } else {
+      processedUri = imageUri;
+      fileExtension = 'jpg';
+    }
+  }
+
+  const mimeType =
+    options?.mimeType ??
+    (fileExtension === 'png'
+      ? 'image/png'
+      : fileExtension === 'jpeg' || fileExtension === 'jpg'
+        ? 'image/jpeg'
+        : fileExtension === 'gif'
+          ? 'image/gif'
+          : fileExtension === 'webp'
+            ? 'image/webp'
+            : 'image/jpeg');
+
+  const prefix = options?.fileNamePrefix ?? 'image';
+  const fileName =
+    options?.fileName ??
+    `${prefix}_${Date.now()}.${fileExtension === 'jpeg' ? 'jpg' : fileExtension}`;
+
+  return { processedUri, mimeType, fileName };
+};
+
+const isUploadNetworkError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const err = error as { response?: unknown; code?: string; message?: string };
+  if (err.response) {
+    return false;
+  }
+  return (
+    err.code === 'NETWORK_ERROR' ||
+    err.code === 'ERR_NETWORK' ||
+    err.code === 'ECONNABORTED' ||
+    err.message?.includes('Network Error') === true ||
+    err.message?.includes('timeout') === true
+  );
+};
 
 export const getPosts = async (userId?: string): Promise<IPostsResponse> => {
   try {
@@ -40,8 +134,6 @@ export const uploadDocument = async (
   fileName?: string,
 ): Promise<string> => {
   try {
-    const formData = new FormData();
-
     let detectedMimeType = mimeType || 'image/jpeg';
     let fileExtension = 'jpg';
     let processedUri = fileUri;
@@ -126,12 +218,15 @@ export const uploadDocument = async (
       finalFileName = `${finalFileName}.${fileExtension}`;
     }
 
-    // Add file to FormData - use 'file' field name for the /upload/file endpoint
-    formData.append('file', {
-      uri: processedUri,
-      type: detectedMimeType,
-      name: finalFileName,
-    } as any);
+    const buildFormData = () => {
+      const fd = new FormData();
+      fd.append('file', {
+        uri: processedUri,
+        type: detectedMimeType,
+        name: finalFileName,
+      } as any);
+      return fd;
+    };
 
     // Log upload attempt for debugging
     console.log('Attempting to upload document:', {
@@ -142,24 +237,22 @@ export const uploadDocument = async (
       fileName: finalFileName,
     });
 
-    const response = await appAxios.post('/upload/file', formData, {
-      headers: {
-        // 'Content-Type': 'multipart/form-data', // Let Axios set the correct boundary
-        'Accept': 'application/json',
-      },
-      timeout: 60000, // Increased to 60 seconds for large files
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
+    const response = await postMultipart<{
+      success?: boolean;
+      Response?: { url: string };
+    }>('/upload/file', buildFormData, { timeoutMs: 60000 });
 
-    if (response.data && response.data.success && response.data.Response?.url) {
-      return response.data.Response.url;
+    if (response && response.success && response.Response?.url) {
+      return response.Response.url;
     }
 
-    const errorMessage = response.data?.Response?.ReturnMessage ||
-      response.data?.message ||
-      response.data?.error ||
-      'Failed to upload document';
+    const failed = response as {
+      Response?: { ReturnMessage?: string };
+      message?: string;
+      error?: string;
+    };
+    const errorMessage =
+      failed?.Response?.ReturnMessage || failed?.message || failed?.error || 'Failed to upload document';
     throw new Error(errorMessage);
   } catch (error: any) {
     console.error('Upload document error:', {
@@ -244,98 +337,21 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
   let processedUri = imageUri;
 
   try {
-    // Check if it's a base64 data URI
-    const isBase64 = imageUri.startsWith('data:image/');
+    const { processedUri: normalizedUri, mimeType, fileName } = prepareLocalImageUploadParts(
+      imageUri,
+      { fileNamePrefix: 'post' },
+    );
+    processedUri = normalizedUri;
 
-    if (isBase64) {
-      // React Native FormData doesn't support base64 data URIs on Android
-      // We need to throw a helpful error message
-      throw new Error(
-        'Base64 image format is not supported. Please ensure the image picker is configured correctly. ' +
-        'Try selecting the image again or check your image picker settings.'
-      );
-    }
-
-    const formData = new FormData();
-
-    let mimeType = 'image/jpeg';
-    let fileExtension = 'jpg';
-    let fileName = `post_${Date.now()}.${fileExtension}`;
-
-    // Check if it's a content:// URI (Android content provider)
-    const isContentUri = imageUri.startsWith('content://');
-    const isFileUri = imageUri.startsWith('file://');
-
-    // Handle URI for different platforms
-    if (Platform.OS === 'ios') {
-      // iOS: Keep file:// prefix or use full path
-      // React Native FormData on iOS can handle both formats
-      if (imageUri.startsWith('file://')) {
-        processedUri = imageUri;
-      } else if (imageUri.startsWith('/')) {
-        // Absolute path - add file:// prefix
-        processedUri = `file://${imageUri}`;
-      } else {
-        // Relative path or other format - use as is
-        processedUri = imageUri;
-      }
-      // Extract file extension from URI
-      const uriParts = imageUri.split('.');
-      if (uriParts.length > 1) {
-        fileExtension = uriParts.pop()?.split('?')[0] || 'jpg';
-      }
-    } else if (Platform.OS === 'android') {
-      if (isContentUri) {
-        // Android content:// URI - keep as is, FormData can handle it
-        processedUri = imageUri;
-        // For content:// URIs, we can't easily extract extension, default to jpeg
-        fileExtension = 'jpg';
-      } else if (isFileUri) {
-        // Android file:// URI - keep file:// prefix for FormData (React Native needs it)
-        processedUri = imageUri;
-        // Try to extract file extension from URI
-        const uriParts = imageUri.split('.');
-        if (uriParts.length > 1) {
-          const ext = uriParts.pop()?.split('?')[0];
-          // Only use extension if it looks like a valid image extension
-          if (ext && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext.toLowerCase())) {
-            fileExtension = ext.toLowerCase();
-          }
-        }
-        // If no valid extension found, default to jpeg (common for Android cache files)
-      } else {
-        // Fallback: assume it's a file path
-        // React Native Android FormData REQUIRE 'file://' prefix for absolute paths
-        if (imageUri.startsWith('/')) {
-          processedUri = `file://${imageUri}`;
-        } else {
-          processedUri = imageUri;
-        }
-        fileExtension = 'jpg';
-      }
-    }
-
-    // Determine MIME type from extension
-    mimeType =
-      fileExtension === 'png'
-        ? 'image/png'
-        : fileExtension === 'jpeg' || fileExtension === 'jpg'
-          ? 'image/jpeg'
-          : fileExtension === 'gif'
-            ? 'image/gif'
-            : fileExtension === 'webp'
-              ? 'image/webp'
-              : 'image/jpeg'; // Default to jpeg
-
-    // Format file name with extension
-    fileName = `post_${Date.now()}.${fileExtension}`;
-
-    // Add image to FormData
-    formData.append('image', {
-      uri: processedUri,
-      type: mimeType,
-      name: fileName,
-    } as any);
+    const buildFormData = () => {
+      const fd = new FormData();
+      fd.append('image', {
+        uri: processedUri,
+        type: mimeType,
+        name: fileName,
+      } as any);
+      return fd;
+    };
 
     // Log upload attempt for debugging
     console.log('Attempting to upload image:', {
@@ -346,24 +362,21 @@ export const uploadImage = async (imageUri: string): Promise<string> => {
       fileName,
     });
 
-    const response = await appAxios.post('/upload/image', formData, {
-      headers: {
-        // 'Content-Type': 'multipart/form-data', // Let Axios set the correct boundary
-        'Accept': 'application/json',
-      },
-      timeout: 60000, // Increased to 60 seconds for large files
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
+    const response = await postMultipart<{
+      success?: boolean;
+      Response?: { url: string; ReturnMessage?: string };
+      message?: string;
+      error?: string;
+    }>('/upload/image', buildFormData, { timeoutMs: 60000 });
 
-    if (response.data && response.data.success && response.data.Response?.url) {
-      return response.data.Response.url;
+    if (response && response.success && response.Response?.url) {
+      return response.Response.url;
     }
 
-    // If response doesn't have the expected structure, throw error with details
-    const errorMessage = response.data?.Response?.ReturnMessage ||
-      response.data?.message ||
-      response.data?.error ||
+    const errorMessage =
+      response?.Response?.ReturnMessage ||
+      response?.message ||
+      response?.error ||
       'Failed to upload image';
     throw new Error(errorMessage);
   } catch (error: any) {
@@ -474,46 +487,60 @@ export const uploadImagesBatch = async (images: IUploadImageInput[]): Promise<st
     return remoteUrls;
   }
 
-  const formData = new FormData();
-  localImages.forEach((img, index) => {
-    const name = img.fileName ?? `vehicle_${Date.now()}_${index}.jpg`;
-    const type = img.type ?? 'image/jpeg';
-    formData.append('images', {
-      uri: img.uri,
-      name,
-      type,
-    } as unknown as Blob);
-  });
+  const uploadSequentially = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const img of localImages) {
+      urls.push(await uploadImage(img.uri));
+    }
+    return urls;
+  };
+
+  const buildBatchFormData = () => {
+    const fd = new FormData();
+    localImages.forEach((img, index) => {
+      const { processedUri, mimeType, fileName } = prepareLocalImageUploadParts(img.uri, {
+        fileNamePrefix: 'product',
+        fileName: img.fileName,
+        mimeType: img.type,
+      });
+      fd.append('images', {
+        uri: processedUri,
+        name: fileName || `product_${Date.now()}_${index}.jpg`,
+        type: mimeType,
+      } as unknown as Blob);
+    });
+    return fd;
+  };
 
   let uploadedUrls: string[];
   try {
-    const response = await appAxios.post<IUploadImagesResponse>('/upload/images', formData, {
-      timeout: UPLOAD_BATCH_TIMEOUT_MS,
-      headers: {
-        Accept: 'application/json',
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
+    const response = await postMultipart<IUploadImagesResponse>(
+      '/upload/images',
+      buildBatchFormData,
+      { timeoutMs: UPLOAD_BATCH_TIMEOUT_MS },
+    );
 
-    if (!response.data?.success || !Array.isArray(response.data.Response)) {
-      const msg = response.data?.Response && typeof response.data.Response === 'object' && 'ReturnMessage' in response.data.Response
-        ? (response.data.Response as { ReturnMessage?: string }).ReturnMessage
-        : 'Failed to upload images';
+    if (!response?.success || !Array.isArray(response.Response)) {
+      const msg =
+        response?.Response &&
+        typeof response.Response === 'object' &&
+        'ReturnMessage' in response.Response
+          ? (response.Response as { ReturnMessage?: string }).ReturnMessage
+          : 'Failed to upload images';
       throw new Error(msg ?? 'Failed to upload images');
     }
 
-    uploadedUrls = (response.data.Response as IUploadImagesResponse['Response']).map((r) => r.url);
+    uploadedUrls = response.Response.map((r) => r.url);
   } catch (batchError: unknown) {
     const status = batchError && typeof batchError === 'object' && 'response' in batchError
       ? (batchError as { response?: { status?: number } }).response?.status
       : undefined;
-    if (status === 404) {
-      uploadedUrls = [];
-      for (const img of localImages) {
-        const url = await uploadImage(img.uri);
-        uploadedUrls.push(url);
-      }
+    if (status === 404 || isUploadNetworkError(batchError)) {
+      console.warn(
+        'Batch image upload failed, falling back to single uploads:',
+        status === 404 ? 'endpoint not found' : 'network error',
+      );
+      uploadedUrls = await uploadSequentially();
     } else if (status === 413) {
       throw new Error('One or more selected images are too large to upload. Please choose smaller images and try again.');
     } else {

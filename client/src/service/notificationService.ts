@@ -1,4 +1,9 @@
-import notifee, { AndroidImportance, EventType, Event } from '@notifee/react-native';
+import notifee, {
+  AndroidImportance,
+  AndroidStyle,
+  EventType,
+  Event,
+} from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
 import { tokenStorage } from '@state/storage';
@@ -65,8 +70,14 @@ export const displayNotifeeNotification = async (
   imageUrl?: string,
 ): Promise<string | undefined> => {
   try {
+    const safeTitle = typeof title === 'string' && title.trim() ? title.trim() : 'motonode';
+    const safeBody = typeof body === 'string' && body.trim() ? body.trim() : ' ';
+
     // Create channel (Android)
     const channelId = await createNotifeeChannel();
+
+    const pictureUrl =
+      typeof imageUrl === 'string' && imageUrl.trim().length > 0 ? imageUrl.trim() : undefined;
 
     // Display notification
     const androidConfig: any = {
@@ -80,22 +91,17 @@ export const displayNotifeeNotification = async (
       vibration: true,
     };
 
-    // Add large icon if valid
-    if (imageUrl) {
-      androidConfig.largeIcon = imageUrl;
-    }
-
-    // Add image style for Android if image URL is provided
-    if (imageUrl) {
+    if (pictureUrl) {
+      androidConfig.largeIcon = pictureUrl;
       androidConfig.style = {
-        type: 1, // BigPictureStyle
-        picture: imageUrl,
+        type: AndroidStyle.BIGPICTURE,
+        picture: pictureUrl,
       };
     }
 
     const notificationId = await notifee.displayNotification({
-      title,
-      body,
+      title: safeTitle,
+      body: safeBody,
       data: data || {},
       android: androidConfig,
       ios: {

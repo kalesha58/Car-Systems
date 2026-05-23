@@ -5,7 +5,7 @@ import { useAuthStore } from '@state/authStore';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import { appAxios } from './apiInterceptors';
 import {
-  registerFCMTokenWithBackend,
+  markPendingLoginGreeting,
   unregisterPushNotifications,
 } from './pushNotificationService';
 
@@ -67,7 +67,7 @@ export const customerLogin = async (email: string, password: string): Promise<IL
       tokenStorage.set('refreshToken', token);
       const { setUser } = useAuthStore.getState();
       setUser(Response);
-      await registerFCMTokenWithBackend({ afterLogin: true });
+      markPendingLoginGreeting();
       return {
         requiresPolicyAcceptance: Boolean(responseData.requiresPolicyAcceptance),
         currentTermsVersion: responseData.currentTermsVersion,

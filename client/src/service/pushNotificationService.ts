@@ -1,6 +1,6 @@
 import firebase from '@react-native-firebase/app';
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { appAxios } from './apiInterceptors';
 import { tokenStorage } from '@state/storage';
 import { useAuthStore } from '@state/authStore';
@@ -12,6 +12,22 @@ import {
 
 let tokenRefreshUnsubscribe: (() => void) | null = null;
 let foregroundUnsubscribe: (() => void) | null = null;
+
+const PENDING_LOGIN_GREETING_KEY = 'pendingLoginGreeting';
+
+export const markPendingLoginGreeting = (): void => {
+  tokenStorage.set(PENDING_LOGIN_GREETING_KEY, '1');
+};
+
+/** Run once after login navigation lands (MainTabs / Add Vehicle / Dealer). */
+export const processPendingLoginGreeting = async (): Promise<void> => {
+  if (tokenStorage.getString(PENDING_LOGIN_GREETING_KEY) !== '1') {
+    return;
+  }
+  tokenStorage.delete(PENDING_LOGIN_GREETING_KEY);
+  tokenStorage.delete('lastGreetingShownAt');
+  await registerFCMTokenWithBackend({ afterLogin: true });
+};
 
 const logPushError = (context: string, error: unknown) => {
   const err = error as Error & { code?: string };
@@ -102,22 +118,31 @@ export const registerFCMTokenWithBackend = async (options?: {
     const greetingSent = Boolean(response.data?.Response?.greetingSent);
     console.log('[Push] FCM token registered with backend', { greetingSent });
 
-    if (options?.afterLogin && !greetingSent) {
-      tokenStorage.set('lastGreetingShownAt', String(Date.now()));
-      await displayLocalWelcomeNotification();
+    if (options?.afterLogin) {
+      await showWelcomeAfterLogin(greetingSent);
     }
     return true;
   } catch (error) {
     logPushError('registerFCMTokenWithBackend', error);
     if (options?.afterLogin) {
       try {
-        await displayLocalWelcomeNotification();
+        await showWelcomeAfterLogin(false);
       } catch (localError) {
         logPushError('displayLocalWelcomeNotification', localError);
       }
     }
     return false;
   }
+};
+
+/** Foreground login: always show Notifee welcome; FCM duplicate suppressed via lastGreetingShownAt. */
+const showWelcomeAfterLogin = async (greetingSent: boolean): Promise<void> => {
+  const isForeground = AppState.currentState === 'active';
+  if (!isForeground && greetingSent) {
+    return;
+  }
+  tokenStorage.set('lastGreetingShownAt', String(Date.now()));
+  await displayLocalWelcomeNotification();
 };
 
 const isUnauthorizedAxiosError = (error: unknown): boolean => {
@@ -142,6 +167,7 @@ export const clearFCMTokenOnBackend = async (): Promise<void> => {
 
 export const unregisterPushNotifications = async (): Promise<void> => {
   try {
+    tokenStorage.delete(PENDING_LOGIN_GREETING_KEY);
     await clearFCMTokenOnBackend();
     await messaging().deleteToken();
   } catch (error) {

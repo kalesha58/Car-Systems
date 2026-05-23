@@ -19,6 +19,15 @@ appAxios.interceptors.request.use(async config => {
     }
     // Add ngrok-skip-browser-warning header for ngrok URLs
     config.headers['ngrok-skip-browser-warning'] = 'true';
+
+    // React Native: axios must not set Content-Type on FormData (breaks multipart on Android)
+    const data = config.data;
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
+    if (isFormData && config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+    }
+
     return config;
 });
 

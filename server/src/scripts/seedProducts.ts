@@ -5,12 +5,16 @@ import { connectDatabase } from '../config/database';
 import { Product } from '../models/Product';
 import { BusinessRegistration } from '../models/BusinessRegistration';
 import { logger } from '../utils/logger';
+import {
+  resolveCategoryIdByName,
+  upsertStoreCategories,
+} from '../data/storeCategories';
 import mongoose from 'mongoose';
 
 interface ISeedProduct {
   name: string;
   brand: string;
-  categoryId: string;
+  storeCategoryName: string;
   price: number;
   originalPrice?: number;
   stock: number;
@@ -30,7 +34,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car shiner',
     brand: 'Jhonson creek',
-    categoryId: '691cc68d3caa39cc5c473e58', // Car Accessories category ID
+    storeCategoryName: 'Car Care & Maintenance',
     price: 650,
     stock: 500,
     images: [
@@ -48,7 +52,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car shiner',
     brand: 'Jhonson creek',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 650,
     stock: 500,
     images: [
@@ -65,7 +69,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Steering covers',
     brand: 'Param Industries',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Interior Accessories',
     price: 300,
     stock: 1000,
     images: [
@@ -83,7 +87,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car wax product',
     brand: 'Parchetu',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1,
     stock: 45,
     images: [
@@ -100,7 +104,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car side glass',
     brand: 'Toyota',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 2500,
     stock: 19,
     images: [
@@ -120,7 +124,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Premium Car Polish',
     brand: 'Meguiar\'s',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1200,
     originalPrice: 1500,
     stock: 250,
@@ -139,7 +143,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Lubricants',
     brand: 'Motul',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 450,
     stock: 300,
     images: [
@@ -157,7 +161,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Floor Mats',
     brand: '3D MAXpider',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 3500,
     originalPrice: 4200,
     stock: 150,
@@ -176,7 +180,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Helmet',
     brand: 'Vega',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 2500,
     originalPrice: 3200,
     stock: 80,
@@ -195,7 +199,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Air Freshener',
     brand: 'Febreze',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 150,
     stock: 500,
     images: [
@@ -213,7 +217,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Engine Oil',
     brand: 'Castrol',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 550,
     stock: 400,
     images: [
@@ -231,7 +235,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Dashboard Cover',
     brand: 'Coverking',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1800,
     stock: 120,
     images: [
@@ -249,7 +253,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Tyre',
     brand: 'MRF',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 3500,
     originalPrice: 4200,
     stock: 60,
@@ -268,7 +272,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Seat Covers',
     brand: 'AutoStyle',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 4500,
     originalPrice: 5500,
     stock: 90,
@@ -287,7 +291,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Battery',
     brand: 'Exide',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 2800,
     stock: 75,
     images: [
@@ -305,7 +309,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Wiper Blades',
     brand: 'Bosch',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 800,
     originalPrice: 1000,
     stock: 200,
@@ -324,7 +328,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Mirrors',
     brand: 'Rynox',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1200,
     stock: 180,
     images: [
@@ -342,7 +346,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Phone Mount',
     brand: 'iOttie',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1200,
     originalPrice: 1500,
     stock: 250,
@@ -361,7 +365,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Bike Gloves',
     brand: 'Rynox',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 1500,
     stock: 140,
     images: [
@@ -379,7 +383,7 @@ const seedProducts: ISeedProduct[] = [
   {
     name: 'Car Charger',
     brand: 'Anker',
-    categoryId: '691cc68d3caa39cc5c473e58',
+    storeCategoryName: 'Car Care & Maintenance',
     price: 800,
     stock: 300,
     images: [
@@ -447,6 +451,9 @@ const seedProductData = async (): Promise<void> => {
       return;
     }
 
+    await upsertStoreCategories({ setTileImageUrls: false });
+    logger.info('Store categories upserted');
+
     let createdCount = 0;
     let skippedCount = 0;
     let errorCount = 0;
@@ -468,11 +475,13 @@ const seedProductData = async (): Promise<void> => {
         // Determine status based on stock
         const status = productData.stock > 0 ? 'active' : 'out_of_stock';
 
+        const categoryId = await resolveCategoryIdByName(productData.storeCategoryName);
+
         // Create new product
         const product = new Product({
           name: productData.name,
           brand: productData.brand,
-          categoryId: productData.categoryId,
+          categoryId,
           price: productData.price,
           originalPrice: productData.originalPrice,
           stock: productData.stock,

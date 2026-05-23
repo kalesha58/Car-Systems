@@ -116,7 +116,19 @@
     "emptyCart": "Your cart is empty",
     "addItems": "Add items to get started",
     "placeOrder": "Place Order",
-    "total": "Total"
+    "total": "Total",
+    "selectAddressTitle": "Delivery address required",
+    "selectAddressMessage": "Please select a delivery address before placing your order.",
+    "selectAddressAction": "Select address",
+    "acceptTermsTitle": "Terms & conditions",
+    "acceptTermsMessage": "Please accept the terms and conditions before placing your order.",
+    "acceptTermsAction": "I accept",
+    "selectPaymentTitle": "Payment method required",
+    "selectPaymentMessage": "Please select a payment method (UPI or Cash on Delivery) before placing your order.",
+    "selectPaymentAction": "OK",
+    "termsAgreement": "I agree to the Terms & Conditions and Privacy Policy",
+    "viewTerms": "Terms & Conditions",
+    "viewPrivacy": "Privacy Policy"
   },
   "address": {
     "addressType": "Address Type",

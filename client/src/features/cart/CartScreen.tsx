@@ -8,7 +8,7 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import { Fonts } from '@utils/Constants';
@@ -27,6 +27,14 @@ import ArrowButton from '@components/ui/ArrowButton';
 import { createOrder } from '@service/orderService';
 import { appAxios } from '@service/apiInterceptors';
 import { navigate } from '@utils/NavigationUtils';
+import {
+  isValidRazorpayPaymentAction,
+  getInvalidPaymentActionMessage,
+} from '@utils/paymentAction';
+import {
+  syncCurrentOrderBeforeCheckout,
+  refreshCurrentOrderFromServer,
+} from '@utils/syncCurrentOrder';
 import { ICreateOrderRequest, IShippingAddress } from '../../types/order/IOrder';
 import { IAddress } from '../../types/address/IAddress';
 import { useTranslation } from 'react-i18next';
@@ -85,16 +93,77 @@ const CartScreen: React.FC = () => {
   const [infoModalMessage, setInfoModalMessage] = useState('');
   const [infoModalVariant, setInfoModalVariant] =
     useState<React.ComponentProps<typeof ThemedModal>['variant']>('info');
+  const [infoModalPrimaryText, setInfoModalPrimaryText] = useState('OK');
+  const infoModalPrimaryActionRef = useRef<(() => void) | undefined>(undefined);
+
+  const closeInfoModal = () => {
+    setInfoModalVisible(false);
+    infoModalPrimaryActionRef.current = undefined;
+    setInfoModalPrimaryText('OK');
+  };
 
   const showInfoModal = (
     title: string,
     message: string,
     variant: React.ComponentProps<typeof ThemedModal>['variant'] = 'info',
+    options?: { primaryText?: string; onPrimaryPress?: () => void },
   ) => {
     setInfoModalTitle(title);
     setInfoModalMessage(message);
     setInfoModalVariant(variant);
+    setInfoModalPrimaryText(options?.primaryText ?? 'OK');
+    infoModalPrimaryActionRef.current = options?.onPrimaryPress;
     setInfoModalVisible(true);
+  };
+
+  const handleInfoModalPrimary = () => {
+    if (infoModalPrimaryActionRef.current) {
+      infoModalPrimaryActionRef.current();
+      return;
+    }
+    closeInfoModal();
+  };
+
+  const showSelectDeliveryAddressModal = () => {
+    showInfoModal(
+      t('cart.selectAddressTitle'),
+      t('cart.selectAddressMessage'),
+      'warning',
+      {
+        primaryText: t('cart.selectAddressAction'),
+        onPrimaryPress: () => {
+          closeInfoModal();
+          navigate('SavedAddresses', { selectMode: true });
+        },
+      },
+    );
+  };
+
+  const showAcceptTermsModal = () => {
+    showInfoModal(
+      t('cart.acceptTermsTitle'),
+      t('cart.acceptTermsMessage'),
+      'warning',
+      {
+        primaryText: t('cart.acceptTermsAction'),
+        onPrimaryPress: () => {
+          setAcceptedTerms(true);
+          closeInfoModal();
+        },
+      },
+    );
+  };
+
+  const showSelectPaymentMethodModal = () => {
+    showInfoModal(
+      t('cart.selectPaymentTitle'),
+      t('cart.selectPaymentMessage'),
+      'warning',
+      {
+        primaryText: t('cart.selectPaymentAction'),
+        onPrimaryPress: closeInfoModal,
+      },
+    );
   };
 
   const estimatedCodCharge = selectedPaymentMethod === 'cash_on_delivery' ? 5 : 0;
@@ -195,6 +264,14 @@ const CartScreen: React.FC = () => {
     }, [route.params, navigation]),
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (currentOrder) {
+        refreshCurrentOrderFromServer();
+      }
+    }, [currentOrder]),
+  );
+
   const parseAddressToShippingAddress = (
     address: IAddress | null,
   ): IShippingAddress => {
@@ -220,24 +297,14 @@ const CartScreen: React.FC = () => {
 
   const handlePlaceOrder = async () => {
     withAuth(async () => {
-      if (currentOrder !== null) {
-        const orderStatus = currentOrder.status?.toUpperCase() || '';
-        const isOrderCompleted = 
-          orderStatus === 'DELIVERED' || 
-          orderStatus === 'CANCELLED_BY_USER' || 
-          orderStatus === 'CANCELLED_BY_DEALER' ||
-          orderStatus === 'REFUND_COMPLETED';
-        
-        if (!isOrderCompleted) {
-          showInfoModal(
-            'Order in Progress',
-            'Please wait for your current order to be delivered before placing a new order.',
-            'warning',
-          );
-          return;
-        } else {
-          setCurrentOrder(null);
-        }
+      const { canPlaceNewOrder } = await syncCurrentOrderBeforeCheckout();
+      if (!canPlaceNewOrder) {
+        showInfoModal(
+          'Order in Progress',
+          'Please wait for your current order to be delivered before placing a new order.',
+          'warning',
+        );
+        return;
       }
 
       if (cart.length === 0) {
@@ -246,7 +313,7 @@ const CartScreen: React.FC = () => {
       }
 
       if (!selectedAddress) {
-        Alert.alert('Please select a delivery address');
+        showSelectDeliveryAddressModal();
         return;
       }
 
@@ -261,12 +328,12 @@ const CartScreen: React.FC = () => {
       }));
 
       if (!selectedPaymentMethod) {
-        Alert.alert('Please select a payment method');
+        showSelectPaymentMethodModal();
         return;
       }
 
       if (!acceptedTerms) {
-        Alert.alert('Please accept the terms and conditions');
+        showAcceptTermsModal();
         return;
       }
 
@@ -301,6 +368,13 @@ const CartScreen: React.FC = () => {
         if (data !== null) {
           setCurrentOrder(data);
           if (selectedPaymentMethod === 'upi' && data.paymentAction) {
+            if (!isValidRazorpayPaymentAction(data.paymentAction)) {
+              Alert.alert(
+                'Payment unavailable',
+                getInvalidPaymentActionMessage(data.paymentAction),
+              );
+              return;
+            }
             clearCart();
             navigate('PaymentStatus', {
               orderId: data.id,
@@ -437,6 +511,29 @@ const CartScreen: React.FC = () => {
       marginRight: 8,
       minWidth: 0,
     },
+    termsContainer: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginHorizontal: 10,
+      marginTop: 4,
+      marginBottom: 15,
+      padding: 14,
+      backgroundColor: colors.cardBackground,
+      borderRadius: 15,
+      borderWidth: 1,
+      borderColor: acceptedTerms ? colors.secondary : colors.border,
+    },
+    termsTextBlock: {
+      flex: 1,
+      marginLeft: 10,
+      minWidth: 0,
+    },
+    termsLinkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      marginTop: 4,
+    },
   });
 
   if (cart.length === 0) {
@@ -483,8 +580,9 @@ const CartScreen: React.FC = () => {
         title={infoModalTitle}
         message={infoModalMessage}
         variant={infoModalVariant}
-        primaryText="OK"
-        onClose={() => setInfoModalVisible(false)}
+        primaryText={infoModalPrimaryText}
+        onPrimaryPress={handleInfoModalPrimary}
+        onClose={closeInfoModal}
       />
       <CustomHeader 
         title="Cart" 
@@ -670,6 +768,53 @@ const CartScreen: React.FC = () => {
               </View>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={styles.termsContainer}
+            onPress={() => setAcceptedTerms((prev) => !prev)}
+            activeOpacity={0.8}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: acceptedTerms }}
+            accessibilityLabel={t('cart.termsAgreement')}>
+            <IconIonicons
+              name={acceptedTerms ? 'checkbox' : 'square-outline'}
+              color={colors.secondary}
+              size={RFValue(22)}
+              style={{ marginTop: 1 }}
+            />
+            <View style={styles.termsTextBlock}>
+              <CustomText variant="h8" fontFamily={Fonts.Medium} style={{ color: colors.text }}>
+                {t('cart.termsAgreement')}
+              </CustomText>
+              <View style={styles.termsLinkRow}>
+                <TouchableOpacity
+                  onPress={() => navigate('TermsAndConditions')}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                  activeOpacity={0.7}>
+                  <CustomText
+                    variant="h9"
+                    fontFamily={Fonts.SemiBold}
+                    style={{ color: colors.secondary }}>
+                    {t('cart.viewTerms')}
+                  </CustomText>
+                </TouchableOpacity>
+                <CustomText variant="h9" style={{ color: colors.textSecondary, marginHorizontal: 6 }}>
+                  |
+                </CustomText>
+                <TouchableOpacity
+                  onPress={() => navigate('SignupPolicies', { initialTab: 'privacy' })}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                  activeOpacity={0.7}>
+                  <CustomText
+                    variant="h9"
+                    fontFamily={Fonts.SemiBold}
+                    style={{ color: colors.secondary }}>
+                    {t('cart.viewPrivacy')}
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
         </ScrollView>
         <ArrowButton
           loading={loading}

@@ -60,6 +60,7 @@ const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 import { useAuthStore } from '@state/authStore';
 import { refetchUser } from '@service/authService';
+import { processPendingLoginGreeting } from '@service/pushNotificationService';
 
 const BusinessRegistrationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -134,6 +135,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   // Debug: track remounts & params
   const screenInstanceIdRef = useRef(`BR_${Date.now()}_${Math.floor(Math.random() * 10000)}`);
   useEffect(() => {
+    void processPendingLoginGreeting();
     console.log('[BusinessRegistrationScreen] mount', {
       instanceId: screenInstanceIdRef.current,
       isEdit: !!isEdit,

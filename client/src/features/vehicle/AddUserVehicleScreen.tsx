@@ -29,6 +29,7 @@ import { resetAndNavigate } from '@utils/NavigationUtils';
 import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
 import { getDropdownOptions } from '@service/dropdownService';
 import { storage } from '@state/storage';
+import { processPendingLoginGreeting } from '@service/pushNotificationService';
 
 const MAX_IMAGES = 2;
 const MIN_IMAGES = 1;
@@ -67,6 +68,10 @@ const AddUserVehicleScreen: React.FC = () => {
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [isLoadingBrands, setIsLoadingBrands] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+
+  useEffect(() => {
+    void processPendingLoginGreeting();
+  }, []);
 
   useEffect(() => {
     const fetchBrands = async () => {

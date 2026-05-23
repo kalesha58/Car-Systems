@@ -129,27 +129,52 @@ backend/
 
 ### Razorpay (UPI / online checkout)
 
-Use **Test Mode** keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/):
+Use keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/) (test: `rzp_test_...`, live: `rzp_live_...`):
 
-- `RAZORPAY_KEY_ID` - Public key (`rzp_test_...`)
+- `RAZORPAY_KEY_ID` - Public key (sent to mobile app for checkout)
 - `RAZORPAY_KEY_SECRET` - Secret key (server only)
-- `RAZORPAY_WEBHOOK_SECRET` - Webhook signing secret (configure webhook URL: `POST /api/webhooks/razorpay`)
+- `RAZORPAY_WEBHOOK_SECRET` - Must match **Secret** in Dashboard → Webhooks (e.g. `mymotonode123`)
 - `RAZORPAY_ENV` - Optional label (`test` / `live`)
 - `COD_CHARGE` - COD fee in rupees (default: `5`)
 - `PAYMENT_TIMEOUT_MINUTES` - UPI order expiry (default: `15`)
 
-### Seeding demo inventory (services, products, Store category tiles)
+**Webhook (production):** `https://api.motonode.in/api/webhooks/razorpay`  
+Implemented in `src/index.ts` (raw body + `x-razorpay-signature` verification).
 
-The script `src/scripts/seedAllInventory.ts` is run as **`npm run seed:all-inventory`** from the `server/` directory.
+**Pre-deploy check:** `npm run verify:razorpay` — validates env vars locally.  
+**Retry checkout:** `POST /api/user/orders/:id/payment-action` — returns `RAZORPAY_CHECKOUT` for pending UPI orders (regenerates Razorpay order if the stored id is a legacy Mongo/Cashfree id).
 
-1. Ensure MongoDB is reachable (`MONGODB_URI` in `.env`).
-2. Create or pick a **dealer user** in the database and copy its `_id` as a 24-character hex string.
-3. Set **`SEED_DEALER_USER_ID`** to that id (in `.env` or in the shell), then run:
+See [`RAZORPAY_WEBHOOK.md`](./RAZORPAY_WEBHOOK.md) for dashboard webhook steps.
+
+In Razorpay Dashboard → **Settings → Webhooks**, enable under **Payment events**:
+
+- `payment.captured`
+- `payment.failed`
+- `order.paid` (recommended)
+
+Mobile app API base must be the same host: `https://api.motonode.in/api` (`client/src/service/config.tsx`).
+
+### Store categories and seeding
+
+Canonical category names and tile groups live in **`src/data/storeCategories.ts`** (see also [`docs/STORE_CATEGORIES.md`](./docs/STORE_CATEGORIES.md)).
+
+| Script | npm command |
+|--------|-------------|
+| Category tiles + Spare Parts | `npm run seed:categories` |
+| Legacy name → canonical migration | `npm run seed:migrate-categories` |
+| Demo services + products + CDN tile images | `SEED_DEALER_USER_ID=... npm run seed:all-inventory` |
+| Premium dealer product samples | `SEED_DEALER_USER_ID=... npm run seed:dealer-products` |
+| Older sample products (no hardcoded ObjectIds) | `npm run seed:products` |
+
+**New environment:**
 
 ```bash
 cd server
+npm run seed:categories
 SEED_DEALER_USER_ID='<your_dealer_user_object_id>' npm run seed:all-inventory
 ```
 
-The script upserts Store home **category tiles** (with `imageUrl` / `tileGroup`) and the **Spare Parts** category, deletes existing **services** and **products** owned by that dealer id, then inserts the bundled demo catalog. Demo **products** are assigned to those tile categories (by name) so Store category taps return items—not only under Spare Parts.
+**Existing DB** with legacy category names (`Car Care`, `Tyres & Wheels`, etc.): run `npm run seed:migrate-categories` once to repoint `Product.categoryId` and deactivate old category documents.
+
+`seed:all-inventory` upserts Store home tiles (with `imageUrl` / `tileGroup`), upserts **Spare Parts**, deletes that dealer’s existing **services** and **products**, then inserts the bundled demo catalog. Service subcategories remain in `serviceCategoryConfig.ts`—not on `Category` documents.
 
