@@ -270,21 +270,17 @@ export const verifyPaymentController = async (
       orderId: orderIdString,
     });
 
-    // Send push notification for payment confirmation
     try {
-      const { sendPushNotification } = await import('../../services/notificationService');
-      await sendPushNotification(orderDoc.userId, {
-        title: 'Payment Confirmed',
-        body: `Payment for order ${orderDoc.orderNumber} has been confirmed. Your order is being processed.`,
-        data: {
-          type: 'payment',
-          orderId: orderIdString,
-          status: 'PAYMENT_CONFIRMED',
-        },
+      const { notifyOrderStatusChange } = await import('../../services/order/orderNotificationService');
+      await notifyOrderStatusChange({
+        userId: orderDoc.userId,
+        orderId: orderIdString,
+        orderNumber: orderDoc.orderNumber,
+        newStatus: 'PAYMENT_CONFIRMED',
+        actor: 'system',
       });
     } catch (notificationError) {
-      logger.error('Error sending push notification for payment confirmation:', notificationError);
-      // Don't throw - notification failure shouldn't block payment verification
+      logger.error('Error notifying payment confirmation:', notificationError);
     }
 
     res.status(200).json({

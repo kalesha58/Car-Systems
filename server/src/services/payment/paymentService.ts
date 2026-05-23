@@ -14,6 +14,7 @@ import {
 } from './gatewayService';
 import { logger } from '../../utils/logger';
 import { NotFoundError, AppError } from '../../utils/errorHandler';
+import { notifyOrderStatusChange } from '../order/orderNotificationService';
 
 const COD_CHARGE = parseInt(process.env.COD_CHARGE || '5', 10) * 100; // Convert to paise
 const PAYMENT_TIMEOUT_MINUTES = parseInt(process.env.PAYMENT_TIMEOUT_MINUTES || '15', 10);
@@ -285,6 +286,8 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
       // Flag for manual review but still process
     }
 
+    const previousStatus = order.status;
+
     // Update order status
     order.paymentStatus = 'paid';
     order.status = 'PAYMENT_CONFIRMED';
@@ -339,6 +342,19 @@ const handlePaymentSuccess = async (webhookData: any): Promise<void> => {
       paymentId,
       amount: paidAmount,
     });
+
+    try {
+      await notifyOrderStatusChange({
+        userId: order.userId,
+        orderId: orderIdString,
+        orderNumber: order.orderNumber,
+        newStatus: 'PAYMENT_CONFIRMED',
+        previousStatus,
+        actor: 'system',
+      });
+    } catch (notificationError) {
+      logger.error('Error notifying webhook payment success:', notificationError);
+    }
   } catch (error) {
     logger.error('Error handling payment success:', error);
     throw error;
@@ -372,6 +388,8 @@ const handlePaymentFailure = async (webhookData: any): Promise<void> => {
       logger.error(`Order not found for failed payment: ${paymentId}`);
       return;
     }
+
+    const previousStatus = order.status;
 
     // Update order status
     order.paymentStatus = 'failed';
@@ -429,6 +447,19 @@ const handlePaymentFailure = async (webhookData: any): Promise<void> => {
         paymentEntity.description ||
         'Unknown',
     });
+
+    try {
+      await notifyOrderStatusChange({
+        userId: order.userId,
+        orderId: orderIdString,
+        orderNumber: order.orderNumber,
+        newStatus: 'PAYMENT_FAILED',
+        previousStatus,
+        actor: 'system',
+      });
+    } catch (notificationError) {
+      logger.error('Error notifying webhook payment failure:', notificationError);
+    }
   } catch (error) {
     logger.error('Error handling payment failure:', error);
     throw error;

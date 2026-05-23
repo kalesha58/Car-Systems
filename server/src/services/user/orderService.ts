@@ -10,7 +10,7 @@ import {
   canRequestReturn,
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
-import { sendPushNotification, createNotification } from '../notificationService';
+import { notifyOrderStatusChange } from '../order/orderNotificationService';
 import { getRazorpayKeyId, isRazorpayEnabled } from '../../config/razorpay';
 import { createPaymentIntent } from '../payment/gatewayService';
 
@@ -433,40 +433,6 @@ export const createUserOrder = async (
       logger.error('Error emitting socket event for order creation:', socketError);
     }
 
-    // Send push notification for order creation
-    try {
-      await sendPushNotification(userId, {
-        title: 'Order Placed Successfully',
-        body: `Your order ${order.orderNumber} has been placed. We'll keep you updated on its status.`,
-        data: {
-          type: 'order_update',
-          orderId: (order._id as any).toString(),
-          status: 'ORDER_PLACED',
-        },
-      });
-    } catch (notificationError) {
-      logger.error('Error sending push notification for order creation:', notificationError);
-      // Don't throw - notification failure shouldn't block order creation
-    }
-
-    // Create in-app notification for order creation
-    try {
-      await createNotification({
-        userId,
-        type: 'order_update',
-        title: 'Order Placed Successfully',
-        body: `Your order ${order.orderNumber} has been placed. We'll keep you updated on its status.`,
-        data: {
-          orderId: (order._id as any).toString(),
-          status: 'ORDER_PLACED',
-        },
-        relatedId: (order._id as any).toString(),
-      });
-    } catch (notificationError) {
-      logger.error('Error creating in-app notification for order creation:', notificationError);
-      // Don't throw - notification failure shouldn't block order creation
-    }
-
     // Process payment based on payment method
     let paymentAction: IPaymentAction | undefined;
     const orderId = (order._id as any).toString();
@@ -581,6 +547,20 @@ export const createUserOrder = async (
         logger.error('Error emitting socket event for payment failure:', socketError);
       }
 
+      try {
+        await notifyOrderStatusChange({
+          userId,
+          orderId,
+          orderNumber: order.orderNumber,
+          newStatus: 'PAYMENT_FAILED',
+          previousStatus,
+          notes: paymentError.message,
+          actor: 'system',
+        });
+      } catch (notificationError) {
+        logger.error('Error notifying payment failure:', notificationError);
+      }
+
       // Restore stock if payment fails (for UPI orders that reserved stock)
       if (data.paymentMethod === 'upi') {
         try {
@@ -612,6 +592,18 @@ export const createUserOrder = async (
       paymentMethod: data.paymentMethod,
       status: order.status,
     });
+
+    try {
+      await notifyOrderStatusChange({
+        userId,
+        orderId,
+        orderNumber: order.orderNumber,
+        newStatus: order.status,
+        actor: 'system',
+      });
+    } catch (notificationError) {
+      logger.error('Error notifying order creation:', notificationError);
+    }
 
     const userOrder = orderToUserOrder(order);
     if (paymentAction) {
@@ -748,6 +740,20 @@ export const cancelUserOrder = async (
     );
 
     logger.info(`Order cancelled by user: ${order.orderNumber}`);
+
+    try {
+      await notifyOrderStatusChange({
+        userId,
+        orderId,
+        orderNumber: order.orderNumber,
+        newStatus: 'CANCELLED_BY_USER',
+        previousStatus,
+        notes: data.reason,
+        actor: 'user',
+      });
+    } catch (notificationError) {
+      logger.error('Error notifying order cancellation:', notificationError);
+    }
 
     return orderToUserOrder(order);
   } catch (error) {

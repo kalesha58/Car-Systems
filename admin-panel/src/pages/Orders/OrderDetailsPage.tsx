@@ -208,7 +208,7 @@ export const OrderDetailsPage = () => {
 
     try {
       setUpdating(true);
-      await updateOrderStatus(id, {
+      const statusResult = await updateOrderStatus(id, {
         status: newStatus,
         notes: statusNotes.trim() || `Status updated to ${newStatus}`,
       });
@@ -322,7 +322,11 @@ export const OrderDetailsPage = () => {
       };
       setOrder(mappedOrder);
       
-      showToast('Order status updated successfully', 'success');
+      if (statusResult.notificationSent) {
+        showToast('Order status updated. Customer was notified.', 'success');
+      } else {
+        showToast('Order status updated successfully', 'success');
+      }
       setShowStatusModal(false);
       setNewStatus('');
       setStatusNotes('');

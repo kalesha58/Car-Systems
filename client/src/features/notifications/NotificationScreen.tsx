@@ -26,6 +26,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
 import { navigate } from '@utils/NavigationUtils';
 import NotificationItemSkeleton from './NotificationItemSkeleton';
+import { onNotificationsInvalidated } from '@utils/notificationEvents';
 
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -96,6 +97,12 @@ const NotificationScreen: React.FC = () => {
     }, [loadNotifications]),
   );
 
+  useEffect(() => {
+    return onNotificationsInvalidated(() => {
+      loadNotifications(1, true);
+    });
+  }, [loadNotifications]);
+
   const handleRefresh = useCallback(() => {
     loadNotifications(1, true);
   }, [loadNotifications]);
@@ -117,8 +124,12 @@ const NotificationScreen: React.FC = () => {
         );
       }
 
-      if (notification.type === 'order_update' && notification.data?.orderId) {
-        navigate('LiveTracking', { orderId: notification.data.orderId });
+      const orderId = notification.data?.orderId;
+      if (
+        orderId &&
+        (notification.type === 'order_update' || notification.data?.status)
+      ) {
+        navigate('LiveTracking', { orderId });
       }
     } catch (error: any) {
       showError('Failed to mark notification as read');

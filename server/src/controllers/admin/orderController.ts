@@ -48,8 +48,8 @@ export const updateOrderStatusController = async (
 ): Promise<void> => {
   try {
     const adminId = req.user?.userId || 'admin';
-    const order = await updateOrderStatus(req.params.id, req.body, adminId);
-    res.status(200).json(order);
+    const { order, notificationSent } = await updateOrderStatus(req.params.id, req.body, adminId);
+    res.status(200).json({ ...order, notificationSent });
   } catch (error) {
     errorHandler(error as IAppError, res);
   }
@@ -65,11 +65,12 @@ export const forceUpdateOrderStatusController = async (
 ): Promise<void> => {
   try {
     const adminId = req.user?.userId || 'admin';
-    const order = await updateOrderStatus(req.params.id, req.body, adminId);
+    const { order, notificationSent } = await updateOrderStatus(req.params.id, req.body, adminId);
     res.status(200).json({
       success: true,
       message: 'Order status force updated',
       data: order,
+      notificationSent,
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

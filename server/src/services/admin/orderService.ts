@@ -22,6 +22,7 @@ import { NotFoundError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { validateStatusTransitionOrThrow } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
+import { notifyOrderStatusChange } from '../order/orderNotificationService';
 
 /**
  * Generate unique order number
@@ -240,7 +241,7 @@ export const updateOrderStatus = async (
   orderId: string,
   data: IUpdateOrderStatusRequest,
   adminId: string,
-): Promise<IOrder> => {
+): Promise<{ order: IOrder; notificationSent: boolean }> => {
   try {
     const order = await Order.findById(orderId);
 
@@ -295,72 +296,32 @@ export const updateOrderStatus = async (
         logger.error('Error emitting socket event for order status update:', socketError);
       }
 
-      // Send push notification for order status update
-      const statusMessages: { [key: string]: { title: string; body: string } } = {
-        ORDER_CONFIRMED: {
-          title: 'Order Confirmed',
-          body: `Your order ${order.orderNumber} has been confirmed and is being prepared.`,
-        },
-        OUT_FOR_DELIVERY: {
-          title: 'Order Out for Delivery',
-          body: `Your order ${order.orderNumber} is on its way to you!`,
-        },
-        DELIVERED: {
-          title: 'Order Delivered',
-          body: `Your order ${order.orderNumber} has been delivered. Thank you for shopping with us!`,
-        },
-        CANCELLED: {
-          title: 'Order Cancelled',
-          body: `Your order ${order.orderNumber} has been cancelled.`,
-        },
-      };
-
-      const message = statusMessages[newStatus] || {
-        title: 'Order Status Updated',
-        body: `Your order ${order.orderNumber} status has been updated to ${newStatus}.`,
-      };
-
+      let notificationSent = false;
       try {
-        const { sendPushNotification } = await import('../notificationService');
-        await sendPushNotification(order.userId, {
-          title: message.title,
-          body: message.body,
-          data: {
-            type: 'order_update',
-            orderId,
-            status: newStatus,
-          },
-        });
-      } catch (notificationError) {
-        logger.error('Error sending push notification for order status update:', notificationError);
-        // Don't throw - notification failure shouldn't block status update
-      }
-
-      // Create in-app notification for order status update
-      try {
-        const { createNotification } = await import('../notificationService');
-        await createNotification({
+        const result = await notifyOrderStatusChange({
           userId: order.userId,
-          type: 'order_update',
-          title: message.title,
-          body: message.body,
-          data: {
-            orderId,
-            status: newStatus,
-          },
-          relatedId: orderId,
+          orderId,
+          orderNumber: order.orderNumber,
+          newStatus,
+          previousStatus,
+          notes: data.notes,
+          actor: 'admin',
         });
+        notificationSent = result.pushSent;
       } catch (notificationError) {
-        logger.error('Error creating in-app notification for order status update:', notificationError);
-        // Don't throw - notification failure shouldn't block status update
+        logger.error('Error notifying order status update:', notificationError);
       }
 
       logger.info(
         `Order status updated by admin: ${order.orderNumber} - ${newStatus}`,
       );
+
+      const updated = await orderToIOrder(order);
+      return { order: updated, notificationSent };
     }
 
-    return await orderToIOrder(order);
+    const unchanged = await orderToIOrder(order);
+    return { order: unchanged, notificationSent: false };
   } catch (error) {
     logger.error('Error updating order status:', error);
     throw error;
@@ -393,6 +354,20 @@ export const cancelOrder = async (orderId: string, data: ICancelOrderRequest): P
     await order.save();
 
     logger.info(`Order cancelled: ${order.orderNumber}`);
+
+    try {
+      await notifyOrderStatusChange({
+        userId: order.userId,
+        orderId,
+        orderNumber: order.orderNumber,
+        newStatus: 'CANCELLED_BY_DEALER',
+        previousStatus,
+        notes: data.reason,
+        actor: 'admin',
+      });
+    } catch (notificationError) {
+      logger.error('Error notifying admin order cancellation:', notificationError);
+    }
 
     return await orderToIOrder(order);
   } catch (error) {

@@ -14,6 +14,7 @@ import { tokenStorage } from '@state/storage';
 import { useThemeStore } from '@state/themeStore';
 import { useAuthStore } from '@state/authStore';
 import { initializeSocket, joinUserNotificationRoom, onNewNotification } from '@service/socketService';
+import { invalidateNotifications } from '@utils/notificationEvents';
 
 const App = () => {
   const { initializeTheme, syncWithDeviceTheme } = useThemeStore();
@@ -51,9 +52,8 @@ const App = () => {
           });
           
           // Listen for new notifications
-          onNewNotification((notification) => {
-            console.log('New notification received:', notification);
-            // Notification icon will auto-refresh via its own polling
+          onNewNotification(() => {
+            invalidateNotifications();
           });
         }
       } catch (error) {

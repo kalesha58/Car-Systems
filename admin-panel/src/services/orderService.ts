@@ -120,8 +120,18 @@ export const createOrder = async (payload: ICreateOrderPayload): Promise<IOrderD
 /**
  * Update order status
  */
-export const updateOrderStatus = async (id: string, payload: IUpdateOrderStatusPayload): Promise<IOrderDetails> => {
-  const response = await apiClient.patch<IOrderDetails>(`/admin/orders/${id}/status`, payload);
+export interface IUpdateOrderStatusResponse extends IOrderDetails {
+  notificationSent?: boolean;
+}
+
+export const updateOrderStatus = async (
+  id: string,
+  payload: IUpdateOrderStatusPayload,
+): Promise<IUpdateOrderStatusResponse> => {
+  const response = await apiClient.patch<IUpdateOrderStatusResponse>(
+    `/admin/orders/${id}/status`,
+    payload,
+  );
   return response.data;
 };
 

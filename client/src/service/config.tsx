@@ -13,8 +13,11 @@ import { Platform } from "react-native"
 // export const BASE_URL = 'https://car-systems.onrender.com/api';
 // export const SOCKET_URL = 'https://car-systems.onrender.com';
 
-export const BASE_URL = 'https://api.motonode.in/api';
-export const SOCKET_URL = 'https://api.motonode.in';
+//export const BASE_URL = 'https://api.motonode.in/api';
+//export const SOCKET_URL = 'https://api.motonode.in';
+
+export const BASE_URL = 'https://car-systems.vercel.app/api';
+export const SOCKET_URL = 'https://car-systems.vercel.app';
 
 export const GOOGLE_MAP_API = "AIzaSyA6GTR1erzNtNl5tD02_mnADtYzF860HjA";
 export const BRANCH_ID = 'YOUR_BRANCH_ID';

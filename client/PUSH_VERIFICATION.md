@@ -38,19 +38,37 @@ curl -X POST http://localhost:3000/api/user/test-greeting-notification \
 
 Expect a push on the device with the logo image.
 
-## 3. Business notifications
+## 3. Order lifecycle notifications (customer)
 
-- Place or update an order → order status push.
+Each step should create an **in-app notification** (Notifications screen) and a **push** when `fcmToken` is set.
+
+| Step | How to trigger | Expected push title (approx.) |
+|------|----------------|----------------------------------|
+| Order placed | Customer checkout (COD / card) | Order Placed |
+| Pending payment | Customer checkout (UPI) | Complete Your Payment |
+| Payment confirmed | UPI verify or Razorpay webhook | Payment Received |
+| Payment failed | Failed UPI / webhook | Payment Failed |
+| Dealer confirmed | Dealer accepts or admin → ORDER_CONFIRMED | Order Confirmed |
+| Packed / Shipped / Out for delivery | Admin panel status update or dealer app | Matching status title |
+| Delivered | Admin or dealer → DELIVERED | Order Delivered |
+| Cancelled | User, dealer, or admin cancel | Order Cancelled |
+
+**Admin panel:** open order → update status → toast should say “Customer was notified” when FCM delivery succeeded.
+
+**Dealer app:** status updates and accept/reject should notify the **order’s customer** (`order.userId`), not the dealer.
+
+## 4. Other business notifications
+
 - Send a chat message → chat push.
 - Group join request → join request push.
 
-## 4. Background / killed app
+## 5. Background / killed app
 
 1. Force-quit the app.
 2. Trigger a push from server.
 3. Notification appears in system tray.
 
-## 5. Tap navigation
+## 6. Tap navigation
 
 | `data.type` | Expected screen |
 |-------------|-----------------|
@@ -60,7 +78,7 @@ Expect a push on the device with the logo image.
 | `group_join_request` | JoinRequests |
 | `greeting` | No navigation (welcome only) |
 
-## 6. Logout
+## 7. Logout
 
 Logout → `DELETE /api/user/fcm-token` clears server token; device FCM token deleted locally.
 
