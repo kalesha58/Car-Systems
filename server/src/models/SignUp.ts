@@ -11,6 +11,8 @@ export interface IPrivacySettings {
   hideVehicleNumber: boolean;
 }
 
+export type AuthProvider = 'email' | 'phone' | 'google';
+
 export interface ISignUpDocument extends Document {
   name: string;
   email: string;
@@ -18,6 +20,8 @@ export interface ISignUpDocument extends Document {
   password: string;
   role: UserRole[];
   status: UserStatus;
+  phoneVerified?: boolean;
+  authProvider?: AuthProvider;
   profileImage?: string;
   resetPasswordCode?: string;
   resetPasswordCodeExpires?: Date;
@@ -118,6 +122,15 @@ const signUpSchema = new Schema<ISignUpDocument>(
     privacyVersion: {
       type: String,
       trim: true,
+    },
+    phoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+    authProvider: {
+      type: String,
+      enum: ['email', 'phone', 'google'],
+      default: 'email',
     },
   },
   {

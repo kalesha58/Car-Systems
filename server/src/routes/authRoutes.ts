@@ -15,6 +15,18 @@ import {
   validateGoogleAuth,
 } from '../middleware/validationMiddleware';
 import { authMiddleware } from '../middleware/authMiddleware';
+import {
+  sendOtpController,
+  verifyOtpController,
+  completePhoneSignupController,
+} from '../controllers/otpAuthController';
+import {
+  validateSendOtp,
+  validateVerifyOtp,
+  validateCompletePhoneSignup,
+} from '../middleware/otpValidationMiddleware';
+import { otpIpRateLimiter } from '../middleware/otpRateLimitMiddleware';
+import { registrationTokenMiddleware } from '../middleware/registrationTokenMiddleware';
 
 const router = Router();
 
@@ -221,6 +233,39 @@ router.post('/reset-password', validateResetPassword, resetPasswordController);
  */
 router.post('/google', validateGoogleAuth, googleAuthController);
 router.post('/policy-acceptance', authMiddleware, acceptPolicyController);
+
+/**
+ * @swagger
+ * /api/auth/send-otp:
+ *   post:
+ *     summary: Send OTP to phone via MSG91
+ *     tags: [Authentication]
+ */
+router.post('/send-otp', otpIpRateLimiter, validateSendOtp, sendOtpController);
+
+/**
+ * @swagger
+ * /api/auth/verify-otp:
+ *   post:
+ *     summary: Verify OTP and login or start phone registration
+ *     tags: [Authentication]
+ */
+router.post('/verify-otp', otpIpRateLimiter, validateVerifyOtp, verifyOtpController);
+
+/**
+ * @swagger
+ * /api/auth/complete-phone-signup:
+ *   post:
+ *     summary: Complete profile after OTP verify (new users)
+ *     tags: [Authentication]
+ */
+router.post(
+  '/complete-phone-signup',
+  otpIpRateLimiter,
+  registrationTokenMiddleware,
+  validateCompletePhoneSignup,
+  completePhoneSignupController,
+);
 
 export default router;
 

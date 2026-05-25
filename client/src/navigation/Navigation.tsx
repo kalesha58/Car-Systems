@@ -64,6 +64,8 @@ import { ToastProvider } from '@context/ToastContext';
 import { useTranslation } from 'react-i18next';
 import LiquidTabBar from '@components/navigation/LiquidTabBar';
 import ForgotPassword from '@features/auth/ForgotPassword';
+import OtpVerifyScreen from '@features/auth/OtpVerifyScreen';
+import PhoneSignupScreen from '@features/auth/PhoneSignupScreen';
 import MetAIChatScreen from '@features/support/MetAIChatScreen';
 import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
 import PrivacyPermissionsScreen from '@features/profile/PrivacyPermissionsScreen';
@@ -758,6 +760,16 @@ const Navigation: FC = () => {
             }}
             name="ForgotPassword"
             component={ForgotPassword}
+          />
+          <Stack.Screen
+            options={{ animation: 'slide_from_right' }}
+            name="OtpVerify"
+            component={OtpVerifyScreen}
+          />
+          <Stack.Screen
+            options={{ animation: 'slide_from_right' }}
+            name="PhoneSignup"
+            component={PhoneSignupScreen}
           />
           <Stack.Screen
             options={{

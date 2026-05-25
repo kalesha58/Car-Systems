@@ -216,6 +216,107 @@ export const resetPasswordWithCode = async (data: {
     }
 };
 
+export interface ISendOtpResult {
+  message: string;
+  resendAfterSeconds: number;
+}
+
+export interface IVerifyOtpResult {
+  isNewUser: boolean;
+  phone?: string;
+  registrationToken?: string;
+  loginResult?: ILoginResult;
+}
+
+const persistAuthSession = (token: string, user: object): ILoginResult => {
+  tokenStorage.set('accessToken', token);
+  tokenStorage.set('refreshToken', token);
+  const { setUser } = useAuthStore.getState();
+  setUser(user as Parameters<typeof setUser>[0]);
+  markPendingLoginGreeting();
+  return {};
+};
+
+export const sendPhoneOtp = async (phone: string): Promise<ISendOtpResult> => {
+  const response = await appAxios.post('/auth/send-otp', { phone });
+  const data = response.data;
+  return data.Response || { message: 'OTP sent', resendAfterSeconds: 30 };
+};
+
+export const verifyPhoneOtp = async (phone: string, otp: string): Promise<IVerifyOtpResult> => {
+  const response = await appAxios.post('/auth/verify-otp', { phone, otp });
+  const data = response.data;
+
+  if (data.isNewUser) {
+    return {
+      isNewUser: true,
+      phone: data.phone,
+      registrationToken: data.registrationToken,
+    };
+  }
+
+  const token = data.token;
+  const Response = data.Response;
+  if (!token || !Response) {
+    throw new Error('Invalid verify OTP response');
+  }
+
+  const loginResult: ILoginResult = {
+    requiresPolicyAcceptance: Boolean(data.requiresPolicyAcceptance),
+    currentTermsVersion: data.currentTermsVersion,
+    currentPrivacyVersion: data.currentPrivacyVersion,
+  };
+
+  persistAuthSession(token, Response);
+
+  return {
+    isNewUser: false,
+    loginResult,
+  };
+};
+
+export const completePhoneSignup = async (
+  registrationToken: string,
+  payload: {
+    name: string;
+    email?: string;
+    termsVersion?: string;
+    privacyVersion?: string;
+  },
+): Promise<ILoginResult> => {
+  const response = await appAxios.post(
+    '/auth/complete-phone-signup',
+    {
+      name: payload.name,
+      email: payload.email,
+      termsAccepted: true,
+      privacyAccepted: true,
+      termsVersion: payload.termsVersion || CURRENT_TERMS_VERSION,
+      privacyVersion: payload.privacyVersion || CURRENT_PRIVACY_VERSION,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${registrationToken}`,
+      },
+    },
+  );
+
+  const data = response.data;
+  const token = data.token;
+  const Response = data.Response;
+  if (!token || !Response) {
+    throw new Error('Invalid complete signup response');
+  }
+
+  persistAuthSession(token, Response);
+
+  return {
+    requiresPolicyAcceptance: Boolean(data.requiresPolicyAcceptance),
+    currentTermsVersion: data.currentTermsVersion,
+    currentPrivacyVersion: data.currentPrivacyVersion,
+  };
+};
+
 export const refetchUser = async (setUser: any) => {
     try {
         const response = await appAxios.get(`/profile`);

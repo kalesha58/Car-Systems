@@ -17,6 +17,7 @@ export interface IPaymentAction {
   deeplink?: string;
   qrCode?: string;
   expiresAt?: string;
+  image?: string;
 }
 
 /**

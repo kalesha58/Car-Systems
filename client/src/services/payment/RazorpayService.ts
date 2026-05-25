@@ -1,4 +1,5 @@
 import RazorpayCheckout from 'react-native-razorpay';
+import { RAZORPAY_CHECKOUT_IMAGE_URL } from '@config/razorpayCheckout';
 import type { IPaymentAction } from './upiPaymentService';
 
 export interface IRazorpayPaymentSuccess {
@@ -54,6 +55,7 @@ class RazorpayService {
         currency: paymentAction.currency || 'INR',
         name: 'Motonode',
         description: 'Order payment',
+        image: paymentAction.image || RAZORPAY_CHECKOUT_IMAGE_URL,
         order_id: paymentAction.paymentIntentId,
         prefill: paymentAction.prefill || {},
         theme: { color: '#1a1a2e' },

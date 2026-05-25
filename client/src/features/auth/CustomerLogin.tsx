@@ -26,14 +26,22 @@ import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomInput from '@components/ui/CustomInput';
 import CustomButton from '@components/ui/CustomButton';
-import { acceptLatestPolicy, CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION, customerLogin, customerSignup } from '@service/authService';
-import { resetNavigationForDealerOnboarding } from '../../auth/postAuthRouting';
+import {
+  acceptLatestPolicy,
+  CURRENT_PRIVACY_VERSION,
+  CURRENT_TERMS_VERSION,
+  customerLogin,
+  sendPhoneOtp,
+} from '@service/authService';
+import { navigateAfterCustomerAuth } from '../../auth/postLoginNavigation';
+import { savePendingSignupDraft } from '@utils/signupDraftStorage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@hooks/useToast';
 import { useAuthStore } from '@state/authStore';
 import ThemedModal from '@components/ui/ThemedModal';
 import { navigate } from '@utils/NavigationUtils';
+import { useRoute } from '@react-navigation/native';
 import { useThemeStore } from '@state/themeStore';
 import { useTheme } from '@hooks/useTheme';
 import { storage } from '@state/storage';
@@ -51,10 +59,17 @@ const getResponsiveValue = (mobile: number, tablet?: number, desktop?: number) =
   return mobile;
 };
 
+type CustomerLoginParams = {
+  prefillLoginIdentifier?: string;
+};
+
 const CustomerLogin = () => {
+  const route = useRoute();
+  const routeParams = (route.params || {}) as CustomerLoginParams;
   const { setUser } = useAuthStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [isSignupMode, setIsSignupMode] = useState(false);
@@ -80,24 +95,55 @@ const CustomerLogin = () => {
     ? ['rgba(18, 18, 18, 1)', 'rgba(18, 18, 18, 0.9)', 'rgba(18, 18, 18, 0.7)', 'rgba(18, 18, 18, 0.6)', 'rgba(18, 18, 18, 0.5)', 'rgba(18, 18, 18, 0.4)', 'rgba(18, 18, 18, 0.003)']
     : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0.003)'];
 
-  const checkUserRole = (role: string | string[] | undefined): string | null => {
-    if (!role) {
-      return null;
-    }
+  const isValidEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
 
-    const roleArray = Array.isArray(role) ? role : [role];
+  const isValidPhone = (value: string): boolean => {
+    const cleanPhone = value.replace(/[^0-9]/g, '');
+    return cleanPhone.length === 10;
+  };
 
-    if (roleArray.includes('admin')) {
-      return 'admin';
+  useEffect(() => {
+    if (routeParams.prefillLoginIdentifier) {
+      setLoginIdentifier(routeParams.prefillLoginIdentifier);
+      setIsSignupMode(false);
+      setSignupStep('chooseAccountType');
+      showSuccess(t('auth.signupSuccessLogin'));
     }
-    if (roleArray.includes('dealer')) {
-      return 'dealer';
-    }
-    if (roleArray.includes('user')) {
-      return 'user';
-    }
+  }, [routeParams.prefillLoginIdentifier, showSuccess, t]);
 
-    return null;
+  const isLoginEmailInput = (value: string): boolean =>
+    value.includes('@') || /[a-zA-Z]/.test(value);
+
+  const handleLoginIdentifierChange = (text: string) => {
+    if (isLoginEmailInput(text)) {
+      setLoginIdentifier(text);
+      return;
+    }
+    const numericText = text.replace(/[^0-9]/g, '');
+    if (numericText.length <= 10) {
+      setLoginIdentifier(numericText);
+    }
+  };
+
+  const isLoginEmailMode =
+    !isSignupMode && (loginIdentifier.length === 0 || isLoginEmailInput(loginIdentifier));
+  const isPhoneLogin =
+    !isSignupMode &&
+    loginIdentifier.length > 0 &&
+    !isLoginEmailInput(loginIdentifier) &&
+    isValidPhone(loginIdentifier);
+
+  const getLoginButtonTitle = (): string => {
+    if (isSignupMode) {
+      return t('auth.signUp');
+    }
+    if (isPhoneLogin) {
+      return t('auth.phoneOtp.sendOtp');
+    }
+    return t('auth.loginWithEmail');
   };
 
   useEffect(() => {
@@ -137,16 +183,6 @@ const CustomerLogin = () => {
     }
   };
 
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const isValidPhone = (phone: string): boolean => {
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
-    return cleanPhone.length === 10;
-  };
-
   const handlePhoneChange = (text: string) => {
     const numericText = text.replace(/[^0-9]/g, '');
     if (numericText.length <= 10) {
@@ -169,7 +205,13 @@ const CustomerLogin = () => {
         && acceptedPolicies
       );
     }
-    return email.trim().length > 0 && password.length >= 8;
+    if (isLoginEmailInput(loginIdentifier)) {
+      return isValidEmail(loginIdentifier.trim()) && password.length >= 8;
+    }
+    if (isPhoneLogin) {
+      return true;
+    }
+    return false;
   };
 
   const toggleSignupMode = () => {
@@ -186,7 +228,18 @@ const CustomerLogin = () => {
     Keyboard.dismiss();
     setLoading(true);
     try {
-      const loginResult = await customerLogin(email, password);
+      if (isPhoneLogin) {
+        const cleanPhone = loginIdentifier.replace(/[^0-9]/g, '');
+        const otpResult = await sendPhoneOtp(cleanPhone);
+        navigate('OtpVerify', {
+          phone: cleanPhone,
+          flow: 'login',
+          resendAfterSeconds: otpResult.resendAfterSeconds,
+        });
+        return;
+      }
+
+      const loginResult = await customerLogin(loginIdentifier.trim().toLowerCase(), password);
       if (loginResult.requiresPolicyAcceptance) {
         Alert.alert(
           'Policy Update Required',
@@ -207,72 +260,8 @@ const CustomerLogin = () => {
         );
       }
       showSuccess(t('auth.loginSuccess'));
-
-      const currentUser = useAuthStore.getState().user;
-      if (currentUser && currentUser.role) {
-        const userRole = checkUserRole(currentUser.role);
-
-        // For dealers, check if they have business registration
-        // Try both 'id' and '_id' fields as the user object might have either
-        const userId = currentUser.id || currentUser._id;
-        if (userRole === 'admin') {
-          resetAndNavigate('MainTabs');
-        } else if (userRole === 'dealer' && userId) {
-          await resetNavigationForDealerOnboarding();
-        } else {
-          // For regular users (not dealers), check if they have vehicles
-          const userId = currentUser.id || currentUser._id;
-          if (userRole === 'user' && userId) {
-            // Check if user has skipped adding vehicle
-            const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
-            
-            if (hasSkippedVehicle) {
-              // User has skipped before, navigate directly to MainTabs
-              resetAndNavigate('MainTabs');
-            } else {
-              try {
-                const userIdString = String(userId);
-                const { getUserVehicles } = await import('@service/vehicleService');
-                const vehiclesData = await getUserVehicles();
-                // Response is directly an array, not an object with vehicles property
-                const hasVehicles = vehiclesData?.Response && Array.isArray(vehiclesData.Response) && vehiclesData.Response.length > 0;
-
-                if (hasVehicles) {
-                  // User already has vehicles, clear skip flag and navigate to MainTabs
-                  storage.delete('hasSkippedVehicle');
-                  resetAndNavigate('MainTabs');
-                } else {
-                  // User doesn't have vehicles, replace login screen with AddUserVehicle with fromLogin param
-                  await replace('AddUserVehicle', { fromLogin: true });
-                }
-              } catch (error: any) {
-                // If check fails, check skip flag before navigating
-                console.error('Error checking user vehicles:', error);
-                const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
-                if (hasSkippedVehicle) {
-                  resetAndNavigate('MainTabs');
-                } else {
-                  await replace('AddUserVehicle', { fromLogin: true });
-                }
-              }
-            }
-          } else {
-            // For regular users without userId, check skip flag
-            const hasSkippedVehicle = storage.getString('hasSkippedVehicle') === 'true';
-            if (hasSkippedVehicle) {
-              resetAndNavigate('MainTabs');
-            } else {
-              resetAndNavigate('AddUserVehicle');
-            }
-          }
-        }
-      } else {
-        // If no role found, navigate to AddUserVehicle
-        resetAndNavigate('AddUserVehicle');
-      }
+      await navigateAfterCustomerAuth(loginResult);
     } catch (error: any) {
-      // Extract error message from server response
-      // Server returns: { success: false, Response: { ReturnMessage: "..." } }
       const errorMessage =
         error?.response?.data?.Response?.ReturnMessage ||
         error?.response?.data?.message ||
@@ -293,22 +282,27 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
-      await customerSignup(name, email, cleanPhone, password, userType, CURRENT_TERMS_VERSION, CURRENT_PRIVACY_VERSION);
-      showSuccess(t('auth.signupSuccess'));
-      // Navigate to login screen after successful signup
-      setTimeout(() => {
-        setIsSignupMode(false);
-        setSignupStep('chooseAccountType');
-        setName('');
-        setEmail('');
-        setPassword('');
-        setPhone('');
-        setUserType('user');
-        setAcceptedPolicies(false);
-      }, 1500);
+      savePendingSignupDraft({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: cleanPhone,
+        password,
+        userType,
+        termsVersion: CURRENT_TERMS_VERSION,
+        privacyVersion: CURRENT_PRIVACY_VERSION,
+      });
+      const otpResult = await sendPhoneOtp(cleanPhone);
+      navigate('OtpVerify', {
+        phone: cleanPhone,
+        flow: 'signup',
+        resendAfterSeconds: otpResult.resendAfterSeconds,
+      });
     } catch (error: any) {
       const errorMessage =
-        error?.response?.data?.message || 'Signup failed. Please try again.';
+        error?.response?.data?.Response?.ReturnMessage ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Could not send verification code. Please try again.';
       setErrorModalTitle('Signup Failed');
       setErrorModalMessage(errorMessage);
       setErrorModalVisible(true);
@@ -483,22 +477,56 @@ const CustomerLogin = () => {
                       />
                     )}
 
-                    <CustomInput
-                      onChangeText={setEmail}
-                      onClear={() => setEmail('')}
-                      value={email}
-                      placeholder={t('auth.email')}
-                      inputMode="email"
-                      left={
-                        <Ionicons
-                          name="mail"
-                          color={colors.secondary}
-                          style={{ marginLeft: 10 }}
-                          size={RFValue(18)}
-                        />
-                      }
-                      right={false}
-                    />
+                    {isSignupMode && signupStep === 'enterDetails' && (
+                      <CustomInput
+                        onChangeText={setEmail}
+                        onClear={() => setEmail('')}
+                        value={email}
+                        placeholder={t('auth.email')}
+                        inputMode="email"
+                        left={
+                          <Ionicons
+                            name="mail"
+                            color={colors.secondary}
+                            style={{ marginLeft: 10 }}
+                            size={RFValue(18)}
+                          />
+                        }
+                        right={false}
+                      />
+                    )}
+
+                    {!isSignupMode && (
+                      <CustomInput
+                        onChangeText={handleLoginIdentifierChange}
+                        onClear={() => setLoginIdentifier('')}
+                        value={loginIdentifier}
+                        placeholder={t('auth.loginIdentifier')}
+                        inputMode={
+                          !loginIdentifier || isLoginEmailInput(loginIdentifier) ? 'email' : 'numeric'
+                        }
+                        keyboardType={
+                          !loginIdentifier
+                            ? 'email-address'
+                            : isLoginEmailInput(loginIdentifier)
+                              ? 'email-address'
+                              : 'number-pad'
+                        }
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        left={
+                          <Ionicons
+                            name={
+                              !loginIdentifier || isLoginEmailInput(loginIdentifier) ? 'mail' : 'call'
+                            }
+                            color={colors.secondary}
+                            style={{ marginLeft: 10 }}
+                            size={RFValue(18)}
+                          />
+                        }
+                        right={false}
+                      />
+                    )}
 
                     {isSignupMode && signupStep === 'enterDetails' && (
                       <CustomInput
@@ -521,39 +549,41 @@ const CustomerLogin = () => {
                       />
                     )}
 
-                    <CustomInput
-                      onChangeText={setPassword}
-                      onClear={() => setPassword('')}
-                      value={password}
-                      placeholder={t('auth.password')}
-                      secureTextEntry={!showPassword}
-                      left={
-                        <Ionicons
-                          name="key-sharp"
-                          color={colors.secondary}
-                          style={{ marginLeft: 10 }}
-                          size={RFValue(18)}
-                        />
-                      }
-                      right={false}
-                      rightIcon={
-                        <TouchableOpacity
-                          onPress={() => setShowPassword(!showPassword)}
-                          style={{
-                            padding: getResponsiveValue(8, 10, 12),
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}
-                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                          activeOpacity={0.7}>
+                    {(isSignupMode || isLoginEmailMode) && (
+                      <CustomInput
+                        onChangeText={setPassword}
+                        onClear={() => setPassword('')}
+                        value={password}
+                        placeholder={t('auth.password')}
+                        secureTextEntry={!showPassword}
+                        left={
                           <Ionicons
-                            name={showPassword ? 'eye-off' : 'eye'}
+                            name="key-sharp"
                             color={colors.secondary}
-                            size={RFValue(getResponsiveValue(22, 24, 26))}
+                            style={{ marginLeft: 10 }}
+                            size={RFValue(18)}
                           />
-                        </TouchableOpacity>
-                      }
-                    />
+                        }
+                        right={false}
+                        rightIcon={
+                          <TouchableOpacity
+                            onPress={() => setShowPassword(!showPassword)}
+                            style={{
+                              padding: getResponsiveValue(8, 10, 12),
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            activeOpacity={0.7}>
+                            <Ionicons
+                              name={showPassword ? 'eye-off' : 'eye'}
+                              color={colors.secondary}
+                              size={RFValue(getResponsiveValue(22, 24, 26))}
+                            />
+                          </TouchableOpacity>
+                        }
+                      />
+                    )}
                     {isSignupMode && signupStep === 'enterDetails' && (
                       <TouchableOpacity
                         onPress={() => setAcceptedPolicies((prev) => !prev)}
@@ -583,12 +613,12 @@ const CustomerLogin = () => {
                   </>
                 )}
 
-                {!isSignupMode && (
+                {!isSignupMode && isLoginEmailMode && loginIdentifier.includes('@') && (
                   <TouchableOpacity
                     onPress={() =>
                       navigate('ForgotPassword', {
                         returnTo: 'CustomerLogin',
-                        prefillEmail: email,
+                        prefillEmail: loginIdentifier.trim(),
                       })
                     }
                     style={{ alignSelf: 'flex-end', marginTop: getResponsiveValue(6, 8, 10) }}>
@@ -606,7 +636,7 @@ const CustomerLogin = () => {
                     disabled={!isFormValid()}
                     onPress={isSignupMode ? handleSignup : handleAuth}
                     loading={loading}
-                    title={isSignupMode ? t('auth.signUp') : 'Continue'}
+                    title={getLoginButtonTitle()}
                   />
                 )}
 

@@ -11,6 +11,7 @@ declare module 'react-native-razorpay' {
     currency?: string;
     name?: string;
     description?: string;
+    image?: string;
     order_id: string;
     prefill?: {
       email?: string;

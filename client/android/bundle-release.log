@@ -1,16 +1,3 @@
-Deleting directory /var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/wrapper/dists/gradle-9.0.0-bin/d6wjpkvcgsg3oed0qlfss3wgl/gradle-9.0.0
-
-Welcome to Gradle 9.0.0!
-
-Here are the highlights of this release:
- - Configuration Cache is the recommended execution mode
- - Gradle requires JVM 17 or higher to run
- - Build scripts use Kotlin 2.2 and Groovy 4.0
- - Improved Kotlin DSL script compilation avoidance
-
-For more details see https://docs.gradle.org/9.0.0/release-notes.html
-
-Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
@@ -33,544 +20,897 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
 
 > Configure project :notifee_react-native
-:notifee_react-native @notifee/react-native found at /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/@notifee/react-native
-:notifee_react-native package.json found at /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/@notifee/react-native/package.json
+:notifee_react-native @notifee/react-native found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@notifee/react-native
+:notifee_react-native package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@notifee/react-native/package.json
 :notifee_react-native:version set from package.json: 9.1.8 (9,1,8 - 9001008)
 :notifee_react-native:android.compileSdk using custom value: 36
 :notifee_react-native:android.targetSdk using custom value: 36
 :notifee_react-native:android.minSdk using custom value: 24
-:notifee_react-native:reactNativeAndroidDir /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/react-native
+:notifee_react-native:reactNativeAndroidDir /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native
 
 > Configure project :react-native-firebase_app
-:react-native-firebase_app package.json found at /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/app/package.json
 :react-native-firebase_app:firebase.bom using default value: 34.10.0
 :react-native-firebase_app:play.play-services-auth using default value: 21.5.0
-:react-native-firebase_app package.json found at /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_app package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/app/package.json
 :react-native-firebase_app:version set from package.json: 23.8.8 (23,8,8 - 23008008)
 :react-native-firebase_app:android.compileSdk using custom value: 36
 :react-native-firebase_app:android.targetSdk using custom value: 36
 :react-native-firebase_app:android.minSdk using custom value: 24
-:react-native-firebase_app:reactNativeAndroidDir /Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/node_modules/react-native
+:react-native-firebase_app:reactNativeAndroidDir /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native
+
+> Configure project :react-native-firebase_messaging
+:react-native-firebase_messaging package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/messaging/package.json
+:react-native-firebase_app package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/app/package.json
+:react-native-firebase_messaging:firebase.bom using default value: 34.10.0
+:react-native-firebase_messaging package.json found at /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/messaging/package.json
+:react-native-firebase_messaging:version set from package.json: 23.8.8 (23,8,8 - 23008008)
+:react-native-firebase_messaging:android.compileSdk using custom value: 36
+:react-native-firebase_messaging:android.targetSdk using custom value: 36
+:react-native-firebase_messaging:android.minSdk using custom value: 24
+:react-native-firebase_messaging:reactNativeAndroidDir /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native
 
 > Configure project :react-native-mmkv
 [react-native-mmkv] Thank you for using react-native-mmkv ❤️
 [react-native-mmkv] If you enjoy using react-native-mmkv, please consider sponsoring this project: https://github.com/sponsors/mrousavy
 
-> Task :app:createBundleReleaseJsAndAssets UP-TO-DATE
-> Task :app:generateAutolinkingNewArchitectureFiles UP-TO-DATE
-> Task :app:generateAutolinkingPackageList UP-TO-DATE
+> Task :app:externalNativeBuildCleanDebug
+Clean react_codegen_RNVectorIconsSpec-armeabi-v7a, react_codegen_safeareacontext-armeabi-v7a, react_codegen_rngesturehandler_codegen-armeabi-v7a, appmodules-armeabi-v7a, react_codegen_rndocumentpicker-armeabi-v7a, react_codegen_rnsvg-armeabi-v7a, react_codegen_RNMapsSpecs-armeabi-v7a, react_codegen_rnworklets-armeabi-v7a, react_codegen_RNCGeolocationSpec-armeabi-v7a, react_codegen_RNRazorpayCheckoutSpec-armeabi-v7a, react_codegen_rnreanimated-armeabi-v7a, core-armeabi-v7a, react-native-mmkv-armeabi-v7a, react_codegen_RNImagePickerSpec-armeabi-v7a, react_codegen_rnscreens-armeabi-v7a, react_codegen_lottiereactnative-armeabi-v7a, react_codegen_RNMmkvSpec-armeabi-v7a
+Clean react_codegen_RNVectorIconsSpec-arm64-v8a, react_codegen_safeareacontext-arm64-v8a, react_codegen_rngesturehandler_codegen-arm64-v8a, appmodules-arm64-v8a, react_codegen_rndocumentpicker-arm64-v8a, react_codegen_rnsvg-arm64-v8a, react_codegen_RNMapsSpecs-arm64-v8a, react_codegen_rnworklets-arm64-v8a, react_codegen_RNCGeolocationSpec-arm64-v8a, react_codegen_RNRazorpayCheckoutSpec-arm64-v8a, react_codegen_rnreanimated-arm64-v8a, core-arm64-v8a, react-native-mmkv-arm64-v8a, react_codegen_RNImagePickerSpec-arm64-v8a, react_codegen_rnscreens-arm64-v8a, react_codegen_lottiereactnative-arm64-v8a, react_codegen_RNMmkvSpec-arm64-v8a
+Clean react_codegen_RNVectorIconsSpec-x86, react_codegen_safeareacontext-x86, react_codegen_rngesturehandler_codegen-x86, appmodules-x86, react_codegen_rndocumentpicker-x86, react_codegen_rnsvg-x86, react_codegen_RNMapsSpecs-x86, react_codegen_rnworklets-x86, react_codegen_RNCGeolocationSpec-x86, react_codegen_RNRazorpayCheckoutSpec-x86, react_codegen_rnreanimated-x86, core-x86, react-native-mmkv-x86, react_codegen_RNImagePickerSpec-x86, react_codegen_rnscreens-x86, react_codegen_lottiereactnative-x86, react_codegen_RNMmkvSpec-x86
+Clean react_codegen_RNVectorIconsSpec-x86_64, react_codegen_safeareacontext-x86_64, react_codegen_rngesturehandler_codegen-x86_64, appmodules-x86_64, react_codegen_rndocumentpicker-x86_64, react_codegen_rnsvg-x86_64, react_codegen_RNMapsSpecs-x86_64, react_codegen_rnworklets-x86_64, react_codegen_RNCGeolocationSpec-x86_64, react_codegen_RNRazorpayCheckoutSpec-x86_64, react_codegen_rnreanimated-x86_64, core-x86_64, react-native-mmkv-x86_64, react_codegen_RNImagePickerSpec-x86_64, react_codegen_rnscreens-x86_64, react_codegen_lottiereactnative-x86_64, react_codegen_RNMmkvSpec-x86_64
+
+> Task :app:externalNativeBuildCleanDebugOptimized
+
+> Task :app:externalNativeBuildCleanRelease
+Clean react_codegen_RNVectorIconsSpec-armeabi-v7a, react_codegen_safeareacontext-armeabi-v7a, react_codegen_rngesturehandler_codegen-armeabi-v7a, appmodules-armeabi-v7a, react_codegen_rndocumentpicker-armeabi-v7a, react_codegen_rnsvg-armeabi-v7a, react_codegen_RNMapsSpecs-armeabi-v7a, react_codegen_rnworklets-armeabi-v7a, react_codegen_RNCGeolocationSpec-armeabi-v7a, react_codegen_RNRazorpayCheckoutSpec-armeabi-v7a, react_codegen_rnreanimated-armeabi-v7a, core-armeabi-v7a, react-native-mmkv-armeabi-v7a, react_codegen_RNImagePickerSpec-armeabi-v7a, react_codegen_rnscreens-armeabi-v7a, react_codegen_lottiereactnative-armeabi-v7a, react_codegen_RNMmkvSpec-armeabi-v7a
+Clean react_codegen_RNVectorIconsSpec-arm64-v8a, react_codegen_safeareacontext-arm64-v8a, react_codegen_rngesturehandler_codegen-arm64-v8a, appmodules-arm64-v8a, react_codegen_rndocumentpicker-arm64-v8a, react_codegen_rnsvg-arm64-v8a, react_codegen_RNMapsSpecs-arm64-v8a, react_codegen_rnworklets-arm64-v8a, react_codegen_RNCGeolocationSpec-arm64-v8a, react_codegen_RNRazorpayCheckoutSpec-arm64-v8a, react_codegen_rnreanimated-arm64-v8a, core-arm64-v8a, react-native-mmkv-arm64-v8a, react_codegen_RNImagePickerSpec-arm64-v8a, react_codegen_rnscreens-arm64-v8a, react_codegen_lottiereactnative-arm64-v8a, react_codegen_RNMmkvSpec-arm64-v8a
+Clean react_codegen_RNVectorIconsSpec-x86, react_codegen_safeareacontext-x86, react_codegen_rngesturehandler_codegen-x86, appmodules-x86, react_codegen_rndocumentpicker-x86, react_codegen_rnsvg-x86, react_codegen_RNMapsSpecs-x86, react_codegen_rnworklets-x86, react_codegen_RNCGeolocationSpec-x86, react_codegen_RNRazorpayCheckoutSpec-x86, react_codegen_rnreanimated-x86, core-x86, react-native-mmkv-x86, react_codegen_RNImagePickerSpec-x86, react_codegen_rnscreens-x86, react_codegen_lottiereactnative-x86, react_codegen_RNMmkvSpec-x86
+Clean react_codegen_RNVectorIconsSpec-x86_64, react_codegen_safeareacontext-x86_64, react_codegen_rngesturehandler_codegen-x86_64, appmodules-x86_64, react_codegen_rndocumentpicker-x86_64, react_codegen_rnsvg-x86_64, react_codegen_RNMapsSpecs-x86_64, react_codegen_rnworklets-x86_64, react_codegen_RNCGeolocationSpec-x86_64, react_codegen_RNRazorpayCheckoutSpec-x86_64, react_codegen_rnreanimated-x86_64, core-x86_64, react-native-mmkv-x86_64, react_codegen_RNImagePickerSpec-x86_64, react_codegen_rnscreens-x86_64, react_codegen_lottiereactnative-x86_64, react_codegen_RNMmkvSpec-x86_64
+
+> Task :app:clean
+> Task :lottie-react-native:clean
+> Task :notifee_react-native:clean
+> Task :react-native-community_geolocation:clean
+> Task :react-native-document-picker:clean
+> Task :react-native-firebase_app:clean
+> Task :react-native-firebase_messaging:clean
+
+> Task :react-native-gesture-handler:externalNativeBuildCleanDebug
+Clean gesturehandler-armeabi-v7a
+Clean gesturehandler-arm64-v8a
+Clean gesturehandler-x86
+Clean gesturehandler-x86_64
+
+> Task :react-native-gesture-handler:externalNativeBuildCleanRelease
+> Task :react-native-gesture-handler:clean
+> Task :react-native-image-picker:clean
+> Task :react-native-linear-gradient:clean
+> Task :react-native-maps:clean
+> Task :react-native-mmkv:clean
+> Task :react-native-razorpay:clean
+> Task :react-native-reanimated:cleanCmakeCache
+> Task :react-native-reanimated:externalNativeBuildCleanDebug
+> Task :react-native-reanimated:externalNativeBuildCleanRelease
+> Task :react-native-reanimated:clean
+> Task :react-native-safe-area-context:clean
+
+> Task :react-native-screens:externalNativeBuildCleanDebug
+Clean rnscreens-armeabi-v7a
+Clean rnscreens-arm64-v8a
+Clean rnscreens-x86
+Clean rnscreens-x86_64
+
+> Task :react-native-screens:externalNativeBuildCleanRelease
+> Task :react-native-screens:clean
+> Task :react-native-svg:clean
+> Task :react-native-vector-icons:clean
+> Task :react-native-worklets:cleanCmakeCache
+> Task :react-native-worklets:externalNativeBuildCleanDebug
+> Task :react-native-worklets:externalNativeBuildCleanRelease
+> Task :react-native-worklets:clean
+
+> Task :app:createBundleReleaseJsAndAssets
+
+                        ▒▒▓▓▓▓▒▒
+                     ▒▓▓▓▒▒░░▒▒▓▓▓▒
+                  ▒▓▓▓▓░░░▒▒▒▒░░░▓▓▓▓▒
+                 ▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓
+                 ▓▓░░░░░▒▓▓▓▓▓▓▒░░░░░▓▓
+                 ▓▓░░▓▓▒░░░▒▒░░░▒▓▒░░▓▓
+                 ▓▓░░▓▓▓▓▓▒▒▒▒▓▓▓▓▒░░▓▓
+                 ▓▓░░▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░▓▓
+                 ▓▓▒░░▒▒▓▓▓▓▓▓▓▓▒░░░▒▓▓
+                  ▒▓▓▓▒░░░▒▓▓▒░░░▒▓▓▓▒
+                     ▒▓▓▓▒░░░░▒▓▓▓▒
+                        ▒▒▓▓▓▓▒▒
+
+
+ WARN  the transform cache was reset.
+                Welcome to Metro v0.83.3
+              Fast - Scalable - Integrated
+
+
+transform[stderr]: (node:81591) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81595) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81594) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81592) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81593) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81596) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+transform[stderr]: (node:81597) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+transform[stderr]: (Use `node --trace-warnings ...` to show where the warning was created)
+LOG:Writing bundle output to: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/build/generated/assets/react/release/index.android.bundle
+LOG:Writing sourcemap output to: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/build/intermediates/sourcemaps/react/release/index.android.bundle.packager.map
+LOG:Done writing bundle output
+LOG:Done writing sourcemap output
+Copying 73 asset files
+Done copying assets
+
+> Task :app:generateAutolinkingNewArchitectureFiles
+> Task :app:generateAutolinkingPackageList
 > Task :app:generateCodegenSchemaFromJavaScript SKIPPED
 > Task :app:generateCodegenArtifactsFromSchema SKIPPED
-> Task :app:generateReactNativeEntryPoint UP-TO-DATE
-> Task :lottie-react-native:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :lottie-react-native:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :lottie-react-native:preBuild UP-TO-DATE
+> Task :app:generateReactNativeEntryPoint
+> Task :lottie-react-native:generateCodegenSchemaFromJavaScript
+> Task :lottie-react-native:generateCodegenArtifactsFromSchema
+> Task :lottie-react-native:preBuild
 > Task :notifee_react-native:preBuild UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:preBuild UP-TO-DATE
-> Task :react-native-community_geolocation:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-community_geolocation:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-community_geolocation:preBuild UP-TO-DATE
-> Task :react-native-document-picker:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-document-picker:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-document-picker:preBuild UP-TO-DATE
+> Task :react-native-community_geolocation:generateCodegenSchemaFromJavaScript
+> Task :react-native-community_geolocation:generateCodegenArtifactsFromSchema
+> Task :react-native-community_geolocation:preBuild
+> Task :react-native-document-picker:generateCodegenSchemaFromJavaScript
+> Task :react-native-document-picker:generateCodegenArtifactsFromSchema
+> Task :react-native-document-picker:preBuild
 > Task :react-native-firebase_app:preBuild UP-TO-DATE
-> Task :react-native-gesture-handler:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-gesture-handler:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-gesture-handler:preBuild UP-TO-DATE
-> Task :react-native-image-picker:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-image-picker:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-firebase_messaging:preBuild UP-TO-DATE
+> Task :react-native-gesture-handler:generateCodegenSchemaFromJavaScript
+> Task :react-native-gesture-handler:generateCodegenArtifactsFromSchema
+> Task :react-native-gesture-handler:preBuild
+> Task :react-native-image-picker:generateCodegenSchemaFromJavaScript
+> Task :react-native-image-picker:generateCodegenArtifactsFromSchema
+> Task :react-native-image-picker:preBuild
 > Task :react-native-linear-gradient:preBuild UP-TO-DATE
 > Task :react-native-maps:generateCodegenSchemaFromJavaScript SKIPPED
 > Task :react-native-maps:generateCodegenArtifactsFromSchema SKIPPED
 > Task :react-native-maps:preBuild UP-TO-DATE
-> Task :react-native-mmkv:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-mmkv:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-mmkv:preBuild UP-TO-DATE
+> Task :react-native-mmkv:generateCodegenSchemaFromJavaScript
+> Task :react-native-mmkv:generateCodegenArtifactsFromSchema
+> Task :react-native-mmkv:preBuild
+> Task :react-native-razorpay:generateCodegenSchemaFromJavaScript
+> Task :react-native-razorpay:generateCodegenArtifactsFromSchema
+> Task :react-native-razorpay:preBuild
 > Task :react-native-reanimated:assertMinimalReactNativeVersionTask
 > Task :react-native-reanimated:assertNewArchitectureEnabledTask SKIPPED
 > Task :react-native-reanimated:assertWorkletsVersionTask
-> Task :react-native-reanimated:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-reanimated:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs UP-TO-DATE
+> Task :react-native-reanimated:generateCodegenSchemaFromJavaScript
+> Task :react-native-reanimated:generateCodegenArtifactsFromSchema
+> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs
 > Task :react-native-reanimated:preBuild
-> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-safe-area-context:preBuild UP-TO-DATE
-> Task :react-native-screens:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-screens:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-screens:preBuild UP-TO-DATE
-> Task :react-native-svg:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-svg:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-svg:preBuild UP-TO-DATE
-> Task :react-native-vector-icons:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-vector-icons:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-vector-icons:preBuild UP-TO-DATE
+> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript
+> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema
+> Task :react-native-safe-area-context:preBuild
+> Task :react-native-screens:generateCodegenSchemaFromJavaScript
+> Task :react-native-screens:generateCodegenArtifactsFromSchema
+> Task :react-native-screens:preBuild
+> Task :react-native-svg:generateCodegenSchemaFromJavaScript
+> Task :react-native-svg:generateCodegenArtifactsFromSchema
+> Task :react-native-svg:preBuild
+> Task :react-native-vector-icons:generateCodegenSchemaFromJavaScript
+> Task :react-native-vector-icons:generateCodegenArtifactsFromSchema
+> Task :react-native-vector-icons:preBuild
 > Task :react-native-worklets:assertMinimalReactNativeVersionTask
 > Task :react-native-worklets:assertNewArchitectureEnabledTask SKIPPED
-> Task :react-native-worklets:generateCodegenSchemaFromJavaScript UP-TO-DATE
-> Task :react-native-worklets:generateCodegenArtifactsFromSchema UP-TO-DATE
-> Task :react-native-worklets:prepareWorkletsHeadersForPrefabs UP-TO-DATE
+> Task :react-native-worklets:generateCodegenSchemaFromJavaScript
+> Task :react-native-worklets:generateCodegenArtifactsFromSchema
+> Task :react-native-worklets:prepareWorkletsHeadersForPrefabs
 > Task :react-native-worklets:preBuild
 > Task :app:preBuild
 > Task :app:preReleaseBuild
 > Task :app:generateReleaseResValues
-> Task :lottie-react-native:preReleaseBuild UP-TO-DATE
-> Task :lottie-react-native:generateReleaseResValues UP-TO-DATE
-> Task :lottie-react-native:generateReleaseResources UP-TO-DATE
-> Task :lottie-react-native:packageReleaseResources UP-TO-DATE
+> Task :app:processReleaseGoogleServices
+> Task :lottie-react-native:preReleaseBuild
+> Task :lottie-react-native:generateReleaseResValues
+> Task :lottie-react-native:generateReleaseResources
+> Task :lottie-react-native:packageReleaseResources
 > Task :notifee_react-native:preReleaseBuild UP-TO-DATE
-> Task :notifee_react-native:generateReleaseResValues UP-TO-DATE
-> Task :notifee_react-native:generateReleaseResources UP-TO-DATE
-> Task :notifee_react-native:packageReleaseResources UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:preReleaseBuild UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:generateReleaseResValues UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:generateReleaseResources UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:packageReleaseResources UP-TO-DATE
-> Task :react-native-community_geolocation:preReleaseBuild UP-TO-DATE
-> Task :react-native-community_geolocation:generateReleaseResValues UP-TO-DATE
-> Task :react-native-community_geolocation:generateReleaseResources UP-TO-DATE
-> Task :react-native-community_geolocation:packageReleaseResources UP-TO-DATE
-> Task :react-native-document-picker:preReleaseBuild UP-TO-DATE
-> Task :react-native-document-picker:generateReleaseResValues UP-TO-DATE
-> Task :react-native-document-picker:generateReleaseResources UP-TO-DATE
-> Task :react-native-document-picker:packageReleaseResources UP-TO-DATE
+> Task :notifee_react-native:generateReleaseResValues
+> Task :notifee_react-native:generateReleaseResources
+> Task :notifee_react-native:packageReleaseResources
+> Task :react-native-community_geolocation:preReleaseBuild
+> Task :react-native-community_geolocation:generateReleaseResValues
+> Task :react-native-community_geolocation:generateReleaseResources
+> Task :react-native-community_geolocation:packageReleaseResources
+> Task :react-native-document-picker:preReleaseBuild
+> Task :react-native-document-picker:generateReleaseResValues
+> Task :react-native-document-picker:generateReleaseResources
+> Task :react-native-document-picker:packageReleaseResources
 > Task :react-native-firebase_app:preReleaseBuild UP-TO-DATE
-> Task :react-native-firebase_app:generateReleaseResValues UP-TO-DATE
-> Task :react-native-firebase_app:generateReleaseResources UP-TO-DATE
-> Task :react-native-firebase_app:packageReleaseResources UP-TO-DATE
-> Task :react-native-gesture-handler:preReleaseBuild UP-TO-DATE
-> Task :react-native-gesture-handler:generateReleaseResValues UP-TO-DATE
-> Task :react-native-gesture-handler:generateReleaseResources UP-TO-DATE
-> Task :react-native-gesture-handler:packageReleaseResources UP-TO-DATE
-> Task :react-native-image-picker:preReleaseBuild UP-TO-DATE
-> Task :react-native-image-picker:generateReleaseResValues UP-TO-DATE
-> Task :react-native-image-picker:generateReleaseResources UP-TO-DATE
-> Task :react-native-image-picker:packageReleaseResources UP-TO-DATE
+> Task :react-native-firebase_app:generateReleaseResValues
+> Task :react-native-firebase_app:generateReleaseResources
+> Task :react-native-firebase_app:packageReleaseResources
+> Task :react-native-firebase_messaging:preReleaseBuild UP-TO-DATE
+> Task :react-native-firebase_messaging:generateReleaseResValues
+> Task :react-native-firebase_messaging:generateReleaseResources
+> Task :react-native-firebase_messaging:packageReleaseResources
+> Task :react-native-gesture-handler:preReleaseBuild
+> Task :react-native-gesture-handler:generateReleaseResValues
+> Task :react-native-gesture-handler:generateReleaseResources
+> Task :react-native-gesture-handler:packageReleaseResources
+> Task :react-native-image-picker:preReleaseBuild
+> Task :react-native-image-picker:generateReleaseResValues
+> Task :react-native-image-picker:generateReleaseResources
+> Task :react-native-image-picker:packageReleaseResources
 > Task :react-native-linear-gradient:preReleaseBuild UP-TO-DATE
-> Task :react-native-linear-gradient:generateReleaseResValues UP-TO-DATE
-> Task :react-native-linear-gradient:generateReleaseResources UP-TO-DATE
-> Task :react-native-linear-gradient:packageReleaseResources UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseResValues
+> Task :react-native-linear-gradient:generateReleaseResources
+> Task :react-native-linear-gradient:packageReleaseResources
 > Task :react-native-maps:preReleaseBuild UP-TO-DATE
-> Task :react-native-maps:generateReleaseResValues UP-TO-DATE
-> Task :react-native-maps:generateReleaseResources UP-TO-DATE
-> Task :react-native-maps:packageReleaseResources UP-TO-DATE
-> Task :react-native-mmkv:preReleaseBuild UP-TO-DATE
-> Task :react-native-mmkv:generateReleaseResValues UP-TO-DATE
-> Task :react-native-mmkv:generateReleaseResources UP-TO-DATE
-> Task :react-native-mmkv:packageReleaseResources UP-TO-DATE
+> Task :react-native-maps:generateReleaseResValues
+> Task :react-native-maps:generateReleaseResources
+> Task :react-native-maps:packageReleaseResources
+> Task :react-native-mmkv:preReleaseBuild
+> Task :react-native-mmkv:generateReleaseResValues
+> Task :react-native-mmkv:generateReleaseResources
+> Task :react-native-mmkv:packageReleaseResources
+> Task :react-native-razorpay:preReleaseBuild
+> Task :react-native-razorpay:generateReleaseResValues
+> Task :react-native-razorpay:generateReleaseResources
+> Task :react-native-razorpay:packageReleaseResources
 > Task :react-native-reanimated:preReleaseBuild
-> Task :react-native-reanimated:generateReleaseResValues UP-TO-DATE
-> Task :react-native-reanimated:generateReleaseResources UP-TO-DATE
-> Task :react-native-reanimated:packageReleaseResources UP-TO-DATE
-> Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
-> Task :react-native-safe-area-context:generateReleaseResValues UP-TO-DATE
-> Task :react-native-safe-area-context:generateReleaseResources UP-TO-DATE
-> Task :react-native-safe-area-context:packageReleaseResources UP-TO-DATE
-> Task :react-native-screens:preReleaseBuild UP-TO-DATE
-> Task :react-native-screens:generateReleaseResValues UP-TO-DATE
-> Task :react-native-screens:generateReleaseResources UP-TO-DATE
-> Task :react-native-screens:packageReleaseResources UP-TO-DATE
-> Task :react-native-svg:preReleaseBuild UP-TO-DATE
-> Task :react-native-svg:generateReleaseResValues UP-TO-DATE
-> Task :react-native-svg:generateReleaseResources UP-TO-DATE
-> Task :react-native-svg:packageReleaseResources UP-TO-DATE
-> Task :react-native-vector-icons:preReleaseBuild UP-TO-DATE
-> Task :react-native-vector-icons:generateReleaseResValues UP-TO-DATE
-> Task :react-native-vector-icons:generateReleaseResources UP-TO-DATE
-> Task :react-native-vector-icons:packageReleaseResources UP-TO-DATE
+> Task :react-native-reanimated:generateReleaseResValues
+> Task :react-native-reanimated:generateReleaseResources
+> Task :react-native-reanimated:packageReleaseResources
+> Task :react-native-safe-area-context:preReleaseBuild
+> Task :react-native-safe-area-context:generateReleaseResValues
+> Task :react-native-safe-area-context:generateReleaseResources
+> Task :react-native-safe-area-context:packageReleaseResources
+> Task :react-native-screens:preReleaseBuild
+> Task :react-native-screens:generateReleaseResValues
+> Task :react-native-screens:generateReleaseResources
+> Task :react-native-screens:packageReleaseResources
+> Task :react-native-svg:preReleaseBuild
+> Task :react-native-svg:generateReleaseResValues
+> Task :react-native-svg:generateReleaseResources
+> Task :react-native-svg:packageReleaseResources
+> Task :react-native-vector-icons:preReleaseBuild
+> Task :react-native-vector-icons:generateReleaseResValues
+> Task :react-native-vector-icons:generateReleaseResources
+> Task :react-native-vector-icons:packageReleaseResources
 > Task :react-native-worklets:preReleaseBuild
-> Task :react-native-worklets:generateReleaseResValues UP-TO-DATE
-> Task :react-native-worklets:generateReleaseResources UP-TO-DATE
-> Task :react-native-worklets:packageReleaseResources UP-TO-DATE
-> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :app:generateReleaseResources UP-TO-DATE
+> Task :react-native-worklets:generateReleaseResValues
+> Task :react-native-worklets:generateReleaseResources
+> Task :react-native-worklets:packageReleaseResources
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
 > Task :app:createReleaseCompatibleScreenManifests
-> Task :app:extractDeepLinksRelease UP-TO-DATE
-> Task :lottie-react-native:extractDeepLinksRelease UP-TO-DATE
-> Task :lottie-react-native:processReleaseManifest UP-TO-DATE
-> Task :notifee_react-native:extractDeepLinksRelease UP-TO-DATE
-> Task :notifee_react-native:processReleaseManifest UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:processReleaseManifest UP-TO-DATE
-> Task :react-native-community_geolocation:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-community_geolocation:processReleaseManifest UP-TO-DATE
-> Task :react-native-document-picker:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-document-picker:processReleaseManifest UP-TO-DATE
-> Task :react-native-firebase_app:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-firebase_app:processReleaseManifest UP-TO-DATE
-> Task :react-native-gesture-handler:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-gesture-handler:processReleaseManifest UP-TO-DATE
-> Task :react-native-image-picker:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-image-picker:processReleaseManifest UP-TO-DATE
-> Task :react-native-linear-gradient:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-linear-gradient:processReleaseManifest UP-TO-DATE
-> Task :react-native-maps:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-maps:processReleaseManifest UP-TO-DATE
-> Task :react-native-mmkv:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-mmkv:processReleaseManifest UP-TO-DATE
-> Task :react-native-reanimated:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-reanimated:processReleaseManifest UP-TO-DATE
-> Task :react-native-safe-area-context:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-safe-area-context:processReleaseManifest UP-TO-DATE
-> Task :react-native-screens:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-screens:processReleaseManifest UP-TO-DATE
-> Task :react-native-svg:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-svg:processReleaseManifest UP-TO-DATE
-> Task :react-native-vector-icons:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-vector-icons:processReleaseManifest UP-TO-DATE
-> Task :react-native-worklets:extractDeepLinksRelease UP-TO-DATE
-> Task :react-native-worklets:processReleaseManifest UP-TO-DATE
+> Task :app:extractDeepLinksRelease
+> Task :lottie-react-native:extractDeepLinksRelease
+> Task :notifee_react-native:extractDeepLinksRelease
+> Task :react-native-community_geolocation:extractDeepLinksRelease
+> Task :react-native-document-picker:extractDeepLinksRelease
+> Task :react-native-firebase_app:extractDeepLinksRelease
+> Task :react-native-firebase_messaging:extractDeepLinksRelease
+> Task :react-native-gesture-handler:extractDeepLinksRelease
+> Task :react-native-image-picker:extractDeepLinksRelease
+
+> Task :react-native-image-picker:processReleaseManifest
+package="com.imagepicker" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.imagepicker" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-image-picker/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-linear-gradient:extractDeepLinksRelease
+
+> Task :react-native-firebase_messaging:processReleaseManifest
+package="io.invertase.firebase.messaging" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.firebase.messaging" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-maps:extractDeepLinksRelease
+> Task :lottie-react-native:processReleaseManifest
+> Task :react-native-mmkv:extractDeepLinksRelease
+
+> Task :react-native-firebase_app:processReleaseManifest
+package="io.invertase.firebase" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/app/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.firebase" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-firebase/app/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-razorpay:extractDeepLinksRelease
+
+> Task :react-native-community_geolocation:processReleaseManifest
+package="com.reactnativecommunity.geolocation" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-community/geolocation/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.geolocation" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@react-native-community/geolocation/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-reanimated:extractDeepLinksRelease
+
+> Task :react-native-document-picker:processReleaseManifest
+package="com.reactnativedocumentpicker" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-document-picker/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativedocumentpicker" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-document-picker/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:extractDeepLinksRelease
+
+> Task :react-native-safe-area-context:processReleaseManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-screens:extractDeepLinksRelease
+> Task :react-native-screens:processReleaseManifest
+> Task :react-native-svg:extractDeepLinksRelease
+
+> Task :react-native-razorpay:processReleaseManifest
+package="com.razorpay.rn" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-razorpay/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.razorpay.rn" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-razorpay/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-vector-icons:extractDeepLinksRelease
+> Task :react-native-maps:processReleaseManifest
+> Task :react-native-worklets:extractDeepLinksRelease
+
+> Task :notifee_react-native:processReleaseManifest
+package="io.invertase.notifee" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@notifee/react-native/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.invertase.notifee" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@notifee/react-native/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-gesture-handler:processReleaseManifest
+> Task :react-native-reanimated:processReleaseManifest
+> Task :react-native-mmkv:processReleaseManifest
+
+> Task :react-native-linear-gradient:processReleaseManifest
+package="com.BV.LinearGradient" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-linear-gradient/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.BV.LinearGradient" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-linear-gradient/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-firebase_app:writeReleaseAarMetadata
+> Task :lottie-react-native:writeReleaseAarMetadata
+> Task :react-native-community_geolocation:writeReleaseAarMetadata
+> Task :react-native-image-picker:writeReleaseAarMetadata
+> Task :react-native-maps:writeReleaseAarMetadata
+> Task :notifee_react-native:writeReleaseAarMetadata
+> Task :react-native-document-picker:writeReleaseAarMetadata
+
+> Task :react-native-vector-icons:processReleaseManifest
+package="com.oblador.vectoricons" found in source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.oblador.vectoricons" from the source AndroidManifest.xml: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-vector-icons/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:writeReleaseAarMetadata
+> Task :react-native-worklets:processReleaseManifest
+> Task :react-native-linear-gradient:writeReleaseAarMetadata
+> Task :react-native-firebase_messaging:writeReleaseAarMetadata
+> Task :react-native-reanimated:writeReleaseAarMetadata
+> Task :react-native-worklets:writeReleaseAarMetadata
+> Task :react-native-gesture-handler:writeReleaseAarMetadata
+> Task :react-native-vector-icons:writeReleaseAarMetadata
+> Task :app:packageReleaseResources
+> Task :react-native-mmkv:writeReleaseAarMetadata
+> Task :react-native-svg:writeReleaseAarMetadata
+> Task :react-native-screens:writeReleaseAarMetadata
+> Task :react-native-razorpay:writeReleaseAarMetadata
+> Task :react-native-svg:processReleaseManifest
 
 > Task :app:processReleaseMainManifest
-/Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/android/app/src/main/AndroidManifest.xml:11:5-96 Warning:
+[com.razorpay:standard-core:1.7.12] /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/ef2cd6e2d67914ece2fd09309c2213d7/transformed/standard-core-1.7.12/AndroidManifest.xml Warning:
+	Namespace 'com.razorpay' is used in multiple modules and/or libraries: com.razorpay:standard-core:1.7.12, com.razorpay:core:1.0.13. Please ensure that all modules and libraries have a unique namespace. For more information, See https://developer.android.com/studio/build/configure-app-module#set-namespace
+/Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/src/main/AndroidManifest.xml:11:5-96 Warning:
 	uses-permission#android.permission.READ_MEDIA_IMAGES was tagged at AndroidManifest.xml:11 to remove other declarations but no other declaration present
-/Users/kaleshabaig/Projects/Freelancing/Car-Systems/client/android/app/src/main/AndroidManifest.xml:12:5-95 Warning:
+/Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/src/main/AndroidManifest.xml:12:5-95 Warning:
 	uses-permission#android.permission.READ_MEDIA_VIDEO was tagged at AndroidManifest.xml:12 to remove other declarations but no other declaration present
 
 > Task :app:processReleaseManifest
 > Task :app:processApplicationManifestReleaseForBundle
-> Task :lottie-react-native:writeReleaseAarMetadata UP-TO-DATE
-> Task :notifee_react-native:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-community_geolocation:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-document-picker:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-firebase_app:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-gesture-handler:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-image-picker:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-linear-gradient:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-maps:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-mmkv:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-reanimated:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-safe-area-context:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-screens:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-svg:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-vector-icons:writeReleaseAarMetadata UP-TO-DATE
-> Task :react-native-worklets:writeReleaseAarMetadata UP-TO-DATE
-> Task :app:checkReleaseAarMetadata UP-TO-DATE
-> Task :app:packageReleaseResources
-> Task :lottie-react-native:compileReleaseLibraryResources UP-TO-DATE
-> Task :lottie-react-native:parseReleaseLocalResources UP-TO-DATE
-> Task :lottie-react-native:generateReleaseRFile UP-TO-DATE
-> Task :notifee_react-native:compileReleaseLibraryResources UP-TO-DATE
-> Task :notifee_react-native:parseReleaseLocalResources UP-TO-DATE
-> Task :notifee_react-native:generateReleaseRFile UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:generateReleaseRFile UP-TO-DATE
-> Task :react-native-community_geolocation:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-community_geolocation:parseReleaseLocalResources UP-TO-DATE
 > Task :app:parseReleaseLocalResources
-> Task :react-native-community_geolocation:generateReleaseRFile UP-TO-DATE
-> Task :react-native-document-picker:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-document-picker:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-document-picker:generateReleaseRFile UP-TO-DATE
-> Task :react-native-firebase_app:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-firebase_app:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-firebase_app:generateReleaseRFile UP-TO-DATE
-> Task :react-native-gesture-handler:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-gesture-handler:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-gesture-handler:generateReleaseRFile UP-TO-DATE
-> Task :react-native-image-picker:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-image-picker:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-image-picker:generateReleaseRFile UP-TO-DATE
 > Task :app:processReleaseManifestForPackage
-> Task :react-native-linear-gradient:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-linear-gradient:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-linear-gradient:generateReleaseRFile UP-TO-DATE
-> Task :react-native-maps:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-maps:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-maps:generateReleaseRFile UP-TO-DATE
-> Task :react-native-mmkv:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-mmkv:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-mmkv:generateReleaseRFile UP-TO-DATE
-> Task :react-native-reanimated:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-reanimated:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-reanimated:generateReleaseRFile UP-TO-DATE
-> Task :react-native-safe-area-context:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-safe-area-context:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-safe-area-context:generateReleaseRFile UP-TO-DATE
-> Task :react-native-screens:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-screens:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-screens:generateReleaseRFile UP-TO-DATE
-> Task :react-native-svg:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-svg:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-svg:generateReleaseRFile UP-TO-DATE
-> Task :react-native-vector-icons:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-vector-icons:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-vector-icons:generateReleaseRFile UP-TO-DATE
-> Task :react-native-worklets:compileReleaseLibraryResources UP-TO-DATE
-> Task :react-native-worklets:parseReleaseLocalResources UP-TO-DATE
-> Task :react-native-worklets:generateReleaseRFile UP-TO-DATE
-> Task :app:extractReleaseVersionControlInfo UP-TO-DATE
-> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:checkReleaseAarMetadata
+> Task :lottie-react-native:parseReleaseLocalResources
+> Task :notifee_react-native:compileReleaseLibraryResources
+> Task :notifee_react-native:parseReleaseLocalResources
+> Task :react-native-document-picker:parseReleaseLocalResources
+> Task :react-native-community_geolocation:parseReleaseLocalResources
+> Task :react-native-document-picker:compileReleaseLibraryResources
+> Task :lottie-react-native:compileReleaseLibraryResources
+> Task :notifee_react-native:generateReleaseRFile
+> Task :lottie-react-native:generateReleaseRFile
+> Task :react-native-document-picker:generateReleaseRFile
+> Task :react-native-community_geolocation:generateReleaseRFile
+> Task :react-native-community_geolocation:compileReleaseLibraryResources
+> Task :react-native-firebase_app:parseReleaseLocalResources
+> Task :react-native-firebase_app:compileReleaseLibraryResources
+> Task :react-native-firebase_messaging:compileReleaseLibraryResources
+> Task :react-native-firebase_app:generateReleaseRFile
+> Task :react-native-gesture-handler:parseReleaseLocalResources
+> Task :react-native-firebase_messaging:parseReleaseLocalResources
+> Task :react-native-gesture-handler:compileReleaseLibraryResources
+> Task :react-native-firebase_messaging:generateReleaseRFile
+> Task :react-native-gesture-handler:generateReleaseRFile
+> Task :react-native-image-picker:compileReleaseLibraryResources
+> Task :react-native-image-picker:parseReleaseLocalResources
+> Task :react-native-linear-gradient:compileReleaseLibraryResources
+> Task :react-native-linear-gradient:parseReleaseLocalResources
+> Task :react-native-image-picker:generateReleaseRFile
+> Task :react-native-linear-gradient:generateReleaseRFile
+> Task :react-native-maps:compileReleaseLibraryResources
+> Task :react-native-mmkv:compileReleaseLibraryResources
+> Task :react-native-maps:parseReleaseLocalResources
+> Task :react-native-mmkv:parseReleaseLocalResources
+> Task :react-native-maps:generateReleaseRFile
+> Task :react-native-mmkv:generateReleaseRFile
+> Task :react-native-reanimated:compileReleaseLibraryResources
+> Task :react-native-reanimated:parseReleaseLocalResources
+> Task :react-native-razorpay:compileReleaseLibraryResources
+> Task :react-native-safe-area-context:compileReleaseLibraryResources
+> Task :react-native-razorpay:parseReleaseLocalResources
+> Task :react-native-safe-area-context:parseReleaseLocalResources
+> Task :react-native-razorpay:generateReleaseRFile
+> Task :react-native-reanimated:generateReleaseRFile
+> Task :react-native-safe-area-context:generateReleaseRFile
+> Task :react-native-svg:parseReleaseLocalResources
+> Task :react-native-vector-icons:parseReleaseLocalResources
+> Task :react-native-vector-icons:compileReleaseLibraryResources
+> Task :react-native-screens:parseReleaseLocalResources
+> Task :react-native-worklets:compileReleaseLibraryResources
+> Task :react-native-screens:compileReleaseLibraryResources
+> Task :react-native-svg:compileReleaseLibraryResources
+> Task :react-native-screens:generateReleaseRFile
+> Task :react-native-svg:generateReleaseRFile
+> Task :react-native-vector-icons:generateReleaseRFile
+> Task :react-native-worklets:parseReleaseLocalResources
+> Task :app:extractReleaseVersionControlInfo
+> Task :react-native-worklets:generateReleaseRFile
+> Task :app:mergeReleaseShaders
 > Task :app:compileReleaseShaders NO-SOURCE
-> Task :app:copyReactNativeVectorIconFonts UP-TO-DATE
-> Task :app:generateReleaseAssets UP-TO-DATE
-> Task :lottie-react-native:mergeReleaseShaders UP-TO-DATE
+> Task :app:copyReactNativeVectorIconFonts
+> Task :app:generateReleaseAssets
+> Task :lottie-react-native:mergeReleaseShaders
 > Task :lottie-react-native:compileReleaseShaders NO-SOURCE
 > Task :lottie-react-native:generateReleaseAssets UP-TO-DATE
-> Task :lottie-react-native:mergeReleaseAssets UP-TO-DATE
-> Task :notifee_react-native:mergeReleaseShaders UP-TO-DATE
+> Task :lottie-react-native:mergeReleaseAssets
+> Task :notifee_react-native:mergeReleaseShaders
 > Task :notifee_react-native:compileReleaseShaders NO-SOURCE
 > Task :notifee_react-native:generateReleaseAssets UP-TO-DATE
-> Task :notifee_react-native:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:mergeReleaseShaders UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:compileReleaseShaders NO-SOURCE
-> Task :react-native-cashfree-pg-sdk:generateReleaseAssets UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-community_geolocation:mergeReleaseShaders UP-TO-DATE
+> Task :notifee_react-native:mergeReleaseAssets
+> Task :react-native-community_geolocation:mergeReleaseShaders
 > Task :react-native-community_geolocation:compileReleaseShaders NO-SOURCE
 > Task :react-native-community_geolocation:generateReleaseAssets UP-TO-DATE
-> Task :react-native-community_geolocation:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-document-picker:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_geolocation:mergeReleaseAssets
+> Task :react-native-document-picker:mergeReleaseShaders
 > Task :react-native-document-picker:compileReleaseShaders NO-SOURCE
 > Task :react-native-document-picker:generateReleaseAssets UP-TO-DATE
-> Task :react-native-document-picker:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-firebase_app:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-document-picker:mergeReleaseAssets
+> Task :react-native-firebase_app:mergeReleaseShaders
 > Task :react-native-firebase_app:compileReleaseShaders NO-SOURCE
 > Task :react-native-firebase_app:generateReleaseAssets UP-TO-DATE
-> Task :react-native-firebase_app:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-gesture-handler:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-firebase_app:mergeReleaseAssets
+> Task :react-native-firebase_messaging:mergeReleaseShaders
+> Task :react-native-firebase_messaging:compileReleaseShaders NO-SOURCE
+> Task :react-native-firebase_messaging:generateReleaseAssets UP-TO-DATE
+> Task :react-native-firebase_messaging:mergeReleaseAssets
+> Task :react-native-gesture-handler:mergeReleaseShaders
 > Task :react-native-gesture-handler:compileReleaseShaders NO-SOURCE
 > Task :react-native-gesture-handler:generateReleaseAssets UP-TO-DATE
-> Task :react-native-gesture-handler:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-image-picker:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-gesture-handler:mergeReleaseAssets
+> Task :react-native-image-picker:mergeReleaseShaders
 > Task :react-native-image-picker:compileReleaseShaders NO-SOURCE
 > Task :react-native-image-picker:generateReleaseAssets UP-TO-DATE
-> Task :react-native-image-picker:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-linear-gradient:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-image-picker:mergeReleaseAssets
+> Task :react-native-linear-gradient:mergeReleaseShaders
 > Task :react-native-linear-gradient:compileReleaseShaders NO-SOURCE
 > Task :react-native-linear-gradient:generateReleaseAssets UP-TO-DATE
-> Task :react-native-linear-gradient:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-maps:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseAssets
+> Task :react-native-maps:mergeReleaseShaders
 > Task :react-native-maps:compileReleaseShaders NO-SOURCE
 > Task :react-native-maps:generateReleaseAssets UP-TO-DATE
-> Task :react-native-maps:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-mmkv:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-maps:mergeReleaseAssets
+> Task :react-native-mmkv:mergeReleaseShaders
 > Task :react-native-mmkv:compileReleaseShaders NO-SOURCE
 > Task :react-native-mmkv:generateReleaseAssets UP-TO-DATE
-> Task :react-native-mmkv:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-reanimated:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-mmkv:mergeReleaseAssets
+> Task :react-native-razorpay:mergeReleaseShaders
+> Task :react-native-razorpay:compileReleaseShaders NO-SOURCE
+> Task :react-native-razorpay:generateReleaseAssets UP-TO-DATE
+> Task :react-native-razorpay:mergeReleaseAssets
+> Task :react-native-reanimated:mergeReleaseShaders
 > Task :react-native-reanimated:compileReleaseShaders NO-SOURCE
 > Task :react-native-reanimated:generateReleaseAssets UP-TO-DATE
-> Task :react-native-reanimated:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-safe-area-context:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-reanimated:mergeReleaseAssets
+> Task :react-native-safe-area-context:mergeReleaseShaders
 > Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
 > Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
-> Task :react-native-safe-area-context:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-screens:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseAssets
+> Task :react-native-screens:mergeReleaseShaders
 > Task :react-native-screens:compileReleaseShaders NO-SOURCE
 > Task :react-native-screens:generateReleaseAssets UP-TO-DATE
-> Task :react-native-screens:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-svg:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-screens:mergeReleaseAssets
+> Task :react-native-svg:mergeReleaseShaders
 > Task :react-native-svg:compileReleaseShaders NO-SOURCE
 > Task :react-native-svg:generateReleaseAssets UP-TO-DATE
-> Task :react-native-svg:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-vector-icons:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-svg:mergeReleaseAssets
+> Task :react-native-vector-icons:mergeReleaseShaders
 > Task :react-native-vector-icons:compileReleaseShaders NO-SOURCE
 > Task :react-native-vector-icons:generateReleaseAssets UP-TO-DATE
-> Task :react-native-vector-icons:mergeReleaseAssets UP-TO-DATE
-> Task :react-native-worklets:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-vector-icons:mergeReleaseAssets
+> Task :react-native-worklets:mergeReleaseShaders
 > Task :react-native-worklets:compileReleaseShaders NO-SOURCE
 > Task :react-native-worklets:generateReleaseAssets UP-TO-DATE
-> Task :react-native-worklets:mergeReleaseAssets UP-TO-DATE
-> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-worklets:mergeReleaseAssets
+> Task :app:mergeReleaseAssets
 > Task :lottie-react-native:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :lottie-react-native:generateReleaseBuildConfig UP-TO-DATE
-> Task :app:mergeReleaseResources
-> Task :lottie-react-native:compileReleaseKotlin UP-TO-DATE
-> Task :lottie-react-native:javaPreCompileRelease UP-TO-DATE
-> Task :app:processReleaseResources
-> Task :lottie-react-native:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :lottie-react-native:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :lottie-react-native:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :lottie-react-native:generateReleaseBuildConfig
 > Task :react-native-gesture-handler:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :react-native-gesture-handler:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-reanimated:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-reanimated:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-worklets:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-worklets:javaPreCompileRelease UP-TO-DATE
-> Task :app:bundleReleaseResources
-> Task :react-native-worklets:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-worklets:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-reanimated:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-reanimated:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-svg:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-svg:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-svg:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-svg:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-gesture-handler:compileReleaseKotlin UP-TO-DATE
-> Task :react-native-gesture-handler:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-gesture-handler:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-gesture-handler:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :lottie-react-native:javaPreCompileRelease
+> Task :react-native-gesture-handler:generateReleaseBuildConfig
+> Task :react-native-reanimated:generateReleaseBuildConfig
+> Task :react-native-reanimated:javaPreCompileRelease
+> Task :react-native-worklets:generateReleaseBuildConfig
+> Task :react-native-worklets:javaPreCompileRelease
+> Task :react-native-svg:generateReleaseBuildConfig
+
+> Task :react-native-worklets:compileReleaseJavaWithJavac
+Note: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/WorkletsMessageQueueThreadBase.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/WorkletsPackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :app:mergeReleaseResources
+> Task :react-native-svg:javaPreCompileRelease
+> Task :react-native-gesture-handler:javaPreCompileRelease
+> Task :react-native-worklets:bundleLibCompileToJarRelease
+> Task :app:processReleaseResources
+
+> Task :lottie-react-native:compileReleaseKotlin
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:12:8 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:21:17 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:72:16 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:74:13 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:76:13 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:78:13 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:108:28 'static fun isAttachedToWindow(p0: View): Boolean' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:138:28 'static fun isAttachedToWindow(p0: View): Boolean' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:148:28 'static fun isAttachedToWindow(p0: View): Boolean' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewManagerImpl.kt:157:28 'static fun isAttachedToWindow(p0: View): Boolean' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:22:8 'class ReactFontManager : Any' is deprecated. This class is deprecated and will be deleted in the near future. Please use [com.facebook.react.common.assets.ReactFontManager] instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:76:24 'class ReactFontManager : Any' is deprecated. This class is deprecated and will be deleted in the near future. Please use [com.facebook.react.common.assets.ReactFontManager] instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottieAnimationViewPropertyManager.kt:90:24 'class ReactFontManager : Any' is deprecated. This class is deprecated and will be deleted in the near future. Please use [com.facebook.react.common.assets.ReactFontManager] instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/main/java/com/airbnb/android/react/lottie/LottiePackage.kt:11:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/lottie-react-native/android/src/newarch/com/airbnb/android/react/lottie/LottieAnimationViewManager.kt:107:18 'fun receiveCommand(view: LottieAnimationView, commandName: String, args: ReadableArray?): Unit' is deprecated. args is not nullable, please update your method signature.
+
+> Task :react-native-svg:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :lottie-react-native:compileReleaseJavaWithJavac
+> Task :lottie-react-native:mergeReleaseGeneratedProguardFiles
+> Task :lottie-react-native:exportReleaseConsumerProguardFiles
+
+> Task :react-native-reanimated:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
 > Task :react-native-maps:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :react-native-maps:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-reanimated:bundleLibCompileToJarRelease
+> Task :react-native-maps:generateReleaseBuildConfig
+> Task :react-native-svg:bundleLibCompileToJarRelease
 > Task :react-native-maps:compileReleaseKotlin NO-SOURCE
-> Task :react-native-maps:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-maps:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-maps:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-maps:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :app:bundleReleaseResources
 > Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :react-native-safe-area-context:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-safe-area-context:compileReleaseKotlin UP-TO-DATE
-> Task :react-native-safe-area-context:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-safe-area-context:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-safe-area-context:exportReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-maps:javaPreCompileRelease
+> Task :react-native-safe-area-context:generateReleaseBuildConfig
+
+> Task :react-native-maps:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :react-native-maps:mergeReleaseGeneratedProguardFiles
+> Task :react-native-maps:exportReleaseConsumerProguardFiles
 > Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :react-native-screens:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-screens:compileReleaseKotlin UP-TO-DATE
-> Task :react-native-screens:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-screens:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-screens:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-screens:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :notifee_react-native:generateReleaseBuildConfig UP-TO-DATE
-> Task :notifee_react-native:javaPreCompileRelease UP-TO-DATE
-> Task :notifee_react-native:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :notifee_react-native:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :notifee_react-native:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-community_geolocation:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-community_geolocation:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-community_geolocation:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-community_geolocation:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-community_geolocation:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-firebase_app:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-firebase_app:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-firebase_app:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-firebase_app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-firebase_app:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-document-picker:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-document-picker:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-document-picker:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-document-picker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-document-picker:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-image-picker:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-image-picker:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-image-picker:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-image-picker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-image-picker:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-linear-gradient:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-linear-gradient:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-linear-gradient:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-linear-gradient:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-linear-gradient:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-mmkv:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-mmkv:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-mmkv:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-mmkv:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-mmkv:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-reanimated:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-svg:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-svg:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-vector-icons:generateReleaseBuildConfig UP-TO-DATE
-> Task :react-native-vector-icons:javaPreCompileRelease UP-TO-DATE
-> Task :react-native-vector-icons:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :react-native-vector-icons:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-vector-icons:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :react-native-worklets:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :react-native-worklets:exportReleaseConsumerProguardFiles UP-TO-DATE
-> Task :app:buildKotlinToolingMetadata UP-TO-DATE
-> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :react-native-safe-area-context:javaPreCompileRelease
+> Task :react-native-screens:generateReleaseBuildConfig
+> Task :react-native-screens:javaPreCompileRelease
+> Task :notifee_react-native:generateReleaseBuildConfig
+> Task :notifee_react-native:javaPreCompileRelease
+> Task :react-native-community_geolocation:generateReleaseBuildConfig
+
+> Task :notifee_react-native:compileReleaseJavaWithJavac
+/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/@notifee/react-native/android/src/main/java/io/invertase/notifee/NotifeeApiModule.java:42: warning: [removal] onCatalystInstanceDestroy() in NativeModule has been deprecated and marked for removal
+  public void onCatalystInstanceDestroy() {
+              ^
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 warning
+
+> Task :notifee_react-native:mergeReleaseGeneratedProguardFiles
+> Task :notifee_react-native:exportReleaseConsumerProguardFiles
+> Task :react-native-community_geolocation:javaPreCompileRelease
+> Task :react-native-firebase_app:generateReleaseBuildConfig
+
+> Task :react-native-community_geolocation:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-community_geolocation:mergeReleaseGeneratedProguardFiles
+> Task :react-native-community_geolocation:exportReleaseConsumerProguardFiles
+> Task :react-native-firebase_app:javaPreCompileRelease
+> Task :react-native-firebase_messaging:generateReleaseBuildConfig
+
+> Task :react-native-safe-area-context:compileReleaseKotlin
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:9:8 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:50:54 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaViewShadowNode.kt:9:32 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaViewShadowNode.kt:110:61 'class NativeViewHierarchyOptimizer : Any' is deprecated. Deprecated in Java.
+
+> Task :react-native-firebase_app:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac
+> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles
+> Task :react-native-safe-area-context:exportReleaseConsumerProguardFiles
+> Task :react-native-firebase_messaging:javaPreCompileRelease
+> Task :react-native-firebase_app:mergeReleaseGeneratedProguardFiles
+> Task :react-native-firebase_app:bundleLibCompileToJarRelease
+> Task :react-native-firebase_app:exportReleaseConsumerProguardFiles
+> Task :react-native-document-picker:generateReleaseBuildConfig
+
+> Task :react-native-firebase_messaging:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-firebase_messaging:mergeReleaseGeneratedProguardFiles
+> Task :react-native-firebase_messaging:exportReleaseConsumerProguardFiles
+> Task :react-native-document-picker:javaPreCompileRelease
+> Task :react-native-image-picker:generateReleaseBuildConfig
+
+> Task :react-native-document-picker:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-document-picker:mergeReleaseGeneratedProguardFiles
+> Task :react-native-document-picker:exportReleaseConsumerProguardFiles
+> Task :react-native-image-picker:javaPreCompileRelease
+> Task :react-native-linear-gradient:generateReleaseBuildConfig
+
+> Task :react-native-gesture-handler:compileReleaseKotlin
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/Extensions.kt:8:8 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/Extensions.kt:13:29 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/Extensions.kt:14:32 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+
+> Task :react-native-image-picker:compileReleaseJavaWithJavac
+Note: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-image-picker/android/src/main/java/com/imagepicker/ImagePickerPackage.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-gesture-handler:compileReleaseJavaWithJavac
+> Task :react-native-gesture-handler:mergeReleaseGeneratedProguardFiles
+> Task :react-native-gesture-handler:exportReleaseConsumerProguardFiles
+> Task :react-native-image-picker:mergeReleaseGeneratedProguardFiles
+> Task :react-native-image-picker:exportReleaseConsumerProguardFiles
+> Task :react-native-linear-gradient:javaPreCompileRelease
+> Task :react-native-mmkv:generateReleaseBuildConfig
+
+> Task :react-native-linear-gradient:compileReleaseJavaWithJavac
+Note: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-linear-gradient/android/src/main/java/com/BV/LinearGradient/LinearGradientPackage.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-linear-gradient:mergeReleaseGeneratedProguardFiles
+> Task :react-native-linear-gradient:exportReleaseConsumerProguardFiles
+> Task :react-native-mmkv:javaPreCompileRelease
+> Task :react-native-razorpay:generateReleaseBuildConfig
+
+> Task :react-native-mmkv:compileReleaseJavaWithJavac
+Note: /Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-mmkv/android/src/main/java/com/mrousavy/mmkv/MmkvPackage.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-mmkv:mergeReleaseGeneratedProguardFiles
+> Task :react-native-mmkv:exportReleaseConsumerProguardFiles
+> Task :react-native-razorpay:javaPreCompileRelease
+> Task :react-native-reanimated:mergeReleaseGeneratedProguardFiles
+
+> Task :react-native-razorpay:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-razorpay:mergeReleaseGeneratedProguardFiles
+> Task :react-native-razorpay:exportReleaseConsumerProguardFiles
+> Task :react-native-reanimated:exportReleaseConsumerProguardFiles
+> Task :react-native-svg:mergeReleaseGeneratedProguardFiles
+> Task :react-native-svg:exportReleaseConsumerProguardFiles
+> Task :react-native-vector-icons:generateReleaseBuildConfig
+> Task :react-native-vector-icons:javaPreCompileRelease
+> Task :react-native-worklets:mergeReleaseGeneratedProguardFiles
+
+> Task :react-native-vector-icons:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :react-native-vector-icons:mergeReleaseGeneratedProguardFiles
+> Task :react-native-vector-icons:exportReleaseConsumerProguardFiles
+> Task :react-native-worklets:exportReleaseConsumerProguardFiles
+> Task :app:buildKotlinToolingMetadata
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :app:generateReleaseBuildConfig
-> Task :lottie-react-native:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :notifee_react-native:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-community_geolocation:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-document-picker:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-firebase_app:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-gesture-handler:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-image-picker:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-linear-gradient:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-maps:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-mmkv:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-safe-area-context:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-screens:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :react-native-vector-icons:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :app:javaPreCompileRelease UP-TO-DATE
-> Task :lottie-react-native:prepareReleaseArtProfile UP-TO-DATE
-> Task :notifee_react-native:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-community_geolocation:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-document-picker:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-firebase_app:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-gesture-handler:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-image-picker:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-linear-gradient:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-maps:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-mmkv:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-reanimated:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-safe-area-context:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-screens:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-svg:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-vector-icons:prepareReleaseArtProfile UP-TO-DATE
-> Task :react-native-worklets:prepareReleaseArtProfile UP-TO-DATE
-> Task :app:mergeReleaseArtProfile UP-TO-DATE
-> Task :lottie-react-native:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :notifee_react-native:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-cashfree-pg-sdk:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-community_geolocation:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-document-picker:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-firebase_app:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-image-picker:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-linear-gradient:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-maps:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-mmkv:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-reanimated:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-screens:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-svg:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-vector-icons:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-worklets:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :app:extractProguardFiles UP-TO-DATE
-> Task :lottie-react-native:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-community_geolocation:bundleLibCompileToJarRelease
+> Task :notifee_react-native:bundleLibCompileToJarRelease
+> Task :lottie-react-native:bundleLibCompileToJarRelease
+> Task :react-native-document-picker:bundleLibCompileToJarRelease
+> Task :react-native-firebase_messaging:bundleLibCompileToJarRelease
+> Task :react-native-image-picker:bundleLibCompileToJarRelease
+> Task :react-native-linear-gradient:bundleLibCompileToJarRelease
+> Task :react-native-mmkv:bundleLibCompileToJarRelease
+> Task :app:checkReleaseDuplicateClasses
+> Task :react-native-razorpay:bundleLibCompileToJarRelease
+> Task :react-native-gesture-handler:bundleLibCompileToJarRelease
+> Task :react-native-vector-icons:bundleLibCompileToJarRelease
+> Task :app:javaPreCompileRelease
+> Task :lottie-react-native:prepareReleaseArtProfile
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease
+> Task :notifee_react-native:prepareReleaseArtProfile
+> Task :react-native-maps:bundleLibCompileToJarRelease
+> Task :react-native-community_geolocation:prepareReleaseArtProfile
+> Task :react-native-document-picker:prepareReleaseArtProfile
+> Task :react-native-firebase_app:prepareReleaseArtProfile
+> Task :react-native-firebase_messaging:prepareReleaseArtProfile
+> Task :react-native-gesture-handler:prepareReleaseArtProfile
+> Task :react-native-image-picker:prepareReleaseArtProfile
+> Task :react-native-linear-gradient:prepareReleaseArtProfile
+> Task :react-native-maps:prepareReleaseArtProfile
+> Task :react-native-mmkv:prepareReleaseArtProfile
+> Task :react-native-razorpay:prepareReleaseArtProfile
+> Task :react-native-reanimated:prepareReleaseArtProfile
+> Task :react-native-safe-area-context:prepareReleaseArtProfile
+> Task :react-native-screens:prepareReleaseArtProfile
+> Task :react-native-svg:prepareReleaseArtProfile
+> Task :react-native-vector-icons:prepareReleaseArtProfile
+> Task :react-native-worklets:prepareReleaseArtProfile
+> Task :lottie-react-native:bundleLibRuntimeToJarRelease
+> Task :notifee_react-native:bundleLibRuntimeToJarRelease
+> Task :app:mergeReleaseArtProfile
+> Task :react-native-community_geolocation:bundleLibRuntimeToJarRelease
+> Task :react-native-document-picker:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_messaging:bundleLibRuntimeToJarRelease
+> Task :react-native-firebase_app:bundleLibRuntimeToJarRelease
+> Task :react-native-image-picker:bundleLibRuntimeToJarRelease
+> Task :react-native-linear-gradient:bundleLibRuntimeToJarRelease
+> Task :react-native-mmkv:bundleLibRuntimeToJarRelease
+> Task :react-native-razorpay:bundleLibRuntimeToJarRelease
+> Task :react-native-gesture-handler:bundleLibRuntimeToJarRelease
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease
+> Task :react-native-vector-icons:bundleLibRuntimeToJarRelease
+> Task :react-native-maps:bundleLibRuntimeToJarRelease
+> Task :react-native-reanimated:bundleLibRuntimeToJarRelease
+> Task :react-native-worklets:bundleLibRuntimeToJarRelease
+> Task :app:extractProguardFiles
+> Task :lottie-react-native:processReleaseJavaRes
 > Task :notifee_react-native:processReleaseJavaRes NO-SOURCE
-> Task :react-native-cashfree-pg-sdk:processReleaseJavaRes NO-SOURCE
 > Task :react-native-community_geolocation:processReleaseJavaRes NO-SOURCE
 > Task :react-native-document-picker:processReleaseJavaRes NO-SOURCE
 > Task :react-native-firebase_app:processReleaseJavaRes NO-SOURCE
-> Task :react-native-gesture-handler:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-firebase_messaging:processReleaseJavaRes NO-SOURCE
+> Task :react-native-gesture-handler:processReleaseJavaRes
 > Task :react-native-image-picker:processReleaseJavaRes NO-SOURCE
 > Task :react-native-linear-gradient:processReleaseJavaRes NO-SOURCE
 > Task :react-native-maps:processReleaseJavaRes NO-SOURCE
 > Task :react-native-mmkv:processReleaseJavaRes NO-SOURCE
+> Task :react-native-razorpay:processReleaseJavaRes NO-SOURCE
+> Task :react-native-svg:bundleLibRuntimeToJarRelease
 > Task :react-native-reanimated:processReleaseJavaRes NO-SOURCE
-> Task :react-native-safe-area-context:processReleaseJavaRes UP-TO-DATE
-> Task :react-native-screens:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-safe-area-context:processReleaseJavaRes
 > Task :react-native-svg:processReleaseJavaRes NO-SOURCE
 > Task :react-native-vector-icons:processReleaseJavaRes NO-SOURCE
 > Task :react-native-worklets:processReleaseJavaRes NO-SOURCE
-> Task :app:mergeReleaseStartupProfile UP-TO-DATE
-> Task :app:compileReleaseKotlin
+> Task :app:mergeReleaseStartupProfile
+
+> Task :react-native-screens:compileReleaseKotlin
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:62:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:63:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:76:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:24:8 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:54:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:426:42 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenContainerViewManager.kt:6:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenContainerViewManager.kt:56:78 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:222:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:225:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:404:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:411:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:414:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:419:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:441:22 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigShadowNode.kt:4:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigShadowNode.kt:10:5 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt:9:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfigViewManager.kt:37:78 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackViewManager.kt:6:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackViewManager.kt:65:78 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:48:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:49:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:51:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:52:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:4:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:5:8 'class NativeViewHierarchyManager : Any' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:6:8 'class NativeViewHierarchyOptimizer : Any' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:7:8 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:11:5 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:12:63 'class NativeViewHierarchyOptimizer : Any' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:14:34 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreensShadowNode.kt:14:106 'class NativeViewHierarchyManager : Any' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:63:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:68:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:19:8 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:153:45 'fun consumeDisplayCutout(): WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:194:58 'class UIManagerModule : ReactContextBaseJavaModule, OnBatchCompleteListener, LifecycleEventListener, UIManager' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:201:31 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/paper/SafeAreaViewShadowNode.kt:7:8 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/paper/SafeAreaViewShadowNode.kt:8:8 'class NativeViewHierarchyOptimizer : Any' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/paper/SafeAreaViewShadowNode.kt:14:32 'class LayoutShadowNode : ReactShadowNodeImpl' is deprecated. Deprecated in Java.
+w: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/paper/SafeAreaViewShadowNode.kt:83:63 'class NativeViewHierarchyOptimizer : Any' is deprecated. Deprecated in Java.
+
 > Task :react-native-worklets:configureCMakeRelWithDebInfo[arm64-v8a]
-> Task :app:compileReleaseJavaWithJavac
-> Task :app:mergeReleaseGeneratedProguardFiles UP-TO-DATE
-> Task :app:processReleaseJavaRes UP-TO-DATE
-> Task :app:expandReleaseArtProfileWildcards
-> Task :app:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-screens:compileReleaseJavaWithJavac
+> Task :react-native-screens:mergeReleaseGeneratedProguardFiles
+> Task :react-native-screens:exportReleaseConsumerProguardFiles
+> Task :react-native-screens:processReleaseJavaRes
+> Task :react-native-screens:bundleLibRuntimeToJarRelease
+> Task :react-native-screens:bundleLibCompileToJarRelease
+
 > Task :react-native-worklets:buildCMakeRelWithDebInfo[arm64-v8a][worklets]
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/build/intermediates/cxx/RelWithDebInfo/3139r513/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/build/intermediates/cxx/RelWithDebInfo/3139r513/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :app:compileReleaseKotlin
 > Task :react-native-worklets:configureCMakeRelWithDebInfo[armeabi-v7a]
-WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/caches/9.0.0/transforms/c209a594e6cc53dd58230e8fda154ee5/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 10: invokespecial Lcom/google/android/gms/common/api/Api$AbstractClientBuilder;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.zba, but was com.google.android.gms.common.api.Api$AbstractClientBuilder.<init>(). In later version of R8, the method may be assumed not reachable.
-WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/caches/9.0.0/transforms/c209a594e6cc53dd58230e8fda154ee5/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.zbb, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
-WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/caches/9.0.0/transforms/c209a594e6cc53dd58230e8fda154ee5/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbu, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
-WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/caches/9.0.0/transforms/c209a594e6cc53dd58230e8fda154ee5/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 17: invokespecial Lcom/google/android/gms/auth/api/signin/internal/zbl;<init>(Lcom/google/android/gms/common/api/GoogleApiClient;)V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbi, but was com.google.android.gms.auth.api.signin.internal.zbl.<init>(com.google.android.gms.common.api.GoogleApiClient). In later version of R8, the method may be assumed not reachable.
-WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/bd6ce382d24f8505f63402c41bbabbcb/gradle/caches/9.0.0/transforms/c209a594e6cc53dd58230e8fda154ee5/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 20: invokespecial Lcom/google/android/gms/auth/api/signin/internal/zbl;<init>(Lcom/google/android/gms/common/api/GoogleApiClient;)V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbk, but was com.google.android.gms.auth.api.signin.internal.zbl.<init>(com.google.android.gms.common.api.GoogleApiClient). In later version of R8, the method may be assumed not reachable.
+> Task :app:compileReleaseJavaWithJavac
+> Task :app:mergeReleaseGeneratedProguardFiles
+> Task :app:processReleaseJavaRes
+> Task :app:expandReleaseArtProfileWildcards
+> Task :app:mergeReleaseJavaResource
 > Task :react-native-worklets:buildCMakeRelWithDebInfo[armeabi-v7a][worklets]
 > Task :react-native-worklets:configureCMakeRelWithDebInfo[x86]
-> Task :app:minifyReleaseWithR8
 > Task :react-native-worklets:buildCMakeRelWithDebInfo[x86][worklets]
 > Task :react-native-worklets:configureCMakeRelWithDebInfo[x86_64]
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 10: invokespecial Lcom/google/android/gms/common/api/Api$AbstractClientBuilder;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.zba, but was com.google.android.gms.common.api.Api$AbstractClientBuilder.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.zbb, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbu, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 7: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.identity.zbv, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.identity.zbj, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 17: invokespecial Lcom/google/android/gms/auth/api/signin/internal/zbl;<init>(Lcom/google/android/gms/common/api/GoogleApiClient;)V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbi, but was com.google.android.gms.auth.api.signin.internal.zbl.<init>(com.google.android.gms.common.api.GoogleApiClient). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 20: invokespecial Lcom/google/android/gms/auth/api/signin/internal/zbl;<init>(Lcom/google/android/gms/common/api/GoogleApiClient;)V, error: Constructor mismatch, expected constructor from com.google.android.gms.auth.api.signin.internal.zbk, but was com.google.android.gms.auth.api.signin.internal.zbl.<init>(com.google.android.gms.common.api.GoogleApiClient). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 6: invokespecial Lcom/google/android/gms/common/api/Api$AbstractClientBuilder;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.internal.auth-api.zbak, but was com.google.android.gms.common.api.Api$AbstractClientBuilder.<init>(). In later version of R8, the method may be assumed not reachable.
+WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/d25a3ee1cba39aceb4ed30b5e225667a/transformed/play-services-auth-21.5.0-runtime.jar: R8: Invalid stack map table at instruction index 2: invokespecial Ljava/lang/Object;<init>()V, error: Constructor mismatch, expected constructor from com.google.android.gms.internal.auth-api.zbay, but was java.lang.Object.<init>(). In later version of R8, the method may be assumed not reachable.
+> Task :app:minifyReleaseWithR8
 > Task :react-native-worklets:buildCMakeRelWithDebInfo[x86_64][worklets]
+
 > Task :react-native-worklets:externalNativeBuildRelease
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-worklets/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
 > Task :react-native-worklets:generateJsonModelRelease
 > Task :react-native-worklets:prefabReleaseConfigurePackage
 > Task :react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]
@@ -582,15 +922,412 @@ WARNING: /private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox
 > Task :app:configureCMakeRelWithDebInfo[arm64-v8a]
 > Task :react-native-worklets:prefabReleasePackage
 > Task :react-native-reanimated:buildCMakeRelWithDebInfo[arm64-v8a][reanimated]
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-reanimated/android/build/intermediates/cxx/RelWithDebInfo/350222qn/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-reanimated/android/build/intermediates/cxx/RelWithDebInfo/350222qn/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
 > Task :react-native-reanimated:buildCMakeRelWithDebInfo[armeabi-v7a][reanimated]
 > Task :react-native-reanimated:buildCMakeRelWithDebInfo[x86][reanimated]
 > Task :react-native-reanimated:buildCMakeRelWithDebInfo[x86_64][reanimated]
-> Task :react-native-worklets:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-worklets:mergeReleaseJniLibFolders
 > Task :react-native-worklets:mergeReleaseNativeLibs
 > Task :app:configureCMakeRelWithDebInfo[armeabi-v7a]
 > Task :react-native-worklets:copyReleaseJniLibsProjectOnly
 > Task :app:configureCMakeRelWithDebInfo[x86]
+
 > Task :react-native-reanimated:externalNativeBuildRelease
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-reanimated/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-reanimated/android/build/intermediates/cmake/release/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
 > Task :react-native-reanimated:prefabReleasePackage
 > Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/build/intermediates/cxx/RelWithDebInfo/31481r46/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/app/build/intermediates/cxx/RelWithDebInfo/31481r46/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
 > Task :app:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :app:buildCMakeRelWithDebInfo[x86]
+> Task :app:configureCMakeRelWithDebInfo[x86_64]
+> Task :app:buildCMakeRelWithDebInfo[x86_64]
+> Task :app:mergeReleaseJniLibFolders
+> Task :lottie-react-native:mergeReleaseJniLibFolders
+> Task :lottie-react-native:mergeReleaseNativeLibs NO-SOURCE
+> Task :lottie-react-native:copyReleaseJniLibsProjectOnly
+> Task :notifee_react-native:mergeReleaseJniLibFolders
+> Task :notifee_react-native:mergeReleaseNativeLibs NO-SOURCE
+> Task :notifee_react-native:copyReleaseJniLibsProjectOnly
+> Task :react-native-community_geolocation:mergeReleaseJniLibFolders
+> Task :react-native-community_geolocation:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_geolocation:copyReleaseJniLibsProjectOnly
+> Task :react-native-document-picker:mergeReleaseJniLibFolders
+> Task :react-native-document-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-document-picker:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_app:mergeReleaseJniLibFolders
+> Task :react-native-firebase_app:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_app:copyReleaseJniLibsProjectOnly
+> Task :react-native-firebase_messaging:mergeReleaseJniLibFolders
+> Task :react-native-firebase_messaging:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-firebase_messaging:copyReleaseJniLibsProjectOnly
+> Task :react-native-gesture-handler:configureCMakeRelWithDebInfo[arm64-v8a]
+
+> Task :react-native-gesture-handler:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-gesture-handler/android/build/intermediates/cxx/RelWithDebInfo/236i466y/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-gesture-handler/android/build/intermediates/cxx/RelWithDebInfo/236i466y/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :react-native-gesture-handler:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-gesture-handler:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-gesture-handler:configureCMakeRelWithDebInfo[x86]
+> Task :react-native-gesture-handler:buildCMakeRelWithDebInfo[x86]
+> Task :react-native-gesture-handler:configureCMakeRelWithDebInfo[x86_64]
+> Task :react-native-gesture-handler:buildCMakeRelWithDebInfo[x86_64]
+> Task :react-native-gesture-handler:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:mergeReleaseJniLibFolders
+> Task :react-native-image-picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:mergeReleaseNativeLibs
+> Task :react-native-image-picker:copyReleaseJniLibsProjectOnly
+> Task :react-native-linear-gradient:mergeReleaseJniLibFolders
+> Task :react-native-linear-gradient:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectOnly
+> Task :react-native-linear-gradient:copyReleaseJniLibsProjectOnly
+> Task :react-native-maps:mergeReleaseJniLibFolders
+> Task :react-native-maps:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-maps:copyReleaseJniLibsProjectOnly
+> Task :react-native-mmkv:mergeReleaseJniLibFolders
+> Task :react-native-mmkv:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-mmkv:copyReleaseJniLibsProjectOnly
+> Task :react-native-razorpay:mergeReleaseJniLibFolders
+> Task :react-native-razorpay:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-razorpay:copyReleaseJniLibsProjectOnly
+> Task :react-native-reanimated:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly
+> Task :react-native-reanimated:mergeReleaseNativeLibs
+> Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-reanimated:copyReleaseJniLibsProjectOnly
+
+> Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/build/intermediates/cxx/RelWithDebInfo/62f64553/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+C/C++: Hard link from '/private/var/folders/fd/r6ytmh5x21ldbysgp1hn26qh0000gn/T/cursor-sandbox-cache/5450644fa966600f910b82dc672cc86f/gradle/caches/9.0.0/transforms/bbabc4355c892ff332a4d181ef2926ba/transformed/react-android-0.82.1-release/prefab/modules/reactnative/libs/android.arm64-v8a/libreactnative.so' to '/Volumes/Baig's/Projects/Motonode/Car-Systems/client/node_modules/react-native-screens/android/build/intermediates/cxx/RelWithDebInfo/62f64553/obj/arm64-v8a/libreactnative.so' failed. Doing a slower copy instead.
+
+> Task :react-native-screens:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[x86]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[x86]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[x86_64]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[x86_64]
+> Task :react-native-screens:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseJniLibFolders
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly
+> Task :react-native-vector-icons:mergeReleaseJniLibFolders
+> Task :react-native-vector-icons:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectOnly
+> Task :app:writeReleaseAppMetadata
+> Task :react-native-screens:mergeReleaseNativeLibs
+> Task :react-native-screens:copyReleaseJniLibsProjectOnly
+> Task :app:compileReleaseArtProfile
+> Task :app:collectReleaseDependencies
+> Task :app:configureReleaseDependencies
+> Task :lottie-react-native:createFullJarRelease
+> Task :lottie-react-native:extractProguardFiles
+> Task :app:mergeReleaseNativeLibs
+> Task :lottie-react-native:generateReleaseLintModel
+> Task :lottie-react-native:prepareLintJarForPublish
+> Task :notifee_react-native:createFullJarRelease
+> Task :notifee_react-native:extractProguardFiles
+> Task :notifee_react-native:generateReleaseLintModel
+> Task :notifee_react-native:prepareLintJarForPublish
+> Task :react-native-community_geolocation:createFullJarRelease
+> Task :react-native-community_geolocation:extractProguardFiles
+> Task :app:stripReleaseDebugSymbols
+> Task :react-native-community_geolocation:generateReleaseLintModel
+> Task :app:buildReleasePreBundle
+> Task :react-native-community_geolocation:prepareLintJarForPublish
+> Task :react-native-document-picker:createFullJarRelease
+> Task :react-native-document-picker:extractProguardFiles
+> Task :react-native-document-picker:generateReleaseLintModel
+> Task :react-native-firebase_app:createFullJarRelease
+> Task :react-native-firebase_app:extractProguardFiles
+> Task :react-native-document-picker:prepareLintJarForPublish
+> Task :react-native-firebase_app:generateReleaseLintModel
+> Task :react-native-firebase_app:prepareLintJarForPublish
+> Task :react-native-firebase_messaging:createFullJarRelease
+> Task :react-native-firebase_messaging:extractProguardFiles
+> Task :app:extractReleaseNativeSymbolTables
+> Task :react-native-firebase_messaging:generateReleaseLintModel
+> Task :react-native-firebase_messaging:prepareLintJarForPublish
+> Task :react-native-gesture-handler:createFullJarRelease
+> Task :react-native-gesture-handler:extractProguardFiles
+> Task :react-native-reanimated:createFullJarRelease
+> Task :react-native-reanimated:extractProguardFiles
+> Task :react-native-worklets:createFullJarRelease
+> Task :react-native-worklets:extractProguardFiles
+> Task :react-native-worklets:generateReleaseLintModel
+> Task :react-native-worklets:prepareLintJarForPublish
+> Task :react-native-reanimated:prepareLintJarForPublish
+> Task :react-native-reanimated:generateReleaseLintModel
+> Task :react-native-svg:createFullJarRelease
+> Task :react-native-svg:extractProguardFiles
+> Task :react-native-svg:generateReleaseLintModel
+> Task :react-native-svg:prepareLintJarForPublish
+> Task :react-native-gesture-handler:prepareLintJarForPublish
+> Task :react-native-gesture-handler:generateReleaseLintModel
+> Task :react-native-image-picker:createFullJarRelease
+> Task :react-native-image-picker:extractProguardFiles
+> Task :react-native-image-picker:generateReleaseLintModel
+> Task :react-native-image-picker:prepareLintJarForPublish
+> Task :react-native-linear-gradient:createFullJarRelease
+> Task :react-native-linear-gradient:extractProguardFiles
+> Task :react-native-linear-gradient:generateReleaseLintModel
+> Task :react-native-linear-gradient:prepareLintJarForPublish
+> Task :react-native-maps:createFullJarRelease
+> Task :react-native-maps:extractProguardFiles
+> Task :react-native-maps:generateReleaseLintModel
+> Task :react-native-maps:prepareLintJarForPublish
+> Task :react-native-mmkv:createFullJarRelease
+> Task :react-native-mmkv:extractProguardFiles
+> Task :react-native-mmkv:generateReleaseLintModel
+> Task :react-native-mmkv:prepareLintJarForPublish
+> Task :react-native-razorpay:createFullJarRelease
+> Task :react-native-razorpay:extractProguardFiles
+> Task :react-native-razorpay:generateReleaseLintModel
+> Task :react-native-razorpay:prepareLintJarForPublish
+> Task :react-native-safe-area-context:createFullJarRelease
+> Task :react-native-safe-area-context:extractProguardFiles
+> Task :react-native-safe-area-context:generateReleaseLintModel
+> Task :react-native-safe-area-context:prepareLintJarForPublish
+> Task :react-native-screens:createFullJarRelease
+> Task :react-native-screens:extractProguardFiles
+> Task :react-native-screens:generateReleaseLintModel
+> Task :react-native-screens:prepareLintJarForPublish
+> Task :react-native-vector-icons:createFullJarRelease
+> Task :react-native-vector-icons:extractProguardFiles
+> Task :react-native-vector-icons:generateReleaseLintModel
+> Task :react-native-vector-icons:prepareLintJarForPublish
+> Task :lottie-react-native:stripReleaseDebugSymbols NO-SOURCE
+> Task :app:generateReleaseLintVitalReportModel
+> Task :lottie-react-native:copyReleaseJniLibsProjectAndLocalJars
+> Task :lottie-react-native:extractDeepLinksForAarRelease
+> Task :lottie-react-native:extractReleaseAnnotations
+> Task :lottie-react-native:mergeReleaseConsumerProguardFiles
+> Task :react-native-gesture-handler:extractDeepLinksForAarRelease
+> Task :lottie-react-native:mergeReleaseJavaResource
+> Task :react-native-gesture-handler:extractReleaseAnnotations
+> Task :lottie-react-native:syncReleaseLibJars
+> Task :react-native-gesture-handler:stripReleaseDebugSymbols
+> Task :lottie-react-native:bundleReleaseLocalLintAar
+> Task :react-native-gesture-handler:mergeReleaseConsumerProguardFiles
+> Task :react-native-maps:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-gesture-handler:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-maps:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-maps:extractDeepLinksForAarRelease
+> Task :react-native-gesture-handler:mergeReleaseJavaResource
+> Task :react-native-maps:extractReleaseAnnotations
+> Task :react-native-gesture-handler:syncReleaseLibJars
+> Task :react-native-gesture-handler:bundleReleaseLocalLintAar
+> Task :react-native-maps:mergeReleaseConsumerProguardFiles
+> Task :react-native-safe-area-context:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-safe-area-context:extractDeepLinksForAarRelease
+> Task :react-native-maps:mergeReleaseJavaResource
+> Task :react-native-safe-area-context:extractReleaseAnnotations
+> Task :react-native-maps:syncReleaseLibJars
+> Task :react-native-maps:bundleReleaseLocalLintAar
+> Task :react-native-safe-area-context:mergeReleaseConsumerProguardFiles
+> Task :react-native-safe-area-context:mergeReleaseJavaResource
+> Task :react-native-screens:extractDeepLinksForAarRelease
+> Task :react-native-safe-area-context:syncReleaseLibJars
+> Task :react-native-safe-area-context:bundleReleaseLocalLintAar
+> Task :react-native-screens:stripReleaseDebugSymbols
+> Task :react-native-screens:extractReleaseAnnotations
+> Task :react-native-screens:mergeReleaseConsumerProguardFiles
+> Task :notifee_react-native:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars
+> Task :notifee_react-native:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-screens:mergeReleaseJavaResource
+> Task :notifee_react-native:extractDeepLinksForAarRelease
+> Task :react-native-screens:syncReleaseLibJars
+> Task :react-native-screens:bundleReleaseLocalLintAar
+> Task :notifee_react-native:extractReleaseAnnotations
+> Task :notifee_react-native:mergeReleaseConsumerProguardFiles
+> Task :react-native-community_geolocation:stripReleaseDebugSymbols NO-SOURCE
+> Task :notifee_react-native:mergeReleaseJavaResource
+> Task :react-native-community_geolocation:copyReleaseJniLibsProjectAndLocalJars
+> Task :notifee_react-native:syncReleaseLibJars
+> Task :notifee_react-native:bundleReleaseLocalLintAar
+> Task :react-native-community_geolocation:extractDeepLinksForAarRelease
+> Task :react-native-community_geolocation:extractReleaseAnnotations
+> Task :react-native-community_geolocation:mergeReleaseConsumerProguardFiles
+> Task :react-native-firebase_messaging:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-firebase_messaging:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-community_geolocation:mergeReleaseJavaResource
+> Task :react-native-firebase_messaging:extractDeepLinksForAarRelease
+> Task :react-native-community_geolocation:syncReleaseLibJars
+> Task :react-native-community_geolocation:bundleReleaseLocalLintAar
+> Task :react-native-firebase_messaging:extractReleaseAnnotations
+> Task :react-native-firebase_messaging:mergeReleaseConsumerProguardFiles
+> Task :react-native-firebase_app:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-firebase_messaging:mergeReleaseJavaResource
+> Task :react-native-firebase_app:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-firebase_app:extractDeepLinksForAarRelease
+> Task :react-native-firebase_messaging:syncReleaseLibJars
+> Task :react-native-firebase_messaging:bundleReleaseLocalLintAar
+> Task :react-native-firebase_app:extractReleaseAnnotations
+> Task :react-native-firebase_app:mergeReleaseConsumerProguardFiles
+> Task :react-native-document-picker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-firebase_app:mergeReleaseJavaResource
+> Task :react-native-document-picker:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-document-picker:extractDeepLinksForAarRelease
+> Task :react-native-firebase_app:syncReleaseLibJars
+> Task :react-native-firebase_app:bundleReleaseLocalLintAar
+> Task :react-native-document-picker:extractReleaseAnnotations
+> Task :react-native-document-picker:mergeReleaseConsumerProguardFiles
+> Task :react-native-image-picker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-document-picker:mergeReleaseJavaResource
+> Task :react-native-image-picker:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-document-picker:syncReleaseLibJars
+> Task :react-native-document-picker:bundleReleaseLocalLintAar
+> Task :react-native-image-picker:extractDeepLinksForAarRelease
+> Task :react-native-image-picker:extractReleaseAnnotations
+> Task :react-native-image-picker:mergeReleaseConsumerProguardFiles
+> Task :react-native-linear-gradient:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-image-picker:mergeReleaseJavaResource
+> Task :react-native-linear-gradient:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-image-picker:syncReleaseLibJars
+> Task :react-native-image-picker:bundleReleaseLocalLintAar
+> Task :react-native-linear-gradient:extractDeepLinksForAarRelease
+> Task :react-native-linear-gradient:extractReleaseAnnotations
+> Task :react-native-linear-gradient:mergeReleaseConsumerProguardFiles
+> Task :react-native-mmkv:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-mmkv:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-linear-gradient:mergeReleaseJavaResource
+> Task :react-native-mmkv:extractDeepLinksForAarRelease
+> Task :react-native-linear-gradient:syncReleaseLibJars
+> Task :react-native-linear-gradient:bundleReleaseLocalLintAar
+> Task :react-native-mmkv:extractReleaseAnnotations
+> Task :react-native-mmkv:mergeReleaseConsumerProguardFiles
+> Task :react-native-razorpay:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-razorpay:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-mmkv:mergeReleaseJavaResource
+> Task :react-native-razorpay:extractDeepLinksForAarRelease
+> Task :react-native-mmkv:syncReleaseLibJars
+> Task :react-native-mmkv:bundleReleaseLocalLintAar
+> Task :react-native-razorpay:extractReleaseAnnotations
+> Task :react-native-razorpay:mergeReleaseConsumerProguardFiles
+> Task :react-native-reanimated:extractDeepLinksForAarRelease
+> Task :react-native-razorpay:mergeReleaseJavaResource
+> Task :react-native-reanimated:extractReleaseAnnotations
+> Task :react-native-razorpay:syncReleaseLibJars
+> Task :react-native-razorpay:bundleReleaseLocalLintAar
+> Task :react-native-reanimated:mergeReleaseConsumerProguardFiles
+> Task :react-native-svg:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-reanimated:mergeReleaseJavaResource
+> Task :react-native-svg:extractDeepLinksForAarRelease
+> Task :react-native-reanimated:syncReleaseLibJars
+> Task :react-native-svg:extractReleaseAnnotations
+> Task :react-native-svg:mergeReleaseConsumerProguardFiles
+> Task :react-native-vector-icons:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-svg:mergeReleaseJavaResource
+> Task :react-native-vector-icons:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-svg:syncReleaseLibJars
+> Task :react-native-svg:bundleReleaseLocalLintAar
+> Task :react-native-vector-icons:extractDeepLinksForAarRelease
+> Task :react-native-vector-icons:extractReleaseAnnotations
+> Task :react-native-vector-icons:mergeReleaseConsumerProguardFiles
+> Task :react-native-vector-icons:mergeReleaseJavaResource
+> Task :react-native-worklets:extractDeepLinksForAarRelease
+> Task :react-native-vector-icons:syncReleaseLibJars
+> Task :react-native-vector-icons:bundleReleaseLocalLintAar
+> Task :react-native-worklets:extractReleaseAnnotations
+> Task :react-native-worklets:mergeReleaseConsumerProguardFiles
+> Task :react-native-worklets:mergeReleaseJavaResource
+> Task :react-native-worklets:syncReleaseLibJars
+> Task :lottie-react-native:writeReleaseLintModelMetadata
+> Task :react-native-reanimated:stripReleaseDebugSymbols
+> Task :notifee_react-native:writeReleaseLintModelMetadata
+> Task :react-native-community_geolocation:writeReleaseLintModelMetadata
+> Task :react-native-document-picker:writeReleaseLintModelMetadata
+> Task :react-native-firebase_app:writeReleaseLintModelMetadata
+> Task :react-native-firebase_messaging:writeReleaseLintModelMetadata
+> Task :react-native-reanimated:writeReleaseLintModelMetadata
+> Task :react-native-svg:writeReleaseLintModelMetadata
+> Task :react-native-worklets:writeReleaseLintModelMetadata
+> Task :react-native-worklets:stripReleaseDebugSymbols
+> Task :react-native-gesture-handler:writeReleaseLintModelMetadata
+> Task :react-native-image-picker:writeReleaseLintModelMetadata
+> Task :react-native-linear-gradient:writeReleaseLintModelMetadata
+> Task :react-native-maps:writeReleaseLintModelMetadata
+> Task :react-native-mmkv:writeReleaseLintModelMetadata
+> Task :react-native-razorpay:writeReleaseLintModelMetadata
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
+> Task :react-native-screens:writeReleaseLintModelMetadata
+> Task :react-native-vector-icons:writeReleaseLintModelMetadata
+> Task :lottie-react-native:generateReleaseLintVitalModel
+> Task :notifee_react-native:generateReleaseLintVitalModel
+> Task :react-native-community_geolocation:generateReleaseLintVitalModel
+> Task :react-native-document-picker:generateReleaseLintVitalModel
+> Task :react-native-firebase_app:generateReleaseLintVitalModel
+> Task :react-native-firebase_messaging:generateReleaseLintVitalModel
+> Task :react-native-gesture-handler:generateReleaseLintVitalModel
+> Task :react-native-image-picker:generateReleaseLintVitalModel
+> Task :react-native-linear-gradient:generateReleaseLintVitalModel
+> Task :react-native-maps:generateReleaseLintVitalModel
+> Task :react-native-mmkv:generateReleaseLintVitalModel
+> Task :react-native-razorpay:generateReleaseLintVitalModel
+> Task :react-native-reanimated:generateReleaseLintVitalModel
+> Task :react-native-worklets:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-safe-area-context:generateReleaseLintVitalModel
+> Task :react-native-reanimated:copyReleaseJniLibsProjectAndLocalJars
+> Task :react-native-worklets:bundleReleaseLocalLintAar
+> Task :react-native-reanimated:bundleReleaseLocalLintAar
+> Task :react-native-screens:generateReleaseLintVitalModel
+> Task :react-native-svg:generateReleaseLintVitalModel
+> Task :react-native-vector-icons:generateReleaseLintVitalModel
+> Task :react-native-worklets:generateReleaseLintVitalModel
+> Task :app:validateSigningRelease
+> Task :app:parseReleaseIntegrityConfig
+> Task :notifee_react-native:lintVitalAnalyzeRelease
+> Task :react-native-community_geolocation:lintVitalAnalyzeRelease
+> Task :react-native-firebase_app:lintVitalAnalyzeRelease
+> Task :react-native-document-picker:lintVitalAnalyzeRelease
+> Task :react-native-firebase_messaging:lintVitalAnalyzeRelease
+> Task :react-native-image-picker:lintVitalAnalyzeRelease
+> Task :react-native-linear-gradient:lintVitalAnalyzeRelease
+> Task :lottie-react-native:lintVitalAnalyzeRelease
+> Task :react-native-mmkv:lintVitalAnalyzeRelease
+> Task :react-native-razorpay:lintVitalAnalyzeRelease
+> Task :react-native-reanimated:lintVitalAnalyzeRelease
+> Task :react-native-maps:lintVitalAnalyzeRelease
+> Task :react-native-safe-area-context:lintVitalAnalyzeRelease
+> Task :react-native-gesture-handler:lintVitalAnalyzeRelease
+> Task :react-native-vector-icons:lintVitalAnalyzeRelease
+> Task :react-native-svg:lintVitalAnalyzeRelease
+> Task :react-native-worklets:lintVitalAnalyzeRelease
+> Task :react-native-screens:lintVitalAnalyzeRelease
+The Daemon will expire after the build after running out of JVM Metaspace.
+The project memory settings are likely not configured or are configured to an insufficient value.
+The daemon will restart for the next build, which may increase subsequent build times.
+These settings can be adjusted by setting 'org.gradle.jvmargs' in 'gradle.properties'.
+The currently configured max heap space is '2 GiB' and the configured max metaspace is '512 MiB'.
+For more information on how to set these values, please refer to https://docs.gradle.org/9.0.0/userguide/build_environment.html#sec:configuring_jvm_memory in the Gradle documentation.
+To disable this warning, set 'org.gradle.daemon.performance.disable-logging=true'.
+Daemon will be stopped at the end of the build after running out of JVM Metaspace
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:packageReleaseBundle
+> Task :app:signReleaseBundle
+> Task :app:produceReleaseBundleIdeListingFile
+> Task :app:createReleaseBundleListingFileRedirect
+> Task :app:bundleRelease
+
+[Incubating] Problems report is available at: file:///Volumes/Baig's/Projects/Motonode/Car-Systems/client/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 10m 14s
+822 actionable tasks: 812 executed, 10 up-to-date

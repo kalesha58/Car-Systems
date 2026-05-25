@@ -1,4 +1,5 @@
 import Razorpay from 'razorpay';
+import { DEFAULT_GREETING_IMAGE_URL } from './greetingNotification';
 import { logger } from '../utils/logger';
 
 export const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || '';
@@ -24,3 +25,12 @@ export const isRazorpayEnabled = (): boolean => razorpayClient !== null;
 
 /** Public key safe to send to mobile clients for checkout */
 export const getRazorpayKeyId = (): string => RAZORPAY_KEY_ID;
+
+/** HTTPS logo for Razorpay checkout header (must be publicly reachable) */
+export const RAZORPAY_CHECKOUT_IMAGE_URL =
+  process.env.RAZORPAY_CHECKOUT_IMAGE_URL || DEFAULT_GREETING_IMAGE_URL;
+
+export const getRazorpayCheckoutImageUrl = (): string | undefined => {
+  const url = RAZORPAY_CHECKOUT_IMAGE_URL?.trim();
+  return url && url.startsWith('https://') ? url : undefined;
+};

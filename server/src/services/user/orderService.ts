@@ -11,7 +11,11 @@ import {
 } from '../../utils/orderStatusValidator';
 import { emitToOrderRoom } from '../socket/socketService';
 import { notifyOrderStatusChange } from '../order/orderNotificationService';
-import { getRazorpayKeyId, isRazorpayEnabled } from '../../config/razorpay';
+import {
+  getRazorpayCheckoutImageUrl,
+  getRazorpayKeyId,
+  isRazorpayEnabled,
+} from '../../config/razorpay';
 import { createPaymentIntent } from '../payment/gatewayService';
 
 const RAZORPAY_ORDER_ID_PREFIX = 'order_';
@@ -30,6 +34,8 @@ export interface IPaymentAction {
   deeplink?: string;
   qrCode?: string;
   expiresAt?: string;
+  /** HTTPS URL for Razorpay checkout merchant logo */
+  image?: string;
 }
 
 type PaymentPrefillUser = {
@@ -62,6 +68,8 @@ export const buildRazorpayPaymentAction = (
     throw new AppError('Failed to create a valid Razorpay payment session.', 500);
   }
 
+  const image = getRazorpayCheckoutImageUrl();
+
   return {
     type: 'RAZORPAY_CHECKOUT',
     paymentIntentId: paymentIntent.order_id,
@@ -69,6 +77,7 @@ export const buildRazorpayPaymentAction = (
     amount: paymentIntent.amount,
     currency: paymentIntent.currency || 'INR',
     expiresAt: expiresAt?.toISOString(),
+    ...(image ? { image } : {}),
     prefill: {
       name: user.name,
       email: user.email,

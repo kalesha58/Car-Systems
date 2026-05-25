@@ -1,6 +1,7 @@
 jest.mock('../../../config/razorpay', () => ({
   isRazorpayEnabled: () => true,
   getRazorpayKeyId: () => 'rzp_test_mock_key_id',
+  getRazorpayCheckoutImageUrl: () => 'https://example.com/motonode-logo.png',
 }));
 
 import {
@@ -19,6 +20,7 @@ describe('Razorpay payment action', () => {
     expect(action.keyId).toBe('rzp_test_mock_key_id');
     expect(action.paymentIntentId).toBe('order_test123');
     expect(action.amount).toBe(20000);
+    expect(action.image).toBe('https://example.com/motonode-logo.png');
     assertRazorpayPaymentAction(action);
   });
 

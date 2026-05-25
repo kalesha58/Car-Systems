@@ -43,7 +43,13 @@ npm run verify:razorpay
 npm run build && npm start
 ```
 
-After deploy, UPI orders must return `paymentAction.type === "RAZORPAY_CHECKOUT"`, `keyId` starting with `rzp_`, and `paymentIntentId` starting with `order_`.  
+After deploy, UPI orders must return `paymentAction.type === "RAZORPAY_CHECKOUT"`, `keyId` starting with `rzp_`, and `paymentIntentId` starting with `order_`.
+
+### Checkout logo
+
+The mobile app passes Razorpay’s `image` option (HTTPS URL) so your logo appears in the checkout header instead of the default “M” placeholder. The server sends `paymentAction.image` (defaults to the same Cloudinary URL as login greeting pushes). Override with `RAZORPAY_CHECKOUT_IMAGE_URL` on the API host.
+
+You can also upload your logo under **Dashboard → Accounts & Settings → Checkout Styling → Brand name and logo** (applies account-wide even without the SDK `image` field).  
 Pending orders with legacy ids can call `POST /api/user/orders/:id/payment-action` to regenerate a Razorpay order.
 
 Until then, webhooks only work on hosts that already have the route (e.g. Render during migration).
