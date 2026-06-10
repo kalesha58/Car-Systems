@@ -32,6 +32,7 @@ export interface IDealer {
   };
   createdAt: string;
   approvalCode?: string;
+  dealerType?: string;
 }
 
 export interface IOrderStats {

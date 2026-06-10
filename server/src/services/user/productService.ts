@@ -22,7 +22,7 @@ export interface IDealerInfo {
   id: string;
   businessName: string;
   type: string;
-  phone: string;
+  phone?: string;
   address: string;
   gst?: string;
 }
@@ -92,7 +92,6 @@ const getDealerInfoByUserId = async (userId: string): Promise<IDealerInfo | null
       id: (businessRegistration._id as any).toString(),
       businessName: businessRegistration.businessName,
       type: businessRegistration.type,
-      phone: businessRegistration.phone,
       address: businessRegistration.address,
       gst: businessRegistration.gst,
     };

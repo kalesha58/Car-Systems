@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {IBusinessRegistration} from '@service/dealerService';
 import {useTranslation} from 'react-i18next';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import {shareStore} from '@utils/shareUtils';
 
 interface BusinessRegistrationInfoProps {
   businessRegistration: IBusinessRegistration | null;
@@ -487,6 +488,38 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
           </View>
         </View>
       )}
+
+      {/* Shareable Store Link */}
+      <View style={styles.card}>
+        <CustomText style={styles.cardTitle}>
+          {t('dealer.shareableBusinessLink') || 'Shareable Business Link'}
+        </CustomText>
+        <CustomText style={{ fontSize: RFValue(11), color: colors.textSecondary, fontFamily: Fonts.Regular, marginBottom: 16, lineHeight: 18 }}>
+          {t('dealer.shareLinkDescription') || 'Share your unique business link on Instagram, WhatsApp, or other platforms to direct customers directly to your Moto Node store.'}
+        </CustomText>
+        <TouchableOpacity
+          onPress={() => {
+            if (businessRegistration) {
+              shareStore(businessRegistration.businessName, businessRegistration.userId);
+            }
+          }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: colors.secondary,
+            paddingVertical: 12,
+            borderRadius: 8,
+            gap: 8,
+          }}
+          activeOpacity={0.8}
+        >
+          <Icon name="share-social-outline" size={RFValue(18)} color="#fff" />
+          <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold, fontSize: RFValue(13) }}>
+            {t('dealer.shareStore') || 'Share Store Link'}
+          </CustomText>
+        </TouchableOpacity>
+      </View>
 
       {/* Registration Dates */}
       <View style={styles.card}>

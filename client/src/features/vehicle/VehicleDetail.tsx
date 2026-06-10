@@ -552,12 +552,15 @@ const VehicleDetail: React.FC = () => {
 
               {/* Dealer Information */}
               {vehicle?.dealer && (
-                <View style={styles.dealerSection}>
+                <TouchableOpacity
+                  onPress={() => (navigation as any).navigate('DealerStore', { dealerId: vehicle.dealerId })}
+                  activeOpacity={0.7}
+                  style={styles.dealerSection}>
                   <View style={styles.dealerAvatar}>
-                    <Icon name="business-outline" size={RFValue(24)} color={colors.text} />
+                    <Icon name="business-outline" size={RFValue(24)} color={colors.secondary} />
                   </View>
                   <View style={styles.dealerInfo}>
-                    <CustomText style={styles.dealerName}>
+                    <CustomText style={[styles.dealerName, { color: colors.secondary }]}>
                       {vehicle.dealer.businessName || 'Unknown Dealer'}
                     </CustomText>
                     <CustomText style={styles.dealerRole}>
@@ -569,14 +572,8 @@ const VehicleDetail: React.FC = () => {
                       </CustomText>
                     )}
                   </View>
-                  <View style={styles.dealerActions}>
-                    {vehicle.dealer.phone && (
-                      <TouchableOpacity style={styles.dealerActionButton}>
-                        <Icon name="call-outline" size={RFValue(20)} color={colors.text} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
+                  <Icon name="chevron-forward" size={RFValue(18)} color={colors.secondary} />
+                </TouchableOpacity>
               )}
 
               {/* Overview/Description */}

@@ -519,6 +519,12 @@ const Navigation: FC = () => {
             categoryName: (categoryName: string) => decodeURIComponent(categoryName),
           },
         },
+        DealerStore: {
+          path: 'store/:dealerId',
+          parse: {
+            dealerId: (dealerId: string) => dealerId,
+          },
+        },
       },
     },
   };
@@ -631,6 +637,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="BusinessRegistrationDetails"
             getComponent={() => require('@features/profile/BusinessRegistrationDetailsScreen').default}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="DealerStore"
+            getComponent={() => require('@features/dealer/DealerStoreScreen').default}
             options={{
               animation: 'slide_from_right',
             }}

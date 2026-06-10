@@ -5,7 +5,7 @@ export interface IDealerInfo {
   businessName: string;
   type: string;
   address: string;
-  phone: string;
+  phone?: string;
   gst?: string;
 }
 

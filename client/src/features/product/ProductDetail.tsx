@@ -1054,23 +1054,28 @@ const ProductDetail: React.FC = () => {
                   Seller Information
                 </CustomText>
                 <View style={styles.dealerInfo}>
-                  <View style={styles.dealerRow}>
+                  <TouchableOpacity
+                    onPress={() => navigate('DealerStore', { dealerId: dealer.id })}
+                    style={styles.dealerRow}
+                    activeOpacity={0.7}
+                  >
                     <Icon
                       name="storefront"
                       size={RFValue(18)}
-                      color={colors.text}
+                      color={colors.secondary}
                     />
                     <CustomText
                       variant="h7"
                       fontFamily={Fonts.Medium}
                       style={[
                         styles.dealerText,
+                        { color: colors.secondary, flex: 1 },
                         !storeOpen ? { color: colors.textSecondary, opacity: 0.7 } : {}
                       ]}>
                       {dealer.businessName || dealer.name}
                     </CustomText>
                     {!storeOpen && (
-                      <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20' }]}>
+                      <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20', marginRight: 8 }]}>
                         <CustomText
                           variant="h9"
                           fontFamily={Fonts.SemiBold}
@@ -1079,20 +1084,13 @@ const ProductDetail: React.FC = () => {
                         </CustomText>
                       </View>
                     )}
-                  </View>
+                    <Icon name="chevron-forward" size={RFValue(16)} color={colors.secondary} />
+                  </TouchableOpacity>
                   {dealer.address && (
                     <View style={styles.dealerRow}>
                       <Icon name="location" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
                       <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
                         {dealer.address}
-                      </CustomText>
-                    </View>
-                  )}
-                  {dealer.phone && (
-                    <View style={styles.dealerRow}>
-                      <Icon name="call" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
-                      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
-                        {dealer.phone}
                       </CustomText>
                     </View>
                   )}

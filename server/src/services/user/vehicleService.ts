@@ -237,6 +237,10 @@ export const getAllDealerVehiclesForUsers = async (
     // Build filter for vehicles - fetch ALL vehicles without restrictions
     const filter: any = {};
 
+    if (query.dealerId) {
+      filter.dealerId = query.dealerId;
+    }
+
     if (query.vehicleType) {
       filter.vehicleType = query.vehicleType;
     }
@@ -335,7 +339,6 @@ export const getAllDealerVehiclesForUsers = async (
         id: regIdString,
         businessName: reg.businessName,
         type: reg.type,
-        phone: reg.phone,
         address: reg.address,
         gst: reg.gst,
       };

@@ -26,5 +26,11 @@
       //order related
       "@order/*": ["src/features/order/*"],
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "ios",
+    "android",
+    "**/*.js"
+  ]
 }

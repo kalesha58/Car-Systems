@@ -14,9 +14,16 @@ export const getDealersController = async (req: Request, res: Response, next: Ne
       status: 'approved',
     };
     const result = await getDealers(query as any);
+    const safeDealers = result.dealers.map((d: any) => {
+      const { email, phone, ...rest } = d;
+      return rest;
+    });
     res.status(200).json({
       success: true,
-      Response: result,
+      Response: {
+        ...result,
+        dealers: safeDealers,
+      },
     });
   } catch (error) {
     errorHandler(error as IAppError, res);
@@ -41,9 +48,11 @@ export const getDealerByIdController = async (req: Request, res: Response, next:
       return;
     }
 
+    const { email, phone, ...safeDealer } = dealer as any;
+
     res.status(200).json({
       success: true,
-      Response: dealer,
+      Response: safeDealer,
     });
   } catch (error) {
     errorHandler(error as IAppError, res);

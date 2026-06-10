@@ -43,6 +43,7 @@ export interface IGetVehiclesRequest {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  dealerId?: string;
 }
 
 export interface IVehiclesResponse {

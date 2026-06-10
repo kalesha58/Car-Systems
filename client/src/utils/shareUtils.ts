@@ -47,3 +47,14 @@ export const shareProduct = async (
   });
 };
 
+export const shareStore = async (
+  businessName: string,
+  dealerId: string,
+): Promise<boolean> => {
+  return shareContent({
+    title: `Visit ${businessName} on motonode`,
+    message: `Check out ${businessName}'s store on motonode!`,
+    url: `motonode://store/${dealerId}`,
+  });
+};
+

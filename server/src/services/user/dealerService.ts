@@ -39,7 +39,7 @@ export const getDealerUserId = async (dealerId: string): Promise<string> => {
  */
 export const getDealerInfo = async (dealerId: string): Promise<IDealerInfo> => {
   logger.info(`getDealerInfo: Looking up dealer with dealerId: ${dealerId}`);
-  
+
   const businessRegistration = await BusinessRegistration.findById(dealerId);
 
   if (!businessRegistration) {
@@ -63,7 +63,6 @@ export const getDealerInfo = async (dealerId: string): Promise<IDealerInfo> => {
     status: businessRegistration.status,
     type: businessRegistration.type,
     address: businessRegistration.address,
-    phone: businessRegistration.phone || (user.phone as string),
   };
 
   logger.info(`getDealerInfo: Returning dealer info for dealerId: ${dealerId}`);
