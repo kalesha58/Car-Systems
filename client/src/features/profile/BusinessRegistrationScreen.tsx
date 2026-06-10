@@ -55,6 +55,45 @@ const PAYOUT_TYPES: IDropdownOption[] = [
   { label: 'Bank Account', value: 'BANK' },
 ];
 
+const INDIAN_STATES: IDropdownOption[] = [
+  { label: 'Andhra Pradesh', value: 'Andhra Pradesh' },
+  { label: 'Arunachal Pradesh', value: 'Arunachal Pradesh' },
+  { label: 'Assam', value: 'Assam' },
+  { label: 'Bihar', value: 'Bihar' },
+  { label: 'Chhattisgarh', value: 'Chhattisgarh' },
+  { label: 'Goa', value: 'Goa' },
+  { label: 'Gujarat', value: 'Gujarat' },
+  { label: 'Haryana', value: 'Haryana' },
+  { label: 'Himachal Pradesh', value: 'Himachal Pradesh' },
+  { label: 'Jharkhand', value: 'Jharkhand' },
+  { label: 'Karnataka', value: 'Karnataka' },
+  { label: 'Kerala', value: 'Kerala' },
+  { label: 'Madhya Pradesh', value: 'Madhya Pradesh' },
+  { label: 'Maharashtra', value: 'Maharashtra' },
+  { label: 'Manipur', value: 'Manipur' },
+  { label: 'Meghalaya', value: 'Meghalaya' },
+  { label: 'Mizoram', value: 'Mizoram' },
+  { label: 'Nagaland', value: 'Nagaland' },
+  { label: 'Odisha', value: 'Odisha' },
+  { label: 'Punjab', value: 'Punjab' },
+  { label: 'Rajasthan', value: 'Rajasthan' },
+  { label: 'Sikkim', value: 'Sikkim' },
+  { label: 'Tamil Nadu', value: 'Tamil Nadu' },
+  { label: 'Telangana', value: 'Telangana' },
+  { label: 'Tripura', value: 'Tripura' },
+  { label: 'Uttar Pradesh', value: 'Uttar Pradesh' },
+  { label: 'Uttarakhand', value: 'Uttarakhand' },
+  { label: 'West Bengal', value: 'West Bengal' },
+  { label: 'Andaman and Nicobar Islands', value: 'Andaman and Nicobar Islands' },
+  { label: 'Chandigarh', value: 'Chandigarh' },
+  { label: 'Dadra and Nagar Haveli and Daman and Diu', value: 'Dadra and Nagar Haveli and Daman and Diu' },
+  { label: 'Delhi', value: 'Delhi' },
+  { label: 'Jammu and Kashmir', value: 'Jammu and Kashmir' },
+  { label: 'Ladakh', value: 'Ladakh' },
+  { label: 'Lakshadweep', value: 'Lakshadweep' },
+  { label: 'Puducherry', value: 'Puducherry' },
+];
+
 const MAX_SHOP_PHOTOS = 2;
 const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
@@ -193,6 +232,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [payoutTypeModalVisible, setPayoutTypeModalVisible] = useState(false);
+  const [stateModalVisible, setStateModalVisible] = useState(false);
 
   const existingShopPhotos = useMemo(() => {
     const urls = (registrationData?.shopPhotos || []).map(p => p?.url).filter(Boolean) as string[];
@@ -1516,16 +1556,22 @@ const BusinessRegistrationScreen: React.FC = () => {
             </View>
             <View style={{ flex: 1 }}>
               <CustomText style={styles.label}>State</CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="State"
-                  placeholderTextColor={colors.disabled}
-                  value={state}
-                  onChangeText={setState}
-                  editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
-                />
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.dropdownButton,
+                  !isEdit || (canUpdateFields && editableFields.includes('address')) ? {} : { opacity: 0.6 },
+                ]}
+                onPress={() => {
+                  if (!isEdit || (canUpdateFields && editableFields.includes('address'))) {
+                    setStateModalVisible(true);
+                  }
+                }}
+                disabled={isEdit && (!canUpdateFields || !editableFields.includes('address'))}>
+                <CustomText style={[styles.dropdownButtonText, !state && { color: colors.disabled }]}>
+                  {state || 'Select State'}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
+              </TouchableOpacity>
             </View>
           </View>
           <View style={{ marginTop: screenHeight * 0.012 }}>
@@ -2103,6 +2149,19 @@ const BusinessRegistrationScreen: React.FC = () => {
         onSelect={handlePayoutTypeSelect}
         title={t('dealer.selectPayoutType') || 'Select Payout Type'}
         searchable={false}
+      />
+
+      <CustomDropdownModal
+        visible={stateModalVisible}
+        onClose={() => setStateModalVisible(false)}
+        options={INDIAN_STATES}
+        selectedValue={state}
+        onSelect={(value) => {
+          setState(value);
+          setStateModalVisible(false);
+        }}
+        title="Select State"
+        searchable={true}
       />
 
       {/* Image Preview Modal */}

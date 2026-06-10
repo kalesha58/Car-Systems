@@ -165,7 +165,9 @@ export const createDealerProduct = async (
       } else {
         // Validate that price matches discounted price
         const calculatedPrice = data.originalPrice * (1 - data.discountPercentage / 100);
-        if (Math.abs(calculatedPrice - data.price) > 0.01) {
+        // Allow a tolerance for rounding (1% of original price + 1 rupee) to prevent rejection due to integer rounding
+        const tolerance = (data.originalPrice * 0.01) + 1;
+        if (Math.abs(calculatedPrice - data.price) > tolerance) {
           throw new AppError('Price does not match the discount calculation', 400);
         }
         finalOriginalPrice = data.originalPrice;
@@ -288,7 +290,9 @@ export const updateDealerProduct = async (
             throw new AppError('Original price must be greater than 0', 400);
           }
           const calculatedPrice = data.originalPrice * (1 - data.discountPercentage / 100);
-          if (Math.abs(calculatedPrice - currentPrice) > 0.01) {
+          // Allow a tolerance for rounding (1% of original price + 1 rupee) to prevent rejection due to integer rounding
+          const tolerance = (data.originalPrice * 0.01) + 1;
+          if (Math.abs(calculatedPrice - currentPrice) > tolerance) {
             throw new AppError('Price does not match the discount calculation', 400);
           }
           product.originalPrice = data.originalPrice;
