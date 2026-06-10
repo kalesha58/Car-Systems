@@ -113,6 +113,101 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// Web redirect helper for custom deep links
+const getRedirectHtml = (deepLink: string, title: string): string => {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Opening Moto Node...</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f7fafc;
+            color: #2d3748;
+            text-align: center;
+            padding: 20px;
+          }
+          .card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            max-width: 400px;
+            width: 100%;
+          }
+          .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #0d8320;
+            margin-bottom: 20px;
+          }
+          .btn {
+            background-color: #0d8320;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 20px;
+            display: inline-block;
+            transition: background-color 0.2s;
+          }
+          .btn:hover {
+            background-color: #0a6418;
+          }
+          h1 { margin-bottom: 10px; font-size: 22px; }
+          p { color: #718096; margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="logo">motonode</div>
+          <h1>Opening ${title}</h1>
+          <p>We are redirecting you to the Moto Node app. If nothing happens, tap the button below.</p>
+          <a class="btn" href="${deepLink}">Open Moto Node</a>
+        </div>
+        <script>
+          // Auto-redirect attempt on load
+          window.onload = function() {
+            window.location.href = "${deepLink}";
+          };
+        </script>
+      </body>
+    </html>
+  `;
+};
+
+// Mount deep link web redirects (both root and /api prefixed routes for robustness)
+app.get('/store/:dealerId', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://store/${req.params.dealerId}`, 'Storefront'));
+});
+app.get('/api/store/:dealerId', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://store/${req.params.dealerId}`, 'Storefront'));
+});
+
+app.get('/product/:productId', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://product/${req.params.productId}`, 'Product'));
+});
+app.get('/api/product/:productId', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://product/${req.params.productId}`, 'Product'));
+});
+
+app.get('/category/:categoryName', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://category/${req.params.categoryName}`, 'Category'));
+});
+app.get('/api/category/:categoryName', (req: Request, res: Response) => {
+  res.send(getRedirectHtml(`motonode://category/${req.params.categoryName}`, 'Category'));
+});
+
 // Swagger JSON endpoint
 app.get('/api/api-docs.json', (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'application/json');

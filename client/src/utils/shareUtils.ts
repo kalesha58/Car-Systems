@@ -1,4 +1,5 @@
 import { Share, Platform } from 'react-native';
+import { BASE_URL } from '../service/config';
 
 export interface ShareOptions {
   title?: string;
@@ -28,11 +29,16 @@ export const shareContent = async (options: ShareOptions): Promise<boolean> => {
   }
 };
 
+const getWebBaseUrl = (): string => {
+  // Derive the HTTP web domain from the backend api base URL
+  return BASE_URL.replace(/\/api$/, '').replace(/\/$/, '');
+};
+
 export const shareCategory = async (categoryName: string): Promise<boolean> => {
   return shareContent({
     title: `Check out ${categoryName} on motonode`,
     message: `Browse ${categoryName} products, vehicles, and services on motonode!`,
-    url: `motonode://category/${categoryName}`,
+    url: `${getWebBaseUrl()}/category/${encodeURIComponent(categoryName)}`,
   });
 };
 
@@ -43,7 +49,7 @@ export const shareProduct = async (
   return shareContent({
     title: `Check out ${productName} on motonode`,
     message: `View ${productName} on motonode!`,
-    url: `motonode://product/${productId}`,
+    url: `${getWebBaseUrl()}/product/${productId}`,
   });
 };
 
@@ -54,7 +60,7 @@ export const shareStore = async (
   return shareContent({
     title: `Visit ${businessName} on motonode`,
     message: `Check out ${businessName}'s store on motonode!`,
-    url: `motonode://store/${dealerId}`,
+    url: `${getWebBaseUrl()}/store/${dealerId}`,
   });
 };
 
