@@ -29,7 +29,18 @@ const CategoriesPage = lazy(() => import('@pages/Settings/CategoriesPage').then(
 const NotFoundPage = lazy(() => import('@pages/NotFound/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
 const ServicesListPage = lazy(() => import('@pages/Services/ServicesListPage').then(module => ({ default: module.ServicesListPage })));
 const ServiceFormPage = lazy(() => import('@pages/Services/ServiceFormPage').then(module => ({ default: module.ServiceFormPage })));
-const ModerationReportsPage = lazy(() => import('@pages/Moderation/ModerationReportsPage').then(module => ({ default: module.ModerationReportsPage })));
+const ModerationReportsPage = lazy(() =>
+  import('@pages/Moderation/ModerationReportsPage').then(module => ({ default: module.ModerationReportsPage })),
+);
+const CouponsListPage = lazy(() =>
+  import('@pages/Coupons/CouponsListPage').then(module => ({ default: module.CouponsListPage })),
+);
+const CouponFormPage = lazy(() =>
+  import('@pages/Coupons/CouponFormPage').then(module => ({ default: module.CouponFormPage })),
+);
+const ServiceBookingsListPage = lazy(() =>
+  import('@pages/ServiceBookings/ServiceBookingsListPage').then(module => ({ default: module.ServiceBookingsListPage })),
+);
 const DeleteAccountPage = lazy(() =>
   import('@pages/Public/DeleteAccountPage').then(module => ({ default: module.DeleteAccountPage })),
 );
@@ -284,6 +295,40 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <ModerationReportsPage />
+              </Suspense>
+            }
+          />
+          {/* Coupons */}
+          <Route
+            path="coupons"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CouponsListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="coupons/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CouponFormPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="coupons/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CouponFormPage />
+              </Suspense>
+            }
+          />
+          {/* Service Bookings */}
+          <Route
+            path="service-bookings"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ServiceBookingsListPage />
               </Suspense>
             }
           />

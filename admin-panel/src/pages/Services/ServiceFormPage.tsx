@@ -33,6 +33,7 @@ interface IFormData {
   vehicleBrand: string;
   images: string[];
   isActive: boolean;
+  commissionPercentage?: number;
 }
 
 const INITIAL_FORM: IFormData = {
@@ -50,6 +51,7 @@ const INITIAL_FORM: IFormData = {
   vehicleBrand: '',
   images: [],
   isActive: true,
+  commissionPercentage: undefined,
 };
 
 export const ServiceFormPage = () => {
@@ -105,6 +107,7 @@ export const ServiceFormPage = () => {
             vehicleBrand: svc.vehicleBrand || '',
             images: svc.images || [],
             isActive: svc.isActive !== false,
+            commissionPercentage: (svc as any).commissionPercentage,
           });
         }
       } catch (e) {
@@ -171,6 +174,9 @@ export const ServiceFormPage = () => {
         vehicleBrand: formData.vehicleBrand.trim() || undefined,
         images: formData.images,
         isActive: formData.isActive,
+        ...(formData.commissionPercentage !== undefined && {
+          commissionPercentage: formData.commissionPercentage,
+        }),
       };
 
       if (isEdit && id) {
@@ -331,8 +337,8 @@ export const ServiceFormPage = () => {
             required
           />
 
-          {/* ── Price & Duration ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: s.md, marginBottom: s.md }}>
+          {/* ── Price & Duration & Commission ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: s.md, marginBottom: s.md }}>
             <Input
               label="Price (₹)"
               type="number"
@@ -350,6 +356,15 @@ export const ServiceFormPage = () => {
               placeholder="60"
               error={errors.durationMinutes}
               required
+            />
+            <Input
+              label="Commission %"
+              type="number"
+              value={formData.commissionPercentage?.toString() ?? ''}
+              onChange={v =>
+                set('commissionPercentage', v === '' ? undefined : parseFloat(v))
+              }
+              placeholder="e.g. 10"
             />
           </div>
 

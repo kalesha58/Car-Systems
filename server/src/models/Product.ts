@@ -19,6 +19,7 @@ export interface IProductDocument extends Document {
   userId: string;
   deliveryTimeMinutes?: number;
   isSparePart?: boolean;
+  commissionPercentage?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -95,6 +96,12 @@ const productSchema = new Schema<IProductDocument>(
     isSparePart: {
       type: Boolean,
       default: false,
+    },
+    commissionPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
   },
   {

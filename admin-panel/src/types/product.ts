@@ -14,6 +14,7 @@ export interface IProduct {
   returnPolicy?: string;
   dealerID?: string;
   tags?: string[];
+  commissionPercentage?: number;
   createdDate: string;
 }
 
@@ -31,5 +32,6 @@ export interface IProductFormData {
   images?: string[];
   specifications?: Record<string, string>;
   tags?: string[];
+  commissionPercentage?: number;
 }
 

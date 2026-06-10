@@ -10,6 +10,7 @@ import { logger } from '../../utils/logger';
 import { SignUp } from '../../models/SignUp';
 import { Service } from '../../models/Service';
 import { DealerVehicle } from '../../models/DealerVehicle';
+import { sendPushNotification, createNotification } from '../notificationService';
 
 /**
  * Convert service booking document to interface
@@ -74,6 +75,7 @@ const serviceBookingToInterface = async (doc: IServiceBookingDocument): Promise<
     priority: doc.priority,
     notes: doc.notes,
     dealerNotes: doc.dealerNotes,
+    rejectionReason: doc.rejectionReason,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
     customerName,
@@ -175,6 +177,8 @@ export const updateServiceBookingStatus = async (
       );
     }
 
+    const prevStatus = booking.status;
+
     if (data.status) {
       booking.status = data.status;
     }
@@ -187,10 +191,86 @@ export const updateServiceBookingStatus = async (
     if (data.priority !== undefined) {
       booking.priority = data.priority;
     }
+    if (data.status === 'cancelled' && data.rejectionReason !== undefined) {
+      booking.rejectionReason = data.rejectionReason;
+    }
 
     await booking.save();
 
     logger.info(`Service booking status updated: ${bookingId} to ${data.status || booking.status} by dealer: ${dealerId}`);
+
+    // Trigger push and in-app notifications on status transition from 'new' to 'scheduled' or 'cancelled'
+    if (prevStatus === 'new') {
+      if (data.status === 'scheduled') {
+        // Accept
+        try {
+          const service = await Service.findById(booking.serviceId).select('name').lean();
+          const title = 'Service Booking Accepted';
+          const body = `Your service booking for "${service?.name || 'Service'}" has been accepted and scheduled.`;
+
+          // Send push notification
+          await sendPushNotification(booking.userId, {
+            title,
+            body,
+            data: {
+              type: 'general',
+              serviceId: booking.serviceId,
+              status: 'scheduled',
+            },
+          });
+
+          // Create in-app notification
+          await createNotification({
+            userId: booking.userId,
+            type: 'service_update',
+            title,
+            body,
+            data: {
+              serviceId: booking.serviceId,
+              status: 'scheduled',
+            },
+            relatedId: (booking._id as any).toString(),
+          });
+        } catch (notifErr) {
+          logger.error('Error sending acceptance notification:', notifErr);
+        }
+      } else if (data.status === 'cancelled') {
+        // Reject
+        try {
+          const service = await Service.findById(booking.serviceId).select('name').lean();
+          const reasonStr = data.rejectionReason ? ` Reason: ${data.rejectionReason}` : '';
+          const title = 'Service Booking Rejected';
+          const body = `Your service booking for "${service?.name || 'Service'}" has been rejected.${reasonStr}`;
+
+          // Send push notification
+          await sendPushNotification(booking.userId, {
+            title,
+            body,
+            data: {
+              type: 'general',
+              serviceId: booking.serviceId,
+              status: 'cancelled',
+            },
+          });
+
+          // Create in-app notification
+          await createNotification({
+            userId: booking.userId,
+            type: 'service_update',
+            title,
+            body,
+            data: {
+              serviceId: booking.serviceId,
+              status: 'cancelled',
+              rejectionReason: data.rejectionReason,
+            },
+            relatedId: (booking._id as any).toString(),
+          });
+        } catch (notifErr) {
+          logger.error('Error sending rejection notification:', notifErr);
+        }
+      }
+    }
 
     return await serviceBookingToInterface(booking);
   } catch (error) {

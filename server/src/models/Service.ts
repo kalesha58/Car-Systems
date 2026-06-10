@@ -23,6 +23,7 @@ export interface IServiceDocument extends Document {
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
+  commissionPercentage?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -115,6 +116,12 @@ const serviceSchema = new Schema<IServiceDocument>(
     slotBookingEnabled: {
       type: Boolean,
       default: false,
+    },
+    commissionPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
   },
   {

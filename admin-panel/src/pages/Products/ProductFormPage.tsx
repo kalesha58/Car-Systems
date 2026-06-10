@@ -35,6 +35,7 @@ export const ProductFormPage = () => {
     dealerID: '',
     tags: [],
     specifications: {},
+    commissionPercentage: undefined,
   });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [tagInput, setTagInput] = useState('');
@@ -131,6 +132,7 @@ export const ProductFormPage = () => {
             specifications: product.specifications || {},
             image: (product as { images?: string[]; image?: string }).images?.[0] || product.image || '',
             images: product.images || [],
+            commissionPercentage: (product as { commissionPercentage?: number }).commissionPercentage,
           });
           
           // Clear imagePreviews for edit mode - it should only contain newly selected images
@@ -337,6 +339,9 @@ export const ProductFormPage = () => {
         returnPolicy: formData.returnPolicy || '',
         tags: formData.tags || [],
         ...(imagesArray.length > 0 && { images: imagesArray }),
+        ...(formData.commissionPercentage !== undefined && {
+          commissionPercentage: formData.commissionPercentage,
+        }),
       };
 
       if (isEdit && id) {
@@ -768,6 +773,18 @@ export const ProductFormPage = () => {
               placeholder="0"
               error={errors.stock}
               required
+            />
+            <Input
+              label="Commission %"
+              type="number"
+              value={formData.commissionPercentage?.toString() ?? ''}
+              onChange={(value) => {
+                setFormData({
+                  ...formData,
+                  commissionPercentage: value === '' ? undefined : parseFloat(value),
+                });
+              }}
+              placeholder="e.g. 10"
             />
           </div>
 

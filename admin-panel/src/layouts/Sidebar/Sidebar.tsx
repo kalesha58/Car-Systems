@@ -7,12 +7,14 @@ import { AnimatePresence,motion } from 'framer-motion';
 import {
   BarChart3,
   Building2,
+  CalendarCheck,
   CarFront,
   LayoutDashboard,
   LogOut,
   Package,
   Settings,
   ShoppingCart,
+  Ticket,
   Users,
   Wrench,
   ShieldAlert,
@@ -37,6 +39,8 @@ const navItems: INavItem[] = [
   { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/settings', label: 'Categories', icon: Settings },
   { path: '/moderation/reports', label: 'Moderation', icon: ShieldAlert },
+  { path: '/coupons', label: 'Coupons', icon: Ticket },
+  { path: '/service-bookings', label: 'Bookings', icon: CalendarCheck },
 ];
 
 export const Sidebar = () => {

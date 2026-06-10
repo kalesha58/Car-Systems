@@ -1,12 +1,27 @@
 import React, { FC, useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
-import { getDealerServiceBookings, IServiceBooking, updateServiceBookingStatus, ServiceBookingStatus } from '@service/serviceBookingService';
+import {
+  getDealerServiceBookings,
+  IServiceBooking,
+  updateServiceBookingStatus,
+  ServiceBookingStatus,
+} from '@service/serviceBookingService';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@hooks/useToast';
 
@@ -25,6 +40,11 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
   const [bookings, setBookings] = useState<IServiceBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Rejection modal state
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -56,9 +76,46 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
       showSuccess(t('dealer.bookingAccepted') || 'Booking accepted');
       fetchBookings();
     } catch (error: any) {
-      showError(error?.response?.data?.message || t('dealer.failedToAcceptBooking') || 'Failed to accept booking');
+      showError(
+        error?.response?.data?.message ||
+          t('dealer.failedToAcceptBooking') ||
+          'Failed to accept booking',
+      );
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const openRejectModal = (bookingId: string) => {
+    setRejectingBookingId(bookingId);
+    setRejectionReason('');
+    setRejectModalVisible(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectingBookingId) return;
+    if (!rejectionReason.trim()) {
+      showError(t('dealer.rejectionReasonRequired') || 'Please enter a rejection reason');
+      return;
+    }
+    try {
+      setUpdating(rejectingBookingId);
+      setRejectModalVisible(false);
+      await updateServiceBookingStatus(rejectingBookingId, {
+        status: 'cancelled',
+        rejectionReason: rejectionReason.trim(),
+      });
+      showSuccess(t('dealer.bookingRejected') || 'Booking rejected');
+      fetchBookings();
+    } catch (error: any) {
+      showError(
+        error?.response?.data?.message ||
+          t('dealer.failedToRejectBooking') ||
+          'Failed to reject booking',
+      );
+    } finally {
+      setUpdating(null);
+      setRejectingBookingId(null);
     }
   };
 
@@ -80,15 +137,15 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
   const getStatusColor = (status: ServiceBookingStatus): string => {
     switch (status) {
       case 'new':
-        return '#3b82f6'; // blue
+        return '#3b82f6';
       case 'scheduled':
-        return '#10b981'; // green
+        return '#10b981';
       case 'in_progress':
-        return '#f59e0b'; // amber
+        return '#f59e0b';
       case 'awaiting':
-        return '#ef4444'; // red
+        return '#ef4444';
       case 'completed':
-        return '#6b7280'; // gray
+        return '#6b7280';
       default:
         return theme.textSecondary;
     }
@@ -197,6 +254,17 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
       fontFamily: Fonts.SemiBold,
       color: theme.white || '#FFFFFF',
     },
+    rejectButton: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 6,
+      backgroundColor: '#ef4444',
+    },
+    rejectButtonText: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+      color: '#FFFFFF',
+    },
     statusBadge: {
       paddingVertical: 4,
       paddingHorizontal: 8,
@@ -220,9 +288,76 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
       paddingVertical: 20,
       alignItems: 'center',
     },
+    // Modal styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContainer: {
+      backgroundColor: theme.cardBackground,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 24,
+      paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    },
+    modalTitle: {
+      fontSize: RFValue(16),
+      fontFamily: Fonts.Bold,
+      color: theme.text,
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      fontSize: RFValue(12),
+      fontFamily: Fonts.Regular,
+      color: theme.textSecondary,
+      marginBottom: 16,
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderColor: theme.border || '#ccc',
+      borderRadius: 8,
+      padding: 12,
+      fontSize: RFValue(13),
+      fontFamily: Fonts.Regular,
+      color: theme.text,
+      backgroundColor: theme.backgroundSecondary,
+      minHeight: 80,
+      textAlignVertical: 'top',
+      marginBottom: 16,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    modalCancelBtn: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border || '#ccc',
+      alignItems: 'center',
+    },
+    modalCancelText: {
+      fontSize: RFValue(13),
+      fontFamily: Fonts.Medium,
+      color: theme.text,
+    },
+    modalConfirmBtn: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      backgroundColor: '#ef4444',
+      alignItems: 'center',
+    },
+    modalConfirmText: {
+      fontSize: RFValue(13),
+      fontFamily: Fonts.SemiBold,
+      color: '#FFFFFF',
+    },
   });
 
-  const tabs: { key: BookingTab; label: string; count?: number }[] = [
+  const tabs: { key: BookingTab; label: string }[] = [
     { key: 'new', label: t('dealer.new') || 'New' },
     { key: 'scheduled', label: t('dealer.scheduled') || 'Scheduled' },
     { key: 'in_progress', label: t('dealer.inProgress') || 'In Progress' },
@@ -265,7 +400,7 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
             style={[styles.tab, activeTab === tab.key && styles.activeTab]}
             onPress={() => setActiveTab(tab.key)}>
             <CustomText style={[styles.tabText, activeTab === tab.key ? styles.activeTabText : {}]}>
-              {tab.label} {tab.count !== undefined ? `(${tab.count})` : ''}
+              {tab.label}
             </CustomText>
           </TouchableOpacity>
         ))}
@@ -288,7 +423,8 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
             <View style={styles.bookingHeader}>
               <View style={styles.bookingInfo}>
                 <CustomText style={styles.customerName}>
-                  {booking.customerName || t('dealer.customer') || 'Customer'} {booking.vehicleName ? `(${booking.vehicleName})` : ''}
+                  {booking.customerName || t('dealer.customer') || 'Customer'}{' '}
+                  {booking.vehicleName ? `(${booking.vehicleName})` : ''}
                 </CustomText>
                 <CustomText style={styles.serviceRequest}>
                   {t('dealer.request') || 'Request'}: {booking.serviceRequest}
@@ -300,12 +436,17 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
               </View>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) + '20' }]}>
                 <CustomText style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
-                  {booking.status === 'new' ? t('dealer.new') || 'New' :
-                   booking.status === 'scheduled' ? t('dealer.scheduled') || 'Scheduled' :
-                   booking.status === 'in_progress' ? t('dealer.inProgress') || 'In Progress' :
-                   booking.status === 'awaiting' ? t('dealer.awaiting') || 'Awaiting' :
-                   booking.status === 'completed' ? t('dealer.completed') || 'Completed' :
-                   booking.status.replace('_', ' ').toUpperCase()}
+                  {booking.status === 'new'
+                    ? t('dealer.new') || 'New'
+                    : booking.status === 'scheduled'
+                    ? t('dealer.scheduled') || 'Scheduled'
+                    : booking.status === 'in_progress'
+                    ? t('dealer.inProgress') || 'In Progress'
+                    : booking.status === 'awaiting'
+                    ? t('dealer.awaiting') || 'Awaiting'
+                    : booking.status === 'completed'
+                    ? t('dealer.completed') || 'Completed'
+                    : booking.status.replace('_', ' ').toUpperCase()}
                 </CustomText>
               </View>
             </View>
@@ -323,11 +464,63 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
                     </CustomText>
                   )}
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.rejectButton}
+                  onPress={() => openRejectModal(booking.id)}
+                  disabled={updating === booking.id}>
+                  <CustomText style={styles.rejectButtonText}>
+                    {t('dealer.reject') || 'Reject'}
+                  </CustomText>
+                </TouchableOpacity>
               </View>
             )}
           </View>
         ))
       )}
+
+      {/* Rejection Reason Modal */}
+      <Modal
+        visible={rejectModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRejectModalVisible(false)}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.modalContainer}>
+            <CustomText style={styles.modalTitle}>
+              {t('dealer.rejectBooking') || 'Reject Booking'}
+            </CustomText>
+            <CustomText style={styles.modalSubtitle}>
+              {t('dealer.rejectBookingSubtitle') ||
+                'Please provide a reason for rejecting this booking. The customer will be notified.'}
+            </CustomText>
+            <TextInput
+              style={styles.modalInput}
+              placeholder={t('dealer.rejectionReasonPlaceholder') || 'e.g. Fully booked on this date'}
+              placeholderTextColor={theme.textSecondary}
+              value={rejectionReason}
+              onChangeText={setRejectionReason}
+              multiline
+              maxLength={300}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setRejectModalVisible(false)}>
+                <CustomText style={styles.modalCancelText}>
+                  {t('dealer.cancel') || 'Cancel'}
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirmBtn} onPress={handleRejectConfirm}>
+                <CustomText style={styles.modalConfirmText}>
+                  {t('dealer.confirmReject') || 'Confirm Reject'}
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };

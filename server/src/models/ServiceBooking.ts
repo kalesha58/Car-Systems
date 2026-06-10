@@ -20,6 +20,7 @@ export interface IServiceBookingDocument extends Document {
   priority?: 'high' | 'medium' | 'low';
   notes?: string;
   dealerNotes?: string;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,6 +91,10 @@ const serviceBookingSchema = new Schema<IServiceBookingDocument>(
       trim: true,
     },
     dealerNotes: {
+      type: String,
+      trim: true,
+    },
+    rejectionReason: {
       type: String,
       trim: true,
     },

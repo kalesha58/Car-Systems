@@ -19,6 +19,7 @@ export interface IServiceBooking {
   priority?: 'high' | 'medium' | 'low';
   notes?: string;
   dealerNotes?: string;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
   customerName?: string;
@@ -39,6 +40,7 @@ export interface IUpdateServiceBookingStatusRequest {
   dealerNotes?: string;
   assignedMechanic?: string;
   priority?: 'high' | 'medium' | 'low';
+  rejectionReason?: string;
 }
 
 export interface IDealerServiceBookingsResponse {
