@@ -45,12 +45,15 @@ export const getServiceSlotsController = async (
       serviceType: serviceType as 'center' | 'home' | undefined,
     };
 
-    const slots = await getAvailableSlots(query);
+    const result = await getAvailableSlots(query);
 
     res.status(200).json({
       success: true,
       Response: {
-        slots,
+        slots: result.slots,
+        dailyCapReached: result.dailyCapReached,
+        dailyBookingsCount: result.dailyBookingsCount,
+        maxDailyBookings: result.maxDailyBookings,
       },
     });
   } catch (error) {
@@ -90,12 +93,17 @@ export const bookServiceSlotController = async (
       return;
     }
 
-    const slot = await bookSlot(slotId);
+    const result = await bookSlot({
+      slotId,
+      userId,
+      serviceRequest: req.body?.serviceRequest,
+    });
 
     res.status(200).json({
       success: true,
       Response: {
-        slot,
+        slot: result.slot,
+        bookingId: result.bookingId,
         ReturnMessage: 'Slot booked successfully',
       },
     });

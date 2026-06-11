@@ -185,6 +185,8 @@
   },
   "product": {
     "brand": "బ్రాండ్",
+    "batteryType": "బ్యాటరీ రకం",
+    "voltageV": "వోల్టేజ్ (V)",
     "productType": "ఉత్పత్తి రకం",
     "highlights": "ముఖ్యాంశాలు",
     "fastDelivery": "వేగవంతమైన డెలివరీ",
@@ -258,6 +260,12 @@
     "enterPrice": "ధర నమోదు చేయండి",
     "stock": "స్టాక్",
     "enterStock": "స్టాక్ పరిమాణం నమోదు చేయండి",
+    "batteryType": "బ్యాటరీ రకం",
+    "selectBatteryType": "బ్యాటరీ రకం ఎంచుకోండి",
+    "voltageV": "వోల్టేజ్ (V)",
+    "enterVoltage": "ఉదా. 12",
+    "batteryTypeRequired": "బ్యాటరీ రకం అవసరం",
+    "voltageRequired": "చెల్లుబాటు అయ్యే వోల్టేజ్ అవసరం",
     "category": "వర్గం",
     "selectCategory": "వర్గం ఎంచుకోండి",
     "vehicleType": "వాహన రకం",
@@ -406,6 +414,13 @@
     "businessInformation": "వ్యాపార సమాచారం",
     "status": "అప్లికేషన్ స్థితి",
     "storeStatus": "స్టోర్ స్థితి",
+    "bookingSettings": "బుకింగ్ సెట్టింగ్‌లు",
+    "maxDailyBookings": "రోజుకు గరిష్ట బుకింగ్‌లు",
+    "maxDailyBookingsHint": "అపరిమిత బుకింగ్‌ల కోసం ఖాళీగా వదిలేయండి",
+    "maxDailyBookingsPlaceholder": "ఉదా. 20",
+    "maxDailyBookingsInvalid": "1 నుండి 999 మధ్య సంఖ్య నమోదు చేయండి, లేదా అపరిమిత కోసం ఖాళీగా వదిలేయండి",
+    "bookingSettingsSaved": "బుకింగ్ సెట్టింగ్‌లు సేవ్ చేయబడ్డాయి",
+    "bookingSettingsSaveFailed": "బుకింగ్ సెట్టింగ్‌లు సేవ్ చేయడంలో విఫలమైంది",
     "payoutDetails": "చెల్లింపు వివరాలు",
     "registeredOn": "నమోదు చేయబడిన తేదీ",
     "lastUpdated": "చివరగా నవీకరించబడింది",
@@ -540,5 +555,13 @@
       "unavailable": "ఈ స్టోరీ అందుబాటులో లేదు.",
       "videoInPost": "వీడియో పోస్ట్ — స్టేటస్‌లో ప్లేబ్యాక్ పరిమితం కావచ్చు."
     }
+  },
+  "service": {
+    "bookASlot": "స్లాట్ బుక్ చేయండి",
+    "bookSlot": "స్లాట్ బుక్ చేయండి",
+    "slotBooked": "స్లాట్ విజయవంతంగా బుక్ అయింది",
+    "slotBookFailed": "స్లాట్ బుక్ చేయడంలో విఫలమైంది",
+    "dailyCapReached": "ఈ డీలర్ రోజువారీ బుకింగ్ పరిమితిని ఈ తేదీకి చేరుకున్నారు",
+    "noSlotsAvailable": "ఈ తేదీకి అందుబాటులో ఉన్న స్లాట్‌లు లేవు"
   }
 }

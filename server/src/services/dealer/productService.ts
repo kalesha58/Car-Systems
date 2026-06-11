@@ -11,14 +11,17 @@ import {
 import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
+import { validateBatteryProductFields, resolveBatteryTypeName } from '../../utils/batteryProduct';
 
 /**
  * Convert product document to dealer product interface
  */
-const productToDealerProduct = (doc: IProductDocument): IDealerProduct => {
+const productToDealerProduct = async (doc: IProductDocument): Promise<IDealerProduct> => {
+  const batteryTypeName = await resolveBatteryTypeName(doc.batteryTypeId);
+
   return {
     id: (doc._id as any).toString(),
-    dealerId: doc.userId, // Map userId to dealerId
+    dealerId: doc.userId,
     name: doc.name,
     brand: doc.brand,
     price: doc.price,
@@ -27,10 +30,13 @@ const productToDealerProduct = (doc: IProductDocument): IDealerProduct => {
     stock: doc.stock,
     images: doc.images,
     description: doc.description,
-    category: undefined, // Will be populated from categoryId if needed
+    category: undefined,
     vehicleType: doc.vehicleType as 'Car' | 'Bike' | undefined,
     specifications: doc.specifications || {},
     tags: doc.tags || [],
+    batteryTypeId: doc.batteryTypeId,
+    batteryTypeName,
+    voltageV: doc.voltageV,
     status: doc.status,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -88,7 +94,7 @@ export const getDealerProducts = async (
     ]);
 
     return {
-      products: products.map(productToDealerProduct),
+      products: await Promise.all(products.map(productToDealerProduct)),
       pagination: {
         page,
         limit,
@@ -121,7 +127,7 @@ export const getDealerProductById = async (
       throw new ForbiddenError('Unauthorized to access this product');
     }
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error getting dealer product by ID:', error);
     throw error;
@@ -197,6 +203,12 @@ export const createDealerProduct = async (
       throw new AppError('Category is required', 400);
     }
 
+    await validateBatteryProductFields({
+      categoryId: data.category,
+      batteryTypeId: data.batteryTypeId,
+      voltageV: data.voltageV,
+    });
+
     const product = new Product({
       name: data.name.trim(),
       brand: data.brand.trim(),
@@ -211,14 +223,16 @@ export const createDealerProduct = async (
       vehicleType: data.vehicleType,
       specifications: data.specifications || {},
       tags: data.tags || [],
-      userId: dealerId, // Map dealerId to userId
+      batteryTypeId: data.batteryTypeId,
+      voltageV: data.voltageV,
+      userId: dealerId,
     });
 
     await product.save();
 
     logger.info(`Product created for dealer: ${dealerId}`);
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error creating dealer product:', error);
     throw error;
@@ -354,15 +368,29 @@ export const updateDealerProduct = async (
       product.tags = data.tags;
     }
 
+    if (data.batteryTypeId !== undefined) {
+      product.batteryTypeId = data.batteryTypeId || undefined;
+    }
+
+    if (data.voltageV !== undefined) {
+      product.voltageV = data.voltageV ?? undefined;
+    }
+
     if (data.status !== undefined) {
       product.status = data.status;
     }
+
+    await validateBatteryProductFields({
+      categoryId: product.categoryId,
+      batteryTypeId: product.batteryTypeId,
+      voltageV: product.voltageV,
+    });
 
     await product.save();
 
     logger.info(`Product updated: ${productId}`);
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error updating dealer product:', error);
     throw error;
@@ -406,7 +434,7 @@ export const updateProductStock = async (
 
     logger.info(`Product stock updated: ${productId} - ${data.stock}`);
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error updating product stock:', error);
     throw error;
@@ -439,7 +467,7 @@ export const updateProductStatus = async (
 
     logger.info(`Product status updated: ${productId} - ${data.status}`);
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error updating product status:', error);
     throw error;
@@ -476,7 +504,7 @@ export const updateProductImages = async (
 
     logger.info(`Product images updated: ${productId}`);
 
-    return productToDealerProduct(product);
+    return await productToDealerProduct(product);
   } catch (error) {
     logger.error('Error updating product images:', error);
     throw error;
@@ -533,7 +561,7 @@ export const getProductsByCategory = async (
     ]);
 
     return {
-      products: products.map(productToDealerProduct),
+      products: await Promise.all(products.map(productToDealerProduct)),
       pagination: {
         page,
         limit,
@@ -572,7 +600,7 @@ export const getProductsByVehicleType = async (
     ]);
 
     return {
-      products: products.map(productToDealerProduct),
+      products: await Promise.all(products.map(productToDealerProduct)),
       pagination: {
         page,
         limit,

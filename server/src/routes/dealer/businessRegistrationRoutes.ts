@@ -9,6 +9,7 @@ import {
   updateBusinessRegistrationController,
   updateBusinessRegistrationStatusController,
   updateStoreStatusController,
+  updateBookingSettingsController,
   deleteBusinessRegistrationController,
 } from '../../controllers/dealer/businessRegistrationController';
 
@@ -318,6 +319,45 @@ router.use(dealerMiddleware);
  *         description: Forbidden - Dealer access required or business registration not approved
  */
 router.patch('/:id/store-status', updateStoreStatusController);
+
+/**
+ * @swagger
+ * /api/dealer/business-registration/{id}/booking-settings:
+ *   patch:
+ *     summary: Update dealer booking settings (daily cap)
+ *     tags: [Dealer]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               maxDailyBookings:
+ *                 type: integer
+ *                 nullable: true
+ *                 minimum: 1
+ *                 maximum: 999
+ *                 description: Max bookings per day (null = unlimited)
+ *     responses:
+ *       200:
+ *         description: Booking settings updated successfully
+ *       400:
+ *         description: Validation error
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Business registration not found
+ */
+router.patch('/:id/booking-settings', updateBookingSettingsController);
 
 /**
  * @swagger

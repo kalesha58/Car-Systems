@@ -19,6 +19,9 @@ export interface IProduct {
   status: string;
   deliveryTimeMinutes?: number;
   isSparePart?: boolean;
+  batteryTypeId?: string;
+  batteryTypeName?: string;
+  voltageV?: number;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;

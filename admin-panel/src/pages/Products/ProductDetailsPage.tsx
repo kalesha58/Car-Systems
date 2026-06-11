@@ -409,6 +409,48 @@ export const ProductDetailsPage = () => {
                 </p>
               </div>
 
+              {product.batteryTypeName && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: theme.colors.textSecondary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: theme.spacing.xs,
+                    }}
+                  >
+                    Battery Type
+                  </label>
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500', color: theme.colors.text }}>
+                    {product.batteryTypeName}
+                  </p>
+                </div>
+              )}
+
+              {product.voltageV !== undefined && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: theme.colors.textSecondary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: theme.spacing.xs,
+                    }}
+                  >
+                    Voltage (V)
+                  </label>
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500', color: theme.colors.text }}>
+                    {product.voltageV}V
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label
                   style={{

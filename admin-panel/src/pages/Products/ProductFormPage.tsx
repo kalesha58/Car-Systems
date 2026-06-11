@@ -5,6 +5,7 @@ import { Input } from '@components/Input/Input';
 import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
 import { getCategories } from '@services/categoryService';
+import { getBatteryTypes } from '@services/batteryTypeService';
 import { getBusinessRegistration } from '@services/dealerService';
 import { createProduct, getProductById, type ICreateProductPayload,updateProduct } from '@services/productService';
 import { getUsers } from '@services/userService';
@@ -36,11 +37,15 @@ export const ProductFormPage = () => {
     tags: [],
     specifications: {},
     commissionPercentage: undefined,
+    batteryTypeId: '',
+    voltageV: undefined,
   });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [tagInput, setTagInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [batteryTypes, setBatteryTypes] = useState<Array<{ id: string; name: string }>>([]);
+  const isBatteryCategory = formData.category === 'Batteries & Chargers';
   const [dealers, setDealers] = useState<IDealerListItem[]>([]);
   const [dealerSearchTerm, setDealerSearchTerm] = useState('');
   const [showDealerDropdown, setShowDealerDropdown] = useState(false);
@@ -74,8 +79,14 @@ export const ProductFormPage = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await getCategories();
+        const [categoriesResponse, batteryTypesResponse] = await Promise.all([
+          getCategories(),
+          getBatteryTypes(),
+        ]);
         setCategories(categoriesResponse.categories.map((cat: { id: string; name: string }) => ({ id: cat.id, name: cat.name })));
+        setBatteryTypes(
+          (batteryTypesResponse.batteryTypes || []).map((type) => ({ id: type.id, name: type.name })),
+        );
 
         // Fetch dealers using users API with role=dealer
         const dealersResponse = await getUsers({ limit: 100, role: 'dealer', status: 'active' });
@@ -133,6 +144,8 @@ export const ProductFormPage = () => {
             image: (product as { images?: string[]; image?: string }).images?.[0] || product.image || '',
             images: product.images || [],
             commissionPercentage: (product as { commissionPercentage?: number }).commissionPercentage,
+            batteryTypeId: product.batteryTypeId || '',
+            voltageV: product.voltageV,
           });
           
           // Clear imagePreviews for edit mode - it should only contain newly selected images
@@ -190,6 +203,15 @@ export const ProductFormPage = () => {
 
     if (!formData.vehicleType.trim()) {
       newErrors.vehicleType = 'Vehicle type is required';
+    }
+
+    if (isBatteryCategory) {
+      if (!formData.batteryTypeId) {
+        newErrors.batteryTypeId = 'Battery type is required';
+      }
+      if (!formData.voltageV || formData.voltageV <= 0) {
+        newErrors.voltageV = 'Voltage must be greater than 0';
+      }
     }
 
     if (!formData.dealerID) {
@@ -341,6 +363,10 @@ export const ProductFormPage = () => {
         ...(imagesArray.length > 0 && { images: imagesArray }),
         ...(formData.commissionPercentage !== undefined && {
           commissionPercentage: formData.commissionPercentage,
+        }),
+        ...(isBatteryCategory && {
+          batteryTypeId: formData.batteryTypeId,
+          voltageV: formData.voltageV,
         }),
       };
 
@@ -672,7 +698,13 @@ export const ProductFormPage = () => {
             <Select
               value={formData.category}
               onChange={(value) => {
-                setFormData({ ...formData, category: value });
+                setFormData({
+                  ...formData,
+                  category: value,
+                  ...(value !== 'Batteries & Chargers'
+                    ? { batteryTypeId: '', voltageV: undefined }
+                    : {}),
+                });
                 setErrors({ ...errors, category: undefined });
               }}
               placeholder="Select a category"
@@ -696,6 +728,40 @@ export const ProductFormPage = () => {
               </div>
             )}
           </div>
+
+          {isBatteryCategory && (
+            <>
+              <div style={{ marginBottom: theme.spacing.md }}>
+                <label style={{ display: 'block', marginBottom: theme.spacing.xs, color: theme.colors.text, fontWeight: '500' }}>
+                  Battery Type <span style={{ color: theme.colors.error }}>*</span>
+                </label>
+                <Select
+                  value={formData.batteryTypeId || ''}
+                  onChange={(value) => {
+                    setFormData({ ...formData, batteryTypeId: value });
+                    setErrors({ ...errors, batteryTypeId: undefined });
+                  }}
+                  placeholder="Select battery type"
+                  options={batteryTypes.map((type) => ({ value: type.id, label: type.name }))}
+                  error={errors.batteryTypeId}
+                />
+              </div>
+              <div style={{ marginBottom: theme.spacing.md }}>
+                <Input
+                  label="Voltage (V)"
+                  type="number"
+                  value={formData.voltageV?.toString() || ''}
+                  onChange={(e) => {
+                    setFormData({ ...formData, voltageV: parseFloat(e.target.value) || undefined });
+                    setErrors({ ...errors, voltageV: undefined });
+                  }}
+                  placeholder="e.g. 12"
+                  error={errors.voltageV}
+                  required
+                />
+              </div>
+            </>
+          )}
 
           <div style={{ marginBottom: theme.spacing.md }}>
             <label

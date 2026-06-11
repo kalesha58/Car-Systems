@@ -19,6 +19,8 @@ export interface IProductDocument extends Document {
   userId: string;
   deliveryTimeMinutes?: number;
   isSparePart?: boolean;
+  batteryTypeId?: string;
+  voltageV?: number;
   commissionPercentage?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -96,6 +98,15 @@ const productSchema = new Schema<IProductDocument>(
     isSparePart: {
       type: Boolean,
       default: false,
+    },
+    batteryTypeId: {
+      type: String,
+      index: true,
+    },
+    voltageV: {
+      type: Number,
+      min: 1,
+      max: 120,
     },
     commissionPercentage: {
       type: Number,

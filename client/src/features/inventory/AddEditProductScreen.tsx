@@ -37,6 +37,7 @@ import {getDropdownOptions} from '@service/dropdownService';
 import {IProduct} from '../../types/product/IProduct';
 
 const MAX_IMAGES = 8;
+const BATTERY_CATEGORY_NAME = 'Batteries & Chargers';
 
 interface RouteParams {
   product?: IProduct;
@@ -72,9 +73,12 @@ const AddEditProductScreen: React.FC = () => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
-  const [dropdownType, setDropdownType] = useState<'category' | 'vehicleType'>('category');
+  const [dropdownType, setDropdownType] = useState<'category' | 'vehicleType' | 'batteryType'>('category');
   const [categories, setCategories] = useState<IDropdownOption[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<IDropdownOption[]>([]);
+  const [batteryTypes, setBatteryTypes] = useState<IDropdownOption[]>([]);
+  const [batteryTypeId, setBatteryTypeId] = useState(product?.batteryTypeId || '');
+  const [voltageV, setVoltageV] = useState(product?.voltageV?.toString() || '');
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
 
   useEffect(() => {
@@ -99,6 +103,7 @@ const AddEditProductScreen: React.FC = () => {
       
       setCategories(options.categories || []);
       setVehicleTypes(options.vehicleTypes || []);
+      setBatteryTypes(options.batteryTypes || []);
       
       // Warn if no data received
       const totalOptions = (options.categories?.length || 0) + (options.vehicleTypes?.length || 0);
@@ -202,6 +207,17 @@ const AddEditProductScreen: React.FC = () => {
       showError(t('dealer.imagesRequired'));
       return;
     }
+    if (isBatteryCategorySelected) {
+      if (!batteryTypeId) {
+        showError(t('dealer.batteryTypeRequired'));
+        return;
+      }
+      const parsedVoltage = parseFloat(voltageV);
+      if (!voltageV || Number.isNaN(parsedVoltage) || parsedVoltage <= 0) {
+        showError(t('dealer.voltageRequired'));
+        return;
+      }
+    }
 
     setIsLoading(true);
 
@@ -230,6 +246,8 @@ const AddEditProductScreen: React.FC = () => {
           returnPolicy: returnPolicy.trim() || undefined,
           deliveryTimeMinutes: deliveryTimeMinutes ? parseInt(deliveryTimeMinutes) : undefined,
           isSparePart,
+          batteryTypeId: isBatteryCategorySelected ? batteryTypeId : undefined,
+          voltageV: isBatteryCategorySelected ? parseFloat(voltageV) : undefined,
         };
 
         await updateDealerProduct(product.id, updateData);
@@ -249,6 +267,8 @@ const AddEditProductScreen: React.FC = () => {
           returnPolicy: returnPolicy.trim() || undefined,
           deliveryTimeMinutes: deliveryTimeMinutes ? parseInt(deliveryTimeMinutes) : undefined,
           isSparePart,
+          batteryTypeId: isBatteryCategorySelected ? batteryTypeId : undefined,
+          voltageV: isBatteryCategorySelected ? parseFloat(voltageV) : undefined,
         };
 
         await createDealerProduct(createData);
@@ -291,7 +311,10 @@ const AddEditProductScreen: React.FC = () => {
     ]);
   };
 
-  const openDropdown = (type: 'category' | 'vehicleType') => {
+  const isBatteryCategorySelected =
+    categories.find(c => c.value === category)?.label === BATTERY_CATEGORY_NAME;
+
+  const openDropdown = (type: 'category' | 'vehicleType' | 'batteryType') => {
     setDropdownType(type);
     setDropdownModalVisible(true);
   };
@@ -299,8 +322,15 @@ const AddEditProductScreen: React.FC = () => {
   const handleDropdownSelect = (value: string) => {
     if (dropdownType === 'category') {
       setCategory(value);
+      const label = categories.find(c => c.value === value)?.label;
+      if (label !== BATTERY_CATEGORY_NAME) {
+        setBatteryTypeId('');
+        setVoltageV('');
+      }
     } else if (dropdownType === 'vehicleType') {
       setVehicleType(value as 'Car' | 'Bike');
+    } else if (dropdownType === 'batteryType') {
+      setBatteryTypeId(value);
     }
   };
 
@@ -327,17 +357,28 @@ const AddEditProductScreen: React.FC = () => {
   const getCurrentDropdownOptions = () => {
     if (dropdownType === 'category') {
       return categories;
-    } else {
-      return vehicleTypes;
     }
+    if (dropdownType === 'batteryType') {
+      return batteryTypes;
+    }
+    return vehicleTypes;
   };
 
   const getSelectedValue = () => {
     if (dropdownType === 'category') {
       return category;
-    } else {
-      return vehicleType;
     }
+    if (dropdownType === 'batteryType') {
+      return batteryTypeId;
+    }
+    return vehicleType;
+  };
+
+  const getBatteryTypeDisplayLabel = () => {
+    return (
+      batteryTypes.find(b => b.value === batteryTypeId)?.label ||
+      t('dealer.selectBatteryType')
+    );
   };
 
   const isSubmitting = isLoading || isUploadingImages;
@@ -713,6 +754,38 @@ const AddEditProductScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
+          {isBatteryCategorySelected && (
+            <>
+              <View style={styles.section}>
+                <CustomText style={styles.label}>
+                  {t('dealer.batteryType')} <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => openDropdown('batteryType')}
+                  activeOpacity={0.75}>
+                  <CustomText style={styles.dropdownButtonText}>{getBatteryTypeDisplayLabel()}</CustomText>
+                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.section}>
+                <CustomText style={styles.label}>
+                  {t('dealer.voltageV')} <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <View style={styles.textInputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={t('dealer.enterVoltage')}
+                    placeholderTextColor={colors.disabled}
+                    value={voltageV}
+                    onChangeText={setVoltageV}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </>
+          )}
+
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
             <TouchableOpacity
@@ -856,7 +929,13 @@ const AddEditProductScreen: React.FC = () => {
         options={getCurrentDropdownOptions()}
         selectedValue={getSelectedValue()}
         onSelect={handleDropdownSelect}
-        title={dropdownType === 'category' ? t('dealer.selectCategory') : t('dealer.selectVehicleType')}
+        title={
+          dropdownType === 'category'
+            ? t('dealer.selectCategory')
+            : dropdownType === 'batteryType'
+            ? t('dealer.selectBatteryType')
+            : t('dealer.selectVehicleType')
+        }
         searchable={true}
       />
     </View>

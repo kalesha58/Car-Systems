@@ -26,6 +26,7 @@ const OrdersListPage = lazy(() => import('@pages/Orders/OrdersListPage').then(mo
 const OrderDetailsPage = lazy(() => import('@pages/Orders/OrderDetailsPage').then(module => ({ default: module.OrderDetailsPage })));
 const ReportsPage = lazy(() => import('@pages/Reports/ReportsPage').then(module => ({ default: module.ReportsPage })));
 const CategoriesPage = lazy(() => import('@pages/Settings/CategoriesPage').then(module => ({ default: module.CategoriesPage })));
+const BatteryTypesPage = lazy(() => import('@pages/Settings/BatteryTypesPage').then(module => ({ default: module.BatteryTypesPage })));
 const NotFoundPage = lazy(() => import('@pages/NotFound/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
 const ServicesListPage = lazy(() => import('@pages/Services/ServicesListPage').then(module => ({ default: module.ServicesListPage })));
 const ServiceFormPage = lazy(() => import('@pages/Services/ServiceFormPage').then(module => ({ default: module.ServiceFormPage })));
@@ -262,6 +263,14 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <CategoriesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings/battery-types"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <BatteryTypesPage />
               </Suspense>
             }
           />

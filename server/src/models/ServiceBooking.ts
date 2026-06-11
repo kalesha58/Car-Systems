@@ -6,6 +6,7 @@ export interface IServiceBookingDocument extends Document {
   userId: string;
   dealerId: string;
   serviceId: string;
+  slotId?: string;
   vehicleId?: string;
   vehicleInfo?: {
     brand?: string;
@@ -40,6 +41,10 @@ const serviceBookingSchema = new Schema<IServiceBookingDocument>(
     serviceId: {
       type: String,
       required: true,
+      index: true,
+    },
+    slotId: {
+      type: String,
       index: true,
     },
     vehicleId: {

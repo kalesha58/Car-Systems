@@ -56,14 +56,24 @@ export interface IGetServiceSlotsResponse {
   success: boolean;
   Response: {
     slots: IServiceSlot[];
+    dailyCapReached?: boolean;
+    dailyBookingsCount?: number;
+    maxDailyBookings?: number;
   };
+}
+
+export interface IGetServiceSlotsResult {
+  slots: IServiceSlot[];
+  dailyCapReached?: boolean;
+  dailyBookingsCount?: number;
+  maxDailyBookings?: number;
 }
 
 export const getServiceSlots = async (
   serviceId: string,
   date: string,
   serviceType?: 'center' | 'home',
-): Promise<{ slots: IServiceSlot[] }> => {
+): Promise<IGetServiceSlotsResult> => {
   try {
     const params: any = { date };
     if (serviceType) {
@@ -82,20 +92,29 @@ export const getServiceSlots = async (
   }
 };
 
+export interface IBookServiceSlotResult {
+  slot: IServiceSlot;
+  bookingId: string;
+}
+
 export const bookServiceSlot = async (
   serviceId: string,
   slotId: string,
-): Promise<IServiceSlot> => {
+): Promise<IBookServiceSlotResult> => {
   try {
     const response = await appAxios.post<{
       success: boolean;
       Response: {
         slot: IServiceSlot;
+        bookingId: string;
         ReturnMessage: string;
       };
     }>(`/user/services/${serviceId}/slots/${slotId}/book`);
     if (response.data.success && response.data.Response) {
-      return response.data.Response.slot;
+      return {
+        slot: response.data.Response.slot,
+        bookingId: response.data.Response.bookingId,
+      };
     }
     throw new Error('Failed to book slot');
   } catch (error) {

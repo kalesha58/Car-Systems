@@ -40,6 +40,8 @@ export interface ICreateProductPayload {
   specifications?: Record<string, string>;
   returnPolicy: string;
   tags?: string[];
+  batteryTypeId?: string;
+  voltageV?: number;
 }
 
 export interface IUpdateProductPayload {
@@ -55,6 +57,8 @@ export interface IUpdateProductPayload {
   specifications?: Record<string, string>;
   returnPolicy?: string;
   tags?: string[];
+  batteryTypeId?: string | null;
+  voltageV?: number | null;
 }
 
 export interface IUpdateStockPayload {

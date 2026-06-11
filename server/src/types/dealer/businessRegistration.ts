@@ -29,6 +29,7 @@ export interface IBusinessRegistration {
   documents?: IBusinessRegistrationDocumentFile[];
   status: BusinessRegistrationStatus;
   storeOpen: boolean;
+  maxDailyBookings?: number;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +48,7 @@ export interface ICreateBusinessRegistrationRequest {
   payout?: IPayoutCredentials;
   shopPhotos: IBusinessRegistrationPhoto[];
   documents: IBusinessRegistrationDocumentFile[];
+  maxDailyBookings?: number;
 }
 
 export interface IUpdateBusinessRegistrationRequest {
@@ -62,6 +64,7 @@ export interface IUpdateBusinessRegistrationRequest {
   payout?: IPayoutCredentials;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
+  maxDailyBookings?: number | null;
 }
 
 export interface IUpdateBusinessRegistrationStatusRequest {
@@ -70,6 +73,10 @@ export interface IUpdateBusinessRegistrationStatusRequest {
 
 export interface IUpdateStoreStatusRequest {
   storeOpen: boolean;
+}
+
+export interface IUpdateBookingSettingsRequest {
+  maxDailyBookings?: number | null;
 }
 
 

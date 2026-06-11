@@ -45,6 +45,7 @@ export interface IBusinessRegistrationDocument extends Document {
   }[];
   status: BusinessRegistrationStatus;
   storeOpen: boolean;
+  maxDailyBookings?: number;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -149,6 +150,11 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
     storeOpen: {
       type: Boolean,
       default: true,
+    },
+    maxDailyBookings: {
+      type: Number,
+      min: 1,
+      max: 999,
     },
     userId: {
       type: String,

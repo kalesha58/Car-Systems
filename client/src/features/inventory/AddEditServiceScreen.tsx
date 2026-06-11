@@ -36,6 +36,7 @@ import {uploadImagesBatch} from '@service/postService';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {IService} from '../../types/service/IService';
+import {SERVICE_SECTIONS} from '@config/serviceCategoryConfig';
 
 const MAX_IMAGES = 8;
 
@@ -47,7 +48,11 @@ const SERVICE_SUB_CATEGORIES: Record<string, string[]> = {
   car_automobile: ['Oil Change', 'Brake Service', 'AC Service', 'Full Service', 'GPS Install'],
   bike_automobile: ['Oil Change', 'Chain Lube', 'Tyre Change', 'Full Service'],
   tire_service: ['Puncture Fix', 'Tyre Rotation', 'Tyre Replacement', 'Wheel Alignment'],
-  battery_service: ['Battery Test', 'Battery Replacement', 'Jump Start', 'Charging'],
+};
+
+const getConfiguredSubcategories = (type: string) => {
+  const section = SERVICE_SECTIONS.find((item) => item.serviceType === type);
+  return section?.subcategories ?? [];
 };
 
 interface RouteParams {
@@ -900,25 +905,37 @@ const AddEditServiceScreen: React.FC = () => {
             </>
           )}
 
-          {serviceType && serviceType !== 'general' && SERVICE_SUB_CATEGORIES[serviceType] && (
+          {serviceType && serviceType !== 'general' &&
+            (serviceType === 'battery_service'
+              ? getConfiguredSubcategories(serviceType).length > 0
+              : !!SERVICE_SUB_CATEGORIES[serviceType]) && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
               <View style={styles.chipGrid}>
-                {SERVICE_SUB_CATEGORIES[serviceType].map(subCat => (
+                {(serviceType === 'battery_service'
+                  ? getConfiguredSubcategories(serviceType).map((subCat) => ({
+                      id: subCat.id,
+                      label: subCat.label,
+                    }))
+                  : SERVICE_SUB_CATEGORIES[serviceType].map((subCat) => ({
+                      id: subCat,
+                      label: subCat,
+                    }))
+                ).map((subCat) => (
                   <TouchableOpacity
-                    key={subCat}
+                    key={subCat.id}
                     style={[
                       styles.chipPill,
-                      serviceSubCategory === subCat && styles.chipPillSelected,
+                      serviceSubCategory === subCat.id && styles.chipPillSelected,
                     ]}
-                    onPress={() => setServiceSubCategory(subCat)}
+                    onPress={() => setServiceSubCategory(subCat.id)}
                     activeOpacity={0.75}>
                     <CustomText
                       style={[
                         styles.chipPillText,
-                        serviceSubCategory === subCat && styles.chipPillTextSelected,
+                        serviceSubCategory === subCat.id && styles.chipPillTextSelected,
                       ]}>
-                      {subCat}
+                      {subCat.label}
                     </CustomText>
                   </TouchableOpacity>
                 ))}

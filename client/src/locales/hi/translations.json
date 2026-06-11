@@ -185,6 +185,8 @@
   },
   "product": {
     "brand": "ब्रांड",
+    "batteryType": "बैटरी प्रकार",
+    "voltageV": "वोल्टेज (V)",
     "productType": "उत्पाद प्रकार",
     "highlights": "प्रमुख विशेषताएं",
     "fastDelivery": "तेज़ डिलीवरी",
@@ -258,6 +260,12 @@
     "enterPrice": "कीमत दर्ज करें",
     "stock": "स्टॉक",
     "enterStock": "स्टॉक मात्रा दर्ज करें",
+    "batteryType": "बैटरी प्रकार",
+    "selectBatteryType": "बैटरी प्रकार चुनें",
+    "voltageV": "वोल्टेज (V)",
+    "enterVoltage": "जैसे 12",
+    "batteryTypeRequired": "बैटरी प्रकार आवश्यक है",
+    "voltageRequired": "मान्य वोल्टेज आवश्यक है",
     "category": "श्रेणी",
     "selectCategory": "श्रेणी चुनें",
     "vehicleType": "वाहन प्रकार",
@@ -406,6 +414,13 @@
     "businessInformation": "व्यवसाय की जानकारी",
     "status": "आवेदन की स्थिति",
     "storeStatus": "स्टोर की स्थिति",
+    "bookingSettings": "बुकिंग सेटिंग्स",
+    "maxDailyBookings": "प्रति दिन अधिकतम बुकिंग",
+    "maxDailyBookingsHint": "असीमित बुकिंग के लिए खाली छोड़ें",
+    "maxDailyBookingsPlaceholder": "जैसे 20",
+    "maxDailyBookingsInvalid": "1 से 999 के बीच संख्या दर्ज करें, या असीमित के लिए खाली छोड़ें",
+    "bookingSettingsSaved": "बुकिंग सेटिंग्स सहेजी गईं",
+    "bookingSettingsSaveFailed": "बुकिंग सेटिंग्स सहेजने में विफल",
     "payoutDetails": "भुगतान विवरण",
     "registeredOn": "पंजीकृत तिथि",
     "lastUpdated": "अंतिम अद्यतन",
@@ -540,5 +555,13 @@
       "unavailable": "यह स्टोरी उपलब्ध नहीं है।",
       "videoInPost": "वीडियो पोस्ट — स्टेटस में प्लेबैक सीमित हो सकता है।"
     }
+  },
+  "service": {
+    "bookASlot": "स्लॉट बुक करें",
+    "bookSlot": "स्लॉट बुक करें",
+    "slotBooked": "स्लॉट सफलतापूर्वक बुक हो गया",
+    "slotBookFailed": "स्लॉट बुक करने में विफल",
+    "dailyCapReached": "इस डीलर की दैनिक बुकिंग सीमा इस तारीख के लिए पूरी हो चुकी है",
+    "noSlotsAvailable": "इस तारीख के लिए कोई स्लॉट उपलब्ध नहीं है"
   }
 }

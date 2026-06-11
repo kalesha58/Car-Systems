@@ -16,6 +16,9 @@ export interface IDealerProduct {
   specifications?: Record<string, string>;
   returnPolicy?: string;
   tags?: string[];
+  batteryTypeId?: string;
+  batteryTypeName?: string;
+  voltageV?: number;
   status?: ProductStatus;
   createdAt: string;
   updatedAt: string;
@@ -35,6 +38,8 @@ export interface ICreateDealerProductRequest {
   specifications?: Record<string, string>;
   returnPolicy?: string;
   tags?: string[];
+  batteryTypeId?: string;
+  voltageV?: number;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -51,6 +56,8 @@ export interface IUpdateDealerProductRequest {
   specifications?: Record<string, string>;
   returnPolicy?: string;
   tags?: string[];
+  batteryTypeId?: string | null;
+  voltageV?: number | null;
   status?: ProductStatus;
 }
 

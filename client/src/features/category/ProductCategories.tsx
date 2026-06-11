@@ -421,7 +421,7 @@ const ProductCategories = () => {
       } else if (category._id === 'tire-service') {
         queryParams.serviceType = 'general';
       } else if (category._id === 'battery-service') {
-        queryParams.serviceType = 'general';
+        queryParams.serviceType = 'battery_service';
       } else {
         if (routeParams?.serviceType) {
           queryParams.serviceType = routeParams.serviceType;

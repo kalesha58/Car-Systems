@@ -16,7 +16,8 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts, Colors } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
-import { getServiceById } from '@service/serviceService';
+import { getServiceById, bookServiceSlot } from '@service/serviceService';
+import { useTranslation } from 'react-i18next';
 import type { IService } from '../../types/service/IService';
 import { openDealerChat } from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
@@ -33,7 +34,8 @@ const ServiceDetail: React.FC = () => {
   const { serviceId } = route.params;
 
   const { colors } = useTheme();
-  const { showError } = useToast();
+  const { t } = useTranslation();
+  const { showError, showSuccess } = useToast();
   const screenWidth = Dimensions.get('window').width;
 
   const [service, setService] = useState<IService | null>(null);
@@ -44,6 +46,60 @@ const ServiceDetail: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<IServiceSlot | null>(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
+  const dateOptions = useMemo(() => {
+    const options: Date[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      options.push(d);
+    }
+    return options;
+  }, []);
+
+  const isSameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const formatDateChip = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (isSameDay(date, today)) {
+      return t('dealer.today') || 'Today';
+    }
+    if (isSameDay(date, tomorrow)) {
+      return t('dealer.tomorrow') || 'Tomorrow';
+    }
+    return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+
+  const handleBookSlot = async () => {
+    if (!service?.id || !selectedSlot?.id) return;
+
+    try {
+      setBookingLoading(true);
+      await bookServiceSlot(service.id, selectedSlot.id);
+      showSuccess(t('service.slotBooked') || 'Slot booked successfully');
+      setSelectedSlot(null);
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.error ||
+        e?.response?.data?.Response?.ReturnMessage ||
+        e?.response?.data?.message ||
+        t('service.slotBookFailed') ||
+        'Failed to book slot';
+      showError(message);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -273,6 +329,44 @@ const ServiceDetail: React.FC = () => {
         skeletonDealerInfo: { flex: 1, marginLeft: 12 },
         skeletonText: { marginTop: 8 },
         skeletonDetailRow: { marginTop: 8 },
+        dateChipsRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 8,
+        },
+        dateChip: {
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.cardBackground,
+        },
+        dateChipSelected: {
+          borderColor: colors.secondary,
+          backgroundColor: colors.secondary + '20',
+        },
+        dateChipText: {
+          fontSize: RFValue(11),
+          fontFamily: Fonts.Medium,
+          color: colors.text,
+        },
+        dateChipTextSelected: {
+          color: colors.secondary,
+        },
+        bookButton: {
+          height: 48,
+          paddingHorizontal: 24,
+          borderRadius: 24,
+          backgroundColor: colors.secondary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 120,
+        },
+        bookButtonDisabled: {
+          opacity: 0.6,
+        },
       }),
     [colors, chatLoading, screenWidth],
   );
@@ -564,8 +658,29 @@ const ServiceDetail: React.FC = () => {
               {service?.slotBookingEnabled && (
                 <>
                   <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                    Book a Slot
+                    {t('service.bookASlot') || 'Book a Slot'}
                   </CustomText>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                    <View style={styles.dateChipsRow}>
+                      {dateOptions.map((date) => {
+                        const selected = isSameDay(date, selectedDate);
+                        return (
+                          <TouchableOpacity
+                            key={date.toISOString()}
+                            style={[styles.dateChip, selected && styles.dateChipSelected]}
+                            onPress={() => {
+                              setSelectedDate(date);
+                              setSelectedSlot(null);
+                            }}
+                            activeOpacity={0.7}>
+                            <CustomText style={[styles.dateChipText, selected && styles.dateChipTextSelected]}>
+                              {formatDateChip(date)}
+                            </CustomText>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
                   <ServiceSlotPicker
                     serviceId={service.id}
                     selectedDate={selectedDate}
@@ -590,7 +705,21 @@ const ServiceDetail: React.FC = () => {
             {service ? `₹${service.price?.toLocaleString()}` : '—'}
           </CustomText>
         </View>
-        {/* Chat Dealer button removed per request */}
+        {service?.slotBookingEnabled && selectedSlot && (
+          <TouchableOpacity
+            style={[styles.bookButton, bookingLoading && styles.bookButtonDisabled]}
+            onPress={handleBookSlot}
+            disabled={bookingLoading}
+            activeOpacity={0.8}>
+            {bookingLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold, fontSize: RFValue(12) }}>
+                {t('service.bookSlot') || 'Book Slot'}
+              </CustomText>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
     </View>

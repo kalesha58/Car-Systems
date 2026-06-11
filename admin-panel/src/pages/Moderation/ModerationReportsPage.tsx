@@ -8,11 +8,22 @@ export const ModerationReportsPage = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<ModerationStatus | ''>('');
 
+  const [error, setError] = useState<string | null>(null);
+
   const loadReports = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getModerationReports(statusFilter || undefined);
       setReports(data);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ||
+        (err as Error)?.message ||
+        'Failed to load moderation reports.';
+      setError(message);
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -42,6 +53,12 @@ export const ModerationReportsPage = () => {
           ))}
         </select>
       </div>
+
+      {error ? (
+        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
 
       {loading ? (
         <div className="text-sm text-gray-500">Loading reports...</div>

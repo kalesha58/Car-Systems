@@ -998,6 +998,34 @@ const ProductDetail: React.FC = () => {
                 </View>
               )}
 
+              {product.batteryTypeName && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="battery-charging-outline" size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>{t('product.batteryType')}</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>
+                      {product.batteryTypeName}
+                    </CustomText>
+                  </View>
+                </View>
+              )}
+
+              {product.voltageV !== undefined && product.voltageV !== null && (
+                <View style={styles.detailRow}>
+                  <View style={styles.detailIconContainer}>
+                    <Icon name="flash-outline" size={RFValue(18)} color={colors.text} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <CustomText style={styles.detailLabel}>{t('product.voltageV')}</CustomText>
+                    <CustomText style={styles.detailValue} numberOfLines={1}>
+                      {product.voltageV}V
+                    </CustomText>
+                  </View>
+                </View>
+              )}
+
               {product.specifications && Object.entries(product.specifications).map(([key, value]) => {
                 const getIconForSpec = (specKey: string) => {
                   const lowerKey = specKey.toLowerCase();

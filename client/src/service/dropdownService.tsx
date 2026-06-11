@@ -22,6 +22,7 @@ export interface IDropdownResponse {
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
+  batteryTypes: IDropdownOption[];
 }
 
 export interface IDropdownApiResponse {
@@ -43,6 +44,7 @@ export const getDropdownOptions = async (
     condition: [],
     businessTypes: [],
     categories: [],
+    batteryTypes: [],
   };
 
   try {

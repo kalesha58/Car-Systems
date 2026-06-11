@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Product, IProductDocument } from '../../models/Product';
 import { Category } from '../../models/Category';
 import { BusinessRegistration } from '../../models/BusinessRegistration';
+import { resolveBatteryTypeName } from '../../utils/batteryProduct';
 import { NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 
@@ -45,6 +46,9 @@ export interface IProductWithDealer {
   status: string;
   deliveryTimeMinutes?: number;
   isSparePart?: boolean;
+  batteryTypeId?: string;
+  batteryTypeName?: string;
+  voltageV?: number;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -128,6 +132,9 @@ const productToIProductWithDealer = async (
     status: productDoc.status,
     deliveryTimeMinutes: productDoc.deliveryTimeMinutes,
     isSparePart: productDoc.isSparePart,
+    batteryTypeId: productDoc.batteryTypeId,
+    batteryTypeName: await resolveBatteryTypeName(productDoc.batteryTypeId),
+    voltageV: productDoc.voltageV,
     dealer: dealerInfo || undefined,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),

@@ -11,6 +11,7 @@ import {
 } from '../../types/admin';
 import { NotFoundError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
+import { validateBatteryProductFields, resolveBatteryTypeName } from '../../utils/batteryProduct';
 
 /**
  * Convert product document to IProduct interface
@@ -48,6 +49,9 @@ const productToIProduct = async (productDoc: IProductDocument): Promise<IProduct
     vehicleType: productDoc.vehicleType,
     tags: productDoc.tags,
     specifications: productDoc.specifications,
+    batteryTypeId: productDoc.batteryTypeId,
+    batteryTypeName: await resolveBatteryTypeName(productDoc.batteryTypeId),
+    voltageV: productDoc.voltageV,
     userId: productDoc.userId,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
   };
@@ -145,6 +149,12 @@ export const createProduct = async (data: ICreateProductRequest, userId: string)
     //   throw new NotFoundError('Category not found');
     // }
 
+    await validateBatteryProductFields({
+      categoryId: data.categoryId,
+      batteryTypeId: data.batteryTypeId,
+      voltageV: data.voltageV,
+    });
+
     const product = new Product({
       name: data.name,
       brand: data.brand,
@@ -155,6 +165,8 @@ export const createProduct = async (data: ICreateProductRequest, userId: string)
       vehicleType: data.vehicleType,
       tags: data.tags || [],
       specifications: data.specifications || {},
+      batteryTypeId: data.batteryTypeId,
+      voltageV: data.voltageV,
       status: data.stock > 0 ? 'active' : 'out_of_stock',
       userId: userId,
     });
@@ -195,6 +207,18 @@ export const updateProduct = async (productId: string, data: IUpdateProductReque
     if (data.status !== undefined) product.status = data.status as any;
     if (data.description !== undefined) product.description = data.description;
     if (data.vehicleType !== undefined) product.vehicleType = data.vehicleType;
+    if (data.batteryTypeId !== undefined) {
+      product.batteryTypeId = data.batteryTypeId || undefined;
+    }
+    if (data.voltageV !== undefined) {
+      product.voltageV = data.voltageV ?? undefined;
+    }
+
+    await validateBatteryProductFields({
+      categoryId: product.categoryId,
+      batteryTypeId: product.batteryTypeId,
+      voltageV: product.voltageV,
+    });
 
     await product.save();
 

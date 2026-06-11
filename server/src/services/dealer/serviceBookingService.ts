@@ -11,6 +11,7 @@ import { SignUp } from '../../models/SignUp';
 import { Service } from '../../models/Service';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import { sendPushNotification, createNotification } from '../notificationService';
+import { cancelBooking } from '../serviceSlotService';
 
 /**
  * Convert service booking document to interface
@@ -65,6 +66,7 @@ const serviceBookingToInterface = async (doc: IServiceBookingDocument): Promise<
     userId: doc.userId,
     dealerId: doc.dealerId,
     serviceId: doc.serviceId,
+    slotId: doc.slotId,
     vehicleId: doc.vehicleId,
     vehicleInfo: doc.vehicleInfo,
     bookingDate: doc.bookingDate.toISOString(),
@@ -196,6 +198,14 @@ export const updateServiceBookingStatus = async (
     }
 
     await booking.save();
+
+    if (data.status === 'cancelled' && booking.slotId) {
+      try {
+        await cancelBooking(booking.slotId);
+      } catch (slotErr) {
+        logger.warn(`Failed to release slot ${booking.slotId} on booking cancel:`, slotErr);
+      }
+    }
 
     logger.info(`Service booking status updated: ${bookingId} to ${data.status || booking.status} by dealer: ${dealerId}`);
 

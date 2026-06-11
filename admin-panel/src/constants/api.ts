@@ -6,7 +6,26 @@
 //export const API_BASE_URL = 'https://geognostical-uncoagulating-wilton.ngrok-free.dev';
 //export const API_BASE_URL = 'http://localhost:4001/';
 // export const API_BASE_URL = 'https://car-systems.onrender.com/';
-export const API_BASE_URL = 'https://api.motonode.in/';
+// export const API_BASE_URL = 'https://api.motonode.in/';
+
+/** Production API (same host as mobile app backend). Admin routes: /admin/* */
+export const DEFAULT_API_BASE_URL = 'https://car-systems.vercel.app/';
+
+const normalizeBaseUrl = (url: string): string => (url.endsWith('/') ? url : `${url}/`);
+
+const resolveApiBaseUrl = (): string => {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!fromEnv) {
+    return DEFAULT_API_BASE_URL;
+  }
+  // Stale env files often still point at api.motonode.in (missing newer /admin routes).
+  if (fromEnv.includes('api.motonode.in')) {
+    return DEFAULT_API_BASE_URL;
+  }
+  return normalizeBaseUrl(fromEnv);
+};
+
+export const API_BASE_URL = resolveApiBaseUrl();
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {

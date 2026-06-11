@@ -6,10 +6,20 @@ import {
   IUpdateBusinessRegistrationRequest,
   IUpdateBusinessRegistrationStatusRequest,
   IUpdateStoreStatusRequest,
+  IUpdateBookingSettingsRequest,
 } from '../../types/dealer/businessRegistration';
 import { NotFoundError, ConflictError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { sendBusinessRegistrationSubmittedEmail } from '../../utils/emailService';
+
+const validateMaxDailyBookings = (value: number | null | undefined): void => {
+  if (value === undefined || value === null) {
+    return;
+  }
+  if (!Number.isInteger(value) || value < 1 || value > 999) {
+    throw new AppError('Maximum daily bookings must be an integer between 1 and 999', 400);
+  }
+};
 
 /**
  * Convert business registration document to interface
@@ -35,6 +45,7 @@ export const businessRegistrationToInterface = (
     documents: doc.documents || [],
     status: doc.status,
     storeOpen: doc.storeOpen !== undefined ? doc.storeOpen : true,
+    maxDailyBookings: doc.maxDailyBookings,
     userId: doc.userId,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -201,6 +212,13 @@ export const createBusinessRegistration = async (
       shopPhotos: data.shopPhotos,
       documents: data.documents || [], // Documents are optional, default to empty array
     };
+
+    if (data.maxDailyBookings !== undefined) {
+      validateMaxDailyBookings(data.maxDailyBookings);
+      if (data.maxDailyBookings !== null) {
+        registrationData.maxDailyBookings = data.maxDailyBookings;
+      }
+    }
 
     logger.info('Creating business registration with data:', {
       userId,
@@ -369,6 +387,15 @@ export const updateBusinessRegistration = async (
       (registration as any).documents = docs;
     }
 
+    if (data.maxDailyBookings !== undefined) {
+      validateMaxDailyBookings(data.maxDailyBookings);
+      if (data.maxDailyBookings === null) {
+        registration.maxDailyBookings = undefined;
+      } else {
+        registration.maxDailyBookings = data.maxDailyBookings;
+      }
+    }
+
     // Handle payout update
     if (data.payout !== undefined) {
       if (data.payout === null) {
@@ -512,6 +539,49 @@ export const updateStoreStatus = async (
     return businessRegistrationToInterface(registration);
   } catch (error) {
     logger.error('Error updating store status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update booking settings (daily cap) for approved dealers
+ */
+export const updateBookingSettings = async (
+  id: string,
+  userId: string,
+  data: IUpdateBookingSettingsRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    const registration = await BusinessRegistration.findById(id);
+
+    if (!registration) {
+      throw new NotFoundError('Business registration not found');
+    }
+
+    if (registration.userId !== userId) {
+      throw new AppError('Unauthorized to update this registration', 403);
+    }
+
+    if (registration.status !== 'approved') {
+      throw new AppError('Can only update booking settings when business registration is approved', 403);
+    }
+
+    if (data.maxDailyBookings !== undefined) {
+      validateMaxDailyBookings(data.maxDailyBookings);
+      if (data.maxDailyBookings === null) {
+        registration.maxDailyBookings = undefined;
+      } else {
+        registration.maxDailyBookings = data.maxDailyBookings;
+      }
+    }
+
+    await registration.save();
+
+    logger.info(`Booking settings updated: ${id} maxDailyBookings=${registration.maxDailyBookings ?? 'unlimited'}`);
+
+    return businessRegistrationToInterface(registration);
+  } catch (error) {
+    logger.error('Error updating booking settings:', error);
     throw error;
   }
 };

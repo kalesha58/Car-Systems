@@ -145,8 +145,9 @@ export const SERVICE_SECTIONS: IServiceSection[] = [
     ],
     hasPackages: false,
     subcategories: [
-      { id: 'new_battery', label: 'New Battery Replacement' },
-      { id: 'battery_charging', label: 'Old Battery Charging' },
+      { id: 'battery_starting', label: 'Battery Starting' },
+      { id: 'battery_charging', label: 'Battery Charging' },
+      { id: 'battery_replacement', label: 'Battery Replacement' },
     ],
   },
 ];

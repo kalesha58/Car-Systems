@@ -15,6 +15,9 @@ export interface IProduct {
   dealerID?: string;
   tags?: string[];
   commissionPercentage?: number;
+  batteryTypeId?: string;
+  batteryTypeName?: string;
+  voltageV?: number;
   createdDate: string;
 }
 
@@ -33,5 +36,7 @@ export interface IProductFormData {
   specifications?: Record<string, string>;
   tags?: string[];
   commissionPercentage?: number;
+  batteryTypeId?: string;
+  voltageV?: number;
 }
 

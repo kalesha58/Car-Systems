@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Linking, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -9,19 +9,22 @@ import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
-import { getBusinessRegistrationByUserId, IBusinessRegistration } from '@service/dealerService';
-import { formatCurrency } from '@utils/analytics';
+import { getBusinessRegistrationByUserId, updateBookingSettings, IBusinessRegistration } from '@service/dealerService';
 import { useTranslation } from 'react-i18next';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import { useToast } from '@hooks/useToast';
 
 const BusinessRegistrationDetailsScreen: React.FC = () => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const { t } = useTranslation();
     const { user } = useAuthStore();
+    const { showSuccess, showError } = useToast();
 
     const [registration, setRegistration] = useState<IBusinessRegistration | null>(null);
     const [loading, setLoading] = useState(true);
+    const [maxDailyBookingsInput, setMaxDailyBookingsInput] = useState('');
+    const [savingBookingSettings, setSavingBookingSettings] = useState(false);
 
     useEffect(() => {
         fetchRegistration();
@@ -33,6 +36,11 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
             setLoading(true);
             const data = await getBusinessRegistrationByUserId(user.id);
             setRegistration(data);
+            setMaxDailyBookingsInput(
+                data?.maxDailyBookings !== undefined && data.maxDailyBookings !== null
+                    ? String(data.maxDailyBookings)
+                    : '',
+            );
         } catch (error) {
             console.error('Error fetching registration details:', error);
         } finally {
@@ -56,6 +64,40 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
             isEdit: false,
             registrationData: null
         });
+    };
+
+    const handleSaveBookingSettings = async () => {
+        if (!registration?.id) return;
+
+        const trimmed = maxDailyBookingsInput.trim();
+        let payload: { maxDailyBookings?: number | null };
+
+        if (!trimmed) {
+            payload = { maxDailyBookings: null };
+        } else {
+            const parsed = parseInt(trimmed, 10);
+            if (Number.isNaN(parsed) || parsed < 1 || parsed > 999) {
+                showError(t('dealer.maxDailyBookingsInvalid') || 'Enter a number between 1 and 999, or leave empty for unlimited');
+                return;
+            }
+            payload = { maxDailyBookings: parsed };
+        }
+
+        try {
+            setSavingBookingSettings(true);
+            const updated = await updateBookingSettings(registration.id, payload);
+            setRegistration(updated);
+            showSuccess(t('dealer.bookingSettingsSaved') || 'Booking settings saved');
+        } catch (error: any) {
+            showError(
+                error?.response?.data?.error ||
+                    error?.response?.data?.Response?.ReturnMessage ||
+                    t('dealer.bookingSettingsSaveFailed') ||
+                    'Failed to save booking settings',
+            );
+        } finally {
+            setSavingBookingSettings(false);
+        }
     };
 
     const getStatusColor = (status: string) => {
@@ -143,6 +185,34 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
             fontFamily: Fonts.SemiBold,
             color: colors.text,
             marginBottom: 10,
+        },
+        bookingInput: {
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            fontSize: RFValue(14),
+            fontFamily: Fonts.Regular,
+            color: colors.text,
+            backgroundColor: colors.background,
+            marginTop: 8,
+        },
+        saveButton: {
+            marginTop: 12,
+            paddingVertical: 12,
+            borderRadius: 8,
+            backgroundColor: colors.secondary,
+            alignItems: 'center',
+        },
+        saveButtonDisabled: {
+            opacity: 0.6,
+        },
+        hintText: {
+            fontSize: RFValue(11),
+            fontFamily: Fonts.Regular,
+            color: colors.textSecondary,
+            marginTop: 6,
         },
         imagesContainer: {
             flexDirection: 'row',
@@ -378,6 +448,43 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                                         </TouchableOpacity>
                                     ))}
                                 </View>
+                            </>
+                        )}
+
+                        {registration.status === 'approved' && (
+                            <>
+                                <View style={styles.divider} />
+                                <CustomText style={styles.sectionTitle}>
+                                    {t('dealer.bookingSettings') || 'Booking Settings'}
+                                </CustomText>
+                                <CustomText style={styles.label}>
+                                    {t('dealer.maxDailyBookings') || 'Maximum bookings per day'}
+                                </CustomText>
+                                <TextInput
+                                    style={styles.bookingInput}
+                                    value={maxDailyBookingsInput}
+                                    onChangeText={(text) => setMaxDailyBookingsInput(text.replace(/[^0-9]/g, ''))}
+                                    placeholder={t('dealer.maxDailyBookingsPlaceholder') || 'e.g. 20'}
+                                    placeholderTextColor={colors.textSecondary}
+                                    keyboardType="number-pad"
+                                    maxLength={3}
+                                />
+                                <CustomText style={styles.hintText}>
+                                    {t('dealer.maxDailyBookingsHint') || 'Leave empty for unlimited bookings per day'}
+                                </CustomText>
+                                <TouchableOpacity
+                                    style={[styles.saveButton, savingBookingSettings && styles.saveButtonDisabled]}
+                                    onPress={handleSaveBookingSettings}
+                                    disabled={savingBookingSettings}
+                                >
+                                    {savingBookingSettings ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold }}>
+                                            {t('common.save') || 'Save'}
+                                        </CustomText>
+                                    )}
+                                </TouchableOpacity>
                             </>
                         )}
 

@@ -185,6 +185,8 @@
   },
   "product": {
     "brand": "Brand",
+    "batteryType": "Battery Type",
+    "voltageV": "Voltage (V)",
     "productType": "Product Type",
     "highlights": "Highlights",
     "fastDelivery": "Fast Delivery",
@@ -258,6 +260,12 @@
     "enterPrice": "Enter price",
     "stock": "Stock",
     "enterStock": "Enter stock quantity",
+    "batteryType": "Battery Type",
+    "selectBatteryType": "Select battery type",
+    "voltageV": "Voltage (V)",
+    "enterVoltage": "e.g. 12",
+    "batteryTypeRequired": "Battery type is required",
+    "voltageRequired": "Valid voltage is required",
     "category": "Category",
     "selectCategory": "Select Category",
     "vehicleType": "Vehicle Type",
@@ -406,6 +414,13 @@
     "businessInformation": "Business Information",
     "status": "Application status",
     "storeStatus": "Store status",
+    "bookingSettings": "Booking Settings",
+    "maxDailyBookings": "Maximum bookings per day",
+    "maxDailyBookingsHint": "Leave empty for unlimited bookings per day",
+    "maxDailyBookingsPlaceholder": "e.g. 20",
+    "maxDailyBookingsInvalid": "Enter a number between 1 and 999, or leave empty for unlimited",
+    "bookingSettingsSaved": "Booking settings saved",
+    "bookingSettingsSaveFailed": "Failed to save booking settings",
     "payoutDetails": "Payout Details",
     "registeredOn": "Registered On",
     "lastUpdated": "Last Updated",
@@ -540,5 +555,13 @@
       "unavailable": "This story is unavailable.",
       "videoInPost": "Video post — playback may be limited in status."
     }
+  },
+  "service": {
+    "bookASlot": "Book a Slot",
+    "bookSlot": "Book Slot",
+    "slotBooked": "Slot booked successfully",
+    "slotBookFailed": "Failed to book slot",
+    "dailyCapReached": "This dealer has reached their daily booking limit for this date",
+    "noSlotsAvailable": "No available slots for this date"
   }
 }

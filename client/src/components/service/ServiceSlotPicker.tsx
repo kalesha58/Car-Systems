@@ -12,6 +12,7 @@ import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getServiceSlots } from '@service/serviceService';
+import { useTranslation } from 'react-i18next';
 
 export interface IServiceSlot {
   id: string;
@@ -43,9 +44,11 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
   selectedSlotId,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [slots, setSlots] = useState<IServiceSlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dailyCapReached, setDailyCapReached] = useState(false);
 
   const dateString = useMemo(() => {
     const year = selectedDate.getFullYear();
@@ -61,11 +64,14 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
       try {
         setLoading(true);
         setError(null);
+        setDailyCapReached(false);
         const response = await getServiceSlots(serviceId, dateString, serviceType);
         setSlots(response.slots || []);
+        setDailyCapReached(!!response.dailyCapReached);
       } catch (err: any) {
         setError(err?.response?.data?.message || 'Failed to load slots');
         setSlots([]);
+        setDailyCapReached(false);
       } finally {
         setLoading(false);
       }
@@ -163,9 +169,16 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
   if (slots.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Icon name="time-outline" size={RFValue(24)} color={colors.disabled} />
+        <Icon
+          name={dailyCapReached ? 'calendar-outline' : 'time-outline'}
+          size={RFValue(24)}
+          color={dailyCapReached ? colors.error : colors.disabled}
+        />
         <CustomText style={styles.emptyText}>
-          No available slots for this date
+          {dailyCapReached
+            ? t('service.dailyCapReached') ||
+              'This dealer has reached their daily booking limit for this date'
+            : t('service.noSlotsAvailable') || 'No available slots for this date'}
         </CustomText>
       </View>
     );

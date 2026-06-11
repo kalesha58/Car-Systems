@@ -2,6 +2,8 @@ import { ServiceSlot, IServiceSlotDocument } from '../models/ServiceSlot';
 import { Service } from '../models/Service';
 import { NotFoundError, AppError, ConflictError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
+import { getDealerBookingCapStatus } from './dealer/dealerBookingCapService';
+import { createServiceBookingFromSlot } from './user/serviceBookingService';
 
 export interface IServiceSlot {
   id: string;
@@ -30,6 +32,24 @@ export interface IGetAvailableSlotsRequest {
   serviceId: string;
   date: string; // ISO date string
   serviceType?: 'center' | 'home';
+}
+
+export interface IGetAvailableSlotsResult {
+  slots: IServiceSlot[];
+  dailyCapReached: boolean;
+  dailyBookingsCount: number;
+  maxDailyBookings?: number;
+}
+
+export interface IBookSlotRequest {
+  slotId: string;
+  userId: string;
+  serviceRequest?: string;
+}
+
+export interface IBookSlotResult {
+  slot: IServiceSlot;
+  bookingId: string;
 }
 
 /**
@@ -123,12 +143,23 @@ export const createSlot = async (
  */
 export const getAvailableSlots = async (
   query: IGetAvailableSlotsRequest,
-): Promise<IServiceSlot[]> => {
+): Promise<IGetAvailableSlotsResult> => {
   try {
-    // Validate service exists
     const service = await Service.findById(query.serviceId);
     if (!service) {
       throw new NotFoundError('Service not found');
+    }
+
+    const dateString = query.date.split('T')[0];
+    const capStatus = await getDealerBookingCapStatus(service.dealerId, dateString);
+
+    if (capStatus.capReached) {
+      return {
+        slots: [],
+        dailyCapReached: true,
+        dailyBookingsCount: capStatus.currentCount,
+        maxDailyBookings: capStatus.maxDailyBookings,
+      };
     }
 
     const slotDate = new Date(query.date);
@@ -138,7 +169,7 @@ export const getAvailableSlots = async (
       serviceId: query.serviceId,
       date: {
         $gte: slotDate,
-        $lt: new Date(slotDate.getTime() + 24 * 60 * 60 * 1000), // Next day
+        $lt: new Date(slotDate.getTime() + 24 * 60 * 60 * 1000),
       },
       isAvailable: true,
     };
@@ -149,12 +180,16 @@ export const getAvailableSlots = async (
 
     const slots = await ServiceSlot.find(filter).sort({ startTime: 1 });
 
-    // Filter slots that have availability
     const availableSlots = slots.filter(
       slot => slot.currentBookings < slot.maxBookings,
     );
 
-    return availableSlots.map(slotToInterface);
+    return {
+      slots: availableSlots.map(slotToInterface),
+      dailyCapReached: false,
+      dailyBookingsCount: capStatus.currentCount,
+      maxDailyBookings: capStatus.maxDailyBookings,
+    };
   } catch (error) {
     logger.error('Error getting available slots:', error);
     throw error;
@@ -162,33 +197,52 @@ export const getAvailableSlots = async (
 };
 
 /**
- * Book a slot (increment currentBookings)
+ * Book a slot (create ServiceBooking + increment currentBookings)
  */
-export const bookSlot = async (slotId: string): Promise<IServiceSlot> => {
+export const bookSlot = async (request: IBookSlotRequest): Promise<IBookSlotResult> => {
   try {
-    const slot = await ServiceSlot.findById(slotId);
+    const slot = await ServiceSlot.findById(request.slotId);
 
     if (!slot) {
       throw new NotFoundError('Slot not found');
     }
 
-    // Check availability
+    const service = await Service.findById(slot.serviceId);
+    if (!service) {
+      throw new NotFoundError('Service not found');
+    }
+
+    const dateString = slot.date.toISOString().split('T')[0];
+    const capStatus = await getDealerBookingCapStatus(service.dealerId, dateString);
+
+    if (capStatus.capReached) {
+      throw new AppError('Daily booking limit reached for this dealer', 400);
+    }
+
     if (!slot.isAvailable || slot.currentBookings >= slot.maxBookings) {
       throw new AppError('Slot is not available for booking', 400);
     }
 
+    const bookingId = await createServiceBookingFromSlot({
+      userId: request.userId,
+      slot,
+      serviceRequest: request.serviceRequest,
+    });
+
     slot.currentBookings += 1;
 
-    // Update availability if fully booked
     if (slot.currentBookings >= slot.maxBookings) {
       slot.isAvailable = false;
     }
 
     await slot.save();
 
-    logger.info(`Slot booked: ${slotId}, currentBookings: ${slot.currentBookings}`);
+    logger.info(`Slot booked: ${request.slotId}, currentBookings: ${slot.currentBookings}`);
 
-    return slotToInterface(slot);
+    return {
+      slot: slotToInterface(slot),
+      bookingId,
+    };
   } catch (error) {
     logger.error('Error booking slot:', error);
     throw error;

@@ -16,6 +16,7 @@
     "seed:dealer-drive": "ts-node src/scripts/seedDealerDriveData.ts",
     "seed:all-inventory": "ts-node src/scripts/seedAllInventory.ts",
     "seed:categories": "ts-node src/scripts/seedCategories.ts",
+    "seed:battery-types": "ts-node src/scripts/seedBatteryTypes.ts",
     "seed:migrate-categories": "ts-node src/scripts/migrateLegacyCategories.ts",
     "seed:dealer-products": "ts-node src/scripts/seedDealerProducts.ts",
     "upload:greeting-logo": "ts-node src/scripts/uploadGreetingLogo.ts",

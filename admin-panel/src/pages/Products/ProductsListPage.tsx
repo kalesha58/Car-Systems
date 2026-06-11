@@ -55,6 +55,13 @@ export const ProductsListPage = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+
+  const categoriesEqual = (
+    a: Array<{ id: string; name: string }>,
+    b: Array<{ id: string; name: string }>,
+  ) => a.length === b.length && a.every((item, index) => item.id === b[index].id && item.name === b[index].name);
 
   const fetchProducts = useCallback(async () => {
     // Prevent duplicate calls
@@ -76,7 +83,10 @@ export const ProductsListPage = () => {
           page: currentPage,
           limit: itemsPerPage,
           search: searchTerm.trim() || undefined,
-          category: categoryFilter !== 'all' ? categoryFilter : undefined,
+          category:
+            categoryFilter !== 'all'
+              ? categoriesRef.current.find((cat) => cat.id === categoryFilter)?.name || categoryFilter
+              : undefined,
           status: statusFilter !== 'all' ? statusFilter : undefined,
           sortBy: 'createdAt',
           sortOrder: 'desc',
@@ -112,7 +122,7 @@ export const ProductsListPage = () => {
           id: cat.id || cat._id || cat.name,
           name: cat.name,
         }));
-        setCategories(uniqueCategories);
+        setCategories((prev) => (categoriesEqual(prev, uniqueCategories) ? prev : uniqueCategories));
       } else {
         // Extract unique categories from products
         const categoryMap = new Map<string, string>();
@@ -138,7 +148,7 @@ export const ProductsListPage = () => {
           id,
           name,
         }));
-        setCategories(uniqueCategories);
+        setCategories((prev) => (categoriesEqual(prev, uniqueCategories) ? prev : uniqueCategories));
       }
     } catch (error: unknown) {
       if ((error as { name?: string })?.name !== 'AbortError') {
@@ -172,11 +182,6 @@ export const ProductsListPage = () => {
     },
     [debouncedSearch]
   );
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [categoryFilter, statusFilter]);
 
   // Sync search input value with search term when search term changes externally
   useEffect(() => {
@@ -455,6 +460,20 @@ export const ProductsListPage = () => {
                   ]}
                 />
               </div>
+            </div>
+            <div className="users-toolbar__field users-toolbar__field--filter">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const batteriesCategory = categories.find((cat) => cat.name === 'Batteries & Chargers');
+                  if (batteriesCategory) {
+                    setCategoryFilter(batteriesCategory.id);
+                    setCurrentPage(1);
+                  }
+                }}
+              >
+                Battery Listings
+              </Button>
             </div>
             <div className="users-toolbar__field users-toolbar__field--filter">
               <div className="users-toolbar__select">

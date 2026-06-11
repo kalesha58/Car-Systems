@@ -241,6 +241,7 @@ export interface IBusinessRegistration {
   documents?: IBusinessRegistrationDocumentFile[];
   status: string;
   storeOpen?: boolean;
+  maxDailyBookings?: number;
   approvalCode?: string;
   userId: string;
   createdAt: string;
@@ -340,6 +341,7 @@ export interface ICreateBusinessRegistrationRequest {
   payout?: IPayoutCredentials;
   shopPhotos: IBusinessRegistrationPhoto[];
   documents: IBusinessRegistrationDocumentFile[];
+  maxDailyBookings?: number;
 }
 
 const BUSINESS_REGISTRATION_TIMEOUT_MS = 90000;
@@ -398,6 +400,28 @@ export const updateStoreStatus = async (
       return response.data.Response;
     }
     throw new Error('Failed to update store status');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export interface IUpdateBookingSettingsRequest {
+  maxDailyBookings?: number | null;
+}
+
+export const updateBookingSettings = async (
+  registrationId: string,
+  data: IUpdateBookingSettingsRequest,
+): Promise<IBusinessRegistration> => {
+  try {
+    const response = await appAxios.patch<IBusinessRegistrationResponse>(
+      `/dealer/business-registration/${registrationId}/booking-settings`,
+      data,
+    );
+    if (response.data.success && response.data.Response) {
+      return response.data.Response;
+    }
+    throw new Error('Failed to update booking settings');
   } catch (error) {
     throw error;
   }
@@ -468,6 +492,8 @@ export interface ICreateDealerProductRequest {
   discountPercentage?: number;
   isSparePart?: boolean;
   deliveryTimeMinutes?: number;
+  batteryTypeId?: string;
+  voltageV?: number;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -487,6 +513,8 @@ export interface IUpdateDealerProductRequest {
   discountPercentage?: number;
   isSparePart?: boolean;
   deliveryTimeMinutes?: number;
+  batteryTypeId?: string | null;
+  voltageV?: number | null;
 }
 
 export interface IDealerProductResponse {

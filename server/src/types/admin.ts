@@ -162,6 +162,9 @@ export interface IProduct {
   vehicleType?: string;
   tags: string[];
   specifications: Record<string, any>;
+  batteryTypeId?: string;
+  batteryTypeName?: string;
+  voltageV?: number;
   userId: string;
   createdAt: string;
 }
@@ -188,6 +191,8 @@ export interface ICreateProductRequest {
   vehicleType?: string;
   tags?: string[];
   specifications?: Record<string, any>;
+  batteryTypeId?: string;
+  voltageV?: number;
 }
 
 export interface IUpdateProductRequest {
@@ -198,6 +203,8 @@ export interface IUpdateProductRequest {
   status?: string;
   description?: string;
   vehicleType?: string;
+  batteryTypeId?: string | null;
+  voltageV?: number | null;
 }
 
 export interface IUpdateProductStockRequest {

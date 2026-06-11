@@ -33,6 +33,7 @@ import addressRoutes from './routes/user/addressRoutes';
 import notificationRoutes from './routes/user/notificationRoutes';
 import blockRoutes from './routes/user/blockRoutes';
 import reportRoutes from './routes/user/reportRoutes';
+import serviceSlotRoutes from './routes/user/serviceSlotRoutes';
 import cartRoutes from './routes/user/cartRoutes';
 import couponRoutes from './routes/user/couponRoutes';
 import dealerInfoRoutes from './routes/user/dealerRoutes';
@@ -270,6 +271,8 @@ app.use('/api/user/test-drives', testDriveRoutes);
 logger.info('[Routes] User test drive routes mounted at /api/user/test-drives');
 app.use('/api/user/pre-bookings', preBookingRoutes);
 logger.info('[Routes] User pre-booking routes mounted at /api/user/pre-bookings');
+app.use('/api/user/services', serviceSlotRoutes);
+logger.info('[Routes] User service slot routes mounted at /api/user/services');
 // Mount dealer info routes BEFORE other /api/user routes to ensure proper matching
 app.use('/api/user/dealer', dealerInfoRoutes);
 logger.info('[Routes] User dealer info routes mounted at /api/user/dealer');

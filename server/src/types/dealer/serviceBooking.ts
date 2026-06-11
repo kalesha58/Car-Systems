@@ -5,6 +5,7 @@ export interface IServiceBooking {
   userId: string;
   dealerId: string;
   serviceId: string;
+  slotId?: string;
   vehicleId?: string;
   vehicleInfo?: {
     brand?: string;

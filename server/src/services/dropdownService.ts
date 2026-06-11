@@ -3,6 +3,7 @@ import { VehicleBrand } from '../models/VehicleBrand';
 import { VehicleModel } from '../models/VehicleModel';
 import { DropdownOption } from '../models/DropdownOption';
 import { Category, CategoryTileGroup } from '../models/Category';
+import { BatteryType } from '../models/BatteryType';
 import { logger } from '../utils/logger';
 
 type LeanCategory = {
@@ -35,6 +36,7 @@ export interface IDropdownResponse {
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
+  batteryTypes: IDropdownOption[];
 }
 
 export const getDropdownOptions = async (
@@ -109,6 +111,10 @@ export const getDropdownOptions = async (
       .sort({ sortOrder: 1, name: 1 })
       .lean<LeanCategory[]>();
 
+    const batteryTypes = await BatteryType.find({ status: 'active' })
+      .sort({ sortOrder: 1, name: 1 })
+      .lean();
+
     // Map to IDropdownOption format
     return {
       vehicleTypes: vehicleTypeOptions.map((opt) => ({
@@ -149,6 +155,10 @@ export const getDropdownOptions = async (
         imageUrl: category.imageUrl,
         sortOrder: category.sortOrder ?? 0,
         tileGroup: category.tileGroup,
+      })),
+      batteryTypes: batteryTypes.map((type) => ({
+        label: type.name,
+        value: type._id.toString(),
       })),
     };
   } catch (error) {
