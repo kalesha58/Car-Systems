@@ -12,12 +12,17 @@ import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandle
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import { validateBatteryProductFields, resolveBatteryTypeName } from '../../utils/batteryProduct';
+import {
+  validateVehicleProductMapping,
+  resolveVehicleBrandModelNames,
+} from '../../utils/vehicleProductMapping';
 
 /**
  * Convert product document to dealer product interface
  */
 const productToDealerProduct = async (doc: IProductDocument): Promise<IDealerProduct> => {
   const batteryTypeName = await resolveBatteryTypeName(doc.batteryTypeId);
+  const vehicleNames = await resolveVehicleBrandModelNames(doc.vehicleBrandId, doc.vehicleModelId);
 
   return {
     id: (doc._id as any).toString(),
@@ -37,6 +42,11 @@ const productToDealerProduct = async (doc: IProductDocument): Promise<IDealerPro
     batteryTypeId: doc.batteryTypeId,
     batteryTypeName,
     voltageV: doc.voltageV,
+    isSparePart: doc.isSparePart,
+    vehicleBrandId: doc.vehicleBrandId,
+    vehicleModelId: doc.vehicleModelId,
+    vehicleBrandName: vehicleNames.vehicleBrandName,
+    vehicleModelName: vehicleNames.vehicleModelName,
     status: doc.status,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -209,6 +219,13 @@ export const createDealerProduct = async (
       voltageV: data.voltageV,
     });
 
+    await validateVehicleProductMapping({
+      vehicleType: data.vehicleType,
+      isSparePart: data.isSparePart,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
+    });
+
     const product = new Product({
       name: data.name.trim(),
       brand: data.brand.trim(),
@@ -225,6 +242,9 @@ export const createDealerProduct = async (
       tags: data.tags || [],
       batteryTypeId: data.batteryTypeId,
       voltageV: data.voltageV,
+      isSparePart: data.isSparePart,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
       userId: dealerId,
     });
 
@@ -376,6 +396,18 @@ export const updateDealerProduct = async (
       product.voltageV = data.voltageV ?? undefined;
     }
 
+    if (data.isSparePart !== undefined) {
+      product.isSparePart = data.isSparePart;
+    }
+
+    if (data.vehicleBrandId !== undefined) {
+      product.vehicleBrandId = data.vehicleBrandId || undefined;
+    }
+
+    if (data.vehicleModelId !== undefined) {
+      product.vehicleModelId = data.vehicleModelId || undefined;
+    }
+
     if (data.status !== undefined) {
       product.status = data.status;
     }
@@ -384,6 +416,13 @@ export const updateDealerProduct = async (
       categoryId: product.categoryId,
       batteryTypeId: product.batteryTypeId,
       voltageV: product.voltageV,
+    });
+
+    await validateVehicleProductMapping({
+      vehicleType: product.vehicleType,
+      isSparePart: product.isSparePart,
+      vehicleBrandId: product.vehicleBrandId,
+      vehicleModelId: product.vehicleModelId,
     });
 
     await product.save();

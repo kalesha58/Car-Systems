@@ -42,6 +42,9 @@ export interface ICreateProductPayload {
   tags?: string[];
   batteryTypeId?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
 }
 
 export interface IUpdateProductPayload {
@@ -59,6 +62,9 @@ export interface IUpdateProductPayload {
   tags?: string[];
   batteryTypeId?: string | null;
   voltageV?: number | null;
+  isSparePart?: boolean;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
 }
 
 export interface IUpdateStockPayload {

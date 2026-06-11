@@ -13,6 +13,8 @@ export interface IDealerVehicle {
   vehicleType: VehicleType;
   brand: string;
   vehicleModel: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: VehicleAvailability;

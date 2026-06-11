@@ -10,6 +10,7 @@ import {
 import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
+import { resolveVehicleBrandModelStrings } from '../../utils/vehicleProductMapping';
 
 /**
  * Convert vehicle document to interface
@@ -21,6 +22,8 @@ const vehicleToInterface = (doc: IDealerVehicleDocument): IDealerVehicle => {
     vehicleType: doc.vehicleType,
     brand: doc.brand,
     vehicleModel: doc.vehicleModel,
+    vehicleBrandId: doc.vehicleBrandId,
+    vehicleModelId: doc.vehicleModelId,
     year: doc.year,
     price: doc.price,
     availability: doc.availability,
@@ -57,7 +60,9 @@ export const getDealerVehicles = async (
       filter.vehicleType = query.vehicleType;
     }
 
-    if (query.brand) {
+    if (query.vehicleBrandId) {
+      filter.vehicleBrandId = query.vehicleBrandId;
+    } else if (query.brand) {
       filter.brand = { $regex: query.brand, $options: 'i' };
     }
 
@@ -127,7 +132,9 @@ export const getAllDealerVehicles = async (
       filter.vehicleType = query.vehicleType;
     }
 
-    if (query.brand) {
+    if (query.vehicleBrandId) {
+      filter.vehicleBrandId = query.vehicleBrandId;
+    } else if (query.brand) {
       filter.brand = { $regex: query.brand, $options: 'i' };
     }
 
@@ -281,11 +288,23 @@ export const createDealerVehicle = async (
       throw new AppError('Vehicle type is required', 400);
     }
 
-    if (!data.brand?.trim()) {
+    let brandName = data.brand?.trim() || '';
+    let modelName = data.vehicleModel?.trim() || '';
+
+    if (data.vehicleBrandId) {
+      const resolved = await resolveVehicleBrandModelStrings(data.vehicleBrandId, data.vehicleModelId);
+      if (!resolved.brand) {
+        throw new AppError('Invalid vehicle brand', 400);
+      }
+      brandName = resolved.brand;
+      modelName = resolved.vehicleModel || modelName;
+    }
+
+    if (!brandName) {
       throw new AppError('Brand is required', 400);
     }
 
-    if (!data.vehicleModel?.trim()) {
+    if (!modelName) {
       throw new AppError('Vehicle model is required', 400);
     }
 
@@ -313,8 +332,10 @@ export const createDealerVehicle = async (
     const vehicle = new DealerVehicle({
       dealerId,
       vehicleType: data.vehicleType,
-      brand: data.brand.trim(),
-      vehicleModel: data.vehicleModel.trim(),
+      brand: brandName,
+      vehicleModel: modelName,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
       year: data.year,
       price: data.price,
       availability: data.availability,
@@ -377,6 +398,32 @@ export const updateDealerVehicle = async (
         throw new AppError('Vehicle model cannot be empty', 400);
       }
       vehicle.vehicleModel = data.vehicleModel.trim();
+    }
+
+    if (data.vehicleBrandId !== undefined) {
+      vehicle.vehicleBrandId = data.vehicleBrandId || undefined;
+      if (data.vehicleBrandId) {
+        const resolved = await resolveVehicleBrandModelStrings(
+          data.vehicleBrandId,
+          data.vehicleModelId || vehicle.vehicleModelId,
+        );
+        if (resolved.brand) {
+          vehicle.brand = resolved.brand;
+        }
+      }
+    }
+
+    if (data.vehicleModelId !== undefined) {
+      vehicle.vehicleModelId = data.vehicleModelId || undefined;
+      if (data.vehicleModelId && vehicle.vehicleBrandId) {
+        const resolved = await resolveVehicleBrandModelStrings(
+          vehicle.vehicleBrandId,
+          data.vehicleModelId,
+        );
+        if (resolved.vehicleModel) {
+          vehicle.vehicleModel = resolved.vehicleModel;
+        }
+      }
     }
 
     if (data.year !== undefined) {
@@ -565,7 +612,9 @@ export const getAvailableDealerVehicles = async (
       filter.vehicleType = query.vehicleType;
     }
 
-    if (query.brand) {
+    if (query.vehicleBrandId) {
+      filter.vehicleBrandId = query.vehicleBrandId;
+    } else if (query.brand) {
       filter.brand = { $regex: query.brand, $options: 'i' };
     }
 

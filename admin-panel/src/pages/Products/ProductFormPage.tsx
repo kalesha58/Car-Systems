@@ -6,6 +6,7 @@ import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
 import { getCategories } from '@services/categoryService';
 import { getBatteryTypes } from '@services/batteryTypeService';
+import { getVehicleBrands, getVehicleModels } from '@services/vehicleBrandService';
 import { getBusinessRegistration } from '@services/dealerService';
 import { createProduct, getProductById, type ICreateProductPayload,updateProduct } from '@services/productService';
 import { getUsers } from '@services/userService';
@@ -39,13 +40,19 @@ export const ProductFormPage = () => {
     commissionPercentage: undefined,
     batteryTypeId: '',
     voltageV: undefined,
+    isSparePart: false,
+    vehicleBrandId: '',
+    vehicleModelId: '',
   });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [tagInput, setTagInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [batteryTypes, setBatteryTypes] = useState<Array<{ id: string; name: string }>>([]);
+  const [vehicleBrands, setVehicleBrands] = useState<Array<{ id: string; name: string }>>([]);
+  const [vehicleModels, setVehicleModels] = useState<Array<{ id: string; name: string }>>([]);
   const isBatteryCategory = formData.category === 'Batteries & Chargers';
+  const showCompatibleFields = formData.isSparePart && (formData.vehicleType === 'Car' || formData.vehicleType === 'Bike');
   const [dealers, setDealers] = useState<IDealerListItem[]>([]);
   const [dealerSearchTerm, setDealerSearchTerm] = useState('');
   const [showDealerDropdown, setShowDealerDropdown] = useState(false);
@@ -146,6 +153,9 @@ export const ProductFormPage = () => {
             commissionPercentage: (product as { commissionPercentage?: number }).commissionPercentage,
             batteryTypeId: product.batteryTypeId || '',
             voltageV: product.voltageV,
+            isSparePart: product.isSparePart || false,
+            vehicleBrandId: product.vehicleBrandId || '',
+            vehicleModelId: product.vehicleModelId || '',
           });
           
           // Clear imagePreviews for edit mode - it should only contain newly selected images
@@ -173,6 +183,33 @@ export const ProductFormPage = () => {
       }
     };
   }, [id, isEdit, navigate, showToast]);
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      if (!showCompatibleFields) {
+        setVehicleBrands([]);
+        return;
+      }
+      const response = await getVehicleBrands({
+        type: formData.vehicleType as 'Car' | 'Bike',
+        status: 'active',
+      });
+      setVehicleBrands((response.vehicleBrands || []).map((b) => ({ id: b.id, name: b.name })));
+    };
+    loadBrands().catch(() => setVehicleBrands([]));
+  }, [showCompatibleFields, formData.vehicleType]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!formData.vehicleBrandId) {
+        setVehicleModels([]);
+        return;
+      }
+      const response = await getVehicleModels(formData.vehicleBrandId, { status: 'active' });
+      setVehicleModels((response.vehicleModels || []).map((m) => ({ id: m.id, name: m.name })));
+    };
+    loadModels().catch(() => setVehicleModels([]));
+  }, [formData.vehicleBrandId]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string | undefined> = {};
@@ -212,6 +249,10 @@ export const ProductFormPage = () => {
       if (!formData.voltageV || formData.voltageV <= 0) {
         newErrors.voltageV = 'Voltage must be greater than 0';
       }
+    }
+
+    if (showCompatibleFields && !formData.vehicleBrandId) {
+      newErrors.vehicleBrandId = 'Compatible brand is required for spare parts';
     }
 
     if (!formData.dealerID) {
@@ -367,6 +408,11 @@ export const ProductFormPage = () => {
         ...(isBatteryCategory && {
           batteryTypeId: formData.batteryTypeId,
           voltageV: formData.voltageV,
+        }),
+        isSparePart: formData.isSparePart,
+        ...(showCompatibleFields && {
+          vehicleBrandId: formData.vehicleBrandId,
+          vehicleModelId: formData.vehicleModelId || undefined,
         }),
       };
 
@@ -854,17 +900,71 @@ export const ProductFormPage = () => {
             />
           </div>
 
-          <Input
+          <Select
             label="Vehicle Type"
             value={formData.vehicleType}
             onChange={(value) => {
-              setFormData({ ...formData, vehicleType: value });
+              setFormData({
+                ...formData,
+                vehicleType: value,
+                vehicleBrandId: '',
+                vehicleModelId: '',
+              });
               setErrors({ ...errors, vehicleType: undefined });
             }}
-            placeholder="e.g., Car, Bike, Truck"
+            options={[
+              { value: 'Car', label: 'Car' },
+              { value: 'Bike', label: 'Bike' },
+            ]}
             error={errors.vehicleType}
             required
           />
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: theme.spacing.md }}>
+            <input
+              type="checkbox"
+              checked={formData.isSparePart}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  isSparePart: e.target.checked,
+                  vehicleBrandId: '',
+                  vehicleModelId: '',
+                })
+              }
+            />
+            <span>Spare Part</span>
+          </label>
+
+          {showCompatibleFields && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: theme.spacing.md,
+                marginBottom: theme.spacing.md,
+              }}
+            >
+              <Select
+                label="Compatible Brand"
+                value={formData.vehicleBrandId}
+                onChange={(value) => {
+                  setFormData({ ...formData, vehicleBrandId: value, vehicleModelId: '' });
+                  setErrors({ ...errors, vehicleBrandId: undefined });
+                }}
+                options={vehicleBrands.map((b) => ({ value: b.id, label: b.name }))}
+                error={errors.vehicleBrandId}
+                required
+              />
+              <Select
+                label="Compatible Model"
+                value={formData.vehicleModelId}
+                onChange={(value) => setFormData({ ...formData, vehicleModelId: value })}
+                options={vehicleModels.map((m) => ({ value: m.id, label: m.name }))}
+                placeholder="Optional"
+              />
+            </div>
+          )}
 
           {/* Specifications */}
           <div style={{ marginBottom: theme.spacing.md }}>

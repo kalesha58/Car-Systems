@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { SERVICE_SECTIONS, SPARE_PARTS_BRANDS } from '../data/serviceCategoryConfig';
+import { SERVICE_SECTIONS } from '../data/serviceCategoryConfig';
 
 /**
  * GET /api/service-categories
@@ -15,7 +15,6 @@ export const getServiceCategoriesController = (req: Request, res: Response): voi
     success: true,
     Response: {
       sections: SERVICE_SECTIONS,
-      sparePartsBrands: SPARE_PARTS_BRANDS,
     },
   });
 };

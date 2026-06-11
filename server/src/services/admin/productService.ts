@@ -12,6 +12,10 @@ import {
 import { NotFoundError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { validateBatteryProductFields, resolveBatteryTypeName } from '../../utils/batteryProduct';
+import {
+  validateVehicleProductMapping,
+  resolveVehicleBrandModelNames,
+} from '../../utils/vehicleProductMapping';
 
 /**
  * Convert product document to IProduct interface
@@ -52,6 +56,10 @@ const productToIProduct = async (productDoc: IProductDocument): Promise<IProduct
     batteryTypeId: productDoc.batteryTypeId,
     batteryTypeName: await resolveBatteryTypeName(productDoc.batteryTypeId),
     voltageV: productDoc.voltageV,
+    isSparePart: productDoc.isSparePart,
+    vehicleBrandId: productDoc.vehicleBrandId,
+    vehicleModelId: productDoc.vehicleModelId,
+    ...(await resolveVehicleBrandModelNames(productDoc.vehicleBrandId, productDoc.vehicleModelId)),
     userId: productDoc.userId,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
   };
@@ -155,6 +163,13 @@ export const createProduct = async (data: ICreateProductRequest, userId: string)
       voltageV: data.voltageV,
     });
 
+    await validateVehicleProductMapping({
+      vehicleType: data.vehicleType,
+      isSparePart: data.isSparePart,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
+    });
+
     const product = new Product({
       name: data.name,
       brand: data.brand,
@@ -167,6 +182,9 @@ export const createProduct = async (data: ICreateProductRequest, userId: string)
       specifications: data.specifications || {},
       batteryTypeId: data.batteryTypeId,
       voltageV: data.voltageV,
+      isSparePart: data.isSparePart,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
       status: data.stock > 0 ? 'active' : 'out_of_stock',
       userId: userId,
     });
@@ -213,11 +231,27 @@ export const updateProduct = async (productId: string, data: IUpdateProductReque
     if (data.voltageV !== undefined) {
       product.voltageV = data.voltageV ?? undefined;
     }
+    if (data.isSparePart !== undefined) {
+      product.isSparePart = data.isSparePart;
+    }
+    if (data.vehicleBrandId !== undefined) {
+      product.vehicleBrandId = data.vehicleBrandId || undefined;
+    }
+    if (data.vehicleModelId !== undefined) {
+      product.vehicleModelId = data.vehicleModelId || undefined;
+    }
 
     await validateBatteryProductFields({
       categoryId: product.categoryId,
       batteryTypeId: product.batteryTypeId,
       voltageV: product.voltageV,
+    });
+
+    await validateVehicleProductMapping({
+      vehicleType: product.vehicleType,
+      isSparePart: product.isSparePart,
+      vehicleBrandId: product.vehicleBrandId,
+      vehicleModelId: product.vehicleModelId,
     });
 
     await product.save();

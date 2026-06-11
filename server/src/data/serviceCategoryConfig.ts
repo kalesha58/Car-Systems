@@ -152,43 +152,6 @@ export const SERVICE_SECTIONS: IServiceSection[] = [
   },
 ];
 
-/**
- * Spare parts brand list — static curated list covering popular Indian brands.
- * Brands are partitioned by vehicle type.
- */
-export const SPARE_PARTS_BRANDS: Record<'Car' | 'Bike', string[]> = {
-  Car: [
-    'Maruti Suzuki',
-    'Hyundai',
-    'Tata',
-    'Mahindra',
-    'Toyota',
-    'Honda',
-    'Kia',
-    'Renault',
-    'Volkswagen',
-    'Skoda',
-    'Ford',
-    'MG',
-    'Jeep',
-    'Nissan',
-    'Others',
-  ],
-  Bike: [
-    'Hero MotoCorp',
-    'Honda',
-    'Bajaj',
-    'TVS',
-    'Royal Enfield',
-    'Yamaha',
-    'Suzuki',
-    'KTM',
-    'Kawasaki',
-    'Jawa',
-    'Others',
-  ],
-};
-
 /** Helper: get section config by section id */
 export const getSectionById = (id: string): IServiceSection | undefined =>
   SERVICE_SECTIONS.find((s) => s.id === id);

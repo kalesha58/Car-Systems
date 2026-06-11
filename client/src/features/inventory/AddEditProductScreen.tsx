@@ -73,17 +73,55 @@ const AddEditProductScreen: React.FC = () => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
-  const [dropdownType, setDropdownType] = useState<'category' | 'vehicleType' | 'batteryType'>('category');
+  const [dropdownType, setDropdownType] = useState<
+    'category' | 'vehicleType' | 'batteryType' | 'compatibleBrand' | 'compatibleModel'
+  >('category');
   const [categories, setCategories] = useState<IDropdownOption[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<IDropdownOption[]>([]);
   const [batteryTypes, setBatteryTypes] = useState<IDropdownOption[]>([]);
   const [batteryTypeId, setBatteryTypeId] = useState(product?.batteryTypeId || '');
   const [voltageV, setVoltageV] = useState(product?.voltageV?.toString() || '');
+  const [vehicleBrandId, setVehicleBrandId] = useState(product?.vehicleBrandId || '');
+  const [vehicleModelId, setVehicleModelId] = useState(product?.vehicleModelId || '');
+  const [compatibleBrands, setCompatibleBrands] = useState<IDropdownOption[]>([]);
+  const [compatibleModels, setCompatibleModels] = useState<IDropdownOption[]>([]);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
 
   useEffect(() => {
     fetchDropdownOptions();
   }, []);
+
+  useEffect(() => {
+    const loadCompatibleBrands = async () => {
+      if (!isSparePart || !vehicleType) {
+        setCompatibleBrands([]);
+        return;
+      }
+      try {
+        const options = await getDropdownOptions(vehicleType);
+        setCompatibleBrands(options.brands || []);
+      } catch {
+        setCompatibleBrands([]);
+      }
+    };
+    loadCompatibleBrands();
+  }, [isSparePart, vehicleType]);
+
+  useEffect(() => {
+    const loadCompatibleModels = async () => {
+      if (!isSparePart || !vehicleType || !vehicleBrandId) {
+        setCompatibleModels([]);
+        return;
+      }
+      try {
+        const options = await getDropdownOptions(vehicleType, vehicleBrandId);
+        setCompatibleModels(options.models || []);
+      } catch {
+        setCompatibleModels([]);
+      }
+    };
+    loadCompatibleModels();
+  }, [isSparePart, vehicleType, vehicleBrandId]);
 
   // Map category name to category ID when categories are loaded in edit mode
   useEffect(() => {
@@ -219,6 +257,13 @@ const AddEditProductScreen: React.FC = () => {
       }
     }
 
+    if (isSparePart && vehicleType) {
+      if (!vehicleBrandId) {
+        showError(t('dealer.compatibleBrandRequired'));
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -248,6 +293,8 @@ const AddEditProductScreen: React.FC = () => {
           isSparePart,
           batteryTypeId: isBatteryCategorySelected ? batteryTypeId : undefined,
           voltageV: isBatteryCategorySelected ? parseFloat(voltageV) : undefined,
+          vehicleBrandId: isSparePart && vehicleType ? vehicleBrandId : undefined,
+          vehicleModelId: isSparePart && vehicleType && vehicleModelId ? vehicleModelId : undefined,
         };
 
         await updateDealerProduct(product.id, updateData);
@@ -269,6 +316,8 @@ const AddEditProductScreen: React.FC = () => {
           isSparePart,
           batteryTypeId: isBatteryCategorySelected ? batteryTypeId : undefined,
           voltageV: isBatteryCategorySelected ? parseFloat(voltageV) : undefined,
+          vehicleBrandId: isSparePart && vehicleType ? vehicleBrandId : undefined,
+          vehicleModelId: isSparePart && vehicleType && vehicleModelId ? vehicleModelId : undefined,
         };
 
         await createDealerProduct(createData);
@@ -314,7 +363,9 @@ const AddEditProductScreen: React.FC = () => {
   const isBatteryCategorySelected =
     categories.find(c => c.value === category)?.label === BATTERY_CATEGORY_NAME;
 
-  const openDropdown = (type: 'category' | 'vehicleType' | 'batteryType') => {
+  const openDropdown = (
+    type: 'category' | 'vehicleType' | 'batteryType' | 'compatibleBrand' | 'compatibleModel',
+  ) => {
     setDropdownType(type);
     setDropdownModalVisible(true);
   };
@@ -329,8 +380,15 @@ const AddEditProductScreen: React.FC = () => {
       }
     } else if (dropdownType === 'vehicleType') {
       setVehicleType(value as 'Car' | 'Bike');
+      setVehicleBrandId('');
+      setVehicleModelId('');
     } else if (dropdownType === 'batteryType') {
       setBatteryTypeId(value);
+    } else if (dropdownType === 'compatibleBrand') {
+      setVehicleBrandId(value);
+      setVehicleModelId('');
+    } else if (dropdownType === 'compatibleModel') {
+      setVehicleModelId(value);
     }
   };
 
@@ -361,6 +419,12 @@ const AddEditProductScreen: React.FC = () => {
     if (dropdownType === 'batteryType') {
       return batteryTypes;
     }
+    if (dropdownType === 'compatibleBrand') {
+      return compatibleBrands;
+    }
+    if (dropdownType === 'compatibleModel') {
+      return compatibleModels;
+    }
     return vehicleTypes;
   };
 
@@ -370,6 +434,12 @@ const AddEditProductScreen: React.FC = () => {
     }
     if (dropdownType === 'batteryType') {
       return batteryTypeId;
+    }
+    if (dropdownType === 'compatibleBrand') {
+      return vehicleBrandId;
+    }
+    if (dropdownType === 'compatibleModel') {
+      return vehicleModelId;
     }
     return vehicleType;
   };
@@ -824,12 +894,57 @@ const AddEditProductScreen: React.FC = () => {
               </CustomText>
               <Switch
                 value={isSparePart}
-                onValueChange={setIsSparePart}
+                onValueChange={(value) => {
+                  setIsSparePart(value);
+                  if (!value) {
+                    setVehicleBrandId('');
+                    setVehicleModelId('');
+                  }
+                }}
                 trackColor={{ false: colors.disabled, true: colors.secondary + '80' }}
                 thumbColor={isSparePart ? colors.secondary : colors.disabled}
               />
             </View>
           </View>
+
+          {isSparePart && vehicleType ? (
+            <>
+              <View style={styles.section}>
+                <CustomText style={styles.label}>
+                  {t('dealer.compatibleBrand')} <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => openDropdown('compatibleBrand')}
+                  activeOpacity={0.75}>
+                  <CustomText style={styles.dropdownButtonText}>
+                    {compatibleBrands.find(b => b.value === vehicleBrandId)?.label ||
+                      t('dealer.selectCompatibleBrand')}
+                  </CustomText>
+                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                </TouchableOpacity>
+                {compatibleBrands.length === 0 && (
+                  <CustomText style={{marginTop: 6, fontSize: RFValue(10), opacity: 0.6}}>
+                    {t('dealer.noBrandsConfigured')}
+                  </CustomText>
+                )}
+              </View>
+              <View style={styles.section}>
+                <CustomText style={styles.label}>{t('dealer.compatibleModel')}</CustomText>
+                <TouchableOpacity
+                  style={styles.dropdownButton}
+                  onPress={() => openDropdown('compatibleModel')}
+                  activeOpacity={0.75}
+                  disabled={!vehicleBrandId}>
+                  <CustomText style={styles.dropdownButtonText}>
+                    {compatibleModels.find(m => m.value === vehicleModelId)?.label ||
+                      t('dealer.selectCompatibleModel')}
+                  </CustomText>
+                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : null}
 
           <View style={[styles.section, {marginBottom: 0}]}>
             <CustomText style={styles.label}>

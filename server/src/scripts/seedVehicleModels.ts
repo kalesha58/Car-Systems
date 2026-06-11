@@ -33,8 +33,19 @@ const bikeData = {
     'Ola Electric': ['S1 Pro', 'S1 Air', 'S1 X', 'S1 X+', 'Roadster', 'Adventure', 'Cruiser', 'Diamondhead', 'S1', 'S1 Lite'],
 };
 
+/**
+ * LOCAL DEVELOPMENT ONLY — do not run in production.
+ * In production, vehicle brands and models are managed via Admin → Vehicle Brands.
+ */
 const seedVehicleModels = async (): Promise<void> => {
-    logger.info('Starting vehicle brand and model seeding...');
+    if (process.env.NODE_ENV === 'production') {
+        logger.error(
+            'seed:vehicles is disabled in production. Add brands/models via the admin Vehicle Brands page.',
+        );
+        process.exit(1);
+    }
+
+    logger.info('Starting vehicle brand and model seeding (dev only)...');
 
     try {
         await connectDatabase();

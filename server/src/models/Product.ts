@@ -21,6 +21,8 @@ export interface IProductDocument extends Document {
   isSparePart?: boolean;
   batteryTypeId?: string;
   voltageV?: number;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   commissionPercentage?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -107,6 +109,14 @@ const productSchema = new Schema<IProductDocument>(
       type: Number,
       min: 1,
       max: 120,
+    },
+    vehicleBrandId: {
+      type: String,
+      index: true,
+    },
+    vehicleModelId: {
+      type: String,
+      index: true,
     },
     commissionPercentage: {
       type: Number,

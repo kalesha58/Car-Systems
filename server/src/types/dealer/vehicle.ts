@@ -12,6 +12,8 @@ export interface IDealerVehicle {
   vehicleType: VehicleType;
   brand: string;
   vehicleModel: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: VehicleAvailability;
@@ -31,8 +33,10 @@ export interface IDealerVehicle {
 
 export interface ICreateDealerVehicleRequest {
   vehicleType: VehicleType;
-  brand: string;
-  vehicleModel: string;
+  brand?: string;
+  vehicleModel?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: VehicleAvailability;
@@ -52,6 +56,8 @@ export interface IUpdateDealerVehicleRequest {
   vehicleType?: VehicleType;
   brand?: string;
   vehicleModel?: string;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
   year?: number;
   price?: number;
   availability?: VehicleAvailability;
@@ -80,6 +86,7 @@ export interface IGetDealerVehiclesRequest {
   limit?: number;
   vehicleType?: VehicleType;
   brand?: string;
+  vehicleBrandId?: string;
   availability?: VehicleAvailability;
   minPrice?: number;
   maxPrice?: number;

@@ -3,6 +3,7 @@ import { Product, IProductDocument } from '../../models/Product';
 import { Category } from '../../models/Category';
 import { BusinessRegistration } from '../../models/BusinessRegistration';
 import { resolveBatteryTypeName } from '../../utils/batteryProduct';
+import { resolveVehicleBrandModelNames } from '../../utils/vehicleProductMapping';
 import { NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 
@@ -12,6 +13,8 @@ export interface IGetUserProductsRequest {
   search?: string;
   category?: string;
   vehicleType?: 'Car' | 'Bike';
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
@@ -49,6 +52,10 @@ export interface IProductWithDealer {
   batteryTypeId?: string;
   batteryTypeName?: string;
   voltageV?: number;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
+  vehicleBrandName?: string;
+  vehicleModelName?: string;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -113,6 +120,10 @@ const productToIProductWithDealer = async (
 ): Promise<IProductWithDealer> => {
   const category = await getCategoryByIdSafe(productDoc.categoryId);
   const dealerInfo = await getDealerInfoByUserId(productDoc.userId);
+  const vehicleNames = await resolveVehicleBrandModelNames(
+    productDoc.vehicleBrandId,
+    productDoc.vehicleModelId,
+  );
 
   return {
     id: (productDoc._id as any).toString(),
@@ -135,6 +146,10 @@ const productToIProductWithDealer = async (
     batteryTypeId: productDoc.batteryTypeId,
     batteryTypeName: await resolveBatteryTypeName(productDoc.batteryTypeId),
     voltageV: productDoc.voltageV,
+    vehicleBrandId: productDoc.vehicleBrandId,
+    vehicleModelId: productDoc.vehicleModelId,
+    vehicleBrandName: vehicleNames.vehicleBrandName,
+    vehicleModelName: vehicleNames.vehicleModelName,
     dealer: dealerInfo || undefined,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -175,6 +190,14 @@ export const getAllProductsForUsers = async (
 
     if (query.vehicleType) {
       filter.vehicleType = query.vehicleType;
+    }
+
+    if (query.vehicleBrandId) {
+      filter.vehicleBrandId = query.vehicleBrandId;
+    }
+
+    if (query.vehicleModelId) {
+      filter.vehicleModelId = query.vehicleModelId;
     }
 
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {

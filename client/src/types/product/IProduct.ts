@@ -22,6 +22,10 @@ export interface IProduct {
   batteryTypeId?: string;
   batteryTypeName?: string;
   voltageV?: number;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
+  vehicleBrandName?: string;
+  vehicleModelName?: string;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -42,6 +46,8 @@ export interface IGetProductsRequest {
   search?: string;
   category?: string;
   vehicleType?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;

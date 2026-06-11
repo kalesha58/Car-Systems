@@ -9,6 +9,7 @@ import {
 import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
+import { resolveVehicleBrandModelStrings } from '../../utils/vehicleProductMapping';
 
 /**
  * Convert service document to dealer service interface
@@ -183,6 +184,14 @@ export const createDealerService = async (
       }
     }
 
+    let vehicleBrand = data.vehicleBrand?.trim();
+    let vehicleModel = data.vehicleModel?.trim();
+    if (data.vehicleBrandId) {
+      const resolved = await resolveVehicleBrandModelStrings(data.vehicleBrandId, data.vehicleModelId);
+      vehicleBrand = resolved.brand || vehicleBrand;
+      vehicleModel = resolved.vehicleModel || vehicleModel;
+    }
+
     const service = new Service({
       dealerId,
       name: data.name.trim(),
@@ -195,6 +204,12 @@ export const createDealerService = async (
       location: data.location,
       isActive: data.isActive !== undefined ? data.isActive : true,
       serviceType: data.serviceType,
+      vehicleType: data.vehicleType,
+      vehicleBrand,
+      vehicleModel,
+      vehicleBrandId: data.vehicleBrandId,
+      vehicleModelId: data.vehicleModelId,
+      serviceSubCategory: data.serviceSubCategory,
     });
 
     await service.save();
@@ -290,6 +305,34 @@ export const updateDealerService = async (
         throw new AppError('Images must be an array', 400);
       }
       service.images = data.images;
+    }
+
+    if (data.serviceType !== undefined) service.serviceType = data.serviceType;
+    if (data.vehicleType !== undefined) service.vehicleType = data.vehicleType;
+    if (data.serviceSubCategory !== undefined) service.serviceSubCategory = data.serviceSubCategory;
+    if (data.isActive !== undefined) service.isActive = data.isActive;
+
+    if (data.vehicleBrandId !== undefined) {
+      service.vehicleBrandId = data.vehicleBrandId || undefined;
+      if (data.vehicleBrandId) {
+        const resolved = await resolveVehicleBrandModelStrings(
+          data.vehicleBrandId,
+          data.vehicleModelId || service.vehicleModelId,
+        );
+        if (resolved.brand) service.vehicleBrand = resolved.brand;
+      }
+    } else if (data.vehicleBrand !== undefined) {
+      service.vehicleBrand = data.vehicleBrand?.trim();
+    }
+
+    if (data.vehicleModelId !== undefined) {
+      service.vehicleModelId = data.vehicleModelId || undefined;
+      if (data.vehicleModelId && service.vehicleBrandId) {
+        const resolved = await resolveVehicleBrandModelStrings(service.vehicleBrandId, data.vehicleModelId);
+        if (resolved.vehicleModel) service.vehicleModel = resolved.vehicleModel;
+      }
+    } else if (data.vehicleModel !== undefined) {
+      service.vehicleModel = data.vehicleModel?.trim();
     }
 
     await service.save();

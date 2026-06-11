@@ -39,6 +39,7 @@ const navItems: INavItem[] = [
   { path: '/reports', label: 'Reports', icon: BarChart3 },
   { path: '/settings', label: 'Categories', icon: Settings },
   { path: '/settings/battery-types', label: 'Battery Types', icon: Settings },
+  { path: '/settings/vehicle-brands', label: 'Vehicle Brands', icon: Settings },
   { path: '/moderation/reports', label: 'Moderation', icon: ShieldAlert },
   { path: '/coupons', label: 'Coupons', icon: Ticket },
   { path: '/service-bookings', label: 'Bookings', icon: CalendarCheck },

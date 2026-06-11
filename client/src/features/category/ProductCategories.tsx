@@ -39,7 +39,7 @@ import {startVoiceSearch, isVoiceSearchAvailable} from '@utils/voiceSearch';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
 import {useNavigation} from '@react-navigation/native';
-import {getSectionById, SPARE_PARTS_BRANDS} from '../../config/serviceCategoryConfig';
+import {getSectionById} from '../../config/serviceCategoryConfig';
 
 type ItemType = IProduct | IDealerVehicle | IService;
 
@@ -86,6 +86,7 @@ const ProductCategories = () => {
   // Spare parts vehicle type & brand filter
   const [sparePartsVehicleType, setSparePartsVehicleType] = useState<'Car' | 'Bike'>('Car');
   const [sparePartsBrand, setSparePartsBrand] = useState<string | null>(null);
+  const [sparePartsBrands, setSparePartsBrands] = useState<Array<{label: string; value: string}>>([]);
   const [dropdownOptions, setDropdownOptions] = useState<{
     vehicleTypes: Array<{label: string; value: string}>;
     brands: Array<{label: string; value: string}>;
@@ -101,6 +102,18 @@ const ProductCategories = () => {
     timestamp: number;
   }>>(new Map());
   const hasFailedAuthRef = useRef(false);
+
+  useEffect(() => {
+    const loadSparePartsBrands = async () => {
+      try {
+        const dropdownData = await getDropdownOptions(sparePartsVehicleType);
+        setSparePartsBrands(dropdownData.brands || []);
+      } catch {
+        setSparePartsBrands([]);
+      }
+    };
+    loadSparePartsBrands();
+  }, [sparePartsVehicleType]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -436,7 +449,7 @@ const ProductCategories = () => {
       queryParams.vehicleType = queryFilters.type;
     }
     if (queryFilters.brand) {
-      queryParams.brand = queryFilters.brand;
+      queryParams.vehicleBrandId = queryFilters.brand;
     }
     if (queryFilters.minPrice !== undefined) {
       queryParams.minPrice = queryFilters.minPrice;
@@ -922,7 +935,7 @@ const ProductCategories = () => {
     if (sparePartsBrand) {
       result = result.filter(item => {
         const p = item as IProduct;
-        return p.brand?.toLowerCase() === sparePartsBrand.toLowerCase();
+        return p.vehicleBrandId === sparePartsBrand;
       });
     }
     return result;
@@ -1240,7 +1253,7 @@ const ProductCategories = () => {
               </View>
               {/* Brand chips */}
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap: 6}}>
-                {[{value: null, label: 'All Brands'}, ...SPARE_PARTS_BRANDS[sparePartsVehicleType].map(b => ({value: b, label: b}))].map(opt => (
+                {[{value: null, label: 'All Brands'}, ...sparePartsBrands].map(opt => (
                   <TouchableOpacity
                     key={opt.label}
                     activeOpacity={0.75}

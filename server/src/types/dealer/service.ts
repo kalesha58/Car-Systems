@@ -23,6 +23,8 @@ export interface ICreateDealerServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
 }
 
@@ -44,6 +46,8 @@ export interface IUpdateDealerServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
   serviceSubCategory?: string;
 }
 

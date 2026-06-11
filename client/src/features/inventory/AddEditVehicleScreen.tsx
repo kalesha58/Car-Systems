@@ -66,8 +66,10 @@ const AddEditVehicleScreen: React.FC = () => {
   const vehicle = params.vehicle;
 
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike'>(vehicle?.vehicleType || 'Car');
-  const [brand, setBrand] = useState(vehicle?.brand || '');
-  const [vehicleModel, setVehicleModel] = useState(vehicle?.vehicleModel || '');
+  const [vehicleBrandId, setVehicleBrandId] = useState(vehicle?.vehicleBrandId || '');
+  const [vehicleModelId, setVehicleModelId] = useState(vehicle?.vehicleModelId || '');
+  const [catalogBrands, setCatalogBrands] = useState<IDropdownOption[]>([]);
+  const [catalogModels, setCatalogModels] = useState<IDropdownOption[]>([]);
   const [year, setYear] = useState(vehicle?.year?.toString() || '');
   const [price, setPrice] = useState(vehicle?.price?.toString() || '');
   const [availability, setAvailability] = useState<'available' | 'sold' | 'reserved'>(
@@ -94,7 +96,7 @@ const AddEditVehicleScreen: React.FC = () => {
 
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [dropdownType, setDropdownType] = useState<
-    'vehicleType' | 'availability' | 'fuelType' | 'transmission' | 'condition'
+    'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition'
   >('vehicleType');
   const [vehicleTypes, setVehicleTypes] = useState<IDropdownOption[]>([]);
   const [availabilityOptions, setAvailabilityOptions] = useState<IDropdownOption[]>([]);
@@ -106,6 +108,34 @@ const AddEditVehicleScreen: React.FC = () => {
   useEffect(() => {
     fetchDropdownOptions();
   }, []);
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        const options = await getDropdownOptions(vehicleType);
+        setCatalogBrands(options.brands || []);
+      } catch {
+        setCatalogBrands([]);
+      }
+    };
+    loadBrands();
+  }, [vehicleType]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!vehicleBrandId) {
+        setCatalogModels([]);
+        return;
+      }
+      try {
+        const options = await getDropdownOptions(vehicleType, vehicleBrandId);
+        setCatalogModels(options.models || []);
+      } catch {
+        setCatalogModels([]);
+      }
+    };
+    loadModels();
+  }, [vehicleType, vehicleBrandId]);
 
   const fetchDropdownOptions = async () => {
     try {
@@ -202,11 +232,11 @@ const AddEditVehicleScreen: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!brand.trim()) {
+    if (!vehicleBrandId) {
       showError(t('dealer.brandRequired'));
       return;
     }
-    if (!vehicleModel.trim()) {
+    if (!vehicleModelId) {
       showError(t('dealer.modelRequired'));
       return;
     }
@@ -231,8 +261,8 @@ const AddEditVehicleScreen: React.FC = () => {
       if (isEditMode && vehicle) {
         const updateData: IUpdateDealerVehicleRequest = {
           vehicleType,
-          brand: brand.trim(),
-          vehicleModel: vehicleModel.trim(),
+          vehicleBrandId,
+          vehicleModelId,
           year: parseInt(year),
           price: parseFloat(price),
           availability,
@@ -253,8 +283,8 @@ const AddEditVehicleScreen: React.FC = () => {
       } else {
         const createData: ICreateDealerVehicleRequest = {
           vehicleType,
-          brand: brand.trim(),
-          vehicleModel: vehicleModel.trim(),
+          vehicleBrandId,
+          vehicleModelId,
           year: parseInt(year),
           price: parseFloat(price),
           availability,
@@ -311,7 +341,7 @@ const AddEditVehicleScreen: React.FC = () => {
   };
 
   const openDropdown = (
-    type: 'vehicleType' | 'availability' | 'fuelType' | 'transmission' | 'condition',
+    type: 'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition',
   ) => {
     setDropdownType(type);
     setDropdownModalVisible(true);
@@ -321,6 +351,15 @@ const AddEditVehicleScreen: React.FC = () => {
     switch (dropdownType) {
       case 'vehicleType':
         setVehicleType(value as 'Car' | 'Bike');
+        setVehicleBrandId('');
+        setVehicleModelId('');
+        break;
+      case 'brand':
+        setVehicleBrandId(value);
+        setVehicleModelId('');
+        break;
+      case 'model':
+        setVehicleModelId(value);
         break;
       case 'availability':
         setAvailability(value as 'available' | 'sold' | 'reserved');
@@ -337,11 +376,17 @@ const AddEditVehicleScreen: React.FC = () => {
     }
   };
 
-  const getSelectedLabel = (type?: 'vehicleType' | 'availability' | 'fuelType' | 'transmission' | 'condition') => {
+  const getSelectedLabel = (
+    type?: 'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition',
+  ) => {
     const currentType = type || dropdownType;
     switch (currentType) {
       case 'vehicleType':
         return vehicleTypes.find(v => v.value === vehicleType)?.label || vehicleType || t('dealer.selectVehicleType');
+      case 'brand':
+        return catalogBrands.find(b => b.value === vehicleBrandId)?.label || t('dealer.selectCompatibleBrand');
+      case 'model':
+        return catalogModels.find(m => m.value === vehicleModelId)?.label || t('dealer.selectCompatibleModel');
       case 'availability':
         return (
           availabilityOptions.find(a => a.value === availability)?.label ||
@@ -367,6 +412,10 @@ const AddEditVehicleScreen: React.FC = () => {
     switch (dropdownType) {
       case 'vehicleType':
         return vehicleTypes;
+      case 'brand':
+        return catalogBrands;
+      case 'model':
+        return catalogModels;
       case 'availability':
         return availabilityOptions;
       case 'fuelType':
@@ -384,6 +433,10 @@ const AddEditVehicleScreen: React.FC = () => {
     switch (dropdownType) {
       case 'vehicleType':
         return vehicleType;
+      case 'brand':
+        return vehicleBrandId;
+      case 'model':
+        return vehicleModelId;
       case 'availability':
         return availability;
       case 'fuelType':
@@ -401,6 +454,10 @@ const AddEditVehicleScreen: React.FC = () => {
     switch (dropdownType) {
       case 'vehicleType':
         return t('dealer.selectVehicleType');
+      case 'brand':
+        return t('dealer.selectCompatibleBrand');
+      case 'model':
+        return t('dealer.selectCompatibleModel');
       case 'availability':
         return t('dealer.selectAvailability');
       case 'fuelType':
@@ -416,8 +473,8 @@ const AddEditVehicleScreen: React.FC = () => {
 
   const isSubmitting = isLoading || isUploadingImages;
   const isFormValid =
-    brand.trim().length > 0 &&
-    vehicleModel.trim().length > 0 &&
+    vehicleBrandId.length > 0 &&
+    vehicleModelId.length > 0 &&
     year &&
     parseInt(year) >= 1900 &&
     price &&
@@ -704,31 +761,33 @@ const AddEditVehicleScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder={t('dealer.enterBrand')}
-                  placeholderTextColor={colors.disabled}
-                  value={brand}
-                  onChangeText={setBrand}
-                />
-              </View>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => openDropdown('brand')}
+                activeOpacity={0.75}>
+                <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('brand')}</CustomText>
+                <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+              </TouchableOpacity>
             </View>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>
                 {t('dealer.model')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder={t('dealer.enterModel')}
-                  placeholderTextColor={colors.disabled}
-                  value={vehicleModel}
-                  onChangeText={setVehicleModel}
-                />
-              </View>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => openDropdown('model')}
+                activeOpacity={0.75}
+                disabled={!vehicleBrandId}>
+                <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('model')}</CustomText>
+                <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+              </TouchableOpacity>
             </View>
           </View>
+          {catalogBrands.length === 0 && (
+            <CustomText style={{fontSize: RFValue(10), opacity: 0.6, marginBottom: 8}}>
+              {t('dealer.noBrandsConfigured')}
+            </CustomText>
+          )}
 
           <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>

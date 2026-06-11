@@ -19,6 +19,11 @@ export interface IDealerProduct {
   batteryTypeId?: string;
   batteryTypeName?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
+  vehicleBrandName?: string;
+  vehicleModelName?: string;
   status?: ProductStatus;
   createdAt: string;
   updatedAt: string;
@@ -40,6 +45,9 @@ export interface ICreateDealerProductRequest {
   tags?: string[];
   batteryTypeId?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -58,6 +66,9 @@ export interface IUpdateDealerProductRequest {
   tags?: string[];
   batteryTypeId?: string | null;
   voltageV?: number | null;
+  isSparePart?: boolean;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
   status?: ProductStatus;
 }
 
@@ -78,6 +89,8 @@ export interface IGetDealerProductsRequest {
   limit?: number;
   category?: string;
   vehicleType?: 'Car' | 'Bike';
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   status?: ProductStatus;
   search?: string;
   minPrice?: number;

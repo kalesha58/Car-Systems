@@ -36,7 +36,6 @@ export interface IServiceSection {
 
 export interface IServiceCategoriesResponse {
   sections: IServiceSection[];
-  sparePartsBrands: { Car: string[]; Bike: string[] };
 }
 
 export const getServiceCategories = async (): Promise<IServiceCategoriesResponse> => {

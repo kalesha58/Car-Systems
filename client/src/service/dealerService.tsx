@@ -494,6 +494,8 @@ export interface ICreateDealerProductRequest {
   deliveryTimeMinutes?: number;
   batteryTypeId?: string;
   voltageV?: number;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -515,6 +517,8 @@ export interface IUpdateDealerProductRequest {
   deliveryTimeMinutes?: number;
   batteryTypeId?: string | null;
   voltageV?: number | null;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
 }
 
 export interface IDealerProductResponse {
@@ -562,8 +566,10 @@ export const deleteDealerProduct = async (productId: string): Promise<void> => {
 // Vehicle CRUD operations
 export interface ICreateDealerVehicleRequest {
   vehicleType: 'Car' | 'Bike';
-  brand: string;
-  vehicleModel: string;
+  brand?: string;
+  vehicleModel?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: 'available' | 'sold' | 'reserved';
@@ -583,6 +589,8 @@ export interface IUpdateDealerVehicleRequest {
   vehicleType?: 'Car' | 'Bike';
   brand?: string;
   vehicleModel?: string;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
   year?: number;
   price?: number;
   availability?: 'available' | 'sold' | 'reserved';
@@ -659,6 +667,8 @@ export interface ICreateDealerServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
@@ -683,6 +693,8 @@ export interface IUpdateDealerServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;

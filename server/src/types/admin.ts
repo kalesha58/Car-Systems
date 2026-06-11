@@ -165,6 +165,11 @@ export interface IProduct {
   batteryTypeId?: string;
   batteryTypeName?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
+  vehicleBrandName?: string;
+  vehicleModelName?: string;
   userId: string;
   createdAt: string;
 }
@@ -193,6 +198,9 @@ export interface ICreateProductRequest {
   specifications?: Record<string, any>;
   batteryTypeId?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
 }
 
 export interface IUpdateProductRequest {
@@ -205,6 +213,9 @@ export interface IUpdateProductRequest {
   vehicleType?: string;
   batteryTypeId?: string | null;
   voltageV?: number | null;
+  isSparePart?: boolean;
+  vehicleBrandId?: string | null;
+  vehicleModelId?: string | null;
 }
 
 export interface IUpdateProductStockRequest {

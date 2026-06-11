@@ -451,6 +451,48 @@ export const ProductDetailsPage = () => {
                 </div>
               )}
 
+              {product.vehicleBrandName && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: theme.colors.textSecondary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: theme.spacing.xs,
+                    }}
+                  >
+                    Compatible Brand
+                  </label>
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500', color: theme.colors.text }}>
+                    {product.vehicleBrandName}
+                  </p>
+                </div>
+              )}
+
+              {product.vehicleModelName && (
+                <div>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      color: theme.colors.textSecondary,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: theme.spacing.xs,
+                    }}
+                  >
+                    Compatible Model
+                  </label>
+                  <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: '500', color: theme.colors.text }}>
+                    {product.vehicleModelName}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label
                   style={{

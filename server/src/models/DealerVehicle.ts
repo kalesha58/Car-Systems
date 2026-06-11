@@ -11,6 +11,8 @@ export interface IDealerVehicleDocument extends Document {
   vehicleType: VehicleType;
   brand: string;
   vehicleModel: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: VehicleAvailability;
@@ -48,6 +50,14 @@ const dealerVehicleSchema = new Schema<IDealerVehicleDocument>(
       type: String,
       required: true,
       trim: true,
+    },
+    vehicleBrandId: {
+      type: String,
+      index: true,
+    },
+    vehicleModelId: {
+      type: String,
+      index: true,
     },
     year: {
       type: Number,

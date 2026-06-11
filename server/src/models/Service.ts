@@ -19,6 +19,8 @@ export interface IServiceDocument extends Document {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
@@ -104,6 +106,14 @@ const serviceSchema = new Schema<IServiceDocument>(
     vehicleBrand: {
       type: String,
       trim: true,
+    },
+    vehicleBrandId: {
+      type: String,
+      index: true,
+    },
+    vehicleModelId: {
+      type: String,
+      index: true,
     },
     serviceSubCategory: {
       type: String,

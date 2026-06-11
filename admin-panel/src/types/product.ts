@@ -18,6 +18,11 @@ export interface IProduct {
   batteryTypeId?: string;
   batteryTypeName?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
+  vehicleBrandName?: string;
+  vehicleModelName?: string;
   createdDate: string;
 }
 
@@ -38,5 +43,8 @@ export interface IProductFormData {
   commissionPercentage?: number;
   batteryTypeId?: string;
   voltageV?: number;
+  isSparePart?: boolean;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
 }
 

@@ -245,7 +245,9 @@ export const getAllDealerVehiclesForUsers = async (
       filter.vehicleType = query.vehicleType;
     }
 
-    if (query.brand) {
+    if (query.vehicleBrandId) {
+      filter.vehicleBrandId = query.vehicleBrandId;
+    } else if (query.brand) {
       filter.brand = { $regex: query.brand, $options: 'i' };
     }
 

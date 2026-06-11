@@ -21,6 +21,8 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
+import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
+import {getDropdownOptions} from '@service/dropdownService';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {useTranslation} from 'react-i18next';
@@ -111,12 +113,40 @@ const AddEditServiceScreen: React.FC = () => {
   const [isActive, setIsActive] = useState(service?.isActive !== undefined ? service.isActive : true);
   const [serviceType, setServiceType] = useState<ServiceType | undefined>(service?.serviceType as ServiceType | undefined);
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | undefined>(service?.vehicleType);
-  const [vehicleModel, setVehicleModel] = useState(service?.vehicleModel || '');
-  const [vehicleBrand, setVehicleBrand] = useState(service?.vehicleBrand || '');
+  const [vehicleBrandId, setVehicleBrandId] = useState((service as any)?.vehicleBrandId || '');
+  const [vehicleModelId, setVehicleModelId] = useState((service as any)?.vehicleModelId || '');
+  const [catalogBrands, setCatalogBrands] = useState<IDropdownOption[]>([]);
+  const [catalogModels, setCatalogModels] = useState<IDropdownOption[]>([]);
+  const [catalogDropdownVisible, setCatalogDropdownVisible] = useState(false);
+  const [catalogDropdownType, setCatalogDropdownType] = useState<'brand' | 'model'>('brand');
   const [serviceSubCategory, setServiceSubCategory] = useState(service?.serviceSubCategory || '');
   const [servicePackage, setServicePackage] = useState<'premium' | 'basic'>(service?.servicePackage || 'basic');
   const [slotBookingEnabled, setSlotBookingEnabled] = useState(service?.slotBookingEnabled || false);
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(service?.slotDurationMinutes?.toString() || '30');
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      if (serviceType !== 'bike_automobile') {
+        setCatalogBrands([]);
+        return;
+      }
+      const options = await getDropdownOptions('Bike');
+      setCatalogBrands(options.brands || []);
+    };
+    loadBrands().catch(() => setCatalogBrands([]));
+  }, [serviceType]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!vehicleBrandId) {
+        setCatalogModels([]);
+        return;
+      }
+      const options = await getDropdownOptions('Bike', vehicleBrandId);
+      setCatalogModels(options.models || []);
+    };
+    loadModels().catch(() => setCatalogModels([]));
+  }, [vehicleBrandId]);
   const [location, setLocation] = useState<ILocationData | null>(
     service?.location
       ? {
@@ -261,8 +291,9 @@ const AddEditServiceScreen: React.FC = () => {
           isActive,
           serviceType,
           vehicleType,
-          vehicleModel: vehicleModel.trim() || undefined,
-          vehicleBrand: vehicleBrand.trim() || undefined,
+          vehicleType: 'Bike',
+          vehicleBrandId: vehicleBrandId || undefined,
+          vehicleModelId: vehicleModelId || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
           servicePackage,
           slotBookingEnabled,
@@ -290,8 +321,9 @@ const AddEditServiceScreen: React.FC = () => {
           isActive: true, // New services are active by default
           serviceType,
           vehicleType,
-          vehicleModel: vehicleModel.trim() || undefined,
-          vehicleBrand: vehicleBrand.trim() || undefined,
+          vehicleType: 'Bike',
+          vehicleBrandId: vehicleBrandId || undefined,
+          vehicleModelId: vehicleModelId || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
           servicePackage,
           slotBookingEnabled,
@@ -879,28 +911,33 @@ const AddEditServiceScreen: React.FC = () => {
             <>
               <View style={styles.section}>
                 <CustomText style={styles.label}>{t('dealer.vehicleBrand')}</CustomText>
-                <View style={styles.textInputContainer}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={t('dealer.enterVehicleBrand')}
-                    placeholderTextColor={colors.disabled}
-                    value={vehicleBrand}
-                    onChangeText={setVehicleBrand}
-                  />
-                </View>
+                <TouchableOpacity
+                  style={styles.textInputContainer}
+                  onPress={() => {
+                    setCatalogDropdownType('brand');
+                    setCatalogDropdownVisible(true);
+                  }}>
+                  <CustomText style={styles.textInput}>
+                    {catalogBrands.find(b => b.value === vehicleBrandId)?.label ||
+                      t('dealer.selectCompatibleBrand')}
+                  </CustomText>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.section}>
                 <CustomText style={styles.label}>{t('dealer.vehicleModel')}</CustomText>
-                <View style={styles.textInputContainer}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={t('dealer.enterVehicleModel')}
-                    placeholderTextColor={colors.disabled}
-                    value={vehicleModel}
-                    onChangeText={setVehicleModel}
-                  />
-                </View>
+                <TouchableOpacity
+                  style={styles.textInputContainer}
+                  onPress={() => {
+                    setCatalogDropdownType('model');
+                    setCatalogDropdownVisible(true);
+                  }}
+                  disabled={!vehicleBrandId}>
+                  <CustomText style={styles.textInput}>
+                    {catalogModels.find(m => m.value === vehicleModelId)?.label ||
+                      t('dealer.selectCompatibleModel')}
+                  </CustomText>
+                </TouchableOpacity>
               </View>
             </>
           )}
@@ -1113,6 +1150,26 @@ const AddEditServiceScreen: React.FC = () => {
           </View>
         )}
       </View>
+
+      <CustomDropdownModal
+        visible={catalogDropdownVisible}
+        onClose={() => setCatalogDropdownVisible(false)}
+        title={
+          catalogDropdownType === 'brand'
+            ? t('dealer.selectCompatibleBrand')
+            : t('dealer.selectCompatibleModel')
+        }
+        options={catalogDropdownType === 'brand' ? catalogBrands : catalogModels}
+        selectedValue={catalogDropdownType === 'brand' ? vehicleBrandId : vehicleModelId}
+        onSelect={(value) => {
+          if (catalogDropdownType === 'brand') {
+            setVehicleBrandId(value);
+            setVehicleModelId('');
+          } else {
+            setVehicleModelId(value);
+          }
+        }}
+      />
     </View>
   );
 };

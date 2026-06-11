@@ -196,6 +196,7 @@ export const getAllDealerVehiclesForUsersController = async (
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
       vehicleType: req.query.vehicleType as 'Car' | 'Bike' | undefined,
       brand: req.query.brand as string | undefined,
+      vehicleBrandId: req.query.vehicleBrandId as string | undefined,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       minYear: req.query.minYear ? parseInt(req.query.minYear as string, 10) : undefined,

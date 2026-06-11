@@ -149,42 +149,6 @@ export const SERVICE_SECTIONS: IServiceSection[] = [
   },
 ];
 
-/**
- * Spare parts brand list — static curated list for Indian market.
- */
-export const SPARE_PARTS_BRANDS: Record<'Car' | 'Bike', string[]> = {
-  Car: [
-    'Maruti Suzuki',
-    'Hyundai',
-    'Tata',
-    'Mahindra',
-    'Toyota',
-    'Honda',
-    'Kia',
-    'Renault',
-    'Volkswagen',
-    'Skoda',
-    'Ford',
-    'MG',
-    'Jeep',
-    'Nissan',
-    'Others',
-  ],
-  Bike: [
-    'Hero MotoCorp',
-    'Honda',
-    'Bajaj',
-    'TVS',
-    'Royal Enfield',
-    'Yamaha',
-    'Suzuki',
-    'KTM',
-    'Kawasaki',
-    'Jawa',
-    'Others',
-  ],
-};
-
 /** Get section config by category id (matches ICategoryItem._id) */
 export const getSectionById = (id: string): IServiceSection | undefined =>
   SERVICE_SECTIONS.find(s => s.id === id);
