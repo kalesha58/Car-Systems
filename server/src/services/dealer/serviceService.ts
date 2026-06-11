@@ -32,6 +32,11 @@ const serviceToDealerService = (doc: IServiceDocument): IDealerService => {
     vehicleModel: doc.vehicleModel,
     vehicleBrand: doc.vehicleBrand,
     serviceSubCategory: doc.serviceSubCategory,
+    vehicleBrandId: doc.vehicleBrandId,
+    vehicleModelId: doc.vehicleModelId,
+    servicePackage: doc.servicePackage,
+    slotBookingEnabled: doc.slotBookingEnabled,
+    slotDurationMinutes: doc.slotDurationMinutes,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -210,6 +215,9 @@ export const createDealerService = async (
       vehicleBrandId: data.vehicleBrandId,
       vehicleModelId: data.vehicleModelId,
       serviceSubCategory: data.serviceSubCategory,
+      servicePackage: data.servicePackage,
+      slotBookingEnabled: data.slotBookingEnabled,
+      slotDurationMinutes: data.slotDurationMinutes,
     });
 
     await service.save();
@@ -310,6 +318,9 @@ export const updateDealerService = async (
     if (data.serviceType !== undefined) service.serviceType = data.serviceType;
     if (data.vehicleType !== undefined) service.vehicleType = data.vehicleType;
     if (data.serviceSubCategory !== undefined) service.serviceSubCategory = data.serviceSubCategory;
+    if (data.servicePackage !== undefined) service.servicePackage = data.servicePackage;
+    if (data.slotBookingEnabled !== undefined) service.slotBookingEnabled = data.slotBookingEnabled;
+    if (data.slotDurationMinutes !== undefined) service.slotDurationMinutes = data.slotDurationMinutes;
     if (data.isActive !== undefined) service.isActive = data.isActive;
 
     if (data.vehicleBrandId !== undefined) {

@@ -26,6 +26,9 @@ export interface ICreateDealerServiceRequest {
   vehicleBrandId?: string;
   vehicleModelId?: string;
   serviceSubCategory?: string;
+  servicePackage?: 'premium' | 'basic';
+  slotBookingEnabled?: boolean;
+  slotDurationMinutes?: number;
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -49,6 +52,9 @@ export interface IUpdateDealerServiceRequest {
   vehicleBrandId?: string | null;
   vehicleModelId?: string | null;
   serviceSubCategory?: string;
+  servicePackage?: 'premium' | 'basic';
+  slotBookingEnabled?: boolean;
+  slotDurationMinutes?: number;
 }
 
 export interface IUpdateServiceStatusRequest {

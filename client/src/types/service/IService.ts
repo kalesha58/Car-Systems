@@ -21,7 +21,11 @@ export interface IService {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
+  servicePackage?: 'premium' | 'basic';
+  slotDurationMinutes?: number;
   dealer?: IDealerInfo;
   slotBookingEnabled?: boolean;
   createdAt: string;

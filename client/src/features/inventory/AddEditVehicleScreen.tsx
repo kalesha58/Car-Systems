@@ -21,7 +21,7 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
-import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
+import CustomDropdownBottomSheet, {IDropdownOption} from '@components/ui/CustomDropdownBottomSheet';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {useTranslation} from 'react-i18next';
@@ -96,7 +96,7 @@ const AddEditVehicleScreen: React.FC = () => {
 
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [dropdownType, setDropdownType] = useState<
-    'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition'
+    'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition' | 'features'
   >('vehicleType');
   const [vehicleTypes, setVehicleTypes] = useState<IDropdownOption[]>([]);
   const [availabilityOptions, setAvailabilityOptions] = useState<IDropdownOption[]>([]);
@@ -341,7 +341,7 @@ const AddEditVehicleScreen: React.FC = () => {
   };
 
   const openDropdown = (
-    type: 'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition',
+    type: 'vehicleType' | 'brand' | 'model' | 'availability' | 'fuelType' | 'transmission' | 'condition' | 'features',
   ) => {
     setDropdownType(type);
     setDropdownModalVisible(true);
@@ -349,11 +349,14 @@ const AddEditVehicleScreen: React.FC = () => {
 
   const handleDropdownSelect = (value: string) => {
     switch (dropdownType) {
-      case 'vehicleType':
-        setVehicleType(value as 'Car' | 'Bike');
+      case 'vehicleType': {
+        const nextType = value as 'Car' | 'Bike';
+        setVehicleType(nextType);
         setVehicleBrandId('');
         setVehicleModelId('');
+        setFeatures(prev => prev.filter(f => COMMON_FEATURES[nextType].includes(f)));
         break;
+      }
       case 'brand':
         setVehicleBrandId(value);
         setVehicleModelId('');
@@ -408,6 +411,16 @@ const AddEditVehicleScreen: React.FC = () => {
     }
   };
 
+  const getFeaturesDisplayLabel = () => {
+    if (features.length === 0) {
+      return t('dealer.selectFeatures');
+    }
+    if (features.length <= 2) {
+      return features.join(', ');
+    }
+    return t('dealer.featuresSelected', {count: features.length});
+  };
+
   const getCurrentDropdownOptions = () => {
     switch (dropdownType) {
       case 'vehicleType':
@@ -424,6 +437,8 @@ const AddEditVehicleScreen: React.FC = () => {
         return transmissionOptions;
       case 'condition':
         return conditionOptions;
+      case 'features':
+        return COMMON_FEATURES[vehicleType].map(feature => ({label: feature, value: feature}));
       default:
         return [];
     }
@@ -466,6 +481,8 @@ const AddEditVehicleScreen: React.FC = () => {
         return t('dealer.selectTransmission');
       case 'condition':
         return t('dealer.selectCondition');
+      case 'features':
+        return t('dealer.selectFeatures');
       default:
         return t('dealer.selectOption');
     }
@@ -482,13 +499,7 @@ const AddEditVehicleScreen: React.FC = () => {
     imageUris.length > 0 &&
     !isSubmitting;
 
-  const cardShadow = {
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: isDark ? 0.35 : 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  };
+  const softBorder = `${colors.border}99`;
 
   const styles = StyleSheet.create({
     container: {
@@ -504,9 +515,23 @@ const AddEditVehicleScreen: React.FC = () => {
       backgroundColor: colors.cardBackground,
       borderRadius: RFValue(14),
       padding: screenWidth * 0.04,
-      borderWidth: isDark ? 1 : 0,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderWidth: 1,
+      borderColor: softBorder,
+    },
+    sectionGroup: {
+      marginBottom: screenHeight * 0.024,
+    },
+    sectionHeader: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+      color: colors.text,
+      marginBottom: screenHeight * 0.014,
+      letterSpacing: 0.3,
+    },
+    fieldDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: softBorder,
+      marginVertical: screenHeight * 0.018,
     },
     row: {
       flexDirection: 'row',
@@ -517,27 +542,31 @@ const AddEditVehicleScreen: React.FC = () => {
       minWidth: 0,
     },
     section: {
-      marginBottom: screenHeight * 0.022,
+      marginBottom: screenHeight * 0.016,
     },
     label: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
       color: colors.textSecondary,
-      marginBottom: screenHeight * 0.01,
+      marginBottom: screenHeight * 0.008,
       letterSpacing: 0.2,
     },
     required: {
       color: colors.error,
     },
-    textInputContainer: {
+    field: {
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
+      paddingVertical: screenHeight * 0.013,
+      minHeight: screenHeight * 0.052,
+    },
+    dropdownField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     textInput: {
       fontSize: RFValue(11),
@@ -550,19 +579,6 @@ const AddEditVehicleScreen: React.FC = () => {
       textAlignVertical: 'top',
       paddingTop: 2,
     },
-    dropdownButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.014,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
-    },
     dropdownButtonText: {
       fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
@@ -573,22 +589,15 @@ const AddEditVehicleScreen: React.FC = () => {
     dropdownPlaceholder: {
       color: colors.disabled,
     },
-    switchContainer: {
+    switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
     },
     switchLabel: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      fontFamily: Fonts.Medium,
       color: colors.text,
       flex: 1,
       marginRight: screenWidth * 0.02,
@@ -598,45 +607,17 @@ const AddEditVehicleScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.016,
-      ...cardShadow,
     },
     buttonText: {
       fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
       color: colors.winterBlueDark,
       marginLeft: screenWidth * 0.025,
-    },
-    chipGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: screenWidth * 0.025,
-      marginTop: screenHeight * 0.012,
-    },
-    chipPill: {
-      paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.012,
-      borderRadius: RFValue(10),
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      ...cardShadow,
-    },
-    chipPillSelected: {
-      borderColor: colors.secondary,
-      backgroundColor: colors.secondary + '22',
-    },
-    chipPillText: {
-      fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
-      color: colors.text,
-    },
-    chipPillTextSelected: {
-      color: colors.secondary,
     },
     imagesContainer: {
       flexDirection: 'row',
@@ -648,11 +629,10 @@ const AddEditVehicleScreen: React.FC = () => {
       position: 'relative',
       width: screenWidth * 0.26,
       height: screenWidth * 0.26,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderColor: softBorder,
     },
     image: {
       width: '100%',
@@ -681,11 +661,6 @@ const AddEditVehicleScreen: React.FC = () => {
       paddingBottom: screenHeight * 0.028,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
-      shadowColor: colors.black,
-      shadowOffset: {width: 0, height: -4},
-      shadowOpacity: isDark ? 0.4 : 0.12,
-      shadowRadius: 12,
-      elevation: 12,
     },
     editDeleteRow: {
       flexDirection: 'row',
@@ -716,11 +691,6 @@ const AddEditVehicleScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-      shadowColor: colors.error,
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.35,
-      shadowRadius: 6,
-      elevation: 4,
     },
     deleteButtonHalf: {
       flex: 1,
@@ -736,14 +706,6 @@ const AddEditVehicleScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-    },
-    primaryButtonShadow: {
-      shadowColor: colors.secondary,
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.35,
-      shadowRadius: 8,
-      elevation: 6,
-      alignSelf: 'stretch',
     },
     fullWidthPrimary: {
       width: '100%',
@@ -770,12 +732,14 @@ const AddEditVehicleScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.formCard}>
-          <View style={styles.section}>
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionBasicInfo')}</CustomText>
+            <View style={styles.section}>
             <CustomText style={styles.label}>
               {t('dealer.vehicleType')} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             <TouchableOpacity
-              style={styles.dropdownButton}
+              style={[styles.field, styles.dropdownField]}
               onPress={() => openDropdown('vehicleType')}
               activeOpacity={0.75}>
               <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('vehicleType')}</CustomText>
@@ -789,7 +753,7 @@ const AddEditVehicleScreen: React.FC = () => {
                 {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
               <TouchableOpacity
-                style={styles.dropdownButton}
+                style={[styles.field, styles.dropdownField]}
                 onPress={() => openDropdown('brand')}
                 activeOpacity={0.75}>
                 <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('brand')}</CustomText>
@@ -801,7 +765,7 @@ const AddEditVehicleScreen: React.FC = () => {
                 {t('dealer.model')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
               <TouchableOpacity
-                style={styles.dropdownButton}
+                style={[styles.field, styles.dropdownField]}
                 onPress={() => openDropdown('model')}
                 activeOpacity={0.75}
                 disabled={!vehicleBrandId}>
@@ -815,13 +779,18 @@ const AddEditVehicleScreen: React.FC = () => {
               {t('dealer.noBrandsConfigured')}
             </CustomText>
           )}
+          </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionPricing')}</CustomText>
           <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>
                 {t('dealer.year')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterYear')}
@@ -836,7 +805,7 @@ const AddEditVehicleScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 {t('dealer.price')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterPrice')}
@@ -854,18 +823,23 @@ const AddEditVehicleScreen: React.FC = () => {
               {t('dealer.availability')} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
             <TouchableOpacity
-              style={styles.dropdownButton}
+              style={[styles.field, styles.dropdownField]}
               onPress={() => openDropdown('availability')}
               activeOpacity={0.75}>
               <CustomText style={styles.dropdownButtonText}>{getSelectedLabel('availability')}</CustomText>
               <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
             </TouchableOpacity>
           </View>
+          </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionClassification')}</CustomText>
           <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>{t('dealer.numberPlate')}</CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterNumberPlate')}
@@ -877,7 +851,7 @@ const AddEditVehicleScreen: React.FC = () => {
             </View>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>{t('dealer.mileage')}</CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterMileage')}
@@ -892,7 +866,7 @@ const AddEditVehicleScreen: React.FC = () => {
 
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.color')}</CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={styles.field}>
               <TextInput
                 style={styles.textInput}
                 placeholder={t('dealer.enterColor')}
@@ -906,7 +880,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.fuelType')}</CustomText>
             <TouchableOpacity
-              style={styles.dropdownButton}
+              style={[styles.field, styles.dropdownField]}
               onPress={() => openDropdown('fuelType')}
               activeOpacity={0.75}>
               <CustomText
@@ -923,7 +897,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.transmission')}</CustomText>
             <TouchableOpacity
-              style={styles.dropdownButton}
+              style={[styles.field, styles.dropdownField]}
               onPress={() => openDropdown('transmission')}
               activeOpacity={0.75}>
               <CustomText
@@ -940,7 +914,7 @@ const AddEditVehicleScreen: React.FC = () => {
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.condition')}</CustomText>
             <TouchableOpacity
-              style={styles.dropdownButton}
+              style={[styles.field, styles.dropdownField]}
               onPress={() => openDropdown('condition')}
               activeOpacity={0.75}>
               <CustomText
@@ -955,7 +929,7 @@ const AddEditVehicleScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
               <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
               <Switch
                 value={allowTestDrive}
@@ -967,41 +941,30 @@ const AddEditVehicleScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <CustomText style={styles.label}>Features</CustomText>
-            <View style={styles.chipGrid}>
-              {COMMON_FEATURES[vehicleType].map(feature => {
-                const isSelected = features.includes(feature);
-                return (
-                  <TouchableOpacity
-                    key={feature}
-                    style={[
-                      styles.chipPill,
-                      isSelected && styles.chipPillSelected,
-                    ]}
-                    onPress={() => {
-                      if (isSelected) {
-                        setFeatures(features.filter(f => f !== feature));
-                      } else {
-                        setFeatures([...features, feature]);
-                      }
-                    }}
-                    activeOpacity={0.75}>
-                    <CustomText
-                      style={[
-                        styles.chipPillText,
-                        isSelected && styles.chipPillTextSelected,
-                      ]}>
-                      {feature}
-                    </CustomText>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <CustomText style={styles.label}>{t('dealer.features')}</CustomText>
+            <TouchableOpacity
+              style={[styles.field, styles.dropdownField]}
+              onPress={() => openDropdown('features')}
+              activeOpacity={0.75}>
+              <CustomText
+                style={[
+                  styles.dropdownButtonText,
+                  ...(features.length === 0 ? [styles.dropdownPlaceholder] : []),
+                ]}>
+                {getFeaturesDisplayLabel()}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
           </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={[styles.sectionGroup, {marginBottom: 0}]}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionDetails')}</CustomText>
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={styles.field}>
               <TextInput
                 style={[styles.textInput, styles.textInputMultiline]}
                 placeholder={t('dealer.enterDescription')}
@@ -1038,17 +1001,14 @@ const AddEditVehicleScreen: React.FC = () => {
               </ScrollView>
             )}
           </View>
+          </View>
         </View>
       </ScrollView>
 
       <View style={[styles.stickyButtonContainer, {paddingBottom: Math.max(insets.bottom, screenHeight * 0.028)}]}>
         {isEditMode ? (
           <View style={styles.editDeleteRow}>
-            <View
-              style={[
-                styles.editButton,
-                (isFormValid || isSubmitting) && styles.primaryButtonShadow,
-              ]}>
+            <View style={styles.editButton}>
               <TouchableOpacity
                 style={styles.submitButtonTouchable}
                 onPress={handleSubmit}
@@ -1081,7 +1041,7 @@ const AddEditVehicleScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={[styles.primaryButtonShadow, styles.fullWidthPrimary]}>
+          <View style={styles.fullWidthPrimary}>
             <TouchableOpacity
               style={styles.submitButtonTouchable}
               onPress={handleSubmit}
@@ -1105,14 +1065,17 @@ const AddEditVehicleScreen: React.FC = () => {
         )}
       </View>
 
-      <CustomDropdownModal
+      <CustomDropdownBottomSheet
         visible={dropdownModalVisible}
         onClose={() => setDropdownModalVisible(false)}
         options={getCurrentDropdownOptions()}
-        selectedValue={getSelectedValue()}
-        onSelect={handleDropdownSelect}
         title={getDropdownTitle()}
         searchable={true}
+        multiSelect={dropdownType === 'features'}
+        selectedValue={dropdownType !== 'features' ? getSelectedValue() : undefined}
+        onSelect={dropdownType !== 'features' ? handleDropdownSelect : undefined}
+        selectedValues={dropdownType === 'features' ? features : undefined}
+        onSelectMultiple={dropdownType === 'features' ? setFeatures : undefined}
       />
     </View>
   );

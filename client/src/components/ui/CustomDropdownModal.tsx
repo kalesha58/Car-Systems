@@ -10,16 +10,14 @@ import {
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenWidth, screenHeight} from '@utils/Scaling';
-import {Fonts, Colors} from '@utils/Constants';
+import {Fonts} from '@utils/Constants';
 import CustomText from './CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
+import {IDropdownOption} from './CustomDropdownBottomSheet';
 
-export interface IDropdownOption {
-  label: string;
-  value: string;
-}
+export type {IDropdownOption};
 
 interface ICustomDropdownModalProps {
   visible: boolean;

@@ -21,7 +21,7 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
-import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
+import CustomDropdownBottomSheet, {IDropdownOption} from '@components/ui/CustomDropdownBottomSheet';
 import {getDropdownOptions} from '@service/dropdownService';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
@@ -39,10 +39,14 @@ import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {IService} from '../../types/service/IService';
 import {SERVICE_SECTIONS} from '@config/serviceCategoryConfig';
+import {
+  DealerServiceType,
+  getAllowedDealerServiceTypes,
+} from '@config/dealerServiceTypeConfig';
 
 const MAX_IMAGES = 8;
 
-type ServiceType = 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'tire_service' | 'battery_service' | 'general';
+type ServiceType = DealerServiceType;
 
 const SERVICE_SUB_CATEGORIES: Record<string, string[]> = {
   car_wash: ['Interior Wash', 'Exterior Wash', 'Full Body', 'Foam Wash', 'Dry Clean'],
@@ -61,28 +65,6 @@ interface RouteParams {
   service?: IService;
 }
 
-const getAllowedServiceTypes = (businessType: string | undefined): ServiceType[] => {
-  if (!businessType) {
-    return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
-  }
-
-  switch (businessType) {
-    case 'Vehicle Wash Station':
-      return ['car_wash'];
-    case 'Detailing Center':
-      return ['car_detailing'];
-    case 'Bike Dealer':
-      return ['bike_automobile', 'tire_service', 'battery_service'];
-    case 'Automobile Showroom':
-      return ['car_automobile', 'tire_service', 'battery_service'];
-    case 'Mechanic Workshop':
-    case 'Riding Gear Store':
-      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
-    default:
-      return ['car_wash', 'car_detailing', 'car_automobile', 'bike_automobile', 'tire_service', 'battery_service', 'general'];
-  }
-};
-
 const AddEditServiceScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -97,7 +79,7 @@ const AddEditServiceScreen: React.FC = () => {
   const service = params.service;
 
   // Get allowed service types based on business registration
-  const allowedServiceTypes = getAllowedServiceTypes(businessRegistration?.type);
+  const allowedServiceTypes = getAllowedDealerServiceTypes(businessRegistration?.type);
   
   // Check if existing service type is allowed for current business type
   const isExistingServiceTypeAllowed = service?.serviceType 
@@ -113,8 +95,8 @@ const AddEditServiceScreen: React.FC = () => {
   const [isActive, setIsActive] = useState(service?.isActive !== undefined ? service.isActive : true);
   const [serviceType, setServiceType] = useState<ServiceType | undefined>(service?.serviceType as ServiceType | undefined);
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | undefined>(service?.vehicleType);
-  const [vehicleBrandId, setVehicleBrandId] = useState((service as any)?.vehicleBrandId || '');
-  const [vehicleModelId, setVehicleModelId] = useState((service as any)?.vehicleModelId || '');
+  const [vehicleBrandId, setVehicleBrandId] = useState(service?.vehicleBrandId || '');
+  const [vehicleModelId, setVehicleModelId] = useState(service?.vehicleModelId || '');
   const [catalogBrands, setCatalogBrands] = useState<IDropdownOption[]>([]);
   const [catalogModels, setCatalogModels] = useState<IDropdownOption[]>([]);
   const [catalogDropdownVisible, setCatalogDropdownVisible] = useState(false);
@@ -291,7 +273,6 @@ const AddEditServiceScreen: React.FC = () => {
           isActive,
           serviceType,
           vehicleType,
-          vehicleType: 'Bike',
           vehicleBrandId: vehicleBrandId || undefined,
           vehicleModelId: vehicleModelId || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
@@ -321,7 +302,6 @@ const AddEditServiceScreen: React.FC = () => {
           isActive: true, // New services are active by default
           serviceType,
           vehicleType,
-          vehicleType: 'Bike',
           vehicleBrandId: vehicleBrandId || undefined,
           vehicleModelId: vehicleModelId || undefined,
           serviceSubCategory: serviceSubCategory.trim() || undefined,
@@ -335,7 +315,10 @@ const AddEditServiceScreen: React.FC = () => {
       }
 
       setTimeout(() => {
-        navigation.goBack();
+        (navigation as any).navigate('DealerTabs', {
+          screen: 'Inventory',
+          params: {activeTab: 'services'},
+        });
       }, 1500);
     } catch (error: any) {
       showError(error?.message || t('dealer.operationFailed'));
@@ -379,13 +362,7 @@ const AddEditServiceScreen: React.FC = () => {
     parseInt(durationMinutes) >= 1 &&
     !isSubmitting;
 
-  const cardShadow = {
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: isDark ? 0.35 : 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  };
+  const softBorder = `${colors.border}99`;
 
   const styles = StyleSheet.create({
     container: {
@@ -401,9 +378,23 @@ const AddEditServiceScreen: React.FC = () => {
       backgroundColor: colors.cardBackground,
       borderRadius: RFValue(14),
       padding: screenWidth * 0.04,
-      borderWidth: isDark ? 1 : 0,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderWidth: 1,
+      borderColor: softBorder,
+    },
+    sectionGroup: {
+      marginBottom: screenHeight * 0.024,
+    },
+    sectionHeader: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+      color: colors.text,
+      marginBottom: screenHeight * 0.014,
+      letterSpacing: 0.3,
+    },
+    fieldDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: softBorder,
+      marginVertical: screenHeight * 0.018,
     },
     row: {
       flexDirection: 'row',
@@ -414,13 +405,13 @@ const AddEditServiceScreen: React.FC = () => {
       minWidth: 0,
     },
     section: {
-      marginBottom: screenHeight * 0.022,
+      marginBottom: screenHeight * 0.016,
     },
     label: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
       color: colors.textSecondary,
-      marginBottom: screenHeight * 0.01,
+      marginBottom: screenHeight * 0.008,
       letterSpacing: 0.2,
     },
     required: {
@@ -432,15 +423,22 @@ const AddEditServiceScreen: React.FC = () => {
       color: colors.error,
       marginTop: screenHeight * 0.008,
     },
-    textInputContainer: {
+    field: {
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
+      paddingVertical: screenHeight * 0.013,
+      minHeight: screenHeight * 0.052,
+    },
+    dropdownField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    dropdownPlaceholder: {
+      color: colors.disabled,
     },
     textInput: {
       fontSize: RFValue(11),
@@ -453,22 +451,15 @@ const AddEditServiceScreen: React.FC = () => {
       textAlignVertical: 'top',
       paddingTop: 2,
     },
-    switchContainer: {
+    switchRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
     },
     switchLabel: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      fontFamily: Fonts.Medium,
       color: colors.text,
       flex: 1,
       marginRight: screenWidth * 0.02,
@@ -478,24 +469,22 @@ const AddEditServiceScreen: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'flex-start',
       backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.014,
-      ...cardShadow,
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.016,
-      ...cardShadow,
     },
     buttonText: {
       fontSize: RFValue(10),
@@ -514,9 +503,8 @@ const AddEditServiceScreen: React.FC = () => {
       paddingVertical: screenHeight * 0.012,
       borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      ...cardShadow,
     },
     chipPillSelected: {
       borderColor: colors.secondary,
@@ -540,11 +528,10 @@ const AddEditServiceScreen: React.FC = () => {
       position: 'relative',
       width: screenWidth * 0.26,
       height: screenWidth * 0.26,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderColor: softBorder,
     },
     image: {
       width: '100%',
@@ -564,16 +551,15 @@ const AddEditServiceScreen: React.FC = () => {
     },
     locationContainer: {
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.014,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginTop: screenHeight * 0.012,
-      ...cardShadow,
     },
     locationText: {
       flex: 1,
@@ -596,11 +582,6 @@ const AddEditServiceScreen: React.FC = () => {
       paddingBottom: screenHeight * 0.028,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
-      shadowColor: colors.black,
-      shadowOffset: {width: 0, height: -4},
-      shadowOpacity: isDark ? 0.4 : 0.12,
-      shadowRadius: 12,
-      elevation: 12,
     },
     editDeleteRow: {
       flexDirection: 'row',
@@ -631,11 +612,6 @@ const AddEditServiceScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-      shadowColor: colors.error,
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.35,
-      shadowRadius: 6,
-      elevation: 4,
     },
     deleteButtonHalf: {
       flex: 1,
@@ -651,14 +627,6 @@ const AddEditServiceScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-    },
-    primaryButtonShadow: {
-      shadowColor: colors.secondary,
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.35,
-      shadowRadius: 8,
-      elevation: 6,
-      alignSelf: 'stretch',
     },
     fullWidthPrimary: {
       width: '100%',
@@ -691,11 +659,13 @@ const AddEditServiceScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: scrollBottomInset}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.formCard}>
-          <View style={styles.section}>
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionBasicInfo')}</CustomText>
+            <View style={styles.section}>
             <CustomText style={styles.label}>
               {t('dealer.serviceName')} <CustomText style={styles.required}>*</CustomText>
             </CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={styles.field}>
               <TextInput
                 style={styles.textInput}
                 placeholder={t('dealer.enterServiceName')}
@@ -705,13 +675,18 @@ const AddEditServiceScreen: React.FC = () => {
               />
             </View>
           </View>
+          </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionPricing')}</CustomText>
           <View style={[styles.section, styles.row]}>
             <View style={styles.halfField}>
               <CustomText style={styles.label}>
                 {t('dealer.price')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterPrice')}
@@ -726,7 +701,7 @@ const AddEditServiceScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 {t('dealer.durationMinutes')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterDuration')}
@@ -740,7 +715,7 @@ const AddEditServiceScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
               <CustomText style={styles.switchLabel}>
                 {t('dealer.homeService')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
@@ -754,7 +729,7 @@ const AddEditServiceScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
               <CustomText style={styles.switchLabel}>
                 Enable Slot Booking
               </CustomText>
@@ -770,7 +745,7 @@ const AddEditServiceScreen: React.FC = () => {
                 <CustomText style={styles.label}>
                   Slot Duration (Minutes) <CustomText style={styles.required}>*</CustomText>
                 </CustomText>
-                <View style={styles.textInputContainer}>
+                <View style={styles.field}>
                   <TextInput
                     style={styles.textInput}
                     placeholder="e.g. 30"
@@ -783,7 +758,12 @@ const AddEditServiceScreen: React.FC = () => {
               </View>
             )}
           </View>
+          </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionClassification')}</CustomText>
           <View style={styles.section}>
             <CustomText style={styles.label}>Service Package</CustomText>
             <View style={styles.chipGrid}>
@@ -846,8 +826,8 @@ const AddEditServiceScreen: React.FC = () => {
                       setVehicleType('Bike');
                     } else {
                       setVehicleType(undefined);
-                      setVehicleModel('');
-                      setVehicleBrand('');
+                      setVehicleModelId('');
+                      setVehicleBrandId('');
                     }
                   }}
                   disabled={!isExistingServiceTypeAllowed && isEditMode}
@@ -912,31 +892,41 @@ const AddEditServiceScreen: React.FC = () => {
               <View style={styles.section}>
                 <CustomText style={styles.label}>{t('dealer.vehicleBrand')}</CustomText>
                 <TouchableOpacity
-                  style={styles.textInputContainer}
+                  style={[styles.field, styles.dropdownField]}
                   onPress={() => {
                     setCatalogDropdownType('brand');
                     setCatalogDropdownVisible(true);
                   }}>
-                  <CustomText style={styles.textInput}>
+                  <CustomText
+                    style={[
+                      styles.textInput,
+                      ...(!vehicleBrandId ? [styles.dropdownPlaceholder] : []),
+                    ]}>
                     {catalogBrands.find(b => b.value === vehicleBrandId)?.label ||
                       t('dealer.selectCompatibleBrand')}
                   </CustomText>
+                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.section}>
                 <CustomText style={styles.label}>{t('dealer.vehicleModel')}</CustomText>
                 <TouchableOpacity
-                  style={styles.textInputContainer}
+                  style={[styles.field, styles.dropdownField, !vehicleBrandId && {opacity: 0.6}]}
                   onPress={() => {
                     setCatalogDropdownType('model');
                     setCatalogDropdownVisible(true);
                   }}
                   disabled={!vehicleBrandId}>
-                  <CustomText style={styles.textInput}>
+                  <CustomText
+                    style={[
+                      styles.textInput,
+                      ...(!vehicleModelId ? [styles.dropdownPlaceholder] : []),
+                    ]}>
                     {catalogModels.find(m => m.value === vehicleModelId)?.label ||
                       t('dealer.selectCompatibleModel')}
                   </CustomText>
+                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
                 </TouchableOpacity>
               </View>
             </>
@@ -977,7 +967,7 @@ const AddEditServiceScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={[styles.textInputContainer, { marginTop: 12 }]}>
+              <View style={[styles.field, { marginTop: 12 }]}>
                 <TextInput
                   style={styles.textInput}
                   placeholder="Or type custom sub-category..."
@@ -992,7 +982,7 @@ const AddEditServiceScreen: React.FC = () => {
           {(!serviceType || serviceType === 'general') && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder={t('dealer.enterSubCategory')}
@@ -1006,7 +996,7 @@ const AddEditServiceScreen: React.FC = () => {
 
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.category')}</CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={styles.field}>
               <TextInput
                 style={styles.textInput}
                 placeholder={t('dealer.enterCategory')}
@@ -1016,10 +1006,15 @@ const AddEditServiceScreen: React.FC = () => {
               />
             </View>
           </View>
+          </View>
 
+          <View style={styles.fieldDivider} />
+
+          <View style={[styles.sectionGroup, {marginBottom: 0}]}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionDetails')}</CustomText>
           <View style={styles.section}>
             <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
-            <View style={styles.textInputContainer}>
+            <View style={styles.field}>
               <TextInput
                 style={[styles.textInput, styles.textInputMultiline]}
                 placeholder={t('dealer.enterDescription')}
@@ -1084,17 +1079,14 @@ const AddEditServiceScreen: React.FC = () => {
               </View>
             )}
           </View>
+          </View>
         </View>
       </ScrollView>
 
       <View style={[styles.stickyButtonContainer, {bottom: stickyFooterBottomOffset}]}>
         {isEditMode ? (
           <View style={styles.editDeleteRow}>
-            <View
-              style={[
-                styles.editButton,
-                (isFormValid || isSubmitting) && styles.primaryButtonShadow,
-              ]}>
+            <View style={styles.editButton}>
               <TouchableOpacity
                 style={styles.submitButtonTouchable}
                 onPress={handleSubmit}
@@ -1127,7 +1119,7 @@ const AddEditServiceScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={[styles.primaryButtonShadow, styles.fullWidthPrimary]}>
+          <View style={styles.fullWidthPrimary}>
             <TouchableOpacity
               style={styles.submitButtonTouchable}
               onPress={handleSubmit}
@@ -1151,7 +1143,7 @@ const AddEditServiceScreen: React.FC = () => {
         )}
       </View>
 
-      <CustomDropdownModal
+      <CustomDropdownBottomSheet
         visible={catalogDropdownVisible}
         onClose={() => setCatalogDropdownVisible(false)}
         title={
@@ -1169,6 +1161,7 @@ const AddEditServiceScreen: React.FC = () => {
             setVehicleModelId(value);
           }
         }}
+        searchable={true}
       />
     </View>
   );

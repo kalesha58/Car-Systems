@@ -21,7 +21,7 @@ import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
-import CustomDropdownModal, {IDropdownOption} from '@components/ui/CustomDropdownModal';
+import CustomDropdownBottomSheet, {IDropdownOption} from '@components/ui/CustomDropdownBottomSheet';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {useTranslation} from 'react-i18next';
@@ -180,8 +180,6 @@ const AddEditProductScreen: React.FC = () => {
         maxWidth: 1600,
         maxHeight: 1600,
         includeBase64: false,
-        // Android: copy into app cache so fetch/FormData can read the file reliably
-        copyTo: 'cachesDirectory',
         selectionLimit: MAX_IMAGES - imageUris.length,
       },
       (response: ImagePickerResponse) => {
@@ -463,13 +461,7 @@ const AddEditProductScreen: React.FC = () => {
     imageUris.length > 0 &&
     !isSubmitting;
 
-  const cardShadow = {
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: isDark ? 0.35 : 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  };
+  const softBorder = `${colors.border}99`;
 
   const styles = StyleSheet.create({
     container: {
@@ -485,9 +477,23 @@ const AddEditProductScreen: React.FC = () => {
       backgroundColor: colors.cardBackground,
       borderRadius: RFValue(14),
       padding: screenWidth * 0.04,
-      borderWidth: isDark ? 1 : 0,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderWidth: 1,
+      borderColor: softBorder,
+    },
+    sectionGroup: {
+      marginBottom: screenHeight * 0.024,
+    },
+    sectionHeader: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.SemiBold,
+      color: colors.text,
+      marginBottom: screenHeight * 0.014,
+      letterSpacing: 0.3,
+    },
+    fieldDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: softBorder,
+      marginVertical: screenHeight * 0.018,
     },
     row: {
       flexDirection: 'row',
@@ -498,27 +504,31 @@ const AddEditProductScreen: React.FC = () => {
       minWidth: 0,
     },
     section: {
-      marginBottom: screenHeight * 0.022,
+      marginBottom: screenHeight * 0.016,
     },
     label: {
-      fontSize: RFValue(9),
+      fontSize: RFValue(10),
       fontFamily: Fonts.Medium,
       color: colors.textSecondary,
-      marginBottom: screenHeight * 0.01,
+      marginBottom: screenHeight * 0.008,
       letterSpacing: 0.2,
     },
     required: {
       color: colors.error,
     },
-    textInputContainer: {
+    field: {
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
+      paddingVertical: screenHeight * 0.013,
+      minHeight: screenHeight * 0.052,
+    },
+    dropdownField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
     },
     textInput: {
       fontSize: RFValue(11),
@@ -531,19 +541,6 @@ const AddEditProductScreen: React.FC = () => {
       textAlignVertical: 'top',
       paddingTop: 2,
     },
-    dropdownButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.014,
-      minHeight: screenHeight * 0.056,
-      ...cardShadow,
-    },
     dropdownButtonText: {
       fontSize: RFValue(11),
       fontFamily: Fonts.Regular,
@@ -554,17 +551,29 @@ const AddEditProductScreen: React.FC = () => {
     dropdownPlaceholder: {
       color: colors.disabled,
     },
+    switchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: screenHeight * 0.012,
+    },
+    switchLabel: {
+      fontSize: RFValue(11),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+      flex: 1,
+      marginRight: screenWidth * 0.02,
+    },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: isDark ? colors.border : colors.winterBlueLight,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.016,
-      ...cardShadow,
     },
     buttonText: {
       fontSize: RFValue(10),
@@ -582,11 +591,10 @@ const AddEditProductScreen: React.FC = () => {
       position: 'relative',
       width: screenWidth * 0.26,
       height: screenWidth * 0.26,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.border,
-      ...cardShadow,
+      borderColor: softBorder,
     },
     image: {
       width: '100%',
@@ -615,11 +623,6 @@ const AddEditProductScreen: React.FC = () => {
       paddingBottom: screenHeight * 0.028,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
-      shadowColor: colors.black,
-      shadowOffset: {width: 0, height: -4},
-      shadowOpacity: isDark ? 0.4 : 0.12,
-      shadowRadius: 12,
-      elevation: 12,
     },
     editDeleteRow: {
       flexDirection: 'row',
@@ -650,11 +653,6 @@ const AddEditProductScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-      shadowColor: colors.error,
-      shadowOffset: {width: 0, height: 3},
-      shadowOpacity: 0.35,
-      shadowRadius: 6,
-      elevation: 4,
     },
     deleteButtonHalf: {
       flex: 1,
@@ -670,14 +668,6 @@ const AddEditProductScreen: React.FC = () => {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: screenWidth * 0.02,
-    },
-    primaryButtonShadow: {
-      shadowColor: colors.secondary,
-      shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.35,
-      shadowRadius: 8,
-      elevation: 6,
-      alignSelf: 'stretch',
     },
     fullWidthPrimary: {
       width: '100%',
@@ -709,267 +699,276 @@ const AddEditProductScreen: React.FC = () => {
         contentContainerStyle={[styles.scrollContent, {paddingBottom: screenHeight * 0.12}]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.formCard}>
-          <View style={styles.section}>
-            <CustomText style={styles.label}>
-              {t('dealer.productName')} <CustomText style={styles.required}>*</CustomText>
-            </CustomText>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder={t('dealer.enterProductName')}
-                placeholderTextColor={colors.disabled}
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <CustomText style={styles.label}>
-              {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
-            </CustomText>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={styles.textInput}
-                placeholder={t('dealer.enterBrand')}
-                placeholderTextColor={colors.disabled}
-                value={brand}
-                onChangeText={setBrand}
-              />
-            </View>
-          </View>
-
-          <View style={[styles.section, styles.row]}>
-            <View style={styles.halfField}>
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionBasicInfo')}</CustomText>
+            <View style={styles.section}>
               <CustomText style={styles.label}>
-                Original Price (₹)
+                {t('dealer.productName')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="e.g. 1500"
+                  placeholder={t('dealer.enterProductName')}
                   placeholderTextColor={colors.disabled}
-                  value={originalPrice}
-                  onChangeText={setOriginalPrice}
-                  keyboardType="numeric"
+                  value={name}
+                  onChangeText={setName}
                 />
               </View>
             </View>
-            <View style={styles.halfField}>
+            <View style={styles.section}>
               <CustomText style={styles.label}>
-                Sale Price (₹) <CustomText style={styles.required}>*</CustomText>
+                {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder={t('dealer.enterPrice')}
+                  placeholder={t('dealer.enterBrand')}
                   placeholderTextColor={colors.disabled}
-                  value={price}
-                  onChangeText={setPrice}
-                  keyboardType="numeric"
+                  value={brand}
+                  onChangeText={setBrand}
                 />
               </View>
             </View>
           </View>
 
-          <View style={[styles.section, styles.row]}>
-            <View style={styles.halfField}>
-              <CustomText style={styles.label}>
-                {t('dealer.stock')} <CustomText style={styles.required}>*</CustomText>
-              </CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder={t('dealer.enterStock')}
-                  placeholderTextColor={colors.disabled}
-                  value={stock}
-                  onChangeText={setStock}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-            <View style={styles.halfField}>
-              <CustomText style={styles.label}>
-                Delivery Time (Mins)
-              </CustomText>
-              <View style={styles.textInputContainer}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="e.g. 60"
-                  placeholderTextColor={colors.disabled}
-                  value={deliveryTimeMinutes}
-                  onChangeText={setDeliveryTimeMinutes}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-          </View>
+          <View style={styles.fieldDivider} />
 
-          <View style={styles.section}>
-            <CustomText style={styles.label}>
-              {t('dealer.category')} <CustomText style={styles.required}>*</CustomText>
-            </CustomText>
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => openDropdown('category')}
-              activeOpacity={0.75}>
-              <CustomText
-                style={[
-                  styles.dropdownButtonText,
-                  ...(categoryIsPlaceholder ? [styles.dropdownPlaceholder] : []),
-                ]}>
-                {categoryDisplay}
-              </CustomText>
-              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
-            </TouchableOpacity>
-          </View>
-
-          {isBatteryCategorySelected && (
-            <>
-              <View style={styles.section}>
-                <CustomText style={styles.label}>
-                  {t('dealer.batteryType')} <CustomText style={styles.required}>*</CustomText>
-                </CustomText>
-                <TouchableOpacity
-                  style={styles.dropdownButton}
-                  onPress={() => openDropdown('batteryType')}
-                  activeOpacity={0.75}>
-                  <CustomText style={styles.dropdownButtonText}>{getBatteryTypeDisplayLabel()}</CustomText>
-                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.section}>
-                <CustomText style={styles.label}>
-                  {t('dealer.voltageV')} <CustomText style={styles.required}>*</CustomText>
-                </CustomText>
-                <View style={styles.textInputContainer}>
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionPricing')}</CustomText>
+            <View style={[styles.section, styles.row]}>
+              <View style={styles.halfField}>
+                <CustomText style={styles.label}>Original Price (₹)</CustomText>
+                <View style={styles.field}>
                   <TextInput
                     style={styles.textInput}
-                    placeholder={t('dealer.enterVoltage')}
+                    placeholder="e.g. 1500"
                     placeholderTextColor={colors.disabled}
-                    value={voltageV}
-                    onChangeText={setVoltageV}
+                    value={originalPrice}
+                    onChangeText={setOriginalPrice}
                     keyboardType="numeric"
                   />
                 </View>
               </View>
-            </>
-          )}
-
-          <View style={styles.section}>
-            <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => openDropdown('vehicleType')}
-              activeOpacity={0.75}>
-              <CustomText
-                style={[
-                  styles.dropdownButtonText,
-                  ...(vehicleIsPlaceholder ? [styles.dropdownPlaceholder] : []),
-                ]}>
-                {vehicleDisplay}
-              </CustomText>
-              <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
-            <View style={styles.textInputContainer}>
-              <TextInput
-                style={[styles.textInput, styles.textInputMultiline]}
-                placeholder={t('dealer.enterDescription')}
-                placeholderTextColor={colors.disabled}
-                value={description}
-                onChangeText={setDescription}
-                multiline
-              />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={[styles.textInputContainer, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, minHeight: 48 }]}>
-              <CustomText style={[styles.label, { marginBottom: 0, fontSize: RFValue(11), color: colors.text }]}>
-                Is this a Spare Part?
-              </CustomText>
-              <Switch
-                value={isSparePart}
-                onValueChange={(value) => {
-                  setIsSparePart(value);
-                  if (!value) {
-                    setVehicleBrandId('');
-                    setVehicleModelId('');
-                  }
-                }}
-                trackColor={{ false: colors.disabled, true: colors.secondary + '80' }}
-                thumbColor={isSparePart ? colors.secondary : colors.disabled}
-              />
-            </View>
-          </View>
-
-          {isSparePart && vehicleType ? (
-            <>
-              <View style={styles.section}>
+              <View style={styles.halfField}>
                 <CustomText style={styles.label}>
-                  {t('dealer.compatibleBrand')} <CustomText style={styles.required}>*</CustomText>
+                  Sale Price (₹) <CustomText style={styles.required}>*</CustomText>
                 </CustomText>
-                <TouchableOpacity
-                  style={styles.dropdownButton}
-                  onPress={() => openDropdown('compatibleBrand')}
-                  activeOpacity={0.75}>
-                  <CustomText style={styles.dropdownButtonText}>
-                    {compatibleBrands.find(b => b.value === vehicleBrandId)?.label ||
-                      t('dealer.selectCompatibleBrand')}
-                  </CustomText>
-                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
-                </TouchableOpacity>
-                {compatibleBrands.length === 0 && (
-                  <CustomText style={{marginTop: 6, fontSize: RFValue(10), opacity: 0.6}}>
-                    {t('dealer.noBrandsConfigured')}
-                  </CustomText>
-                )}
+                <View style={styles.field}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={t('dealer.enterPrice')}
+                    placeholderTextColor={colors.disabled}
+                    value={price}
+                    onChangeText={setPrice}
+                    keyboardType="numeric"
+                  />
+                </View>
               </View>
-              <View style={styles.section}>
-                <CustomText style={styles.label}>{t('dealer.compatibleModel')}</CustomText>
-                <TouchableOpacity
-                  style={styles.dropdownButton}
-                  onPress={() => openDropdown('compatibleModel')}
-                  activeOpacity={0.75}
-                  disabled={!vehicleBrandId}>
-                  <CustomText style={styles.dropdownButtonText}>
-                    {compatibleModels.find(m => m.value === vehicleModelId)?.label ||
-                      t('dealer.selectCompatibleModel')}
-                  </CustomText>
-                  <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
-                </TouchableOpacity>
+            </View>
+            <View style={[styles.section, styles.row]}>
+              <View style={styles.halfField}>
+                <CustomText style={styles.label}>
+                  {t('dealer.stock')} <CustomText style={styles.required}>*</CustomText>
+                </CustomText>
+                <View style={styles.field}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder={t('dealer.enterStock')}
+                    placeholderTextColor={colors.disabled}
+                    value={stock}
+                    onChangeText={setStock}
+                    keyboardType="numeric"
+                  />
+                </View>
               </View>
-            </>
-          ) : null}
+              <View style={styles.halfField}>
+                <CustomText style={styles.label}>Delivery Time (Mins)</CustomText>
+                <View style={styles.field}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. 60"
+                    placeholderTextColor={colors.disabled}
+                    value={deliveryTimeMinutes}
+                    onChangeText={setDeliveryTimeMinutes}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
 
-          <View style={[styles.section, {marginBottom: 0}]}>
-            <CustomText style={styles.label}>
-              {t('dealer.images')} <CustomText style={styles.required}>*</CustomText>
-            </CustomText>
-            <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.8}>
-              <Icon name="images-outline" size={RFValue(20)} color={colors.winterBlueDark} />
-              <CustomText style={styles.buttonText}>
-                {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
+          <View style={styles.fieldDivider} />
+
+          <View style={styles.sectionGroup}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionClassification')}</CustomText>
+            <View style={styles.section}>
+              <CustomText style={styles.label}>
+                {t('dealer.category')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-            </TouchableOpacity>
-            {imageUris.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesContainer}>
-                {imageUris.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{uri}} style={styles.image} />
-                    <TouchableOpacity
-                      style={styles.removeImageButton}
-                      onPress={() => removeImage(index)}>
-                      <Icon name="close" size={RFValue(14)} color="#fff" />
-                    </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.field, styles.dropdownField]}
+                onPress={() => openDropdown('category')}
+                activeOpacity={0.75}>
+                <CustomText
+                  style={[
+                    styles.dropdownButtonText,
+                    ...(categoryIsPlaceholder ? [styles.dropdownPlaceholder] : []),
+                  ]}>
+                  {categoryDisplay}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            {isBatteryCategorySelected && (
+              <>
+                <View style={styles.section}>
+                  <CustomText style={styles.label}>
+                    {t('dealer.batteryType')} <CustomText style={styles.required}>*</CustomText>
+                  </CustomText>
+                  <TouchableOpacity
+                    style={[styles.field, styles.dropdownField]}
+                    onPress={() => openDropdown('batteryType')}
+                    activeOpacity={0.75}>
+                    <CustomText style={styles.dropdownButtonText}>{getBatteryTypeDisplayLabel()}</CustomText>
+                    <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.section}>
+                  <CustomText style={styles.label}>
+                    {t('dealer.voltageV')} <CustomText style={styles.required}>*</CustomText>
+                  </CustomText>
+                  <View style={styles.field}>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={t('dealer.enterVoltage')}
+                      placeholderTextColor={colors.disabled}
+                      value={voltageV}
+                      onChangeText={setVoltageV}
+                      keyboardType="numeric"
+                    />
                   </View>
-                ))}
-              </ScrollView>
+                </View>
+              </>
             )}
+
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
+              <TouchableOpacity
+                style={[styles.field, styles.dropdownField]}
+                onPress={() => openDropdown('vehicleType')}
+                activeOpacity={0.75}>
+                <CustomText
+                  style={[
+                    styles.dropdownButtonText,
+                    ...(vehicleIsPlaceholder ? [styles.dropdownPlaceholder] : []),
+                  ]}>
+                  {vehicleDisplay}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.switchRow}>
+                <CustomText style={styles.switchLabel}>Is this a Spare Part?</CustomText>
+                <Switch
+                  value={isSparePart}
+                  onValueChange={(value) => {
+                    setIsSparePart(value);
+                    if (!value) {
+                      setVehicleBrandId('');
+                      setVehicleModelId('');
+                    }
+                  }}
+                  trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+                  thumbColor={isSparePart ? colors.secondary : colors.disabled}
+                />
+              </View>
+            </View>
+
+            {isSparePart && vehicleType ? (
+              <>
+                <View style={styles.section}>
+                  <CustomText style={styles.label}>
+                    {t('dealer.compatibleBrand')} <CustomText style={styles.required}>*</CustomText>
+                  </CustomText>
+                  <TouchableOpacity
+                    style={[styles.field, styles.dropdownField]}
+                    onPress={() => openDropdown('compatibleBrand')}
+                    activeOpacity={0.75}>
+                    <CustomText style={styles.dropdownButtonText}>
+                      {compatibleBrands.find(b => b.value === vehicleBrandId)?.label ||
+                        t('dealer.selectCompatibleBrand')}
+                    </CustomText>
+                    <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                  </TouchableOpacity>
+                  {compatibleBrands.length === 0 && (
+                    <CustomText style={{marginTop: 6, fontSize: RFValue(10), opacity: 0.6}}>
+                      {t('dealer.noBrandsConfigured')}
+                    </CustomText>
+                  )}
+                </View>
+                <View style={styles.section}>
+                  <CustomText style={styles.label}>{t('dealer.compatibleModel')}</CustomText>
+                  <TouchableOpacity
+                    style={[styles.field, styles.dropdownField]}
+                    onPress={() => openDropdown('compatibleModel')}
+                    activeOpacity={0.75}
+                    disabled={!vehicleBrandId}>
+                    <CustomText style={styles.dropdownButtonText}>
+                      {compatibleModels.find(m => m.value === vehicleModelId)?.label ||
+                        t('dealer.selectCompatibleModel')}
+                    </CustomText>
+                    <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null}
+          </View>
+
+          <View style={styles.fieldDivider} />
+
+          <View style={[styles.sectionGroup, {marginBottom: 0}]}>
+            <CustomText style={styles.sectionHeader}>{t('dealer.sectionDetails')}</CustomText>
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.description')}</CustomText>
+              <View style={styles.field}>
+                <TextInput
+                  style={[styles.textInput, styles.textInputMultiline]}
+                  placeholder={t('dealer.enterDescription')}
+                  placeholderTextColor={colors.disabled}
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                />
+              </View>
+            </View>
+            <View style={[styles.section, {marginBottom: 0}]}>
+              <CustomText style={styles.label}>
+                {t('dealer.images')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              <TouchableOpacity style={styles.button} onPress={handleImagePicker} activeOpacity={0.8}>
+                <Icon name="images-outline" size={RFValue(20)} color={colors.winterBlueDark} />
+                <CustomText style={styles.buttonText}>
+                  {t('dealer.addImages')} ({imageUris.length}/{MAX_IMAGES})
+                </CustomText>
+              </TouchableOpacity>
+              {imageUris.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imagesContainer}>
+                  {imageUris.map((uri, index) => (
+                    <View key={index} style={styles.imageWrapper}>
+                      <Image source={{uri}} style={styles.image} />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => removeImage(index)}>
+                        <Icon name="close" size={RFValue(14)} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -977,11 +976,7 @@ const AddEditProductScreen: React.FC = () => {
       <View style={[styles.stickyButtonContainer, {paddingBottom: Math.max(insets.bottom, screenHeight * 0.028)}]}>
         {isEditMode ? (
           <View style={styles.editDeleteRow}>
-            <View
-              style={[
-                styles.editButton,
-                (isFormValid || isSubmitting) && styles.primaryButtonShadow,
-              ]}>
+            <View style={styles.editButton}>
               <TouchableOpacity
                 style={styles.submitButtonTouchable}
                 onPress={handleSubmit}
@@ -1014,7 +1009,7 @@ const AddEditProductScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={[styles.primaryButtonShadow, styles.fullWidthPrimary]}>
+          <View style={styles.fullWidthPrimary}>
             <TouchableOpacity
               style={styles.submitButtonTouchable}
               onPress={handleSubmit}
@@ -1038,7 +1033,7 @@ const AddEditProductScreen: React.FC = () => {
         )}
       </View>
 
-      <CustomDropdownModal
+      <CustomDropdownBottomSheet
         visible={dropdownModalVisible}
         onClose={() => setDropdownModalVisible(false)}
         options={getCurrentDropdownOptions()}
@@ -1049,6 +1044,10 @@ const AddEditProductScreen: React.FC = () => {
             ? t('dealer.selectCategory')
             : dropdownType === 'batteryType'
             ? t('dealer.selectBatteryType')
+            : dropdownType === 'compatibleBrand'
+            ? t('dealer.selectCompatibleBrand')
+            : dropdownType === 'compatibleModel'
+            ? t('dealer.selectCompatibleModel')
             : t('dealer.selectVehicleType')
         }
         searchable={true}

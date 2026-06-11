@@ -15,8 +15,9 @@ import {
 } from 'react-native';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
-import {useNavigation, useFocusEffect} from '@react-navigation/native';
+import {useNavigation, useFocusEffect, useRoute, RouteProp} from '@react-navigation/native';
 import {getDealerProducts, getDealerVehicles, getDealerServices, getBusinessRegistrationByUserId, IBusinessRegistration} from '@service/dealerService';
+import {isServiceVisibleForBusiness} from '@config/dealerServiceTypeConfig';
 import {useAuthStore} from '@state/authStore';
 import {IProduct} from '../../types/product/IProduct';
 import {IDealerVehicle} from '../../types/vehicle/IVehicle';
@@ -32,9 +33,17 @@ import {formatCurrency} from '@utils/analytics';
 import ImagePreviewModal from '@components/common/ImagePreviewModal/ImagePreviewModal';
 import InventoryItemSkeleton from './InventoryItemSkeleton';
 
+type InventoryTab = 'products' | 'vehicles' | 'services';
+
+type InventoryRouteParams = {
+  activeTab?: InventoryTab;
+};
+
+const getItemId = (item: {id?: string; _id?: string}) => item.id || item._id || '';
+
 const InventoryScreen: React.FC = () => {
-  type InventoryTab = 'products' | 'vehicles' | 'services';
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<{params: InventoryRouteParams}, 'params'>>();
   const {colors: theme} = useTheme();
   const {t} = useTranslation();
   const {user} = useAuthStore();
@@ -170,34 +179,20 @@ const InventoryScreen: React.FC = () => {
     try {
       setLoading(true);
       const businessType = registration?.type;
-      
-      // Build service filters based on business type
-      const serviceFilters: any = { limit: 1000 };
-      
-      if (businessType === 'Automobile Showroom') {
-        // Show car automobile services
-        serviceFilters.serviceType = 'car_automobile';
-        serviceFilters.vehicleType = 'Car';
-      } else if (businessType === 'Bike Dealer') {
-        // Show bike automobile services
-        serviceFilters.serviceType = 'bike_automobile';
-        serviceFilters.vehicleType = 'Bike';
-      } else if (businessType === 'Vehicle Wash Station') {
-        // Show car wash services
-        serviceFilters.serviceType = 'car_wash';
-      } else if (businessType === 'Detailing Center') {
-        // Show car detailing services
-        serviceFilters.serviceType = 'car_detailing';
-      }
-      
+
       const [productsData, vehiclesData, servicesData] = await Promise.all([
         getDealerProducts({limit: 1000}),
         getDealerVehicles({limit: 1000}),
-        getDealerServices(serviceFilters),
+        getDealerServices({limit: 1000}),
       ]);
       setProducts(productsData.Response?.products || []);
       setVehicles(vehiclesData.Response?.vehicles || []);
-      setServices(servicesData.Response?.services || []);
+      const allServices = servicesData.Response?.services || [];
+      setServices(
+        allServices.filter(service =>
+          isServiceVisibleForBusiness(service.serviceType, businessType),
+        ),
+      );
     } catch (error) {
       // Error handling - no fallback per rules
     } finally {
@@ -235,8 +230,16 @@ const InventoryScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
+      const requestedTab = route.params?.activeTab;
+      if (requestedTab && tabOrder.includes(requestedTab)) {
+        setActiveTab(requestedTab);
+        const index = tabOrder.indexOf(requestedTab);
+        if (index >= 0) {
+          pagerRef.current?.scrollTo({x: index * screenWidth, y: 0, animated: false});
+        }
+      }
       loadInventoryWithRegistration();
-    }, [loadInventoryWithRegistration]),
+    }, [loadInventoryWithRegistration, route.params?.activeTab, tabOrder]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -642,7 +645,7 @@ const InventoryScreen: React.FC = () => {
         <FlatList
           data={products}
           renderItem={renderProductItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => getItemId(item)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -658,7 +661,7 @@ const InventoryScreen: React.FC = () => {
         <FlatList
           data={vehicles}
           renderItem={renderVehicleItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => getItemId(item)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -674,7 +677,7 @@ const InventoryScreen: React.FC = () => {
         <FlatList
           data={services}
           renderItem={renderServiceItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => getItemId(item)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
@@ -788,7 +791,7 @@ const InventoryScreen: React.FC = () => {
                 <FlatList
                   data={products}
                   renderItem={renderProductItem}
-                  keyExtractor={item => item.id}
+                  keyExtractor={item => getItemId(item)}
                   contentContainerStyle={styles.listContent}
                   showsVerticalScrollIndicator={false}
                   ListEmptyComponent={activeTab === 'products' ? renderEmptyState : null}
@@ -803,7 +806,7 @@ const InventoryScreen: React.FC = () => {
                 <FlatList
                   data={vehicles}
                   renderItem={renderVehicleItem}
-                  keyExtractor={item => item.id}
+                  keyExtractor={item => getItemId(item)}
                   contentContainerStyle={styles.listContent}
                   showsVerticalScrollIndicator={false}
                   ListEmptyComponent={activeTab === 'vehicles' ? renderEmptyState : null}
@@ -818,7 +821,7 @@ const InventoryScreen: React.FC = () => {
                 <FlatList
                   data={services}
                   renderItem={renderServiceItem}
-                  keyExtractor={item => item.id}
+                  keyExtractor={item => getItemId(item)}
                   contentContainerStyle={styles.listContent}
                   showsVerticalScrollIndicator={false}
                   ListEmptyComponent={activeTab === 'services' ? renderEmptyState : null}
