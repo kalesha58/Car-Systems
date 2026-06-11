@@ -33,6 +33,51 @@ Phone login for the Motonode mobile app uses MSG91 on the server only. The React
 
 If MSG91 still rejects requests, the error usually means the outbound IP seen by MSG91 is not whitelisted (VPN, different Wi‑Fi, or server running elsewhere).
 
+### Option B — Vercel production (required for `car-systems.vercel.app`)
+
+Vercel serverless uses **dynamic outbound IPs**. If API Security (IP whitelist) is enabled on your MSG91 auth key, requests fail with **error code 418** and you receive an email alert from MSG91.
+
+**Use two auth keys:**
+
+| Setting | Dev key (`server/.env`) | Production key (Vercel env) |
+|---------|-------------------------|-----------------------------|
+| Name | `Motonode Dev` | `Motonode Vercel Prod` |
+| Integration | Server-side / API | Server-side / API |
+| **IP Security** | **ON** — whitelist your dev public IPv4 | **OFF** — do not enable IP whitelist |
+| Where used | Local `npm run dev` | Vercel project environment variables |
+
+**MSG91 dashboard steps (account e.g. build8):**
+
+1. **SMS → API Failed Logs** — confirm failed requests show **418** and note the rejected source IP (for reference only; do not whitelist Vercel IPs long-term).
+2. **Authkey → Create** → name `Motonode Vercel Prod`, integration **Server-side / API**, **IP Security disabled**.
+3. Copy the new auth key and your approved **OTP template ID**.
+4. In **Vercel** → Project → **Settings → Environment Variables**, set:
+   - `MSG91_API_KEY` = production auth key (no IP lock)
+   - `MSG91_TEMPLATE_ID` = OTP template id
+   - `MSG91_OTP_LENGTH` = `6`
+   - `MSG91_COUNTRY_CODE` = `91`
+   - `OTP_RESEND_COOLDOWN_SECONDS` = `30`
+   - `OTP_EXPIRY_MINUTES` = `5`
+5. **Redeploy** the backend after saving env vars.
+
+**Verify production:**
+
+```bash
+curl -X POST https://car-systems.vercel.app/api/auth/send-otp \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"YOUR_10_DIGIT_NUMBER"}'
+```
+
+Expected: `200` with `"OTP sent"`. If the server returns a message containing `IP not whitelisted`, the Vercel env still uses an IP-locked auth key.
+
+**Common MSG91 API error codes:**
+
+| Code | Meaning | Fix |
+|------|---------|-----|
+| 418 | IP not whitelisted | Production auth key with IP Security **off** on Vercel |
+| 207 | Invalid auth key | Check `MSG91_API_KEY` in Vercel env |
+| 301 | Insufficient balance | Top up MSG91 account |
+
 ## Environment variables
 
 Add to `server/.env` (see `.env.example`):
@@ -142,8 +187,9 @@ curl -X POST http://localhost:3000/api/auth/complete-phone-signup \
 
 - Rotate `MSG91_API_KEY` and `JWT_SECRET` on a schedule.
 - Monitor 429 responses (per-phone and per-IP limits).
-- Use MSG91 IP allowlisting if your deployment has a fixed egress IP.
+- **Vercel:** use a dedicated prod auth key **without** IP whitelist (see Option B above). IP allowlisting only works with a fixed egress IP (VPS, not serverless).
 - OTP sessions expire via MongoDB TTL on `expiresAt`.
+- Server logs MSG91 error `code` (e.g. 418) in `msg91OtpService` for easier debugging.
 
 ## Tests
 

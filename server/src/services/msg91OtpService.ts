@@ -5,6 +5,12 @@ import { logger } from '../utils/logger';
 const MSG91_SEND_URL = 'https://control.msg91.com/api/v5/otp';
 const MSG91_VERIFY_URL = 'https://control.msg91.com/api/v5/otp/verify';
 
+type Msg91ErrorBody = {
+  message?: string;
+  type?: string;
+  code?: number | string;
+};
+
 const getMsg91ApiKey = (): string => {
   const key = process.env.MSG91_API_KEY?.trim();
   if (!key) {
@@ -29,6 +35,76 @@ const getOtpLength = (): number => {
 const getOtpExpiryMinutes = (): number => {
   const minutes = parseInt(process.env.OTP_EXPIRY_MINUTES || '5', 10);
   return Number.isFinite(minutes) && minutes > 0 ? minutes : 5;
+};
+
+export const parseMsg91ErrorCode = (body: unknown): number | undefined => {
+  if (!body || typeof body !== 'object') {
+    return undefined;
+  }
+  const code = (body as Msg91ErrorBody).code;
+  if (typeof code === 'number') {
+    return code;
+  }
+  if (typeof code === 'string' && /^\d+$/.test(code)) {
+    return parseInt(code, 10);
+  }
+  return undefined;
+};
+
+export const mapMsg91ErrorToAppError = (
+  body: unknown,
+  fallbackMessage: string,
+): AppError => {
+  const data = (body && typeof body === 'object' ? body : {}) as Msg91ErrorBody;
+  const code = parseMsg91ErrorCode(data);
+  const message = data.message || fallbackMessage;
+
+  if (code === 418) {
+    return new AppError(
+      'MSG91 rejected request: IP not whitelisted. Use a Vercel auth key without IP security.',
+      502,
+    );
+  }
+
+  if (code === 207) {
+    return new AppError('MSG91 authentication failed. Check MSG91_API_KEY.', 502);
+  }
+
+  if (code === 301) {
+    return new AppError('MSG91 account has insufficient SMS balance.', 502);
+  }
+
+  return new AppError(message, 502);
+};
+
+const throwIfMsg91PayloadError = (data: Record<string, unknown>, action: string): void => {
+  if (data.type !== 'error') {
+    return;
+  }
+
+  const code = parseMsg91ErrorCode(data);
+  logger.error(`MSG91 ${action} returned error payload`, { code, data });
+  throw mapMsg91ErrorToAppError(data, `Failed to ${action}`);
+};
+
+const handleMsg91AxiosError = (error: unknown, action: string): never => {
+  const axiosErr = error as AxiosError<Msg91ErrorBody>;
+  const responseData = axiosErr.response?.data;
+  const code = parseMsg91ErrorCode(responseData);
+  const msg = responseData?.message || axiosErr.message || `Failed to ${action}`;
+
+  logger.error(`MSG91 ${action} error`, {
+    status: axiosErr.response?.status,
+    code,
+    message: msg,
+    data: responseData,
+  });
+
+  if (code !== undefined) {
+    throw mapMsg91ErrorToAppError(responseData, msg);
+  }
+
+  throw new AppError(msg, axiosErr.response?.status === 429 ? 429 : 502);
 };
 
 export interface IMsg91SendResult {
@@ -59,6 +135,8 @@ export const sendOtpViaMsg91 = async (mobileWithCountryCode: string): Promise<IM
     );
 
     const data = response.data as Record<string, unknown>;
+    throwIfMsg91PayloadError(data, 'send OTP');
+
     const requestId =
       (data.request_id as string) ||
       (data.requestId as string) ||
@@ -69,11 +147,6 @@ export const sendOtpViaMsg91 = async (mobileWithCountryCode: string): Promise<IM
       throw new AppError('Failed to send OTP. Please try again.', 502);
     }
 
-    if (data.type === 'error') {
-      const errMsg = (data.message as string) || 'Failed to send OTP';
-      throw new AppError(errMsg, 400);
-    }
-
     return {
       requestId: String(requestId),
       message: data.message as string | undefined,
@@ -82,13 +155,7 @@ export const sendOtpViaMsg91 = async (mobileWithCountryCode: string): Promise<IM
     if (error instanceof AppError) {
       throw error;
     }
-    const axiosErr = error as AxiosError<{ message?: string }>;
-    const msg =
-      axiosErr.response?.data?.message ||
-      axiosErr.message ||
-      'Failed to send OTP';
-    logger.error('MSG91 send OTP error', { status: axiosErr.response?.status, msg });
-    throw new AppError(msg, axiosErr.response?.status === 429 ? 429 : 502);
+    return handleMsg91AxiosError(error, 'send OTP');
   }
 };
 
@@ -116,19 +183,16 @@ export const verifyOtpViaMsg91 = async (
     );
 
     const data = response.data as Record<string, unknown>;
-    if (data.type === 'error') {
-      throw new AppError((data.message as string) || 'Invalid OTP', 401);
-    }
+    throwIfMsg91PayloadError(data, 'verify OTP');
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
     }
-    const axiosErr = error as AxiosError<{ message?: string }>;
+    const axiosErr = error as AxiosError<Msg91ErrorBody>;
     const status = axiosErr.response?.status;
     if (status === 400 || status === 401 || status === 404) {
       throw new AppError('Invalid or expired OTP', 401);
     }
-    logger.error('MSG91 verify OTP error', { status, message: axiosErr.message });
-    throw new AppError('OTP verification failed. Please try again.', 502);
+    handleMsg91AxiosError(error, 'verify OTP');
   }
 };

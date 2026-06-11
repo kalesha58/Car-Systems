@@ -71,29 +71,38 @@ const OtpInput: FC<OtpInputProps> = ({
     }
   };
 
-  const getCellStyle = (index: number) => {
+  const getCellWrapperStyle = (index: number) => {
     const isFocused = focusedIndex === index && !disabled;
     const isFilled = Boolean(digits[index]?.trim());
 
     return {
       borderColor: isFocused ? colors.primary : isFilled ? colors.secondary : colors.border,
-      backgroundColor: isFocused
-        ? `${colors.primary}18`
-        : isFilled
-          ? colors.backgroundSecondary
-          : colors.cardBackground,
+      backgroundColor: colors.cardBackground,
       opacity: disabled ? 0.5 : 1,
       ...Platform.select({
         ios: {
-          shadowColor: isFocused ? colors.primary : '#000',
-          shadowOffset: { width: 0, height: isFocused ? 2 : 1 },
-          shadowOpacity: isFocused ? 0.2 : 0.06,
-          shadowRadius: isFocused ? 4 : 2,
+          shadowColor: isFocused ? colors.primary : colors.border,
+          shadowOffset: { width: 0, height: isFocused ? 3 : 2 },
+          shadowOpacity: isFocused ? 0.35 : 0.55,
+          shadowRadius: isFocused ? 5 : 3,
         },
         android: {
-          elevation: isFocused ? 3 : 1,
+          elevation: isFocused ? 5 : 3,
         },
       }),
+    };
+  };
+
+  const getInputStyle = (index: number) => {
+    const isFocused = focusedIndex === index && !disabled;
+    const isFilled = Boolean(digits[index]?.trim());
+
+    return {
+      backgroundColor: isFocused
+        ? `${colors.primary}14`
+        : isFilled
+          ? colors.backgroundSecondary
+          : colors.cardBackground,
     };
   };
 
@@ -114,28 +123,27 @@ const OtpInput: FC<OtpInputProps> = ({
 
       <View style={styles.row}>
         {Array.from({ length }).map((_, index) => (
-          <TextInput
-            key={index}
-            ref={(ref) => {
-              inputsRef.current[index] = ref;
-            }}
-            style={[
-              styles.box,
-              getCellStyle(index),
-              {
-                color: colors.text,
-              },
-            ]}
-            value={digits[index] === ' ' ? '' : digits[index]}
-            onChangeText={(t) => handleChange(index, t)}
-            onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
-            onFocus={() => setFocusedIndex(index)}
-            keyboardType="number-pad"
-            maxLength={length}
-            editable={!disabled}
-            selectTextOnFocus
-            textAlign="center"
-          />
+          <View key={index} style={[styles.cellWrapper, getCellWrapperStyle(index)]}>
+            <TextInput
+              ref={(ref) => {
+                inputsRef.current[index] = ref;
+              }}
+              style={[
+                styles.box,
+                getInputStyle(index),
+                { color: colors.text },
+              ]}
+              value={digits[index] === ' ' ? '' : digits[index]}
+              onChangeText={(t) => handleChange(index, t)}
+              onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
+              onFocus={() => setFocusedIndex(index)}
+              keyboardType="number-pad"
+              maxLength={length}
+              editable={!disabled}
+              selectTextOnFocus
+              textAlign="center"
+            />
+          </View>
         ))}
       </View>
     </View>
@@ -155,15 +163,19 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 10,
+  },
+  cellWrapper: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
   },
   box: {
-    flex: 1,
-    height: RFValue(52),
-    borderWidth: 1.5,
+    height: RFValue(54),
     borderRadius: 12,
     fontFamily: Fonts.SemiBold,
-    fontSize: RFValue(20),
+    fontSize: RFValue(22),
   },
 });
 

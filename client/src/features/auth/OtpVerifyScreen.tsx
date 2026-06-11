@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
-import { Keyboard, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -11,7 +11,7 @@ import CustomButton from '@components/ui/CustomButton';
 import CustomHeader from '@components/ui/CustomHeader';
 import ThemedModal from '@components/ui/ThemedModal';
 import OtpInput from '@components/auth/OtpInput';
-import { Fonts } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
 import { goBack, navigate, replace } from '@utils/NavigationUtils';
 import {
   customerSignup,
@@ -83,8 +83,7 @@ const OtpVerifyScreen: FC = () => {
   const codeExpired = expirySeconds <= 0;
   const canVerify = otp.length === otpLength && !locked && !codeExpired;
 
-  const headerTitle =
-    flow === 'signup' ? t('auth.signupVerifyPhone') : t('auth.phoneOtp.verifyOtp');
+  const headerTitle = t('auth.signupVerifyPhone');
 
   const attemptsRemaining = OTP_MAX_VERIFY_ATTEMPTS - failedAttempts;
 
@@ -218,6 +217,8 @@ const OtpVerifyScreen: FC = () => {
         title={headerTitle}
         showNotificationIcon={false}
         onBackPress={goBack}
+        backgroundColor={colors.background}
+        rightComponent={<View style={{ width: MIN_TOUCH_TARGET }} />}
       />
 
       <ScrollView
@@ -245,23 +246,7 @@ const OtpVerifyScreen: FC = () => {
           </TouchableOpacity>
         </View>
 
-        <View
-          style={[
-            styles.otpCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-              ...Platform.select({
-                ios: {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 8,
-                },
-                android: { elevation: 2 },
-              }),
-            },
-          ]}>
+        <View style={styles.otpCard}>
           <OtpInput
             value={otp}
             onChange={setOtp}
@@ -348,9 +333,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   otpCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
+    paddingVertical: 4,
   },
   timerBlock: {
     gap: 8,
