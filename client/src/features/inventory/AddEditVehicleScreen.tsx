@@ -397,7 +397,7 @@ const AddEditVehicleScreen: React.FC = () => {
         return fuelTypes.find(f => f.value === fuelType)?.label || fuelType || t('dealer.selectFuelType');
       case 'transmission':
         return (
-          transmissionOptions.find(t => t.value === transmission)?.label ||
+          transmissionOptions.find(opt => opt.value === transmission)?.label ||
           transmission ||
           t('dealer.selectTransmission')
         );
@@ -610,6 +610,33 @@ const AddEditVehicleScreen: React.FC = () => {
       fontFamily: Fonts.Medium,
       color: colors.winterBlueDark,
       marginLeft: screenWidth * 0.025,
+    },
+    chipGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: screenWidth * 0.025,
+      marginTop: screenHeight * 0.012,
+    },
+    chipPill: {
+      paddingHorizontal: screenWidth * 0.04,
+      paddingVertical: screenHeight * 0.012,
+      borderRadius: RFValue(10),
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
+      ...cardShadow,
+    },
+    chipPillSelected: {
+      borderColor: colors.secondary,
+      backgroundColor: colors.secondary + '22',
+    },
+    chipPillText: {
+      fontSize: RFValue(10),
+      fontFamily: Fonts.Medium,
+      color: colors.text,
+    },
+    chipPillTextSelected: {
+      color: colors.secondary,
     },
     imagesContainer: {
       flexDirection: 'row',

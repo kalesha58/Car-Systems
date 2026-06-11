@@ -797,8 +797,8 @@ export const ProductFormPage = () => {
                   label="Voltage (V)"
                   type="number"
                   value={formData.voltageV?.toString() || ''}
-                  onChange={(e) => {
-                    setFormData({ ...formData, voltageV: parseFloat(e.target.value) || undefined });
+                  onChange={(value) => {
+                    setFormData({ ...formData, voltageV: parseFloat(value) || undefined });
                     setErrors({ ...errors, voltageV: undefined });
                   }}
                   placeholder="e.g. 12"
@@ -947,7 +947,7 @@ export const ProductFormPage = () => {
             >
               <Select
                 label="Compatible Brand"
-                value={formData.vehicleBrandId}
+                value={formData.vehicleBrandId ?? ''}
                 onChange={(value) => {
                   setFormData({ ...formData, vehicleBrandId: value, vehicleModelId: '' });
                   setErrors({ ...errors, vehicleBrandId: undefined });
@@ -958,7 +958,7 @@ export const ProductFormPage = () => {
               />
               <Select
                 label="Compatible Model"
-                value={formData.vehicleModelId}
+                value={formData.vehicleModelId ?? ''}
                 onChange={(value) => setFormData({ ...formData, vehicleModelId: value })}
                 options={vehicleModels.map((m) => ({ value: m.id, label: m.name }))}
                 placeholder="Optional"

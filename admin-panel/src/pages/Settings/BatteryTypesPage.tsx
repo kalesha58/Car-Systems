@@ -106,7 +106,7 @@ export const BatteryTypesPage = () => {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Settings' }, { label: 'Battery Types' }]} />
+      <Breadcrumbs />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Battery size={22} color={theme.colors.primary} />
@@ -154,14 +154,14 @@ export const BatteryTypesPage = () => {
           <Input
             label="Name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(value) => setFormData({ ...formData, name: value })}
             placeholder="e.g. Lead Acid"
           />
           <Select
             label="Status"
             value={formData.status}
-            onChange={(e) =>
-              setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })
+            onChange={(value) =>
+              setFormData({ ...formData, status: value as 'active' | 'inactive' })
             }
             options={[
               { value: 'active', label: 'Active' },
@@ -172,8 +172,8 @@ export const BatteryTypesPage = () => {
             label="Sort Order"
             type="number"
             value={String(formData.sortOrder)}
-            onChange={(e) =>
-              setFormData({ ...formData, sortOrder: parseInt(e.target.value, 10) || 0 })
+            onChange={(value) =>
+              setFormData({ ...formData, sortOrder: parseInt(value, 10) || 0 })
             }
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

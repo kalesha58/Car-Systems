@@ -181,7 +181,7 @@ export const VehicleBrandsPage = () => {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Settings' }, { label: 'Vehicle Brands' }]} />
+      <Breadcrumbs />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Car size={22} color={theme.colors.primary} />
@@ -298,14 +298,14 @@ export const VehicleBrandsPage = () => {
           <Input
             label="Name"
             value={brandForm.name}
-            onChange={(e) => setBrandForm({ ...brandForm, name: e.target.value })}
+            onChange={(value) => setBrandForm({ ...brandForm, name: value })}
             placeholder={activeType === 'Bike' ? 'e.g. Hero' : 'e.g. Maruti Suzuki'}
           />
           <Select
             label="Status"
             value={brandForm.status}
-            onChange={(e) =>
-              setBrandForm({ ...brandForm, status: e.target.value as 'active' | 'inactive' })
+            onChange={(value) =>
+              setBrandForm({ ...brandForm, status: value as 'active' | 'inactive' })
             }
             options={[
               { value: 'active', label: 'Active' },
@@ -330,14 +330,14 @@ export const VehicleBrandsPage = () => {
           <Input
             label="Name"
             value={modelForm.name}
-            onChange={(e) => setModelForm({ ...modelForm, name: e.target.value })}
+            onChange={(value) => setModelForm({ ...modelForm, name: value })}
             placeholder="e.g. Splendor Plus"
           />
           <Select
             label="Status"
             value={modelForm.status}
-            onChange={(e) =>
-              setModelForm({ ...modelForm, status: e.target.value as 'active' | 'inactive' })
+            onChange={(value) =>
+              setModelForm({ ...modelForm, status: value as 'active' | 'inactive' })
             }
             options={[
               { value: 'active', label: 'Active' },
