@@ -235,6 +235,8 @@ const CustomerLogin = () => {
           phone: cleanPhone,
           flow: 'login',
           resendAfterSeconds: otpResult.resendAfterSeconds,
+          otpExpiresInSeconds: otpResult.otpExpiresInSeconds,
+          otpLength: otpResult.otpLength,
         });
         return;
       }
@@ -296,6 +298,8 @@ const CustomerLogin = () => {
         phone: cleanPhone,
         flow: 'signup',
         resendAfterSeconds: otpResult.resendAfterSeconds,
+        otpExpiresInSeconds: otpResult.otpExpiresInSeconds,
+        otpLength: otpResult.otpLength,
       });
     } catch (error: any) {
       const errorMessage =

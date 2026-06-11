@@ -8,6 +8,11 @@ import {
   markPendingLoginGreeting,
   unregisterPushNotifications,
 } from './pushNotificationService';
+import {
+  OTP_EXPIRY_SECONDS,
+  OTP_LENGTH,
+  OTP_RESEND_COOLDOWN_SECONDS,
+} from '@config/otpAuthConfig';
 
 export const CURRENT_TERMS_VERSION = '2026-05';
 export const CURRENT_PRIVACY_VERSION = '2026-05';
@@ -219,6 +224,8 @@ export const resetPasswordWithCode = async (data: {
 export interface ISendOtpResult {
   message: string;
   resendAfterSeconds: number;
+  otpExpiresInSeconds: number;
+  otpLength: number;
 }
 
 export interface IVerifyOtpResult {
@@ -240,7 +247,14 @@ const persistAuthSession = (token: string, user: object): ILoginResult => {
 export const sendPhoneOtp = async (phone: string): Promise<ISendOtpResult> => {
   const response = await appAxios.post('/auth/send-otp', { phone });
   const data = response.data;
-  return data.Response || { message: 'OTP sent', resendAfterSeconds: 30 };
+  return (
+    data.Response || {
+      message: 'OTP sent',
+      resendAfterSeconds: OTP_RESEND_COOLDOWN_SECONDS,
+      otpExpiresInSeconds: OTP_EXPIRY_SECONDS,
+      otpLength: OTP_LENGTH,
+    }
+  );
 };
 
 export const verifyPhoneOtp = async (phone: string, otp: string): Promise<IVerifyOtpResult> => {

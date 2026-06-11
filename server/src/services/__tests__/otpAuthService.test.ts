@@ -63,6 +63,8 @@ describe('otpAuthService', () => {
       expect(OtpSession.create).toHaveBeenCalled();
       expect(result.message).toBe('OTP sent');
       expect(result.resendAfterSeconds).toBeGreaterThan(0);
+      expect(result.otpExpiresInSeconds).toBeGreaterThan(0);
+      expect(result.otpLength).toBeGreaterThanOrEqual(4);
     });
 
     it('enforces resend cooldown', async () => {

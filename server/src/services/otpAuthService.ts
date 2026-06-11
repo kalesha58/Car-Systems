@@ -28,6 +28,7 @@ const OTP_SEND_WINDOW_MS =
 const OTP_RESEND_COOLDOWN_MS =
   parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || '30', 10) * 1000;
 const OTP_MAX_VERIFY_ATTEMPTS = parseInt(process.env.OTP_MAX_VERIFY_ATTEMPTS || '5', 10);
+const MSG91_OTP_LENGTH = parseInt(process.env.MSG91_OTP_LENGTH || '6', 10);
 const MSG91_COUNTRY_CODE = process.env.MSG91_COUNTRY_CODE || '91';
 const CURRENT_TERMS_VERSION = process.env.CURRENT_TERMS_VERSION || '2026-05';
 const CURRENT_PRIVACY_VERSION = process.env.CURRENT_PRIVACY_VERSION || '2026-05';
@@ -102,9 +103,16 @@ export const sendOtp = async (phoneInput: string): Promise<ISendOtpResponse> => 
 
   logger.info(`OTP sent for phone ending ${phone.slice(-4)}`);
 
+  const otpLength =
+    Number.isFinite(MSG91_OTP_LENGTH) && MSG91_OTP_LENGTH >= 4 && MSG91_OTP_LENGTH <= 8
+      ? MSG91_OTP_LENGTH
+      : 6;
+
   return {
     message: 'OTP sent',
     resendAfterSeconds: Math.ceil(OTP_RESEND_COOLDOWN_MS / 1000),
+    otpExpiresInSeconds: OTP_EXPIRY_MINUTES * 60,
+    otpLength,
   };
 };
 

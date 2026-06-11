@@ -7,6 +7,8 @@ export interface ISendOtpRequest {
 export interface ISendOtpResponse {
   message: string;
   resendAfterSeconds: number;
+  otpExpiresInSeconds: number;
+  otpLength: number;
 }
 
 export interface IVerifyOtpRequest {
