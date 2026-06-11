@@ -18,6 +18,8 @@ export interface IService {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
@@ -61,6 +63,8 @@ export interface ICreateServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
 }
@@ -82,6 +86,8 @@ export interface IUpdateServiceRequest {
   vehicleType?: 'Car' | 'Bike';
   vehicleModel?: string;
   vehicleBrand?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   serviceSubCategory?: string;
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
