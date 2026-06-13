@@ -34,6 +34,8 @@ export interface IDealer {
   createdAt: string;
   approvalCode?: string;
   dealerType?: string;
+  storeOpen?: boolean;
+  shopPhotos?: { url: string }[];
 }
 
 export interface IOrderStats {
@@ -80,4 +82,41 @@ export interface IDealersResponse {
     pagination: IPaginationResponse;
   };
 }
+
+export interface IDealerByIdResponse {
+  success: boolean;
+  Response: IDealer;
+}
+
+export interface IDealerSnapshot {
+  businessName: string;
+  dealerType?: string;
+  address?: string;
+  businessRegistrationId?: string;
+  storeOpen?: boolean;
+  shopPhotos?: { url: string }[];
+}
+
+/** Parse dealer from list or single-dealer API response shapes. */
+export const parseDealerResponse = (
+  response: IDealerByIdResponse | IDealersResponse | null | undefined,
+): IDealer | null => {
+  if (!response?.success || !response.Response) {
+    return null;
+  }
+
+  const payload = response.Response as IDealer & {
+    dealers?: IDealer[];
+  };
+
+  if (Array.isArray(payload.dealers)) {
+    return payload.dealers[0] ?? null;
+  }
+
+  if (payload.id || payload.businessName || payload.name) {
+    return payload as IDealer;
+  }
+
+  return null;
+};
 

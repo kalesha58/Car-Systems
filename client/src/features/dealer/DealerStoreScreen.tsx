@@ -21,13 +21,13 @@ import { useToast } from '@hooks/useToast';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomHeader from '@components/ui/CustomHeader';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
-import { getDealerById } from '@service/dealerService';
+import { getDealerById, parseDealerResponse } from '@service/dealerService';
 import { getProducts } from '@service/productService';
 import { getDealerVehicles } from '@service/vehicleService';
 import { getServicesByDealerId } from '@service/serviceService';
 import { shareStore } from '@utils/shareUtils';
 import { useCartStore } from '@state/cartStore';
-import type { IDealer } from '../../types/dealer/IDealer';
+import type { IDealer, IDealerSnapshot } from '../../types/dealer/IDealer';
 import type { IProduct } from '../../types/product/IProduct';
 import type { IDealerVehicle } from '../../types/vehicle/IVehicle';
 import type { IService } from '../../types/service/IService';
@@ -35,64 +35,110 @@ import type { IService } from '../../types/service/IService';
 type DealerStoreRouteParams = {
   DealerStore: {
     dealerId: string;
+    dealerSnapshot?: IDealerSnapshot;
   };
 };
 
 type TabType = 'products' | 'vehicles' | 'services';
 
+const DEFAULT_BANNER_URI =
+  'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=800';
+
+const snapshotToDealer = (snapshot: IDealerSnapshot, routeDealerId: string): IDealer => ({
+  id: routeDealerId,
+  businessRegistrationId: snapshot.businessRegistrationId,
+  name: snapshot.businessName,
+  businessName: snapshot.businessName,
+  email: '',
+  phone: '',
+  status: 'approved',
+  address: snapshot.address,
+  dealerType: snapshot.dealerType,
+  storeOpen: snapshot.storeOpen,
+  shopPhotos: snapshot.shopPhotos,
+  createdAt: new Date().toISOString(),
+});
+
 const { width: screenWidth } = Dimensions.get('window');
 
 const DealerStoreScreen: React.FC = () => {
-  const route = useRoute<any>();
-  const { dealerId } = route.params;
+  const route = useRoute<RouteProp<DealerStoreRouteParams, 'DealerStore'>>();
+  const { dealerId, dealerSnapshot } = route.params;
   const { colors, isDark } = useTheme();
   const { showSuccess, showError } = useToast();
   const { addItem } = useCartStore();
 
   // States
-  const [dealer, setDealer] = useState<IDealer | null>(null);
+  const [dealer, setDealer] = useState<IDealer | null>(() =>
+    dealerSnapshot ? snapshotToDealer(dealerSnapshot, dealerId) : null,
+  );
   const [products, setProducts] = useState<IProduct[]>([]);
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
   const [services, setServices] = useState<IService[]>([]);
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!dealerSnapshot);
+  const [dealerFetchError, setDealerFetchError] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [servicesLoading, setServicesLoading] = useState(false);
   
   const [activeTab, setActiveTab] = useState<TabType>('products');
   const [searchQuery, setSearchQuery] = useState('');
-  const [storeOpen, setStoreOpen] = useState(true);
+  const [storeOpen, setStoreOpen] = useState(
+    dealerSnapshot?.storeOpen !== undefined ? dealerSnapshot.storeOpen : true,
+  );
 
   const catalogDealerId = useMemo(
-    () => dealer?.businessRegistrationId ?? dealerId,
-    [dealer?.businessRegistrationId, dealerId],
+    () =>
+      dealer?.businessRegistrationId ??
+      dealerSnapshot?.businessRegistrationId ??
+      dealerId,
+    [dealer?.businessRegistrationId, dealerSnapshot?.businessRegistrationId, dealerId],
   );
+
+  const bannerUri =
+    dealer?.shopPhotos?.[0]?.url ?? dealerSnapshot?.shopPhotos?.[0]?.url ?? DEFAULT_BANNER_URI;
+
+  const inventoryStats = useMemo(() => {
+    const parts: string[] = [];
+    if (products.length > 0) {
+      parts.push(`${products.length} Product${products.length !== 1 ? 's' : ''}`);
+    }
+    if (vehicles.length > 0) {
+      parts.push(`${vehicles.length} Vehicle${vehicles.length !== 1 ? 's' : ''}`);
+    }
+    if (services.length > 0) {
+      parts.push(`${services.length} Service${services.length !== 1 ? 's' : ''}`);
+    }
+    return parts.join(' · ');
+  }, [products.length, vehicles.length, services.length]);
+
+  const fetchDealerDetails = async () => {
+    const profileFetchId = dealerSnapshot?.businessRegistrationId ?? dealerId;
+    try {
+      setLoading(true);
+      setDealerFetchError(false);
+      const response = await getDealerById(profileFetchId);
+      const dealerData = parseDealerResponse(response);
+      if (dealerData) {
+        setDealer(dealerData);
+        setStoreOpen(dealerData.storeOpen !== undefined ? dealerData.storeOpen : true);
+      } else if (!dealerSnapshot) {
+        setDealerFetchError(true);
+      }
+    } catch (error) {
+      console.error('Error fetching dealer:', error);
+      if (!dealerSnapshot) {
+        setDealerFetchError(true);
+        showError('Failed to load dealer information');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch Dealer details
   useEffect(() => {
-    const fetchDealerDetails = async () => {
-      try {
-        setLoading(true);
-        const response = await getDealerById(dealerId);
-        if (response.success && response.Response) {
-          const dealerData = Array.isArray(response.Response.dealers)
-            ? response.Response.dealers[0]
-            : (response.Response as any);
-          if (dealerData) {
-            setDealer(dealerData);
-            // Default storeOpen check
-            setStoreOpen(dealerData.status === 'approved');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching dealer:', error);
-        showError('Failed to load dealer information');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (dealerId) {
       fetchDealerDetails();
     }
@@ -292,6 +338,34 @@ const DealerStoreScreen: React.FC = () => {
           fontSize: RFValue(11),
           ...fontStyle(Fonts.Regular),
           flex: 1,
+        },
+        inventoryStats: {
+          color: colors.textSecondary,
+          fontSize: RFValue(11),
+          ...fontStyle(Fonts.Medium),
+          marginTop: 8,
+        },
+        profileErrorRow: {
+          alignItems: 'center',
+          gap: 10,
+          paddingVertical: 8,
+        },
+        profileErrorText: {
+          color: colors.textSecondary,
+          fontSize: RFValue(12),
+          ...fontStyle(Fonts.Regular),
+          textAlign: 'center',
+        },
+        retryButton: {
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 8,
+          backgroundColor: colors.secondary,
+        },
+        retryButtonText: {
+          color: '#fff',
+          fontSize: RFValue(12),
+          ...fontStyle(Fonts.SemiBold),
         },
         searchContainer: {
           flexDirection: 'row',
@@ -602,7 +676,7 @@ const DealerStoreScreen: React.FC = () => {
         {/* Banner Section */}
         <View style={styles.bannerContainer}>
           <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=800' }}
+            source={{ uri: bannerUri }}
             style={styles.bannerImage}
             resizeMode="cover"
           />
@@ -611,41 +685,53 @@ const DealerStoreScreen: React.FC = () => {
 
         {/* Profile Card */}
         <View style={styles.profileCard}>
-          {loading ? (
+          {loading && !dealer ? (
             <View style={{ gap: 8 }}>
               <SkeletonLoader width="50%" height={16} borderRadius={4} />
               <SkeletonLoader width="80%" height={24} borderRadius={4} />
               <SkeletonLoader width="95%" height={14} borderRadius={4} />
             </View>
-          ) : (
-            dealer && (
-              <>
-                <View style={styles.storeBadgeRow}>
-                  <View style={styles.storeTypeTag}>
-                    <CustomText style={styles.storeTypeText}>{dealer.dealerType || 'Dealer'}</CustomText>
-                  </View>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: storeOpen ? '#10b981' : '#ef4444' },
-                    ]}
-                  >
-                    <CustomText style={styles.statusText}>
-                      {storeOpen ? 'OPEN' : 'CLOSED'}
-                    </CustomText>
-                  </View>
+          ) : dealer ? (
+            <>
+              <View style={styles.storeBadgeRow}>
+                <View style={styles.storeTypeTag}>
+                  <CustomText style={styles.storeTypeText}>{dealer.dealerType || 'Dealer'}</CustomText>
                 </View>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: storeOpen ? '#10b981' : '#ef4444' },
+                  ]}
+                >
+                  <CustomText style={styles.statusText}>
+                    {storeOpen ? 'OPEN' : 'CLOSED'}
+                  </CustomText>
+                </View>
+              </View>
 
-                <CustomText style={styles.businessName}>{dealer.businessName || dealer.name}</CustomText>
+              <CustomText style={styles.businessName}>{dealer.businessName || dealer.name}</CustomText>
 
-                {dealer.address && (
-                  <View style={styles.addressRow}>
-                    <Icon name="location-outline" size={RFValue(14)} color={colors.textSecondary} style={{ marginTop: 2 }} />
-                    <CustomText style={styles.addressText}>{dealer.address}</CustomText>
-                  </View>
-                )}
-              </>
-            )
+              {dealer.address && (
+                <View style={styles.addressRow}>
+                  <Icon name="location-outline" size={RFValue(14)} color={colors.textSecondary} style={{ marginTop: 2 }} />
+                  <CustomText style={styles.addressText}>{dealer.address}</CustomText>
+                </View>
+              )}
+
+              {inventoryStats.length > 0 && (
+                <CustomText style={styles.inventoryStats}>{inventoryStats}</CustomText>
+              )}
+            </>
+          ) : (
+            <View style={styles.profileErrorRow}>
+              <Icon name="storefront-outline" size={RFValue(28)} color={colors.textSecondary} />
+              <CustomText style={styles.profileErrorText}>
+                Unable to load store details. Please try again.
+              </CustomText>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchDealerDetails}>
+                <CustomText style={styles.retryButtonText}>Retry</CustomText>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 

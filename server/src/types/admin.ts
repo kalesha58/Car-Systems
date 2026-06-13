@@ -110,7 +110,8 @@ export interface IDealer {
   suspensionReason?: string;
   registrationDate?: string;
   approvalDate?: string;
-
+  storeOpen?: boolean;
+  shopPhotos?: { url: string }[];
 }
 
 export interface IGetDealersRequest {

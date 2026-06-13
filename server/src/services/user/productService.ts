@@ -91,11 +91,15 @@ const getCategoryByIdSafe = async (categoryId: string): Promise<{ name: string }
 };
 
 /**
- * Get dealer information by userId
+ * Get dealer information by userId or BusinessRegistration document id
  */
 const getDealerInfoByUserId = async (userId: string): Promise<IDealerInfo | null> => {
   try {
-    const businessRegistration = await BusinessRegistration.findOne({ userId });
+    let businessRegistration = await BusinessRegistration.findOne({ userId });
+
+    if (!businessRegistration && mongoose.Types.ObjectId.isValid(userId)) {
+      businessRegistration = await BusinessRegistration.findById(userId);
+    }
 
     if (!businessRegistration || businessRegistration.status !== 'approved') {
       return null;

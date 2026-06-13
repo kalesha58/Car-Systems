@@ -1,5 +1,10 @@
 import { appAxios } from './apiInterceptors';
-import { IDealersResponse, IGetDealersRequest } from '../types/dealer/IDealer';
+import {
+  IDealersResponse,
+  IDealerByIdResponse,
+  IGetDealersRequest,
+  parseDealerResponse,
+} from '../types/dealer/IDealer';
 import { IOrderData, IOrdersListResponse } from '../types/order/IOrder';
 import { IProductsResponse, IGetProductsRequest, IProduct } from '../types/product/IProduct';
 import { IVehiclesResponse, IGetVehiclesRequest, IDealerVehicle } from '../types/vehicle/IVehicle';
@@ -17,14 +22,16 @@ export const getDealers = async (
   }
 };
 
-export const getDealerById = async (dealerId: string): Promise<IDealersResponse> => {
+export const getDealerById = async (dealerId: string): Promise<IDealerByIdResponse> => {
   try {
-    const response = await appAxios.get<IDealersResponse>(`/dealers/${dealerId}`);
+    const response = await appAxios.get<IDealerByIdResponse>(`/dealers/${dealerId}`);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
+
+export { parseDealerResponse };
 
 export interface INearbyDealer {
   id: string;

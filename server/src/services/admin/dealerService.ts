@@ -88,6 +88,8 @@ const mapBusinessRegistrationToDealer = (
     registrationDate: reg.createdAt?.toISOString(),
     approvalDate: reg.status === 'approved' ? reg.updatedAt?.toISOString() : undefined,
     createdAt: reg.createdAt?.toISOString() || new Date().toISOString(),
+    storeOpen: reg.storeOpen !== undefined ? reg.storeOpen : true,
+    shopPhotos: (reg.shopPhotos || []).map((photo) => ({ url: photo.url })),
   };
 };
 
