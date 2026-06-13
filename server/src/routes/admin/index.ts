@@ -18,6 +18,7 @@ import moderationRoutes from './moderationRoutes';
 import couponRoutes from './couponRoutes';
 import serviceBookingRoutes from './serviceBookingRoutes';
 import testDriveRoutes from './testDriveRoutes';
+import tyreServiceRoutes from './tyreServiceRoutes';
 
 const router = Router();
 
@@ -41,6 +42,7 @@ router.use('/moderation', moderationRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/service-bookings', serviceBookingRoutes);
 router.use('/test-drives', testDriveRoutes);
+router.use('/tyre-services', tyreServiceRoutes);
 
 export default router;
 

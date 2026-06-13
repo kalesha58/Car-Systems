@@ -11,20 +11,22 @@ import {navigate} from '@utils/NavigationUtils';
 interface ServiceItemProps {
   item: IService;
   index: number;
+  fullWidth?: boolean;
 }
 
-const ServiceItem: FC<ServiceItemProps> = ({index, item}) => {
+const ServiceItem: FC<ServiceItemProps> = ({index, item, fullWidth = false}) => {
   const {colors} = useTheme();
-  const isSecondColumn = index % 2 !== 0;
   const imageUrl = item.images && item.images.length > 0 ? item.images[0] : '';
+  const hasDuration = typeof item.durationMinutes === 'number' && item.durationMinutes > 0;
 
   const styles = StyleSheet.create({
     container: {
-      width: '45%',
+      flex: fullWidth ? undefined : 1,
+      width: fullWidth ? '100%' : undefined,
+      maxWidth: fullWidth ? '100%' : '48%',
       borderRadius: 10,
       backgroundColor: colors.cardBackground,
       marginBottom: 10,
-      marginLeft: 10,
       shadowColor: '#000',
       shadowOffset: {
         width: 0,
@@ -94,7 +96,7 @@ const ServiceItem: FC<ServiceItemProps> = ({index, item}) => {
 
   return (
     <Pressable
-      style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
+      style={styles.container}
       onPress={() => navigate('ServiceDetail', {serviceId: item.id || (item as any)._id})}>
       <View style={styles.imageContainer}>
         {imageUrl ? (
@@ -121,18 +123,22 @@ const ServiceItem: FC<ServiceItemProps> = ({index, item}) => {
           {item.name}
         </CustomText>
 
-        <View style={styles.detailsRow}>
-          <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
-            {item.durationMinutes} mins
-          </CustomText>
-          {item.homeService && (
-            <View style={styles.homeServiceBadge}>
-              <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
-                Home Service
+        {(hasDuration || item.homeService) && (
+          <View style={styles.detailsRow}>
+            {hasDuration && (
+              <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
+                {item.durationMinutes} mins
               </CustomText>
-            </View>
-          )}
-        </View>
+            )}
+            {item.homeService && (
+              <View style={styles.homeServiceBadge}>
+                <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium}>
+                  Home Service
+                </CustomText>
+              </View>
+            )}
+          </View>
+        )}
 
         <View style={styles.priceContainer}>
           <View>

@@ -11,20 +11,21 @@ import {navigate} from '@utils/NavigationUtils';
 interface VehicleItemProps {
   item: IDealerVehicle;
   index: number;
+  fullWidth?: boolean;
 }
 
-const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
+const VehicleItem: FC<VehicleItemProps> = ({index, item, fullWidth = false}) => {
   const {colors} = useTheme();
-  const isSecondColumn = index % 2 !== 0;
   const imageUrl = item.images && item.images.length > 0 ? item.images[0] : '';
 
   const styles = StyleSheet.create({
     container: {
-      width: '45%',
+      flex: fullWidth ? undefined : 1,
+      width: fullWidth ? '100%' : undefined,
+      maxWidth: fullWidth ? '100%' : '48%',
       borderRadius: 10,
       backgroundColor: colors.cardBackground,
       marginBottom: 10,
-      marginLeft: 10,
       shadowColor: '#000',
       shadowOffset: {
         width: 0,
@@ -88,7 +89,7 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
 
   return (
     <Pressable
-      style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
+      style={styles.container}
       onPress={() => navigate('VehicleDetail', {vehicleId: item.id || (item as any)._id})}>
       <View style={styles.imageContainer}>
         {imageUrl ? (

@@ -249,14 +249,24 @@ export const createNotificationChannel = (): void => {
 /**
  * In-app notification types and interfaces
  */
+export type NotificationType =
+  | 'order_update'
+  | 'service_update'
+  | 'test_drive_update'
+  | 'tyre_service_update'
+  | 'tyre_service_request'
+  | 'general';
+
 export interface INotification {
   id: string;
-  type: 'order_update' | 'service_update' | 'test_drive_update' | 'general';
+  type: NotificationType;
   title: string;
   body: string;
   data?: {
     orderId?: string;
     serviceId?: string;
+    bookingId?: string;
+    testDriveId?: string;
     status?: string;
     [key: string]: any;
   };

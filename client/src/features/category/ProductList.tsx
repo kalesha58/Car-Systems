@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, FlatList, RefreshControl} from 'react-native';
+import {View, StyleSheet, FlatList, RefreshControl} from 'react-native';
 import React, {FC} from 'react';
 import ProductItem from './ProductItem';
 import VehicleItem from './VehicleItem';
@@ -26,6 +26,24 @@ interface ProductListProps {
   refreshing?: boolean;
 }
 
+const detectItemTypeFromShape = (item: ItemType): 'products' | 'vehicles' | 'services' | null => {
+  const itemAny = item as any;
+
+  if (itemAny.vehicleModel !== undefined && itemAny.year !== undefined) {
+    return 'vehicles';
+  }
+
+  if (itemAny.durationMinutes !== undefined && itemAny.homeService !== undefined) {
+    return 'services';
+  }
+
+  if (itemAny.name !== undefined && itemAny.stock !== undefined) {
+    return 'products';
+  }
+
+  return null;
+};
+
 const ProductList: FC<ProductListProps> = ({
   data,
   itemType = 'products',
@@ -35,6 +53,9 @@ const ProductList: FC<ProductListProps> = ({
   refreshing = false,
 }) => {
   const {colors} = useTheme();
+  const isGridView = viewMode !== 'list';
+  const isSingleColumnGrid = isGridView && data.length === 1;
+  const gridColumns = isGridView ? (isSingleColumnGrid ? 1 : 2) : 1;
 
   const styles = StyleSheet.create({
     container: {
@@ -44,7 +65,12 @@ const ProductList: FC<ProductListProps> = ({
     },
     content: {
       paddingVertical: 10,
+      paddingHorizontal: isSingleColumnGrid ? 10 : 0,
       paddingBottom: 100,
+    },
+    columnWrapper: {
+      justifyContent: 'space-between',
+      paddingHorizontal: 10,
     },
     listContent: {
       paddingBottom: 100,
@@ -58,32 +84,17 @@ const ProductList: FC<ProductListProps> = ({
   });
 
   const getItemType = (item: ItemType): 'products' | 'vehicles' | 'services' => {
-    // If itemType is provided, use it
-    if (itemType) {
-      return itemType;
+    const detected = detectItemTypeFromShape(item);
+    if (detected) {
+      return detected;
     }
-
-    // Determine type from item properties
-    const itemAny = item as any;
-    
-    // IDealerVehicle has vehicleModel and year as distinguishing properties
-    if (itemAny.vehicleModel !== undefined && itemAny.year !== undefined) {
-      return 'vehicles';
-    }
-    
-    // IService has durationMinutes and homeService as distinguishing properties
-    if (itemAny.durationMinutes !== undefined && itemAny.homeService !== undefined) {
-      return 'services';
-    }
-    
-    // Default to products
-    return 'products';
+    return itemType;
   };
 
   const renderItem = ({item, index}: {item: ItemType; index: number}) => {
     const detectedType = getItemType(item);
-    
-    // For list view, use list components
+    const fullWidth = isSingleColumnGrid;
+
     if (viewMode === 'list') {
       if (detectedType === 'products') {
         return <ProductListItem item={item as IProduct} />;
@@ -95,15 +106,14 @@ const ProductList: FC<ProductListProps> = ({
         return <ServiceListItem item={item as IService} />;
       }
     }
-    
-    // Grid view for all types
+
     if (detectedType === 'vehicles') {
-      return <VehicleItem item={item as IDealerVehicle} index={index} />;
+      return <VehicleItem item={item as IDealerVehicle} index={index} fullWidth={fullWidth} />;
     }
     if (detectedType === 'services') {
-      return <ServiceItem item={item as IService} index={index} />;
+      return <ServiceItem item={item as IService} index={index} fullWidth={fullWidth} />;
     }
-    return <ProductItem item={item as IProduct} index={index} />;
+    return <ProductItem item={item as IProduct} index={index} fullWidth={fullWidth} />;
   };
 
   const renderSkeleton = ({index}: {index: number}) => {
@@ -117,7 +127,6 @@ const ProductList: FC<ProductListProps> = ({
   };
 
   if (loading) {
-    // Show 6 skeleton items
     const skeletonData = Array.from({length: 6}, (_, i) => ({id: `skeleton-${i}`, index: i}));
     return (
       <View style={styles.container}>
@@ -134,13 +143,14 @@ const ProductList: FC<ProductListProps> = ({
 
   return (
     <FlatList
-      key={viewMode === 'list' ? 'list-view' : 'grid-view'}
+      key={viewMode === 'list' ? 'list-view' : isSingleColumnGrid ? 'grid-single' : 'grid-view'}
       data={data}
       keyExtractor={item => item.id || (item as any)._id}
       renderItem={renderItem}
       style={styles.container}
       contentContainerStyle={viewMode === 'list' ? styles.listContent : styles.content}
-      numColumns={viewMode === 'list' ? 1 : 2}
+      numColumns={gridColumns}
+      columnWrapperStyle={isGridView && !isSingleColumnGrid ? styles.columnWrapper : undefined}
       refreshControl={
         onRefresh ? (
           <RefreshControl

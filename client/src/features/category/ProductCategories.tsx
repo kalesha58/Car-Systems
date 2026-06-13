@@ -48,6 +48,36 @@ const MONGO_OBJECT_ID = /^[a-f\d]{24}$/i;
 const isSparePartsCategory = (category: ICategoryItem | null | undefined): boolean =>
   !!category && /^spare\s*parts$/i.test(category.name.trim());
 
+const isServiceItem = (item: ItemType): item is IService =>
+  typeof (item as IService).durationMinutes === 'number' &&
+  typeof (item as IService).homeService === 'boolean';
+
+const isVehicleItem = (item: ItemType): item is IDealerVehicle =>
+  typeof (item as IDealerVehicle).vehicleModel === 'string' &&
+  typeof (item as IDealerVehicle).year === 'number';
+
+const isProductItem = (item: ItemType): item is IProduct =>
+  typeof (item as IProduct).name === 'string' &&
+  typeof (item as IProduct).stock === 'number' &&
+  !isVehicleItem(item) &&
+  !isServiceItem(item);
+
+const filterItemsByCategoryType = (items: ItemType[], type?: CategoryType): ItemType[] => {
+  if (!type) {
+    return items;
+  }
+  switch (type) {
+    case 'services':
+      return items.filter(isServiceItem);
+    case 'vehicles':
+      return items.filter(isVehicleItem);
+    case 'products':
+      return items.filter(isProductItem);
+    default:
+      return items;
+  }
+};
+
 const SERVICE_CATEGORY_IMAGES: Record<string, ReturnType<typeof require>> = {
   'car-service': require('@assets/services/car_service.png'),
   'bike-service': require('@assets/services/bike_service.jpg'),
@@ -148,6 +178,7 @@ const ProductCategories = () => {
     timestamp: number;
   }>>(new Map());
   const hasFailedAuthRef = useRef(false);
+  const fetchRequestIdRef = useRef(0);
 
   useEffect(() => {
     const loadSparePartsBrands = async () => {
@@ -185,14 +216,17 @@ const ProductCategories = () => {
         const allCategories = buildBaseCategories(t, backendCategories);
 
         setCategories(allCategories);
-        if (allCategories.length > 0) {
+        if (
+          allCategories.length > 0 &&
+          !routeParams?.initialCategoryId &&
+          !routeParams?.initialCategoryType
+        ) {
           setSelectedCategory(allCategories[0]);
         }
       } catch (error) {
         const defaultCategories = buildBaseCategories(t, []);
         setCategories(defaultCategories);
-        // Set initial category - will be overridden by route params if they exist
-        if (!routeParams?.initialCategoryId) {
+        if (!routeParams?.initialCategoryId && !routeParams?.initialCategoryType) {
           setSelectedCategory(defaultCategories[0]);
         }
       } finally {
@@ -492,11 +526,16 @@ const ProductCategories = () => {
         return;
       }
 
+      const requestId = ++fetchRequestIdRef.current;
+
       try {
         setItemsLoading(true);
-        setItems([]); // Clear items immediately when category changes
+        setItems([]);
 
         const fetchedItems = await fetchItemsMemoized(selectedCategory, filters, false);
+        if (requestId !== fetchRequestIdRef.current) {
+          return;
+        }
         console.log('[ProductCategories] Setting items:', {
           category: selectedCategory._id,
           categoryType: selectedCategory.type,
@@ -505,11 +544,16 @@ const ProductCategories = () => {
         setItems(fetchedItems);
         setProductCount(fetchedItems.length);
       } catch (error) {
+        if (requestId !== fetchRequestIdRef.current) {
+          return;
+        }
         console.error('[ProductCategories] Error in fetchItems:', error);
         setItems([]);
         setProductCount(0);
       } finally {
-        setItemsLoading(false);
+        if (requestId === fetchRequestIdRef.current) {
+          setItemsLoading(false);
+        }
       }
     };
 
@@ -874,7 +918,7 @@ const ProductCategories = () => {
     }
 
     if (selectedCategory?.type !== 'products' || !isSparePartsCategory(selectedCategory)) {
-      return result;
+      return filterItemsByCategoryType(result, selectedCategory?.type);
     }
     let spareResult = [...result];
     if (sparePartsVehicleType) {
@@ -889,7 +933,7 @@ const ProductCategories = () => {
         return p.vehicleBrandId === sparePartsBrand;
       });
     }
-    return spareResult;
+    return filterItemsByCategoryType(spareResult, selectedCategory?.type);
   }, [subcategoryFilteredItems, selectedCategory, sparePartsVehicleType, sparePartsBrand, allowTestDriveOnly]);
 
   // Handle sort selection
@@ -969,10 +1013,13 @@ const ProductCategories = () => {
   // Handle refresh
   const handleRefresh = async () => {
     setRefreshing(true);
+    const requestId = ++fetchRequestIdRef.current;
     try {
-      // Re-fetch items with force refresh
       if (selectedCategory) {
         const fetchedItems = await fetchItemsMemoized(selectedCategory, filters, true);
+        if (requestId !== fetchRequestIdRef.current) {
+          return;
+        }
         setItems(fetchedItems);
         setProductCount(fetchedItems.length);
       }
@@ -980,7 +1027,9 @@ const ProductCategories = () => {
     } catch (error) {
       // Silently fail
     } finally {
-      setRefreshing(false);
+      if (requestId === fetchRequestIdRef.current) {
+        setRefreshing(false);
+      }
     }
   };
 

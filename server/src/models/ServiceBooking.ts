@@ -22,6 +22,12 @@ export interface IServiceBookingDocument extends Document {
   notes?: string;
   dealerNotes?: string;
   rejectionReason?: string;
+  serviceSubCategory?: string;
+  requestLocation?: {
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,6 +108,16 @@ const serviceBookingSchema = new Schema<IServiceBookingDocument>(
     rejectionReason: {
       type: String,
       trim: true,
+    },
+    serviceSubCategory: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    requestLocation: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+      address: { type: String, trim: true },
     },
   },
   {

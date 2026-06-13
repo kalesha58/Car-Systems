@@ -10,6 +10,29 @@ import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandle
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import { resolveVehicleBrandModelStrings } from '../../utils/vehicleProductMapping';
+import { getSectionByServiceType } from '../../data/serviceCategoryConfig';
+
+const validateServiceSubCategory = (
+  serviceType: string | undefined,
+  serviceSubCategory: string | undefined,
+): void => {
+  if (!serviceType || serviceType === 'general' || !serviceSubCategory?.trim()) {
+    return;
+  }
+
+  const section = getSectionByServiceType(serviceType as any);
+  if (!section || section.subcategories.length === 0) {
+    return;
+  }
+
+  const validIds = section.subcategories.map(s => s.id);
+  if (!validIds.includes(serviceSubCategory.trim())) {
+    throw new AppError(
+      `Invalid subcategory "${serviceSubCategory}" for service type ${serviceType}`,
+      400,
+    );
+  }
+};
 
 /**
  * Convert service document to dealer service interface
@@ -197,6 +220,8 @@ export const createDealerService = async (
       vehicleModel = resolved.vehicleModel || vehicleModel;
     }
 
+    validateServiceSubCategory(data.serviceType, data.serviceSubCategory);
+
     const service = new Service({
       dealerId,
       name: data.name.trim(),
@@ -318,6 +343,10 @@ export const updateDealerService = async (
     if (data.serviceType !== undefined) service.serviceType = data.serviceType;
     if (data.vehicleType !== undefined) service.vehicleType = data.vehicleType;
     if (data.serviceSubCategory !== undefined) service.serviceSubCategory = data.serviceSubCategory;
+    validateServiceSubCategory(
+      data.serviceType ?? service.serviceType,
+      data.serviceSubCategory ?? service.serviceSubCategory,
+    );
     if (data.servicePackage !== undefined) service.servicePackage = data.servicePackage;
     if (data.slotBookingEnabled !== undefined) service.slotBookingEnabled = data.slotBookingEnabled;
     if (data.slotDurationMinutes !== undefined) service.slotDurationMinutes = data.slotDurationMinutes;

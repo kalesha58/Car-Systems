@@ -49,6 +49,11 @@ const ActivitySection: FC = () => {
             label: t('profile.myTestDrives'),
             onPress: () => navigation.navigate('MyTestDrives' as never),
           },
+          {
+            icon: 'construct-outline',
+            label: t('service.myBookings') || 'My Service Bookings',
+            onPress: () => navigation.navigate('MyServiceBookings' as never),
+          },
         ]
       : []),
     {

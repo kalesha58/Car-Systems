@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -22,6 +22,7 @@ import type { IService } from '../../types/service/IService';
 import { openDealerChat } from '@utils/openDealerChat';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import ServiceSlotPicker, { IServiceSlot } from '@components/service/ServiceSlotPicker';
+import { withAuth } from '@utils/AuthGuard';
 
 type ServiceDetailRouteParams = {
   ServiceDetail: {
@@ -31,6 +32,7 @@ type ServiceDetailRouteParams = {
 
 const ServiceDetail: React.FC = () => {
   const route = useRoute<RouteProp<ServiceDetailRouteParams, 'ServiceDetail'>>();
+  const navigation = useNavigation();
   const { serviceId } = route.params;
 
   const { colors } = useTheme();
@@ -705,6 +707,20 @@ const ServiceDetail: React.FC = () => {
             {service ? `₹${service.price?.toLocaleString()}` : '—'}
           </CustomText>
         </View>
+        {service?.serviceType === 'tire_service' && (
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={() => {
+              withAuth(() => {
+                (navigation as any).navigate('TyreServiceRequest', { serviceId: service.id });
+              }, 'Please login to request tyre service.');
+            }}
+            activeOpacity={0.8}>
+            <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(11) }}>
+              Request Tyre Service
+            </CustomText>
+          </TouchableOpacity>
+        )}
         {service?.slotBookingEnabled && selectedSlot && (
           <TouchableOpacity
             style={[styles.bookButton, bookingLoading && styles.bookButtonDisabled]}

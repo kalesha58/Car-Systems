@@ -8,6 +8,8 @@
  * Keep in sync with: server/src/data/serviceCategoryConfig.ts
  */
 
+import { getAllowedDealerServiceTypes } from './dealerServiceTypeConfig';
+
 export type ServiceTypeValue =
   | 'car_automobile'
   | 'bike_automobile'
@@ -194,6 +196,43 @@ export const buildServiceQueryParams = (
   }
 
   return {};
+};
+
+/** Get section config by serviceType (and optional vehicleType when multiple sections share a type) */
+export const getSectionByServiceType = (
+  serviceType: ServiceTypeValue,
+  vehicleType?: 'Car' | 'Bike',
+): IServiceSection | undefined => {
+  const matches = SERVICE_SECTIONS.filter(s => s.serviceType === serviceType);
+  if (matches.length === 1) {
+    return matches[0];
+  }
+  if (vehicleType) {
+    const byVehicle = matches.find(s => s.vehicleType === vehicleType);
+    if (byVehicle) {
+      return byVehicle;
+    }
+  }
+  return matches[0];
+};
+
+/** Sections a dealer may create based on business registration type */
+export const getSectionsForBusinessType = (businessType?: string): IServiceSection[] => {
+  const allowed = getAllowedDealerServiceTypes(businessType);
+  return SERVICE_SECTIONS.filter(s => allowed.includes(s.serviceType));
+};
+
+/** Resolve subcategory id to display label for a service type */
+export const getSubcategoryLabel = (
+  serviceType: ServiceTypeValue | undefined,
+  subCategoryId: string | undefined,
+): string | undefined => {
+  if (!serviceType || !subCategoryId) {
+    return subCategoryId;
+  }
+  const section = getSectionByServiceType(serviceType);
+  const match = section?.subcategories.find(s => s.id === subCategoryId);
+  return match?.label ?? subCategoryId;
 };
 
 /** Build navigation params for a service section shortcut button */

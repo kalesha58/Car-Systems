@@ -135,6 +135,12 @@ const NotificationScreen: React.FC = () => {
 
       if (notification.type === 'test_drive_update') {
         navigate('MyTestDrives' as never);
+        return;
+      }
+
+      if (notification.type === 'tyre_service_update' || notification.type === 'tyre_service_request') {
+        navigate('MyServiceBookings' as never);
+        return;
       }
     } catch (error: any) {
       showError('Failed to mark notification as read');
@@ -151,6 +157,24 @@ const NotificationScreen: React.FC = () => {
     }
   };
 
+  const isTyreServiceNotification = (type: string) =>
+    type === 'tyre_service_update' || type === 'tyre_service_request';
+
+  const getNotificationIconBg = (type: string) => {
+    if (type === 'order_update') return colors.secondary + '20';
+    if (type === 'service_update') return colors.primary + '20';
+    if (type === 'test_drive_update') return colors.secondary + '15';
+    if (isTyreServiceNotification(type)) return colors.warning + '20';
+    return colors.border;
+  };
+
+  const getNotificationIconColor = (type: string) => {
+    if (type === 'order_update') return colors.secondary;
+    if (type === 'service_update') return colors.primary;
+    if (type === 'test_drive_update') return colors.secondary;
+    if (isTyreServiceNotification(type)) return colors.warning || '#FF9800';
+    return colors.text;
+  };
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'order_update':
@@ -159,6 +183,9 @@ const NotificationScreen: React.FC = () => {
         return 'car-outline';
       case 'test_drive_update':
         return 'car-sport-outline';
+      case 'tyre_service_update':
+      case 'tyre_service_request':
+        return 'disc-outline';
       default:
         return 'notifications-outline';
     }
@@ -180,29 +207,12 @@ const NotificationScreen: React.FC = () => {
           <View
             style={[
               styles.iconContainer,
-              {
-                backgroundColor:
-                  item.type === 'order_update'
-                    ? colors.secondary + '20'
-                    : item.type === 'service_update'
-                    ? colors.primary + '20'
-                    : item.type === 'test_drive_update'
-                    ? colors.secondary + '15'
-                    : colors.border,
-              },
+              { backgroundColor: getNotificationIconBg(item.type) },
             ]}>
             <Icon
               name={getNotificationIcon(item.type)}
               size={RFValue(20)}
-                color={
-                item.type === 'order_update'
-                  ? colors.secondary
-                  : item.type === 'service_update'
-                  ? colors.primary
-                  : item.type === 'test_drive_update'
-                  ? colors.secondary
-                  : colors.text
-              }
+              color={getNotificationIconColor(item.type)}
             />
           </View>
           <View style={styles.textContainer}>

@@ -27,9 +27,20 @@ export interface INotificationPayload {
   body: string;
   imageUrl?: string;
   data?: {
-    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request' | 'greeting' | 'test_drive_update';
+    type?:
+      | 'order_update'
+      | 'payment'
+      | 'chat'
+      | 'general'
+      | 'group_join_request'
+      | 'greeting'
+      | 'test_drive_update'
+      | 'tyre_service_update'
+      | 'tyre_service_request'
+      | 'service_update';
     orderId?: string;
     testDriveId?: string;
+    bookingId?: string;
     vehicleId?: string;
     status?: string;
     actor?: string;

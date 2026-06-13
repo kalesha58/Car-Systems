@@ -51,6 +51,12 @@ const TestDrivesListPage = lazy(() =>
 const TestDriveDetailsPage = lazy(() =>
   import('@pages/TestDrives/TestDriveDetailsPage').then(module => ({ default: module.TestDriveDetailsPage })),
 );
+const TyreServicesListPage = lazy(() =>
+  import('@pages/TyreServices/TyreServicesListPage').then(module => ({ default: module.TyreServicesListPage })),
+);
+const TyreServiceDetailsPage = lazy(() =>
+  import('@pages/TyreServices/TyreServiceDetailsPage').then(module => ({ default: module.TyreServiceDetailsPage })),
+);
 const DeleteAccountPage = lazy(() =>
   import('@pages/Public/DeleteAccountPage').then(module => ({ default: module.DeleteAccountPage })),
 );
@@ -391,6 +397,22 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <TestDriveDetailsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tyre-services"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TyreServicesListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="tyre-services/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TyreServiceDetailsPage />
               </Suspense>
             }
           />

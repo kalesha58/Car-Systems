@@ -72,6 +72,8 @@ import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
 import PrivacyPermissionsScreen from '@features/profile/PrivacyPermissionsScreen';
 import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
 import MyTestDrivesScreen from '@features/profile/MyTestDrivesScreen';
+import MyServiceBookingsScreen from '@features/profile/MyServiceBookingsScreen';
+import TyreServiceRequestScreen from '@features/service/TyreServiceRequestScreen';
 import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
 import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
 import QuickActionsScreen from '@features/dashboard/QuickActionsScreen';
@@ -680,6 +682,20 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="MyTestDrives"
             component={MyTestDrivesScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="MyServiceBookings"
+            component={MyServiceBookingsScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="TyreServiceRequest"
+            component={TyreServiceRequestScreen}
             options={{
               animation: 'slide_from_right',
             }}

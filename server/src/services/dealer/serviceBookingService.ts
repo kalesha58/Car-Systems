@@ -12,6 +12,7 @@ import { Service } from '../../models/Service';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import { sendPushNotification, createNotification } from '../notificationService';
 import { cancelBooking } from '../serviceSlotService';
+import { notifyTyreServiceStatusChange } from '../tyreService/tyreServiceNotificationService';
 
 /**
  * Convert service booking document to interface
@@ -209,16 +210,30 @@ export const updateServiceBookingStatus = async (
 
     logger.info(`Service booking status updated: ${bookingId} to ${data.status || booking.status} by dealer: ${dealerId}`);
 
-    // Trigger push and in-app notifications on status transition from 'new' to 'scheduled' or 'cancelled'
-    if (prevStatus === 'new') {
-      if (data.status === 'scheduled') {
-        // Accept
-        try {
-          const service = await Service.findById(booking.serviceId).select('name').lean();
+    // Trigger notifications on status transition from 'new'
+    if (prevStatus === 'new' && (data.status === 'scheduled' || data.status === 'cancelled')) {
+      try {
+        const service = await Service.findById(booking.serviceId).select('name serviceType images').lean();
+
+        if (service?.serviceType === 'tire_service') {
+          await notifyTyreServiceStatusChange({
+            userId: booking.userId,
+            bookingId,
+            serviceId: booking.serviceId,
+            newStatus: data.status!,
+            previousStatus: prevStatus,
+            actor: 'dealer',
+            bookingDate: booking.bookingDate.toISOString(),
+            bookingTime: booking.bookingTime,
+            dealerNotes: data.dealerNotes,
+            rejectionReason: data.rejectionReason ?? booking.rejectionReason,
+            serviceName: service?.name,
+            serviceImageUrl: service?.images?.[0],
+          });
+        } else if (data.status === 'scheduled') {
           const title = 'Service Booking Accepted';
           const body = `Your service booking for "${service?.name || 'Service'}" has been accepted and scheduled.`;
 
-          // Send push notification
           await sendPushNotification(booking.userId, {
             title,
             body,
@@ -229,7 +244,6 @@ export const updateServiceBookingStatus = async (
             },
           });
 
-          // Create in-app notification
           await createNotification({
             userId: booking.userId,
             type: 'service_update',
@@ -241,18 +255,11 @@ export const updateServiceBookingStatus = async (
             },
             relatedId: (booking._id as any).toString(),
           });
-        } catch (notifErr) {
-          logger.error('Error sending acceptance notification:', notifErr);
-        }
-      } else if (data.status === 'cancelled') {
-        // Reject
-        try {
-          const service = await Service.findById(booking.serviceId).select('name').lean();
+        } else if (data.status === 'cancelled') {
           const reasonStr = data.rejectionReason ? ` Reason: ${data.rejectionReason}` : '';
           const title = 'Service Booking Rejected';
           const body = `Your service booking for "${service?.name || 'Service'}" has been rejected.${reasonStr}`;
 
-          // Send push notification
           await sendPushNotification(booking.userId, {
             title,
             body,
@@ -263,7 +270,6 @@ export const updateServiceBookingStatus = async (
             },
           });
 
-          // Create in-app notification
           await createNotification({
             userId: booking.userId,
             type: 'service_update',
@@ -276,9 +282,9 @@ export const updateServiceBookingStatus = async (
             },
             relatedId: (booking._id as any).toString(),
           });
-        } catch (notifErr) {
-          logger.error('Error sending rejection notification:', notifErr);
         }
+      } catch (notifErr) {
+        logger.error('Error sending service booking notification:', notifErr);
       }
     }
 

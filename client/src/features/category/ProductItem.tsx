@@ -16,14 +16,14 @@ import {useToast} from '@hooks/useToast';
 interface ProductItemProps {
   item: IProduct;
   index: number;
+  fullWidth?: boolean;
 }
 
-const ProductItem: FC<ProductItemProps> = ({index, item}) => {
+const ProductItem: FC<ProductItemProps> = ({index, item, fullWidth = false}) => {
   const {colors} = useTheme();
   const {showSuccess} = useToast();
   const {isFavorite, toggleFavorite} = useFavoritesStore();
   const {isInCompare, addItem, canAddMore, removeItem} = useCompareStore();
-  const isSecondColumn = index % 2 !== 0;
   const imageUrl = item.images && item.images.length > 0 ? item.images[0] : '';
   const itemId = item.id || (item as any)._id;
   const favorite = isFavorite(itemId);
@@ -56,11 +56,12 @@ const ProductItem: FC<ProductItemProps> = ({index, item}) => {
 
   const styles = StyleSheet.create({
     container: {
-      width: '46%',
+      flex: fullWidth ? undefined : 1,
+      width: fullWidth ? '100%' : undefined,
+      maxWidth: fullWidth ? '100%' : '48%',
       borderRadius: 16,
       backgroundColor: colors.cardBackground,
       marginBottom: 16,
-      marginLeft: '2.5%',
       borderWidth: 1,
       borderColor: colors.border + '50',
       overflow: 'hidden',

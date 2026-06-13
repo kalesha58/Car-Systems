@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {
   View,
   StyleSheet,
@@ -38,7 +38,12 @@ import {uploadImagesBatch} from '@service/postService';
 import {getCurrentLocationWithAddress} from '@utils/addressUtils';
 import {ILocationData} from '../../types/address/IAddress';
 import {IService} from '../../types/service/IService';
-import {SERVICE_SECTIONS} from '@config/serviceCategoryConfig';
+import {
+  getSectionsForBusinessType,
+  getSectionByServiceType,
+  getSectionById,
+  type ServiceTypeValue,
+} from '@config/serviceCategoryConfig';
 import {
   DealerServiceType,
   getAllowedDealerServiceTypes,
@@ -48,17 +53,14 @@ const MAX_IMAGES = 8;
 
 type ServiceType = DealerServiceType;
 
-const SERVICE_SUB_CATEGORIES: Record<string, string[]> = {
-  car_wash: ['Interior Wash', 'Exterior Wash', 'Full Body', 'Foam Wash', 'Dry Clean'],
-  car_detailing: ['PPF', 'Ceramic Coating', 'Paint Correction', 'Interior Detailing'],
-  car_automobile: ['Oil Change', 'Brake Service', 'AC Service', 'Full Service', 'GPS Install'],
-  bike_automobile: ['Oil Change', 'Chain Lube', 'Tyre Change', 'Full Service'],
-  tire_service: ['Puncture Fix', 'Tyre Rotation', 'Tyre Replacement', 'Wheel Alignment'],
-};
-
-const getConfiguredSubcategories = (type: string) => {
-  const section = SERVICE_SECTIONS.find((item) => item.serviceType === type);
-  return section?.subcategories ?? [];
+const resolveInitialSectionId = (svc?: IService): string => {
+  if (!svc?.serviceType) return '';
+  if (svc.serviceType === 'general') return 'general';
+  const section = getSectionByServiceType(
+    svc.serviceType as ServiceTypeValue,
+    svc.vehicleType,
+  );
+  return section?.id || '';
 };
 
 interface RouteParams {
@@ -80,6 +82,17 @@ const AddEditServiceScreen: React.FC = () => {
 
   // Get allowed service types based on business registration
   const allowedServiceTypes = getAllowedDealerServiceTypes(businessRegistration?.type);
+  const allowedSections = useMemo(
+    () => getSectionsForBusinessType(businessRegistration?.type),
+    [businessRegistration?.type],
+  );
+  const showGeneralOption = allowedServiceTypes.includes('general');
+
+  const [sectionId, setSectionId] = useState(resolveInitialSectionId(service));
+  const selectedSection = useMemo(() => {
+    if (sectionId === 'general' || !sectionId) return null;
+    return allowedSections.find(s => s.id === sectionId) ?? getSectionById(sectionId) ?? null;
+  }, [sectionId, allowedSections]);
   
   // Check if existing service type is allowed for current business type
   const isExistingServiceTypeAllowed = service?.serviceType 
@@ -105,6 +118,44 @@ const AddEditServiceScreen: React.FC = () => {
   const [servicePackage, setServicePackage] = useState<'premium' | 'basic'>(service?.servicePackage || 'basic');
   const [slotBookingEnabled, setSlotBookingEnabled] = useState(service?.slotBookingEnabled || false);
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(service?.slotDurationMinutes?.toString() || '30');
+
+  const handleSectionChange = (newSectionId: string) => {
+    if (!isExistingServiceTypeAllowed && isEditMode) {
+      return;
+    }
+    setSectionId(newSectionId);
+    if (newSectionId === 'general') {
+      setServiceType('general');
+      setServiceSubCategory('');
+      setVehicleType(undefined);
+      setVehicleBrandId('');
+      setVehicleModelId('');
+      return;
+    }
+    const section = allowedSections.find(s => s.id === newSectionId);
+    if (!section) return;
+    setServiceType(section.serviceType);
+    setServiceSubCategory('');
+    setServicePackage('basic');
+    if (section.vehicleType === 'Car') {
+      setVehicleType('Car');
+    } else if (section.vehicleType === 'Bike') {
+      setVehicleType('Bike');
+    } else {
+      setVehicleType(undefined);
+      setVehicleBrandId('');
+      setVehicleModelId('');
+    }
+    if (section.hasDeliveryModes && section.deliveryModes?.length) {
+      setHomeService(section.deliveryModes[0].value === 'home');
+    }
+  };
+
+  const legacySubcategoryHint =
+    isEditMode &&
+    service?.serviceSubCategory &&
+    selectedSection &&
+    !selectedSection.subcategories.some(s => s.id === serviceSubCategory);
 
   useEffect(() => {
     const loadBrands = async () => {
@@ -246,6 +297,20 @@ const AddEditServiceScreen: React.FC = () => {
     }
     if (!durationMinutes || parseInt(durationMinutes) < 1) {
       showError(t('dealer.durationRequired'));
+      return;
+    }
+    if (!sectionId && !serviceType) {
+      showError(t('dealer.selectServiceType') || 'Please select a service section');
+      return;
+    }
+    if (
+      sectionId &&
+      sectionId !== 'general' &&
+      selectedSection &&
+      selectedSection.subcategories.length > 0 &&
+      !serviceSubCategory.trim()
+    ) {
+      showError(t('dealer.subCategoryRequired') || 'Subcategory is required');
       return;
     }
 
@@ -714,6 +779,7 @@ const AddEditServiceScreen: React.FC = () => {
             </View>
           </View>
 
+          {!selectedSection?.hasDeliveryModes && (
           <View style={styles.section}>
             <View style={styles.switchRow}>
               <CustomText style={styles.switchLabel}>
@@ -727,6 +793,7 @@ const AddEditServiceScreen: React.FC = () => {
               />
             </View>
           </View>
+          )}
 
           <View style={styles.section}>
             <View style={styles.switchRow}>
@@ -764,42 +831,9 @@ const AddEditServiceScreen: React.FC = () => {
 
           <View style={styles.sectionGroup}>
             <CustomText style={styles.sectionHeader}>{t('dealer.sectionClassification')}</CustomText>
-          <View style={styles.section}>
-            <CustomText style={styles.label}>Service Package</CustomText>
-            <View style={styles.chipGrid}>
-              {(['basic', 'premium'] as const).map(pkg => (
-                <TouchableOpacity
-                  key={pkg}
-                  style={[
-                    styles.chipPill,
-                    servicePackage === pkg && styles.chipPillSelected,
-                  ]}
-                  onPress={() => setServicePackage(pkg)}
-                  activeOpacity={0.75}>
-                  <CustomText
-                    style={[
-                      styles.chipPillText,
-                      servicePackage === pkg && styles.chipPillTextSelected,
-                    ]}>
-                    {pkg.charAt(0).toUpperCase() + pkg.slice(1)}
-                  </CustomText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
 
           <View style={styles.section}>
-            <CustomText style={styles.label}>{t('dealer.serviceType')}</CustomText>
-            <View style={[styles.hintRow, !isExistingServiceTypeAllowed && {opacity: 0.65}]}>
-              <Icon name="construct-outline" size={RFValue(18)} color={colors.winterBlueDark} />
-              <CustomText
-                style={[
-                  styles.buttonText,
-                  ...(!serviceType ? [{color: colors.disabled}] : []),
-                ]}>
-                {serviceType || t('dealer.selectServiceType')}
-              </CustomText>
-            </View>
+            <CustomText style={styles.label}>{t('dealer.serviceSection') || 'Service Section'}</CustomText>
             {!isExistingServiceTypeAllowed && (
               <CustomText style={styles.helpText}>
                 {t('dealer.serviceTypeNotAllowed') ||
@@ -807,56 +841,104 @@ const AddEditServiceScreen: React.FC = () => {
               </CustomText>
             )}
             <View style={styles.chipGrid}>
-              {allowedServiceTypes.map(type => (
+              {allowedSections.map(sec => (
                 <TouchableOpacity
-                  key={type}
+                  key={sec.id}
                   style={[
                     styles.chipPill,
-                    serviceType === type && styles.chipPillSelected,
+                    sectionId === sec.id && styles.chipPillSelected,
                     !isExistingServiceTypeAllowed && isEditMode && {opacity: 0.5},
                   ]}
-                  onPress={() => {
-                    if (!isExistingServiceTypeAllowed && isEditMode) {
-                      return;
-                    }
-                    setServiceType(type);
-                    if (type === 'car_automobile') {
-                      setVehicleType('Car');
-                    } else if (type === 'bike_automobile') {
-                      setVehicleType('Bike');
-                    } else {
-                      setVehicleType(undefined);
-                      setVehicleModelId('');
-                      setVehicleBrandId('');
-                    }
-                  }}
+                  onPress={() => handleSectionChange(sec.id)}
                   disabled={!isExistingServiceTypeAllowed && isEditMode}
                   activeOpacity={0.75}>
                   <CustomText
                     style={[
                       styles.chipPillText,
-                      serviceType === type && styles.chipPillTextSelected,
+                      sectionId === sec.id && styles.chipPillTextSelected,
                     ]}>
-                    {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    {sec.label}
+                  </CustomText>
+                </TouchableOpacity>
+              ))}
+              {showGeneralOption && (
+                <TouchableOpacity
+                  key="general"
+                  style={[
+                    styles.chipPill,
+                    sectionId === 'general' && styles.chipPillSelected,
+                    !isExistingServiceTypeAllowed && isEditMode && {opacity: 0.5},
+                  ]}
+                  onPress={() => handleSectionChange('general')}
+                  disabled={!isExistingServiceTypeAllowed && isEditMode}
+                  activeOpacity={0.75}>
+                  <CustomText
+                    style={[
+                      styles.chipPillText,
+                      sectionId === 'general' && styles.chipPillTextSelected,
+                    ]}>
+                    General
+                  </CustomText>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {selectedSection?.hasPackages && (selectedSection.packages ?? []).length > 0 && (
+          <View style={styles.section}>
+            <CustomText style={styles.label}>Service Package</CustomText>
+            <View style={styles.chipGrid}>
+              {(selectedSection.packages ?? []).map(pkg => (
+                <TouchableOpacity
+                  key={pkg.value}
+                  style={[
+                    styles.chipPill,
+                    servicePackage === pkg.value && styles.chipPillSelected,
+                  ]}
+                  onPress={() => setServicePackage(pkg.value)}
+                  activeOpacity={0.75}>
+                  <CustomText
+                    style={[
+                      styles.chipPillText,
+                      servicePackage === pkg.value && styles.chipPillTextSelected,
+                    ]}>
+                    {pkg.label}
                   </CustomText>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
+          )}
 
-          {(serviceType === 'car_automobile' || serviceType === 'bike_automobile' || serviceType === 'car_wash') && (
+          {selectedSection?.hasDeliveryModes && (selectedSection.deliveryModes ?? []).length > 0 && (
+          <View style={styles.section}>
+            <CustomText style={styles.label}>{t('dealer.deliveryMode') || 'Delivery Mode'}</CustomText>
+            <View style={styles.chipGrid}>
+              {(selectedSection.deliveryModes ?? []).map(dm => (
+                <TouchableOpacity
+                  key={dm.value}
+                  style={[
+                    styles.chipPill,
+                    (dm.value === 'home' ? homeService : !homeService) && styles.chipPillSelected,
+                  ]}
+                  onPress={() => setHomeService(dm.value === 'home')}
+                  activeOpacity={0.75}>
+                  <CustomText
+                    style={[
+                      styles.chipPillText,
+                      (dm.value === 'home' ? homeService : !homeService) && styles.chipPillTextSelected,
+                    ]}>
+                    {dm.label}
+                  </CustomText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          )}
+
+          {selectedSection?.vehicleType === 'Both' && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
-              <View style={styles.hintRow}>
-                <Icon name="car-outline" size={RFValue(18)} color={colors.winterBlueDark} />
-                <CustomText
-                  style={[
-                    styles.buttonText,
-                    ...(!vehicleType ? [{color: colors.disabled}] : []),
-                  ]}>
-                  {vehicleType || t('dealer.selectVehicleType')}
-                </CustomText>
-              </View>
               <View style={styles.chipGrid}>
                 {(['Car', 'Bike'] as const).map(type => (
                   <TouchableOpacity
@@ -865,14 +947,7 @@ const AddEditServiceScreen: React.FC = () => {
                       styles.chipPill,
                       vehicleType === type && styles.chipPillSelected,
                     ]}
-                    onPress={() => {
-                      setVehicleType(type);
-                      if (serviceType === 'car_automobile' && type !== 'Car') {
-                        setServiceType('bike_automobile');
-                      } else if (serviceType === 'bike_automobile' && type !== 'Bike') {
-                        setServiceType('car_automobile');
-                      }
-                    }}
+                    onPress={() => setVehicleType(type)}
                     activeOpacity={0.75}>
                     <CustomText
                       style={[
@@ -883,6 +958,16 @@ const AddEditServiceScreen: React.FC = () => {
                     </CustomText>
                   </TouchableOpacity>
                 ))}
+              </View>
+            </View>
+          )}
+
+          {(serviceType === 'car_automobile' || serviceType === 'bike_automobile') && selectedSection?.vehicleType !== 'Both' && (
+            <View style={styles.section}>
+              <CustomText style={styles.label}>{t('dealer.vehicleType')}</CustomText>
+              <View style={styles.hintRow}>
+                <Icon name="car-outline" size={RFValue(18)} color={colors.winterBlueDark} />
+                <CustomText style={styles.buttonText}>{vehicleType || t('dealer.selectVehicleType')}</CustomText>
               </View>
             </View>
           )}
@@ -932,23 +1017,18 @@ const AddEditServiceScreen: React.FC = () => {
             </>
           )}
 
-          {serviceType && serviceType !== 'general' &&
-            (serviceType === 'battery_service'
-              ? getConfiguredSubcategories(serviceType).length > 0
-              : !!SERVICE_SUB_CATEGORIES[serviceType]) && (
+          {selectedSection && selectedSection.subcategories.length > 0 && (
             <View style={styles.section}>
-              <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
+              <CustomText style={styles.label}>
+                {t('dealer.serviceSubCategory')} <CustomText style={styles.required}>*</CustomText>
+              </CustomText>
+              {legacySubcategoryHint && (
+                <CustomText style={styles.helpText}>
+                  Current value "{serviceSubCategory}" is outdated — please pick a valid subcategory.
+                </CustomText>
+              )}
               <View style={styles.chipGrid}>
-                {(serviceType === 'battery_service'
-                  ? getConfiguredSubcategories(serviceType).map((subCat) => ({
-                      id: subCat.id,
-                      label: subCat.label,
-                    }))
-                  : SERVICE_SUB_CATEGORIES[serviceType].map((subCat) => ({
-                      id: subCat,
-                      label: subCat,
-                    }))
-                ).map((subCat) => (
+                {selectedSection.subcategories.map(subCat => (
                   <TouchableOpacity
                     key={subCat.id}
                     style={[
@@ -967,19 +1047,10 @@ const AddEditServiceScreen: React.FC = () => {
                   </TouchableOpacity>
                 ))}
               </View>
-              <View style={[styles.field, { marginTop: 12 }]}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Or type custom sub-category..."
-                  placeholderTextColor={colors.disabled}
-                  value={serviceSubCategory}
-                  onChangeText={setServiceSubCategory}
-                />
-              </View>
             </View>
           )}
 
-          {(!serviceType || serviceType === 'general') && (
+          {(sectionId === 'general' || (!sectionId && serviceType === 'general')) && (
             <View style={styles.section}>
               <CustomText style={styles.label}>{t('dealer.serviceSubCategory')}</CustomText>
               <View style={styles.field}>
