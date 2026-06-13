@@ -1,0 +1,44 @@
+{
+  "1": {
+    "id": "1",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1234567890",
+    "status": "active",
+    "createdDate": "2024-01-15T10:30:00Z",
+    "orders": [
+      {
+        "id": "ORD-001",
+        "date": "2024-03-15T10:30:00Z",
+        "amount": 1250.00,
+        "status": "completed"
+      },
+      {
+        "id": "ORD-004",
+        "date": "2024-03-10T16:45:00Z",
+        "amount": 320.00,
+        "status": "cancelled"
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "1",
+        "make": "Toyota",
+        "model": "Camry",
+        "year": 2020,
+        "licensePlate": "ABC-1234"
+      }
+    ],
+    "addresses": [
+      {
+        "id": "1",
+        "street": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "zipCode": "10001",
+        "type": "home"
+      }
+    ]
+  }
+}
+

@@ -1,0 +1,66 @@
+{
+  "dealers": [
+    {
+      "id": "1",
+      "dealerName": "AutoMax Dealership",
+      "businessName": "AutoMax LLC",
+      "mobile": "+1234567800",
+      "email": "contact@automax.com",
+      "status": "approved",
+      "location": "New York, NY",
+      "rating": 4.5,
+      "totalOrders": 45,
+      "createdDate": "2024-01-05T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "dealerName": "Car World",
+      "businessName": "Car World Inc",
+      "mobile": "+1234567801",
+      "email": "info@carworld.com",
+      "status": "approved",
+      "location": "Los Angeles, CA",
+      "rating": 4.8,
+      "totalOrders": 78,
+      "createdDate": "2024-01-12T14:30:00Z"
+    },
+    {
+      "id": "3",
+      "dealerName": "Premium Motors",
+      "businessName": "Premium Motors Ltd",
+      "mobile": "+1234567802",
+      "email": "sales@premiummotors.com",
+      "status": "pending",
+      "location": "Chicago, IL",
+      "rating": 0,
+      "totalOrders": 0,
+      "createdDate": "2024-03-10T09:20:00Z"
+    },
+    {
+      "id": "4",
+      "dealerName": "Speed Auto",
+      "businessName": "Speed Auto Group",
+      "mobile": "+1234567803",
+      "email": "contact@speedauto.com",
+      "status": "suspended",
+      "location": "Houston, TX",
+      "rating": 3.2,
+      "totalOrders": 12,
+      "createdDate": "2024-01-20T11:15:00Z"
+    },
+    {
+      "id": "5",
+      "dealerName": "Elite Cars",
+      "businessName": "Elite Cars Corporation",
+      "mobile": "+1234567804",
+      "email": "info@elitecars.com",
+      "status": "approved",
+      "location": "Miami, FL",
+      "rating": 4.9,
+      "totalOrders": 120,
+      "createdDate": "2024-01-08T13:45:00Z"
+    }
+  ],
+  "total": 5
+}
+

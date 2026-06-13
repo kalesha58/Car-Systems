@@ -1,0 +1,72 @@
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "Premium Car Wax",
+      "category": "Car Care & Maintenance",
+      "description": "High-quality car wax for long-lasting shine",
+      "price": 29.99,
+      "stock": 150,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["wax", "premium", "shine"],
+      "createdDate": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "name": "Car Floor Mats",
+      "category": "Interior Accessories",
+      "description": "Durable all-weather floor mats",
+      "price": 49.99,
+      "stock": 200,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["mats", "interior", "protection"],
+      "createdDate": "2024-01-20T11:00:00Z"
+    },
+    {
+      "id": "3",
+      "name": "LED Headlights",
+      "category": "Lighting & Electrical",
+      "description": "Bright LED headlight bulbs",
+      "price": 79.99,
+      "stock": 0,
+      "status": "out_of_stock",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["led", "lighting", "headlights"],
+      "createdDate": "2024-02-01T09:00:00Z"
+    },
+    {
+      "id": "4",
+      "name": "Alloy Wheel Set",
+      "category": "Tires & Wheels",
+      "description": "19-inch alloy wheels",
+      "price": 499.99,
+      "stock": 12,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["wheels", "alloy"],
+      "createdDate": "2024-02-10T14:00:00Z"
+    },
+    {
+      "id": "5",
+      "name": "Brake Pad Set",
+      "category": "Spare Parts",
+      "description": "Front brake pad replacement set",
+      "price": 89.99,
+      "stock": 50,
+      "status": "active",
+      "image": "https://via.placeholder.com/150",
+      "tags": ["brakes", "spare"],
+      "createdDate": "2024-02-15T10:30:00Z"
+    }
+  ],
+  "categories": [
+    "Car Care & Maintenance",
+    "Interior Accessories",
+    "Lighting & Electrical",
+    "Tires & Wheels",
+    "Spare Parts"
+  ],
+  "total": 5
+}

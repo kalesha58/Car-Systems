@@ -1,0 +1,56 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+1234567890",
+      "status": "active",
+      "createdDate": "2024-01-15T10:30:00Z",
+      "ordersCount": 5,
+      "totalSpent": 12500
+    },
+    {
+      "id": "2",
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "phone": "+1234567891",
+      "status": "active",
+      "createdDate": "2024-02-20T14:20:00Z",
+      "ordersCount": 3,
+      "totalSpent": 8500
+    },
+    {
+      "id": "3",
+      "name": "Mike Johnson",
+      "email": "mike.j@example.com",
+      "phone": "+1234567892",
+      "status": "blocked",
+      "createdDate": "2024-01-10T09:15:00Z",
+      "ordersCount": 2,
+      "totalSpent": 4500
+    },
+    {
+      "id": "4",
+      "name": "Sarah Williams",
+      "email": "sarah.w@example.com",
+      "phone": "+1234567893",
+      "status": "active",
+      "createdDate": "2024-03-05T11:45:00Z",
+      "ordersCount": 8,
+      "totalSpent": 18900
+    },
+    {
+      "id": "5",
+      "name": "David Brown",
+      "email": "david.brown@example.com",
+      "phone": "+1234567894",
+      "status": "active",
+      "createdDate": "2024-02-28T16:30:00Z",
+      "ordersCount": 1,
+      "totalSpent": 3200
+    }
+  ],
+  "total": 5
+}
+

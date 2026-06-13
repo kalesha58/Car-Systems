@@ -139,9 +139,7 @@ const ProductItem: FC<ProductItemProps> = ({index, item, fullWidth = false}) => 
   };
 
   return (
-    <Pressable
-      style={[styles.container, {marginRight: isSecondColumn ? 10 : 0}]}
-      onPress={handleProductPress}>
+    <Pressable style={styles.container} onPress={handleProductPress}>
       <View style={styles.imageContainer}>
         {imageUrl ? (
           <Image source={{uri: imageUrl}} style={styles.image} />

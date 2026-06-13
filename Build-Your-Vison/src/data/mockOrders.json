@@ -1,0 +1,118 @@
+{
+  "orders": [
+    {
+      "id": "ORD-001",
+      "userId": "1",
+      "userName": "John Doe",
+      "dealerId": "1",
+      "dealerName": "AutoMax Dealership",
+      "amount": 1250.00,
+      "status": "completed",
+      "date": "2024-03-15T10:30:00Z",
+      "items": [
+        {
+          "productId": "1",
+          "productName": "Premium Car Wax",
+          "quantity": 2,
+          "price": 29.99
+        },
+        {
+          "productId": "2",
+          "productName": "Car Floor Mats",
+          "quantity": 1,
+          "price": 49.99
+        }
+      ],
+      "paymentMethod": "Credit Card",
+      "paymentStatus": "paid"
+    },
+    {
+      "id": "ORD-002",
+      "userId": "2",
+      "userName": "Jane Smith",
+      "dealerId": "2",
+      "dealerName": "Car World",
+      "amount": 850.00,
+      "status": "pending",
+      "date": "2024-03-18T14:20:00Z",
+      "items": [
+        {
+          "productId": "4",
+          "productName": "Car Phone Mount",
+          "quantity": 3,
+          "price": 19.99
+        }
+      ],
+      "paymentMethod": "PayPal",
+      "paymentStatus": "pending"
+    },
+    {
+      "id": "ORD-003",
+      "userId": "4",
+      "userName": "Sarah Williams",
+      "dealerId": "1",
+      "dealerName": "AutoMax Dealership",
+      "amount": 1890.00,
+      "status": "processing",
+      "date": "2024-03-20T09:15:00Z",
+      "items": [
+        {
+          "productId": "5",
+          "productName": "Car Battery Charger",
+          "quantity": 1,
+          "price": 89.99
+        },
+        {
+          "productId": "2",
+          "productName": "Car Floor Mats",
+          "quantity": 2,
+          "price": 49.99
+        }
+      ],
+      "paymentMethod": "Credit Card",
+      "paymentStatus": "paid"
+    },
+    {
+      "id": "ORD-004",
+      "userId": "1",
+      "userName": "John Doe",
+      "dealerId": "5",
+      "dealerName": "Elite Cars",
+      "amount": 320.00,
+      "status": "cancelled",
+      "date": "2024-03-10T16:45:00Z",
+      "items": [
+        {
+          "productId": "4",
+          "productName": "Car Phone Mount",
+          "quantity": 1,
+          "price": 19.99
+        }
+      ],
+      "paymentMethod": "Credit Card",
+      "paymentStatus": "refunded"
+    },
+    {
+      "id": "ORD-005",
+      "userId": "5",
+      "userName": "David Brown",
+      "dealerId": "2",
+      "dealerName": "Car World",
+      "amount": 3200.00,
+      "status": "completed",
+      "date": "2024-03-22T11:30:00Z",
+      "items": [
+        {
+          "productId": "5",
+          "productName": "Car Battery Charger",
+          "quantity": 2,
+          "price": 89.99
+        }
+      ],
+      "paymentMethod": "Bank Transfer",
+      "paymentStatus": "paid"
+    }
+  ],
+  "total": 5
+}
+
