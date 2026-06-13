@@ -413,3 +413,4 @@ export const TyreServiceDetailsPage = () => {
     </motion.div>
   );
 };
+
