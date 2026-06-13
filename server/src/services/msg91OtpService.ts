@@ -139,15 +139,27 @@ export const sendOtpViaMsg91 = async (mobileWithCountryCode: string): Promise<IM
     const data = response.data as Record<string, unknown>;
     throwIfMsg91PayloadError(data, 'send OTP');
 
+    if (data.type && data.type !== 'success') {
+      logger.error('MSG91 send OTP: unexpected response type', { data });
+      throw mapMsg91ErrorToAppError(data, 'Failed to send OTP');
+    }
+
+    // v5 uses request_id; legacy SendOTP puts the id in message (hex string).
     const requestId =
       (data.request_id as string) ||
       (data.requestId as string) ||
-      (typeof data.message === 'string' ? data.message : '');
+      (data.type === 'success' && typeof data.message === 'string' ? data.message : '');
 
     if (!requestId) {
       logger.error('MSG91 send OTP: missing request_id', { data });
       throw new AppError('Failed to send OTP. Please try again.', 502);
     }
+
+    logger.info('MSG91 send OTP accepted', {
+      requestId,
+      mobileSuffix: mobileWithCountryCode.slice(-4),
+      type: data.type,
+    });
 
     return {
       requestId: String(requestId),
