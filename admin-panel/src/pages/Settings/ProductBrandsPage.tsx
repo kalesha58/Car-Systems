@@ -17,7 +17,10 @@ import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { extractErrorMessage } from '@utils/errorHandler';
 import { Package, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { SortOrderControls } from '@components/SortOrderControls/SortOrderControls';
+import { moveSortableItem, sortBySortOrderThenName } from '@utils/reorderSortableItems';
 
 interface IProductBrandFormData {
   name: string;
@@ -33,6 +36,7 @@ export const ProductBrandsPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<IProductBrand | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<IProductBrand | null>(null);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<IProductBrandFormData>({
     name: '',
     status: 'active',
@@ -54,6 +58,29 @@ export const ProductBrandsPage = () => {
   useEffect(() => {
     fetchProductBrands();
   }, [fetchProductBrands]);
+
+  const sortedBrands = useMemo(
+    () => sortBySortOrderThenName(productBrands),
+    [productBrands],
+  );
+
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    const item = sortedBrands[index];
+    if (!item) return;
+
+    try {
+      setReorderingId(item.id);
+      await moveSortableItem(sortedBrands, index, direction, (id, sortOrder) =>
+        updateProductBrand(id, { sortOrder }),
+      );
+      showToast('Order updated', 'success');
+      await fetchProductBrands();
+    } catch (error) {
+      showToast(extractErrorMessage(error, 'Failed to update order'), 'error');
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -126,11 +153,21 @@ export const ProductBrandsPage = () => {
             { key: 'status', header: 'Status' },
             { key: 'sortOrder', header: 'Sort Order' },
             { key: 'products', header: 'Products' },
+            { key: 'reorder', header: 'Reorder' },
             { key: 'actions', header: 'Actions' },
           ]}
-          data={productBrands.map((item) => ({
+          data={sortedBrands.map((item, index) => ({
             ...item,
             products: item.products ?? 0,
+            reorder: (
+              <SortOrderControls
+                index={index}
+                total={sortedBrands.length}
+                disabled={reorderingId !== null}
+                onMoveUp={() => handleMove(index, 'up')}
+                onMoveDown={() => handleMove(index, 'down')}
+              />
+            ),
             actions: (
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button variant="secondary" size="sm" onClick={() => openEdit(item)}>

@@ -1,60 +1,23 @@
 import { ConfirmModal } from '@components/ConfirmModal/ConfirmModal';
+import { Tooltip } from '@components/Tooltip/Tooltip';
 import { useAuthStore } from '@store/authStore';
 import { useSidebarStore } from '@store/sidebarStore';
 import { colorSchemes } from '@theme/colorSchemes';
 import { useTheme } from '@theme/ThemeContext';
-import { AnimatePresence,motion } from 'framer-motion';
-import {
-  BarChart3,
-  Building2,
-  CalendarCheck,
-  CarFront,
-  LayoutDashboard,
-  LogOut,
-  Package,
-  Settings,
-  ShoppingCart,
-  Ticket,
-  Sparkles,
-  Users,
-  Wrench,
-  ShieldAlert,
-} from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { LogOut } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 
-interface INavItem {
-  path: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string; size?: number | string }>;
-}
-
-const navItems: INavItem[] = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/users', label: 'Users', icon: Users },
-  { path: '/dealers', label: 'Dealers', icon: Building2 },
-  { path: '/products', label: 'Products', icon: Package },
-  { path: '/services', label: 'Services', icon: Wrench },
-  { path: '/vehicles', label: 'Vehicles', icon: CarFront },
-  { path: '/orders', label: 'Orders', icon: ShoppingCart },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
-  { path: '/settings', label: 'Categories', icon: Settings },
-  { path: '/settings/battery-types', label: 'Battery Types', icon: Settings },
-  { path: '/settings/product-brands', label: 'Product Brands', icon: Settings },
-  { path: '/settings/vehicle-brands', label: 'Vehicle Brands', icon: Settings },
-  { path: '/settings/app', label: 'App Settings', icon: Sparkles },
-  { path: '/moderation/reports', label: 'Moderation', icon: ShieldAlert },
-  { path: '/coupons', label: 'Coupons', icon: Ticket },
-  { path: '/service-bookings', label: 'Bookings', icon: CalendarCheck },
-];
+import { dashboardNavItem, navGroups } from './sidebarNavConfig';
+import { SidebarNavGroup } from './SidebarNavGroup';
 
 export const Sidebar = () => {
   const { logout } = useAuthStore();
   const { isOpen } = useSidebarStore();
   const { colorScheme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
-  // Get the current color scheme's primary and secondary colors
+
   const schemeConfig = colorSchemes[colorScheme];
   const primaryColor = schemeConfig.primary;
   const secondaryColor = schemeConfig.secondary;
@@ -79,6 +42,12 @@ export const Sidebar = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleNavigate = useCallback(() => {
+    if (isMobile) {
+      useSidebarStore.getState().close();
+    }
+  }, [isMobile]);
 
   const sidebarVariants = {
     open: {
@@ -117,9 +86,63 @@ export const Sidebar = () => {
     },
   };
 
+  const DashboardIcon = dashboardNavItem.icon;
+
+  const dashboardLink = (
+    <NavLink
+      to={dashboardNavItem.path}
+      onClick={handleNavigate}
+      className={({ isActive }) =>
+        `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl no-underline transition-all duration-200 ${
+          isActive
+            ? 'text-white shadow-lg'
+            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-700/50'
+        }`
+      }
+      style={({ isActive }) =>
+        isActive
+          ? {
+              background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
+              boxShadow: `0 10px 15px -3px ${primaryColor}30, 0 4px 6px -2px ${primaryColor}20`,
+            }
+          : undefined
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <motion.div className="flex-shrink-0" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <DashboardIcon
+              size={20}
+              className={isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400'}
+            />
+          </motion.div>
+          <AnimatePresence mode="wait">
+            {isOpen && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-sm font-medium flex-1 truncate"
+              >
+                {dashboardNavItem.label}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          {isActive && isOpen && (
+            <motion.div
+              layoutId="activeIndicator"
+              className="absolute right-2 w-1.5 h-1.5 rounded-full bg-white"
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+
   return (
     <>
-      {/* Overlay for mobile */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -133,7 +156,6 @@ export const Sidebar = () => {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.div
         data-tour="sidebar"
         variants={sidebarVariants}
@@ -152,7 +174,6 @@ export const Sidebar = () => {
           boxShadow: '0 4px 24px 0 rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.05)',
         }}
       >
-        {/* Header */}
         <div className="p-4 md:p-5 border-b border-slate-200/50 dark:border-slate-700/50">
           <motion.div
             variants={contentVariants}
@@ -195,79 +216,30 @@ export const Sidebar = () => {
           </motion.div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 p-3 md:p-4 overflow-y-auto overflow-x-hidden scrollbar-hide">
-          <div className="space-y-1.5">
-            {navItems.map((item, index) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/settings'}
-                onClick={() => {
-                  // Close sidebar on mobile when navigating
-                  if (isMobile) {
-                    useSidebarStore.getState().close();
-                  }
-                }}
-                className={({ isActive }) =>
-                  `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl no-underline transition-all duration-200 ${
-                    isActive
-                      ? 'text-white shadow-lg'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-700/50'
-                  }`
-                }
-                style={({ isActive }) =>
-                  isActive
-                    ? {
-                        background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`,
-                        boxShadow: `0 10px 15px -3px ${primaryColor}30, 0 4px 6px -2px ${primaryColor}20`,
-                      }
-                    : undefined
-                }
-              >
-                {({ isActive }) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <>
-                      <motion.div
-                        className="flex-shrink-0"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <IconComponent
-                          size={20}
-                          className={isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400'}
-                        />
-                      </motion.div>
-                    <AnimatePresence mode="wait">
-                      {isOpen && (
-                        <motion.span
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2, delay: index * 0.02 }}
-                          className="text-sm font-medium flex-1 truncate"
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                    {isActive && isOpen && (
-                      <motion.div
-                        layoutId="activeIndicator"
-                        className="absolute right-2 w-1.5 h-1.5 rounded-full bg-white"
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      />
-                    )}
-                    </>
-                  );
-                }}
-              </NavLink>
+          <div className="space-y-2">
+            {isOpen ? (
+              dashboardLink
+            ) : (
+              <Tooltip text={dashboardNavItem.label} position="right">
+                {dashboardLink}
+              </Tooltip>
+            )}
+
+            {navGroups.map((group) => (
+              <SidebarNavGroup
+                key={group.id}
+                group={group}
+                isSidebarOpen={isOpen}
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                isMobile={isMobile}
+                onNavigate={handleNavigate}
+              />
             ))}
           </div>
         </nav>
 
-        {/* Logout Button */}
         <div className="p-3 md:p-4 border-t border-slate-200/50 dark:border-slate-700/50">
           <motion.button
             onClick={handleLogoutClick}
@@ -305,7 +277,6 @@ export const Sidebar = () => {
         </div>
       </motion.div>
 
-      {/* Logout Confirmation Modal */}
       <ConfirmModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}

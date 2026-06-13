@@ -17,7 +17,10 @@ import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { extractErrorMessage } from '@utils/errorHandler';
 import { Battery, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { SortOrderControls } from '@components/SortOrderControls/SortOrderControls';
+import { moveSortableItem, sortBySortOrderThenName } from '@utils/reorderSortableItems';
 
 interface IBatteryTypeFormData {
   name: string;
@@ -33,6 +36,7 @@ export const BatteryTypesPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<IBatteryType | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<IBatteryType | null>(null);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<IBatteryTypeFormData>({
     name: '',
     status: 'active',
@@ -54,6 +58,29 @@ export const BatteryTypesPage = () => {
   useEffect(() => {
     fetchBatteryTypes();
   }, [fetchBatteryTypes]);
+
+  const sortedTypes = useMemo(
+    () => sortBySortOrderThenName(batteryTypes),
+    [batteryTypes],
+  );
+
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    const item = sortedTypes[index];
+    if (!item) return;
+
+    try {
+      setReorderingId(item.id);
+      await moveSortableItem(sortedTypes, index, direction, (id, sortOrder) =>
+        updateBatteryType(id, { sortOrder }),
+      );
+      showToast('Order updated', 'success');
+      await fetchBatteryTypes();
+    } catch (error) {
+      showToast(extractErrorMessage(error, 'Failed to update order'), 'error');
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -126,11 +153,21 @@ export const BatteryTypesPage = () => {
             { key: 'status', header: 'Status' },
             { key: 'sortOrder', header: 'Sort Order' },
             { key: 'products', header: 'Products' },
+            { key: 'reorder', header: 'Reorder' },
             { key: 'actions', header: 'Actions' },
           ]}
-          data={batteryTypes.map((item) => ({
+          data={sortedTypes.map((item, index) => ({
             ...item,
             products: item.products ?? 0,
+            reorder: (
+              <SortOrderControls
+                index={index}
+                total={sortedTypes.length}
+                disabled={reorderingId !== null}
+                onMoveUp={() => handleMove(index, 'up')}
+                onMoveDown={() => handleMove(index, 'down')}
+              />
+            ),
             actions: (
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button variant="secondary" size="sm" onClick={() => openEdit(item)}>

@@ -53,7 +53,10 @@ export const ProductFormPage = () => {
   const [productBrands, setProductBrands] = useState<Array<{ name: string }>>([]);
   const [vehicleBrands, setVehicleBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [vehicleModels, setVehicleModels] = useState<Array<{ id: string; name: string }>>([]);
-  const isBatteryCategory = formData.category === 'Batteries & Chargers';
+  const isBatteryCategory = useMemo(() => {
+    const selected = categories.find((cat) => cat.id === formData.category);
+    return selected?.name === 'Batteries & Chargers';
+  }, [categories, formData.category]);
   const showCompatibleFields = formData.isSparePart && (formData.vehicleType === 'Car' || formData.vehicleType === 'Bike');
   const [dealers, setDealers] = useState<IDealerListItem[]>([]);
   const [dealerSearchTerm, setDealerSearchTerm] = useState('');
@@ -145,7 +148,12 @@ export const ProductFormPage = () => {
           setFormData({
             name: product.name,
             brand: product.brand || '',
-            category: product.category || '',
+            category:
+              categoriesResponse.categories.find(
+                (cat: { id: string; name: string }) => cat.name === product.category,
+              )?.id ||
+              product.category ||
+              '',
             description: product.description,
             price: product.price,
             stock: product.stock,
@@ -336,7 +344,7 @@ export const ProductFormPage = () => {
 
     try {
       setSubmitting(true);
-      const selectedCategory = categories.find((cat) => cat.name === formData.category);
+      const selectedCategory = categories.find((cat) => cat.id === formData.category);
 
       if (!selectedCategory) {
         showToast('Please select a valid category', 'error');
@@ -399,7 +407,7 @@ export const ProductFormPage = () => {
       const payload: ICreateProductPayload = {
         name: formData.name,
         brand: formData.brand,
-        category: formData.category, // Using category name as string, not categoryId
+        category: selectedCategory.id,
         price: formData.price,
         stock: formData.stock,
         description: formData.description,
@@ -759,10 +767,11 @@ export const ProductFormPage = () => {
             <Select
               value={formData.category}
               onChange={(value) => {
+                const categoryName = categories.find((cat) => cat.id === value)?.name;
                 setFormData({
                   ...formData,
                   category: value,
-                  ...(value !== 'Batteries & Chargers'
+                  ...(categoryName !== 'Batteries & Chargers'
                     ? { batteryTypeId: '', voltageV: undefined }
                     : {}),
                 });
@@ -773,7 +782,7 @@ export const ProductFormPage = () => {
               searchable={categories.length > 5}
               error={errors.category}
               options={categories.map((cat) => ({
-                value: cat.name,
+                value: cat.id,
                 label: cat.name,
               }))}
             />

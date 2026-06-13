@@ -233,7 +233,7 @@ export const DashboardPage = () => {
     {
       target: '[data-tour="sidebar"]',
       title: 'Navigation Sidebar',
-      content: 'Use the sidebar to navigate between different sections of the admin panel. You can toggle it open or closed using the menu button. Here you\'ll find Dashboard, Users, Dealers, Products, Vehicles, Orders, Reports, and Settings.',
+      content: 'Use the sidebar to navigate the admin panel. Pages are grouped into People, Inventory, Operations, Insights, and Settings — expand a section to see its links. Toggle the sidebar open or closed with the menu button.',
       position: 'right',
     },
     {

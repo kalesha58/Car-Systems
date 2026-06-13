@@ -12,6 +12,7 @@ import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandle
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import { validateBatteryProductFields, resolveBatteryTypeName } from '../../utils/batteryProduct';
+import { resolveCategoryId } from '../../utils/categoryResolver';
 import {
   validateVehicleProductMapping,
   resolveVehicleBrandModelNames,
@@ -213,8 +214,10 @@ export const createDealerProduct = async (
       throw new AppError('Category is required', 400);
     }
 
+    const categoryId = await resolveCategoryId(data.category);
+
     await validateBatteryProductFields({
-      categoryId: data.category,
+      categoryId,
       batteryTypeId: data.batteryTypeId,
       voltageV: data.voltageV,
     });
@@ -229,7 +232,7 @@ export const createDealerProduct = async (
     const product = new Product({
       name: data.name.trim(),
       brand: data.brand.trim(),
-      categoryId: data.category, // Assuming category is categoryId
+      categoryId,
       price: data.price,
       originalPrice: finalOriginalPrice,
       discountPercentage: finalDiscountPercentage,
@@ -373,7 +376,7 @@ export const updateDealerProduct = async (
     }
 
     if (data.category !== undefined) {
-      product.categoryId = data.category; // Assuming category is categoryId
+      product.categoryId = await resolveCategoryId(data.category);
     }
 
     if (data.vehicleType !== undefined) {
