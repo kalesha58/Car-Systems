@@ -11,8 +11,19 @@ import StoreCategorySectionEmpty from './StoreCategorySectionEmpty';
 import { useTheme } from '@hooks/useTheme';
 import { getDropdownOptions, type IDropdownCategoryOption } from '@service/dropdownService';
 import type { StoreCategoryTile } from '../../types/category/ICategoryItem';
+import { SERVICE_SECTIONS } from '../../config/serviceCategoryConfig';
 
 const allVehiclesTileImage = require('@assets/images/All-Vehicles.jpeg');
+const allServicesTileImage = require('@assets/images/AutoMobile-Services.jpeg');
+
+const SERVICE_SECTION_IMAGES: Record<string, ReturnType<typeof require>> = {
+  'car-service': require('@assets/services/car_service.png'),
+  'bike-service': require('@assets/services/bike_service.jpg'),
+  'vehicle-wash': require('@assets/services/car_wash.jpg'),
+  'tire-service': require('@assets/services/tier_service.jpg'),
+  'ppf-detailing': require('@assets/services/ppf_detailing.png'),
+  'battery-service': require('@assets/services/batery_sevices.jpg'),
+};
 
 const tileGroupOrder = (a: IDropdownCategoryOption, b: IDropdownCategoryOption) =>
   (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.label.localeCompare(b.label);
@@ -26,11 +37,14 @@ const mapToTiles = (rows: IDropdownCategoryOption[]): StoreCategoryTile[] =>
 
 /**
  * Build Store home rows from dropdown categories that have active inventory.
- * Product/service tiles use activeProductCount; vehicle listings use dealerVehicleCount.
+ * Product tiles use activeProductCount; vehicles use dealerVehicleCount;
+ * services use activeServiceCount + serviceTypeCounts.
  */
 function buildStoreTileRows(
   all: IDropdownCategoryOption[],
   dealerVehicleCount = 0,
+  activeServiceCount = 0,
+  serviceTypeCounts: Record<string, number> = {},
 ): {
   products: StoreCategoryTile[];
   vehicles: StoreCategoryTile[];
@@ -51,10 +65,29 @@ function buildStoreTileRows(
         ]
       : [];
 
+  const serviceTiles: StoreCategoryTile[] = [];
+  if (activeServiceCount > 0) {
+    serviceTiles.push({
+      id: 'all-services',
+      name: 'All Services',
+      image: allServicesTileImage,
+    });
+    for (const section of SERVICE_SECTIONS) {
+      const count = serviceTypeCounts[section.serviceType] ?? 0;
+      if (count > 0) {
+        serviceTiles.push({
+          id: section.id,
+          name: section.label,
+          image: SERVICE_SECTION_IMAGES[section.id] ?? null,
+        });
+      }
+    }
+  }
+
   return {
     products: mapToTiles(sorted.filter((c) => c.tileGroup === 'products')),
     vehicles: [...dealerListingTiles, ...accessoryVehicleTiles],
-    services: mapToTiles(sorted.filter((c) => c.tileGroup === 'services')),
+    services: serviceTiles,
   };
 }
 
@@ -62,6 +95,8 @@ const Content: FC = () => {
   const { colors } = useTheme();
   const [dropdownCategories, setDropdownCategories] = useState<IDropdownCategoryOption[]>([]);
   const [dealerVehicleCount, setDealerVehicleCount] = useState<number>(0);
+  const [activeServiceCount, setActiveServiceCount] = useState<number>(0);
+  const [serviceTypeCounts, setServiceTypeCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -72,11 +107,19 @@ const Content: FC = () => {
         if (!cancelled) {
           setDropdownCategories(Array.isArray(data.categories) ? data.categories : []);
           setDealerVehicleCount(typeof data.dealerVehicleCount === 'number' ? data.dealerVehicleCount : 0);
+          setActiveServiceCount(typeof data.activeServiceCount === 'number' ? data.activeServiceCount : 0);
+          setServiceTypeCounts(
+            data.serviceTypeCounts && typeof data.serviceTypeCounts === 'object'
+              ? data.serviceTypeCounts
+              : {},
+          );
         }
       } catch {
         if (!cancelled) {
           setDropdownCategories([]);
           setDealerVehicleCount(0);
+          setActiveServiceCount(0);
+          setServiceTypeCounts({});
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -126,7 +169,10 @@ const Content: FC = () => {
   });
 
   const { products: productsCategories, vehicles: vehiclesCategories, services: servicesCategories } =
-    useMemo(() => buildStoreTileRows(dropdownCategories, dealerVehicleCount), [dropdownCategories, dealerVehicleCount]);
+    useMemo(
+      () => buildStoreTileRows(dropdownCategories, dealerVehicleCount, activeServiceCount, serviceTypeCounts),
+      [dropdownCategories, dealerVehicleCount, activeServiceCount, serviceTypeCounts],
+    );
 
   if (loading) {
     return <ContentSkeleton />;

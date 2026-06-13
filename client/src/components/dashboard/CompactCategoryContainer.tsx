@@ -5,8 +5,10 @@ import { Fonts } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { navigate } from '@utils/NavigationUtils';
 import type { CategoryType, StoreCategoryTile } from '../../types/category/ICategoryItem';
+import { buildServiceNavigationParams, SERVICE_SECTIONS } from '../../config/serviceCategoryConfig';
 
 const MONGO_OBJECT_ID = /^[a-f\d]{24}$/i;
+const SERVICE_SECTION_IDS = new Set(SERVICE_SECTIONS.map((s) => s.id));
 
 interface CompactCategoryContainerProps {
   data: StoreCategoryTile[];
@@ -63,6 +65,25 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
           initialCategoryId: 'all-vehicles',
           initialCategoryType: 'vehicles',
         },
+      });
+      return;
+    }
+
+    if (item.id === 'all-services') {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          initialCategoryId: 'all-services',
+          initialCategoryType: 'services',
+        },
+      });
+      return;
+    }
+
+    if (categoryType === 'services' && SERVICE_SECTION_IDS.has(item.id)) {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: buildServiceNavigationParams(item.id),
       });
       return;
     }

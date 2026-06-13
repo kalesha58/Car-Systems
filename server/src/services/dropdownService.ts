@@ -7,7 +7,10 @@ import { BatteryType } from '../models/BatteryType';
 import { ProductBrand } from '../models/ProductBrand';
 import { Product } from '../models/Product';
 import { DealerVehicle } from '../models/DealerVehicle';
+import { Service } from '../models/Service';
 import { logger } from '../utils/logger';
+
+const ACTIVE_SERVICE_FILTER = { isActive: { $ne: false } };
 
 type LeanCategory = {
   _id: mongoose.Types.ObjectId;
@@ -42,6 +45,10 @@ export interface IDropdownResponse {
   categories: IDropdownCategoryOption[];
   /** Available dealer listings (cars/bikes for sale) — used by Store home Vehicle Categories. */
   dealerVehicleCount?: number;
+  /** Active dealer services — used by Store home Service Categories. */
+  activeServiceCount?: number;
+  /** Active services grouped by serviceType (e.g. tire_service). */
+  serviceTypeCounts?: Record<string, number>;
   batteryTypes: IDropdownOption[];
   productBrands: IDropdownOption[];
 }
@@ -119,7 +126,8 @@ export const getDropdownOptions = async (
       .sort({ sortOrder: 1, name: 1 })
       .lean<LeanCategory[]>();
 
-    const [productCountRows, dealerVehicleCount] = await Promise.all([
+    const [productCountRows, dealerVehicleCount, serviceTypeCountRows, activeServiceCount] =
+      await Promise.all([
       Product.aggregate<{ _id: string; count: number }>([
         { $match: { status: 'active' } },
         { $group: { _id: '$categoryId', count: { $sum: 1 } } },
@@ -127,10 +135,25 @@ export const getDropdownOptions = async (
       storeTiles
         ? DealerVehicle.countDocuments({ availability: 'available' })
         : Promise.resolve(undefined),
+      storeTiles
+        ? Service.aggregate<{ _id: string; count: number }>([
+            { $match: ACTIVE_SERVICE_FILTER },
+            { $group: { _id: '$serviceType', count: { $sum: 1 } } },
+          ])
+        : Promise.resolve([]),
+      storeTiles
+        ? Service.countDocuments(ACTIVE_SERVICE_FILTER)
+        : Promise.resolve(undefined),
     ]);
     const activeProductCountByCategory = new Map<string, number>(
       productCountRows.map((row) => [String(row._id), row.count]),
     );
+    const serviceTypeCounts: Record<string, number> = {};
+    for (const row of serviceTypeCountRows) {
+      if (row._id) {
+        serviceTypeCounts[String(row._id)] = row.count;
+      }
+    }
 
     let categoryOptions: IDropdownCategoryOption[] = categories.map((category) => {
       const categoryId = category._id.toString();
@@ -191,7 +214,13 @@ export const getDropdownOptions = async (
         value: opt.value,
       })),
       categories: categoryOptions,
-      ...(storeTiles ? { dealerVehicleCount: dealerVehicleCount ?? 0 } : {}),
+      ...(storeTiles
+        ? {
+            dealerVehicleCount: dealerVehicleCount ?? 0,
+            activeServiceCount: activeServiceCount ?? 0,
+            serviceTypeCounts,
+          }
+        : {}),
       batteryTypes: batteryTypes.map((type) => ({
         label: type.name,
         value: type._id.toString(),

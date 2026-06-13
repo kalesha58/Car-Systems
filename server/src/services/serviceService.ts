@@ -53,7 +53,7 @@ export const getServices = async (
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
-    const filter: any = {};
+    const filter: any = { isActive: { $ne: false } };
 
     if (query.dealerId) {
       filter.dealerId = query.dealerId;

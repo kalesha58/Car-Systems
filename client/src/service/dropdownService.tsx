@@ -24,6 +24,8 @@ export interface IDropdownResponse {
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
   dealerVehicleCount?: number;
+  activeServiceCount?: number;
+  serviceTypeCounts?: Record<string, number>;
   batteryTypes: IDropdownOption[];
   productBrands: IDropdownOption[];
 }
@@ -49,6 +51,8 @@ export const getDropdownOptions = async (
     businessTypes: [],
     categories: [],
     dealerVehicleCount: 0,
+    activeServiceCount: 0,
+    serviceTypeCounts: {},
     batteryTypes: [],
     productBrands: [],
   };
@@ -92,6 +96,11 @@ export const getDropdownOptions = async (
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
         dealerVehicleCount: typeof result.dealerVehicleCount === 'number' ? result.dealerVehicleCount : 0,
+        activeServiceCount: typeof result.activeServiceCount === 'number' ? result.activeServiceCount : 0,
+        serviceTypeCounts:
+          result.serviceTypeCounts && typeof result.serviceTypeCounts === 'object'
+            ? result.serviceTypeCounts
+            : {},
         batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
         productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
@@ -111,6 +120,11 @@ export const getDropdownOptions = async (
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
         dealerVehicleCount: typeof result.dealerVehicleCount === 'number' ? result.dealerVehicleCount : 0,
+        activeServiceCount: typeof result.activeServiceCount === 'number' ? result.activeServiceCount : 0,
+        serviceTypeCounts:
+          result.serviceTypeCounts && typeof result.serviceTypeCounts === 'object'
+            ? result.serviceTypeCounts
+            : {},
         batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
         productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
@@ -134,6 +148,11 @@ export const getDropdownOptions = async (
         businessTypes: Array.isArray(directData.businessTypes) ? directData.businessTypes : [],
         categories: Array.isArray(directData.categories) ? directData.categories : [],
         dealerVehicleCount: typeof directData.dealerVehicleCount === 'number' ? directData.dealerVehicleCount : 0,
+        activeServiceCount: typeof directData.activeServiceCount === 'number' ? directData.activeServiceCount : 0,
+        serviceTypeCounts:
+          directData.serviceTypeCounts && typeof directData.serviceTypeCounts === 'object'
+            ? directData.serviceTypeCounts
+            : {},
         batteryTypes: Array.isArray(directData.batteryTypes) ? directData.batteryTypes : [],
         productBrands: Array.isArray(directData.productBrands) ? directData.productBrands : [],
       };

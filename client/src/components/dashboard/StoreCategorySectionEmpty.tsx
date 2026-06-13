@@ -22,8 +22,8 @@ const SECTION_COPY: Record<
     icon: 'car-outline',
   },
   services: {
-    title: 'No service categories yet',
-    message: 'Service category tiles show up once matching products are listed.',
+    title: 'No service listings yet',
+    message: 'Service categories appear here once dealers add active services.',
     icon: 'construct-outline',
   },
 };

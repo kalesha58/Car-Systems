@@ -5,7 +5,7 @@ import { Input } from '@components/Input/Input';
 import { SkeletonCard } from '@components/Skeleton';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getUsers } from '@services/userService';
 import {
@@ -67,6 +67,10 @@ export const ServiceFormPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sections, setSections] = useState<IServiceSection[]>([]);
   const [dealers, setDealers] = useState<Array<{ id: string; name: string; businessName?: string }>>([]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived: selected section config
   const selectedSection = sections.find(s => s.id === formData.sectionId) ?? null;
@@ -138,6 +142,60 @@ export const ServiceFormPage = () => {
     setErrors(prev => ({ ...prev, [key]: '' }));
   };
 
+  const resolveImageSrc = (img: string) => {
+    if (img.startsWith('data:') || img.startsWith('http://') || img.startsWith('https://')) {
+      return img;
+    }
+    return `data:image/jpeg;base64,${img}`;
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setImageError('');
+
+    if (files.length === 0) return;
+
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const invalidFiles = files.filter(file => !validImageTypes.includes(file.type));
+    if (invalidFiles.length > 0) {
+      setImageError('Please select valid image files (JPG, PNG, WebP, or GIF)');
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    const oversizedFiles = files.filter(file => file.size > maxSize);
+    if (oversizedFiles.length > 0) {
+      setImageError('Image size must be less than 10MB per file');
+      return;
+    }
+
+    setSelectedImages(prev => [...prev, ...files]);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImageError('');
+  };
+
+  const handleRemoveExistingImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!formData.dealerId) e.dealerId = 'Dealer is required';
@@ -148,7 +206,17 @@ export const ServiceFormPage = () => {
     if (selectedSection && selectedSection.subcategories.length > 0 && !formData.serviceSubCategory) {
       e.serviceSubCategory = 'Subcategory is required';
     }
+    if (
+      !isEdit &&
+      selectedImages.length === 0 &&
+      (!formData.images || formData.images.length === 0)
+    ) {
+      setImageError('At least one service image is required');
+      setErrors(e);
+      return false;
+    }
     setErrors(e);
+    setImageError('');
     return Object.keys(e).length === 0;
   };
 
@@ -157,6 +225,43 @@ export const ServiceFormPage = () => {
     if (!validate()) { showToast('Please fix the errors', 'error'); return; }
     try {
       setSubmitting(true);
+
+      const imagesArray: string[] = [];
+
+      if (selectedImages.length > 0) {
+        try {
+          const dataURIPromises = selectedImages.map(
+            file =>
+              new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  if (typeof reader.result === 'string') {
+                    resolve(reader.result);
+                  } else {
+                    reject(new Error('Failed to convert image to data URI'));
+                  }
+                };
+                reader.onerror = () => reject(new Error('Error reading file'));
+                reader.readAsDataURL(file);
+              }),
+          );
+          imagesArray.push(...(await Promise.all(dataURIPromises)));
+        } catch {
+          showToast('Failed to process images', 'error');
+          return;
+        }
+      }
+
+      if (formData.images.length > 0) {
+        imagesArray.push(
+          ...formData.images.map(img =>
+            img.startsWith('data:') || img.startsWith('http://') || img.startsWith('https://')
+              ? img
+              : img,
+          ),
+        );
+      }
+
       const payload = {
         dealerId: formData.dealerId,
         name: formData.name.trim(),
@@ -172,7 +277,7 @@ export const ServiceFormPage = () => {
         servicePackage: (formData.servicePackage as ServicePackageValue) || undefined,
         vehicleModel: formData.vehicleModel.trim() || undefined,
         vehicleBrand: formData.vehicleBrand.trim() || undefined,
-        images: formData.images,
+        ...(imagesArray.length > 0 && { images: imagesArray }),
         isActive: formData.isActive,
         ...(formData.commissionPercentage !== undefined && {
           commissionPercentage: formData.commissionPercentage,
@@ -399,6 +504,137 @@ export const ServiceFormPage = () => {
                 fontFamily: 'inherit', resize: 'vertical',
               }}
             />
+          </div>
+
+          {/* ── Service Images ── */}
+          <div style={{ marginBottom: s.md }}>
+            <label style={labelStyle}>
+              Service Images {!isEdit && <span style={{ color: c.error }}>*</span>}
+            </label>
+
+            {formData.images.length > 0 && (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                  gap: s.sm,
+                  marginBottom: s.sm,
+                }}
+              >
+                {formData.images.map((img, index) => (
+                  <div key={`existing-${index}`} style={{ position: 'relative' }}>
+                    <img
+                      src={resolveImageSrc(img)}
+                      alt={`Service image ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '150px',
+                        borderRadius: theme.borderRadius.md,
+                        border: `1px solid ${c.border}`,
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        background: c.error,
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: 32,
+                        height: 32,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {imagePreviews.length > 0 && (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                  gap: s.sm,
+                  marginBottom: s.sm,
+                }}
+              >
+                {imagePreviews.map((preview, index) => (
+                  <div key={`new-${index}`} style={{ position: 'relative' }}>
+                    <img
+                      src={preview}
+                      alt={`Service preview ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        height: '150px',
+                        borderRadius: theme.borderRadius.md,
+                        border: `1px solid ${c.border}`,
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        background: c.error,
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: 32,
+                        height: 32,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+              multiple
+              onChange={handleImageChange}
+              style={{
+                width: '100%',
+                padding: s.sm,
+                border: `1px solid ${imageError ? c.error : c.border}`,
+                borderRadius: theme.borderRadius.md,
+                backgroundColor: c.surface,
+                color: c.text,
+                fontSize: '1rem',
+                cursor: 'pointer',
+              }}
+            />
+            {imageError && <p style={errStyle}>{imageError}</p>}
+            <p style={{ marginTop: s.xs, color: c.textSecondary, fontSize: '0.75rem' }}>
+              Accepted formats: JPG, PNG, WebP, GIF (Max 10MB per file)
+            </p>
           </div>
 
           {/* ── Home Service toggle (for sections without explicit delivery modes) ── */}
