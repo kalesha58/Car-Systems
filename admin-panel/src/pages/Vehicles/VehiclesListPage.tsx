@@ -20,6 +20,7 @@ import { Table } from '@components/Table/Table';
 import { Tooltip } from '@components/Tooltip/Tooltip';
 import { deleteVehicle, getVehicles } from '@services/vehicleService';
 import { useToastStore } from '@store/toastStore';
+import { bulkDeleteByIds } from '@utils/bulkDelete';
 import { debounce } from '@utils/debounce';
 import { extractErrorMessage } from '@utils/errorHandler';
 
@@ -43,6 +44,8 @@ export const VehiclesListPage = () => {
     vehicle: null,
     dealerId: '',
   });
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [selectedVehicleIds, setSelectedVehicleIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [statusSummary, setStatusSummary] = useState({ 
     total: 0, 
@@ -139,6 +142,10 @@ export const VehiclesListPage = () => {
     fetchVehicles();
   }, [fetchVehicles]);
 
+  useEffect(() => {
+    setSelectedVehicleIds([]);
+  }, [currentPage, searchTerm, vehicleTypeFilter, availabilityFilter]);
+
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
@@ -233,6 +240,32 @@ export const VehiclesListPage = () => {
       console.error('Error deleting vehicle:', error);
       // API interceptor already shows error toast for API errors
       // Only show generic error if interceptor didn't show one (unlikely)
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedVehicleIds.length === 0) return;
+
+    try {
+      setSubmitting(true);
+      const { succeeded, failed } = await bulkDeleteByIds(selectedVehicleIds, deleteVehicle);
+      setBulkDeleteModalOpen(false);
+      setSelectedVehicleIds([]);
+
+      if (failed === 0) {
+        showToast(`${succeeded} vehicle${succeeded === 1 ? '' : 's'} deleted successfully`, 'success');
+      } else if (succeeded === 0) {
+        showToast('Failed to delete selected vehicles', 'error');
+      } else {
+        showToast(`${succeeded} deleted, ${failed} failed`, 'warning');
+      }
+
+      fetchVehicles();
+    } catch (error) {
+      console.error('Error bulk deleting vehicles:', error);
+      showToast(extractErrorMessage(error, 'Failed to delete selected vehicles'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -471,6 +504,17 @@ export const VehiclesListPage = () => {
             </div>
             <div className="users-toolbar__spacer" />
             <div className="users-toolbar__actions">
+              {selectedVehicleIds.length > 0 && (
+                <div className="users-toolbar__button">
+                  <Button
+                    variant="danger"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    icon={Trash2}
+                  >
+                    Delete Selected ({selectedVehicleIds.length})
+                  </Button>
+                </div>
+              )}
               <div className="users-toolbar__button">
                 <Button
                   onClick={() => navigate('/vehicles/new')}
@@ -563,6 +607,9 @@ export const VehiclesListPage = () => {
                   columns={columns}
                   data={vehicles}
                   onRowClick={(vehicle) => navigate(`/vehicles/${vehicle.id}`)}
+                  selectable
+                  selectedIds={selectedVehicleIds}
+                  onSelectedIdsChange={setSelectedVehicleIds}
                 />
               </div>
               {totalItems > 0 && (
@@ -589,6 +636,17 @@ export const VehiclesListPage = () => {
         title="Delete Vehicle"
         message={`Are you sure you want to delete "${deleteModal.vehicle?.brand} ${deleteModal.vehicle?.vehicleModel}"? This action cannot be undone.`}
         confirmText={submitting ? 'Deleting...' : 'Delete'}
+        type="danger"
+        disabled={submitting}
+      />
+
+      <ConfirmModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => !submitting && setBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Delete Selected Vehicles"
+        message={`Are you sure you want to delete ${selectedVehicleIds.length} selected vehicle${selectedVehicleIds.length === 1 ? '' : 's'}? This action cannot be undone.`}
+        confirmText={submitting ? 'Deleting...' : 'Delete All'}
         type="danger"
         disabled={submitting}
       />
