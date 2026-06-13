@@ -10,6 +10,7 @@ export interface IDropdownCategoryOption extends IDropdownOption {
   imageUrl?: string;
   sortOrder?: number;
   tileGroup?: 'products' | 'vehicles' | 'services';
+  activeProductCount?: number;
 }
 
 export interface IDropdownResponse {
@@ -23,6 +24,7 @@ export interface IDropdownResponse {
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
   batteryTypes: IDropdownOption[];
+  productBrands: IDropdownOption[];
 }
 
 export interface IDropdownApiResponse {
@@ -33,6 +35,7 @@ export interface IDropdownApiResponse {
 export const getDropdownOptions = async (
   vehicleType?: string,
   brandId?: string,
+  storeTiles?: boolean,
 ): Promise<IDropdownResponse> => {
   const defaultResponse: IDropdownResponse = {
     vehicleTypes: [],
@@ -45,15 +48,19 @@ export const getDropdownOptions = async (
     businessTypes: [],
     categories: [],
     batteryTypes: [],
+    productBrands: [],
   };
 
   try {
-    const params: {vehicleType?: string; brandId?: string} = {};
+    const params: { vehicleType?: string; brandId?: string; storeTiles?: boolean } = {};
     if (vehicleType) {
       params.vehicleType = vehicleType;
     }
     if (brandId) {
       params.brandId = brandId;
+    }
+    if (storeTiles) {
+      params.storeTiles = true;
     }
     
     const response = await appAxios.get<IDropdownApiResponse>('/dropdowns', {
@@ -82,6 +89,8 @@ export const getDropdownOptions = async (
         condition: Array.isArray(result.condition) ? result.condition : [],
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
+        batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
+        productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
     }
     
@@ -98,6 +107,8 @@ export const getDropdownOptions = async (
         condition: Array.isArray(result.condition) ? result.condition : [],
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
+        batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
+        productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
     }
     
@@ -118,6 +129,8 @@ export const getDropdownOptions = async (
         condition: Array.isArray(directData.condition) ? directData.condition : [],
         businessTypes: Array.isArray(directData.businessTypes) ? directData.businessTypes : [],
         categories: Array.isArray(directData.categories) ? directData.categories : [],
+        batteryTypes: Array.isArray(directData.batteryTypes) ? directData.batteryTypes : [],
+        productBrands: Array.isArray(directData.productBrands) ? directData.productBrands : [],
       };
     }
     

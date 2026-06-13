@@ -4,6 +4,8 @@ import { VehicleModel } from '../models/VehicleModel';
 import { DropdownOption } from '../models/DropdownOption';
 import { Category, CategoryTileGroup } from '../models/Category';
 import { BatteryType } from '../models/BatteryType';
+import { ProductBrand } from '../models/ProductBrand';
+import { Product } from '../models/Product';
 import { logger } from '../utils/logger';
 
 type LeanCategory = {
@@ -24,6 +26,7 @@ export interface IDropdownCategoryOption extends IDropdownOption {
   imageUrl?: string;
   sortOrder?: number;
   tileGroup?: 'products' | 'vehicles' | 'services';
+  activeProductCount?: number;
 }
 
 export interface IDropdownResponse {
@@ -37,11 +40,13 @@ export interface IDropdownResponse {
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
   batteryTypes: IDropdownOption[];
+  productBrands: IDropdownOption[];
 }
 
 export const getDropdownOptions = async (
   vehicleType?: string,
   brandId?: string,
+  storeTiles?: boolean,
 ): Promise<IDropdownResponse> => {
   try {
     // Fetch vehicle types from DropdownOption
@@ -111,7 +116,35 @@ export const getDropdownOptions = async (
       .sort({ sortOrder: 1, name: 1 })
       .lean<LeanCategory[]>();
 
+    const productCountRows = await Product.aggregate<{ _id: string; count: number }>([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$categoryId', count: { $sum: 1 } } },
+    ]);
+    const activeProductCountByCategory = new Map<string, number>(
+      productCountRows.map((row) => [String(row._id), row.count]),
+    );
+
+    let categoryOptions: IDropdownCategoryOption[] = categories.map((category) => {
+      const categoryId = category._id.toString();
+      return {
+        label: category.name,
+        value: categoryId,
+        imageUrl: category.imageUrl,
+        sortOrder: category.sortOrder ?? 0,
+        tileGroup: category.tileGroup,
+        activeProductCount: activeProductCountByCategory.get(categoryId) ?? 0,
+      };
+    });
+
+    if (storeTiles) {
+      categoryOptions = categoryOptions.filter((cat) => (cat.activeProductCount ?? 0) > 0);
+    }
+
     const batteryTypes = await BatteryType.find({ status: 'active' })
+      .sort({ sortOrder: 1, name: 1 })
+      .lean();
+
+    const productBrands = await ProductBrand.find({ status: 'active' })
       .sort({ sortOrder: 1, name: 1 })
       .lean();
 
@@ -149,16 +182,14 @@ export const getDropdownOptions = async (
         label: opt.label,
         value: opt.value,
       })),
-      categories: categories.map((category) => ({
-        label: category.name,
-        value: category._id.toString(),
-        imageUrl: category.imageUrl,
-        sortOrder: category.sortOrder ?? 0,
-        tileGroup: category.tileGroup,
-      })),
+      categories: categoryOptions,
       batteryTypes: batteryTypes.map((type) => ({
         label: type.name,
         value: type._id.toString(),
+      })),
+      productBrands: productBrands.map((brand) => ({
+        label: brand.name,
+        value: brand.name,
       })),
     };
   } catch (error) {

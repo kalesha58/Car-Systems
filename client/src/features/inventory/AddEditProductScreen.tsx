@@ -74,11 +74,12 @@ const AddEditProductScreen: React.FC = () => {
 
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [dropdownType, setDropdownType] = useState<
-    'category' | 'vehicleType' | 'batteryType' | 'compatibleBrand' | 'compatibleModel'
+    'category' | 'vehicleType' | 'batteryType' | 'brand' | 'compatibleBrand' | 'compatibleModel'
   >('category');
   const [categories, setCategories] = useState<IDropdownOption[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<IDropdownOption[]>([]);
   const [batteryTypes, setBatteryTypes] = useState<IDropdownOption[]>([]);
+  const [productBrands, setProductBrands] = useState<IDropdownOption[]>([]);
   const [batteryTypeId, setBatteryTypeId] = useState(product?.batteryTypeId || '');
   const [voltageV, setVoltageV] = useState(product?.voltageV?.toString() || '');
   const [vehicleBrandId, setVehicleBrandId] = useState(product?.vehicleBrandId || '');
@@ -142,6 +143,7 @@ const AddEditProductScreen: React.FC = () => {
       setCategories(options.categories || []);
       setVehicleTypes(options.vehicleTypes || []);
       setBatteryTypes(options.batteryTypes || []);
+      setProductBrands(options.productBrands || []);
       
       // Warn if no data received
       const totalOptions = (options.categories?.length || 0) + (options.vehicleTypes?.length || 0);
@@ -154,7 +156,8 @@ const AddEditProductScreen: React.FC = () => {
       // Set empty arrays on error to prevent undefined issues
       setCategories([]);
       setVehicleTypes([]);
-      
+      setBatteryTypes([]);
+      setProductBrands([]);
       // Show error to user
       const errorMessage = error?.response?.data?.message || 
                           error?.message || 
@@ -362,7 +365,7 @@ const AddEditProductScreen: React.FC = () => {
     categories.find(c => c.value === category)?.label === BATTERY_CATEGORY_NAME;
 
   const openDropdown = (
-    type: 'category' | 'vehicleType' | 'batteryType' | 'compatibleBrand' | 'compatibleModel',
+    type: 'category' | 'vehicleType' | 'batteryType' | 'brand' | 'compatibleBrand' | 'compatibleModel',
   ) => {
     setDropdownType(type);
     setDropdownModalVisible(true);
@@ -382,6 +385,8 @@ const AddEditProductScreen: React.FC = () => {
       setVehicleModelId('');
     } else if (dropdownType === 'batteryType') {
       setBatteryTypeId(value);
+    } else if (dropdownType === 'brand') {
+      setBrand(value);
     } else if (dropdownType === 'compatibleBrand') {
       setVehicleBrandId(value);
       setVehicleModelId('');
@@ -410,12 +415,31 @@ const AddEditProductScreen: React.FC = () => {
     );
   };
 
+  const getProductBrandOptions = (): IDropdownOption[] => {
+    if (brand && !productBrands.some((item) => item.value === brand)) {
+      return [{ label: brand, value: brand }, ...productBrands];
+    }
+    return productBrands;
+  };
+
+  const getBrandDisplayLabel = () => {
+    return (
+      getProductBrandOptions().find((item) => item.value === brand)?.label ||
+      brand ||
+      t('dealer.selectBrand') ||
+      'Select brand'
+    );
+  };
+
   const getCurrentDropdownOptions = () => {
     if (dropdownType === 'category') {
       return categories;
     }
     if (dropdownType === 'batteryType') {
       return batteryTypes;
+    }
+    if (dropdownType === 'brand') {
+      return getProductBrandOptions();
     }
     if (dropdownType === 'compatibleBrand') {
       return compatibleBrands;
@@ -432,6 +456,9 @@ const AddEditProductScreen: React.FC = () => {
     }
     if (dropdownType === 'batteryType') {
       return batteryTypeId;
+    }
+    if (dropdownType === 'brand') {
+      return brand;
     }
     if (dropdownType === 'compatibleBrand') {
       return vehicleBrandId;
@@ -719,15 +746,21 @@ const AddEditProductScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 {t('dealer.brand')} <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.field}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder={t('dealer.enterBrand')}
-                  placeholderTextColor={colors.disabled}
-                  value={brand}
-                  onChangeText={setBrand}
-                />
-              </View>
+              <TouchableOpacity
+                style={[styles.field, styles.dropdownField]}
+                onPress={() => openDropdown('brand')}
+                activeOpacity={0.75}
+                disabled={dropdownsLoading}>
+                <CustomText style={styles.dropdownButtonText}>
+                  {getBrandDisplayLabel()}
+                </CustomText>
+                <Icon name="chevron-down" size={RFValue(18)} color={colors.secondary} />
+              </TouchableOpacity>
+              {productBrands.length === 0 && (
+                <CustomText style={{marginTop: 6, fontSize: RFValue(10), opacity: 0.6}}>
+                  {t('dealer.noBrandsConfigured') || 'No brands configured — contact admin'}
+                </CustomText>
+              )}
             </View>
           </View>
 
@@ -1044,6 +1077,8 @@ const AddEditProductScreen: React.FC = () => {
             ? t('dealer.selectCategory')
             : dropdownType === 'batteryType'
             ? t('dealer.selectBatteryType')
+            : dropdownType === 'brand'
+            ? t('dealer.selectBrand') || 'Select brand'
             : dropdownType === 'compatibleBrand'
             ? t('dealer.selectCompatibleBrand')
             : dropdownType === 'compatibleModel'

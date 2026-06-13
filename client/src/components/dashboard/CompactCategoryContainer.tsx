@@ -5,7 +5,6 @@ import { Fonts } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { navigate } from '@utils/NavigationUtils';
 import type { CategoryType, StoreCategoryTile } from '../../types/category/ICategoryItem';
-import Icon from 'react-native-vector-icons/Ionicons';
 
 const MONGO_OBJECT_ID = /^[a-f\d]{24}$/i;
 
@@ -53,9 +52,6 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
       height: '100%',
       resizeMode: 'contain',
     },
-    placeholderIcon: {
-      opacity: 0.45,
-    },
   });
 
 
@@ -83,13 +79,18 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
 
   const renderImage = (item: StoreCategoryTile) => {
     const src = item.image;
-    if (typeof src === 'number') {
-      return <Image source={src} style={styles.image} />;
-    }
     if (src && typeof src === 'object' && 'uri' in src && src.uri) {
       return <Image source={src} style={styles.image} />;
     }
-    return <Icon name="image-outline" size={28} color={colors.textSecondary} style={styles.placeholderIcon} />;
+    const initial = item.name?.trim()?.charAt(0)?.toUpperCase() || '?';
+    return (
+      <CustomText
+        variant="h4"
+        fontFamily={Fonts.SemiBold}
+        style={{ color: colors.textSecondary, opacity: 0.55 }}>
+        {initial}
+      </CustomText>
+    );
   };
 
   const renderItems = (items: StoreCategoryTile[]) => {

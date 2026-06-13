@@ -9,10 +9,11 @@ export const getDropdownOptionsController = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { vehicleType, brandId } = req.query;
+    const { vehicleType, brandId, storeTiles } = req.query;
     const options = await getDropdownOptions(
       vehicleType as string | undefined,
       brandId as string | undefined,
+      storeTiles === 'true',
     );
     
     res.status(200).json({

@@ -6,6 +6,7 @@ import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
 import { getCategories } from '@services/categoryService';
 import { getBatteryTypes } from '@services/batteryTypeService';
+import { getProductBrands } from '@services/productBrandService';
 import { getVehicleBrands, getVehicleModels } from '@services/vehicleBrandService';
 import { getBusinessRegistration } from '@services/dealerService';
 import { createProduct, getProductById, type ICreateProductPayload,updateProduct } from '@services/productService';
@@ -49,6 +50,7 @@ export const ProductFormPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [batteryTypes, setBatteryTypes] = useState<Array<{ id: string; name: string }>>([]);
+  const [productBrands, setProductBrands] = useState<Array<{ name: string }>>([]);
   const [vehicleBrands, setVehicleBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [vehicleModels, setVehicleModels] = useState<Array<{ id: string; name: string }>>([]);
   const isBatteryCategory = formData.category === 'Batteries & Chargers';
@@ -86,13 +88,17 @@ export const ProductFormPage = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const [categoriesResponse, batteryTypesResponse] = await Promise.all([
+        const [categoriesResponse, batteryTypesResponse, productBrandsResponse] = await Promise.all([
           getCategories(),
           getBatteryTypes(),
+          getProductBrands({ status: 'active' }),
         ]);
         setCategories(categoriesResponse.categories.map((cat: { id: string; name: string }) => ({ id: cat.id, name: cat.name })));
         setBatteryTypes(
           (batteryTypesResponse.batteryTypes || []).map((type) => ({ id: type.id, name: type.name })),
+        );
+        setProductBrands(
+          (productBrandsResponse.productBrands || []).map((brand) => ({ name: brand.name })),
         );
 
         // Fetch dealers using users API with role=dealer
@@ -465,6 +471,14 @@ export const ProductFormPage = () => {
     );
   }, [dealers, dealerSearchTerm]);
 
+  const brandOptions = useMemo(() => {
+    const names = productBrands.map((brand) => brand.name);
+    if (formData.brand && !names.includes(formData.brand)) {
+      return [{ value: formData.brand, label: formData.brand }, ...names.map((name) => ({ value: name, label: name }))];
+    }
+    return names.map((name) => ({ value: name, label: name }));
+  }, [productBrands, formData.brand]);
+
   // Handle dealer selection
   const handleDealerSelect = useCallback((dealerId: string) => {
     setFormData((prev) => ({ ...prev, dealerID: dealerId }));
@@ -554,14 +568,15 @@ export const ProductFormPage = () => {
             required
           />
 
-          <Input
+          <Select
             label="Brand"
             value={formData.brand}
             onChange={(value) => {
               setFormData({ ...formData, brand: value });
               setErrors({ ...errors, brand: undefined });
             }}
-            placeholder="Enter brand name"
+            options={brandOptions}
+            placeholder="Select a brand"
             error={errors.brand}
             required
           />

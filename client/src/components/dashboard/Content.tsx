@@ -7,9 +7,9 @@ import PromoBannerStrip from './PromoBannerStrip';
 import TrustBadgeRow from './TrustBadgeRow';
 import ContentSkeleton from './ContentSkeleton';
 import PromoOfferCards from './PromoOfferCards';
+import StoreCategorySectionEmpty from './StoreCategorySectionEmpty';
 import { useTheme } from '@hooks/useTheme';
 import { getDropdownOptions, type IDropdownCategoryOption } from '@service/dropdownService';
-import { STATIC_CATEGORY_IMAGES } from '@config/storeCategoryImages';
 import type { StoreCategoryTile } from '../../types/category/ICategoryItem';
 
 const tileGroupOrder = (a: IDropdownCategoryOption, b: IDropdownCategoryOption) =>
@@ -19,69 +19,25 @@ const mapToTiles = (rows: IDropdownCategoryOption[]): StoreCategoryTile[] =>
   rows.map((c) => ({
     id: c.value,
     name: c.label,
-    // Prefer backend CDN URL; fall back to bundled static image
-    image:
-      c.imageUrl && c.imageUrl.trim() !== ''
-        ? { uri: c.imageUrl }
-        : (STATIC_CATEGORY_IMAGES[c.label] ?? null),
+    image: c.imageUrl && c.imageUrl.trim() !== '' ? { uri: c.imageUrl.trim() } : null,
   }));
 
-const isSparePartsLabel = (label: string) => /^spare\s*parts$/i.test(label.trim());
-
 /**
- * Build Store home rows. Prefer `tileGroup` from API (seeded DB). If no category has
- * `tileGroup` (legacy Mongo data), partition all categories so tiles are not empty.
- * Orphan categories (no tileGroup) fill empty rows after tileGroup matches.
+ * Build Store home rows from dropdown categories that have active inventory.
+ * Only categories with activeProductCount > 0 and a tileGroup are shown.
  */
 function buildStoreTileRows(all: IDropdownCategoryOption[]): {
   products: StoreCategoryTile[];
   vehicles: StoreCategoryTile[];
   services: StoreCategoryTile[];
 } {
-  const sorted = [...all].sort(tileGroupOrder);
-  const anyTileGroup = sorted.some((c) => !!c.tileGroup);
-
-  const take = (rows: IDropdownCategoryOption[]) => mapToTiles(rows);
-
-  if (!anyTileGroup) {
-    const legacy = sorted.filter((c) => !isSparePartsLabel(c.label));
-    return {
-      products: take(legacy.slice(0, 4)),
-      vehicles: take(legacy.slice(4, 9)),
-      services: take(legacy.slice(9, 13)),
-    };
-  }
-
-  let products = sorted.filter((c) => c.tileGroup === 'products');
-  let vehicles = sorted.filter((c) => c.tileGroup === 'vehicles');
-  let services = sorted.filter((c) => c.tileGroup === 'services');
-
-  const used = new Set<string>([...products, ...vehicles, ...services].map((c) => c.value));
-  const orphans = sorted.filter((c) => !c.tileGroup && !isSparePartsLabel(c.label) && !used.has(c.value));
-
-  const fillIfEmpty = (
-    row: IDropdownCategoryOption[],
-    count: number,
-    pool: IDropdownCategoryOption[],
-  ): { row: IDropdownCategoryOption[]; pool: IDropdownCategoryOption[] } => {
-    if (row.length > 0) {
-      return { row, pool };
-    }
-    const next = pool.slice(0, count);
-    const rest = pool.slice(count);
-    next.forEach((c) => used.add(c.value));
-    return { row: next, pool: rest };
-  };
-
-  let pool = orphans;
-  ({ row: products, pool } = fillIfEmpty(products, 4, pool));
-  ({ row: vehicles, pool } = fillIfEmpty(vehicles, 5, pool));
-  ({ row: services, pool } = fillIfEmpty(services, 4, pool));
+  const withInventory = all.filter((c) => (c.activeProductCount ?? 0) > 0);
+  const sorted = [...withInventory].sort(tileGroupOrder);
 
   return {
-    products: take(products),
-    vehicles: take(vehicles),
-    services: take(services),
+    products: mapToTiles(sorted.filter((c) => c.tileGroup === 'products')),
+    vehicles: mapToTiles(sorted.filter((c) => c.tileGroup === 'vehicles')),
+    services: mapToTiles(sorted.filter((c) => c.tileGroup === 'services')),
   };
 }
 
@@ -94,7 +50,7 @@ const Content: FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getDropdownOptions();
+        const data = await getDropdownOptions(undefined, undefined, true);
         if (!cancelled) {
           setDropdownCategories(Array.isArray(data.categories) ? data.categories : []);
         }
@@ -112,13 +68,11 @@ const Content: FC = () => {
   }, []);
 
   const styles = StyleSheet.create({
-    // ── Page canvas ───────────────────────────────────────────────────
     canvas: {
-      backgroundColor: colors.backgroundSecondary, // #f5f6fb light / #1E1E1E dark
+      backgroundColor: colors.backgroundSecondary,
       paddingTop: 10,
       paddingBottom: 6,
     },
-    // ── Floating section card ─────────────────────────────────────────
     card: {
       backgroundColor: colors.background,
       marginHorizontal: 12,
@@ -133,7 +87,6 @@ const Content: FC = () => {
       shadowRadius: 6,
       elevation: 2,
     },
-    // ── Section header with coloured accent bar ───────────────────────
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -146,7 +99,6 @@ const Content: FC = () => {
       backgroundColor: colors.primary,
       marginRight: 8,
     },
-    // ── Promo strip — sits on canvas between cards ────────────────────
     promoPadding: {
       paddingHorizontal: 12,
       marginBottom: 10,
@@ -163,7 +115,6 @@ const Content: FC = () => {
   return (
     <View style={styles.canvas}>
 
-      {/* ── Product Categories card ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <View style={styles.accentBar} />
@@ -171,15 +122,17 @@ const Content: FC = () => {
             Product Categories
           </CustomText>
         </View>
-        <CompactCategoryContainer data={productsCategories} categoryType="products" />
+        {productsCategories.length > 0 ? (
+          <CompactCategoryContainer data={productsCategories} categoryType="products" />
+        ) : (
+          <StoreCategorySectionEmpty section="products" />
+        )}
       </View>
 
-      {/* ── Promo Banner Strip (on canvas, no card wrapper) ── */}
       <View style={styles.promoPadding}>
         <PromoBannerStrip />
       </View>
 
-      {/* ── Vehicle Categories card ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <View style={styles.accentBar} />
@@ -187,10 +140,13 @@ const Content: FC = () => {
             Vehicle Categories
           </CustomText>
         </View>
-        <CompactCategoryContainer data={vehiclesCategories} categoryType="vehicles" />
+        {vehiclesCategories.length > 0 ? (
+          <CompactCategoryContainer data={vehiclesCategories} categoryType="vehicles" />
+        ) : (
+          <StoreCategorySectionEmpty section="vehicles" />
+        )}
       </View>
 
-      {/* ── Service Categories card ── */}
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
           <View style={styles.accentBar} />
@@ -198,17 +154,19 @@ const Content: FC = () => {
             Service Categories
           </CustomText>
         </View>
-        <CompactCategoryContainer data={servicesCategories} categoryType="services" />
+        {servicesCategories.length > 0 ? (
+          <CompactCategoryContainer data={servicesCategories} categoryType="services" />
+        ) : (
+          <StoreCategorySectionEmpty section="services" />
+        )}
         <TrustBadgeRow />
       </View>
-      {/* ── Promotional Offers + How It Works ── */}
+
       <PromoOfferCards />
 
-      {/* bottom breathing room */}
-      <View style={{height: 16}} />
+      <View style={{ height: 16 }} />
 
     </View>
   );
 };
 export default Content;
-

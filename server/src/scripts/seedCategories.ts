@@ -2,7 +2,8 @@
  * Seed Store Home Category Tiles
  *
  * Upserts canonical store categories from src/data/storeCategories.ts.
- * Category names MUST match client storeCategoryImages.ts for static fallback.
+ * Category names MUST match server/src/data/storeCategories.ts.
+ * Image URLs are written to Mongo (setTileImageUrls: true).
  *
  * Run from server/: npm run seed:categories
  */
@@ -21,7 +22,7 @@ const seedCategories = async () => {
     await connectDatabase();
     logger.info('Database connected');
 
-    const { tileCount } = await upsertStoreCategories({ setTileImageUrls: false });
+    const { tileCount } = await upsertStoreCategories({ setTileImageUrls: true });
     logger.info('✅ Category seeding complete. Tiles upserted: %d (+ Spare Parts)', tileCount);
 
     await printCategorySummary();

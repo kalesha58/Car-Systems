@@ -27,6 +27,7 @@ const OrderDetailsPage = lazy(() => import('@pages/Orders/OrderDetailsPage').the
 const ReportsPage = lazy(() => import('@pages/Reports/ReportsPage').then(module => ({ default: module.ReportsPage })));
 const CategoriesPage = lazy(() => import('@pages/Settings/CategoriesPage').then(module => ({ default: module.CategoriesPage })));
 const BatteryTypesPage = lazy(() => import('@pages/Settings/BatteryTypesPage').then(module => ({ default: module.BatteryTypesPage })));
+const ProductBrandsPage = lazy(() => import('@pages/Settings/ProductBrandsPage').then(module => ({ default: module.ProductBrandsPage })));
 const VehicleBrandsPage = lazy(() => import('@pages/Settings/VehicleBrandsPage').then(module => ({ default: module.VehicleBrandsPage })));
 const AppSettingsPage = lazy(() => import('@pages/Settings/AppSettingsPage').then(module => ({ default: module.AppSettingsPage })));
 const NotFoundPage = lazy(() => import('@pages/NotFound/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
@@ -273,6 +274,14 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <BatteryTypesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings/product-brands"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ProductBrandsPage />
               </Suspense>
             }
           />

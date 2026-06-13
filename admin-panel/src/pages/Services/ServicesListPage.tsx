@@ -1,17 +1,27 @@
 import { Breadcrumbs } from '@components/Breadcrumbs/Breadcrumbs';
 import { Button } from '@components/Button/Button';
 import { Card } from '@components/Card/Card';
-import { SkeletonCard } from '@components/Skeleton';
-import { useToastStore } from '@store/toastStore';
-import { useTheme } from '@theme/ThemeContext';
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ConfirmModal } from '@components/ConfirmModal/ConfirmModal';
+import { Input } from '@components/Input/Input';
+import { Pagination } from '@components/Pagination/Pagination';
+import { Select } from '@components/Select';
+import { SkeletonTable } from '@components/Skeleton';
+import { Table } from '@components/Table/Table';
+import { Tooltip } from '@components/Tooltip/Tooltip';
 import {
-  getAdminServices,
   deleteAdminService,
+  getAdminServices,
   type IAdminService,
   type IAdminServiceQueryParams,
 } from '@services/serviceCategoryService';
+import { useToastStore } from '@store/toastStore';
+import { bulkDeleteByIds } from '@utils/bulkDelete';
+import { debounce } from '@utils/debounce';
+import { extractErrorMessage } from '@utils/errorHandler';
+import { motion } from 'framer-motion';
+import { Lightbulb, Pencil, Search, Trash2, UserPlus, Wrench } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {
   car_automobile: 'Car Service',
@@ -23,170 +33,531 @@ const SERVICE_TYPE_LABELS: Record<string, string> = {
   general: 'General',
 };
 
+const formatSubcategory = (value?: string) =>
+  value ? value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '—';
+
 export const ServicesListPage = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const { showToast } = useToastStore();
   const [services, setServices] = useState<IAdminService[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const LIMIT = 20;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const [sectionFilter, setSectionFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; service: IAdminService | null }>({
+    isOpen: false,
+    service: null,
+  });
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [statusSummary, setStatusSummary] = useState({
+    total: 0,
+    active: 0,
+    homeService: 0,
+    inactive: 0,
+  });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isFetchingRef = useRef(false);
 
   const fetchServices = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     try {
       setLoading(true);
-      const params: IAdminServiceQueryParams = { page, limit: LIMIT };
-      if (search.trim()) params.search = search.trim();
-      if (filterType) params.serviceType = filterType;
+      const params: IAdminServiceQueryParams = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      };
+      if (searchTerm.trim()) params.search = searchTerm.trim();
+      if (sectionFilter !== 'all') params.serviceType = sectionFilter;
+
       const data = await getAdminServices(params);
       setServices(data.services);
+      setTotalItems(data.pagination.total);
       setTotalPages(data.pagination.totalPages);
-      setTotal(data.pagination.total);
-    } catch {
-      showToast('Failed to load services', 'error');
+
+      const activeCount = data.services.filter((s) => s.isActive !== false).length;
+      const homeCount = data.services.filter((s) => s.homeService).length;
+      setStatusSummary({
+        total: data.services.length,
+        active: activeCount,
+        homeService: homeCount,
+        inactive: data.services.length - activeCount,
+      });
+    } catch (error: unknown) {
+      if ((error as { name?: string })?.name !== 'AbortError') {
+        console.error('Error fetching services:', error);
+        showToast(extractErrorMessage(error, 'Failed to load services'), 'error');
+      }
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  }, [page, search, filterType, showToast]);
+  }, [currentPage, itemsPerPage, searchTerm, sectionFilter, showToast]);
 
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this service? This cannot be undone.')) return;
+  useEffect(() => {
+    setSelectedServiceIds([]);
+  }, [currentPage, searchTerm, sectionFilter]);
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1);
+      }, 300),
+    [],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInputValue(value);
+      debouncedSearch(value);
+    },
+    [debouncedSearch],
+  );
+
+  useEffect(() => {
+    setSearchInputValue(searchTerm);
+  }, [searchTerm]);
+
+  const handleDelete = async () => {
+    if (!deleteModal.service) return;
+
     try {
-      setDeletingId(id);
-      await deleteAdminService(id);
-      showToast('Service deleted', 'success');
+      setSubmitting(true);
+      await deleteAdminService(deleteModal.service.id);
+      showToast('Service deleted successfully', 'success');
+      setDeleteModal({ isOpen: false, service: null });
       fetchServices();
-    } catch {
-      showToast('Failed to delete service', 'error');
+    } catch (error: unknown) {
+      console.error('Error deleting service:', error);
+      showToast(extractErrorMessage(error, 'Failed to delete service'), 'error');
     } finally {
-      setDeletingId(null);
+      setSubmitting(false);
     }
   };
 
-  const s = theme.spacing;
-  const c = theme.colors;
+  const handleBulkDelete = async () => {
+    if (selectedServiceIds.length === 0) return;
+
+    try {
+      setSubmitting(true);
+      const { succeeded, failed } = await bulkDeleteByIds(selectedServiceIds, deleteAdminService);
+      setBulkDeleteModalOpen(false);
+      setSelectedServiceIds([]);
+
+      if (failed === 0) {
+        showToast(`${succeeded} service${succeeded === 1 ? '' : 's'} deleted successfully`, 'success');
+      } else if (succeeded === 0) {
+        showToast('Failed to delete selected services', 'error');
+      } else {
+        showToast(`${succeeded} deleted, ${failed} failed`, 'warning');
+      }
+
+      fetchServices();
+    } catch (error: unknown) {
+      console.error('Error bulk deleting services:', error);
+      showToast(extractErrorMessage(error, 'Failed to delete selected services'), 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ key: string; label: string }> = [];
+    if (searchInputValue.trim()) {
+      filters.push({ key: 'search', label: `Search: ${searchInputValue.trim()}` });
+    }
+    if (sectionFilter !== 'all') {
+      filters.push({
+        key: 'section',
+        label: `Section: ${SERVICE_TYPE_LABELS[sectionFilter] || sectionFilter}`,
+      });
+    }
+    return filters;
+  }, [searchInputValue, sectionFilter]);
+
+  const handleClearFilter = useCallback((key: string) => {
+    if (key === 'search') {
+      setSearchInputValue('');
+      setSearchTerm('');
+      setCurrentPage(1);
+    }
+    if (key === 'section') {
+      setSectionFilter('all');
+      setCurrentPage(1);
+    }
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setSearchInputValue('');
+    setSearchTerm('');
+    setSectionFilter('all');
+    setCurrentPage(1);
+  }, []);
+
+  const isEmptyState = !loading && services.length === 0;
+
+  const columns = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+    },
+    {
+      key: 'section',
+      header: 'Section',
+      sortable: true,
+      sortValue: (service: IAdminService) => service.serviceType || '',
+      render: (service: IAdminService) => (
+        <span className="users-status-badge users-status-badge--active">
+          {service.serviceType ? SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType : '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'serviceSubCategory',
+      header: 'Subcategory',
+      sortable: true,
+      render: (service: IAdminService) => formatSubcategory(service.serviceSubCategory),
+    },
+    {
+      key: 'servicePackage',
+      header: 'Package',
+      sortable: true,
+      render: (service: IAdminService) =>
+        service.servicePackage
+          ? service.servicePackage.charAt(0).toUpperCase() + service.servicePackage.slice(1)
+          : '—',
+    },
+    {
+      key: 'vehicleType',
+      header: 'Vehicle',
+      sortable: true,
+      render: (service: IAdminService) => service.vehicleType || '—',
+    },
+    {
+      key: 'price',
+      header: 'Price',
+      sortable: true,
+      sortValue: (service: IAdminService) => service.price,
+      render: (service: IAdminService) => `₹${service.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+    },
+    {
+      key: 'homeService',
+      header: 'Home Svc',
+      sortable: true,
+      sortValue: (service: IAdminService) => (service.homeService ? 1 : 0),
+      render: (service: IAdminService) => (
+        <span
+          className={`users-status-badge ${
+            service.homeService ? 'users-status-badge--active' : 'users-status-badge--inactive'
+          }`}
+        >
+          {service.homeService ? 'Yes' : 'No'}
+        </span>
+      ),
+    },
+    {
+      key: 'isActive',
+      header: 'Active',
+      sortable: true,
+      sortValue: (service: IAdminService) => (service.isActive !== false ? 1 : 0),
+      render: (service: IAdminService) => (
+        <span
+          className={`users-status-badge ${
+            service.isActive !== false ? 'users-status-badge--active' : 'users-status-badge--inactive'
+          }`}
+        >
+          {service.isActive !== false ? 'Yes' : 'No'}
+        </span>
+      ),
+    },
+    {
+      key: 'dealer',
+      header: 'Dealer',
+      sortable: true,
+      sortValue: (service: IAdminService) => service.dealer?.businessName || service.dealerId,
+      render: (service: IAdminService) => service.dealer?.businessName || service.dealerId.slice(-6),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      sortable: false,
+      render: (service: IAdminService) => (
+        <div className="users-action-buttons">
+          <Tooltip text="Edit">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e?: React.MouseEvent) => {
+                e?.stopPropagation();
+                navigate(`/services/${service.id}/edit`);
+              }}
+              icon={Pencil}
+            />
+          </Tooltip>
+          <Tooltip text="Delete">
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={(e?: React.MouseEvent) => {
+                e?.stopPropagation();
+                setDeleteModal({ isOpen: true, service });
+              }}
+              icon={Trash2}
+            />
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <Breadcrumbs />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: s.xl }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="users-page"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="users-page__hero"
+      >
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: c.text, margin: 0 }}>Services</h1>
-          <p style={{ color: c.text, opacity: 0.6, margin: `${s.xs} 0 0` }}>{total} services found</p>
+          <h1 className="users-page__title">Services</h1>
+          <p className="users-page__subtitle">
+            View and manage dealer service offerings, sections, and pricing from a centralized dashboard.
+          </p>
         </div>
-        <Button variant="primary" onClick={() => navigate('/services/new')}>+ Add Service</Button>
+        <div className="users-page__stats">
+          <motion.div
+            className="users-page__stat-card"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ duration: 0.2 }}
+          >
+            <span>Total Services</span>
+            <strong>{totalItems}</strong>
+            <small>All matching filters</small>
+          </motion.div>
+          <motion.div
+            className="users-page__stat-card users-page__stat-card--active"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ duration: 0.2 }}
+          >
+            <span>Active</span>
+            <strong>{statusSummary.active}</strong>
+            <small>On this page</small>
+          </motion.div>
+          <motion.div
+            className="users-page__stat-card users-page__stat-card--warning"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ duration: 0.2 }}
+          >
+            <span>Home Service</span>
+            <strong>{statusSummary.homeService}</strong>
+            <small>On this page</small>
+          </motion.div>
+          <motion.div
+            className="users-page__stat-card users-page__stat-card--inactive"
+            whileHover={{ scale: 1.02, y: -2 }}
+            transition={{ duration: 0.2 }}
+          >
+            <span>Inactive</span>
+            <strong>{statusSummary.inactive}</strong>
+            <small>On this page</small>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      <div className="users-page__breadcrumbs">
+        <Breadcrumbs />
       </div>
 
-      {/* Filters */}
-      <Card>
-        <div style={{ display: 'flex', gap: s.md, flexWrap: 'wrap' }}>
-          <input
-            placeholder="Search services..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-            style={{
-              flex: 1, minWidth: 200, padding: s.sm,
-              border: `1px solid ${c.border}`, borderRadius: theme.borderRadius.md,
-              backgroundColor: c.surface, color: c.text, fontSize: '1rem',
-            }}
-          />
-          <select
-            value={filterType}
-            onChange={e => { setFilterType(e.target.value); setPage(1); }}
-            style={{
-              padding: s.sm, border: `1px solid ${c.border}`,
-              borderRadius: theme.borderRadius.md, backgroundColor: c.surface,
-              color: c.text, fontSize: '1rem', minWidth: 180,
-            }}
-          >
-            <option value="">All Sections</option>
-            {Object.entries(SERVICE_TYPE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
-            ))}
-          </select>
-          <Button variant="secondary" onClick={() => { setSearch(''); setFilterType(''); setPage(1); }}>
-            Clear
-          </Button>
+      <Card className="users-card">
+        <div className="users-toolbar">
+          <div className="users-toolbar__row users-toolbar__row--main">
+            <div className="users-toolbar__field users-toolbar__field--search">
+              <div className="users-toolbar__input-wrapper">
+                <Input
+                  placeholder="Search services"
+                  value={searchInputValue}
+                  onChange={handleSearchChange}
+                  icon={Search}
+                />
+              </div>
+            </div>
+            <div className="users-toolbar__field users-toolbar__field--filter">
+              <div className="users-toolbar__select">
+                <Select
+                  value={sectionFilter}
+                  onChange={(value) => {
+                    setSectionFilter(value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="All Sections"
+                  options={[
+                    { value: 'all', label: 'All Sections' },
+                    ...Object.entries(SERVICE_TYPE_LABELS).map(([value, label]) => ({
+                      value,
+                      label,
+                    })),
+                  ]}
+                />
+              </div>
+            </div>
+            <div className="users-toolbar__spacer" />
+            <div className="users-toolbar__actions">
+              {selectedServiceIds.length > 0 && (
+                <div className="users-toolbar__button">
+                  <Button
+                    variant="danger"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    icon={Trash2}
+                  >
+                    Delete Selected ({selectedServiceIds.length})
+                  </Button>
+                </div>
+              )}
+              <div className="users-toolbar__button">
+                <Button onClick={() => navigate('/services/new')} icon={UserPlus}>
+                  Add Service
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="users-toolbar__row users-toolbar__row--chips">
+            <div className="users-toolbar__chips">
+              {activeFilters.length ? (
+                activeFilters.map((filter) => (
+                  <button
+                    key={filter.key}
+                    className="users-filter-chip"
+                    type="button"
+                    onClick={() => handleClearFilter(filter.key)}
+                  >
+                    <span>{filter.label}</span>
+                    <span aria-hidden="true">×</span>
+                  </button>
+                ))
+              ) : (
+                <span className="users-toolbar__chips-placeholder">
+                  <Lightbulb size={14} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} />
+                  Tip: Combine search + section filters for precise segments.
+                </span>
+              )}
+            </div>
+            {activeFilters.length > 0 && (
+              <div className="users-toolbar__chips-actions">
+                <button type="button" onClick={handleClearAllFilters}>
+                  Clear all
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="users-table-wrapper">
+          {loading ? (
+            <SkeletonTable rows={5} columns={columns.length} />
+          ) : isEmptyState ? (
+            <div className="users-empty-state">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="users-empty-state__illustration"
+              >
+                <Wrench size={48} strokeWidth={1.5} style={{ opacity: 0.35 }} />
+              </motion.div>
+              <h3>No services found</h3>
+              <p>It looks a little quiet here. Adjust filters or add a new service to get things moving.</p>
+              <div className="users-empty-state__tip">
+                <Lightbulb size={16} />
+                <span>Tip: Combine search + section filters for precise segments.</span>
+              </div>
+              <div className="users-empty-state__actions">
+                <div className="users-empty-state__cta users-empty-state__cta--ghost">
+                  <Button variant="outline" onClick={handleClearAllFilters}>
+                    Reset filters
+                  </Button>
+                </div>
+                <div className="users-empty-state__cta">
+                  <Button onClick={() => navigate('/services/new')} icon={UserPlus}>
+                    Add your first service
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="users-table">
+                <Table
+                  columns={columns}
+                  data={services}
+                  onRowClick={(service) => navigate(`/services/${service.id}/edit`)}
+                  selectable
+                  selectedIds={selectedServiceIds}
+                  onSelectedIdsChange={setSelectedServiceIds}
+                />
+              </div>
+              {totalItems > 0 && (
+                <div className="users-pagination">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={() => {}}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       </Card>
 
-      <div style={{ marginTop: s.lg }}>
-        {loading ? (
-          <><SkeletonCard /><SkeletonCard /></>
-        ) : services.length === 0 ? (
-          <Card>
-            <div style={{ textAlign: 'center', padding: s.xl, color: c.text, opacity: 0.5 }}>
-              No services found. <span style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/services/new')}>Add one?</span>
-            </div>
-          </Card>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: c.surface }}>
-                  {['Name', 'Section', 'Subcategory', 'Package', 'Vehicle', 'Price', 'Home Svc', 'Active', 'Dealer', 'Actions'].map(h => (
-                    <th key={h} style={{ padding: `${s.sm} ${s.md}`, textAlign: 'left', color: c.text, fontWeight: 600, borderBottom: `1px solid ${c.border}`, whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {services.map((svc, idx) => (
-                  <tr key={svc.id} style={{ backgroundColor: idx % 2 === 0 ? 'transparent' : c.surface + '40' }}>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text, fontWeight: 500 }}>{svc.name}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text }}>
-                      <span style={{ backgroundColor: '#0d8320' + '20', color: '#0d8320', padding: '2px 8px', borderRadius: 12, fontSize: '0.8rem' }}>
-                        {svc.serviceType ? SERVICE_TYPE_LABELS[svc.serviceType] || svc.serviceType : '—'}
-                      </span>
-                    </td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text, opacity: 0.8, fontSize: '0.9rem' }}>{svc.serviceSubCategory || '—'}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text, opacity: 0.8, fontSize: '0.9rem' }}>{svc.servicePackage || '—'}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text, opacity: 0.8, fontSize: '0.9rem' }}>{svc.vehicleType || '—'}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text }}>₹{svc.price.toLocaleString()}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}` }}>
-                      <span style={{ color: svc.homeService ? '#22c55e' : '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>{svc.homeService ? '✓ Yes' : '✗ No'}</span>
-                    </td>
-                    <td style={{ padding: `${s.sm} ${s.md}` }}>
-                      <span style={{ color: svc.isActive ? '#22c55e' : '#ef4444', fontWeight: 600, fontSize: '0.85rem' }}>{svc.isActive ? '✓' : '✗'}</span>
-                    </td>
-                    <td style={{ padding: `${s.sm} ${s.md}`, color: c.text, opacity: 0.7, fontSize: '0.85rem' }}>{svc.dealer?.businessName || svc.dealerId.slice(-6)}</td>
-                    <td style={{ padding: `${s.sm} ${s.md}` }}>
-                      <div style={{ display: 'flex', gap: s.xs }}>
-                        <button
-                          onClick={() => navigate(`/services/${svc.id}/edit`)}
-                          style={{ padding: '4px 10px', backgroundColor: c.primary + '20', color: c.primary, border: `1px solid ${c.primary}40`, borderRadius: 6, cursor: 'pointer', fontSize: '0.8rem' }}
-                        >Edit</button>
-                        <button
-                          onClick={() => handleDelete(svc.id)}
-                          disabled={deletingId === svc.id}
-                          style={{ padding: '4px 10px', backgroundColor: '#ef4444' + '20', color: '#ef4444', border: '1px solid #ef444440', borderRadius: 6, cursor: 'pointer', fontSize: '0.8rem' }}
-                        >{deletingId === svc.id ? '...' : 'Del'}</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => !submitting && setDeleteModal({ isOpen: false, service: null })}
+        onConfirm={handleDelete}
+        title="Delete Service"
+        message={`Are you sure you want to delete "${deleteModal.service?.name}"? This action cannot be undone.`}
+        confirmText={submitting ? 'Deleting...' : 'Delete'}
+        type="danger"
+        disabled={submitting}
+      />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: s.sm, marginTop: s.lg }}>
-          <Button variant="secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
-          <span style={{ padding: `${s.sm} ${s.md}`, color: c.text }}>Page {page} / {totalPages}</span>
-          <Button variant="secondary" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-        </div>
-      )}
-    </div>
+      <ConfirmModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => !submitting && setBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Delete Selected Services"
+        message={`Are you sure you want to delete ${selectedServiceIds.length} selected service${selectedServiceIds.length === 1 ? '' : 's'}? This action cannot be undone.`}
+        confirmText={submitting ? 'Deleting...' : 'Delete All'}
+        type="danger"
+        disabled={submitting}
+      />
+    </motion.div>
   );
 };
