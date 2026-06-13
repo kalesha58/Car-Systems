@@ -1,4 +1,4 @@
-import { Fonts } from "@utils/Constants";
+import { Fonts, fontStyle } from "@utils/Constants";
 import { FC } from "react";
 import { StyleSheet, Text, TextStyle, StyleProp } from "react-native";
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -72,9 +72,7 @@ const CustomText:FC<Props> = ({
             break;
     }
 
-    const fontFamilyStyle = {
-        fontFamily
-    }
+    const fontFamilyStyle = fontStyle(fontFamily);
 
 
   return (

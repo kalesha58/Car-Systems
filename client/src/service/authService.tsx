@@ -141,9 +141,7 @@ export const customerSignup = async (
     }
     
     const response = await axios.post(`${BASE_URL}/auth/signup`, requestBody);
-    const { Response } = response.data;
-    const { setUser } = useAuthStore.getState();
-    setUser(Response);
+    return response.data.Response;
   } catch (error) {
     throw error;
   }

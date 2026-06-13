@@ -15,7 +15,7 @@ import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { createTestDrive } from '@service/testDriveService';
@@ -152,7 +152,7 @@ const TestDriveBookingScreen: React.FC = () => {
         },
         vehicleTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           marginBottom: 8,
         },
@@ -172,13 +172,13 @@ const TestDriveBookingScreen: React.FC = () => {
         },
         detailText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
           marginLeft: 6,
         },
         price: {
           fontSize: RFValue(18),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.secondary,
         },
         section: {
@@ -195,7 +195,7 @@ const TestDriveBookingScreen: React.FC = () => {
         },
         sectionTitle: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
           marginBottom: 12,
         },
@@ -211,7 +211,7 @@ const TestDriveBookingScreen: React.FC = () => {
         },
         dateButtonText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.text,
         },
         dateButtonPlaceholder: {
@@ -223,7 +223,7 @@ const TestDriveBookingScreen: React.FC = () => {
           padding: 12,
           minHeight: 100,
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1.5,
           borderColor: colors.border,

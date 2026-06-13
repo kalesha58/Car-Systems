@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { navigate } from '@utils/NavigationUtils';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
@@ -241,7 +241,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         storeTypeText: {
           color: colors.secondary,
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           fontSize: RFValue(10),
         },
         statusBadge: {
@@ -250,14 +250,14 @@ const DealerStoreScreen: React.FC = () => {
           borderRadius: 6,
         },
         statusText: {
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           fontSize: RFValue(10),
           color: '#fff',
         },
         businessName: {
           color: colors.text,
           fontSize: RFValue(18),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           marginBottom: 6,
         },
         addressRow: {
@@ -269,7 +269,7 @@ const DealerStoreScreen: React.FC = () => {
         addressText: {
           color: colors.textSecondary,
           fontSize: RFValue(11),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           flex: 1,
         },
         searchContainer: {
@@ -291,7 +291,7 @@ const DealerStoreScreen: React.FC = () => {
         searchInput: {
           flex: 1,
           color: colors.text,
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           fontSize: RFValue(13),
         },
         tabsContainer: {
@@ -308,7 +308,7 @@ const DealerStoreScreen: React.FC = () => {
           position: 'relative',
         },
         tabText: {
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           fontSize: RFValue(13),
         },
         activeIndicator: {
@@ -344,14 +344,14 @@ const DealerStoreScreen: React.FC = () => {
         },
         productBrand: {
           fontSize: RFValue(9),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
           textTransform: 'uppercase',
           marginBottom: 2,
         },
         productName: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           height: 36,
         },
@@ -363,7 +363,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         productPrice: {
           fontSize: RFValue(13),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
         },
         addToCartBtn: {
@@ -397,14 +397,14 @@ const DealerStoreScreen: React.FC = () => {
         },
         vehicleModel: {
           fontSize: RFValue(15),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           flex: 1,
           marginRight: 8,
         },
         vehicleYear: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
           marginTop: 2,
         },
@@ -425,7 +425,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         specText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
         },
         vehicleFooter: {
@@ -439,7 +439,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         vehiclePrice: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
         },
         vehicleConditionTag: {
@@ -469,7 +469,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         serviceName: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           marginBottom: 4,
         },
@@ -481,7 +481,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         serviceDetailText: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
         },
         serviceFooter: {
@@ -492,7 +492,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         servicePrice: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.secondary,
         },
         viewServiceBtn: {
@@ -503,7 +503,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         viewServiceText: {
           color: '#fff',
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           fontSize: RFValue(11),
         },
         emptyContainer: {
@@ -514,14 +514,14 @@ const DealerStoreScreen: React.FC = () => {
         },
         emptyTitle: {
           fontSize: RFValue(15),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           marginTop: 12,
           marginBottom: 6,
         },
         emptyText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           textAlign: 'center',
           lineHeight: 18,
@@ -794,7 +794,7 @@ const DealerStoreScreen: React.FC = () => {
                         <CustomText
                           style={{
                             fontSize: RFValue(11),
-                            fontFamily: Fonts.Bold,
+                            ...fontStyle(Fonts.Bold),
                             color:
                               item.availability === 'available'
                                 ? '#10b981'

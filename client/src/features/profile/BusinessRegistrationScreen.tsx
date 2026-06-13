@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { screenHeight, screenWidth } from '@utils/Scaling';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
@@ -1049,7 +1049,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     label: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
       marginBottom: screenHeight * 0.008,
       opacity: 0.8,
@@ -1072,7 +1072,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     textInput: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
     },
     textInputMultiline: {
@@ -1096,7 +1096,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     dropdownButtonText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       flex: 1,
     },
@@ -1113,7 +1113,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     buttonText: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
       marginLeft: screenWidth * 0.02,
     },
@@ -1152,7 +1152,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     submitButtonText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#fff',
     },
     locationButton: {
@@ -1168,7 +1168,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     locationButtonText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     removeLocationIcon: {
@@ -1188,7 +1188,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     locationInfoText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       flex: 1,
       opacity: 0.8,
@@ -1243,25 +1243,25 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     docTitle: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     docSub: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       opacity: 0.7,
     },
     helperText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       marginTop: 4,
       marginLeft: 4
     },
     errorText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.error || '#ef4444',
       marginTop: screenHeight * 0.006,
       marginLeft: screenWidth * 0.01,
@@ -1278,13 +1278,13 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     noticeTitle: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: screenHeight * 0.006,
     },
     noticeText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       lineHeight: RFValue(12),
     },
@@ -1305,7 +1305,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     editableBadgeText: {
       fontSize: RFValue(7),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: Colors.secondary,
     },
     nonEditableBadge: {
@@ -1319,7 +1319,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     },
     nonEditableBadgeText: {
       fontSize: RFValue(7),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
     },
   });

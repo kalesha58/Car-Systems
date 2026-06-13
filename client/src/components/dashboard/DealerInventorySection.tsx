@@ -1,7 +1,7 @@
 import { View, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import React, { FC, useMemo } from 'react';
 import CustomText from '@components/ui/CustomText';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
@@ -142,7 +142,7 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
     },
     productName: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 4,
     },
@@ -154,12 +154,12 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
     },
     price: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: (colors as any).winterBlueDark || colors.secondary,
     },
     discountPrice: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       textDecorationLine: 'line-through',
     },
@@ -175,7 +175,7 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
     },
     discountText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.white,
     },
     trainContainer: {
@@ -206,7 +206,7 @@ const DealerInventorySection: FC<DealerInventorySectionProps> = ({ products, veh
   return (
     <View style={[styles.container, { backgroundColor: colors.cardBackground, borderRadius: 12 }]}>
       {/* Overlay animation (train, sleigh, etc.) above All Inventory - if available */}
-      {seasonalTheme.animations.overlay && (
+      {seasonalTheme.showOverlayOnDealerDashboard && seasonalTheme.animations.overlay && (
         <View style={styles.trainContainer}>
           <LottieView
             autoPlay

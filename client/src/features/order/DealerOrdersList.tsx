@@ -13,7 +13,7 @@ import {getDealerOrders} from '@service/dealerService';
 import {IOrderData} from '../../types/order/IOrder';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {formatISOToCustom} from '@utils/DateUtils';
 import {navigate} from '@utils/NavigationUtils';
 import {useTheme} from '@hooks/useTheme';
@@ -513,7 +513,7 @@ const DealerOrdersList: React.FC = () => {
     badgeText: {
       color: '#fff',
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
   });
 

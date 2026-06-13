@@ -18,7 +18,7 @@ import {launchImageLibrary, ImagePickerResponse} from 'react-native-image-picker
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import { Fonts, headerTopInset, MIN_TOUCH_TARGET } from '@utils/Constants';
+import { Fonts, headerTopInset, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {uploadImagesBatch, createPost, updatePost, getPostById} from '@service/postService';
@@ -140,7 +140,7 @@ const CreateNewPost: React.FC = () => {
     headerCenterTitle: {
       fontSize: RFValue(12),
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     postButton: {
       minWidth: 60,
@@ -161,7 +161,7 @@ const CreateNewPost: React.FC = () => {
     },
     postButtonText: {
       color: colors.secondary,
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       fontSize: RFValue(10),
     },
     postButtonTextDisabled: {
@@ -193,17 +193,17 @@ const CreateNewPost: React.FC = () => {
     avatarText: {
       color: colors.text,
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     userName: {
       marginLeft: 10,
       fontSize: RFValue(10),
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     textInput: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       textAlignVertical: 'top',
       lineHeight: RFValue(18),
@@ -212,7 +212,7 @@ const CreateNewPost: React.FC = () => {
     },
     characterCount: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       marginTop: 10,
       textAlign: 'right',
@@ -263,7 +263,7 @@ const CreateNewPost: React.FC = () => {
       marginLeft: 8,
       color: colors.text,
       fontSize: RFValue(9),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     bottomTray: {
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -284,7 +284,7 @@ const CreateNewPost: React.FC = () => {
     trayHeader: {
       fontSize: RFValue(10),
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       marginBottom: 10,
     },
     tileGrid: {
@@ -309,7 +309,7 @@ const CreateNewPost: React.FC = () => {
     tileTitle: {
       fontSize: RFValue(9),
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     compactTray: {
       flexDirection: 'row',

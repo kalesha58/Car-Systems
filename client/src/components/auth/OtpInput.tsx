@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, FC, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { OTP_LENGTH as DEFAULT_OTP_LENGTH } from '@config/otpAuthConfig';
 
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   box: {
     height: RFValue(54),
     borderRadius: 12,
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
     fontSize: RFValue(22),
   },
 });

@@ -5,7 +5,7 @@ import {PermissionsAndroid} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Colors, Fonts} from '@utils/Constants';
+import { Colors, Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {goBack, navigate} from '@utils/NavigationUtils';
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: RFValue(12),
     color: Colors.text,
-    fontFamily: Fonts.Regular,
+    ...fontStyle(Fonts.Regular),
   },
   mapContainer: {
     height: 400,

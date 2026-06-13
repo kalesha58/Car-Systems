@@ -1,3 +1,6 @@
+/** Set to true when MSG91 phone OTP is ready for production */
+export const PHONE_OTP_AUTH_ENABLED = false;
+
 /** Fallbacks when send-otp response omits fields — mirror server/.env.example defaults */
 export const OTP_RESEND_COOLDOWN_SECONDS = 30;
 export const OTP_EXPIRY_SECONDS = 5 * 60;

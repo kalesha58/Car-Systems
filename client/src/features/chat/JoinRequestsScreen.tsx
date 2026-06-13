@@ -11,7 +11,7 @@ import {
 import {useRoute, useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -142,18 +142,18 @@ const JoinRequestsScreen: React.FC = () => {
         },
         userName: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 4,
         },
         userEmail: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
           marginBottom: 4,
         },
         requestTime: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
         },
         actionsContainer: {
@@ -175,7 +175,7 @@ const JoinRequestsScreen: React.FC = () => {
         },
         actionButtonText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         approveButtonText: {
           color: colors.white,
@@ -191,7 +191,7 @@ const JoinRequestsScreen: React.FC = () => {
         },
         emptyText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
           textAlign: 'center',
         },

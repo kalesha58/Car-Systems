@@ -11,7 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
@@ -182,12 +182,12 @@ const ChatScreen: React.FC = () => {
         },
         tabText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
         },
         activeTabText: {
           color: colors.secondary,
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         listContent: {
           paddingBottom: 20,
@@ -233,13 +233,13 @@ const ChatScreen: React.FC = () => {
         },
         chatName: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
           marginBottom: 2,
         },
         lastMessage: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
         },
         timeContainer: {
@@ -248,7 +248,7 @@ const ChatScreen: React.FC = () => {
         },
         timeText: {
           fontSize: RFValue(9),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           marginBottom: 4,
         },
@@ -264,7 +264,7 @@ const ChatScreen: React.FC = () => {
         unreadText: {
           color: colors.white,
           fontSize: RFValue(8),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         followButton: {
           paddingHorizontal: 12,
@@ -277,7 +277,7 @@ const ChatScreen: React.FC = () => {
         followButtonText: {
           color: colors.white,
           fontSize: RFValue(10),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         requestedButton: {
           paddingHorizontal: 10,
@@ -290,7 +290,7 @@ const ChatScreen: React.FC = () => {
         requestedButtonText: {
           color: colors.textSecondary,
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
         },
         emptyContainer: {
           flex: 1,
@@ -300,7 +300,7 @@ const ChatScreen: React.FC = () => {
         },
         emptyText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           textAlign: 'center',
           lineHeight: RFValue(18),
@@ -326,7 +326,7 @@ const ChatScreen: React.FC = () => {
         notificationBadgeText: {
           color: colors.white,
           fontSize: RFValue(8),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
         },
       }),
     [colors],

@@ -29,7 +29,7 @@ import type {IProduct} from '../../types/product/IProduct';
 import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import type {IService} from '../../types/service/IService';
 import type {ICategoryItem, CategoryType} from '../../types/category/ICategoryItem';
-import {Fonts, Colors} from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
 import {useRecentSearchesStore} from '@state/recentSearchesStore';
@@ -1061,7 +1061,7 @@ const ProductCategories = () => {
     searchInput: {
       flex: 1,
       fontSize: RFValue(13),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
       marginLeft: 8,
     },

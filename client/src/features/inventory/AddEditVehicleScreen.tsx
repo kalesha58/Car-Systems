@@ -18,7 +18,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenHeight, screenWidth} from '@utils/Scaling';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomDropdownBottomSheet, {IDropdownOption} from '@components/ui/CustomDropdownBottomSheet';
@@ -523,7 +523,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     sectionHeader: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: screenHeight * 0.014,
       letterSpacing: 0.3,
@@ -546,7 +546,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     label: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       marginBottom: screenHeight * 0.008,
       letterSpacing: 0.2,
@@ -570,7 +570,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     textInput: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       paddingVertical: 0,
     },
@@ -581,7 +581,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     dropdownButtonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       flex: 1,
       marginRight: screenWidth * 0.02,
@@ -597,7 +597,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     switchLabel: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
       flex: 1,
       marginRight: screenWidth * 0.02,
@@ -615,7 +615,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     buttonText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.winterBlueDark,
       marginLeft: screenWidth * 0.025,
     },
@@ -680,7 +680,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     submitButtonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#fff',
     },
     deleteButton: {
@@ -697,7 +697,7 @@ const AddEditVehicleScreen: React.FC = () => {
     },
     deleteButtonText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#fff',
     },
     primaryGradient: {

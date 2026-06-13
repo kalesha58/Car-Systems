@@ -11,7 +11,7 @@ import CustomButton from '@components/ui/CustomButton';
 import CustomHeader from '@components/ui/CustomHeader';
 import ThemedModal from '@components/ui/ThemedModal';
 import OtpInput from '@components/auth/OtpInput';
-import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import { goBack, navigate, replace } from '@utils/NavigationUtils';
 import {
   customerSignup,
@@ -303,7 +303,7 @@ const OtpVerifyScreen: FC = () => {
             style={{
               color:
                 resendSeconds > 0 || locked ? colors.textSecondary : colors.primary,
-              fontFamily: Fonts.SemiBold,
+              ...fontStyle(Fonts.SemiBold),
             }}>
             {resendSeconds > 0
               ? t('auth.phoneOtp.resendIn', { time: formatTimer(resendSeconds) })

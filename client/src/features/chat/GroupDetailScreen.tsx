@@ -14,7 +14,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {useAuthStore} from '@state/authStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -183,25 +183,25 @@ const GroupDetailScreen: React.FC = () => {
         },
         planTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 12,
           color: colors.text,
         },
         planText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           marginBottom: 8,
         },
         planDetail: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
           marginTop: 4,
         },
         sectionTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 12,
           marginTop: 8,
           color: colors.text,
@@ -212,7 +212,7 @@ const GroupDetailScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1,
           borderColor: colors.border,
@@ -245,13 +245,13 @@ const GroupDetailScreen: React.FC = () => {
         },
         memberName: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 4,
           color: colors.text,
         },
         memberRole: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
         },
         liveLocationBadge: {
@@ -265,7 +265,7 @@ const GroupDetailScreen: React.FC = () => {
         },
         liveLocationText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.secondary,
           marginLeft: 4,
         },
@@ -280,7 +280,7 @@ const GroupDetailScreen: React.FC = () => {
         addButtonText: {
           color: colors.white,
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         userItem: {
           flexDirection: 'row',

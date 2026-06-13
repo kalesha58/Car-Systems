@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
@@ -76,12 +76,12 @@ const CustomerEnquiriesCard: FC<CustomerEnquiriesCardProps> = ({ limit = 2 }) =>
     },
     title: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
     },
     count: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.primary,
     },
     viewAllButton: {
@@ -90,7 +90,7 @@ const CustomerEnquiriesCard: FC<CustomerEnquiriesCardProps> = ({ limit = 2 }) =>
     },
     viewAllText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: theme.secondary,
     },
     enquiryItem: {
@@ -109,18 +109,18 @@ const CustomerEnquiriesCard: FC<CustomerEnquiriesCardProps> = ({ limit = 2 }) =>
     },
     enquiryName: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
       flex: 1,
     },
     enquiryTime: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     enquiryMessage: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginTop: 4,
     },
@@ -130,7 +130,7 @@ const CustomerEnquiriesCard: FC<CustomerEnquiriesCardProps> = ({ limit = 2 }) =>
     },
     emptyText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     loadingContainer: {

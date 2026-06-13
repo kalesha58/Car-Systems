@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
 import React, { FC } from 'react';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { navigate } from '@utils/NavigationUtils';
@@ -167,7 +167,7 @@ const CategoryButtons: FC = () => {
     },
     label: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       textAlign: 'center',
     },
   });

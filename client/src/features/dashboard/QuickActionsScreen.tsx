@@ -17,7 +17,7 @@ import { getDealerTestDrives } from '@service/testDriveService';
 import { getDealerPreBookings } from '@service/preBookingService';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { screenWidth } from '@utils/Scaling';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -212,7 +212,7 @@ const QuickActionsScreen: React.FC = () => {
     },
     tabText: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.textSecondary,
     },
     pager: {
@@ -242,7 +242,7 @@ const QuickActionsScreen: React.FC = () => {
     },
     statusText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#FFFFFF',
     },
     vehicleInfo: {

@@ -2,7 +2,7 @@ import React, { FC, useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
@@ -100,12 +100,12 @@ const WorkshopTasksCard: FC<WorkshopTasksCardProps> = ({ limit = 3 }) => {
     },
     title: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
     },
     subtitle: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginBottom: 12,
     },
@@ -128,13 +128,13 @@ const WorkshopTasksCard: FC<WorkshopTasksCardProps> = ({ limit = 3 }) => {
     },
     taskTitle: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
       marginBottom: 4,
     },
     taskDetails: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginBottom: 2,
     },
@@ -146,7 +146,7 @@ const WorkshopTasksCard: FC<WorkshopTasksCardProps> = ({ limit = 3 }) => {
     },
     priorityText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     viewAllButton: {
       marginTop: 12,
@@ -158,7 +158,7 @@ const WorkshopTasksCard: FC<WorkshopTasksCardProps> = ({ limit = 3 }) => {
     },
     viewAllButtonText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.white || '#FFFFFF',
     },
     emptyState: {
@@ -167,7 +167,7 @@ const WorkshopTasksCard: FC<WorkshopTasksCardProps> = ({ limit = 3 }) => {
     },
     emptyText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     loadingContainer: {

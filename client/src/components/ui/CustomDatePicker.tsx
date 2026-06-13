@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -174,11 +174,11 @@ const CustomDatePicker: React.FC<ICustomDatePickerProps> = ({
         },
         dayText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
         },
         dayTextSelected: {
           color: '#fff',
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         dayTextDisabled: {
           color: colors.textSecondary,

@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import React, {FC} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {IUserVehicle} from '../../../types/vehicle/IVehicle';
@@ -80,7 +80,7 @@ const VehicleGrid: FC<VehicleGridProps> = ({
     },
     vehicleText: {
       fontSize: RFValue(8.5),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: '#fff',
       flex: 1,
     },
@@ -93,14 +93,14 @@ const VehicleGrid: FC<VehicleGridProps> = ({
     },
     emptyTitle: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 8,
       textAlign: 'center',
     },
     emptyText: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       textAlign: 'center',
     },

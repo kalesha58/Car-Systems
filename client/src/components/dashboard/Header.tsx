@@ -12,6 +12,7 @@ import { getSavedAddresses } from '@service/addressService';
 import type { IAddress } from '../../types/address/IAddress';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@hooks/useTheme';
+import { useVisualEffectsStore } from '@state/visualEffectsStore';
 
 interface HeaderProps {
   showNotice: () => void;
@@ -25,6 +26,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
   const [savedAddress, setSavedAddress] = useState<IAddress | null>(null);
   const [isLoadingAddress, setIsLoadingAddress] = useState<boolean>(false);
   const { colors } = useTheme();
+  const rainNoticeEnabled = useVisualEffectsStore(state => state.config.rainNotice.enabled);
 
   const styles = StyleSheet.create({
     text: {
@@ -117,6 +119,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
             <CustomText fontFamily={Fonts.SemiBold} variant="h4" style={styles.text} numberOfLines={1}>
               {title}
             </CustomText>
+            {rainNoticeEnabled && (
             <TouchableOpacity style={[styles.noticeBtn, { backgroundColor: colors.backgroundSecondary }]} onPress={showNotice}>
               <CustomText
                 fontSize={RFValue(5)}
@@ -125,6 +128,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
                 ⛈️ Rain
               </CustomText>
             </TouchableOpacity>
+            )}
           </View>
         ) : (
           <>
@@ -138,6 +142,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
                 style={styles.text}>
                 15 {t('dashboard.minutes')}
               </CustomText>
+              {rainNoticeEnabled && (
               <TouchableOpacity style={[styles.noticeBtn, { backgroundColor: colors.backgroundSecondary }]} onPress={showNotice}>
                 <CustomText
                   fontSize={RFValue(5)}
@@ -146,6 +151,7 @@ const Header: FC<HeaderProps> = ({ showNotice, title, subtitle }) => {
                   ⛈️ Rain
                 </CustomText>
               </TouchableOpacity>
+              )}
             </View>
           </>
         )}

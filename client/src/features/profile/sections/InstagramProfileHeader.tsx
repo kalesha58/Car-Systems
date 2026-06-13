@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import React, { FC } from 'react';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { useAuthStore } from '@state/authStore';
 import { useTranslation } from 'react-i18next';
@@ -101,18 +101,18 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     },
     statNumber: {
       fontSize: RFValue(17),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.text,
     },
     statLabel: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       marginTop: 2,
     },
     userName: {
       fontSize: RFValue(17),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.text,
       marginBottom: 6,
     },
@@ -124,7 +124,7 @@ const InstagramProfileHeader: FC<InstagramProfileHeaderProps> = ({
     },
     bioText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
     },
   });

@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, Animated as RNAnimated } from 'react-native'
+import { View, StyleSheet, Animated as RNAnimated } from 'react-native'
 import React, { FC } from 'react'
-import { NoticeHeight } from '@utils/Scaling';
+import { NoticeHeight } from '@utils/Scaling'
 import Notice from '@components/dashboard/Notice';
 import { useTheme } from '@hooks/useTheme';
+import { useVisualEffectsStore } from '@state/visualEffectsStore';
 
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12)
@@ -11,17 +12,22 @@ const NOTICE_HEIGHT = -(NoticeHeight + 12)
 const NoticeAnimation: FC<{ noticePosition: any; children: React.ReactElement }>
     = ({ noticePosition, children }) => {
         const { colors } = useTheme();
+        const rainNoticeEnabled = useVisualEffectsStore(state => state.config.rainNotice.enabled);
         
         return (
             <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <RNAnimated.View style={[styles.noticeContainer, { transform: [{ translateY: noticePosition }] }]}>
-                    <Notice />
-                </RNAnimated.View>
+                {rainNoticeEnabled && (
+                  <RNAnimated.View style={[styles.noticeContainer, { transform: [{ translateY: noticePosition }] }]}>
+                      <Notice />
+                  </RNAnimated.View>
+                )}
                 <RNAnimated.View style={[styles.contentContainer, {
-                    paddingTop: noticePosition.interpolate({
-                        inputRange: [NOTICE_HEIGHT, 0],
-                        outputRange: [0, NoticeHeight + 20]
-                    })
+                    paddingTop: rainNoticeEnabled
+                      ? noticePosition.interpolate({
+                          inputRange: [NOTICE_HEIGHT, 0],
+                          outputRange: [0, NoticeHeight + 20]
+                        })
+                      : 0
                 }]}>
                     {children}
                 </RNAnimated.View>

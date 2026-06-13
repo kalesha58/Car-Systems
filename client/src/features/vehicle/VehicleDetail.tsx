@@ -13,7 +13,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { getVehicleById } from '@service/vehicleService';
@@ -171,7 +171,7 @@ const VehicleDetail: React.FC = () => {
           borderWidth: 1,
           borderColor: colors.border,
         },
-        categoryText: { color: colors.text, fontSize: RFValue(10), fontFamily: Fonts.Medium },
+        categoryText: { color: colors.text, fontSize: RFValue(10), ...fontStyle(Fonts.Medium) },
         metricsRow: {
           flexDirection: 'row',
           marginTop: 16,
@@ -189,8 +189,8 @@ const VehicleDetail: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
         },
-        metricText: { fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium },
-        metricLabel: { fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular },
+        metricText: { fontSize: RFValue(10), color: colors.text, ...fontStyle(Fonts.Medium) },
+        metricLabel: { fontSize: RFValue(8), color: colors.disabled, ...fontStyle(Fonts.Regular) },
         dealerSection: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -209,7 +209,7 @@ const VehicleDetail: React.FC = () => {
           marginRight: 12,
         },
         dealerInfo: { flex: 1 },
-        dealerName: { fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text },
+        dealerName: { ...fontStyle(Fonts.Bold), fontSize: RFValue(14), color: colors.text },
         dealerRole: { fontSize: RFValue(11), color: colors.disabled, marginTop: 2 },
         dealerActions: {
           flexDirection: 'row',
@@ -223,13 +223,13 @@ const VehicleDetail: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
         },
-        sectionTitle: { marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14) },
+        sectionTitle: { marginTop: 24, marginBottom: 8, ...fontStyle(Fonts.Bold), fontSize: RFValue(14) },
         description: {
           color: colors.text,
           opacity: 0.9,
           lineHeight: RFValue(18),
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
         },
         featuresGrid: {
           flexDirection: 'row',
@@ -253,7 +253,7 @@ const VehicleDetail: React.FC = () => {
         featureLabel: {
           fontSize: RFValue(9),
           color: colors.text,
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           textAlign: 'center',
         },
         bottomBar: {
@@ -270,10 +270,10 @@ const VehicleDetail: React.FC = () => {
           gap: 12,
         },
         priceContainer: { flex: 1 },
-        priceLabel: { fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular },
+        priceLabel: { fontSize: RFValue(11), color: colors.disabled, ...fontStyle(Fonts.Regular) },
         priceValue: {
           fontSize: RFValue(20),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
         },
         actionButtonsContainer: {
@@ -301,7 +301,7 @@ const VehicleDetail: React.FC = () => {
           flexDirection: 'row',
           gap: 6,
         },
-        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium },
+        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), ...fontStyle(Fonts.Medium) },
         detailRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -322,8 +322,8 @@ const VehicleDetail: React.FC = () => {
         detailContent: {
           flex: 1,
         },
-        detailLabel: { color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Regular, marginBottom: 4 },
-        detailValue: { fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text },
+        detailLabel: { color: colors.disabled, fontSize: RFValue(11), ...fontStyle(Fonts.Regular), marginBottom: 4 },
+        detailValue: { fontSize: RFValue(13), ...fontStyle(Fonts.Medium), color: colors.text },
         skeletonImage: {
           width: screenWidth,
           height: screenWidth * 0.8,

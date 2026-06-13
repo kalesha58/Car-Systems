@@ -21,7 +21,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { useAuthStore } from '@state/authStore';
 import { useTranslation } from 'react-i18next';
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   captionText: {
     color: '#fff',
     fontSize: RFValue(12),
-    fontFamily: Fonts.Regular,
+    ...fontStyle(Fonts.Regular),
     marginBottom: 10,
   },
   tagsWrap: {

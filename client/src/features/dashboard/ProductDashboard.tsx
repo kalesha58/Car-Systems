@@ -33,6 +33,7 @@ import StickySearchBar from './StickySearchBar';
 import withCart from '../../features/cart/WithCart';
 import withLiveStatus from '@features/map/withLiveStatus';
 import {useTheme} from '@hooks/useTheme';
+import {useVisualEffectsStore} from '@state/visualEffectsStore';
 
 const NOTICE_HEIGHT = -(NoticeHeight + 12);
 
@@ -43,6 +44,7 @@ const ProductDashboard = () => {
   const {scrollY, expand} = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
   const {colors} = useTheme();
+  const rainNotice = useVisualEffectsStore(state => state.config.rainNotice);
 
   const backToTopStyle = useAnimatedStyle(() => {
     const isScrollingUp =
@@ -75,12 +77,20 @@ const ProductDashboard = () => {
   };
 
   useEffect(() => {
+    if (!rainNotice.enabled || !rainNotice.autoShowOnHomeLoad) {
+      return;
+    }
+
     slideDown();
     const timeoutId = setTimeout(() => {
       slideUp();
-    }, 3500);
+    }, rainNotice.autoHideAfterMs);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [
+    rainNotice.enabled,
+    rainNotice.autoShowOnHomeLoad,
+    rainNotice.autoHideAfterMs,
+  ]);
 
   const styles = StyleSheet.create({
     panelContainer: {
@@ -135,10 +145,13 @@ const ProductDashboard = () => {
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {
+                if (!rainNotice.enabled) {
+                  return;
+                }
                 slideDown();
                 const timeoutId = setTimeout(() => {
                   slideUp();
-                }, 3500);
+                }, rainNotice.autoHideAfterMs);
                 return () => clearTimeout(timeoutId);
               }}
             />

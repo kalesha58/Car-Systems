@@ -24,7 +24,7 @@ import {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import {IService} from '../../types/service/IService';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts, Colors} from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenWidth, screenHeight} from '@utils/Scaling';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -948,7 +948,7 @@ const styles = StyleSheet.create({
   discountText: {
     color: '#fff',
     fontSize: RFValue(9),
-    fontFamily: Fonts.Bold,
+    ...fontStyle(Fonts.Bold),
   },
   metaRow: {
     flexDirection: 'row',
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
   },
   bannerText: {
     fontSize: RFValue(12),
-    fontFamily: Fonts.Medium,
+    ...fontStyle(Fonts.Medium),
     lineHeight: RFValue(16),
   },
   bannerButton: {
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   bannerButtonText: {
     fontSize: RFValue(11),
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
     color: '#fff',
   },
 });

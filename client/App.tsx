@@ -15,12 +15,15 @@ import { useThemeStore } from '@state/themeStore';
 import { useAuthStore } from '@state/authStore';
 import { initializeSocket, joinUserNotificationRoom, onNewNotification } from '@service/socketService';
 import { invalidateNotifications } from '@utils/notificationEvents';
+import { useAppConfigStore } from '@state/appConfigStore';
 
 const App = () => {
   const { initializeTheme, syncWithDeviceTheme } = useThemeStore();
   const { user } = useAuthStore();
+  const fetchAppConfig = useAppConfigStore(state => state.fetchAppConfig);
 
   useEffect(() => {
+    void fetchAppConfig();
     // Initialize theme based on device theme on first load
     initializeTheme();
     
@@ -83,7 +86,7 @@ const App = () => {
       appearanceSubscription.remove();
       appStateSubscription.remove();
     };
-  }, [initializeTheme, syncWithDeviceTheme, user?.userId]);
+  }, [initializeTheme, syncWithDeviceTheme, user?.userId, fetchAppConfig]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>

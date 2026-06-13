@@ -10,7 +10,7 @@ import {
 import React, {FC, useState, useEffect} from 'react';
 import {screenHeight} from '@utils/Scaling';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -394,7 +394,7 @@ const FilterModal: FC<IFilterModalProps> = ({
     },
     categoryTextSelected: {
       color: colors.secondary,
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
     },
     optionItem: {
       paddingVertical: 18,
@@ -459,12 +459,12 @@ const FilterModal: FC<IFilterModalProps> = ({
     clearButtonText: {
       color: colors.text,
       fontSize: RFValue(13),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     applyButtonText: {
       color: '#fff',
       fontSize: RFValue(13),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
     },
   });
 

@@ -15,7 +15,7 @@ import Animated, {
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {screenWidth, screenHeight} from '@utils/Scaling';
 import type {ICategoryItem} from '../../types/category/ICategoryItem';
 import type {SharedValue} from 'react-native-reanimated';
@@ -137,7 +137,7 @@ const CategoryItem: FC<CategoryItemProps> = ({
     },
     countText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
     },
   });
 

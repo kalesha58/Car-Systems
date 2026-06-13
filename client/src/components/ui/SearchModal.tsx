@@ -10,7 +10,7 @@ import {
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from './CustomText';
-import {Fonts, headerTopInset} from '@utils/Constants';
+import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -74,7 +74,7 @@ const SearchModal: FC<SearchModalProps> = ({
     searchInput: {
       flex: 1,
       fontSize: RFValue(14),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
       paddingVertical: 12,
       paddingHorizontal: 8,
@@ -96,7 +96,7 @@ const SearchModal: FC<SearchModalProps> = ({
     },
     headerTitle: {
       fontSize: RFValue(18),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
   });
 

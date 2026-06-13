@@ -1,6 +1,6 @@
 import {View, StyleSheet, TextInput, TouchableOpacity} from 'react-native';
 import React, {FC, useState} from 'react';
-import {Colors, Fonts} from '@utils/Constants';
+import { Colors, Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: RFValue(12),
-    fontFamily: Fonts.Regular,
+    ...fontStyle(Fonts.Regular),
     minHeight: 80,
     marginBottom: 15,
   },

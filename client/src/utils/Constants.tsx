@@ -22,13 +22,7 @@ export enum Colors {
     backgroundSecondary = '#f5f6fb'
 }
 
-export enum Fonts {
-    Regular = 'Gilroy-Regular',
-    Medium = 'Gilroy-Medium',
-    Light = 'Gilroy-Light',
-    SemiBold = 'Gilroy-Medium',
-    Bold = 'Gilroy-Bold',
-}
+export { Fonts, fontStyle, UI_FONT_FAMILY } from './typography';
 
 /** Minimum tap area (pt) for primary header / nav controls — iPad & accessibility friendly */
 export const MIN_TOUCH_TARGET = 44;

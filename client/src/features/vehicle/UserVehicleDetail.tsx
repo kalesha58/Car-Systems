@@ -17,7 +17,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
 import {getUserVehicleById, updateUserVehicle} from '@service/vehicleService';
@@ -96,13 +96,13 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     },
     documentLabel: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 2,
     },
     documentStatus: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: hasDocument ? colors.secondary : colors.disabled,
     },
     actionButtons: {
@@ -125,7 +125,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     },
     buttonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.secondary,
     },
     uploadButtonText: {
@@ -384,7 +384,7 @@ const UserVehicleDetail: React.FC = () => {
         sectionTitle: {
           marginTop: 28,
           marginBottom: 16,
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           fontSize: RFValue(15),
           color: colors.text,
           textTransform: 'uppercase',
@@ -397,10 +397,10 @@ const UserVehicleDetail: React.FC = () => {
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
         },
-        detailLabel: {color: colors.disabled, fontSize: RFValue(12), fontFamily: Fonts.Medium},
+        detailLabel: {color: colors.disabled, fontSize: RFValue(12), ...fontStyle(Fonts.Medium)},
         detailValue: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
         },
         documentsSection: {

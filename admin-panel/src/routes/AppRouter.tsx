@@ -28,6 +28,7 @@ const ReportsPage = lazy(() => import('@pages/Reports/ReportsPage').then(module 
 const CategoriesPage = lazy(() => import('@pages/Settings/CategoriesPage').then(module => ({ default: module.CategoriesPage })));
 const BatteryTypesPage = lazy(() => import('@pages/Settings/BatteryTypesPage').then(module => ({ default: module.BatteryTypesPage })));
 const VehicleBrandsPage = lazy(() => import('@pages/Settings/VehicleBrandsPage').then(module => ({ default: module.VehicleBrandsPage })));
+const AppSettingsPage = lazy(() => import('@pages/Settings/AppSettingsPage').then(module => ({ default: module.AppSettingsPage })));
 const NotFoundPage = lazy(() => import('@pages/NotFound/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
 const ServicesListPage = lazy(() => import('@pages/Services/ServicesListPage').then(module => ({ default: module.ServicesListPage })));
 const ServiceFormPage = lazy(() => import('@pages/Services/ServiceFormPage').then(module => ({ default: module.ServiceFormPage })));
@@ -282,6 +283,18 @@ export const AppRouter = () => {
                 <VehicleBrandsPage />
               </Suspense>
             }
+          />
+          <Route
+            path="settings/app"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AppSettingsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings/app-effects"
+            element={<Navigate to="/settings/app" replace />}
           />
           {/* Services */}
           <Route

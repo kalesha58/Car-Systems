@@ -1,6 +1,6 @@
 import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
-import { Colors, Fonts } from '@utils/Constants';
+import { Colors, Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   discountText: {
     color: '#fff',
     fontSize: RFValue(8),
-    fontFamily: Fonts.Bold,
+    ...fontStyle(Fonts.Bold),
   },
   productInfo: {
     padding: 8,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: RFValue(8),
     color: '#007185',
-    fontFamily: Fonts.Regular,
+    ...fontStyle(Fonts.Regular),
   },
   priceRow: {
     flexDirection: 'row',

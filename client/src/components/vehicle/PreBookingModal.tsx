@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { createPreBooking } from '@service/preBookingService';
@@ -119,7 +119,7 @@ const PreBookingModal: FC<IPreBookingModalProps> = ({
     },
     label: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 10,
     },
@@ -135,7 +135,7 @@ const PreBookingModal: FC<IPreBookingModalProps> = ({
     },
     dateButtonText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     dateButtonPlaceholder: {
@@ -150,13 +150,13 @@ const PreBookingModal: FC<IPreBookingModalProps> = ({
       backgroundColor: colors.backgroundSecondary,
       color: colors.text,
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       textAlignVertical: 'top',
     },
     disabledText: {
       color: colors.textSecondary,
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       marginTop: 8,
     },
   });

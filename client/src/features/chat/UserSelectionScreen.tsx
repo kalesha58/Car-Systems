@@ -11,7 +11,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -97,7 +97,7 @@ const UserSelectionScreen: React.FC = () => {
           flex: 1,
           paddingVertical: 10,
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           marginLeft: 8,
         },
@@ -134,12 +134,12 @@ const UserSelectionScreen: React.FC = () => {
         },
         userName: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
         },
         userEmail: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           marginTop: 2,
         },
@@ -157,7 +157,7 @@ const UserSelectionScreen: React.FC = () => {
         },
         emptyText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
           textAlign: 'center',
         },

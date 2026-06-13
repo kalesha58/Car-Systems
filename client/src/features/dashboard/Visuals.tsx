@@ -3,7 +3,6 @@ import React from 'react';
 import { screenHeight } from '@utils/Scaling';
 import { useCollapsibleContext } from '@r0b0t3d/react-native-collapsible';
 import Animated, { interpolate, useAnimatedStyle } from 'react-native-reanimated';
-import LinearGradient from 'react-native-linear-gradient';
 import LottieView from 'lottie-react-native';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 
@@ -16,21 +15,26 @@ const Visuals: React.FC<{ showOverlay?: boolean }> = ({ showOverlay = true }) =>
     return { opacity };
   });
 
+  const shouldShowOverlay =
+    showOverlay &&
+    seasonalTheme.showOverlayOnHome &&
+    !!seasonalTheme.animations.overlay;
+
   return (
     <Animated.View style={[styles.container, headerAniamtedStyle, { backgroundColor: seasonalTheme.colors.primary }]}>
-      {/* Background animation (snow, sakura, etc.) */}
-      <View style={styles.animationContainer}>
-        <LottieView
-          autoPlay
-          loop
-          speed={0.5}
-          style={styles.backgroundAnimation}
-          source={seasonalTheme.animations.background}
-        />
-      </View>
+      {seasonalTheme.animations.background && (
+        <View style={styles.animationContainer}>
+          <LottieView
+            autoPlay
+            loop
+            speed={seasonalTheme.backgroundSpeed}
+            style={styles.backgroundAnimation}
+            source={seasonalTheme.animations.background}
+          />
+        </View>
+      )}
 
-      {/* Overlay animation (train, sleigh, etc.) - if available */}
-      {showOverlay && seasonalTheme.animations.overlay && (
+      {shouldShowOverlay && (
         <View style={styles.overlayContainer}>
           <LottieView
             autoPlay
@@ -50,11 +54,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     height: screenHeight * 0.4,
-  },
-  gradient: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
   },
   animationContainer: {
     width: '100%',

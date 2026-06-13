@@ -19,7 +19,7 @@ import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-nat
 import Geolocation from '@react-native-community/geolocation';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
@@ -649,7 +649,7 @@ const ChatMessageScreen: React.FC = () => {
         },
         messageText: {
           fontSize: RFValue(13),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.white,
           lineHeight: RFValue(18),
         },
@@ -672,13 +672,13 @@ const ChatMessageScreen: React.FC = () => {
         },
         locationText: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           marginLeft: 6,
         },
         messageTime: {
           fontSize: RFValue(8),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: 'rgba(255,255,255,0.6)',
           textAlign: 'right',
           marginTop: 2,
@@ -688,7 +688,7 @@ const ChatMessageScreen: React.FC = () => {
         },
         senderName: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 2,
           color: colors.secondary,
         },
@@ -716,7 +716,7 @@ const ChatMessageScreen: React.FC = () => {
           flex: 1,
           paddingVertical: 10,
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           maxHeight: 100,
           minHeight: 40,
@@ -738,7 +738,7 @@ const ChatMessageScreen: React.FC = () => {
         },
         typingText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           fontStyle: 'italic',
           color: colors.textSecondary,
         },
@@ -890,7 +890,7 @@ const ChatMessageScreen: React.FC = () => {
             )}
           </TouchableOpacity>
           <View style={{ marginLeft: 12, flex: 1 }}>
-            <CustomText style={{ fontSize: RFValue(16), fontFamily: Fonts.SemiBold, color: colors.text }}>
+            <CustomText style={{ fontSize: RFValue(16), ...fontStyle(Fonts.SemiBold), color: colors.text }}>
               {chat.groupName || 'Group'}
             </CustomText>
             <CustomText style={{ fontSize: RFValue(11), color: colors.textSecondary, marginTop: 2 }}>
@@ -910,7 +910,7 @@ const ChatMessageScreen: React.FC = () => {
           onPress={handleAddMembers}
           activeOpacity={0.7}>
           <Icon name="person-add-outline" size={RFValue(18)} color={colors.secondary} />
-          <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
+          <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), ...fontStyle(Fonts.Medium), color: colors.text }}>
             Add Members
           </CustomText>
         </TouchableOpacity>
@@ -925,7 +925,7 @@ const ChatMessageScreen: React.FC = () => {
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Icon name="lock-closed-outline" size={RFValue(18)} color={colors.secondary} />
-            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
+            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), ...fontStyle(Fonts.Medium), color: colors.text }}>
               Privacy ({chat.privacy === 'public' ? 'Public' : 'Private'})
             </CustomText>
           </View>
@@ -952,7 +952,7 @@ const ChatMessageScreen: React.FC = () => {
             }}
             activeOpacity={0.7}>
             <Icon name="settings-outline" size={RFValue(18)} color={colors.secondary} />
-            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), fontFamily: Fonts.Medium, color: colors.text }}>
+            <CustomText style={{ marginLeft: 12, fontSize: RFValue(13), ...fontStyle(Fonts.Medium), color: colors.text }}>
               Edit Group Settings
             </CustomText>
           </TouchableOpacity>
@@ -996,7 +996,7 @@ const ChatMessageScreen: React.FC = () => {
                     borderWidth: 1,
                     borderColor: colors.secondary,
                   }}>
-                  <CustomText style={{ color: colors.white, fontSize: RFValue(8), fontFamily: Fonts.Bold }}>
+                  <CustomText style={{ color: colors.white, fontSize: RFValue(8), ...fontStyle(Fonts.Bold) }}>
                     {pendingRequestCount > 99 ? '99+' : String(pendingRequestCount)}
                   </CustomText>
                 </View>

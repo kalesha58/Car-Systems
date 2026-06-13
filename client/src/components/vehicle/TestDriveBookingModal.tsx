@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { createTestDrive } from '@service/testDriveService';
@@ -123,7 +123,7 @@ const TestDriveBookingModal: FC<ITestDriveBookingModalProps> = ({
     },
     label: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 10,
     },
@@ -139,7 +139,7 @@ const TestDriveBookingModal: FC<ITestDriveBookingModalProps> = ({
     },
     dateButtonText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     dateButtonPlaceholder: {
@@ -154,13 +154,13 @@ const TestDriveBookingModal: FC<ITestDriveBookingModalProps> = ({
       backgroundColor: colors.backgroundSecondary,
       color: colors.text,
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       textAlignVertical: 'top',
     },
     disabledText: {
       color: colors.textSecondary,
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       marginTop: 8,
     },
   });

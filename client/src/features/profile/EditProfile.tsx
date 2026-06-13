@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary, launchCamera, ImagePickerResponse } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import AttachmentModal from '@components/common/AttachmentModal';
@@ -199,7 +199,7 @@ const EditProfile: FC = () => {
     },
     editImageButtonText: {
       color: colors.secondary,
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       fontSize: RFValue(9),
     },
     formContainer: {
@@ -220,7 +220,7 @@ const EditProfile: FC = () => {
     },
     label: {
       marginBottom: 6,
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       fontSize: RFValue(8.5),
       opacity: 0.95,
@@ -240,7 +240,7 @@ const EditProfile: FC = () => {
       paddingVertical: 10,
       paddingHorizontal: 8,
       fontSize: RFValue(10),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
     },
     inputReadOnly: {
@@ -271,7 +271,7 @@ const EditProfile: FC = () => {
     },
     saveButtonText: {
       color: colors.white,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       fontSize: RFValue(10),
     },
     loadingOverlay: {

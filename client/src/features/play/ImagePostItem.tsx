@@ -21,7 +21,7 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, headerTopInset } from '@utils/Constants';
+import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
 import { PLAY_UI_FONT, playFeedText } from '@utils/playTypography';
 import { screenHeight, screenWidth } from '@utils/Scaling';
 import CustomText from '@components/ui/CustomText';
@@ -1287,7 +1287,7 @@ const styles = StyleSheet.create({
   },
   shareSectionLabel: {
     fontSize: RFValue(7),
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
     letterSpacing: 1,
     marginBottom: 6,
   },

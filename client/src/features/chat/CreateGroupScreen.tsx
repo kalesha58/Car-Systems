@@ -16,7 +16,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -186,7 +186,7 @@ const CreateGroupScreen: React.FC = () => {
         },
         label: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 8,
           color: colors.text,
         },
@@ -196,7 +196,7 @@ const CreateGroupScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1,
           borderColor: colors.border,
@@ -213,7 +213,7 @@ const CreateGroupScreen: React.FC = () => {
         },
         locationButtonText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           marginLeft: 8,
           flex: 1,
@@ -233,12 +233,12 @@ const CreateGroupScreen: React.FC = () => {
         },
         privacyText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
         },
         sectionTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 12,
           color: colors.text,
         },
@@ -248,7 +248,7 @@ const CreateGroupScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1,
           borderColor: colors.border,
@@ -281,13 +281,13 @@ const CreateGroupScreen: React.FC = () => {
         },
         userName: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 4,
           color: colors.text,
         },
         userEmail: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
         },
         checkbox: {
@@ -329,7 +329,7 @@ const CreateGroupScreen: React.FC = () => {
         createButtonText: {
           color: colors.white,
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         addMembersButton: {
           backgroundColor: colors.secondary,
@@ -342,7 +342,7 @@ const CreateGroupScreen: React.FC = () => {
         addMembersButtonText: {
           color: colors.white,
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         loadingContainer: {
           flex: 1,
@@ -360,7 +360,7 @@ const CreateGroupScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1,
           borderColor: colors.border,

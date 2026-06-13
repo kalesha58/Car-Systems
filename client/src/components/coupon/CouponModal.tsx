@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -194,7 +194,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
       flex: 1,
       color: colors.text,
       fontSize: RFValue(getResponsiveValue(14, 16, 18)),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       marginLeft: getResponsiveValue(8, 10, 12),
     },
     couponList: {
@@ -241,19 +241,19 @@ const CouponModal: React.FC<CouponModalProps> = ({
     },
     couponTitle: {
       fontSize: RFValue(getResponsiveValue(16, 18, 20)),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: getResponsiveValue(4, 6, 8),
     },
     couponDescription: {
       fontSize: RFValue(getResponsiveValue(12, 14, 16)),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       marginBottom: getResponsiveValue(8, 10, 12),
     },
     couponTerms: {
       fontSize: RFValue(getResponsiveValue(10, 12, 14)),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       marginTop: getResponsiveValue(8, 10, 12),
     },
@@ -368,7 +368,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                     style={{
                       color: colors.white,
                       fontSize: RFValue(getResponsiveValue(14, 16, 18)),
-                      fontFamily: Fonts.SemiBold,
+                      ...fontStyle(Fonts.SemiBold),
                     }}>
                     Retry
                   </CustomText>
@@ -422,7 +422,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                           style={{
                             color: colors.white,
                             fontSize: RFValue(getResponsiveValue(12, 14, 16)),
-                            fontFamily: Fonts.Bold,
+                            ...fontStyle(Fonts.Bold),
                           }}>
                           {coupon.discountType === 'percentage'
                             ? `${coupon.discountValue}%`
@@ -437,7 +437,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                           style={{
                             color: colors.secondary,
                             fontSize: RFValue(getResponsiveValue(12, 14, 16)),
-                            fontFamily: Fonts.SemiBold,
+                            ...fontStyle(Fonts.SemiBold),
                           }}>
                           {coupon.code}
                         </CustomText>
@@ -454,7 +454,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                             style={{
                               color: colors.secondary,
                               fontSize: RFValue(getResponsiveValue(10, 12, 14)),
-                              fontFamily: Fonts.Medium,
+                              ...fontStyle(Fonts.Medium),
                             }}>
                             Applied
                           </CustomText>
@@ -478,7 +478,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                           style={{
                             color: colors.white,
                             fontSize: RFValue(getResponsiveValue(14, 16, 18)),
-                            fontFamily: Fonts.SemiBold,
+                            ...fontStyle(Fonts.SemiBold),
                           }}>
                           Remove Coupon
                         </CustomText>
@@ -491,7 +491,7 @@ const CouponModal: React.FC<CouponModalProps> = ({
                           style={{
                             color: colors.white,
                             fontSize: RFValue(getResponsiveValue(14, 16, 18)),
-                            fontFamily: Fonts.SemiBold,
+                            ...fontStyle(Fonts.SemiBold),
                           }}>
                           Apply Coupon
                         </CustomText>

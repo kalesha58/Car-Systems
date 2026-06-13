@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 're
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomHeader from '@components/ui/CustomHeader';
@@ -119,7 +119,7 @@ const PreBookingManagementScreen: React.FC = () => {
     },
     statusText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.white,
     },
     vehicleInfo: {
@@ -229,7 +229,7 @@ const PreBookingManagementScreen: React.FC = () => {
               variant="h6"
               style={{
                 color: statusFilter === status ? '#fff' : colors.text,
-                fontFamily: Fonts.Medium,
+                ...fontStyle(Fonts.Medium),
               }}>
               {status.charAt(0).toUpperCase() + status.slice(1)}
             </CustomText>

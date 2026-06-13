@@ -1,30 +1,55 @@
+import {
+  BackgroundEffectId,
+  OverlayEffectId,
+} from '@types/visualEffects';
+
+export type AnimationEffectId = BackgroundEffectId | OverlayEffectId;
+
 interface IAnimationConfig {
-  id: string;
+  id: AnimationEffectId;
   source: any;
   name: string;
-  translationKey: string;
 }
 
-export const animations: IAnimationConfig[] = [
-  {
+const BACKGROUND_ANIMATIONS: Record<Exclude<BackgroundEffectId, 'none'>, IAnimationConfig> = {
+  rain: {
     id: 'rain',
     source: require('@assets/animations/raining.json'),
     name: 'Rain',
-    translationKey: 'animations.rain',
   },
-  {
+  snow: {
+    id: 'snow',
+    source: require('@assets/animations/Snow flakes Christmas.json'),
+    name: 'Snow',
+  },
+  sakura: {
     id: 'sakura',
     source: require('@assets/animations/Sakura fall.json'),
-    name: 'Sakura Fall',
-    translationKey: 'animations.sakuraFall',
+    name: 'Sakura',
   },
-  {
-    id: 'christmas',
+};
+
+const OVERLAY_ANIMATIONS: Record<Exclude<OverlayEffectId, 'none'>, IAnimationConfig> = {
+  winter_train: {
+    id: 'winter_train',
+    source: require('@assets/animations/Winter Train.json'),
+    name: 'Winter Train',
+  },
+  christmas_sleigh: {
+    id: 'christmas_sleigh',
     source: require('@assets/animations/Christmas Sleigh.json'),
     name: 'Christmas Sleigh',
-    translationKey: 'animations.christmasSleigh',
   },
-];
+};
 
-export type {IAnimationConfig};
+export const getBackgroundAnimationSource = (effectId: BackgroundEffectId): any | undefined => {
+  if (effectId === 'none') return undefined;
+  return BACKGROUND_ANIMATIONS[effectId].source;
+};
 
+export const getOverlayAnimationSource = (effectId: OverlayEffectId): any | undefined => {
+  if (effectId === 'none') return undefined;
+  return OVERLAY_ANIMATIONS[effectId].source;
+};
+
+export type { IAnimationConfig };

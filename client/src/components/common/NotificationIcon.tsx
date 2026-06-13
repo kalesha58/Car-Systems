@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
 import { getUnreadNotificationCount } from '@service/notificationService';
@@ -96,7 +96,7 @@ const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress, color }) =
     badgeText: {
       color: colors.white,
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
   });
 

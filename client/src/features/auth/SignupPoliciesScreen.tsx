@@ -5,7 +5,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 
 type PolicyTab = 'terms' | 'privacy';
 
@@ -51,17 +51,17 @@ const SignupPoliciesScreen: FC = () => {
           paddingVertical: 10,
         },
         tabButtonActive: { backgroundColor: colors.secondary },
-        tabText: { fontSize: RFValue(12), fontFamily: Fonts.Medium, color: colors.textSecondary },
-        tabTextActive: { color: colors.white, fontFamily: Fonts.SemiBold },
+        tabText: { fontSize: RFValue(12), ...fontStyle(Fonts.Medium), color: colors.textSecondary },
+        tabTextActive: { color: colors.white, ...fontStyle(Fonts.SemiBold) },
         title: {
           fontSize: RFValue(20),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           marginBottom: 8,
         },
         subtitle: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           lineHeight: RFValue(18),
           marginBottom: 16,
@@ -78,7 +78,7 @@ const SignupPoliciesScreen: FC = () => {
           fontSize: RFValue(12),
           lineHeight: RFValue(18),
           color: colors.textSecondary,
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
         },
       }),
     [colors],

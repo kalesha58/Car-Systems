@@ -2,7 +2,7 @@ import React, { FC, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { RFValue } from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
@@ -92,13 +92,13 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
     value: {
       fontSize: RFValue(17),
       color: colors.text,
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       letterSpacing: -0.2,
     },
     label: {
       fontSize: RFValue(10),
       color: colors.textSecondary,
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     trendContainer: {
       flexDirection: 'row',
@@ -112,7 +112,7 @@ const StatCard: FC<IStatCardProps> = ({ icon, value, label, trend, updateDate, i
     trendText: {
       fontSize: RFValue(9),
       color: trend?.isPositive ? '#10b981' : '#ef4444',
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
     },
     updateDate: {
       fontSize: RFValue(8),

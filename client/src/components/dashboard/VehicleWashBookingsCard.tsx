@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
@@ -176,7 +176,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     title: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
     },
     tabsContainer: {
@@ -195,7 +195,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     tabText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: theme.textSecondary,
     },
     activeTabText: {
@@ -220,24 +220,24 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     customerName: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
       marginBottom: 4,
     },
     vehicleInfo: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginBottom: 2,
     },
     serviceType: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     bookingTime: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginTop: 4,
     },
@@ -254,7 +254,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     acceptButtonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.white || '#FFFFFF',
     },
     rejectButton: {
@@ -265,7 +265,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     rejectButtonText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#FFFFFF',
     },
     statusBadge: {
@@ -276,7 +276,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     statusText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     emptyState: {
       paddingVertical: 20,
@@ -284,7 +284,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     emptyText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     loadingContainer: {
@@ -306,13 +306,13 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     modalTitle: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: theme.text,
       marginBottom: 8,
     },
     modalSubtitle: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
       marginBottom: 16,
     },
@@ -322,7 +322,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
       borderRadius: 8,
       padding: 12,
       fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.text,
       backgroundColor: theme.backgroundSecondary,
       minHeight: 80,
@@ -343,7 +343,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     modalCancelText: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: theme.text,
     },
     modalConfirmBtn: {
@@ -355,7 +355,7 @@ const VehicleWashBookingsCard: FC<VehicleWashBookingsCardProps> = ({ limit = 5 }
     },
     modalConfirmText: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#FFFFFF',
     },
   });

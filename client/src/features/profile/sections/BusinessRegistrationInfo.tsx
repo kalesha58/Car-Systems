@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {FC, useMemo} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -111,7 +111,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         },
         cardTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
           marginBottom: 12,
         },
@@ -131,13 +131,13 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         },
         infoLabel: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
           flex: 1,
         },
         infoValue: {
           fontSize: RFValue(13),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           flex: 1.5,
           textAlign: 'right',
@@ -150,7 +150,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         },
         statusText: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           textTransform: 'capitalize',
         },
         photosContainer: {
@@ -189,13 +189,13 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         },
         documentName: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
           marginBottom: 2,
         },
         documentType: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
         },
         emptyContainer: {
@@ -210,14 +210,14 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         },
         emptyTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.text,
           marginBottom: 8,
           textAlign: 'center',
         },
         emptyText: {
           fontSize: RFValue(13),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           textAlign: 'center',
         },
@@ -314,7 +314,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
           <CustomText style={styles.infoLabel}>
             {t('profile.orders') || 'Total Orders'}
           </CustomText>
-          <CustomText style={[styles.infoValue, {fontFamily: Fonts.Bold, color: colors.secondary}]}>
+          <CustomText style={[styles.infoValue, {...fontStyle(Fonts.Bold), color: colors.secondary}]}>
             {ordersCount}
           </CustomText>
         </View>
@@ -494,7 +494,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
         <CustomText style={styles.cardTitle}>
           {t('dealer.shareableBusinessLink') || 'Shareable Business Link'}
         </CustomText>
-        <CustomText style={{ fontSize: RFValue(11), color: colors.textSecondary, fontFamily: Fonts.Regular, marginBottom: 16, lineHeight: 18 }}>
+        <CustomText style={{ fontSize: RFValue(11), color: colors.textSecondary, ...fontStyle(Fonts.Regular), marginBottom: 16, lineHeight: 18 }}>
           {t('dealer.shareLinkDescription') || 'Share your unique business link on Instagram, WhatsApp, or other platforms to direct customers directly to your Moto Node store.'}
         </CustomText>
         <TouchableOpacity
@@ -515,7 +515,7 @@ const BusinessRegistrationInfo: FC<BusinessRegistrationInfoProps> = ({
           activeOpacity={0.8}
         >
           <Icon name="share-social-outline" size={RFValue(18)} color="#fff" />
-          <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold, fontSize: RFValue(13) }}>
+          <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(13) }}>
             {t('dealer.shareStore') || 'Share Store Link'}
           </CustomText>
         </TouchableOpacity>

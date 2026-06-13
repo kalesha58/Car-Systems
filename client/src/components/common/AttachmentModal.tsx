@@ -4,7 +4,7 @@ import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 
 interface IAttachmentOption {
     id: string;
@@ -65,7 +65,7 @@ const AttachmentModal: FC<IAttachmentModalProps> = ({ visible, onClose, options 
         },
         label: {
             fontSize: RFValue(11),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.text,
             textAlign: 'center',
         },

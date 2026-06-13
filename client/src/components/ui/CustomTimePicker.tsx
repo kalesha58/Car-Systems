@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 interface ICustomTimePickerProps {
@@ -70,12 +70,12 @@ const CustomTimePicker: React.FC<ICustomTimePickerProps> = ({
         },
         timeSlotText: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.text,
         },
         timeSlotTextSelected: {
           color: colors.secondary,
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
       }),
     [colors, selectedTime],

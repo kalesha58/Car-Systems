@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, headerTopInset } from '@utils/Constants';
+import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
@@ -297,7 +297,7 @@ const ProductDetail: React.FC = () => {
     },
     stockText: {
       color: '#FF6B35',
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       fontSize: RFValue(11),
     },
     priceContainer: {
@@ -310,7 +310,7 @@ const ProductDetail: React.FC = () => {
     },
     currentPrice: {
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     originalPrice: {
       textDecorationLine: 'line-through',
@@ -327,7 +327,7 @@ const ProductDetail: React.FC = () => {
     discountBadgeText: {
       color: colors.white,
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     viewDetailsLink: {
       flexDirection: 'row',
@@ -338,7 +338,7 @@ const ProductDetail: React.FC = () => {
     },
     viewDetailsText: {
       color: colors.text,
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     serviceHighlightsContainer: {
       flexDirection: 'row',
@@ -361,7 +361,7 @@ const ProductDetail: React.FC = () => {
     serviceText: {
       textAlign: 'center',
       fontSize: RFValue(11),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     sectionContainer: {
       marginHorizontal: 16,
@@ -403,7 +403,7 @@ const ProductDetail: React.FC = () => {
       gap: getResponsiveValue(4, 6, 8),
     },
     actionButtonsPrice: {
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       fontSize: RFValue(getResponsiveValue(18, 20, 22)),
     },
@@ -422,7 +422,7 @@ const ProductDetail: React.FC = () => {
     actionButtonsDiscountText: {
       color: colors.white,
       fontSize: RFValue(getResponsiveValue(8, 10, 12)),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     actionButtonsTaxText: {
       fontSize: RFValue(getResponsiveValue(9, 11, 13)),
@@ -468,12 +468,12 @@ const ProductDetail: React.FC = () => {
     },
     actionButtonsAddToCartText: {
       color: colors.white,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       fontSize: RFValue(getResponsiveValue(12, 13, 14)),
     },
     actionButtonsBuyNowText: {
       color: colors.white,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       fontSize: RFValue(getResponsiveValue(12, 13, 14)),
     },
     actionButtonsShare: {
@@ -584,13 +584,13 @@ const ProductDetail: React.FC = () => {
     metricText: {
       fontSize: RFValue(10),
       color: colors.text,
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       textAlign: 'center',
     },
     metricLabel: {
       fontSize: RFValue(8),
       color: colors.disabled,
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
     },
     detailRow: {
       flexDirection: 'row',
@@ -616,12 +616,12 @@ const ProductDetail: React.FC = () => {
     detailLabel: {
       color: colors.disabled,
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       marginBottom: 4,
     },
     detailValue: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
   });

@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
-import { Fonts, Colors, MIN_TOUCH_TARGET } from '@utils/Constants';
+import { Fonts, Colors, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
@@ -100,18 +100,18 @@ const MetAIChatScreen: React.FC = () => {
         },
         userText: {
           color: '#fff',
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           fontSize: RFValue(11),
         },
         botText: {
           color: colors.text,
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           fontSize: RFValue(11),
         },
         timeText: {
           marginTop: 6,
           fontSize: RFValue(8),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           opacity: 0.7,
         },
         actionsContainer: {
@@ -133,7 +133,7 @@ const MetAIChatScreen: React.FC = () => {
         },
         chipText: {
           fontSize: RFValue(9),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.text,
         },
         inputBar: {
@@ -157,7 +157,7 @@ const MetAIChatScreen: React.FC = () => {
           borderWidth: 1,
           borderColor: colors.border,
           color: colors.text,
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           fontSize: RFValue(11),
         },
         sendBtn: {
@@ -429,7 +429,7 @@ const MetAIChatScreen: React.FC = () => {
           onContentSizeChange={scrollToBottom}
           ListEmptyComponent={
             <View style={{ paddingTop: 20 }}>
-              <CustomText style={{ color: colors.textSecondary, textAlign: 'center', fontFamily: Fonts.Medium }}>
+              <CustomText style={{ color: colors.textSecondary, textAlign: 'center', ...fontStyle(Fonts.Medium) }}>
                 {t('profile.metAI_start') || 'Ask MetAI anything about your orders, services, or account.'}
               </CustomText>
             </View>

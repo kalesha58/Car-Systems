@@ -13,7 +13,7 @@ import {
 import {useRoute, useNavigation} from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -144,7 +144,7 @@ const EditGroupScreen: React.FC = () => {
         },
         label: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 8,
         },
         input: {
@@ -153,7 +153,7 @@ const EditGroupScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 12,
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.text,
           borderWidth: 1,
           borderColor: colors.border,
@@ -170,11 +170,11 @@ const EditGroupScreen: React.FC = () => {
         },
         privacyText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
         },
         sectionTitle: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 12,
           marginTop: 8,
         },
@@ -205,12 +205,12 @@ const EditGroupScreen: React.FC = () => {
         },
         userName: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 4,
         },
         userEmail: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.disabled,
         },
         actionButton: {
@@ -230,7 +230,7 @@ const EditGroupScreen: React.FC = () => {
         saveButtonText: {
           color: colors.white,
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
         loadingContainer: {
           flex: 1,
@@ -247,7 +247,7 @@ const EditGroupScreen: React.FC = () => {
         memberBadgeText: {
           color: colors.white,
           fontSize: RFValue(10),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
         },
       }),
     [colors, user?.id],

@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { screenHeight, screenWidth } from '@utils/Scaling';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import { useTheme } from '@hooks/useTheme';
@@ -133,7 +133,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         title: {
             fontSize: RFValue(14),
-            fontFamily: Fonts.Bold,
+            ...fontStyle(Fonts.Bold),
             color: colors.text,
             flex: 1,
         },
@@ -144,7 +144,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         statusText: {
             fontSize: RFValue(10),
-            fontFamily: Fonts.SemiBold,
+            ...fontStyle(Fonts.SemiBold),
             color: '#fff',
             textTransform: 'capitalize',
         },
@@ -153,13 +153,13 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         label: {
             fontSize: RFValue(10),
-            fontFamily: Fonts.Medium,
+            ...fontStyle(Fonts.Medium),
             color: colors.textSecondary,
             marginBottom: 4,
         },
         value: {
             fontSize: RFValue(12),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.text,
         },
         divider: {
@@ -182,7 +182,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         sectionTitle: {
             fontSize: RFValue(12),
-            fontFamily: Fonts.SemiBold,
+            ...fontStyle(Fonts.SemiBold),
             color: colors.text,
             marginBottom: 10,
         },
@@ -193,7 +193,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
             paddingHorizontal: 12,
             paddingVertical: 10,
             fontSize: RFValue(14),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.text,
             backgroundColor: colors.background,
             marginTop: 8,
@@ -210,7 +210,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         hintText: {
             fontSize: RFValue(11),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.textSecondary,
             marginTop: 6,
         },
@@ -251,12 +251,12 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
         },
         docTitle: {
             fontSize: RFValue(10),
-            fontFamily: Fonts.Medium,
+            ...fontStyle(Fonts.Medium),
             color: colors.text,
         },
         docSub: {
             fontSize: RFValue(8),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.textSecondary,
             marginTop: 2,
         },
@@ -480,7 +480,7 @@ const BusinessRegistrationDetailsScreen: React.FC = () => {
                                     {savingBookingSettings ? (
                                         <ActivityIndicator size="small" color="#fff" />
                                     ) : (
-                                        <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold }}>
+                                        <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold) }}>
                                             {t('common.save') || 'Save'}
                                         </CustomText>
                                     )}

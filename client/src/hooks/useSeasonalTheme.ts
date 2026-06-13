@@ -1,17 +1,17 @@
 import { useMemo } from 'react';
-import { getCurrentSeasonalTheme, ISeasonalTheme } from '@config/seasonalThemes';
+import { resolveVisualTheme, ISeasonalTheme } from '@config/seasonalThemes';
+import { useVisualEffectsStore } from '@state/visualEffectsStore';
 
 /**
- * Custom hook for accessing the current seasonal theme
- * 
- * Usage:
- * const { season, colors, animations, isActive } = useSeasonalTheme();
+ * Custom hook for accessing the current seasonal theme (admin-controlled).
  */
 export const useSeasonalTheme = (): ISeasonalTheme & { isActive: boolean } => {
-    const theme = useMemo(() => getCurrentSeasonalTheme(), []);
+  const config = useVisualEffectsStore(state => state.config);
 
-    return {
-        ...theme,
-        isActive: theme.enabled,
-    };
+  const theme = useMemo(() => resolveVisualTheme(config), [config]);
+
+  return {
+    ...theme,
+    isActive: theme.enabled,
+  };
 };

@@ -2,7 +2,7 @@ import React, {FC} from 'react';
 import {View, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {formatCurrency} from '@utils/analytics';
@@ -49,7 +49,7 @@ const ProfitCard: FC<IProfitCardProps> = ({amount, label, growth, growthLabel}) 
     },
     growthText: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: growth !== undefined && growth >= 0 ? colors.success : colors.error,
       marginBottom: 4,
     },

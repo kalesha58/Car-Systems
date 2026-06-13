@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import React, {FC} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import {useTheme} from '@hooks/useTheme';
 import {IPost} from '../../../types/post/IPost';
@@ -137,7 +137,7 @@ const PostGrid: FC<PostGridProps> = ({
     },
     likesText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: '#fff',
       marginLeft: 4,
     },
@@ -150,20 +150,20 @@ const PostGrid: FC<PostGridProps> = ({
     },
     emptyTitle: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 8,
       textAlign: 'center',
     },
     emptyText: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       textAlign: 'center',
     },
     hintText: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       textAlign: 'center',
       paddingHorizontal: 20,

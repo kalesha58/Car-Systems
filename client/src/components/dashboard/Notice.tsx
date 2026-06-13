@@ -1,27 +1,30 @@
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native'
+import { View, StyleSheet } from 'react-native'
 import React, { FC } from 'react'
 import { NoticeHeight } from '@utils/Scaling'
 import CustomText from '@components/ui/CustomText'
 import { Fonts, headerTopInset } from '@utils/Constants'
 import { Defs, G, Path, Svg, Use } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useVisualEffectsStore } from '@state/visualEffectsStore'
 
 /** SVG path for the notice bottom wave (local to this screen). */
 const NOTICE_WAVE_PATH =
-  'M 0 2000 0 500 Q 62.5 280 125 500 t 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0   125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0 v1000 z'
+  'M 0 2000 0 500 Q 62.5 280 125 500 t 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0 125 0   125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0  125 0 125 0 125 0 v1000 z'
 
 const Notice: FC = () => {
     const insets = useSafeAreaInsets()
+    const rainNotice = useVisualEffectsStore(state => state.config.rainNotice)
+
     return (
         <View style={{ height: NoticeHeight }}>
             <View style={styles.container}>
                 <View style={styles.noticeContainer}>
                     <View style={{ padding: 10, paddingTop: headerTopInset(insets?.top || 0) + 6 }}>
                         <CustomText style={styles.heading} variant='h8' fontFamily={Fonts.SemiBold}>
-                            It's raining near this location
+                            {rainNotice.title}
                         </CustomText>
                         <CustomText variant='h9' style={styles.textCenter}>
-                            Our delivery partners may take longer to reach you
+                            {rainNotice.subtitle}
                         </CustomText>
                     </View>
                 </View>

@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -88,7 +88,7 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
         },
         title: {
           fontSize: RFValue(16),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 12,
           color: colors.text,
         },
@@ -120,7 +120,7 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
         },
         slotText: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
         },
         slotTextAvailable: {
           color: colors.text,
@@ -137,7 +137,7 @@ const ServiceSlotPicker: React.FC<ServiceSlotPickerProps> = ({
         },
         emptyText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           textAlign: 'center',
         },

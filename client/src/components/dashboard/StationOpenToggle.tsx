@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
@@ -95,13 +95,13 @@ const StationOpenToggle: FC<StationOpenToggleProps> = ({
     },
     label: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: theme.text,
       marginBottom: 2,
     },
     status: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: theme.textSecondary,
     },
     toggle: {

@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator, TouchableOpacity, AppState, AppSta
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '@hooks/useTheme';
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   amount: {
     marginTop: 20,
     fontSize: RFValue(18),
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
   },
   testHintBox: {
     marginTop: 18,

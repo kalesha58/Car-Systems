@@ -1,7 +1,7 @@
 import {View, StyleSheet, TouchableOpacity, ActivityIndicator} from 'react-native';
 import React, {FC, useEffect, useState, useMemo} from 'react';
 import {useNavigation} from '@react-navigation/native';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
@@ -79,13 +79,13 @@ const DealershipRequestSection: FC = () => {
         },
         statusTitle: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           marginBottom: 4,
           color: colors.text,
         },
         statusSubtitle: {
           fontSize: RFValue(12),
-          fontFamily: Fonts.Regular,
+          ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
         },
         button: {
@@ -100,7 +100,7 @@ const DealershipRequestSection: FC = () => {
         },
         buttonText: {
           fontSize: RFValue(14),
-          fontFamily: Fonts.SemiBold,
+          ...fontStyle(Fonts.SemiBold),
           color: colors.white,
           marginLeft: 8,
         },
@@ -114,7 +114,7 @@ const DealershipRequestSection: FC = () => {
         },
         pendingText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: '#f59e0b',
         },
         approvedBadge: {
@@ -127,7 +127,7 @@ const DealershipRequestSection: FC = () => {
         },
         approvedText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: '#10b981',
         },
         rejectedBadge: {
@@ -140,7 +140,7 @@ const DealershipRequestSection: FC = () => {
         },
         rejectedText: {
           fontSize: RFValue(10),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: '#ef4444',
         },
       }),

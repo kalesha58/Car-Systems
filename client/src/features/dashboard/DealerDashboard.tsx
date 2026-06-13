@@ -40,6 +40,7 @@ import {
 import AnimatedHeader from './AnimatedHeader';
 import AdCarousal from '@components/dashboard/AdCarousal';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
+import { useVisualEffectsStore } from '@state/visualEffectsStore';
 import LottieView from 'lottie-react-native';
 import {
   CollapsibleContainer,
@@ -50,7 +51,7 @@ import {
 } from '@r0b0t3d/react-native-collapsible';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomText from '@components/ui/CustomText';
-import { Fonts, headerTopInset } from '@utils/Constants';
+import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import withLiveOrder from '@features/delivery/withLiveOrder';
 import CustomerEnquiriesCard from '@components/dashboard/CustomerEnquiriesCard';
@@ -81,6 +82,7 @@ const DealerDashboard: React.FC = () => {
   const { scrollY, expand } = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
   const seasonalTheme = useSeasonalTheme();
+  const rainNotice = useVisualEffectsStore(state => state.config.rainNotice);
 
   const [dealer, setDealer] = useState<IDealer | undefined>(undefined);
   const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
@@ -122,14 +124,6 @@ const DealerDashboard: React.FC = () => {
       useNativeDriver: false,
     }).start();
   };
-
-  useEffect(() => {
-    slideDown();
-    const timeoutId = setTimeout(() => {
-      slideUp();
-    }, 3500);
-    return () => clearTimeout(timeoutId);
-  }, []);
 
   const fetchDealerData = useCallback(async () => {
     if (!user?.id) {
@@ -407,10 +401,13 @@ const DealerDashboard: React.FC = () => {
           <CollapsibleHeaderContainer containerStyle={styles.transparent}>
             <AnimatedHeader
               showNotice={() => {
+                if (!rainNotice.enabled) {
+                  return;
+                }
                 slideDown();
                 const timeoutId = setTimeout(() => {
                   slideUp();
-                }, 3500);
+                }, rainNotice.autoHideAfterMs);
                 return () => clearTimeout(timeoutId);
               }}
               title={dealer?.businessName || user?.name || ''}
@@ -418,7 +415,7 @@ const DealerDashboard: React.FC = () => {
             />
             
             {/* Train effect below header */}
-            {seasonalTheme.animations.overlay && (
+            {seasonalTheme.showOverlayOnDealerDashboard && seasonalTheme.animations.overlay && (
               <View style={styles.trainEffectBelow}>
                 <LottieView
                   autoPlay
@@ -744,7 +741,7 @@ const styles = StyleSheet.create({
   },
   statusBannerText: {
     fontSize: RFValue(13),
-    fontFamily: Fonts.Medium,
+    ...fontStyle(Fonts.Medium),
     marginBottom: 12,
     lineHeight: RFValue(18),
   },
@@ -757,7 +754,7 @@ const styles = StyleSheet.create({
   statusBannerButtonText: {
     color: '#fff',
     fontSize: RFValue(13),
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
   },
   recentSection: {
     marginTop: 8,

@@ -17,7 +17,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
 import { screenHeight, screenWidth } from '@utils/Scaling';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import { useTheme } from '@hooks/useTheme';
@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { createUserVehicle } from '@service/vehicleService';
 import { uploadImage, uploadImagesBatch } from '@service/postService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
-import CustomDropdownModal, { IDropdownOption } from '@components/ui/CustomDropdownModal';
+import CustomDropdownBottomSheet, { IDropdownOption } from '@components/ui/CustomDropdownBottomSheet';
 import { getDropdownOptions } from '@service/dropdownService';
 import { storage } from '@state/storage';
 import { processPendingLoginGreeting } from '@service/pushNotificationService';
@@ -64,8 +64,8 @@ const AddUserVehicleScreen: React.FC = () => {
 
   const [brandOptions, setBrandOptions] = useState<IDropdownOption[]>([]);
   const [modelOptions, setModelOptions] = useState<IDropdownOption[]>([]);
-  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
-  const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
+  const [dropdownType, setDropdownType] = useState<'brand' | 'model'>('brand');
   const [isLoadingBrands, setIsLoadingBrands] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
@@ -114,6 +114,37 @@ const AddUserVehicleScreen: React.FC = () => {
 
     fetchModels();
   }, [brandId, vehicleType]);
+
+  const openDropdown = (type: 'brand' | 'model') => {
+    setDropdownType(type);
+    setDropdownModalVisible(true);
+  };
+
+  const handleDropdownSelect = (value: string) => {
+    if (dropdownType === 'brand') {
+      const selectedOption = brandOptions.find(opt => opt.value === value);
+      if (selectedOption) {
+        setBrand(selectedOption.label);
+        setBrandId(selectedOption.value);
+      }
+      return;
+    }
+
+    const selectedOption = modelOptions.find(opt => opt.value === value);
+    if (selectedOption) {
+      setModel(selectedOption.label);
+    }
+  };
+
+  const getCurrentDropdownOptions = () =>
+    dropdownType === 'brand' ? brandOptions : modelOptions;
+
+  const getSelectedDropdownValue = () => {
+    if (dropdownType === 'brand') {
+      return brandId;
+    }
+    return modelOptions.find(opt => opt.label === model)?.value ?? '';
+  };
 
   const getAssetsWithinSizeLimit = (
     assets: Asset[],
@@ -352,87 +383,83 @@ const AddUserVehicleScreen: React.FC = () => {
     imageUris.length <= MAX_IMAGES &&
     !isSubmitting;
 
-  const cardShadow = {
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0.35 : 0.08,
-    shadowRadius: 10,
-    elevation: 4,
-  };
+  const softBorder = `${colors.border}99`;
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.backgroundSecondary,
     },
     contentContainer: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: colors.backgroundSecondary,
       borderTopLeftRadius: 25,
       borderTopRightRadius: 25,
       overflow: 'hidden',
     },
     scrollContent: {
       paddingHorizontal: screenWidth * 0.04,
-      paddingTop: screenHeight * 0.02,
+      paddingTop: screenHeight * 0.018,
       paddingBottom: screenHeight * 0.15,
     },
     formCard: {
       backgroundColor: colors.cardBackground,
-      borderRadius: RFValue(16),
-      padding: screenWidth * 0.045,
-      ...cardShadow,
+      borderRadius: RFValue(14),
+      padding: screenWidth * 0.04,
+      borderWidth: 1,
+      borderColor: softBorder,
     },
     section: {
-      marginBottom: screenHeight * 0.02,
+      marginBottom: screenHeight * 0.016,
     },
     label: {
-      fontSize: RFValue(9),
-      fontFamily: Fonts.Medium,
+      fontSize: RFValue(10),
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       marginBottom: screenHeight * 0.008,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
     },
     required: {
       color: colors.error,
     },
-    textInputContainer: {
+    field: {
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.012,
-      minHeight: screenHeight * 0.055,
-      ...cardShadow,
+      paddingVertical: screenHeight * 0.013,
+      minHeight: screenHeight * 0.052,
+    },
+    dropdownField: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    dropdownButtonText: {
+      fontSize: RFValue(11),
+      ...fontStyle(Fonts.Regular),
+      color: colors.text,
+      flex: 1,
+      marginRight: screenWidth * 0.02,
+    },
+    dropdownPlaceholder: {
+      color: colors.disabled,
     },
     textInput: {
       fontSize: RFValue(11),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
-      padding: 0,
-    },
-    dropdownButton: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: screenWidth * 0.035,
-      paddingVertical: screenHeight * 0.014,
-      minHeight: screenHeight * 0.055,
-      ...cardShadow,
+      paddingVertical: 0,
     },
     typeContainer: {
       flexDirection: 'row',
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       padding: 4,
       marginBottom: screenHeight * 0.02,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
     },
     typeButton: {
       flex: 1,
@@ -446,29 +473,28 @@ const AddUserVehicleScreen: React.FC = () => {
     },
     typeText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     typeTextActive: {
       color: colors.white,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(12),
+      backgroundColor: isDark ? colors.backgroundTertiary : colors.iceBlue,
+      borderRadius: RFValue(10),
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       paddingHorizontal: screenWidth * 0.035,
       paddingVertical: screenHeight * 0.016,
-      ...cardShadow,
     },
     buttonText: {
       fontSize: RFValue(10),
-      fontFamily: Fonts.Medium,
-      color: colors.secondary,
+      ...fontStyle(Fonts.Medium),
+      color: colors.winterBlueDark,
       marginLeft: screenWidth * 0.025,
     },
     imagesContainer: {
@@ -476,15 +502,16 @@ const AddUserVehicleScreen: React.FC = () => {
       flexWrap: 'wrap',
       gap: screenWidth * 0.03,
       marginTop: screenHeight * 0.012,
+      paddingVertical: 4,
     },
     imageWrapper: {
       position: 'relative',
       width: screenWidth * 0.26,
       height: screenWidth * 0.26,
-      borderRadius: RFValue(12),
+      borderRadius: RFValue(10),
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
     },
     image: {
       width: '100%',
@@ -509,15 +536,10 @@ const AddUserVehicleScreen: React.FC = () => {
       right: 0,
       backgroundColor: colors.cardBackground,
       paddingHorizontal: screenWidth * 0.04,
-      paddingVertical: screenHeight * 0.015,
-      paddingBottom: Math.max(insets.bottom, 20),
+      paddingVertical: screenHeight * 0.012,
+      paddingBottom: Math.max(insets.bottom, 16),
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
-      shadowColor: colors.black,
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 10,
     },
     buttonRow: {
       flexDirection: 'row',
@@ -526,25 +548,27 @@ const AddUserVehicleScreen: React.FC = () => {
     skipButton: {
       flex: 0.8,
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
-      borderRadius: RFValue(14),
-      height: 54,
+      borderRadius: RFValue(12),
+      minHeight: 44,
+      paddingVertical: screenHeight * 0.012,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
     },
     skipButtonText: {
-      fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(10),
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
     },
     submitButton: {
       flex: 1.2,
-      borderRadius: RFValue(14),
+      borderRadius: RFValue(12),
       overflow: 'hidden',
     },
     submitButtonGradient: {
-      height: 54,
+      minHeight: 44,
+      paddingVertical: screenHeight * 0.012,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
@@ -554,13 +578,13 @@ const AddUserVehicleScreen: React.FC = () => {
       opacity: 0.6,
     },
     submitButtonText: {
-      fontSize: RFValue(11),
-      fontFamily: Fonts.SemiBold,
+      fontSize: RFValue(10),
+      ...fontStyle(Fonts.SemiBold),
       color: colors.white,
     },
     descriptionText: {
       fontSize: RFValue(9),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       marginTop: screenHeight * 0.005,
       fontStyle: 'italic',
@@ -573,13 +597,13 @@ const AddUserVehicleScreen: React.FC = () => {
     },
     sectionHint: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       marginTop: screenHeight * 0.006,
     },
     statusChip: {
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: softBorder,
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
       borderRadius: RFValue(16),
       paddingHorizontal: 10,
@@ -587,14 +611,14 @@ const AddUserVehicleScreen: React.FC = () => {
     },
     statusChipText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.textSecondary,
     },
     docPlaceholderButton: {
       borderStyle: 'dashed',
       borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: RFValue(12),
+      borderColor: softBorder,
+      borderRadius: RFValue(10),
       backgroundColor: isDark ? colors.backgroundTertiary : colors.backgroundSecondary,
       alignItems: 'center',
       justifyContent: 'center',
@@ -603,7 +627,7 @@ const AddUserVehicleScreen: React.FC = () => {
     },
     docPlaceholderText: {
       fontSize: RFValue(8),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
     },
   });
@@ -664,7 +688,8 @@ const AddUserVehicleScreen: React.FC = () => {
               </CustomText>
               <TouchableOpacity
                 style={[
-                  styles.dropdownButton,
+                  styles.field,
+                  styles.dropdownField,
                   (isLoadingBrands || brandOptions.length === 0) && { opacity: 0.6 }
                 ]}
                 onPress={() => {
@@ -676,15 +701,16 @@ const AddUserVehicleScreen: React.FC = () => {
                     showError('No brands available. Please try again.');
                     return;
                   }
-                  setShowBrandDropdown(true);
+                  openDropdown('brand');
                 }}
                 disabled={isLoadingBrands || brandOptions.length === 0}
                 activeOpacity={0.75}
               >
-                <CustomText style={{
-                  ...styles.textInput,
-                  color: brand ? colors.text : colors.disabled
-                }}>
+                <CustomText
+                  style={[
+                    styles.dropdownButtonText,
+                    !brand && styles.dropdownPlaceholder,
+                  ]}>
                   {isLoadingBrands ? 'Loading brands...' : (brand || 'Select Brand')}
                 </CustomText>
                 <Icon name="chevron-down" size={RFValue(16)} color={colors.secondary} />
@@ -698,7 +724,8 @@ const AddUserVehicleScreen: React.FC = () => {
               </CustomText>
               <TouchableOpacity
                 style={[
-                  styles.dropdownButton,
+                  styles.field,
+                  styles.dropdownField,
                   (!brand || modelOptions.length === 0) && { opacity: 0.6 }
                 ]}
                 onPress={() => {
@@ -714,16 +741,17 @@ const AddUserVehicleScreen: React.FC = () => {
                     showError('No models available for this brand');
                     return;
                   }
-                  setShowModelDropdown(true);
+                  openDropdown('model');
                 }}
                 disabled={!brand || isLoadingModels || modelOptions.length === 0}
                 activeOpacity={0.75}
               >
-                <CustomText style={{
-                  ...styles.textInput,
-                  color: model ? colors.text : colors.disabled
-                }}>
-                  {model || 'Select Model'}
+                <CustomText
+                  style={[
+                    styles.dropdownButtonText,
+                    !model && styles.dropdownPlaceholder,
+                  ]}>
+                  {isLoadingModels ? 'Loading models...' : (model || 'Select Model')}
                 </CustomText>
                 <Icon name="chevron-down" size={RFValue(16)} color={colors.secondary} />
               </TouchableOpacity>
@@ -734,7 +762,7 @@ const AddUserVehicleScreen: React.FC = () => {
               <CustomText style={styles.label}>
                 NUMBER PLATE <CustomText style={styles.required}>*</CustomText>
               </CustomText>
-              <View style={styles.textInputContainer}>
+              <View style={styles.field}>
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter number plate"
@@ -753,7 +781,7 @@ const AddUserVehicleScreen: React.FC = () => {
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={[styles.section, { flex: 1 }]}>
                 <CustomText style={styles.label}>YEAR</CustomText>
-                <View style={styles.textInputContainer}>
+                <View style={styles.field}>
                   <TextInput
                     style={styles.textInput}
                     placeholder="2023"
@@ -767,7 +795,7 @@ const AddUserVehicleScreen: React.FC = () => {
               </View>
               <View style={[styles.section, { flex: 1 }]}>
                 <CustomText style={styles.label}>COLOR</CustomText>
-                <View style={styles.textInputContainer}>
+                <View style={styles.field}>
                   <TextInput
                     style={styles.textInput}
                     placeholder="White"
@@ -895,37 +923,15 @@ const AddUserVehicleScreen: React.FC = () => {
         </View>
       </View>
 
-      <CustomDropdownModal
-        visible={showBrandDropdown}
-        onClose={() => setShowBrandDropdown(false)}
-        title="Select Brand"
-        options={brandOptions}
-        selectedValue={brandId}
-        onSelect={(value) => {
-          const selectedOption = brandOptions.find(opt => opt.value === value);
-          if (selectedOption) {
-            setBrand(selectedOption.label);
-            setBrandId(selectedOption.value);
-          }
-        }}
+      <CustomDropdownBottomSheet
+        visible={dropdownModalVisible}
+        onClose={() => setDropdownModalVisible(false)}
+        options={getCurrentDropdownOptions()}
+        selectedValue={getSelectedDropdownValue()}
+        onSelect={handleDropdownSelect}
+        title={dropdownType === 'brand' ? 'Select Brand' : 'Select Model'}
         searchable
-        placeholder="Search brand..."
-      />
-
-      <CustomDropdownModal
-        visible={showModelDropdown}
-        onClose={() => setShowModelDropdown(false)}
-        title="Select Model"
-        options={modelOptions}
-        selectedValue={model}
-        onSelect={(value) => {
-          const selectedOption = modelOptions.find(opt => opt.value === value);
-          if (selectedOption) {
-            setModel(selectedOption.label);
-          }
-        }}
-        searchable
-        placeholder="Search model..."
+        placeholder={dropdownType === 'brand' ? 'Search brand...' : 'Search model...'}
       />
     </View>
   );

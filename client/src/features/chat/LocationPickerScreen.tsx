@@ -13,7 +13,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import Geolocation from '@react-native-community/geolocation';
 import { useToast } from '@hooks/useToast';
@@ -158,7 +158,7 @@ const LocationPickerScreen: FC = () => {
         },
         liveLocationText: {
             fontSize: RFValue(14),
-            fontFamily: Fonts.SemiBold,
+            ...fontStyle(Fonts.SemiBold),
             color: colors.text,
         },
         sectionHeader: {
@@ -168,7 +168,7 @@ const LocationPickerScreen: FC = () => {
         },
         sectionTitle: {
             fontSize: RFValue(12),
-            fontFamily: Fonts.Medium,
+            ...fontStyle(Fonts.Medium),
             color: colors.disabled,
             textTransform: 'uppercase',
         },
@@ -194,13 +194,13 @@ const LocationPickerScreen: FC = () => {
         },
         placeName: {
             fontSize: RFValue(14),
-            fontFamily: Fonts.SemiBold,
+            ...fontStyle(Fonts.SemiBold),
             color: colors.text,
             marginBottom: 4,
         },
         placeAddress: {
             fontSize: RFValue(12),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.disabled,
         },
         loadingContainer: {
@@ -234,7 +234,7 @@ const LocationPickerScreen: FC = () => {
         sendButtonText: {
             color: colors.white,
             fontSize: RFValue(14),
-            fontFamily: Fonts.SemiBold,
+            ...fontStyle(Fonts.SemiBold),
         },
         locationErrorBanner: {
             backgroundColor: colors.warning,
@@ -244,7 +244,7 @@ const LocationPickerScreen: FC = () => {
         locationErrorText: {
             color: colors.white,
             fontSize: RFValue(12),
-            fontFamily: Fonts.Medium,
+            ...fontStyle(Fonts.Medium),
         },
     });
 

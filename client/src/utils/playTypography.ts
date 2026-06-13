@@ -1,12 +1,8 @@
-import { Platform, TextStyle } from 'react-native';
-import { Fonts } from '@utils/Constants';
+import { TextStyle } from 'react-native';
+import { UI_FONT_FAMILY } from './typography';
 
 /** System UI font for the Play feed — clearer at small sizes than rounded custom faces. */
-export const PLAY_UI_FONT = Platform.select({
-  ios: 'SF Pro Text',
-  android: 'Roboto',
-  default: Fonts.Regular,
-}) as string;
+export const PLAY_UI_FONT = UI_FONT_FAMILY;
 
 export const playFeedText = {
   brand: {

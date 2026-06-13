@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Dimensions } from 
 import React, { FC } from 'react'
 import Icon from "react-native-vector-icons/Ionicons";
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 
 interface InputProps {
@@ -35,7 +35,7 @@ const CustomInput:FC<InputProps & React.ComponentProps<typeof TextInput>> = ({le
     },
     inputContainer: {
         flex: 1,
-        fontFamily: Fonts.SemiBold,
+        ...fontStyle(Fonts.SemiBold),
         fontSize: RFValue(getResponsiveValue(12, 14, 16)),
         paddingVertical: getResponsiveValue(14, 16, 18),
         paddingBottom: getResponsiveValue(15, 17, 19),

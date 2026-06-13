@@ -2,7 +2,7 @@ import React, { FC, useMemo } from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -83,7 +83,7 @@ const QuickActionsModal: FC<IQuickActionsModalProps> = ({
     },
     title: {
       fontSize: RFValue(20),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.text,
     },
     closeButton: {
@@ -114,13 +114,13 @@ const QuickActionsModal: FC<IQuickActionsModalProps> = ({
     },
     actionLabel: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       marginBottom: 4,
     },
     actionDescription: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
     },
     chevron: {

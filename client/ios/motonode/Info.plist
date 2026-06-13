@@ -67,19 +67,9 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Okra-Bold.ttf</string>
-		<string>Okra-ExtraBold.ttf</string>
-		<string>Okra-Medium.ttf</string>
-		<string>Okra-MediumLight.ttf</string>
-		<string>Okra-Regular.ttf</string>
 		<string>MaterialCommunityIcons.ttf</string>
 		<string>MaterialIcons.ttf</string>
 		<string>Ionicons.ttf</string>
-		<string>Gilroy-Bold.ttf</string>
-		<string>Gilroy-Heavy.ttf</string>
-		<string>Gilroy-Light.ttf</string>
-		<string>Gilroy-Medium.ttf</string>
-		<string>Gilroy-Regular.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

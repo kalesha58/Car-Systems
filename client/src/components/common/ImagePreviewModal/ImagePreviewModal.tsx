@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenWidth, screenHeight} from '@utils/Scaling';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -112,7 +112,7 @@ const ImagePreviewModal: FC<ImagePreviewModalProps> = ({
     counterText: {
       color: '#fff',
       fontSize: RFValue(12),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
     },
     paginationContainer: {
       position: 'absolute',

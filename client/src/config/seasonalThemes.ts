@@ -1,131 +1,185 @@
 /**
  * Seasonal Theme Configuration
- * 
- * This file defines all seasonal themes for the application.
- * Change CURRENT_SEASON to switch between themes throughout the year.
  */
 
-export type SeasonType = 'winter' | 'spring' | 'summer' | 'autumn' | 'default';
+import {
+  BackgroundEffectId,
+  IVisualEffectsConfig,
+  OverlayEffectId,
+  SeasonType,
+  DEFAULT_VISUAL_EFFECTS,
+} from '@types/visualEffects';
+import {
+  getBackgroundAnimationSource,
+  getOverlayAnimationSource,
+} from '@utils/animationConfig';
+
+export type { SeasonType };
 
 export interface ISeasonalTheme {
-    season: SeasonType;
-    name: string;
-    colors: {
-        primary: string;
-        secondary: string;
-        accent: string;
-    };
-    animations: {
-        background: any; // Main background animation (e.g., snow, rain)
-        overlay?: any;   // Optional overlay animation (e.g., train, sleigh)
-    };
-    enabled: boolean;
+  season: SeasonType;
+  name: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  animations: {
+    background?: any;
+    overlay?: any;
+  };
+  enabled: boolean;
+  backgroundSpeed: number;
+  showOverlayOnHome: boolean;
+  showOverlayOnDealerDashboard: boolean;
 }
 
 export const seasonalThemes: Record<SeasonType, ISeasonalTheme> = {
-    winter: {
-        season: 'winter',
-        name: 'Winter Theme',
-        colors: {
-            primary: '#4A90E2',    // winterBlue
-            secondary: '#6DB3F2',  // winterBlueLight
-            accent: '#2E5C8A',     // winterBlueDark
-        },
-        animations: {
-            background: require('@assets/animations/Snow flakes Christmas.json'),
-            overlay: require('@assets/animations/Winter Train.json'),
-        },
-        enabled: true,
+  winter: {
+    season: 'winter',
+    name: 'Winter Theme',
+    colors: {
+      primary: '#4A90E2',
+      secondary: '#6DB3F2',
+      accent: '#2E5C8A',
     },
-    spring: {
-        season: 'spring',
-        name: 'Spring Theme',
-        colors: {
-            primary: '#81C784',    // Green
-            secondary: '#A5D6A7',  // Light green
-            accent: '#66BB6A',     // Dark green
-        },
-        animations: {
-            background: require('@assets/animations/Sakura fall.json'),
-        },
-        enabled: true, 
+    animations: {
+      background: getBackgroundAnimationSource('snow'),
+      overlay: getOverlayAnimationSource('winter_train'),
     },
-    summer: {
-        season: 'summer',
-        name: 'Summer Theme',
-        colors: {
-            primary: '#FFA726',    // Orange
-            secondary: '#FFB74D',  // Light orange
-            accent: '#FB8C00',     // Dark orange
-        },
-        animations: {
-            background: require('@assets/animations/raining.json'), // Placeholder
-        },
-        enabled: false, // Not yet implemented
+    enabled: true,
+    backgroundSpeed: 0.5,
+    showOverlayOnHome: true,
+    showOverlayOnDealerDashboard: true,
+  },
+  spring: {
+    season: 'spring',
+    name: 'Spring Theme',
+    colors: {
+      primary: '#81C784',
+      secondary: '#A5D6A7',
+      accent: '#66BB6A',
     },
-    autumn: {
-        season: 'autumn',
-        name: 'Autumn Theme',
-        colors: {
-            primary: '#D4A574',    // Brown
-            secondary: '#E6C9A8',  // Light brown
-            accent: '#A67C52',     // Dark brown
-        },
-        animations: {
-            background: require('@assets/animations/Sakura fall.json'), // Can be reused for leaves
-        },
-        enabled: false, // Not yet implemented
+    animations: {
+      background: getBackgroundAnimationSource('sakura'),
     },
-    default: {
-        season: 'default',
-        name: 'Default Theme',
-        colors: {
-            primary: '#f7ca49',
-            secondary: '#ffe141',
-            accent: '#0d8320',
-        },
-        animations: {
-            background: require('@assets/animations/raining.json'),
-        },
-        enabled: true,
+    enabled: true,
+    backgroundSpeed: 0.5,
+    showOverlayOnHome: true,
+    showOverlayOnDealerDashboard: true,
+  },
+  summer: {
+    season: 'summer',
+    name: 'Summer Theme',
+    colors: {
+      primary: '#FFA726',
+      secondary: '#FFB74D',
+      accent: '#FB8C00',
     },
+    animations: {
+      background: getBackgroundAnimationSource('rain'),
+    },
+    enabled: false,
+    backgroundSpeed: 0.5,
+    showOverlayOnHome: true,
+    showOverlayOnDealerDashboard: true,
+  },
+  autumn: {
+    season: 'autumn',
+    name: 'Autumn Theme',
+    colors: {
+      primary: '#D4A574',
+      secondary: '#E6C9A8',
+      accent: '#A67C52',
+    },
+    animations: {
+      background: getBackgroundAnimationSource('sakura'),
+    },
+    enabled: false,
+    backgroundSpeed: 0.5,
+    showOverlayOnHome: true,
+    showOverlayOnDealerDashboard: true,
+  },
+  default: {
+    season: 'default',
+    name: 'Default Theme',
+    colors: {
+      primary: '#f7ca49',
+      secondary: '#ffe141',
+      accent: '#0d8320',
+    },
+    animations: {
+      background: getBackgroundAnimationSource('rain'),
+    },
+    enabled: true,
+    backgroundSpeed: 0.5,
+    showOverlayOnHome: true,
+    showOverlayOnDealerDashboard: true,
+  },
+};
+
+export const getSeasonFromCalendar = (): SeasonType => {
+  const month = new Date().getMonth();
+
+  if (month >= 2 && month <= 4) {
+    return 'spring';
+  }
+  if (month >= 5 && month <= 7) {
+    return 'summer';
+  }
+  if (month >= 8 && month <= 10) {
+    return 'autumn';
+  }
+  return 'winter';
+};
+
+const resolveSeason = (config: IVisualEffectsConfig): SeasonType => {
+  if (config.seasonMode === 'manual') {
+    return config.manualSeason;
+  }
+
+  const season = getSeasonFromCalendar();
+  const theme = seasonalThemes[season];
+  return theme.enabled ? season : 'default';
 };
 
 /**
- * SINGLE POINT OF CONFIGURATION
- * Change this value to switch the entire app's seasonal theme
- */
-export const CURRENT_SEASON: SeasonType = 'default'; 
-
-/**
- * Get the current active seasonal theme
+ * Get the current active seasonal theme (local fallback)
  */
 export const getCurrentSeasonalTheme = (): ISeasonalTheme => {
-    const month = new Date().getMonth(); // 0-11 (Jan is 0)
-    let season: SeasonType;
+  return resolveVisualTheme(DEFAULT_VISUAL_EFFECTS);
+};
 
-    // Automatic Season Detection
-    // Spring: March (2), April (3), May (4)
-    // Summer: June (5), July (6), August (7)
-    // Autumn: September (8), October (9), November (10)
-    // Winter: December (11), January (0), February (1)
-    
-    if (month >= 2 && month <= 4) {
-        season = 'spring';
-    } else if (month >= 5 && month <= 7) {
-        season = 'summer';
-    } else if (month >= 8 && month <= 10) {
-        season = 'autumn';
-    } else {
-        season = 'winter';
-    }
+/**
+ * Merge remote admin config with local season definitions and animation registry.
+ */
+export const resolveVisualTheme = (config: IVisualEffectsConfig): ISeasonalTheme => {
+  const season = resolveSeason(config);
+  const baseTheme = seasonalThemes[season] ?? seasonalThemes.default;
 
-    const theme = seasonalThemes[season];
+  const background = config.enabled
+    ? getBackgroundAnimationSource(config.backgroundEffect)
+    : undefined;
+  const overlay = config.enabled
+    ? getOverlayAnimationSource(config.overlayEffect)
+    : undefined;
 
-    // Fallback to default if specific season is disabled
-    if (!theme.enabled) {
-        return seasonalThemes.default;
-    }
+  const primaryColor = config.headerColor ?? baseTheme.colors.primary;
 
-    return theme;
+  return {
+    ...baseTheme,
+    season,
+    colors: {
+      ...baseTheme.colors,
+      primary: primaryColor,
+    },
+    animations: {
+      background,
+      overlay,
+    },
+    enabled: config.enabled,
+    backgroundSpeed: config.backgroundSpeed,
+    showOverlayOnHome: config.showOverlayOnHome,
+    showOverlayOnDealerDashboard: config.showOverlayOnDealerDashboard,
+  };
 };

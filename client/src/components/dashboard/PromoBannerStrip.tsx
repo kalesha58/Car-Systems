@@ -1,4 +1,4 @@
-import React, {FC, useRef, useEffect, useState, useCallback} from 'react';
+import React, {FC, useRef, useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,103 +9,70 @@ import {
 } from 'react-native';
 import CustomText from '@components/ui/CustomText';
 import {Fonts} from '@utils/Constants';
-import {navigate} from '@utils/NavigationUtils';
 import {useTheme} from '@hooks/useTheme';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {useAppConfigStore} from '@state/appConfigStore';
+import {IStoreBannerItem} from '@types/storeBanners';
+import {navigateFromBannerLink} from '@utils/bannerNavigation';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
-// matches the paddingHorizontal:20 in Content.tsx's section view
 const CARD_WIDTH = SCREEN_WIDTH - 40;
-const AUTO_SCROLL_MS = 3500;
 
-interface Banner {
-  id: string;
-  emoji: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  backgroundColor: string;
+interface BannerRow extends IStoreBannerItem {
   onPress: () => void;
 }
 
-const BANNERS: Banner[] = [
-  {
-    id: 'doorstep',
-    emoji: '🔧',
-    title: 'Doorstep Car Service',
-    subtitle: 'Expert mechanics at your door —\nno garage visit needed',
-    cta: 'Book Now',
-    backgroundColor: '#1565C0',
-    onPress: () =>
-      navigate('Category', {
-        screen: 'ProductCategories',
-        params: {
-          initialCategoryId: 'car-service',
-          initialCategoryType: 'services',
-          serviceType: 'car_automobile',
-          vehicleType: 'Car',
-        },
-      }),
-  },
-  {
-    id: 'ppf',
-    emoji: '✨',
-    title: 'Premium PPF & Detailing',
-    subtitle: 'Ceramic coating & paint protection\nstarting from ₹999',
-    cta: 'Explore',
-    backgroundColor: '#6A1B9A',
-    onPress: () =>
-      navigate('Category', {
-        screen: 'ProductCategories',
-        params: {
-          initialCategoryId: 'ppf-detailing',
-          initialCategoryType: 'services',
-          serviceType: 'car_detailing',
-        },
-      }),
-  },
-  {
-    id: 'tyre',
-    emoji: '🛞',
-    title: 'Tyre Puncture? We\'re Near',
-    subtitle: 'Roadside tyre fix in 15 mins —\nanytime, anywhere',
-    cta: 'Get Help',
-    backgroundColor: '#BF360C',
-    onPress: () =>
-      navigate('Category', {
-        screen: 'ProductCategories',
-        params: {
-          initialCategoryId: 'all-services',
-          initialCategoryType: 'services',
-          serviceType: 'tire_service',
-        },
-      }),
-  },
-];
-
 const PromoBannerStrip: FC = () => {
   const {colors} = useTheme();
-  const flatListRef = useRef<FlatList<Banner>>(null);
+  const storeBanners = useAppConfigStore(state => state.storeBanners);
+  const flatListRef = useRef<FlatList<BannerRow>>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeIndexRef = useRef(0);
 
+  const banners = useMemo<BannerRow[]>(() => {
+    if (!storeBanners.enabled) {
+      return [];
+    }
+
+    return [...storeBanners.items]
+      .filter(item => item.enabled)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(item => ({
+        ...item,
+        onPress: () => navigateFromBannerLink(item.link),
+      }));
+  }, [storeBanners]);
+
+  const autoScrollMs = storeBanners.autoScrollMs || 3500;
+
   const startAutoScroll = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (banners.length <= 1) {
+      return;
+    }
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     timerRef.current = setInterval(() => {
-      const next = (activeIndexRef.current + 1) % BANNERS.length;
+      const next = (activeIndexRef.current + 1) % banners.length;
       activeIndexRef.current = next;
       setActiveIndex(next);
       flatListRef.current?.scrollToIndex({index: next, animated: true});
-    }, AUTO_SCROLL_MS);
-  }, []);
+    }, autoScrollMs);
+  }, [autoScrollMs, banners.length]);
 
   useEffect(() => {
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
     startAutoScroll();
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     };
-  }, [startAutoScroll]);
+  }, [startAutoScroll, banners]);
 
   const onViewableItemsChanged = useRef(
     ({viewableItems}: {viewableItems: ViewToken[]}) => {
@@ -121,7 +88,9 @@ const PromoBannerStrip: FC = () => {
   }).current;
 
   const handleScrollBeginDrag = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
   };
 
   const styles = StyleSheet.create({
@@ -189,7 +158,7 @@ const PromoBannerStrip: FC = () => {
     },
   });
 
-  const renderBanner = ({item}: {item: Banner}) => (
+  const renderBanner = ({item}: {item: BannerRow}) => (
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={item.onPress}
@@ -226,11 +195,15 @@ const PromoBannerStrip: FC = () => {
     </TouchableOpacity>
   );
 
+  if (banners.length === 0) {
+    return null;
+  }
+
   return (
     <View style={styles.wrapper}>
       <FlatList
         ref={flatListRef}
-        data={BANNERS}
+        data={banners}
         renderItem={renderBanner}
         keyExtractor={item => item.id}
         horizontal
@@ -247,9 +220,8 @@ const PromoBannerStrip: FC = () => {
           index,
         })}
       />
-      {/* Pager dots */}
       <View style={styles.dotsRow}>
-        {BANNERS.map((_, i) => (
+        {banners.map((_, i) => (
           <View
             key={i}
             style={[

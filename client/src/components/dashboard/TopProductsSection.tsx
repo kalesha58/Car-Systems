@@ -1,7 +1,7 @@
 import { View, StyleSheet, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { getProducts } from '@service/productService';
@@ -91,7 +91,7 @@ const TopProductsSection: FC = () => {
         },
         productName: {
             fontSize: RFValue(9),
-            fontFamily: Fonts.Medium,
+            ...fontStyle(Fonts.Medium),
             color: colors.text,
             marginBottom: 4,
             minHeight: 28,
@@ -106,12 +106,12 @@ const TopProductsSection: FC = () => {
         },
         price: {
             fontSize: RFValue(11),
-            fontFamily: Fonts.Bold,
+            ...fontStyle(Fonts.Bold),
             color: colors.secondary,
         },
         discountPrice: {
             fontSize: RFValue(8),
-            fontFamily: Fonts.Regular,
+            ...fontStyle(Fonts.Regular),
             color: colors.disabled,
             textDecorationLine: 'line-through',
         },
@@ -128,7 +128,7 @@ const TopProductsSection: FC = () => {
         },
         discountText: {
             fontSize: RFValue(8),
-            fontFamily: Fonts.Bold,
+            ...fontStyle(Fonts.Bold),
             color: colors.white,
         },
     });

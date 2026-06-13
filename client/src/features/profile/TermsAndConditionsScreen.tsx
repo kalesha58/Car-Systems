@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
 import React, { FC } from 'react';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import CustomHeader from '@components/ui/CustomHeader';
 import { useTranslation } from 'react-i18next';
@@ -43,18 +43,18 @@ const PolicySection: FC<PolicySectionProps> = ({ number, title, children }) => {
     },
     numberText: {
       fontSize: RFValue(14),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.white,
     },
     sectionTitle: {
       fontSize: RFValue(15),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
       flex: 1,
     },
     sectionContent: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       lineHeight: RFValue(20),
     },
@@ -121,28 +121,28 @@ const TermsAndConditionsScreen: FC = () => {
     },
     mainTitle: {
       fontSize: RFValue(24),
-      fontFamily: Fonts.Bold,
+      ...fontStyle(Fonts.Bold),
       color: colors.text,
       marginBottom: 8,
       textAlign: 'center',
     },
     subtitle: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.textSecondary,
       marginBottom: 4,
       textAlign: 'center',
     },
     lastUpdated: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       opacity: 0.7,
       textAlign: 'center',
     },
     sectionContent: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       lineHeight: RFValue(20),
     },
@@ -155,7 +155,7 @@ const TermsAndConditionsScreen: FC = () => {
     },
     footerText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.textSecondary,
       textAlign: 'center',
     },

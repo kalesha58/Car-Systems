@@ -349,12 +349,71 @@ export interface IExportReportRequest {
 }
 
 // Settings Types
+export type SeasonType = 'winter' | 'spring' | 'summer' | 'autumn' | 'default';
+export type BackgroundEffectId = 'rain' | 'snow' | 'sakura' | 'none';
+export type OverlayEffectId = 'winter_train' | 'christmas_sleigh' | 'none';
+export type SeasonMode = 'auto' | 'manual';
+
+export interface IRainNoticeConfig {
+  enabled: boolean;
+  autoShowOnHomeLoad: boolean;
+  autoHideAfterMs: number;
+  title: string;
+  subtitle: string;
+}
+
+export interface IVisualEffectsConfig {
+  enabled: boolean;
+  seasonMode: SeasonMode;
+  manualSeason: SeasonType;
+  backgroundEffect: BackgroundEffectId;
+  overlayEffect: OverlayEffectId;
+  headerColor: string | null;
+  backgroundSpeed: number;
+  showOverlayOnHome: boolean;
+  showOverlayOnDealerDashboard: boolean;
+  rainNotice: IRainNoticeConfig;
+}
+
+export interface IStoreBannerLink {
+  type: 'category' | 'none';
+  categoryId?: string;
+  categoryType?: 'products' | 'services' | 'vehicles';
+  serviceType?: string;
+  vehicleType?: string;
+}
+
+export interface IStoreBannerItem {
+  id: string;
+  enabled: boolean;
+  sortOrder: number;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  cta: string;
+  backgroundColor: string;
+  link: IStoreBannerLink;
+}
+
+export interface IStoreBannersConfig {
+  enabled: boolean;
+  autoScrollMs: number;
+  items: IStoreBannerItem[];
+}
+
+export interface IAppConfig {
+  visualEffects: IVisualEffectsConfig;
+  storeBanners: IStoreBannersConfig;
+}
+
 export interface ISettings {
   siteName: string;
   siteEmail: string;
   currency: string;
   taxRate: number;
   shippingCost: number;
+  visualEffects: IVisualEffectsConfig;
+  storeBanners: IStoreBannersConfig;
 }
 
 export interface IUpdateSettingsRequest {
@@ -363,6 +422,12 @@ export interface IUpdateSettingsRequest {
   currency?: string;
   taxRate?: number;
   shippingCost?: number;
+  visualEffects?: Partial<IVisualEffectsConfig> & {
+    rainNotice?: Partial<IRainNoticeConfig>;
+  };
+  storeBanners?: Partial<IStoreBannersConfig> & {
+    items?: IStoreBannerItem[];
+  };
 }
 
 // File Upload Types

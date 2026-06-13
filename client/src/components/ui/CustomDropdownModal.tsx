@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {screenWidth, screenHeight} from '@utils/Scaling';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomText from './CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useTheme} from '@hooks/useTheme';
@@ -97,7 +97,7 @@ const CustomDropdownModal: FC<ICustomDropdownModalProps> = ({
     },
     title: {
       fontSize: RFValue(16),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.text,
     },
     closeButton: {
@@ -117,7 +117,7 @@ const CustomDropdownModal: FC<ICustomDropdownModalProps> = ({
     searchInput: {
       flex: 1,
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.text,
       marginLeft: 8,
     },
@@ -138,16 +138,16 @@ const CustomDropdownModal: FC<ICustomDropdownModalProps> = ({
     },
     optionText: {
       fontSize: RFValue(13),
-      fontFamily: Fonts.Medium,
+      ...fontStyle(Fonts.Medium),
       color: colors.text,
     },
     optionTextSelected: {
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       color: colors.secondary,
     },
     emptyText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       color: colors.disabled,
       textAlign: 'center',
       paddingVertical: 20,

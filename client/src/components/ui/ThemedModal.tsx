@@ -10,7 +10,7 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import {useTheme} from '@hooks/useTheme';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import CustomButton from '@components/ui/CustomButton';
 import CustomText from '@components/ui/CustomText';
 
@@ -90,7 +90,7 @@ const ThemedModal: FC<IThemedModalProps> = ({
     },
     title: {
       color: colors.text,
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
       fontSize: RFValue(14),
       flexShrink: 1,
     },
@@ -104,7 +104,7 @@ const ThemedModal: FC<IThemedModalProps> = ({
     },
     message: {
       color: colors.textSecondary,
-      fontFamily: Fonts.Regular,
+      ...fontStyle(Fonts.Regular),
       fontSize: RFValue(12),
       lineHeight: RFValue(16),
     },

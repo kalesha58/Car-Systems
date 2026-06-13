@@ -3,7 +3,7 @@ import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import IconIonicons from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
-import {Fonts} from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
@@ -160,7 +160,7 @@ const WelcomeHeader: FC<IWelcomeHeaderProps> = ({
     badgeText: {
       color: colors.white,
       fontSize: RFValue(10),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
   }), [colors, isDark]);
 

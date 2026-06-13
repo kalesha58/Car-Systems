@@ -13,7 +13,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { Fonts, Colors } from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { getServiceById, bookServiceSlot } from '@service/serviceService';
@@ -214,7 +214,7 @@ const ServiceDetail: React.FC = () => {
           borderRadius: 20,
           backgroundColor: colors.backgroundSecondary, // Changed from secondary
         },
-        categoryText: { color: colors.text, fontSize: RFValue(10), fontFamily: Fonts.Medium }, // Changed text color
+        categoryText: { color: colors.text, fontSize: RFValue(10), ...fontStyle(Fonts.Medium) }, // Changed text color
         metricsRow: {
           flexDirection: 'row',
           marginTop: 16,
@@ -232,8 +232,8 @@ const ServiceDetail: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
         },
-        metricText: { fontSize: RFValue(10), color: colors.text, fontFamily: Fonts.Medium },
-        metricLabel: { fontSize: RFValue(8), color: colors.disabled, fontFamily: Fonts.Regular },
+        metricText: { fontSize: RFValue(10), color: colors.text, ...fontStyle(Fonts.Medium) },
+        metricLabel: { fontSize: RFValue(8), color: colors.disabled, ...fontStyle(Fonts.Regular) },
         dealerSection: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -252,7 +252,7 @@ const ServiceDetail: React.FC = () => {
           marginRight: 12,
         },
         dealerInfo: { flex: 1 },
-        dealerName: { fontFamily: Fonts.Bold, fontSize: RFValue(14), color: colors.text },
+        dealerName: { ...fontStyle(Fonts.Bold), fontSize: RFValue(14), color: colors.text },
         dealerRole: { fontSize: RFValue(11), color: colors.disabled, marginTop: 2 },
         dealerActions: {
           flexDirection: 'row',
@@ -266,13 +266,13 @@ const ServiceDetail: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
         },
-        sectionTitle: { marginTop: 24, marginBottom: 8, fontFamily: Fonts.Bold, fontSize: RFValue(14) },
+        sectionTitle: { marginTop: 24, marginBottom: 8, ...fontStyle(Fonts.Bold), fontSize: RFValue(14) },
         description: {
           color: colors.text,
           opacity: 0.9,
           lineHeight: RFValue(18),
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
         },
         bottomBar: {
           position: 'absolute',
@@ -288,10 +288,10 @@ const ServiceDetail: React.FC = () => {
           gap: 16,
         },
         priceContainer: { flex: 1 },
-        priceLabel: { fontSize: RFValue(11), color: colors.disabled, fontFamily: Fonts.Regular },
+        priceLabel: { fontSize: RFValue(11), color: colors.disabled, ...fontStyle(Fonts.Regular) },
         priceValue: {
           fontSize: RFValue(20),
-          fontFamily: Fonts.Bold,
+          ...fontStyle(Fonts.Bold),
           color: colors.text, // Changed from secondary
         },
         chatButton: {
@@ -304,7 +304,7 @@ const ServiceDetail: React.FC = () => {
           flexDirection: 'row',
           gap: 8,
         },
-        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), fontFamily: Fonts.Medium },
+        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), ...fontStyle(Fonts.Medium) },
         detailRow: {
           flexDirection: 'row', // Changed back to row for list layout
           alignItems: 'center',
@@ -315,8 +315,8 @@ const ServiceDetail: React.FC = () => {
           gap: 12,
           width: '100%', // Full width
         },
-        detailLabel: { color: colors.disabled, fontSize: RFValue(10), fontFamily: Fonts.Regular },
-        detailValue: { fontSize: RFValue(10), fontFamily: Fonts.Medium },
+        detailLabel: { color: colors.disabled, fontSize: RFValue(10), ...fontStyle(Fonts.Regular) },
+        detailValue: { fontSize: RFValue(10), ...fontStyle(Fonts.Medium) },
         skeletonImage: {
           width: screenWidth,
           height: screenWidth * 0.8,
@@ -349,7 +349,7 @@ const ServiceDetail: React.FC = () => {
         },
         dateChipText: {
           fontSize: RFValue(11),
-          fontFamily: Fonts.Medium,
+          ...fontStyle(Fonts.Medium),
           color: colors.text,
         },
         dateChipTextSelected: {
@@ -714,7 +714,7 @@ const ServiceDetail: React.FC = () => {
             {bookingLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <CustomText style={{ color: '#fff', fontFamily: Fonts.SemiBold, fontSize: RFValue(12) }}>
+              <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(12) }}>
                 {t('service.bookSlot') || 'Book Slot'}
               </CustomText>
             )}

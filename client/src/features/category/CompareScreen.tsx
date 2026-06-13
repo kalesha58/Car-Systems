@@ -4,7 +4,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {Fonts, Colors} from '@utils/Constants';
+import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useCompareStore} from '@state/compareStore';
 import {screenWidth} from '@utils/Scaling';
@@ -92,7 +92,7 @@ const CompareScreen: FC = () => {
     },
     headerText: {
       fontSize: RFValue(12),
-      fontFamily: Fonts.SemiBold,
+      ...fontStyle(Fonts.SemiBold),
     },
     cellText: {
       fontSize: RFValue(11),

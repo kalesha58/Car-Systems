@@ -31,8 +31,10 @@ import {
   CURRENT_PRIVACY_VERSION,
   CURRENT_TERMS_VERSION,
   customerLogin,
+  customerSignup,
   sendPhoneOtp,
 } from '@service/authService';
+import { PHONE_OTP_AUTH_ENABLED } from '@config/otpAuthConfig';
 import { navigateAfterCustomerAuth } from '../../auth/postLoginNavigation';
 import { savePendingSignupDraft } from '@utils/signupDraftStorage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -106,13 +108,14 @@ const CustomerLogin = () => {
   };
 
   useEffect(() => {
-    if (routeParams.prefillLoginIdentifier) {
-      setLoginIdentifier(routeParams.prefillLoginIdentifier);
-      setIsSignupMode(false);
-      setSignupStep('chooseAccountType');
-      showSuccess(t('auth.signupSuccessLogin'));
+    const prefill = routeParams.prefillLoginIdentifier;
+    if (!prefill) {
+      return;
     }
-  }, [routeParams.prefillLoginIdentifier, showSuccess, t]);
+    setLoginIdentifier(prefill);
+    setIsSignupMode(false);
+    setSignupStep('chooseAccountType');
+  }, [routeParams.prefillLoginIdentifier]);
 
   const isLoginEmailInput = (value: string): boolean =>
     value.includes('@') || /[a-zA-Z]/.test(value);
@@ -128,9 +131,11 @@ const CustomerLogin = () => {
     }
   };
 
-  const isLoginEmailMode =
-    !isSignupMode && (loginIdentifier.length === 0 || isLoginEmailInput(loginIdentifier));
+  const isLoginEmailMode = PHONE_OTP_AUTH_ENABLED
+    ? !isSignupMode && (loginIdentifier.length === 0 || isLoginEmailInput(loginIdentifier))
+    : !isSignupMode || (isSignupMode && signupStep === 'enterDetails');
   const isPhoneLogin =
+    PHONE_OTP_AUTH_ENABLED &&
     !isSignupMode &&
     loginIdentifier.length > 0 &&
     !isLoginEmailInput(loginIdentifier) &&
@@ -211,7 +216,7 @@ const CustomerLogin = () => {
     if (isPhoneLogin) {
       return true;
     }
-    return false;
+    return PHONE_OTP_AUTH_ENABLED ? false : isValidEmail(loginIdentifier.trim()) && password.length >= 8;
   };
 
   const toggleSignupMode = () => {
@@ -284,23 +289,42 @@ const CustomerLogin = () => {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/[^0-9]/g, '');
-      savePendingSignupDraft({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        phone: cleanPhone,
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (PHONE_OTP_AUTH_ENABLED) {
+        savePendingSignupDraft({
+          name: name.trim(),
+          email: normalizedEmail,
+          phone: cleanPhone,
+          password,
+          userType,
+          termsVersion: CURRENT_TERMS_VERSION,
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+        });
+        const otpResult = await sendPhoneOtp(cleanPhone);
+        navigate('OtpVerify', {
+          phone: cleanPhone,
+          flow: 'signup',
+          resendAfterSeconds: otpResult.resendAfterSeconds,
+          otpExpiresInSeconds: otpResult.otpExpiresInSeconds,
+          otpLength: otpResult.otpLength,
+        });
+        return;
+      }
+
+      await customerSignup(
+        name.trim(),
+        normalizedEmail,
+        cleanPhone,
         password,
         userType,
-        termsVersion: CURRENT_TERMS_VERSION,
-        privacyVersion: CURRENT_PRIVACY_VERSION,
-      });
-      const otpResult = await sendPhoneOtp(cleanPhone);
-      navigate('OtpVerify', {
-        phone: cleanPhone,
-        flow: 'signup',
-        resendAfterSeconds: otpResult.resendAfterSeconds,
-        otpExpiresInSeconds: otpResult.otpExpiresInSeconds,
-        otpLength: otpResult.otpLength,
-      });
+        CURRENT_TERMS_VERSION,
+        CURRENT_PRIVACY_VERSION,
+      );
+      showSuccess(t('auth.signupSuccessLogin'));
+      setIsSignupMode(false);
+      setSignupStep('chooseAccountType');
+      await replace('CustomerLogin', { prefillLoginIdentifier: normalizedEmail });
     } catch (error: any) {
       const errorMessage =
         error?.response?.data?.Response?.ReturnMessage ||
@@ -502,27 +526,21 @@ const CustomerLogin = () => {
 
                     {!isSignupMode && (
                       <CustomInput
-                        onChangeText={handleLoginIdentifierChange}
+                        onChangeText={
+                          PHONE_OTP_AUTH_ENABLED ? handleLoginIdentifierChange : setLoginIdentifier
+                        }
                         onClear={() => setLoginIdentifier('')}
                         value={loginIdentifier}
-                        placeholder={t('auth.loginIdentifier')}
-                        inputMode={
-                          !loginIdentifier || isLoginEmailInput(loginIdentifier) ? 'email' : 'numeric'
+                        placeholder={
+                          PHONE_OTP_AUTH_ENABLED ? t('auth.loginIdentifier') : t('auth.email')
                         }
-                        keyboardType={
-                          !loginIdentifier
-                            ? 'email-address'
-                            : isLoginEmailInput(loginIdentifier)
-                              ? 'email-address'
-                              : 'number-pad'
-                        }
+                        inputMode="email"
+                        keyboardType="email-address"
                         autoCapitalize="none"
                         autoCorrect={false}
                         left={
                           <Ionicons
-                            name={
-                              !loginIdentifier || isLoginEmailInput(loginIdentifier) ? 'mail' : 'call'
-                            }
+                            name="mail"
                             color={colors.secondary}
                             style={{ marginLeft: 10 }}
                             size={RFValue(18)}
@@ -617,7 +635,7 @@ const CustomerLogin = () => {
                   </>
                 )}
 
-                {!isSignupMode && isLoginEmailMode && loginIdentifier.includes('@') && (
+                {!isSignupMode && loginIdentifier.includes('@') && (
                   <TouchableOpacity
                     onPress={() =>
                       navigate('ForgotPassword', {

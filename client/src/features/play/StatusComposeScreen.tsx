@@ -18,7 +18,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomText from '@components/ui/CustomText';
-import { Fonts } from '@utils/Constants';
+import { Fonts, fontStyle } from '@utils/Constants';
 import { useTranslation } from 'react-i18next';
 import { appendStoryFromPost } from '@service/storyService';
 import { useToast } from '@hooks/useToast';
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   sharePillText: {
     color: '#fff',
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
     fontSize: RFValue(14),
   },
   bottomBlock: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   captionInput: {
-    fontFamily: Fonts.Regular,
+    ...fontStyle(Fonts.Regular),
     fontSize: RFValue(14),
     textAlignVertical: 'top',
     minHeight: 80,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: 'rgba(255,255,255,0.75)',
     fontSize: RFValue(10),
-    fontFamily: Fonts.SemiBold,
+    ...fontStyle(Fonts.SemiBold),
     letterSpacing: 1.2,
     marginBottom: 10,
   },
