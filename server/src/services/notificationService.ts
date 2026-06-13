@@ -4,7 +4,9 @@ import { SignUp } from '../models/SignUp';
 import { Notification, INotificationDocument, NotificationType } from '../models/Notification';
 import { logger } from '../utils/logger';
 import * as admin from 'firebase-admin';
+import mongoose from 'mongoose';
 import { emitToUserNotificationRoom } from './socket/socketService';
+import { NotFoundError } from '../utils/errorHandler';
 
 /** FCM rejects the entire message when imageUrl is missing, non-HTTPS, or malformed. */
 export const resolveFcmImageUrl = (url?: string): string | undefined => {
@@ -393,7 +395,7 @@ export const markAsRead = async (
     });
 
     if (!notification) {
-      throw new Error('Notification not found');
+      throw new NotFoundError('Notification not found');
     }
 
     if (!notification.read) {
@@ -431,12 +433,21 @@ export const markAllAsRead = async (userId: string): Promise<{ count: number }> 
  */
 export const getUnreadCount = async (userId: string): Promise<number> => {
   try {
-    const count = await Notification.countDocuments({
-      userId,
-      read: false,
-    });
+    const normalizedUserId = String(userId);
+    const unreadFilter: Record<string, unknown> = {
+      read: { $ne: true },
+    };
 
-    return count;
+    if (mongoose.Types.ObjectId.isValid(normalizedUserId)) {
+      unreadFilter.$or = [
+        { userId: normalizedUserId },
+        { userId: new mongoose.Types.ObjectId(normalizedUserId) },
+      ];
+    } else {
+      unreadFilter.userId = normalizedUserId;
+    }
+
+    return await Notification.countDocuments(unreadFilter);
   } catch (error) {
     logger.error('Error getting unread notification count:', error);
     throw error;

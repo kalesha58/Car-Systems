@@ -3,6 +3,7 @@ import { IAuthRequest } from '../../middleware/authMiddleware';
 import { SignUp } from '../../models/SignUp';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../utils/errorHandler';
+import { ensureDatabaseConnection } from '../../config/database';
 import {
   sendGreetingNotification,
   getUserNotifications,
@@ -330,6 +331,7 @@ export const getUnreadCountController = async (
       return;
     }
 
+    await ensureDatabaseConnection();
     const count = await getUnreadCount(userId);
 
     res.status(200).json({

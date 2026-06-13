@@ -356,13 +356,22 @@ export const getUnreadNotificationCount = async (): Promise<number> => {
   }
   try {
     const response = await appAxios.get('/user/notifications/unread-count');
-    return response.data.Response.count || 0;
+    return response.data.Response?.count ?? 0;
   } catch (error: any) {
     const status = error?.response?.status;
     if (status === 401 || status === 403) {
       return 0;
     }
-    console.error('Error getting unread notification count:', error);
-    return 0;
+
+    // Fallback when dedicated count endpoint fails (older deploy / transient DB errors)
+    try {
+      const fallback = await appAxios.get('/user/notifications?page=1&limit=1&read=false');
+      return fallback.data.Response?.total ?? 0;
+    } catch {
+      if (__DEV__) {
+        console.warn('Error getting unread notification count:', error?.message || error);
+      }
+      return 0;
+    }
   }
 };

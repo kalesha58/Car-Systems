@@ -156,30 +156,34 @@ export const TyreServicesListPage = () => {
         <p>Review and approve customer tyre service requests</p>
       </div>
 
-      <Card className="users-page__filters">
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <Input
-              label="Search"
-              value={search}
-              onChange={v => {
-                setSearch(v);
-                setPage(1);
-              }}
-              placeholder="Customer, service, dealer..."
-            />
-          </div>
-          <div style={{ minWidth: 180 }}>
-            <Select
-              label="Status"
-              value={status}
-              onChange={v => {
-                setStatus(v);
-                setPage(1);
-              }}
-              options={STATUS_OPTIONS}
-            />
-          </div>
+      <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md, overflow: 'visible', position: 'relative', zIndex: 10 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(240px, 1fr) minmax(180px, 220px)',
+            gap: theme.spacing.md,
+            alignItems: 'end',
+          }}
+        >
+          <Input
+            label="Search"
+            value={search}
+            onChange={v => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder="Customer, service, dealer..."
+          />
+          <Select
+            label="Status"
+            value={status}
+            onChange={v => {
+              setStatus(v);
+              setPage(1);
+            }}
+            options={STATUS_OPTIONS}
+            style={{ marginBottom: 0 }}
+          />
         </div>
       </Card>
 

@@ -81,7 +81,12 @@ export const Select: React.FC<ISelectProps> = ({
     <div
       ref={selectRef}
       className={`relative ${className}`}
-      style={{ marginBottom: label || error ? theme.spacing.md : 0, ...style }}
+      style={{
+        marginBottom: label || error ? theme.spacing.md : 0,
+        alignSelf: 'flex-start',
+        width: '100%',
+        ...style,
+      }}
     >
       {label && (
         <label
@@ -98,7 +103,7 @@ export const Select: React.FC<ISelectProps> = ({
         </label>
       )}
 
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <motion.button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -174,11 +179,11 @@ export const Select: React.FC<ISelectProps> = ({
               className="select-dropdown"
               style={{
                 position: 'absolute',
-                top: '100%',
+                top: 'calc(100% + 4px)',
                 left: 0,
-                width: 'max-content',
+                right: 0,
+                width: '100%',
                 minWidth: '220px',
-                marginTop: theme.spacing.xs,
                 backgroundColor: '#ffffff',
                 border: `2px solid ${isOpen ? theme.colors.primary : '#e2e8f0'}`,
                 borderRadius: theme.borderRadius.md,

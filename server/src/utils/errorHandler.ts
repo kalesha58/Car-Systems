@@ -10,8 +10,14 @@ export const errorHandler = (err: IAppError, res: Response): void => {
   try {
     logger.error('Error occurred', err);
 
-    const statusCode = err?.statusCode || 500;
+    let statusCode = err?.statusCode || 500;
     let message = 'Internal server error';
+
+    if (err?.name === 'CastError') {
+      statusCode = 400;
+    } else if (err?.name === 'MongoServerError' || err?.name === 'MongoNetworkError') {
+      statusCode = 503;
+    }
     
     if (err) {
       if (typeof err === 'string') {

@@ -96,6 +96,22 @@ router.post('/test-greeting-notification', authMiddleware, testGreetingNotificat
 
 /**
  * @swagger
+ * /api/user/notifications/unread-count:
+ *   get:
+ *     summary: Get unread notification count
+ *     tags: [User Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unread count retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/notifications/unread-count', authMiddleware, getUnreadCountController);
+
+/**
+ * @swagger
  * /api/user/notifications:
  *   get:
  *     summary: Get user notifications
@@ -164,22 +180,6 @@ router.put('/notifications/:id/read', authMiddleware, markNotificationAsReadCont
  *         description: Unauthorized
  */
 router.put('/notifications/read-all', authMiddleware, markAllNotificationsAsReadController);
-
-/**
- * @swagger
- * /api/user/notifications/unread-count:
- *   get:
- *     summary: Get unread notification count
- *     tags: [User Notifications]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Unread count retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/notifications/unread-count', authMiddleware, getUnreadCountController);
 
 export default router;
 

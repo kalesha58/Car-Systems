@@ -1,9 +1,5 @@
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger';
-
-/**
- * Cached connection to prevent multiple connections
- */
 let cachedConnection: typeof mongoose | null = null;
 
 /**
@@ -163,5 +159,17 @@ export const connectDatabase = async (): Promise<typeof mongoose> => {
     
     throw error;
   }
+};
+
+/**
+ * Ensure MongoDB is connected before handling a request (safe for serverless / warm restarts).
+ * Unlike connectDatabase(), this does not call process.exit on failure.
+ */
+export const ensureDatabaseConnection = async (): Promise<void> => {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  await connectDatabase();
 };
 
