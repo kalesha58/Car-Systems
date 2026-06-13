@@ -24,6 +24,7 @@
     "notificationSettings": "నోటిఫికేషన్ సెట్టింగ్‌లు",
     "privacyCenter": "గోప్యతా కేంద్రం",
     "myActivity": "MY ACTIVITY",
+    "myTestDrives": "నా టెస్ట్ డ్రైవ్‌లు",
     "reviews": "సమీక్షలు",
     "questionsAnswers": "ప్రశ్నలు & జవాబులు",
     "feedbackInformation": "ఫీడ్‌బ్యాక్ & సమాచారం",
@@ -189,6 +190,12 @@
     "allVehicles": "అన్ని వాహనాలు",
     "allServices": "అన్ని సేవలు"
   },
+  "store": {
+    "testDriveRequest": "టెస్ట్ డ్రైవ్",
+    "testDriveRequestTitle": "టెస్ట్ డ్రైవ్ అభ్యర్థన",
+    "testDriveEmptyTitle": "టెస్ట్ డ్రైవ్ వాహనాలు లేవు",
+    "testDriveEmptyMessage": "ప్రస్తుతం టెస్ట్ డ్రైవ్ కోసం వాహనాలు అందుబాటులో లేవు. తర్వాత చూడండి లేదా అన్ని వాహనాలను బ్రౌజ్ చేయండి."
+  },
   "product": {
     "brand": "బ్రాండ్",
     "batteryType": "బ్యాటరీ రకం",
@@ -199,6 +206,23 @@
     "support247": "24/7 మద్దతు",
     "sharedSuccessfully": "ఉత్పత్తి విజయవంతంగా భాగస్వామ్యం చేయబడింది",
     "shareFailed": "ఉత్పత్తిని భాగస్వామ్యం చేయడంలో విఫలమైంది"
+  },
+  "testDrive": {
+    "filterAll": "అన్నీ",
+    "statusPending": "పెండింగ్",
+    "statusApproved": "ఆమోదించబడింది",
+    "statusRejected": "తిరస్కరించబడింది",
+    "statusCompleted": "పూర్తయింది",
+    "statusCancelled": "రద్దు",
+    "emptyTitle": "టెస్ట్ డ్రైవ్ అభ్యర్థనలు లేవు",
+    "emptyMessage": "వాహన పేజీ నుండి టెస్ట్ డ్రైవ్ బుక్ చేయండి, అభ్యర్థనలు ఇక్కడ కనిపిస్తాయి.",
+    "loadFailed": "టెస్ట్ డ్రైవ్‌లు లోడ్ చేయడం విఫలమైంది",
+    "vehicleFallback": "వాహనం",
+    "requestDetails": "అభ్యర్థన వివరాలు",
+    "scheduledFor": "షెడ్యూల్",
+    "yourNotes": "మీ నోట్స్",
+    "dealerNotes": "డీలర్ సందేశం",
+    "viewVehicle": "వాహనం చూడండి"
   },
   "dealer": {
     "dashboard": "డాష్‌బోర్డ్",

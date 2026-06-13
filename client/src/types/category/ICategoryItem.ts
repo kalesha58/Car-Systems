@@ -1,3 +1,5 @@
+import type { ServiceTypeValue } from '../../config/serviceCategoryConfig';
+
 export type CategoryType = 'products' | 'vehicles' | 'services';
 
 /** Store home category tile (from dropdown API, passed to CompactCategoryContainer). */
@@ -19,3 +21,14 @@ export interface ICategoryItem {
   status?: string;
 }
 
+/** Route params for ProductCategories screen (Category stack + root stack). */
+export interface IProductCategoriesRouteParams {
+  initialCategoryId?: string;
+  initialCategoryType?: CategoryType;
+  sortBy?: string;
+  dealerId?: string;
+  serviceType?: ServiceTypeValue;
+  vehicleType?: 'Car' | 'Bike';
+  allowTestDriveOnly?: boolean;
+  screenTitle?: string;
+}

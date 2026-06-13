@@ -1,4 +1,4 @@
-export type NotificationType = 'order_update' | 'service_update' | 'general';
+export type NotificationType = 'order_update' | 'service_update' | 'test_drive_update' | 'general';
 
 export interface INotification {
   id: string;

@@ -24,6 +24,7 @@
     "notificationSettings": "अधिसूचना सेटिंग्स",
     "privacyCenter": "गोपनीयता केंद्र",
     "myActivity": "MY ACTIVITY",
+    "myTestDrives": "मेरी टेस्ट ड्राइव",
     "reviews": "समीक्षाएं",
     "questionsAnswers": "प्रश्न और उत्तर",
     "feedbackInformation": "प्रतिक्रिया और जानकारी",
@@ -189,6 +190,12 @@
     "allVehicles": "सभी वाहन",
     "allServices": "सभी सेवाएं"
   },
+  "store": {
+    "testDriveRequest": "टेस्ट ड्राइव",
+    "testDriveRequestTitle": "टेस्ट ड्राइव अनुरोध",
+    "testDriveEmptyTitle": "कोई टेस्ट ड्राइव वाहन उपलब्ध नहीं",
+    "testDriveEmptyMessage": "अभी कोई वाहन टेस्ट ड्राइव के लिए उपलब्ध नहीं है। बाद में देखें या सभी वाहन ब्राउज़ करें।"
+  },
   "product": {
     "brand": "ब्रांड",
     "batteryType": "बैटरी प्रकार",
@@ -199,6 +206,23 @@
     "support247": "24/7 सहायता",
     "sharedSuccessfully": "उत्पाद सफलतापूर्वक साझा किया गया",
     "shareFailed": "उत्पाद साझा करने में विफल"
+  },
+  "testDrive": {
+    "filterAll": "सभी",
+    "statusPending": "लंबित",
+    "statusApproved": "स्वीकृत",
+    "statusRejected": "अस्वीकृत",
+    "statusCompleted": "पूर्ण",
+    "statusCancelled": "रद्द",
+    "emptyTitle": "कोई टेस्ट ड्राइव अनुरोध नहीं",
+    "emptyMessage": "वाहन पृष्ठ से टेस्ट ड्राइव बुक करें, अनुरोध यहाँ दिखेंगे।",
+    "loadFailed": "टेस्ट ड्राइव लोड करने में विफल",
+    "vehicleFallback": "वाहन",
+    "requestDetails": "अनुरोध विवरण",
+    "scheduledFor": "निर्धारित",
+    "yourNotes": "आपके नोट्स",
+    "dealerNotes": "डीलर का संदेश",
+    "viewVehicle": "वाहन देखें"
   },
   "dealer": {
     "dashboard": "डैशबोर्ड",

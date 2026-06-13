@@ -225,6 +225,11 @@ export const handleNotificationNavigation = async (data: Record<string, unknown>
     return;
   }
 
+  if (type === 'test_drive_update') {
+    navigate('MyTestDrives');
+    return;
+  }
+
   if (type === 'greeting') {
     return;
   }
@@ -246,7 +251,7 @@ export const createNotificationChannel = (): void => {
  */
 export interface INotification {
   id: string;
-  type: 'order_update' | 'service_update' | 'general';
+  type: 'order_update' | 'service_update' | 'test_drive_update' | 'general';
   title: string;
   body: string;
   data?: {

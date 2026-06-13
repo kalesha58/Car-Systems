@@ -589,7 +589,7 @@ const VehicleDetail: React.FC = () => {
               {/* Key Metrics */}
               {vehicle && (
                 <View style={styles.metricsRow}>
-                  {vehicle.year && (
+                  {vehicle.year != null && (
                     <View style={styles.metricItem}>
                       <View style={styles.metricIcon}>
                         <Icon name={getMetricIcon('year')} size={RFValue(20)} color={colors.text} />
@@ -598,7 +598,7 @@ const VehicleDetail: React.FC = () => {
                       <CustomText style={styles.metricLabel}>Year</CustomText>
                     </View>
                   )}
-                  {vehicle.mileage && (
+                  {vehicle.mileage != null && (
                     <View style={styles.metricItem}>
                       <View style={styles.metricIcon}>
                         <Icon name={getMetricIcon('mileage')} size={RFValue(20)} color={colors.text} />
@@ -703,7 +703,7 @@ const VehicleDetail: React.FC = () => {
               </CustomText>
 
               {/* Features */}
-              {vehicle?.features && vehicle.features.length > 0 && (
+              {Array.isArray(vehicle?.features) && vehicle.features.length > 0 && (
                 <>
                   <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
                     Features
@@ -713,13 +713,13 @@ const VehicleDetail: React.FC = () => {
                       <View key={index} style={styles.featureItem}>
                         <View style={styles.featureIcon}>
                           <Icon
-                            name={getFeatureIcon(feature)}
+                            name={getFeatureIcon(String(feature))}
                             size={RFValue(20)}
                             color={colors.text}
                           />
                         </View>
                         <CustomText style={styles.featureLabel} numberOfLines={2}>
-                          {feature}
+                          {String(feature)}
                         </CustomText>
                       </View>
                     ))}
@@ -767,7 +767,7 @@ const VehicleDetail: React.FC = () => {
                         </View>
                       </View>
                     )}
-                    {vehicle.year && (
+                    {vehicle.year != null && (
                       <View style={styles.detailRow}>
                         <View style={styles.detailIconContainer}>
                           <Icon name="calendar-outline" size={RFValue(18)} color={colors.text} />
@@ -895,7 +895,7 @@ const VehicleDetail: React.FC = () => {
           </CustomText>
         </View>
         <View style={styles.actionButtonsContainer}>
-          {vehicle?.allowTestDrive && (
+          {vehicle?.allowTestDrive === true && (
             <TouchableOpacity
               onPress={() => {
                 withAuth(() => {

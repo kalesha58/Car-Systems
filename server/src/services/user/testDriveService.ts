@@ -1,4 +1,4 @@
-import { TestDrive, ITestDriveDocument } from '../../models/TestDrive';
+import { TestDrive } from '../../models/TestDrive';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import {
   ITestDrive,
@@ -8,25 +8,13 @@ import {
 import { NotFoundError, AppError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
+import {
+  enrichTestDriveLight,
+  testDriveToInterface,
+  ITestDriveListEnrichment,
+} from '../testDrive/testDriveEnrichment';
 
-/**
- * Convert test drive document to interface
- */
-const testDriveToInterface = (doc: ITestDriveDocument): ITestDrive => {
-  return {
-    id: (doc._id as any).toString(),
-    userId: doc.userId,
-    vehicleId: doc.vehicleId,
-    dealerId: doc.dealerId,
-    preferredDate: doc.preferredDate.toISOString(),
-    preferredTime: doc.preferredTime,
-    status: doc.status,
-    notes: doc.notes,
-    dealerNotes: doc.dealerNotes,
-    createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-    updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-  };
-};
+export interface IUserTestDrive extends ITestDrive, ITestDriveListEnrichment {}
 
 /**
  * Create a new test drive request
@@ -36,7 +24,6 @@ export const createTestDrive = async (
   data: ICreateTestDriveRequest,
 ): Promise<ITestDrive> => {
   try {
-    // Validate vehicle exists and has test drive enabled
     const vehicle = await DealerVehicle.findById(data.vehicleId);
     if (!vehicle) {
       throw new NotFoundError('Vehicle not found');
@@ -46,24 +33,21 @@ export const createTestDrive = async (
       throw new AppError('Test drive is not available for this vehicle', 400);
     }
 
-    // Check if vehicle is available
     if (vehicle.availability !== 'available') {
       throw new AppError('Vehicle is not available for test drive', 400);
     }
 
-    // Validate date is in future
     const preferredDate = new Date(data.preferredDate);
     const now = new Date();
     if (preferredDate <= now) {
       throw new AppError('Preferred date must be in the future', 400);
     }
 
-    // Check for overlapping test drives (same vehicle, same date/time)
     const startOfDay = new Date(preferredDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(preferredDate);
     endOfDay.setHours(23, 59, 59, 999);
-    
+
     const existingTestDrive = await TestDrive.findOne({
       vehicleId: data.vehicleId,
       preferredDate: {
@@ -78,7 +62,6 @@ export const createTestDrive = async (
       throw new ConflictError('A test drive is already scheduled for this date and time');
     }
 
-    // Create test drive
     const testDrive = new TestDrive({
       userId,
       vehicleId: data.vehicleId,
@@ -106,7 +89,7 @@ export const createTestDrive = async (
 export const getUserTestDrives = async (
   userId: string,
   query: IGetTestDrivesRequest,
-): Promise<{ testDrives: ITestDrive[]; pagination: IPaginationResponse }> => {
+): Promise<{ testDrives: IUserTestDrive[]; pagination: IPaginationResponse }> => {
   try {
     const page = query.page || 1;
     const limit = query.limit || 10;
@@ -137,8 +120,10 @@ export const getUserTestDrives = async (
       TestDrive.countDocuments(filter),
     ]);
 
+    const enriched = await Promise.all(testDrives.map((td) => enrichTestDriveLight(td)));
+
     return {
-      testDrives: testDrives.map(testDriveToInterface),
+      testDrives: enriched,
       pagination: {
         page,
         limit,
@@ -158,7 +143,7 @@ export const getUserTestDrives = async (
 export const getUserTestDriveById = async (
   userId: string,
   testDriveId: string,
-): Promise<ITestDrive> => {
+): Promise<IUserTestDrive> => {
   try {
     const testDrive = await TestDrive.findById(testDriveId);
 
@@ -166,12 +151,11 @@ export const getUserTestDriveById = async (
       throw new NotFoundError('Test drive not found');
     }
 
-    // Ensure user can only access their own test drives
     if (testDrive.userId !== userId) {
       throw new AppError('Unauthorized access to test drive', 403);
     }
 
-    return testDriveToInterface(testDrive);
+    return enrichTestDriveLight(testDrive);
   } catch (error) {
     logger.error('Error getting test drive by ID:', error);
     throw error;
@@ -192,12 +176,10 @@ export const cancelUserTestDrive = async (
       throw new NotFoundError('Test drive not found');
     }
 
-    // Ensure user can only cancel their own test drives
     if (testDrive.userId !== userId) {
       throw new AppError('Unauthorized access to test drive', 403);
     }
 
-    // Can only cancel if status is pending or approved
     if (!['pending', 'approved'].includes(testDrive.status)) {
       throw new AppError(`Cannot cancel test drive with status: ${testDrive.status}`, 400);
     }
@@ -213,4 +195,3 @@ export const cancelUserTestDrive = async (
     throw error;
   }
 };
-

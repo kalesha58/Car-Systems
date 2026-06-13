@@ -5,6 +5,7 @@ import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { navigate } from '@utils/NavigationUtils';
+import { useTranslation } from 'react-i18next';
 import { buildServiceNavigationParams } from '../../config/serviceCategoryConfig';
 import { getDropdownOptions } from '@service/dropdownService';
 
@@ -22,6 +23,7 @@ const isSparePartsLabel = (label: string) => /^spare\s*parts$/i.test(label.trim(
 
 const CategoryButtons: FC = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [sparePartsCategoryId, setSparePartsCategoryId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -78,6 +80,15 @@ const CategoryButtons: FC = () => {
         categoryId: 'tire-service',
       },
       {
+        id: 'test-drive-request',
+        label: t('store.testDriveRequest'),
+        imageSource: require('@assets/images/All-Vehicles.jpeg'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'vehicles',
+        categoryId: 'all-vehicles',
+      },
+      {
         id: 'ppf-detailing',
         label: 'PPF & Detailing',
         imageSource: require('@assets/services/ppf_detailing_new.png'),
@@ -105,10 +116,23 @@ const CategoryButtons: FC = () => {
         categoryId: 'battery-service',
       },
     ],
-    [colors.cardBackground, colors.text, sparePartsCategoryId],
+    [colors.cardBackground, colors.text, sparePartsCategoryId, t],
   );
 
   const handleCategoryPress = (button: CategoryButton) => {
+    if (button.id === 'test-drive-request') {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          initialCategoryId: 'all-vehicles',
+          initialCategoryType: 'vehicles',
+          allowTestDriveOnly: true,
+          screenTitle: t('store.testDriveRequestTitle'),
+        },
+      });
+      return;
+    }
+
     if (button.categoryType === 'services' && button.categoryId) {
       navigate('Category', {
         screen: 'ProductCategories',

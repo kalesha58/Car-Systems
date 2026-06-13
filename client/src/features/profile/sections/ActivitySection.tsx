@@ -42,6 +42,15 @@ const ActivitySection: FC = () => {
   });
 
   const menuItems = [
+    ...(!isDealer
+      ? [
+          {
+            icon: 'car-sport-outline',
+            label: t('profile.myTestDrives'),
+            onPress: () => navigation.navigate('MyTestDrives' as never),
+          },
+        ]
+      : []),
     {
       icon: 'create-outline',
       label: t('profile.reviews'),

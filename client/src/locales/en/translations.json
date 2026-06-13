@@ -24,6 +24,7 @@
     "notificationSettings": "Notification Settings",
     "privacyCenter": "Privacy Center",
     "myActivity": "MY ACTIVITY",
+    "myTestDrives": "My Test Drives",
     "reviews": "Reviews",
     "questionsAnswers": "Questions & Answers",
     "feedbackInformation": "Feedback & Information",
@@ -189,6 +190,12 @@
     "allVehicles": "All Vehicles",
     "allServices": "All Services"
   },
+  "store": {
+    "testDriveRequest": "Test Drive",
+    "testDriveRequestTitle": "Test Drive Request",
+    "testDriveEmptyTitle": "No test drive vehicles available",
+    "testDriveEmptyMessage": "No vehicles are open for test drive right now. Check back later or browse all vehicles."
+  },
   "product": {
     "brand": "Brand",
     "batteryType": "Battery Type",
@@ -199,6 +206,23 @@
     "support247": "24/7 Support",
     "sharedSuccessfully": "Product shared successfully",
     "shareFailed": "Failed to share product"
+  },
+  "testDrive": {
+    "filterAll": "All",
+    "statusPending": "Pending",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "emptyTitle": "No test drive requests",
+    "emptyMessage": "Book a test drive from a vehicle page to see your requests here.",
+    "loadFailed": "Failed to load test drives",
+    "vehicleFallback": "Vehicle",
+    "requestDetails": "Request details",
+    "scheduledFor": "Scheduled for",
+    "yourNotes": "Your notes",
+    "dealerNotes": "Message from dealer",
+    "viewVehicle": "View vehicle"
   },
   "dealer": {
     "dashboard": "Dashboard",

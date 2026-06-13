@@ -19,6 +19,7 @@ import ProductDashboard from '@features/dashboard/ProductDashboard';
 import DealerDashboard from '@features/dashboard/DealerDashboard';
 import PlayScreen from '@features/play/PlayScreen';
 import ProductCategories from '@features/category/ProductCategories';
+import type { IProductCategoriesRouteParams } from '../types/category/ICategoryItem';
 import CompareScreen from '@features/category/CompareScreen';
 import CartScreen from '@features/cart/CartScreen';
 import Profile from '@features/profile/Profile';
@@ -70,6 +71,7 @@ import MetAIChatScreen from '@features/support/MetAIChatScreen';
 import PrivacyCenterScreen from '@features/profile/PrivacyCenterScreen';
 import PrivacyPermissionsScreen from '@features/profile/PrivacyPermissionsScreen';
 import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen';
+import MyTestDrivesScreen from '@features/profile/MyTestDrivesScreen';
 import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
 import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
 import QuickActionsScreen from '@features/dashboard/QuickActionsScreen';
@@ -78,8 +80,14 @@ import PreBookingScreen from '@features/vehicle/PreBookingScreen';
 import SignupPoliciesScreen from '@features/auth/SignupPoliciesScreen';
 
 const Stack = createNativeStackNavigator();
+
+export type StoreStackParamList = {
+  StoreDashboard: undefined;
+  ProductCategories: IProductCategoriesRouteParams | undefined;
+};
+
+const StoreStack = createNativeStackNavigator<StoreStackParamList>();
 const Tab = createBottomTabNavigator();
-const StoreStack = createNativeStackNavigator();
 
 // Store Stack Navigator - nested inside Category tab
 const StoreStackNavigator: FC = () => {
@@ -665,6 +673,13 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="PrivacyPermissions"
             component={PrivacyPermissionsScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="MyTestDrives"
+            component={MyTestDrivesScreen}
             options={{
               animation: 'slide_from_right',
             }}

@@ -28,7 +28,7 @@ import {getDropdownOptions} from '@service/dropdownService';
 import type {IProduct} from '../../types/product/IProduct';
 import type {IDealerVehicle} from '../../types/vehicle/IVehicle';
 import type {IService} from '../../types/service/IService';
-import type {ICategoryItem, CategoryType} from '../../types/category/ICategoryItem';
+import type {ICategoryItem, CategoryType, IProductCategoriesRouteParams} from '../../types/category/ICategoryItem';
 import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import {useTranslation} from 'react-i18next';
@@ -102,14 +102,8 @@ const allServicesImage = require('@assets/images/AutoMobile-Services.jpeg');
 const ProductCategories = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const routeParams = route.params as {
-    initialCategoryId?: string;
-    initialCategoryType?: CategoryType;
-    sortBy?: string;
-    dealerId?: string;
-    serviceType?: ServiceTypeValue;
-    vehicleType?: 'Car' | 'Bike';
-  } | undefined;
+  const routeParams = route.params as IProductCategoriesRouteParams | undefined;
+  const allowTestDriveOnly = routeParams?.allowTestDriveOnly === true;
   
   const {t} = useTranslation();
   const {showError, showSuccess} = useToast();
@@ -245,6 +239,10 @@ const ProductCategories = () => {
       } else if (routeParams.sortBy === 'createdAt') {
         setCurrentSort('newest');
       }
+    }
+
+    if (routeParams.allowTestDriveOnly) {
+      setFilters((prev) => ({ ...prev, allowTestDrive: true }));
     }
 
     // Clear dealerId filter if navigating to "all products" without explicit dealerId
@@ -452,6 +450,11 @@ const ProductCategories = () => {
         });
         // Handle both response structures: Response.vehicles or Response.vehicles (nested)
         fetchedItems = response.Response?.vehicles || [];
+        if (routeParams?.allowTestDriveOnly) {
+          fetchedItems = fetchedItems.filter(
+            (v) => (v as IDealerVehicle).allowTestDrive === true && (v as IDealerVehicle).availability === 'available',
+          );
+        }
         console.log('[All Vehicles] Extracted vehicles:', fetchedItems.length);
       } else if (categoryType === 'services') {
         const response = await getServices(queryParams);
@@ -481,7 +484,7 @@ const ProductCategories = () => {
       console.warn(`[${categoryType}] No cached data available, returning empty array for category:`, category._id);
       return [];
     }
-  }, [routeParams?.dealerId]);
+  }, [routeParams?.dealerId, routeParams?.allowTestDriveOnly]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -516,6 +519,9 @@ const ProductCategories = () => {
   }, [selectedCategory, filters, fetchItemsMemoized]);
 
   const getHeaderTitle = () => {
+    if (routeParams?.screenTitle) {
+      return routeParams.screenTitle;
+    }
     if (selectedCategory?.name) {
       return selectedCategory.name;
     }
@@ -858,24 +864,33 @@ const ProductCategories = () => {
 
   // ── Spare Parts: filter by vehicleType + brand (spare parts category only) ──
   const finalItems = useMemo(() => {
-    if (selectedCategory?.type !== 'products' || !isSparePartsCategory(selectedCategory)) {
-      return subcategoryFilteredItems;
+    let result = subcategoryFilteredItems;
+
+    if (allowTestDriveOnly && selectedCategory?.type === 'vehicles') {
+      result = result.filter((item) => {
+        const v = item as IDealerVehicle;
+        return v.allowTestDrive === true && v.availability === 'available';
+      });
     }
-    let result = [...subcategoryFilteredItems];
+
+    if (selectedCategory?.type !== 'products' || !isSparePartsCategory(selectedCategory)) {
+      return result;
+    }
+    let spareResult = [...result];
     if (sparePartsVehicleType) {
-      result = result.filter(item => {
+      spareResult = spareResult.filter(item => {
         const p = item as IProduct;
         return !p.vehicleType || p.vehicleType.toLowerCase() === sparePartsVehicleType.toLowerCase();
       });
     }
     if (sparePartsBrand) {
-      result = result.filter(item => {
+      spareResult = spareResult.filter(item => {
         const p = item as IProduct;
         return p.vehicleBrandId === sparePartsBrand;
       });
     }
-    return result;
-  }, [subcategoryFilteredItems, selectedCategory, sparePartsVehicleType, sparePartsBrand]);
+    return spareResult;
+  }, [subcategoryFilteredItems, selectedCategory, sparePartsVehicleType, sparePartsBrand, allowTestDriveOnly]);
 
   // Handle sort selection
   const handleSortSelect = (sort: SortOption) => {
@@ -898,6 +913,9 @@ const ProductCategories = () => {
 
   // Handle filter removal
   const handleRemoveFilter = (key: keyof IFilterState) => {
+    if (allowTestDriveOnly && key === 'allowTestDrive') {
+      return;
+    }
     setFilters(prev => {
       const newFilters = {...prev};
       if (key === 'minPrice' || key === 'maxPrice') {
@@ -912,7 +930,11 @@ const ProductCategories = () => {
 
   // Handle clear all filters
   const handleClearAllFilters = () => {
-    setFilters({});
+    if (allowTestDriveOnly) {
+      setFilters({ allowTestDrive: true });
+    } else {
+      setFilters({});
+    }
     setCurrentSort('relevance');
   };
 
@@ -1214,25 +1236,27 @@ const ProductCategories = () => {
             {selectedCategory?.type === 'vehicles' && (
               <View style={{flexDirection: 'row', gap: 8, marginBottom: 8}}>
                 <TouchableOpacity
-                  activeOpacity={0.75}
-                  onPress={() =>
+                  activeOpacity={allowTestDriveOnly ? 1 : 0.75}
+                  onPress={() => {
+                    if (allowTestDriveOnly) return;
                     setFilters((prev) => ({
                       ...prev,
                       allowTestDrive: prev.allowTestDrive ? undefined : true,
-                    }))
-                  }
+                    }));
+                  }}
                   style={{
                     paddingVertical: 6,
                     paddingHorizontal: 12,
                     borderRadius: 16,
                     borderWidth: 1,
-                    backgroundColor: filters.allowTestDrive ? Colors.secondary + '18' : colors.backgroundSecondary,
-                    borderColor: filters.allowTestDrive ? Colors.secondary : colors.border,
+                    backgroundColor: (filters.allowTestDrive || allowTestDriveOnly) ? Colors.secondary + '18' : colors.backgroundSecondary,
+                    borderColor: (filters.allowTestDrive || allowTestDriveOnly) ? Colors.secondary : colors.border,
+                    opacity: allowTestDriveOnly ? 0.85 : 1,
                   }}>
                   <CustomText
                     fontSize={RFValue(10)}
-                    fontFamily={filters.allowTestDrive ? Fonts.SemiBold : Fonts.Medium}
-                    style={{color: filters.allowTestDrive ? Colors.secondary : colors.text}}>
+                    fontFamily={(filters.allowTestDrive || allowTestDriveOnly) ? Fonts.SemiBold : Fonts.Medium}
+                    style={{color: (filters.allowTestDrive || allowTestDriveOnly) ? Colors.secondary : colors.text}}>
                     Test drive available
                   </CustomText>
                 </TouchableOpacity>
@@ -1270,6 +1294,8 @@ const ProductCategories = () => {
                   searchQuery={searchQuery}
                   onClearFilters={handleClearAllFilters}
                   onClearSearch={() => handleSearch('')}
+                  emptyTitle={allowTestDriveOnly && !searchQuery.trim() ? t('store.testDriveEmptyTitle') : undefined}
+                  emptyMessage={allowTestDriveOnly && !searchQuery.trim() ? t('store.testDriveEmptyMessage') : undefined}
                 />
               ) : (
               <ProductList 

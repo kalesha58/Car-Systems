@@ -1,17 +1,16 @@
 import { Breadcrumbs } from '@components/Breadcrumbs/Breadcrumbs';
-import { Button } from '@components/Button/Button';
 import { Card } from '@components/Card/Card';
 import { Input } from '@components/Input/Input';
+import { Pagination } from '@components/Pagination/Pagination';
 import { Select } from '@components/Select';
+import { SkeletonTable } from '@components/Skeleton';
+import { Table } from '@components/Table/Table';
+import { getAdminTestDrives } from '@services/testDriveService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
-import { Fragment, useCallback, useEffect, useState } from 'react';
-import {
-  deleteAdminTestDrive,
-  getAdminTestDrives,
-  updateAdminTestDrive,
-  updateAdminTestDriveStatus,
-} from '@services/testDriveService';
+import { motion } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { IAdminTestDrive, TestDriveStatus } from '../../types/testDrive';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -20,14 +19,6 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: '#ef4444',
   completed: '#6b7280',
   cancelled: '#9ca3af',
-};
-
-const STATUS_ACTIONS: Record<TestDriveStatus, TestDriveStatus[]> = {
-  pending: ['approved', 'rejected', 'cancelled'],
-  approved: ['completed', 'cancelled'],
-  rejected: [],
-  completed: [],
-  cancelled: [],
 };
 
 const STATUS_OPTIONS = [
@@ -39,7 +30,17 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+const formatDate = (d?: string) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
 export const TestDrivesListPage = () => {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const { showToast } = useToastStore();
   const [testDrives, setTestDrives] = useState<IAdminTestDrive[]>([]);
@@ -48,27 +49,27 @@ export const TestDrivesListPage = () => {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [editModal, setEditModal] = useState<{
-    id: string;
-    preferredDate: string;
-    preferredTime: string;
-    notes: string;
-  } | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const itemsPerPage = 20;
 
   const fetchTestDrives = useCallback(async () => {
     try {
       setLoading(true);
+      setFetchError(null);
       const result = await getAdminTestDrives({
         page,
-        limit: 20,
+        limit: itemsPerPage,
         search: search || undefined,
         status: (status as TestDriveStatus) || undefined,
       });
-      setTestDrives(result.testDrives);
+      setTestDrives(result.testDrives ?? []);
       setTotalPages(result.pagination?.totalPages ?? 1);
-    } catch {
+      setTotalItems(result.pagination?.total ?? 0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load test drives';
+      setFetchError(message);
+      setTestDrives([]);
       showToast('Failed to load test drives', 'error');
     } finally {
       setLoading(false);
@@ -79,62 +80,80 @@ export const TestDrivesListPage = () => {
     fetchTestDrives();
   }, [fetchTestDrives]);
 
-  const s = theme.spacing;
-
-  const formatDate = (d?: string) => {
-    if (!d) return '—';
-    return new Date(d).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const handleStatusChange = async (id: string, newStatus: TestDriveStatus) => {
-    try {
-      setSubmittingId(id);
-      await updateAdminTestDriveStatus(id, { status: newStatus });
-      showToast(`Test drive ${newStatus}`, 'success');
-      fetchTestDrives();
-    } catch {
-      showToast('Failed to update status', 'error');
-    } finally {
-      setSubmittingId(null);
+  const getStatusClass = (value: string) => {
+    switch (value) {
+      case 'approved':
+      case 'completed':
+        return 'users-status-badge users-status-badge--active';
+      case 'pending':
+        return 'users-status-badge users-status-badge--warning';
+      case 'rejected':
+      case 'cancelled':
+        return 'users-status-badge users-status-badge--inactive';
+      default:
+        return 'users-status-badge';
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this test drive permanently?')) return;
-    try {
-      setSubmittingId(id);
-      await deleteAdminTestDrive(id);
-      showToast('Test drive deleted', 'success');
-      fetchTestDrives();
-    } catch {
-      showToast('Failed to delete test drive', 'error');
-    } finally {
-      setSubmittingId(null);
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editModal) return;
-    try {
-      setSubmittingId(editModal.id);
-      await updateAdminTestDrive(editModal.id, {
-        preferredDate: editModal.preferredDate,
-        preferredTime: editModal.preferredTime,
-        notes: editModal.notes,
-      });
-      showToast('Test drive updated', 'success');
-      setEditModal(null);
-      fetchTestDrives();
-    } catch {
-      showToast('Failed to update test drive', 'error');
-    } finally {
-      setSubmittingId(null);
-    }
-  };
+  const columns = [
+    {
+      key: 'customer',
+      header: 'Customer',
+      sortable: true,
+      sortValue: (td: IAdminTestDrive) => td.customerName || '',
+      render: (td: IAdminTestDrive) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{td.customerName || '—'}</div>
+          <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
+            {td.customerPhone || td.customerEmail || '—'}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'vehicle',
+      header: 'Vehicle',
+      sortable: true,
+      sortValue: (td: IAdminTestDrive) => td.vehicleLabel || '',
+      render: (td: IAdminTestDrive) => td.vehicleLabel || td.vehicleId,
+    },
+    {
+      key: 'dealer',
+      header: 'Dealer',
+      sortable: true,
+      sortValue: (td: IAdminTestDrive) => td.dealerName || '',
+      render: (td: IAdminTestDrive) => td.dealerName || td.dealerId,
+    },
+    {
+      key: 'schedule',
+      header: 'Date / Time',
+      sortable: true,
+      sortValue: (td: IAdminTestDrive) => new Date(td.preferredDate),
+      render: (td: IAdminTestDrive) => (
+        <div>
+          <div>{formatDate(td.preferredDate)}</div>
+          <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>{td.preferredTime}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      sortValue: (td: IAdminTestDrive) => td.status,
+      render: (td: IAdminTestDrive) => {
+        const color = STATUS_COLORS[td.status] || '#6b7280';
+        return (
+          <span
+            className={getStatusClass(td.status)}
+            style={{ background: `${color}20`, color }}
+          >
+            {td.status}
+          </span>
+        );
+      },
+    },
+  ];
 
   const emptyStateMessage = (() => {
     if (status === 'approved') {
@@ -150,24 +169,24 @@ export const TestDrivesListPage = () => {
   })();
 
   return (
-    <div style={{ padding: s.lg }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="users-page">
       <Breadcrumbs />
 
-      <div style={{ marginBottom: s.lg }}>
-        <h1 style={{ margin: 0, color: theme.colors.text, fontSize: '1.5rem', fontWeight: 700 }}>
-          Test Drives
-        </h1>
-        <p style={{ margin: 0, color: theme.colors.textSecondary, marginTop: 4 }}>
-          Manage test drive requests across all dealers
-        </p>
+      <div className="users-page__hero">
+        <div>
+          <h1 className="users-page__title">Test Drives</h1>
+          <p className="users-page__subtitle">
+            Manage test drive requests across all dealers. Click a row to view full details.
+          </p>
+        </div>
       </div>
 
-      <Card style={{ marginBottom: s.md, padding: s.md }}>
+      <Card style={{ marginBottom: theme.spacing.md, padding: theme.spacing.md }}>
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(240px, 1fr) minmax(180px, 220px)',
-            gap: s.md,
+            gap: theme.spacing.md,
             alignItems: 'end',
           }}
         >
@@ -195,229 +214,36 @@ export const TestDrivesListPage = () => {
 
       <Card style={{ padding: 0 }}>
         {loading ? (
-          <div style={{ padding: s.xl, textAlign: 'center', color: theme.colors.textSecondary }}>
-            Loading...
+          <SkeletonTable rows={5} columns={columns.length} />
+        ) : fetchError ? (
+          <div style={{ padding: theme.spacing.xl, textAlign: 'center' }}>
+            <p style={{ fontWeight: 600, color: theme.colors.error }}>Could not load test drives</p>
+            <p style={{ color: theme.colors.textSecondary }}>{fetchError}</p>
           </div>
         ) : testDrives.length === 0 ? (
-          <div style={{ padding: s.xl, textAlign: 'center', color: theme.colors.textSecondary }}>
-            <p style={{ margin: '0 0 8px', fontWeight: 600, color: theme.colors.text }}>
-              No test drives found
-            </p>
-            <p style={{ margin: 0, maxWidth: 520, marginInline: 'auto', lineHeight: 1.5 }}>
-              {emptyStateMessage}
-            </p>
+          <div style={{ padding: theme.spacing.xl, textAlign: 'center', color: theme.colors.textSecondary }}>
+            <p style={{ fontWeight: 600, color: theme.colors.text }}>No test drives found</p>
+            <p style={{ maxWidth: 520, margin: '8px auto 0', lineHeight: 1.5 }}>{emptyStateMessage}</p>
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr
-                  style={{
-                    background: theme.colors.surface,
-                    borderBottom: `1px solid ${theme.colors.border}`,
-                  }}
-                >
-                  {['Customer', 'Vehicle', 'Dealer', 'Date / Time', 'Status', 'Actions'].map((h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        color: theme.colors.textSecondary,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {testDrives.map((td) => {
-                  const statusColor = STATUS_COLORS[td.status] || '#6b7280';
-                  const isExpanded = expandedId === td.id;
-                  const actions = STATUS_ACTIONS[td.status] || [];
-                  const busy = submittingId === td.id;
-
-                  return (
-                    <Fragment key={td.id}>
-                      <tr style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
-                        <td style={{ padding: '12px 16px', color: theme.colors.text }}>
-                          <div style={{ fontWeight: 600 }}>{td.customerName || '—'}</div>
-                          <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
-                            {td.customerPhone || td.customerEmail}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 16px', color: theme.colors.text }}>
-                          {td.vehicleLabel || td.vehicleId}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: theme.colors.text }}>
-                          {td.dealerName || td.dealerId}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: theme.colors.text, whiteSpace: 'nowrap' }}>
-                          {formatDate(td.preferredDate)}
-                          <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
-                            {td.preferredTime}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '4px 10px',
-                              borderRadius: 20,
-                              fontSize: '0.72rem',
-                              fontWeight: 600,
-                              lineHeight: 1.2,
-                              background: `${statusColor}20`,
-                              color: statusColor,
-                              textTransform: 'capitalize',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {td.status}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                            {actions.map((action) => (
-                              <Button
-                                key={action}
-                                variant="outline"
-                                disabled={busy}
-                                onClick={() => handleStatusChange(td.id, action)}
-                                style={{ padding: '4px 10px', fontSize: '0.72rem', textTransform: 'capitalize' }}
-                              >
-                                {action}
-                              </Button>
-                            ))}
-                            <Button
-                              variant="outline"
-                              disabled={busy}
-                              onClick={() =>
-                                setEditModal({
-                                  id: td.id,
-                                  preferredDate: td.preferredDate.split('T')[0],
-                                  preferredTime: td.preferredTime,
-                                  notes: td.notes || '',
-                                })
-                              }
-                              style={{ padding: '4px 10px', fontSize: '0.72rem' }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              disabled={busy}
-                              onClick={() => setExpandedId(isExpanded ? null : td.id)}
-                              style={{ padding: '4px 10px', fontSize: '0.72rem' }}
-                            >
-                              {isExpanded ? 'Hide' : 'View'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              disabled={busy}
-                              onClick={() => handleDelete(td.id)}
-                              style={{ padding: '4px 10px', fontSize: '0.72rem', color: '#ef4444' }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr key={`${td.id}-expanded`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              padding: '16px 24px',
-                              background: theme.colors.surface,
-                              borderBottom: `1px solid ${theme.colors.border}`,
-                            }}
-                          >
-                            <div style={{ display: 'grid', gap: 8, fontSize: '0.85rem', color: theme.colors.text }}>
-                              <div><strong>Notes:</strong> {td.notes || '—'}</div>
-                              <div><strong>Dealer notes:</strong> {td.dealerNotes || '—'}</div>
-                              <div><strong>User ID:</strong> {td.userId}</div>
-                              <div><strong>Vehicle ID:</strong> {td.vehicleId}</div>
-                              <div><strong>Dealer ID:</strong> {td.dealerId}</div>
-                              <div><strong>Created:</strong> {formatDate(td.createdAt)}</div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            columns={columns}
+            data={testDrives}
+            onRowClick={(td) => navigate(`/test-drives/${td.id}`)}
+          />
         )}
       </Card>
 
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: s.sm, marginTop: s.md }}>
-          <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-            Previous
-          </Button>
-          <span style={{ alignSelf: 'center', color: theme.colors.textSecondary }}>
-            Page {page} of {totalPages}
-          </span>
-          <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-            Next
-          </Button>
-        </div>
+      {!loading && totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setPage}
+          onItemsPerPageChange={() => {}}
+        />
       )}
-
-      {editModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setEditModal(null)}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <Card style={{ padding: s.lg, width: '100%', maxWidth: 420 }}>
-            <h3 style={{ margin: '0 0 16px', color: theme.colors.text }}>Edit Test Drive</h3>
-            <div style={{ display: 'grid', gap: 12 }}>
-              <Input
-                label="Preferred date"
-                type="date"
-                value={editModal.preferredDate}
-                onChange={(v) => setEditModal({ ...editModal, preferredDate: v })}
-              />
-              <Input
-                label="Preferred time (HH:mm)"
-                value={editModal.preferredTime}
-                onChange={(v) => setEditModal({ ...editModal, preferredTime: v })}
-              />
-              <Input
-                label="Customer notes"
-                value={editModal.notes}
-                onChange={(v) => setEditModal({ ...editModal, notes: v })}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-              <Button variant="outline" onClick={() => setEditModal(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEdit} disabled={submittingId === editModal.id}>
-                Save
-              </Button>
-            </div>
-          </Card>
-          </div>
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 };

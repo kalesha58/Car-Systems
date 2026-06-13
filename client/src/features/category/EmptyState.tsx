@@ -12,6 +12,8 @@ interface IEmptyStateProps {
   searchQuery?: string;
   onClearFilters?: () => void;
   onClearSearch?: () => void;
+  emptyTitle?: string;
+  emptyMessage?: string;
 }
 
 const EmptyState: FC<IEmptyStateProps> = ({
@@ -19,6 +21,8 @@ const EmptyState: FC<IEmptyStateProps> = ({
   searchQuery,
   onClearFilters,
   onClearSearch,
+  emptyTitle,
+  emptyMessage,
 }) => {
   const {colors} = useTheme();
 
@@ -124,13 +128,13 @@ const EmptyState: FC<IEmptyStateProps> = ({
         variant="h5"
         fontFamily={Fonts.SemiBold}
         style={[styles.title, {color: colors.text}]}>
-        No items available
+        {emptyTitle || 'No items available'}
       </CustomText>
       <CustomText
         variant="h6"
         fontFamily={Fonts.Regular}
         style={[styles.message, {color: colors.textSecondary}]}>
-        Try adjusting your filters or browse other categories
+        {emptyMessage || 'Try adjusting your filters or browse other categories'}
       </CustomText>
       {onClearFilters && (
         <TouchableOpacity

@@ -48,6 +48,9 @@ const ServiceBookingsListPage = lazy(() =>
 const TestDrivesListPage = lazy(() =>
   import('@pages/TestDrives/TestDrivesListPage').then(module => ({ default: module.TestDrivesListPage })),
 );
+const TestDriveDetailsPage = lazy(() =>
+  import('@pages/TestDrives/TestDriveDetailsPage').then(module => ({ default: module.TestDriveDetailsPage })),
+);
 const DeleteAccountPage = lazy(() =>
   import('@pages/Public/DeleteAccountPage').then(module => ({ default: module.DeleteAccountPage })),
 );
@@ -380,6 +383,14 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <TestDrivesListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="test-drives/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <TestDriveDetailsPage />
               </Suspense>
             }
           />

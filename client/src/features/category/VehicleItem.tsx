@@ -119,7 +119,7 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
           <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
             {item.year} • {item.vehicleType}
           </CustomText>
-          {item.mileage && (
+          {item.mileage != null && (
             <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Regular}>
               {item.mileage} km
             </CustomText>

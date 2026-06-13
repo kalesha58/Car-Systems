@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type NotificationType = 'order_update' | 'service_update' | 'general';
+export type NotificationType = 'order_update' | 'service_update' | 'test_drive_update' | 'general';
 
 export interface INotificationDocument extends Document {
   userId: string;
@@ -29,7 +29,7 @@ const notificationSchema = new Schema<INotificationDocument>(
     },
     type: {
       type: String,
-      enum: ['order_update', 'service_update', 'general'],
+      enum: ['order_update', 'service_update', 'test_drive_update', 'general'],
       required: true,
     },
     title: {

@@ -1,6 +1,7 @@
 import apiClient from './apiClient';
 import type {
   IAdminTestDrive,
+  IAdminTestDriveDetail,
   IAdminTestDriveListResponse,
   IGetAdminTestDrivesParams,
   IUpdateAdminTestDrivePayload,
@@ -10,20 +11,34 @@ import type {
 export const getAdminTestDrives = async (
   params?: IGetAdminTestDrivesParams,
 ): Promise<IAdminTestDriveListResponse> => {
-  const response = await apiClient.get<{ success: boolean; Response?: IAdminTestDriveListResponse }>(
-    '/admin/test-drives',
-    { params },
-  );
+  const response = await apiClient.get<
+    | { success: boolean; Response?: IAdminTestDriveListResponse }
+    | IAdminTestDriveListResponse
+  >('/admin/test-drives', { params });
 
-  if (response.data.success && response.data.Response) {
-    return response.data.Response;
+  const data = response.data;
+
+  if ('success' in data && data.success && data.Response) {
+    return {
+      testDrives: data.Response.testDrives ?? [],
+      pagination: data.Response.pagination ?? {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 20,
+        total: data.Response.testDrives?.length ?? 0,
+        totalPages: 1,
+      },
+    };
+  }
+
+  if ('testDrives' in data && Array.isArray(data.testDrives)) {
+    return data as IAdminTestDriveListResponse;
   }
 
   throw new Error('Failed to load test drives');
 };
 
-export const getAdminTestDriveById = async (id: string): Promise<IAdminTestDrive> => {
-  const response = await apiClient.get<{ success: boolean; Response?: IAdminTestDrive }>(
+export const getAdminTestDriveById = async (id: string): Promise<IAdminTestDriveDetail> => {
+  const response = await apiClient.get<{ success: boolean; Response?: IAdminTestDriveDetail }>(
     `/admin/test-drives/${id}`,
   );
 
@@ -37,7 +52,7 @@ export const getAdminTestDriveById = async (id: string): Promise<IAdminTestDrive
 export const updateAdminTestDriveStatus = async (
   id: string,
   payload: IUpdateAdminTestDriveStatusPayload,
-): Promise<IAdminTestDrive> => {
+): Promise<IAdminTestDriveDetail> => {
   const response = await apiClient.patch<{ success: boolean; Response?: IAdminTestDrive; message?: string }>(
     `/admin/test-drives/${id}/status`,
     payload,
@@ -53,7 +68,7 @@ export const updateAdminTestDriveStatus = async (
 export const updateAdminTestDrive = async (
   id: string,
   payload: IUpdateAdminTestDrivePayload,
-): Promise<IAdminTestDrive> => {
+): Promise<IAdminTestDriveDetail> => {
   const response = await apiClient.put<{ success: boolean; Response?: IAdminTestDrive; message?: string }>(
     `/admin/test-drives/${id}`,
     payload,

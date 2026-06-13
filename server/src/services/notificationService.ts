@@ -11,9 +11,12 @@ export interface INotificationPayload {
   body: string;
   imageUrl?: string;
   data?: {
-    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request' | 'greeting';
+    type?: 'order_update' | 'payment' | 'chat' | 'general' | 'group_join_request' | 'greeting' | 'test_drive_update';
     orderId?: string;
+    testDriveId?: string;
+    vehicleId?: string;
     status?: string;
+    actor?: string;
     chatId?: string;
     groupId?: string;
     requestId?: string;

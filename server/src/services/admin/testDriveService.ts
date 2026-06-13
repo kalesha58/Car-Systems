@@ -1,7 +1,4 @@
 import { TestDrive } from '../../models/TestDrive';
-import { SignUp } from '../../models/SignUp';
-import { DealerVehicle } from '../../models/DealerVehicle';
-import { BusinessRegistration } from '../../models/BusinessRegistration';
 import {
   ITestDrive,
   IUpdateTestDriveStatusRequest,
@@ -9,14 +6,17 @@ import {
 import { NotFoundError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { TestDriveStatus } from '../../models/TestDrive';
+import {
+  enrichTestDriveLight,
+  enrichTestDriveDetail,
+  ITestDriveDetailEnrichment,
+  ITestDriveListEnrichment,
+} from '../testDrive/testDriveEnrichment';
+import { notifyTestDriveStatusChange } from '../testDrive/testDriveNotificationService';
 
-export interface IAdminTestDrive extends ITestDrive {
-  customerName?: string;
-  customerPhone?: string;
-  customerEmail?: string;
-  dealerName?: string;
-  vehicleLabel?: string;
-}
+export interface IAdminTestDrive extends ITestDrive, ITestDriveListEnrichment {}
+
+export interface IAdminTestDriveDetail extends ITestDrive, ITestDriveDetailEnrichment {}
 
 export interface IGetAdminTestDrivesRequest {
   page?: number;
@@ -42,41 +42,6 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   rejected: [],
   completed: [],
   cancelled: [],
-};
-
-const testDriveToInterface = (doc: any): ITestDrive => ({
-  id: doc._id.toString(),
-  userId: doc.userId,
-  vehicleId: doc.vehicleId,
-  dealerId: doc.dealerId,
-  preferredDate: doc.preferredDate?.toISOString?.() || String(doc.preferredDate),
-  preferredTime: doc.preferredTime,
-  status: doc.status,
-  notes: doc.notes,
-  dealerNotes: doc.dealerNotes,
-  createdAt: doc.createdAt?.toISOString?.() || String(doc.createdAt),
-  updatedAt: doc.updatedAt?.toISOString?.() || String(doc.updatedAt),
-});
-
-const enrichTestDrive = async (doc: any): Promise<IAdminTestDrive> => {
-  const base = testDriveToInterface(doc);
-
-  const [user, vehicle, businessReg] = await Promise.all([
-    SignUp.findById(doc.userId).select('name phone email').lean(),
-    DealerVehicle.findById(doc.vehicleId).select('brand vehicleModel year').lean(),
-    BusinessRegistration.findById(doc.dealerId).select('businessName').lean(),
-  ]);
-
-  return {
-    ...base,
-    customerName: (user as any)?.name,
-    customerPhone: (user as any)?.phone,
-    customerEmail: (user as any)?.email,
-    dealerName: (businessReg as any)?.businessName,
-    vehicleLabel: vehicle
-      ? `${(vehicle as any).brand} ${(vehicle as any).vehicleModel} (${(vehicle as any).year})`
-      : undefined,
-  };
 };
 
 export const getAdminTestDrives = async (
@@ -110,7 +75,7 @@ export const getAdminTestDrives = async (
       .limit(limit)
       .lean();
 
-    const enriched = await Promise.all(rows.map((row) => enrichTestDrive(row)));
+    const enriched = await Promise.all(rows.map((row) => enrichTestDriveLight(row)));
 
     let testDrives = enriched;
     if (query.search) {
@@ -139,18 +104,18 @@ export const getAdminTestDrives = async (
   }
 };
 
-export const getAdminTestDriveById = async (testDriveId: string): Promise<IAdminTestDrive> => {
+export const getAdminTestDriveById = async (testDriveId: string): Promise<IAdminTestDriveDetail> => {
   const doc = await TestDrive.findById(testDriveId).lean();
   if (!doc) {
     throw new NotFoundError('Test drive not found');
   }
-  return enrichTestDrive(doc);
+  return enrichTestDriveDetail(doc);
 };
 
 export const updateAdminTestDriveStatus = async (
   testDriveId: string,
   data: IUpdateTestDriveStatusRequest,
-): Promise<IAdminTestDrive> => {
+): Promise<IAdminTestDriveDetail> => {
   const testDrive = await TestDrive.findById(testDriveId);
   if (!testDrive) {
     throw new NotFoundError('Test drive not found');
@@ -161,6 +126,7 @@ export const updateAdminTestDriveStatus = async (
     throw new AppError(`Cannot change status from ${testDrive.status} to ${data.status}`, 400);
   }
 
+  const previousStatus = testDrive.status;
   testDrive.status = data.status;
   if (data.dealerNotes !== undefined) {
     testDrive.dealerNotes = data.dealerNotes;
@@ -168,13 +134,26 @@ export const updateAdminTestDriveStatus = async (
   await testDrive.save();
 
   logger.info(`Admin updated test drive ${testDriveId} to ${data.status}`);
-  return enrichTestDrive(testDrive);
+
+  await notifyTestDriveStatusChange({
+    userId: testDrive.userId,
+    testDriveId,
+    vehicleId: testDrive.vehicleId,
+    newStatus: data.status,
+    previousStatus,
+    actor: 'admin',
+    preferredDate: testDrive.preferredDate.toISOString(),
+    preferredTime: testDrive.preferredTime,
+    dealerNotes: data.dealerNotes ?? testDrive.dealerNotes,
+  });
+
+  return enrichTestDriveDetail(testDrive);
 };
 
 export const updateAdminTestDrive = async (
   testDriveId: string,
   data: IAdminUpdateTestDriveRequest,
-): Promise<IAdminTestDrive> => {
+): Promise<IAdminTestDriveDetail> => {
   const testDrive = await TestDrive.findById(testDriveId);
   if (!testDrive) {
     throw new NotFoundError('Test drive not found');
@@ -201,7 +180,7 @@ export const updateAdminTestDrive = async (
 
   await testDrive.save();
   logger.info(`Admin updated test drive fields: ${testDriveId}`);
-  return enrichTestDrive(testDrive);
+  return enrichTestDriveDetail(testDrive);
 };
 
 export const deleteAdminTestDrive = async (testDriveId: string): Promise<void> => {

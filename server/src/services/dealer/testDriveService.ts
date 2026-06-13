@@ -9,25 +9,13 @@ import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandle
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import { resolveDealerCatalogIds } from '../../utils/dealerCatalogIds';
+import { testDriveToInterface } from '../testDrive/testDriveEnrichment';
+import { notifyTestDriveStatusChange } from '../testDrive/testDriveNotificationService';
 
 /**
  * Convert test drive document to interface
  */
-const testDriveToInterface = (doc: ITestDriveDocument): ITestDrive => {
-  return {
-    id: (doc._id as any).toString(),
-    userId: doc.userId,
-    vehicleId: doc.vehicleId,
-    dealerId: doc.dealerId,
-    preferredDate: doc.preferredDate.toISOString(),
-    preferredTime: doc.preferredTime,
-    status: doc.status,
-    notes: doc.notes,
-    dealerNotes: doc.dealerNotes,
-    createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
-    updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
-  };
-};
+const toInterface = (doc: ITestDriveDocument): ITestDrive => testDriveToInterface(doc);
 
 const dealerOwnsTestDrive = async (testDriveDealerId: string, authenticatedDealerId: string): Promise<boolean> => {
   const catalogIds = await resolveDealerCatalogIds(authenticatedDealerId);
@@ -79,7 +67,7 @@ export const getDealerTestDrives = async (
     ]);
 
     return {
-      testDrives: testDrives.map(testDriveToInterface),
+      testDrives: testDrives.map(toInterface),
       pagination: {
         page,
         limit,
@@ -112,7 +100,7 @@ export const getDealerTestDriveById = async (
       throw new ForbiddenError('Unauthorized access to test drive');
     }
 
-    return testDriveToInterface(testDrive);
+    return toInterface(testDrive);
   } catch (error) {
     logger.error('Error getting test drive by ID:', error);
     throw error;
@@ -155,6 +143,7 @@ export const updateTestDriveStatus = async (
       );
     }
 
+    const previousStatus = testDrive.status;
     testDrive.status = data.status;
     if (data.dealerNotes) {
       testDrive.dealerNotes = data.dealerNotes;
@@ -163,7 +152,19 @@ export const updateTestDriveStatus = async (
 
     logger.info(`Test drive status updated: ${testDriveId} to ${data.status} by dealer: ${dealerId}`);
 
-    return testDriveToInterface(testDrive);
+    await notifyTestDriveStatusChange({
+      userId: testDrive.userId,
+      testDriveId,
+      vehicleId: testDrive.vehicleId,
+      newStatus: data.status,
+      previousStatus,
+      actor: 'dealer',
+      preferredDate: testDrive.preferredDate.toISOString(),
+      preferredTime: testDrive.preferredTime,
+      dealerNotes: data.dealerNotes ?? testDrive.dealerNotes,
+    });
+
+    return toInterface(testDrive);
   } catch (error) {
     logger.error('Error updating test drive status:', error);
     throw error;

@@ -12,6 +12,10 @@ export interface ITestDrive {
   dealerNotes?: string;
   createdAt: string;
   updatedAt: string;
+  vehicleLabel?: string;
+  vehicleImage?: string;
+  vehicleType?: string;
+  dealerName?: string;
 }
 
 export interface ICreateTestDriveRequest {
@@ -52,15 +56,3 @@ export interface ITestDrivesListResponse {
     };
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-

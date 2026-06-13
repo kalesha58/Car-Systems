@@ -130,6 +130,11 @@ const NotificationScreen: React.FC = () => {
         (notification.type === 'order_update' || notification.data?.status)
       ) {
         navigate('LiveTracking', { orderId });
+        return;
+      }
+
+      if (notification.type === 'test_drive_update') {
+        navigate('MyTestDrives' as never);
       }
     } catch (error: any) {
       showError('Failed to mark notification as read');
@@ -152,6 +157,8 @@ const NotificationScreen: React.FC = () => {
         return 'receipt-outline';
       case 'service_update':
         return 'car-outline';
+      case 'test_drive_update':
+        return 'car-sport-outline';
       default:
         return 'notifications-outline';
     }
@@ -179,17 +186,21 @@ const NotificationScreen: React.FC = () => {
                     ? colors.secondary + '20'
                     : item.type === 'service_update'
                     ? colors.primary + '20'
+                    : item.type === 'test_drive_update'
+                    ? colors.secondary + '15'
                     : colors.border,
               },
             ]}>
             <Icon
               name={getNotificationIcon(item.type)}
               size={RFValue(20)}
-              color={
+                color={
                 item.type === 'order_update'
                   ? colors.secondary
                   : item.type === 'service_update'
                   ? colors.primary
+                  : item.type === 'test_drive_update'
+                  ? colors.secondary
                   : colors.text
               }
             />

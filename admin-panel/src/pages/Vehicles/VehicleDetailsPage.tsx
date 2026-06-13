@@ -956,7 +956,11 @@ export const VehicleDetailsPage = () => {
                 {testDrives.map((td) => {
                   const statusColor = TEST_DRIVE_STATUS_COLORS[td.status] || '#6b7280';
                   return (
-                    <tr key={td.id} style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
+                    <tr
+                      key={td.id}
+                      style={{ borderBottom: `1px solid ${theme.colors.border}`, cursor: 'pointer' }}
+                      onClick={() => navigate(`/test-drives/${td.id}`)}
+                    >
                       <td style={{ padding: '10px 12px', color: theme.colors.text, verticalAlign: 'middle' }}>
                         <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{td.customerName || '—'}</div>
                         <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
