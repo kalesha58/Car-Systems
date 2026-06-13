@@ -25,6 +25,7 @@ import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
 import { PLAY_UI_FONT, playFeedText } from '@utils/playTypography';
 import { screenHeight, screenWidth } from '@utils/Scaling';
 import CustomText from '@components/ui/CustomText';
+import CustomActionBottomSheet, { IActionSheetItem } from '@components/ui/CustomActionBottomSheet';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImageCarousel from './ImageCarousel';
 import UserInitialAvatar from './UserInitialAvatar';
@@ -71,6 +72,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
   const [comments, setComments] = useState<IComment[]>(post?.comments || []);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [postActionsVisible, setPostActionsVisible] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -503,18 +505,38 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
   };
 
   const handleOpenPostActions = () => {
-    const actions = [
-      { text: 'Report', onPress: handleReportPost },
-    ] as Array<{ text: string; onPress: () => void; style?: 'default' | 'cancel' | 'destructive' }>;
-
-    if (user?.id !== post.userId) {
-      actions.push({ text: 'Block', style: 'destructive', onPress: handleBlockAuthor });
-    }
-
-    actions.push({ text: 'Cancel', style: 'cancel', onPress: () => undefined });
-
-    Alert.alert('Post actions', 'Choose an action', actions);
+    setPostActionsVisible(true);
   };
+
+  const postActionItems: IActionSheetItem[] = [
+      {
+        id: 'share',
+        label: t('play.story.sharePost') || 'Share Post',
+        description: 'Send or share this post with others',
+        icon: 'arrow-redo-outline',
+        onPress: () => handleShare(),
+      },
+    {
+      id: 'report',
+      label: 'Report',
+      description: 'Report objectionable content',
+      icon: 'flag-outline',
+      onPress: handleReportPost,
+    },
+  ];
+
+  if (user?.id !== post.userId) {
+    postActionItems.push({
+      id: 'block',
+      label: 'Block User',
+      description: post.userName
+        ? `Hide posts from ${post.userName}`
+        : 'Hide posts from this user',
+      icon: 'person-remove-outline',
+      destructive: true,
+      onPress: handleBlockAuthor,
+    });
+  }
 
   const renderCommentItem = ({ item }: { item: IComment }) => {
     const isLiked = item.isLiked || false;
@@ -1044,6 +1066,14 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <CustomActionBottomSheet
+        visible={postActionsVisible}
+        onClose={() => setPostActionsVisible(false)}
+        title="Post Actions"
+        subtitle={post.userName ? `Post by ${post.userName}` : undefined}
+        actions={postActionItems}
+      />
     </View>
   );
 };

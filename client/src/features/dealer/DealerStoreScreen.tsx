@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts, fontStyle } from '@utils/Constants';
@@ -21,11 +22,12 @@ import { useToast } from '@hooks/useToast';
 import Icon from 'react-native-vector-icons/Ionicons';
 import CustomHeader from '@components/ui/CustomHeader';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
+import CustomActionBottomSheet, { IActionSheetItem } from '@components/ui/CustomActionBottomSheet';
 import { getDealerById, parseDealerResponse } from '@service/dealerService';
 import { getProducts } from '@service/productService';
 import { getDealerVehicles } from '@service/vehicleService';
 import { getServicesByDealerId } from '@service/serviceService';
-import { shareStore } from '@utils/shareUtils';
+import { shareStore, getStoreShareUrl } from '@utils/shareUtils';
 import { useCartStore } from '@state/cartStore';
 import type { IDealer, IDealerSnapshot } from '../../types/dealer/IDealer';
 import type { IProduct } from '../../types/product/IProduct';
@@ -43,6 +45,21 @@ type TabType = 'products' | 'vehicles' | 'services';
 
 const DEFAULT_BANNER_URI =
   'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=800';
+
+const tint = (hex: string, alpha: string) => `${hex}${alpha}`;
+
+const getVehicleAvailabilityStyle = (
+  availability: string,
+  colors: { success: string; error: string; warning: string },
+) => {
+  if (availability === 'available') {
+    return { bg: tint(colors.success, '1F'), text: colors.success };
+  }
+  if (availability === 'sold') {
+    return { bg: tint(colors.error, '1F'), text: colors.error };
+  }
+  return { bg: tint(colors.warning, '1F'), text: colors.warning };
+};
 
 const snapshotToDealer = (snapshot: IDealerSnapshot, routeDealerId: string): IDealer => ({
   id: routeDealerId,
@@ -64,7 +81,7 @@ const { width: screenWidth } = Dimensions.get('window');
 const DealerStoreScreen: React.FC = () => {
   const route = useRoute<RouteProp<DealerStoreRouteParams, 'DealerStore'>>();
   const { dealerId, dealerSnapshot } = route.params;
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { showSuccess, showError } = useToast();
   const { addItem } = useCartStore();
 
@@ -77,7 +94,6 @@ const DealerStoreScreen: React.FC = () => {
   const [services, setServices] = useState<IService[]>([]);
   
   const [loading, setLoading] = useState(!dealerSnapshot);
-  const [dealerFetchError, setDealerFetchError] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [servicesLoading, setServicesLoading] = useState(false);
@@ -87,6 +103,7 @@ const DealerStoreScreen: React.FC = () => {
   const [storeOpen, setStoreOpen] = useState(
     dealerSnapshot?.storeOpen !== undefined ? dealerSnapshot.storeOpen : true,
   );
+  const [showStoreActions, setShowStoreActions] = useState(false);
 
   const catalogDealerId = useMemo(
     () =>
@@ -100,49 +117,59 @@ const DealerStoreScreen: React.FC = () => {
     dealer?.shopPhotos?.[0]?.url ?? dealerSnapshot?.shopPhotos?.[0]?.url ?? DEFAULT_BANNER_URI;
 
   const inventoryStats = useMemo(() => {
-    const parts: string[] = [];
+    const stats: { icon: string; label: string }[] = [];
     if (products.length > 0) {
-      parts.push(`${products.length} Product${products.length !== 1 ? 's' : ''}`);
+      stats.push({
+        icon: 'cube-outline',
+        label: `${products.length} Product${products.length !== 1 ? 's' : ''}`,
+      });
     }
     if (vehicles.length > 0) {
-      parts.push(`${vehicles.length} Vehicle${vehicles.length !== 1 ? 's' : ''}`);
+      stats.push({
+        icon: 'car-outline',
+        label: `${vehicles.length} Vehicle${vehicles.length !== 1 ? 's' : ''}`,
+      });
     }
     if (services.length > 0) {
-      parts.push(`${services.length} Service${services.length !== 1 ? 's' : ''}`);
+      stats.push({
+        icon: 'construct-outline',
+        label: `${services.length} Service${services.length !== 1 ? 's' : ''}`,
+      });
     }
-    return parts.join(' · ');
+    return stats;
   }, [products.length, vehicles.length, services.length]);
 
-  const fetchDealerDetails = async () => {
+  const profileAvatarUri = dealer?.shopPhotos?.[0]?.url ?? dealerSnapshot?.shopPhotos?.[0]?.url;
+
+  const fetchDealerDetails = useCallback(async () => {
     const profileFetchId = dealerSnapshot?.businessRegistrationId ?? dealerId;
     try {
       setLoading(true);
-      setDealerFetchError(false);
       const response = await getDealerById(profileFetchId);
       const dealerData = parseDealerResponse(response);
       if (dealerData) {
         setDealer(dealerData);
         setStoreOpen(dealerData.storeOpen !== undefined ? dealerData.storeOpen : true);
       } else if (!dealerSnapshot) {
-        setDealerFetchError(true);
+        setDealer(null);
       }
     } catch (error) {
       console.error('Error fetching dealer:', error);
       if (!dealerSnapshot) {
-        setDealerFetchError(true);
+        setDealer(null);
         showError('Failed to load dealer information');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [dealerId, dealerSnapshot, showError]);
 
   // Fetch Dealer details
   useEffect(() => {
     if (dealerId) {
       fetchDealerDetails();
     }
-  }, [dealerId]);
+  }, [dealerId, fetchDealerDetails]);
 
   useEffect(() => {
     setProducts([]);
@@ -212,17 +239,30 @@ const DealerStoreScreen: React.FC = () => {
   }, [activeTab, catalogDealerId, products.length, vehicles.length, services.length]);
 
   // Handle Share Store
-  const handleShare = async () => {
+  const handleShareStoreLink = useCallback(async () => {
     if (!dealer) return;
     try {
-      const shared = await shareStore(dealer.businessName || dealer.name, dealerId);
+      const shared = await shareStore(dealer.businessName || dealer.name, catalogDealerId);
       if (shared) {
         showSuccess('Store link shared successfully');
       }
     } catch (error) {
       showError('Failed to share store link');
     }
-  };
+  }, [dealer, catalogDealerId, showSuccess, showError]);
+
+  const storeActionItems = useMemo<IActionSheetItem[]>(() => {
+    if (!dealer) return [];
+    return [
+      {
+        id: 'share-store',
+        label: 'Share Store Link',
+        description: getStoreShareUrl(catalogDealerId),
+        icon: 'share-social-outline',
+        onPress: handleShareStoreLink,
+      },
+    ];
+  }, [dealer, catalogDealerId, handleShareStoreLink]);
 
   // Add to Cart
   const handleAddToCart = (product: IProduct) => {
@@ -258,6 +298,23 @@ const DealerStoreScreen: React.FC = () => {
     );
   }, [services, searchQuery]);
 
+  const tabCounts = useMemo(
+    () => ({
+      products: products.length,
+      vehicles: vehicles.length,
+      services: Array.isArray(services) ? services.length : 0,
+    }),
+    [products.length, vehicles.length, services.length],
+  );
+
+  const statusChipStyle = useMemo(
+    () =>
+      storeOpen
+        ? { bg: tint(colors.success, '1F'), dot: colors.success, text: colors.success }
+        : { bg: tint(colors.error, '1F'), dot: colors.error, text: colors.error },
+    [storeOpen, colors.success, colors.error],
+  );
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -267,7 +324,7 @@ const DealerStoreScreen: React.FC = () => {
         },
         bannerContainer: {
           width: '100%',
-          height: 160,
+          height: 200,
           backgroundColor: colors.backgroundSecondary,
           position: 'relative',
         },
@@ -275,75 +332,194 @@ const DealerStoreScreen: React.FC = () => {
           width: '100%',
           height: '100%',
         },
-        bannerOverlay: {
+        bannerGradient: {
           ...StyleSheet.absoluteFillObject,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
         },
         profileCard: {
           backgroundColor: colors.cardBackground,
           marginHorizontal: 16,
-          marginTop: -60,
+          marginTop: -56,
           borderRadius: 16,
-          padding: 16,
+          padding: 18,
+          paddingTop: 0,
           borderWidth: 1,
-          borderColor: isDark ? colors.border : '#E2E8F0',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 4,
-          marginBottom: 16,
+          borderColor: colors.border,
+          marginBottom: 12,
+          overflow: 'visible',
+        },
+        profileAvatarWrap: {
+          alignSelf: 'flex-start',
+          marginTop: -36,
+          marginBottom: 12,
+        },
+        profileAvatar: {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 3,
+          borderColor: colors.cardBackground,
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+        },
+        profileAvatarImage: {
+          width: '100%',
+          height: '100%',
+        },
+        profileHeaderContent: {
+          gap: 6,
+        },
+        profileLabel: {
+          color: colors.textSecondary,
+          fontSize: RFValue(10),
+          ...fontStyle(Fonts.Medium),
+          textTransform: 'uppercase',
+          letterSpacing: 0.6,
         },
         storeBadgeRow: {
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          marginBottom: 8,
+          gap: 8,
+          marginBottom: 4,
         },
         storeTypeTag: {
-          backgroundColor: colors.secondary + '15',
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          borderRadius: 6,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          backgroundColor: colors.backgroundSecondary,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         storeTypeText: {
-          color: colors.secondary,
+          color: colors.textSecondary,
           ...fontStyle(Fonts.Medium),
           fontSize: RFValue(10),
         },
         statusBadge: {
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          borderRadius: 6,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        statusDot: {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
         },
         statusText: {
-          ...fontStyle(Fonts.Bold),
+          ...fontStyle(Fonts.SemiBold),
           fontSize: RFValue(10),
-          color: '#fff',
+          letterSpacing: 0.4,
         },
         businessName: {
           color: colors.text,
-          fontSize: RFValue(18),
+          fontSize: RFValue(20),
           ...fontStyle(Fonts.Bold),
-          marginBottom: 6,
+          lineHeight: RFValue(26),
         },
-        addressRow: {
+        addressCard: {
           flexDirection: 'row',
           alignItems: 'flex-start',
-          gap: 6,
-          marginTop: 4,
+          gap: 8,
+          marginTop: 12,
+          paddingTop: 12,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
         },
         addressText: {
           color: colors.textSecondary,
-          fontSize: RFValue(11),
+          fontSize: RFValue(12),
           ...fontStyle(Fonts.Regular),
           flex: 1,
+          lineHeight: RFValue(18),
         },
-        inventoryStats: {
-          color: colors.textSecondary,
+        inventoryRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginTop: 12,
+        },
+        inventoryChip: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 10,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        inventoryChipText: {
+          color: colors.text,
+          fontSize: RFValue(10),
+          ...fontStyle(Fonts.Medium),
+        },
+        profileActionsRow: {
+          flexDirection: 'row',
+          gap: 10,
+          marginTop: 14,
+        },
+        profileActionBtn: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          paddingVertical: 10,
+          borderRadius: 12,
+          backgroundColor: colors.cardBackground,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        profileActionText: {
+          color: colors.text,
           fontSize: RFValue(11),
           ...fontStyle(Fonts.Medium),
-          marginTop: 8,
+        },
+        closedBanner: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 10,
+          marginHorizontal: 16,
+          marginBottom: 12,
+          padding: 14,
+          borderRadius: 12,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        closedBannerTitle: {
+          color: colors.text,
+          fontSize: RFValue(13),
+          ...fontStyle(Fonts.SemiBold),
+          marginBottom: 2,
+        },
+        closedBannerText: {
+          color: colors.textSecondary,
+          fontSize: RFValue(11),
+          ...fontStyle(Fonts.Regular),
+          lineHeight: RFValue(16),
+          flex: 1,
+        },
+        catalogSection: {
+          marginHorizontal: 16,
+          marginTop: 4,
+          marginBottom: 10,
+        },
+        catalogSectionTitle: {
+          color: colors.text,
+          fontSize: RFValue(15),
+          ...fontStyle(Fonts.SemiBold),
         },
         profileErrorRow: {
           alignItems: 'center',
@@ -360,63 +536,80 @@ const DealerStoreScreen: React.FC = () => {
           paddingHorizontal: 16,
           paddingVertical: 8,
           borderRadius: 8,
-          backgroundColor: colors.secondary,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         retryButtonText: {
-          color: '#fff',
+          color: colors.text,
           fontSize: RFValue(12),
-          ...fontStyle(Fonts.SemiBold),
+          ...fontStyle(Fonts.Medium),
         },
         searchContainer: {
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: colors.backgroundSecondary,
           marginHorizontal: 16,
-          borderRadius: 10,
-          paddingHorizontal: 12,
-          paddingVertical: Platform.OS === 'ios' ? 10 : 2,
-          marginBottom: 16,
+          borderRadius: 12,
+          paddingHorizontal: 14,
+          paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+          marginBottom: 14,
           borderWidth: 1,
-          borderColor: isDark ? colors.border : '#E2E8F0',
+          borderColor: colors.border,
         },
         searchIcon: {
-          marginRight: 8,
-          opacity: 0.6,
+          marginRight: 10,
         },
         searchInput: {
           flex: 1,
           color: colors.text,
-          ...fontStyle(Fonts.Regular),
+          ...fontStyle(Fonts.Medium),
           fontSize: RFValue(13),
+        },
+        tabsWrapper: {
+          marginHorizontal: 16,
+          marginBottom: 16,
+          padding: 4,
+          borderRadius: 12,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         tabsContainer: {
           flexDirection: 'row',
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          marginHorizontal: 16,
-          marginBottom: 16,
         },
         tabButton: {
           flex: 1,
           alignItems: 'center',
-          paddingVertical: 12,
+          justifyContent: 'center',
+          paddingVertical: 10,
+          borderRadius: 8,
           position: 'relative',
         },
-        tabText: {
-          ...fontStyle(Fonts.SemiBold),
-          fontSize: RFValue(13),
+        tabButtonActive: {
+          backgroundColor: colors.cardBackground,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
-        activeIndicator: {
+        tabActiveIndicator: {
           position: 'absolute',
-          bottom: 0,
-          height: 3,
-          width: '60%',
+          bottom: 4,
+          width: '40%',
+          height: 2,
+          borderRadius: 1,
           backgroundColor: colors.secondary,
-          borderTopLeftRadius: 3,
-          borderTopRightRadius: 3,
+        },
+        tabText: {
+          ...fontStyle(Fonts.Medium),
+          fontSize: RFValue(11),
+        },
+        tabCountBadge: {
+          marginTop: 2,
+          fontSize: RFValue(9),
+          ...fontStyle(Fonts.Regular),
         },
         gridList: {
-          paddingHorizontal: 16,
+          paddingHorizontal: 10,
           paddingBottom: 40,
         },
         productCard: {
@@ -431,40 +624,42 @@ const DealerStoreScreen: React.FC = () => {
         },
         productImage: {
           width: '100%',
-          height: 120,
+          height: 130,
           backgroundColor: colors.backgroundSecondary,
         },
         productInfo: {
-          padding: 10,
+          padding: 12,
         },
         productBrand: {
           fontSize: RFValue(9),
           ...fontStyle(Fonts.Medium),
           color: colors.textSecondary,
           textTransform: 'uppercase',
-          marginBottom: 2,
+          marginBottom: 4,
+          letterSpacing: 0.4,
         },
         productName: {
           fontSize: RFValue(12),
           ...fontStyle(Fonts.Bold),
           color: colors.text,
-          height: 36,
+          minHeight: 34,
+          lineHeight: RFValue(17),
         },
         productFooter: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: 8,
+          marginTop: 10,
         },
         productPrice: {
-          fontSize: RFValue(13),
-          ...fontStyle(Fonts.SemiBold),
+          fontSize: RFValue(14),
+          ...fontStyle(Fonts.Bold),
           color: colors.text,
         },
         addToCartBtn: {
-          width: 32,
-          height: 32,
-          borderRadius: 16,
+          width: 34,
+          height: 34,
+          borderRadius: 17,
           backgroundColor: colors.secondary,
           justifyContent: 'center',
           alignItems: 'center',
@@ -547,15 +742,15 @@ const DealerStoreScreen: React.FC = () => {
           borderRadius: 12,
           borderWidth: 1,
           borderColor: colors.border,
-          marginBottom: 12,
-          padding: 16,
+          marginBottom: 14,
+          padding: 14,
           flexDirection: 'row',
           gap: 12,
         },
         serviceImage: {
-          width: 80,
-          height: 80,
-          borderRadius: 8,
+          width: 84,
+          height: 84,
+          borderRadius: 12,
           backgroundColor: colors.backgroundSecondary,
         },
         serviceInfo: {
@@ -588,38 +783,54 @@ const DealerStoreScreen: React.FC = () => {
         servicePrice: {
           fontSize: RFValue(14),
           ...fontStyle(Fonts.Bold),
-          color: colors.secondary,
+          color: colors.text,
         },
         viewServiceBtn: {
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          borderRadius: 6,
-          backgroundColor: colors.secondary,
+          paddingHorizontal: 14,
+          paddingVertical: 7,
+          borderRadius: 10,
+          backgroundColor: colors.cardBackground,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         viewServiceText: {
-          color: '#fff',
-          ...fontStyle(Fonts.SemiBold),
+          color: colors.text,
+          ...fontStyle(Fonts.Medium),
           fontSize: RFValue(11),
         },
         emptyContainer: {
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 60,
-          paddingHorizontal: 40,
+          marginHorizontal: 16,
+          paddingVertical: 48,
+          paddingHorizontal: 28,
+          borderRadius: 12,
+          backgroundColor: colors.cardBackground,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        emptyIconWrap: {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: colors.backgroundSecondary,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 14,
         },
         emptyTitle: {
           fontSize: RFValue(15),
           ...fontStyle(Fonts.Bold),
           color: colors.text,
-          marginTop: 12,
-          marginBottom: 6,
+          marginBottom: 8,
+          textAlign: 'center',
         },
         emptyText: {
           fontSize: RFValue(12),
           ...fontStyle(Fonts.Regular),
           color: colors.textSecondary,
           textAlign: 'center',
-          lineHeight: 18,
+          lineHeight: RFValue(18),
         },
         skeletonGrid: {
           flexDirection: 'row',
@@ -636,7 +847,7 @@ const DealerStoreScreen: React.FC = () => {
           gap: 8,
         },
       }),
-    [colors, isDark]
+    [colors]
   );
 
   // Render Skeletons for Loading
@@ -660,13 +871,10 @@ const DealerStoreScreen: React.FC = () => {
     <View style={styles.container}>
       <CustomHeader
         title={dealer?.businessName || 'Store Profile'}
-        backgroundColor="#0d8320"
-        titleColor="#fff"
-        iconColor="#fff"
         rightComponent={
           dealer ? (
-            <TouchableOpacity onPress={handleShare}>
-              <Icon name="share-social" size={RFValue(20)} color="#fff" />
+            <TouchableOpacity onPress={() => setShowStoreActions(true)}>
+              <Icon name="ellipsis-horizontal" size={RFValue(22)} color={colors.text} />
             </TouchableOpacity>
           ) : null
         }
@@ -680,7 +888,10 @@ const DealerStoreScreen: React.FC = () => {
             style={styles.bannerImage}
             resizeMode="cover"
           />
-          <View style={styles.bannerOverlay} />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.55)']}
+            style={styles.bannerGradient}
+          />
         </View>
 
         {/* Profile Card */}
@@ -693,34 +904,67 @@ const DealerStoreScreen: React.FC = () => {
             </View>
           ) : dealer ? (
             <>
-              <View style={styles.storeBadgeRow}>
-                <View style={styles.storeTypeTag}>
-                  <CustomText style={styles.storeTypeText}>{dealer.dealerType || 'Dealer'}</CustomText>
-                </View>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: storeOpen ? '#10b981' : '#ef4444' },
-                  ]}
-                >
-                  <CustomText style={styles.statusText}>
-                    {storeOpen ? 'OPEN' : 'CLOSED'}
-                  </CustomText>
+              <View style={styles.profileAvatarWrap}>
+                <View style={styles.profileAvatar}>
+                  {profileAvatarUri ? (
+                    <Image source={{ uri: profileAvatarUri }} style={styles.profileAvatarImage} resizeMode="cover" />
+                  ) : (
+                    <Icon name="storefront" size={RFValue(30)} color={colors.textSecondary} />
+                  )}
                 </View>
               </View>
 
-              <CustomText style={styles.businessName}>{dealer.businessName || dealer.name}</CustomText>
+              <View style={styles.profileHeaderContent}>
+                <CustomText style={styles.profileLabel}>Seller Store</CustomText>
+
+                <View style={styles.storeBadgeRow}>
+                  <View style={styles.storeTypeTag}>
+                    <Icon name="business-outline" size={RFValue(11)} color={colors.textSecondary} />
+                    <CustomText style={styles.storeTypeText}>{dealer.dealerType || 'Dealer'}</CustomText>
+                  </View>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: statusChipStyle.bg },
+                    ]}
+                  >
+                    <View style={[styles.statusDot, { backgroundColor: statusChipStyle.dot }]} />
+                    <CustomText style={[styles.statusText, { color: statusChipStyle.text }]}>
+                      {storeOpen ? 'OPEN' : 'CLOSED'}
+                    </CustomText>
+                  </View>
+                </View>
+
+                <CustomText style={styles.businessName}>{dealer.businessName || dealer.name}</CustomText>
+              </View>
 
               {dealer.address && (
-                <View style={styles.addressRow}>
-                  <Icon name="location-outline" size={RFValue(14)} color={colors.textSecondary} style={{ marginTop: 2 }} />
+                <View style={styles.addressCard}>
+                  <Icon name="location-outline" size={RFValue(16)} color={colors.textSecondary} />
                   <CustomText style={styles.addressText}>{dealer.address}</CustomText>
                 </View>
               )}
 
               {inventoryStats.length > 0 && (
-                <CustomText style={styles.inventoryStats}>{inventoryStats}</CustomText>
+                <View style={styles.inventoryRow}>
+                  {inventoryStats.map((stat) => (
+                    <View key={stat.label} style={styles.inventoryChip}>
+                      <Icon name={stat.icon} size={RFValue(12)} color={colors.textSecondary} />
+                      <CustomText style={styles.inventoryChipText}>{stat.label}</CustomText>
+                    </View>
+                  ))}
+                </View>
               )}
+
+              <View style={styles.profileActionsRow}>
+                <TouchableOpacity
+                  style={styles.profileActionBtn}
+                  onPress={() => setShowStoreActions(true)}
+                  activeOpacity={0.85}>
+                  <Icon name="options-outline" size={RFValue(16)} color={colors.text} />
+                  <CustomText style={styles.profileActionText}>Store Actions</CustomText>
+                </TouchableOpacity>
+              </View>
             </>
           ) : (
             <View style={styles.profileErrorRow}>
@@ -735,11 +979,27 @@ const DealerStoreScreen: React.FC = () => {
           )}
         </View>
 
+        {!storeOpen && dealer && (
+          <View style={styles.closedBanner}>
+            <Icon name="close-circle" size={RFValue(20)} color={colors.error} />
+            <View style={{ flex: 1 }}>
+              <CustomText style={styles.closedBannerTitle}>Store Currently Closed</CustomText>
+              <CustomText style={styles.closedBannerText}>
+                This seller is not accepting orders right now. You can still browse their catalog.
+              </CustomText>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.catalogSection}>
+          <CustomText style={styles.catalogSectionTitle}>Store Catalog</CustomText>
+        </View>
+
         {/* Search Input */}
         <View style={styles.searchContainer}>
-          <Icon name="search-outline" size={RFValue(16)} color={colors.textSecondary} style={styles.searchIcon} />
+          <Icon name="search-outline" size={RFValue(18)} color={colors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            placeholder={`Search in store...`}
+            placeholder="Search in store..."
             placeholderTextColor={colors.disabled}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -747,33 +1007,50 @@ const DealerStoreScreen: React.FC = () => {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="close-circle" size={RFValue(16)} color={colors.textSecondary} />
+              <Icon name="close-circle" size={RFValue(18)} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {/* Tab Navigation */}
-        <View style={styles.tabsContainer}>
-          {(['products', 'vehicles', 'services'] as TabType[]).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={styles.tabButton}
-              onPress={() => {
-                setActiveTab(tab);
-                setSearchQuery('');
-              }}
-            >
-              <CustomText
-                style={[
-                  styles.tabText,
-                  { color: activeTab === tab ? colors.secondary : colors.textSecondary },
-                ]}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </CustomText>
-              {activeTab === tab && <View style={styles.activeIndicator} />}
-            </TouchableOpacity>
-          ))}
+        <View style={styles.tabsWrapper}>
+          <View style={styles.tabsContainer}>
+            {(['products', 'vehicles', 'services'] as TabType[]).map((tab) => {
+              const isActive = activeTab === tab;
+              const count = tabCounts[tab];
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tabButton, isActive && styles.tabButtonActive]}
+                  onPress={() => {
+                    setActiveTab(tab);
+                    setSearchQuery('');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <CustomText
+                    style={[
+                      styles.tabText,
+                      { color: isActive ? colors.text : colors.textSecondary },
+                    ]}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </CustomText>
+                  {count > 0 && (
+                    <CustomText
+                      style={[
+                        styles.tabCountBadge,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {count}
+                    </CustomText>
+                  )}
+                  {isActive && <View style={styles.tabActiveIndicator} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {/* Tab Content */}
@@ -812,7 +1089,7 @@ const DealerStoreScreen: React.FC = () => {
                           style={styles.addToCartBtn}
                           onPress={() => handleAddToCart(item)}
                         >
-                          <Icon name="cart-outline" size={RFValue(14)} color="#fff" />
+                          <Icon name="cart-outline" size={RFValue(14)} color={colors.white} />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -822,7 +1099,9 @@ const DealerStoreScreen: React.FC = () => {
             />
           ) : (
             <View style={styles.emptyContainer}>
-              <Icon name="cube-outline" size={RFValue(40)} color={colors.disabled} />
+              <View style={styles.emptyIconWrap}>
+                <Icon name="cube-outline" size={RFValue(32)} color={colors.textSecondary} />
+              </View>
               <CustomText style={styles.emptyTitle}>No Products Found</CustomText>
               <CustomText style={styles.emptyText}>
                 This seller has not listed any products or none match your search.
@@ -842,7 +1121,9 @@ const DealerStoreScreen: React.FC = () => {
             </View>
           ) : filteredVehicles.length > 0 ? (
             <View style={{ paddingHorizontal: 16 }}>
-              {filteredVehicles.map((item) => (
+              {filteredVehicles.map((item) => {
+                const availStyle = getVehicleAvailabilityStyle(item.availability, colors);
+                return (
                 <TouchableOpacity
                   key={item.id}
                   onPress={() => (navigate as any)('VehicleDetail', { vehicleId: item.id })}
@@ -888,26 +1169,14 @@ const DealerStoreScreen: React.FC = () => {
                       <View
                         style={[
                           styles.vehicleConditionTag,
-                          {
-                            backgroundColor:
-                              item.availability === 'available'
-                                ? '#10b98120'
-                                : item.availability === 'sold'
-                                ? '#ef444420'
-                                : '#f59e0b20',
-                          },
+                          { backgroundColor: availStyle.bg },
                         ]}
                       >
                         <CustomText
                           style={{
-                            fontSize: RFValue(11),
-                            ...fontStyle(Fonts.Bold),
-                            color:
-                              item.availability === 'available'
-                                ? '#10b981'
-                                : item.availability === 'sold'
-                                ? '#ef4444'
-                                : '#f59e0b',
+                            fontSize: RFValue(10),
+                            ...fontStyle(Fonts.SemiBold),
+                            color: availStyle.text,
                           }}
                         >
                           {item.availability.toUpperCase()}
@@ -916,11 +1185,14 @@ const DealerStoreScreen: React.FC = () => {
                     </View>
                   </View>
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Icon name="car-outline" size={RFValue(40)} color={colors.disabled} />
+              <View style={styles.emptyIconWrap}>
+                <Icon name="car-outline" size={RFValue(32)} color={colors.textSecondary} />
+              </View>
               <CustomText style={styles.emptyTitle}>No Vehicles Available</CustomText>
               <CustomText style={styles.emptyText}>
                 There are no vehicles listed for this showroom currently.
@@ -982,7 +1254,9 @@ const DealerStoreScreen: React.FC = () => {
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Icon name="build-outline" size={RFValue(40)} color={colors.disabled} />
+              <View style={styles.emptyIconWrap}>
+                <Icon name="build-outline" size={RFValue(32)} color={colors.textSecondary} />
+              </View>
               <CustomText style={styles.emptyTitle}>No Services Offered</CustomText>
               <CustomText style={styles.emptyText}>
                 This showroom or workshop does not list any services at the moment.
@@ -991,6 +1265,14 @@ const DealerStoreScreen: React.FC = () => {
           )
         )}
       </ScrollView>
+
+      <CustomActionBottomSheet
+        visible={showStoreActions}
+        onClose={() => setShowStoreActions(false)}
+        title="Store Actions"
+        subtitle={dealer?.businessName || dealer?.name}
+        actions={storeActionItems}
+      />
     </View>
   );
 };

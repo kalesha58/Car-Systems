@@ -192,25 +192,108 @@ const VehicleDetail: React.FC = () => {
         metricText: { fontSize: RFValue(10), color: colors.text, ...fontStyle(Fonts.Medium) },
         metricLabel: { fontSize: RFValue(8), color: colors.disabled, ...fontStyle(Fonts.Regular) },
         dealerSection: {
+          marginTop: 24,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.cardBackground,
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 2,
+        },
+        sellerCardPressable: {
+          padding: 14,
+        },
+        sellerCardTop: {
           flexDirection: 'row',
           alignItems: 'center',
-          marginTop: 24,
-          padding: 16,
-          backgroundColor: colors.cardBackground,
-          borderRadius: 12,
+          gap: 12,
         },
         dealerAvatar: {
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: colors.backgroundSecondary || colors.cardBackground,
+          width: 52,
+          height: 52,
+          borderRadius: 26,
+          backgroundColor: colors.secondary + '15',
           justifyContent: 'center',
           alignItems: 'center',
-          marginRight: 12,
+          borderWidth: 1,
+          borderColor: colors.secondary + '25',
+        },
+        sellerCardMain: {
+          flex: 1,
+          gap: 4,
+        },
+        sellerCardLabel: {
+          color: colors.textSecondary,
+          fontSize: RFValue(9),
+          ...fontStyle(Fonts.Medium),
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+        },
+        dealerName: {
+          ...fontStyle(Fonts.Bold),
+          fontSize: RFValue(14),
+          color: colors.text,
+        },
+        sellerCardMetaRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 6,
+        },
+        sellerTypePill: {
+          paddingHorizontal: 8,
+          paddingVertical: 3,
+          borderRadius: 10,
+          backgroundColor: colors.secondary + '12',
+        },
+        dealerRole: {
+          fontSize: RFValue(9),
+          color: colors.secondary,
+          ...fontStyle(Fonts.SemiBold),
+        },
+        sellerCardDivider: {
+          height: 1,
+          backgroundColor: colors.border,
+          marginVertical: 12,
+        },
+        sellerCardBottom: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+        },
+        sellerAddressRow: {
+          flex: 1,
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 6,
+        },
+        dealerText: {
+          flex: 1,
+          color: colors.textSecondary,
+          fontSize: RFValue(11),
+          ...fontStyle(Fonts.Regular),
+          lineHeight: RFValue(16),
+        },
+        sellerVisitBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 10,
+          backgroundColor: colors.secondary + '12',
+        },
+        sellerVisitText: {
+          color: colors.secondary,
+          fontSize: RFValue(10),
+          ...fontStyle(Fonts.SemiBold),
         },
         dealerInfo: { flex: 1 },
-        dealerName: { ...fontStyle(Fonts.Bold), fontSize: RFValue(14), color: colors.text },
-        dealerRole: { fontSize: RFValue(11), color: colors.disabled, marginTop: 2 },
         dealerActions: {
           flexDirection: 'row',
           gap: 8,
@@ -301,7 +384,6 @@ const VehicleDetail: React.FC = () => {
           flexDirection: 'row',
           gap: 6,
         },
-        dealerText: { marginTop: 4, color: colors.disabled, fontSize: RFValue(11), ...fontStyle(Fonts.Medium) },
         detailRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -552,28 +634,61 @@ const VehicleDetail: React.FC = () => {
 
               {/* Dealer Information */}
               {vehicle?.dealer && (
-                <TouchableOpacity
-                  onPress={() => (navigation as any).navigate('DealerStore', { dealerId: vehicle.dealerId })}
-                  activeOpacity={0.7}
-                  style={styles.dealerSection}>
-                  <View style={styles.dealerAvatar}>
-                    <Icon name="business-outline" size={RFValue(24)} color={colors.secondary} />
-                  </View>
-                  <View style={styles.dealerInfo}>
-                    <CustomText style={[styles.dealerName, { color: colors.secondary }]}>
-                      {vehicle.dealer.businessName || 'Unknown Dealer'}
-                    </CustomText>
-                    <CustomText style={styles.dealerRole}>
-                      {vehicle.dealer.type || 'Dealer'}
-                    </CustomText>
-                    {vehicle.dealer.address && (
-                      <CustomText style={styles.dealerText} numberOfLines={1}>
-                        {vehicle.dealer.address}
-                      </CustomText>
-                    )}
-                  </View>
-                  <Icon name="chevron-forward" size={RFValue(18)} color={colors.secondary} />
-                </TouchableOpacity>
+                <View style={styles.dealerSection}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      (navigation as any).navigate('DealerStore', {
+                        dealerId: vehicle.dealerId,
+                        dealerSnapshot: {
+                          businessName: vehicle.dealer.businessName || 'Unknown Dealer',
+                          dealerType: vehicle.dealer.type,
+                          address: vehicle.dealer.address,
+                          businessRegistrationId: vehicle.dealer.id,
+                        },
+                      })
+                    }
+                    activeOpacity={0.85}
+                    style={styles.sellerCardPressable}
+                  >
+                    <View style={styles.sellerCardTop}>
+                      <View style={styles.dealerAvatar}>
+                        <Icon name="storefront" size={RFValue(22)} color={colors.secondary} />
+                      </View>
+                      <View style={styles.sellerCardMain}>
+                        <CustomText style={styles.sellerCardLabel}>Sold by</CustomText>
+                        <CustomText style={styles.dealerName} numberOfLines={2}>
+                          {vehicle.dealer.businessName || 'Unknown Dealer'}
+                        </CustomText>
+                        {vehicle.dealer.type ? (
+                          <View style={styles.sellerCardMetaRow}>
+                            <View style={styles.sellerTypePill}>
+                              <CustomText style={styles.dealerRole}>{vehicle.dealer.type}</CustomText>
+                            </View>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    <View style={styles.sellerCardDivider} />
+
+                    <View style={styles.sellerCardBottom}>
+                      {vehicle.dealer.address ? (
+                        <View style={styles.sellerAddressRow}>
+                          <Icon name="location-outline" size={RFValue(14)} color={colors.textSecondary} />
+                          <CustomText style={styles.dealerText} numberOfLines={2}>
+                            {vehicle.dealer.address}
+                          </CustomText>
+                        </View>
+                      ) : (
+                        <CustomText style={styles.dealerText}>View full store profile</CustomText>
+                      )}
+                      <View style={styles.sellerVisitBtn}>
+                        <CustomText style={styles.sellerVisitText}>Visit Store</CustomText>
+                        <Icon name="chevron-forward" size={RFValue(12)} color={colors.secondary} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               )}
 
               {/* Overview/Description */}

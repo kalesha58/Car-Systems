@@ -20,6 +20,7 @@ import {
   getDealerVehiclesController,
   getAllDealerVehiclesController,
   getDealerVehicleByIdController,
+  deleteDealerVehicleAdminController,
   getBusinessRegistrationByUserIdController,
   updateDealerBusinessRegistrationController
 } from '../../controllers/admin/dealerController';
@@ -153,6 +154,33 @@ router.get('/vehicles', getAllDealerVehiclesController);
  *         description: Forbidden - Admin access required
  */
 router.get('/vehicles/:vehicleId', getDealerVehicleByIdController);
+
+/**
+ * @swagger
+ * /admin/dealers/vehicles/{vehicleId}:
+ *   delete:
+ *     summary: Delete a dealer vehicle by ID
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle ID
+ *     responses:
+ *       200:
+ *         description: Vehicle deleted successfully
+ *       404:
+ *         description: Vehicle not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.delete('/vehicles/:vehicleId', deleteDealerVehicleAdminController);
 
 /**
  * @swagger

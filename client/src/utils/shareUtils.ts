@@ -60,7 +60,11 @@ export const shareStore = async (
   return shareContent({
     title: `Visit ${businessName} on motonode`,
     message: `Check out ${businessName}'s store on motonode!`,
-    url: `${getWebBaseUrl()}/store/${dealerId}`,
+    url: getStoreShareUrl(dealerId),
   });
+};
+
+export const getStoreShareUrl = (dealerId: string): string => {
+  return `${getWebBaseUrl()}/store/${dealerId}`;
 };
 

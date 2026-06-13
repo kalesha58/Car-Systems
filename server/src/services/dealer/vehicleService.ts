@@ -43,6 +43,17 @@ const vehicleToInterface = (doc: IDealerVehicleDocument): IDealerVehicle => {
   };
 };
 
+const assertDealerOwnsVehicle = async (
+  vehicleDealerId: string,
+  authenticatedDealerId: string,
+  action: string,
+): Promise<void> => {
+  const catalogIds = await resolveDealerCatalogIds(authenticatedDealerId);
+  if (!catalogIds.includes(vehicleDealerId)) {
+    throw new ForbiddenError(`Unauthorized to ${action} this vehicle`);
+  }
+};
+
 /**
  * Get all vehicles for a dealer
  */
@@ -267,9 +278,7 @@ export const getDealerVehicleById = async (
     }
 
     // Verify dealer owns this vehicle
-    if (vehicle.dealerId !== dealerId) {
-      throw new ForbiddenError('Unauthorized to access this vehicle');
-    }
+    await assertDealerOwnsVehicle(vehicle.dealerId, dealerId, 'access');
 
     return vehicleToInterface(vehicle);
   } catch (error) {
@@ -381,9 +390,7 @@ export const updateDealerVehicle = async (
     }
 
     // Verify dealer owns this vehicle
-    if (vehicle.dealerId !== dealerId) {
-      throw new ForbiddenError('Unauthorized to update this vehicle');
-    }
+    await assertDealerOwnsVehicle(vehicle.dealerId, dealerId, 'update');
 
     if (data.vehicleType !== undefined) {
       vehicle.vehicleType = data.vehicleType;
@@ -518,9 +525,7 @@ export const updateVehicleAvailability = async (
     }
 
     // Verify dealer owns this vehicle
-    if (vehicle.dealerId !== dealerId) {
-      throw new ForbiddenError('Unauthorized to update this vehicle');
-    }
+    await assertDealerOwnsVehicle(vehicle.dealerId, dealerId, 'update');
 
     vehicle.availability = data.availability;
 
@@ -551,9 +556,7 @@ export const updateVehicleImages = async (
     }
 
     // Verify dealer owns this vehicle
-    if (vehicle.dealerId !== dealerId) {
-      throw new ForbiddenError('Unauthorized to update this vehicle');
-    }
+    await assertDealerOwnsVehicle(vehicle.dealerId, dealerId, 'update');
 
     if (!Array.isArray(data.images) || data.images.length === 0) {
       throw new AppError('At least one image is required', 400);
@@ -584,9 +587,7 @@ export const deleteDealerVehicle = async (vehicleId: string, dealerId: string): 
     }
 
     // Verify dealer owns this vehicle
-    if (vehicle.dealerId !== dealerId) {
-      throw new ForbiddenError('Unauthorized to delete this vehicle');
-    }
+    await assertDealerOwnsVehicle(vehicle.dealerId, dealerId, 'delete');
 
     await DealerVehicle.findByIdAndDelete(vehicleId);
 

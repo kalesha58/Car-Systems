@@ -153,7 +153,9 @@ export const updateVehicle = async (userId: string, vehicleId: string, payload: 
  * @param vehicleId - The vehicle ID (path parameter)
  */
 export const deleteVehicle = async (vehicleId: string): Promise<{ success: boolean; message: string }> => {
-  const response = await apiClient.delete<{ success: boolean; message: string }>(`/api/dealer/vehicles/${vehicleId}`);
+  const response = await apiClient.delete<{ success: boolean; message: string }>(
+    `/admin/dealers/vehicles/${vehicleId}`,
+  );
   return response.data;
 };
 

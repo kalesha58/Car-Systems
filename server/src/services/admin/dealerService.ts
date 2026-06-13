@@ -550,6 +550,26 @@ export const getDealerVehicleByIdForAdmin = async (
 };
 
 /**
+ * Delete vehicle by ID for admin (no dealer ownership check)
+ */
+export const deleteDealerVehicleForAdmin = async (vehicleId: string): Promise<void> => {
+  try {
+    const vehicle = await DealerVehicle.findById(vehicleId);
+
+    if (!vehicle) {
+      throw new NotFoundError('Vehicle not found');
+    }
+
+    await DealerVehicle.findByIdAndDelete(vehicleId);
+
+    logger.info(`Vehicle deleted by admin: ${vehicleId}`);
+  } catch (error) {
+    logger.error('Error deleting dealer vehicle for admin:', error);
+    throw error;
+  }
+};
+
+/**
  * Create vehicle for dealer
  */
 export const createVehicleForDealer = async (

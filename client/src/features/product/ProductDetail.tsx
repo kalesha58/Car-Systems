@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   Animated as RNAnimated,
+  Image,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -17,7 +18,12 @@ import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { getProductById } from '@service/productService';
-import { getBusinessRegistrationByUserId } from '@service/dealerService';
+import {
+  getBusinessRegistrationByUserId,
+  getBusinessRegistrationById,
+  getDealerById,
+  parseDealerResponse,
+} from '@service/dealerService';
 import { IProduct } from '../../types/product/IProduct';
 import ProductImageCarousel from '@components/product/ProductImageCarousel';
 import CustomHeader from '@components/ui/CustomHeader';
@@ -35,7 +41,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '@hooks/useToast';
 import { navigate } from '@utils/NavigationUtils';
 import { useNavigation } from '@react-navigation/native';
-import { getDealerById } from '@service/dealerService';
 import type { IDealer } from '../../types/dealer/IDealer';
 import RelatedProducts from '@features/cart/RelatedProducts';
 import SkeletonLoader from '@components/ui/SkeletonLoader';
@@ -108,13 +113,18 @@ const ProductDetail: React.FC = () => {
     }
   }, [productId]);
 
-  const fetchDealerInfo = async (dealerId: string) => {
+  const fetchDealerInfo = async (dealerIdParam: string) => {
     try {
       setLoadingDealer(true);
       try {
-        const businessRegistration = await getBusinessRegistrationByUserId(dealerId);
+        let businessRegistration = await getBusinessRegistrationByUserId(dealerIdParam);
+        if (!businessRegistration) {
+          businessRegistration = await getBusinessRegistrationById(dealerIdParam);
+        }
         if (businessRegistration) {
-          setStoreOpen(businessRegistration.storeOpen !== undefined ? businessRegistration.storeOpen : true);
+          setStoreOpen(
+            businessRegistration.storeOpen !== undefined ? businessRegistration.storeOpen : true,
+          );
         } else {
           setStoreOpen(true);
         }
@@ -122,13 +132,12 @@ const ProductDetail: React.FC = () => {
         console.log('Error fetching business registration:', regErr);
         setStoreOpen(true);
       }
-      const response = await getDealerById(dealerId);
-      if (response.success && response.Response) {
-        const dealerData = Array.isArray(response.Response.dealers)
-          ? response.Response.dealers[0]
-          : (response.Response as any);
-        if (dealerData) {
-          setDealer(dealerData as IDealer);
+      const response = await getDealerById(dealerIdParam);
+      const dealerData = parseDealerResponse(response);
+      if (dealerData) {
+        setDealer(dealerData as IDealer);
+        if (dealerData.storeOpen !== undefined) {
+          setStoreOpen(dealerData.storeOpen);
         }
       }
     } catch (err) {
@@ -512,8 +521,129 @@ const ProductDetail: React.FC = () => {
       textAlign: 'right',
     },
     dealerInfo: {
-      marginTop: 12,
+      marginTop: 4,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.cardBackground,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    sellerCardPressable: {
+      padding: 14,
+    },
+    sellerCardTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    sellerAvatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: colors.secondary + '15',
+      justifyContent: 'center',
+      alignItems: 'center',
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.secondary + '25',
+    },
+    sellerAvatarImage: {
+      width: '100%',
+      height: '100%',
+    },
+    sellerCardMain: {
+      flex: 1,
+      gap: 4,
+    },
+    sellerCardLabel: {
+      color: colors.textSecondary,
+      fontSize: RFValue(9),
+      ...fontStyle(Fonts.Medium),
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    sellerCardName: {
+      color: colors.text,
+      fontSize: RFValue(14),
+      ...fontStyle(Fonts.Bold),
+    },
+    sellerCardMetaRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 6,
+    },
+    sellerTypePill: {
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 10,
+      backgroundColor: colors.secondary + '12',
+    },
+    sellerTypeText: {
+      color: colors.secondary,
+      fontSize: RFValue(9),
+      ...fontStyle(Fonts.SemiBold),
+    },
+    sellerOpenPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 10,
+    },
+    sellerOpenDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+    },
+    sellerOpenText: {
+      fontSize: RFValue(9),
+      ...fontStyle(Fonts.Bold),
+      letterSpacing: 0.3,
+    },
+    sellerCardDivider: {
+      height: 1,
+      backgroundColor: colors.border,
+      marginVertical: 12,
+    },
+    sellerCardBottom: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       gap: 10,
+    },
+    sellerAddressRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 6,
+    },
+    sellerAddressText: {
+      flex: 1,
+      color: colors.textSecondary,
+      fontSize: RFValue(11),
+      ...fontStyle(Fonts.Regular),
+      lineHeight: RFValue(16),
+    },
+    sellerVisitBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 10,
+      backgroundColor: colors.secondary + '12',
+    },
+    sellerVisitText: {
+      color: colors.secondary,
+      fontSize: RFValue(10),
+      ...fontStyle(Fonts.SemiBold),
     },
     dealerRow: {
       flexDirection: 'row',
@@ -1086,46 +1216,94 @@ const ProductDetail: React.FC = () => {
                     onPress={() =>
                       navigate('DealerStore', {
                         dealerId: product?.dealerId || dealer.id,
+                        dealerSnapshot: {
+                          businessName: dealer.businessName || dealer.name,
+                          dealerType: dealer.dealerType,
+                          address: dealer.address,
+                          businessRegistrationId: dealer.businessRegistrationId,
+                          storeOpen,
+                          shopPhotos: dealer.shopPhotos,
+                        },
                       })
                     }
-                    style={styles.dealerRow}
-                    activeOpacity={0.7}
+                    style={styles.sellerCardPressable}
+                    activeOpacity={0.85}
                   >
-                    <Icon
-                      name="storefront"
-                      size={RFValue(18)}
-                      color={colors.secondary}
-                    />
-                    <CustomText
-                      variant="h7"
-                      fontFamily={Fonts.Medium}
-                      style={[
-                        styles.dealerText,
-                        { color: colors.secondary, flex: 1 },
-                        !storeOpen ? { color: colors.textSecondary, opacity: 0.7 } : {}
-                      ]}>
-                      {dealer.businessName || dealer.name}
-                    </CustomText>
-                    {!storeOpen && (
-                      <View style={[styles.storeStatusBadge, { backgroundColor: colors.error + '20', marginRight: 8 }]}>
-                        <CustomText
-                          variant="h9"
-                          fontFamily={Fonts.SemiBold}
-                          style={{ color: colors.error, fontSize: RFValue(9) }}>
-                          {t('dealer.storeClosed') || 'CLOSED'}
-                        </CustomText>
+                    <View style={styles.sellerCardTop}>
+                      <View style={styles.sellerAvatar}>
+                        {dealer.shopPhotos?.[0]?.url ? (
+                          <Image
+                            source={{ uri: dealer.shopPhotos[0].url }}
+                            style={styles.sellerAvatarImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <Icon name="storefront" size={RFValue(22)} color={colors.secondary} />
+                        )}
                       </View>
-                    )}
-                    <Icon name="chevron-forward" size={RFValue(16)} color={colors.secondary} />
-                  </TouchableOpacity>
-                  {dealer.address && (
-                    <View style={styles.dealerRow}>
-                      <Icon name="location" size={RFValue(18)} color={colors.text} style={{ opacity: 0.6 }} />
-                      <CustomText variant="h8" fontFamily={Fonts.Regular} style={styles.dealerText}>
-                        {dealer.address}
-                      </CustomText>
+                      <View style={styles.sellerCardMain}>
+                        <CustomText style={styles.sellerCardLabel}>Sold by</CustomText>
+                        <CustomText style={styles.sellerCardName} numberOfLines={2}>
+                          {dealer.businessName || dealer.name}
+                        </CustomText>
+                        <View style={styles.sellerCardMetaRow}>
+                          {dealer.dealerType ? (
+                            <View style={styles.sellerTypePill}>
+                              <CustomText style={styles.sellerTypeText}>{dealer.dealerType}</CustomText>
+                            </View>
+                          ) : null}
+                          <View
+                            style={[
+                              styles.sellerOpenPill,
+                              {
+                                backgroundColor: storeOpen
+                                  ? colors.success + '18'
+                                  : colors.error + '18',
+                              },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.sellerOpenDot,
+                                { backgroundColor: storeOpen ? colors.success : colors.error },
+                              ]}
+                            />
+                            <CustomText
+                              style={[
+                                styles.sellerOpenText,
+                                { color: storeOpen ? colors.success : colors.error },
+                              ]}
+                            >
+                              {storeOpen
+                                ? t('dealer.storeOpen') || 'OPEN'
+                                : t('dealer.storeClosed') || 'CLOSED'}
+                            </CustomText>
+                          </View>
+                        </View>
+                      </View>
                     </View>
-                  )}
+
+                    <View style={styles.sellerCardDivider} />
+
+                    <View style={styles.sellerCardBottom}>
+                      {dealer.address ? (
+                        <View style={styles.sellerAddressRow}>
+                          <Icon name="location-outline" size={RFValue(14)} color={colors.textSecondary} />
+                          <CustomText style={styles.sellerAddressText} numberOfLines={2}>
+                            {dealer.address}
+                          </CustomText>
+                        </View>
+                      ) : (
+                        <CustomText style={styles.sellerAddressText}>
+                          View full store profile
+                        </CustomText>
+                      )}
+                      <View style={styles.sellerVisitBtn}>
+                        <CustomText style={styles.sellerVisitText}>Visit Store</CustomText>
+                        <Icon name="chevron-forward" size={RFValue(12)} color={colors.secondary} />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             )
