@@ -62,6 +62,26 @@ const toIdString = (v: unknown): string => {
   return String(v);
 };
 
+/** Resolve SignUp userId from a vehicle's stored dealerId (business reg _id or legacy userId). */
+const resolveDealerUserId = async (dealerId: string): Promise<string | undefined> => {
+  const byRegId = await BusinessRegistration.findById(dealerId).select('userId').lean();
+  if (byRegId?.userId) {
+    return toIdString(byRegId.userId);
+  }
+
+  const byUserId = await BusinessRegistration.findOne({ userId: dealerId }).select('userId').lean();
+  if (byUserId?.userId) {
+    return toIdString(byUserId.userId);
+  }
+
+  const user = await SignUp.findById(dealerId).select('_id').lean();
+  if (user) {
+    return toIdString(user._id);
+  }
+
+  return undefined;
+};
+
 const mapBusinessRegistrationToDealer = (
   reg: IBusinessRegistrationDocument,
   user: ISignUpDocument | null | undefined,
@@ -518,10 +538,10 @@ export const getDealerVehicleByIdForAdmin = async (
       throw new NotFoundError('Vehicle not found');
     }
 
-    // Convert vehicle document to interface
     const vehicleData: IDealerVehicle = {
       id: (vehicle._id as any).toString(),
       dealerId: vehicle.dealerId,
+      dealerUserId: await resolveDealerUserId(vehicle.dealerId),
       vehicleType: vehicle.vehicleType,
       brand: vehicle.brand,
       vehicleModel: vehicle.vehicleModel,
@@ -567,6 +587,32 @@ export const deleteDealerVehicleForAdmin = async (vehicleId: string): Promise<vo
     logger.info(`Vehicle deleted by admin: ${vehicleId}`);
   } catch (error) {
     logger.error('Error deleting dealer vehicle for admin:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update vehicle by ID for admin (no userId path param required)
+ */
+export const updateDealerVehicleForAdmin = async (
+  vehicleId: string,
+  data: IUpdateDealerVehicleRequest,
+): Promise<IDealerVehicle> => {
+  try {
+    const vehicle = await DealerVehicle.findById(vehicleId);
+
+    if (!vehicle) {
+      throw new NotFoundError('Vehicle not found');
+    }
+
+    const updated = await updateDealerVehicle(vehicleId, vehicle.dealerId, data);
+    updated.dealerUserId = await resolveDealerUserId(vehicle.dealerId);
+
+    logger.info(`Vehicle updated by admin: ${vehicleId}`);
+
+    return updated;
+  } catch (error) {
+    logger.error('Error updating dealer vehicle for admin:', error);
     throw error;
   }
 };

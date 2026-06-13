@@ -98,7 +98,7 @@ export const VehicleFormPage = () => {
           const vehicle = await getVehicleById(id);
           
           // Use dealerID from vehicle response, which should match one of the dealers in the list
-          const vehicleDealerId = vehicle.dealerID || dealerId || '';
+          const vehicleDealerId = vehicle.dealerUserId || vehicle.dealerID || dealerId || '';
           
           setFormData({
             vehicleType: vehicle.vehicleType || '',

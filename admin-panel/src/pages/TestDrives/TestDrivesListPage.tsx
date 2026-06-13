@@ -2,9 +2,10 @@ import { Breadcrumbs } from '@components/Breadcrumbs/Breadcrumbs';
 import { Button } from '@components/Button/Button';
 import { Card } from '@components/Card/Card';
 import { Input } from '@components/Input/Input';
+import { Select } from '@components/Select';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import {
   deleteAdminTestDrive,
   getAdminTestDrives,
@@ -28,6 +29,15 @@ const STATUS_ACTIONS: Record<TestDriveStatus, TestDriveStatus[]> = {
   completed: [],
   cancelled: [],
 };
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'All Statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 export const TestDrivesListPage = () => {
   const { theme } = useTheme();
@@ -126,6 +136,19 @@ export const TestDrivesListPage = () => {
     }
   };
 
+  const emptyStateMessage = (() => {
+    if (status === 'approved') {
+      return 'No approved test drives yet. New bookings start as Pending — try the Pending or All Statuses filter.';
+    }
+    if (status === 'pending') {
+      return 'No pending test drive requests. Enable "Allow test drive" on a vehicle, then have a customer book from the app.';
+    }
+    if (status) {
+      return `No ${status} test drives found. Try All Statuses to see every request.`;
+    }
+    return 'No test drive requests yet. Enable "Allow test drive" on a vehicle (Inventory → Vehicles), then customers can book from the app.';
+  })();
+
   return (
     <div style={{ padding: s.lg }}>
       <Breadcrumbs />
@@ -140,54 +163,33 @@ export const TestDrivesListPage = () => {
       </div>
 
       <Card style={{ marginBottom: s.md, padding: s.md }}>
-        <div style={{ display: 'flex', gap: s.md, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <Input
-              label="Search"
-              value={search}
-              onChange={(v) => {
-                setSearch(v);
-                setPage(1);
-              }}
-              placeholder="Customer, dealer, vehicle..."
-            />
-          </div>
-          <div style={{ minWidth: 160 }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: s.xs,
-                color: theme.colors.text,
-                fontWeight: 500,
-                fontSize: '0.875rem',
-              }}
-            >
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                setPage(1);
-              }}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: `1px solid ${theme.colors.border}`,
-                background: theme.colors.surface,
-                color: theme.colors.text,
-                fontSize: '0.875rem',
-              }}
-            >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(240px, 1fr) minmax(180px, 220px)',
+            gap: s.md,
+            alignItems: 'end',
+          }}
+        >
+          <Input
+            label="Search"
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
+            placeholder="Customer, dealer, vehicle..."
+          />
+          <Select
+            label="Status"
+            value={status}
+            onChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
+            options={STATUS_OPTIONS}
+            style={{ marginBottom: 0 }}
+          />
         </div>
       </Card>
 
@@ -198,7 +200,12 @@ export const TestDrivesListPage = () => {
           </div>
         ) : testDrives.length === 0 ? (
           <div style={{ padding: s.xl, textAlign: 'center', color: theme.colors.textSecondary }}>
-            No test drives found.
+            <p style={{ margin: '0 0 8px', fontWeight: 600, color: theme.colors.text }}>
+              No test drives found
+            </p>
+            <p style={{ margin: 0, maxWidth: 520, marginInline: 'auto', lineHeight: 1.5 }}>
+              {emptyStateMessage}
+            </p>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -235,8 +242,8 @@ export const TestDrivesListPage = () => {
                   const busy = submittingId === td.id;
 
                   return (
-                    <>
-                      <tr key={td.id} style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
+                    <Fragment key={td.id}>
+                      <tr style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
                         <td style={{ padding: '12px 16px', color: theme.colors.text }}>
                           <div style={{ fontWeight: 600 }}>{td.customerName || '—'}</div>
                           <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
@@ -255,23 +262,26 @@ export const TestDrivesListPage = () => {
                             {td.preferredTime}
                           </div>
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
+                        <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
                           <span
                             style={{
-                              display: 'inline-block',
-                              padding: '3px 10px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              padding: '4px 10px',
                               borderRadius: 20,
                               fontSize: '0.72rem',
                               fontWeight: 600,
+                              lineHeight: 1.2,
                               background: `${statusColor}20`,
                               color: statusColor,
                               textTransform: 'capitalize',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {td.status}
                           </span>
                         </td>
-                        <td style={{ padding: '12px 16px' }}>
+                        <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             {actions.map((action) => (
                               <Button
@@ -339,7 +349,7 @@ export const TestDrivesListPage = () => {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -375,10 +385,8 @@ export const TestDrivesListPage = () => {
           }}
           onClick={() => setEditModal(null)}
         >
-          <Card
-            style={{ padding: s.lg, width: '100%', maxWidth: 420 }}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
+          <div onClick={(e) => e.stopPropagation()}>
+            <Card style={{ padding: s.lg, width: '100%', maxWidth: 420 }}>
             <h3 style={{ margin: '0 0 16px', color: theme.colors.text }}>Edit Test Drive</h3>
             <div style={{ display: 'grid', gap: 12 }}>
               <Input
@@ -407,6 +415,7 @@ export const TestDrivesListPage = () => {
               </Button>
             </div>
           </Card>
+          </div>
         </div>
       )}
     </div>

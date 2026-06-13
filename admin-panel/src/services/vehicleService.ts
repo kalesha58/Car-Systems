@@ -117,6 +117,7 @@ export const getVehicleById = async (vehicleId: string): Promise<IVehicle> => {
   const vehicle: IVehicle = {
     ...vehicleData,
     dealerID: vehicleData.dealerId || vehicleData.dealerID,
+    dealerUserId: (vehicleData as IVehicle & { dealerUserId?: string }).dealerUserId,
   };
   
   return vehicle;
@@ -152,6 +153,29 @@ export const updateVehicle = async (userId: string, vehicleId: string, payload: 
   }
   
   throw new Error('Invalid response structure from updateVehicle API');
+};
+
+/**
+ * Update vehicle by vehicle ID (admin direct route — no dealer userId required)
+ */
+export const updateVehicleById = async (
+  vehicleId: string,
+  payload: IUpdateVehiclePayload,
+): Promise<IVehicle> => {
+  const response = await apiClient.patch<{ success: boolean; Response?: IVehicle } | IVehicle>(
+    `/admin/dealers/vehicles/${vehicleId}`,
+    payload,
+  );
+
+  if ('Response' in response.data && response.data.Response) {
+    return response.data.Response;
+  }
+
+  if ('id' in response.data || 'vehicleType' in response.data) {
+    return response.data as IVehicle;
+  }
+
+  throw new Error('Invalid response structure from updateVehicleById API');
 };
 
 /**

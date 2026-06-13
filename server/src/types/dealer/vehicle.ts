@@ -9,6 +9,7 @@ import {
 export interface IDealerVehicle {
   id: string;
   dealerId: string;
+  dealerUserId?: string;
   vehicleType: VehicleType;
   brand: string;
   vehicleModel: string;

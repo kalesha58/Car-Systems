@@ -4,16 +4,26 @@ import { Card } from '@components/Card/Card';
 import { ImagePreviewModal } from '@components/ImagePreviewModal/ImagePreviewModal';
 import { SkeletonCard } from '@components/Skeleton';
 import { getUsers } from '@services/userService';
-import { getVehicleById } from '@services/vehicleService';
+import { getAdminTestDrives } from '@services/testDriveService';
+import { getVehicleById, updateVehicleById } from '@services/vehicleService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { motion } from 'framer-motion';
 import { Car, Edit } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { IDealerListItem } from '../../types/dealer';
+import type { IAdminTestDrive } from '../../types/testDrive';
 import { IVehicle } from '../../types/vehicle';
+
+const TEST_DRIVE_STATUS_COLORS: Record<string, string> = {
+  pending: '#f59e0b',
+  approved: '#10b981',
+  rejected: '#ef4444',
+  completed: '#6b7280',
+  cancelled: '#9ca3af',
+};
 
 export const VehicleDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +35,9 @@ export const VehicleDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [failedThumbnails, setFailedThumbnails] = useState<Set<number>>(new Set());
+  const [updatingTestDrive, setUpdatingTestDrive] = useState(false);
+  const [testDrives, setTestDrives] = useState<IAdminTestDrive[]>([]);
+  const [loadingTestDrives, setLoadingTestDrives] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
   const lastFetchedIdRef = useRef<string | null>(null);
@@ -97,6 +110,26 @@ export const VehicleDetailsPage = () => {
       }
     };
   }, [id, navigate, showToast]);
+
+  const fetchVehicleTestDrives = useCallback(async (vehicleId: string) => {
+    try {
+      setLoadingTestDrives(true);
+      const result = await getAdminTestDrives({ vehicleId, limit: 20, page: 1 });
+      setTestDrives(result.testDrives);
+    } catch {
+      setTestDrives([]);
+    } finally {
+      setLoadingTestDrives(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchVehicleTestDrives(id);
+    }
+  }, [id, fetchVehicleTestDrives]);
+
+  const dealerUserId = vehicle?.dealerUserId || vehicle?.dealerID;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
@@ -181,6 +214,28 @@ export const VehicleDetailsPage = () => {
     setFailedThumbnails((prev) => new Set(prev).add(index));
   };
 
+  const handleTestDriveToggle = async (enabled: boolean) => {
+    if (!id) return;
+
+    setUpdatingTestDrive(true);
+    try {
+      const updated = await updateVehicleById(id, { allowTestDrive: enabled });
+      setVehicle((prev) => (prev ? { ...prev, allowTestDrive: updated.allowTestDrive ?? enabled } : prev));
+      showToast(
+        enabled ? 'Test drive enabled for this vehicle' : 'Test drive disabled for this vehicle',
+        'success',
+      );
+      if (id) {
+        fetchVehicleTestDrives(id);
+      }
+    } catch (error) {
+      console.error('Error updating test drive setting:', error);
+      showToast('Failed to update test drive setting', 'error');
+    } finally {
+      setUpdatingTestDrive(false);
+    }
+  };
+
   return (
     <div>
       <Breadcrumbs />
@@ -207,10 +262,10 @@ export const VehicleDetailsPage = () => {
           Vehicle Details
         </h1>
         <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
-          {vehicle.dealerID && (
+          {dealerUserId && (
             <Button
               variant="outline"
-              onClick={() => navigate(`/vehicles/${vehicle.dealerID}/${id}/edit`)}
+              onClick={() => navigate(`/vehicles/${dealerUserId}/${id}/edit`)}
               icon={Edit}
             >
               Edit
@@ -788,6 +843,165 @@ export const VehicleDetailsPage = () => {
               </div>
             )}
         </motion.div>
+      </Card>
+
+      <Card style={{ marginBottom: theme.spacing.xl }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+            flexWrap: 'wrap',
+            paddingBottom: theme.spacing.md,
+            marginBottom: theme.spacing.md,
+            borderBottom: `1px solid ${theme.colors.border}`,
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0, color: theme.colors.text, fontSize: '1.1rem', fontWeight: 700 }}>
+              Test Drive
+            </h3>
+            <p style={{ margin: '4px 0 0', color: theme.colors.textSecondary, fontSize: '0.85rem' }}>
+              Allow bookings and view requests for this vehicle
+            </p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                borderRadius: theme.borderRadius.xl,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                backgroundColor: vehicle.allowTestDrive
+                  ? theme.colors.success + '20'
+                  : theme.colors.textSecondary + '20',
+                color: vehicle.allowTestDrive ? theme.colors.success : theme.colors.textSecondary,
+              }}
+            >
+              {vehicle.allowTestDrive ? 'Enabled' : 'Disabled'}
+            </span>
+            <label
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: theme.spacing.xs,
+                fontSize: '0.875rem',
+                color: theme.colors.text,
+                fontWeight: 500,
+                cursor: updatingTestDrive ? 'not-allowed' : 'pointer',
+                opacity: updatingTestDrive ? 0.6 : 1,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={vehicle.allowTestDrive ?? false}
+                disabled={updatingTestDrive}
+                onChange={(e) => handleTestDriveToggle(e.target.checked)}
+              />
+              Allow test drive
+            </label>
+          </div>
+        </div>
+
+        <h4 style={{ margin: '0 0 12px', color: theme.colors.text, fontSize: '0.95rem', fontWeight: 600 }}>
+          Booking requests
+        </h4>
+
+        {loadingTestDrives ? (
+          <p style={{ margin: 0, color: theme.colors.textSecondary, fontSize: '0.875rem' }}>Loading requests...</p>
+        ) : testDrives.length === 0 ? (
+          <div
+            style={{
+              padding: theme.spacing.lg,
+              borderRadius: theme.borderRadius.md,
+              background: theme.colors.surface,
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ margin: '0 0 6px', color: theme.colors.text, fontWeight: 600 }}>
+              No test drive requests yet
+            </p>
+            <p style={{ margin: 0, color: theme.colors.textSecondary, fontSize: '0.85rem', lineHeight: 1.5 }}>
+              {vehicle.allowTestDrive
+                ? 'This vehicle is open for test drives. Requests appear here after a customer books from the app.'
+                : 'Enable "Allow test drive" above, then customers can book from the app.'}
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
+                  {['Customer', 'Date / Time', 'Status', 'Notes'].map((heading) => (
+                    <th
+                      key={heading}
+                      style={{
+                        padding: '10px 12px',
+                        textAlign: 'left',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: theme.colors.textSecondary,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {testDrives.map((td) => {
+                  const statusColor = TEST_DRIVE_STATUS_COLORS[td.status] || '#6b7280';
+                  return (
+                    <tr key={td.id} style={{ borderBottom: `1px solid ${theme.colors.border}` }}>
+                      <td style={{ padding: '10px 12px', color: theme.colors.text, verticalAlign: 'middle' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{td.customerName || '—'}</div>
+                        <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>
+                          {td.customerPhone || td.customerEmail || td.userId}
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 12px', color: theme.colors.text, verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                        {formatDate(td.preferredDate)}
+                        <div style={{ fontSize: '0.75rem', color: theme.colors.textSecondary }}>{td.preferredTime}</div>
+                      </td>
+                      <td style={{ padding: '10px 12px', verticalAlign: 'middle' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '4px 10px',
+                            borderRadius: 20,
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            lineHeight: 1.2,
+                            background: `${statusColor}20`,
+                            color: statusColor,
+                            textTransform: 'capitalize',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {td.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', color: theme.colors.textSecondary, fontSize: '0.85rem', verticalAlign: 'middle' }}>
+                        {td.notes || '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div style={{ marginTop: theme.spacing.md }}>
+          <Button variant="outline" onClick={() => navigate('/test-drives')}>
+            View all test drives
+          </Button>
+        </div>
       </Card>
 
       {/* Image Preview Modal */}

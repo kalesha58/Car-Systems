@@ -21,6 +21,7 @@ import {
   getAllDealerVehiclesController,
   getDealerVehicleByIdController,
   deleteDealerVehicleAdminController,
+  updateDealerVehicleAdminController,
   getBusinessRegistrationByUserIdController,
   updateDealerBusinessRegistrationController
 } from '../../controllers/admin/dealerController';
@@ -154,6 +155,8 @@ router.get('/vehicles', getAllDealerVehiclesController);
  *         description: Forbidden - Admin access required
  */
 router.get('/vehicles/:vehicleId', getDealerVehicleByIdController);
+router.patch('/vehicles/:vehicleId', updateDealerVehicleAdminController);
+router.put('/vehicles/:vehicleId', updateDealerVehicleAdminController);
 
 /**
  * @swagger
