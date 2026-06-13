@@ -6,9 +6,9 @@ import notifee, {
 } from '@notifee/react-native';
 import { Platform, PermissionsAndroid } from 'react-native';
 import { appAxios } from './apiInterceptors';
-import { tokenStorage } from '@state/storage';
 import { navigate, push } from '@utils/NavigationUtils';
 import { getOrderById } from './orderService';
+import { hasAuthenticatedSession } from './authService';
 import { useAuthStore } from '@state/authStore';
 
 /**
@@ -282,8 +282,7 @@ export interface IGetNotificationsParams {
 export const getNotifications = async (
   params: IGetNotificationsParams = {},
 ): Promise<IGetNotificationsResponse> => {
-  const accessToken = tokenStorage.getString('accessToken');
-  if (!accessToken) {
+  if (!hasAuthenticatedSession()) {
     return {
       notifications: [],
       total: 0,
@@ -310,8 +309,7 @@ export const getNotifications = async (
  * Mark notification as read
  */
 export const markNotificationAsRead = async (notificationId: string): Promise<void> => {
-  const accessToken = tokenStorage.getString('accessToken');
-  if (!accessToken) return;
+  if (!hasAuthenticatedSession()) return;
   try {
     await appAxios.put(`/user/notifications/${notificationId}/read`);
   } catch (error: any) {
@@ -324,8 +322,7 @@ export const markNotificationAsRead = async (notificationId: string): Promise<vo
  * Mark all notifications as read
  */
 export const markAllNotificationsAsRead = async (): Promise<{ count: number }> => {
-  const accessToken = tokenStorage.getString('accessToken');
-  if (!accessToken) return { count: 0 };
+  if (!hasAuthenticatedSession()) return { count: 0 };
   try {
     const response = await appAxios.put('/user/notifications/read-all');
     return response.data.Response;
@@ -339,14 +336,17 @@ export const markAllNotificationsAsRead = async (): Promise<{ count: number }> =
  * Get unread notification count
  */
 export const getUnreadNotificationCount = async (): Promise<number> => {
-  const accessToken = tokenStorage.getString('accessToken');
-  if (!accessToken) {
+  if (!hasAuthenticatedSession()) {
     return 0;
   }
   try {
     const response = await appAxios.get('/user/notifications/unread-count');
     return response.data.Response.count || 0;
   } catch (error: any) {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      return 0;
+    }
     console.error('Error getting unread notification count:', error);
     return 0;
   }

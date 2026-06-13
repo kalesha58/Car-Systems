@@ -37,7 +37,13 @@ const REGISTRATION_VERIFY_WINDOW_MS = 15 * 60 * 1000;
 const generateRandomPassword = (): string => crypto.randomBytes(16).toString('hex');
 
 export const normalizePhone = (phone: string): string => {
-  const digits = phone.replace(/[^0-9]/g, '');
+  let digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
   if (!/^[0-9]{10}$/.test(digits)) {
     throw new AppError('Phone number must be exactly 10 digits', 400);
   }

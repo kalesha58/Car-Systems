@@ -14,7 +14,7 @@ import { getBusinessRegistrationByUserId, updateStoreStatus, IBusinessRegistrati
 import { useToast } from '@hooks/useToast';
 import { deleteAccount } from '@service/profileService';
 import { useCartStore } from '@state/cartStore';
-import { clearBusinessRegistrationDraft, storage, tokenStorage } from '@state/storage';
+import { clearBusinessRegistrationDraft, storage } from '@state/storage';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 
 const AccountSettingsSection: FC = () => {
@@ -104,7 +104,6 @@ const AccountSettingsSection: FC = () => {
 
       clearCart();
       await logoutSession();
-      tokenStorage.clearAll();
       storage.clearAll();
       clearBusinessRegistrationDraft(currentUserId);
 

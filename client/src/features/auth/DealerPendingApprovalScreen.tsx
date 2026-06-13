@@ -7,7 +7,6 @@ import { Fonts } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { resetAndNavigate } from '@utils/NavigationUtils';
-import { tokenStorage } from '@state/storage';
 import { logoutSession } from '@service/authService';
 import { processPendingLoginGreeting } from '@service/pushNotificationService';
 import {
@@ -40,7 +39,6 @@ const DealerPendingApprovalScreen: React.FC = () => {
 
   const handleSignOut = async () => {
     await logoutSession();
-    tokenStorage.clearAll();
     resetAndNavigate('CustomerLogin');
   };
 

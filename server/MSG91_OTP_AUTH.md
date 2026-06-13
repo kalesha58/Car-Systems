@@ -70,6 +70,23 @@ curl -X POST https://car-systems.vercel.app/api/auth/send-otp \
 
 Expected: `200` with `"OTP sent"`. If the server returns a message containing `IP not whitelisted`, the Vercel env still uses an IP-locked auth key.
 
+### API returns success but SMS not received
+
+`200` + `"OTP sent"` means **MSG91 accepted the OTP request** (you got a `request_id`). It does **not** guarantee the SMS reached the handset. Delivery can still fail afterward (DLT, template, balance, DND, trial whitelist).
+
+**Check in MSG91 dashboard (account build8):**
+
+1. **SMS → Logs** or **OTP → Reports** — search mobile `917799012154` (country code + number).
+2. Look at **delivery status**:
+   - **Delivered** — check phone spam/SMS folder; wait 1–2 minutes; try another carrier if ported.
+   - **Failed** — open the row and read **failure reason** (DLT template, header, entity, balance, etc.).
+3. **API Failed Logs** — should be empty if 418 is fixed; if new codes appear, fix those first.
+4. **OTP template** — must be **approved** on MSG91 and registered on **DLT** with correct entity ID and sender/header.
+5. **Trial / test accounts** — some plans only deliver to **whitelisted test numbers**. Add `7799012154` under MSG91 test recipients if your plan requires it.
+6. **Balance** — error 301 or low credits block delivery.
+
+**Server logs (Vercel):** After deploy, successful sends log `MSG91 send OTP accepted` with `requestId`. Match that `requestId` in MSG91 reports to see delivery outcome.
+
 **Common MSG91 API error codes:**
 
 | Code | Meaning | Fix |

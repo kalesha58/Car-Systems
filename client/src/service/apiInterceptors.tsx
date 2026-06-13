@@ -1,8 +1,8 @@
 import axios from "axios";
 import { BASE_URL } from "./config";
 import { refresh_tokens } from "./authService";
-import { Alert } from "react-native";
 import { tokenStorage } from "@state/storage";
+import { useAuthStore } from "@state/authStore";
 
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 60000;
@@ -35,12 +35,10 @@ appAxios.interceptors.response.use(
     response=>response,
     async error=>{
         if(error.response && error.response.status === 401){
-            // Check if refresh token exists before attempting refresh
             const refreshToken = tokenStorage.getString('refreshToken');
-            
-            if (!refreshToken) {
-                // No refresh token available, reject immediately without trying to refresh
-                console.log('No refresh token available, skipping token refresh');
+            const user = useAuthStore.getState().user;
+
+            if (!refreshToken || !user) {
                 return Promise.reject(error);
             }
             

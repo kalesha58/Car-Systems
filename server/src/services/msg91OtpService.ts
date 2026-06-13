@@ -119,14 +119,23 @@ export interface IMsg91SendResult {
  */
 export const sendOtpViaMsg91 = async (mobileWithCountryCode: string): Promise<IMsg91SendResult> => {
   try {
+    const templateId = getTemplateId();
+    const otpLength = getOtpLength();
+    const otpExpiry = getOtpExpiryMinutes();
+    const query = new URLSearchParams({
+      template_id: templateId,
+      mobile: mobileWithCountryCode,
+      otp_length: String(otpLength),
+      otp_expiry: String(otpExpiry),
+    });
+    const dltTeId = process.env.MSG91_DLT_TE_ID?.trim();
+    if (dltTeId) {
+      query.set('DLT_TE_ID', dltTeId);
+    }
+
     const response = await axios.post(
-      MSG91_SEND_URL,
-      {
-        template_id: getTemplateId(),
-        mobile: mobileWithCountryCode,
-        otp_length: getOtpLength(),
-        otp_expiry: getOtpExpiryMinutes(),
-      },
+      `${MSG91_SEND_URL}?${query.toString()}`,
+      {},
       {
         headers: {
           authkey: getMsg91ApiKey(),

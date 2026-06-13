@@ -8,6 +8,8 @@ import {useTheme} from '@hooks/useTheme';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {getUnreadNotificationCount} from '@service/notificationService';
+import {hasAuthenticatedSession} from '@service/authService';
+import {useAuthStore} from '@state/authStore';
 
 interface IWelcomeHeaderProps {
   businessName: string;
@@ -22,31 +24,47 @@ const WelcomeHeader: FC<IWelcomeHeaderProps> = ({
 }) => {
   const {colors, isDark} = useTheme();
   const navigation = useNavigation();
+  const {user} = useAuthStore();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const loadUnreadCount = useCallback(async () => {
+    if (!hasAuthenticatedSession()) {
+      setUnreadCount(0);
+      return;
+    }
     try {
       const count = await getUnreadNotificationCount();
       setUnreadCount(count);
     } catch (error) {
-      console.error('Error loading unread count:', error);
       setUnreadCount(0);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
+      if (!hasAuthenticatedSession()) {
+        setUnreadCount(0);
+        return;
+      }
       loadUnreadCount();
     }, [loadUnreadCount]),
   );
 
   useEffect(() => {
+    if (!hasAuthenticatedSession()) {
+      setUnreadCount(0);
+      return;
+    }
     loadUnreadCount();
     const interval = setInterval(() => {
+      if (!hasAuthenticatedSession()) {
+        setUnreadCount(0);
+        return;
+      }
       loadUnreadCount();
     }, 30000);
     return () => clearInterval(interval);
-  }, [loadUnreadCount]);
+  }, [loadUnreadCount, user]);
 
   const handleNotificationPress = () => {
     (navigation as any).navigate('NotificationScreen');

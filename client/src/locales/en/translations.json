@@ -130,6 +130,7 @@
       "codeExpired": "Code expired. Tap Resend OTP.",
       "backToEmailLogin": "Back to email login",
       "codeSentTo": "Enter the code sent to +91 {{phone}}",
+      "deliveryHint": "SMS can take 1–2 minutes. Check spam or blocked messages. If nothing arrives, tap Resend OTP.",
       "otpResent": "OTP sent again",
       "invalidPhoneTitle": "Invalid phone",
       "invalidPhoneMessage": "Please enter a valid 10-digit mobile number",

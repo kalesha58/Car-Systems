@@ -6,6 +6,8 @@ import { Fonts, MIN_TOUCH_TARGET } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
 import { getUnreadNotificationCount } from '@service/notificationService';
+import { hasAuthenticatedSession } from '@service/authService';
+import { useAuthStore } from '@state/authStore';
 import CustomText from '@components/ui/CustomText';
 
 interface NotificationIconProps {
@@ -16,31 +18,47 @@ interface NotificationIconProps {
 const NotificationIcon: React.FC<NotificationIconProps> = ({ onPress, color }) => {
   const navigation = useNavigation();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const loadUnreadCount = useCallback(async () => {
+    if (!hasAuthenticatedSession()) {
+      setUnreadCount(0);
+      return;
+    }
     try {
       const count = await getUnreadNotificationCount();
       setUnreadCount(count);
     } catch (error) {
-      console.error('Error loading unread count:', error);
       setUnreadCount(0);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
+      if (!hasAuthenticatedSession()) {
+        setUnreadCount(0);
+        return;
+      }
       loadUnreadCount();
     }, [loadUnreadCount]),
   );
 
   useEffect(() => {
+    if (!hasAuthenticatedSession()) {
+      setUnreadCount(0);
+      return;
+    }
     loadUnreadCount();
     const interval = setInterval(() => {
+      if (!hasAuthenticatedSession()) {
+        setUnreadCount(0);
+        return;
+      }
       loadUnreadCount();
     }, 30000);
     return () => clearInterval(interval);
-  }, [loadUnreadCount]);
+  }, [loadUnreadCount, user]);
 
   const handlePress = () => {
     if (onPress) {

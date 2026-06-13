@@ -17,9 +17,21 @@ import {
 export const CURRENT_TERMS_VERSION = '2026-05';
 export const CURRENT_PRIVACY_VERSION = '2026-05';
 
-/** Clears FCM on the server (while JWT is valid), then clears auth store state. */
+export const hasAuthenticatedSession = (): boolean => {
+  const user = useAuthStore.getState().user;
+  if (!user || user.isGuest) {
+    return false;
+  }
+  return Boolean(
+    tokenStorage.getString('accessToken') &&
+    tokenStorage.getString('refreshToken'),
+  );
+};
+
+/** Clears FCM on the server (while JWT is valid), then clears tokens and auth store state. */
 export const logoutSession = async (): Promise<void> => {
   await unregisterPushNotifications();
+  tokenStorage.clearAll();
   useAuthStore.getState().logout();
 };
 

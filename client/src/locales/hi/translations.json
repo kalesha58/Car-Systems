@@ -130,6 +130,7 @@
       "codeExpired": "कोड समाप्त। OTP दोबारा भेजें।",
       "backToEmailLogin": "ईमेल लॉगिन पर वापस",
       "codeSentTo": "+91 {{phone}} पर भेजा गया कोड दर्ज करें",
+      "deliveryHint": "SMS आने में 1–2 मिनट लग सकते हैं। स्पैम या ब्लॉक किए गए संदेश जांचें। न मिले तो Resend OTP दबाएं।",
       "otpResent": "OTP दोबारा भेजा गया",
       "invalidPhoneTitle": "अमान्य फ़ोन",
       "invalidPhoneMessage": "कृपया मान्य 10 अंकों का मोबाइल नंबर दर्ज करें",

@@ -6,7 +6,7 @@ import { useCartStore } from '@state/cartStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
-import { storage, tokenStorage } from '@state/storage';
+import { storage } from '@state/storage';
 import { logoutSession } from '@service/authService';
 import { resetAndNavigate } from '@utils/NavigationUtils';
 import WalletSection from './WalletSection';
@@ -43,7 +43,6 @@ const ProfileSettings = () => {
   const handleLogout = async () => {
     clearCart();
     await logoutSession();
-    tokenStorage.clearAll();
     storage.clearAll();
     resetAndNavigate('CustomerLogin');
   };

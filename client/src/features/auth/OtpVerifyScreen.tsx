@@ -239,6 +239,11 @@ const OtpVerifyScreen: FC = () => {
           <CustomText variant="h8" style={{ color: colors.textSecondary, textAlign: 'center' }}>
             {t('auth.phoneOtp.codeSentTo', { phone: formatPhoneForSubtitle(phone) })}
           </CustomText>
+          <CustomText
+            variant="h8"
+            style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 8, paddingHorizontal: 8 }}>
+            {t('auth.phoneOtp.deliveryHint')}
+          </CustomText>
           <TouchableOpacity onPress={goBack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <CustomText variant="h8" style={{ color: colors.primary, marginTop: 4 }}>
               {t('auth.phoneOtp.changeNumber')}
