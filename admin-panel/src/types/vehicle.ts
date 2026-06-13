@@ -16,6 +16,7 @@ export interface IVehicle {
   features?: string[];
   condition: 'New' | 'Used' | 'Refurbished';
   dealerID?: string;
+  allowTestDrive?: boolean;
   dealer?: {
     id: string;
     name: string;
@@ -46,6 +47,7 @@ export interface IVehicleFormData {
   features: string[];
   condition: 'New' | 'Used' | 'Refurbished';
   dealerID: string;
+  allowTestDrive?: boolean;
   images?: string[];
 }
 

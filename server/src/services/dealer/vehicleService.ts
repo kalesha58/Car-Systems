@@ -1,4 +1,5 @@
 import { DealerVehicle, IDealerVehicleDocument } from '../../models/DealerVehicle';
+import { TestDrive } from '../../models/TestDrive';
 import {
   IDealerVehicle,
   ICreateDealerVehicleRequest,
@@ -102,6 +103,10 @@ export const getDealerVehicles = async (
       ];
     }
 
+    if (query.allowTestDrive === true) {
+      filter.allowTestDrive = true;
+    }
+
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = { [sortBy]: sortOrder };
@@ -179,6 +184,10 @@ export const getAllDealerVehicles = async (
       const catalogIds = await resolveDealerCatalogIds(query.dealerId);
       filter.dealerId =
         catalogIds.length > 1 ? { $in: catalogIds } : catalogIds[0] ?? query.dealerId;
+    }
+
+    if (query.allowTestDrive === true) {
+      filter.allowTestDrive = true;
     }
 
     const sortBy = query.sortBy || 'createdAt';
@@ -495,7 +504,23 @@ export const updateDealerVehicle = async (
     }
 
     if (data.allowTestDrive !== undefined) {
+      const wasEnabled = vehicle.allowTestDrive === true;
       vehicle.allowTestDrive = data.allowTestDrive;
+
+      if (wasEnabled && data.allowTestDrive === false) {
+        await TestDrive.updateMany(
+          {
+            vehicleId: vehicleId,
+            status: { $in: ['pending', 'approved'] },
+          },
+          {
+            $set: {
+              status: 'cancelled',
+              dealerNotes: 'Test drive disabled for this vehicle',
+            },
+          },
+        );
+      }
     }
 
     await vehicle.save();

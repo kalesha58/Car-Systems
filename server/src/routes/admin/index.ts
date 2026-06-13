@@ -17,6 +17,7 @@ import payoutRoutes from './payoutRoutes';
 import moderationRoutes from './moderationRoutes';
 import couponRoutes from './couponRoutes';
 import serviceBookingRoutes from './serviceBookingRoutes';
+import testDriveRoutes from './testDriveRoutes';
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.use('/payouts', payoutRoutes);
 router.use('/moderation', moderationRoutes);
 router.use('/coupons', couponRoutes);
 router.use('/service-bookings', serviceBookingRoutes);
+router.use('/test-drives', testDriveRoutes);
 
 export default router;
 

@@ -96,6 +96,7 @@ export interface IGetDealerVehiclesRequest {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   dealerId?: string;
+  allowTestDrive?: boolean;
 }
 
 

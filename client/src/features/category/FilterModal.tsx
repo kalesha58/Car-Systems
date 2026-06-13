@@ -33,6 +33,7 @@ export interface IFilterState {
   minPrice?: number;
   maxPrice?: number;
   sort?: string;
+  allowTestDrive?: boolean;
 }
 
 const FilterModal: FC<IFilterModalProps> = ({

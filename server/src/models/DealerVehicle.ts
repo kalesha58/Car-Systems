@@ -127,6 +127,7 @@ const dealerVehicleSchema = new Schema<IDealerVehicleDocument>(
 // Indexes
 dealerVehicleSchema.index({ dealerId: 1 });
 dealerVehicleSchema.index({ availability: 1 });
+dealerVehicleSchema.index({ allowTestDrive: 1, availability: 1 });
 dealerVehicleSchema.index({ vehicleType: 1 });
 dealerVehicleSchema.index({ brand: 1 });
 dealerVehicleSchema.index({ price: 1 });

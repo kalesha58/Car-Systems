@@ -50,6 +50,7 @@ const InventoryScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<InventoryTab>('products');
   const [products, setProducts] = useState<IProduct[]>([]);
   const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
+  const [vehicleTestDriveOnly, setVehicleTestDriveOnly] = useState(false);
   const [services, setServices] = useState<IService[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -95,6 +96,44 @@ const InventoryScreen: React.FC = () => {
   }, [businessRegistration?.type]);
   
   const activeIndex = useMemo(() => tabOrder.indexOf(activeTab), [activeTab, tabOrder]);
+
+  const filteredVehicles = useMemo(() => {
+    if (!vehicleTestDriveOnly) return vehicles;
+    return vehicles.filter((v) => v.allowTestDrive === true);
+  }, [vehicles, vehicleTestDriveOnly]);
+
+  const renderVehicleFilterHeader = () => (
+    <View style={{flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 8}}>
+      <TouchableOpacity
+        onPress={() => setVehicleTestDriveOnly(false)}
+        style={{
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: !vehicleTestDriveOnly ? theme.secondary : theme.border,
+          backgroundColor: !vehicleTestDriveOnly ? theme.secondary + '15' : theme.backgroundSecondary,
+        }}>
+        <CustomText variant="h9" fontFamily={Fonts.Medium} style={{color: theme.text}}>
+          All
+        </CustomText>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setVehicleTestDriveOnly(true)}
+        style={{
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: vehicleTestDriveOnly ? theme.secondary : theme.border,
+          backgroundColor: vehicleTestDriveOnly ? theme.secondary + '15' : theme.backgroundSecondary,
+        }}>
+        <CustomText variant="h9" fontFamily={Fonts.Medium} style={{color: theme.text}}>
+          Test drive enabled
+        </CustomText>
+      </TouchableOpacity>
+    </View>
+  );
 
   // Set default active tab based on available tabs
   useEffect(() => {
@@ -406,6 +445,14 @@ const InventoryScreen: React.FC = () => {
                 {item.availability.charAt(0).toUpperCase() + item.availability.slice(1)}
               </CustomText>
             </View>
+            {item.allowTestDrive && (
+              <View style={[styles.metaItem, {marginLeft: 8}]}>
+                <Icon name="car-sport-outline" size={RFValue(12)} color={theme.textSecondary} />
+                <CustomText variant="h9" style={[styles.metaText, {color: theme.textSecondary}]}>
+                  Test drive
+                </CustomText>
+              </View>
+            )}
             <View
               style={[
                 styles.statusBadge,
@@ -659,11 +706,12 @@ const InventoryScreen: React.FC = () => {
     if (singleTab === 'vehicles') {
       return (
         <FlatList
-          data={vehicles}
+          data={filteredVehicles}
           renderItem={renderVehicleItem}
           keyExtractor={item => getItemId(item)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderVehicleFilterHeader}
           ListEmptyComponent={renderEmptyState}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />
@@ -804,11 +852,12 @@ const InventoryScreen: React.FC = () => {
             {tabOrder.includes('vehicles') && (
               <View style={{width: screenWidth}}>
                 <FlatList
-                  data={vehicles}
+                  data={filteredVehicles}
                   renderItem={renderVehicleItem}
                   keyExtractor={item => getItemId(item)}
                   contentContainerStyle={styles.listContent}
                   showsVerticalScrollIndicator={false}
+                  ListHeaderComponent={renderVehicleFilterHeader}
                   ListEmptyComponent={activeTab === 'vehicles' ? renderEmptyState : null}
                   refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.secondary} colors={[theme.secondary]} />

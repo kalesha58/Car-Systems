@@ -100,6 +100,7 @@ const DealerStoreScreen: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<TabType>('products');
   const [searchQuery, setSearchQuery] = useState('');
+  const [vehicleTestDriveOnly, setVehicleTestDriveOnly] = useState(false);
   const [storeOpen, setStoreOpen] = useState(
     dealerSnapshot?.storeOpen !== undefined ? dealerSnapshot.storeOpen : true,
   );
@@ -284,11 +285,14 @@ const DealerStoreScreen: React.FC = () => {
   }, [products, searchQuery]);
 
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter((v) =>
-      v.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.vehicleModel.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [vehicles, searchQuery]);
+    return vehicles.filter((v) => {
+      const matchesSearch =
+        v.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.vehicleModel.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTestDrive = !vehicleTestDriveOnly || v.allowTestDrive === true;
+      return matchesSearch && matchesTestDrive;
+    });
+  }, [vehicles, searchQuery, vehicleTestDriveOnly]);
 
   const filteredServices = useMemo(() => {
     const list = Array.isArray(services) ? services : [];
@@ -737,6 +741,49 @@ const DealerStoreScreen: React.FC = () => {
           paddingVertical: 4,
           borderRadius: 6,
         },
+        testDriveChip: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          borderRadius: 6,
+          backgroundColor: colors.backgroundSecondary,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignSelf: 'flex-start',
+        },
+        testDriveChipText: {
+          fontSize: RFValue(9),
+          ...fontStyle(Fonts.Medium),
+          color: colors.textSecondary,
+        },
+        vehicleFilterRow: {
+          flexDirection: 'row',
+          gap: 8,
+          marginHorizontal: 16,
+          marginBottom: 12,
+        },
+        vehicleFilterChip: {
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.backgroundSecondary,
+        },
+        vehicleFilterChipActive: {
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.secondary,
+        },
+        vehicleFilterChipText: {
+          fontSize: RFValue(10),
+          ...fontStyle(Fonts.Medium),
+          color: colors.textSecondary,
+        },
+        vehicleFilterChipTextActive: {
+          color: colors.text,
+        },
         serviceCard: {
           backgroundColor: colors.cardBackground,
           borderRadius: 12,
@@ -1111,7 +1158,36 @@ const DealerStoreScreen: React.FC = () => {
         )}
 
         {activeTab === 'vehicles' && (
-          vehiclesLoading ? (
+          <>
+            <View style={styles.vehicleFilterRow}>
+              <TouchableOpacity
+                style={[styles.vehicleFilterChip, !vehicleTestDriveOnly && styles.vehicleFilterChipActive]}
+                onPress={() => setVehicleTestDriveOnly(false)}
+              >
+                <CustomText
+                  style={[
+                    styles.vehicleFilterChipText,
+                    !vehicleTestDriveOnly && styles.vehicleFilterChipTextActive,
+                  ]}
+                >
+                  All vehicles
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.vehicleFilterChip, vehicleTestDriveOnly && styles.vehicleFilterChipActive]}
+                onPress={() => setVehicleTestDriveOnly(true)}
+              >
+                <CustomText
+                  style={[
+                    styles.vehicleFilterChipText,
+                    vehicleTestDriveOnly && styles.vehicleFilterChipTextActive,
+                  ]}
+                >
+                  Test drive available
+                </CustomText>
+              </TouchableOpacity>
+            </View>
+          {vehiclesLoading ? (
             <View style={{ paddingHorizontal: 16 }}>
               {[1, 2].map((i) => (
                 <View key={i} style={{ height: 240, marginBottom: 16 }}>
@@ -1162,6 +1238,12 @@ const DealerStoreScreen: React.FC = () => {
                           <CustomText style={styles.specText}>{item.condition}</CustomText>
                         </View>
                       )}
+                      {item.allowTestDrive && (
+                        <View style={styles.testDriveChip}>
+                          <Icon name="car-sport-outline" size={RFValue(10)} color={colors.textSecondary} />
+                          <CustomText style={styles.testDriveChipText}>Test drive</CustomText>
+                        </View>
+                      )}
                     </View>
 
                     <View style={styles.vehicleFooter}>
@@ -1198,7 +1280,8 @@ const DealerStoreScreen: React.FC = () => {
                 There are no vehicles listed for this showroom currently.
               </CustomText>
             </View>
-          )
+          )}
+          </>
         )}
 
         {activeTab === 'services' && (

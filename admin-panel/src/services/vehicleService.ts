@@ -48,6 +48,7 @@ export interface ICreateVehiclePayload {
   description: string;
   features?: string[];
   condition: 'New' | 'Used' | 'Refurbished';
+  allowTestDrive?: boolean;
 }
 
 export interface IUpdateVehiclePayload {
@@ -66,6 +67,7 @@ export interface IUpdateVehiclePayload {
   description?: string;
   features?: string[];
   condition?: 'New' | 'Used' | 'Refurbished';
+  allowTestDrive?: boolean;
 }
 
 /**

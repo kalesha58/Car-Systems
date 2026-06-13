@@ -126,6 +126,14 @@ const VehicleItem: FC<VehicleItemProps> = ({index, item}) => {
           )}
         </View>
 
+        {item.allowTestDrive && (
+          <View style={[styles.dealerBadge, {marginBottom: 4}]}>
+            <CustomText fontSize={RFValue(6)} fontFamily={Fonts.Medium} style={{color: colors.textSecondary}}>
+              Test drive
+            </CustomText>
+          </View>
+        )}
+
         <View style={styles.priceContainer}>
           <CustomText variant="h8" fontFamily={Fonts.Medium}>
             ₹{item.price?.toLocaleString()}

@@ -382,6 +382,9 @@ const ProductCategories = () => {
     if (queryFilters.maxPrice !== undefined) {
       queryParams.maxPrice = queryFilters.maxPrice;
     }
+    if (categoryType === 'vehicles' && queryFilters.allowTestDrive) {
+      queryParams.allowTestDrive = true;
+    }
     if (categoryType === 'products' && category._id !== 'all-products') {
       if (MONGO_OBJECT_ID.test(category._id)) {
         queryParams.categoryId = category._id;
@@ -1208,6 +1211,33 @@ const ProductCategories = () => {
             </View>
           )}
           <View style={{paddingHorizontal: 16, paddingVertical: 8}}>
+            {selectedCategory?.type === 'vehicles' && (
+              <View style={{flexDirection: 'row', gap: 8, marginBottom: 8}}>
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      allowTestDrive: prev.allowTestDrive ? undefined : true,
+                    }))
+                  }
+                  style={{
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    backgroundColor: filters.allowTestDrive ? Colors.secondary + '18' : colors.backgroundSecondary,
+                    borderColor: filters.allowTestDrive ? Colors.secondary : colors.border,
+                  }}>
+                  <CustomText
+                    fontSize={RFValue(10)}
+                    fontFamily={filters.allowTestDrive ? Fonts.SemiBold : Fonts.Medium}
+                    style={{color: filters.allowTestDrive ? Colors.secondary : colors.text}}>
+                    Test drive available
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
+            )}
             <FilterChips
               filters={filters}
               onRemoveFilter={handleRemoveFilter}

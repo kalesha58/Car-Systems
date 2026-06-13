@@ -24,6 +24,7 @@ import CustomHeader from '@components/ui/CustomHeader';
 import CustomDropdownBottomSheet, {IDropdownOption} from '@components/ui/CustomDropdownBottomSheet';
 import {useTheme} from '@hooks/useTheme';
 import {useToast} from '@hooks/useToast';
+import {useBusinessRegistration} from '@hooks/useBusinessRegistration';
 import {useTranslation} from 'react-i18next';
 import {
   createDealerVehicle,
@@ -59,8 +60,13 @@ const AddEditVehicleScreen: React.FC = () => {
   const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const {showSuccess, showError} = useToast();
+  const {businessRegistration} = useBusinessRegistration();
   const {t} = useTranslation();
   const params = (route.params as RouteParams) || {};
+
+  const showTestDriveOption =
+    businessRegistration?.type === 'Automobile Showroom' ||
+    businessRegistration?.type === 'Bike Dealer';
 
   const isEditMode = !!params.vehicle;
   const vehicle = params.vehicle;
@@ -602,6 +608,12 @@ const AddEditVehicleScreen: React.FC = () => {
       flex: 1,
       marginRight: screenWidth * 0.02,
     },
+    helperText: {
+      fontSize: RFValue(10),
+      ...fontStyle(Fonts.Regular),
+      marginTop: 4,
+      lineHeight: RFValue(14),
+    },
     button: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -929,15 +941,22 @@ const AddEditVehicleScreen: React.FC = () => {
           </View>
 
           <View style={styles.section}>
-            <View style={styles.switchRow}>
-              <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
-              <Switch
-                value={allowTestDrive}
-                onValueChange={setAllowTestDrive}
-                trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
-                thumbColor={allowTestDrive ? colors.secondary : colors.disabled}
-              />
-            </View>
+            {showTestDriveOption && (
+              <>
+                <View style={styles.switchRow}>
+                  <CustomText style={styles.switchLabel}>{t('dealer.allowTestDrive')}</CustomText>
+                  <Switch
+                    value={allowTestDrive}
+                    onValueChange={setAllowTestDrive}
+                    trackColor={{false: colors.disabled, true: colors.secondary + '80'}}
+                    thumbColor={allowTestDrive ? colors.secondary : colors.disabled}
+                  />
+                </View>
+                <CustomText style={[styles.helperText, {color: colors.textSecondary}]}>
+                  Customers can request a test drive for this vehicle only when enabled.
+                </CustomText>
+              </>
+            )}
           </View>
 
           <View style={styles.section}>

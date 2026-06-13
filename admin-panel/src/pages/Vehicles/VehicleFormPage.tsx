@@ -37,6 +37,7 @@ export const VehicleFormPage = () => {
     features: [],
     condition: 'New',
     dealerID: dealerId || '',
+    allowTestDrive: false,
   });
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [featureInput, setFeatureInput] = useState('');
@@ -110,6 +111,7 @@ export const VehicleFormPage = () => {
             features: vehicle.features || [],
             condition: vehicle.condition || 'New',
             dealerID: vehicleDealerId,
+            allowTestDrive: vehicle.allowTestDrive ?? false,
             images: vehicle.images || [],
           });
           // Existing images are already set in formData.images above
@@ -318,6 +320,7 @@ export const VehicleFormPage = () => {
         description: formData.description,
         features: formData.features || [],
         condition: formData.condition,
+        allowTestDrive: formData.allowTestDrive ?? false,
         ...(imagesArray.length > 0 && { images: imagesArray }),
       };
 
@@ -797,6 +800,31 @@ export const VehicleFormPage = () => {
                   { value: 'Refurbished', label: 'Refurbished' },
                 ]}
               />
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.md }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: theme.spacing.sm,
+                  color: theme.colors.text,
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={formData.allowTestDrive ?? false}
+                  onChange={(e) =>
+                    setFormData({ ...formData, allowTestDrive: e.target.checked })
+                  }
+                />
+                Allow test drive for this vehicle
+              </label>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: theme.colors.textSecondary }}>
+                Customers can request a test drive only when this is enabled.
+              </p>
             </div>
 
             <div style={{ marginBottom: theme.spacing.md }}>

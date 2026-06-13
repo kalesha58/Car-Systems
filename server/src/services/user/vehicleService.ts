@@ -271,6 +271,10 @@ export const getAllDealerVehiclesForUsers = async (
       ];
     }
 
+    if (query.allowTestDrive === true) {
+      filter.allowTestDrive = true;
+    }
+
     const sortBy = query.sortBy || 'createdAt';
     const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
     const sort: any = { [sortBy]: sortOrder };

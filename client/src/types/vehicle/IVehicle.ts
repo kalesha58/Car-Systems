@@ -46,6 +46,7 @@ export interface IGetVehiclesRequest {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   dealerId?: string;
+  allowTestDrive?: boolean;
 }
 
 export interface IVehiclesResponse {

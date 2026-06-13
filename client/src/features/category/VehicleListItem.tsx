@@ -210,6 +210,14 @@ const VehicleListItem: FC<VehicleListItemProps> = ({item}) => {
                   style={styles.detailText}>
                   {item.year} • {item.fuelType} • {item.transmission}
                 </CustomText>
+                {item.allowTestDrive && (
+                  <CustomText
+                    fontSize={RFValue(9)}
+                    fontFamily={Fonts.Medium}
+                    style={[styles.detailText, {color: colors.textSecondary}]}>
+                    Test drive
+                  </CustomText>
+                )}
               </View>
             </View>
             <TouchableOpacity

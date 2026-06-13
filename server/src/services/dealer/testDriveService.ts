@@ -8,6 +8,7 @@ import {
 import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
+import { resolveDealerCatalogIds } from '../../utils/dealerCatalogIds';
 
 /**
  * Convert test drive document to interface
@@ -28,6 +29,11 @@ const testDriveToInterface = (doc: ITestDriveDocument): ITestDrive => {
   };
 };
 
+const dealerOwnsTestDrive = async (testDriveDealerId: string, authenticatedDealerId: string): Promise<boolean> => {
+  const catalogIds = await resolveDealerCatalogIds(authenticatedDealerId);
+  return catalogIds.includes(testDriveDealerId);
+};
+
 /**
  * Get dealer's test drives
  */
@@ -40,16 +46,18 @@ export const getDealerTestDrives = async (
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
 
-    const filter: any = { dealerId };
+    const catalogIds = await resolveDealerCatalogIds(dealerId);
+    const filter: any = {
+      dealerId: catalogIds.length > 1 ? { $in: catalogIds } : catalogIds[0] ?? dealerId,
+    };
 
     if (query.status) {
       filter.status = query.status;
     }
 
     if (query.vehicleId) {
-      // Verify vehicle belongs to dealer
       const vehicle = await DealerVehicle.findById(query.vehicleId);
-      if (!vehicle || vehicle.dealerId !== dealerId) {
+      if (!vehicle || !(await dealerOwnsTestDrive(vehicle.dealerId, dealerId))) {
         throw new ForbiddenError('Vehicle does not belong to this dealer');
       }
       filter.vehicleId = query.vehicleId;
@@ -100,7 +108,7 @@ export const getDealerTestDriveById = async (
     }
 
     // Ensure dealer can only access test drives for their vehicles
-    if (testDrive.dealerId !== dealerId) {
+    if (!(await dealerOwnsTestDrive(testDrive.dealerId, dealerId))) {
       throw new ForbiddenError('Unauthorized access to test drive');
     }
 
@@ -126,8 +134,7 @@ export const updateTestDriveStatus = async (
       throw new NotFoundError('Test drive not found');
     }
 
-    // Ensure dealer can only manage test drives for their vehicles
-    if (testDrive.dealerId !== dealerId) {
+    if (!(await dealerOwnsTestDrive(testDrive.dealerId, dealerId))) {
       throw new ForbiddenError('Unauthorized access to test drive');
     }
 

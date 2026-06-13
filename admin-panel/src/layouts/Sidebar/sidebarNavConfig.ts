@@ -15,6 +15,7 @@ import {
   Wrench,
   BadgeCheck,
   Car,
+  CarTaxiFront,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -66,6 +67,7 @@ export const navGroups: INavGroup[] = [
     items: [
       { path: '/orders', label: 'Orders', icon: ShoppingCart },
       { path: '/service-bookings', label: 'Bookings', icon: CalendarCheck },
+      { path: '/test-drives', label: 'Test Drives', icon: CarTaxiFront },
       { path: '/coupons', label: 'Coupons', icon: Ticket },
     ],
   },
