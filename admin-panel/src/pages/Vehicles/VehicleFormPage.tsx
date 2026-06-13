@@ -5,6 +5,7 @@ import { Input } from '@components/Input/Input';
 import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
 import { getUsers } from '@services/userService';
+import { getVehicleBrands, getVehicleModels } from '@services/vehicleBrandService';
 import { createVehicle, getVehicleById, type ICreateVehiclePayload,updateVehicle } from '@services/vehicleService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
@@ -25,6 +26,8 @@ export const VehicleFormPage = () => {
     vehicleType: '',
     brand: '',
     vehicleModel: '',
+    vehicleBrandId: '',
+    vehicleModelId: '',
     year: new Date().getFullYear(),
     price: 0,
     availability: 'available',
@@ -42,6 +45,8 @@ export const VehicleFormPage = () => {
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [featureInput, setFeatureInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [vehicleBrands, setVehicleBrands] = useState<Array<{ id: string; name: string }>>([]);
+  const [vehicleModels, setVehicleModels] = useState<Array<{ id: string; name: string }>>([]);
   const [dealers, setDealers] = useState<IDealerListItem[]>([]);
   const [dealerSearchTerm, setDealerSearchTerm] = useState('');
   const [showDealerDropdown, setShowDealerDropdown] = useState(false);
@@ -99,6 +104,8 @@ export const VehicleFormPage = () => {
             vehicleType: vehicle.vehicleType || '',
             brand: vehicle.brand || '',
             vehicleModel: vehicle.vehicleModel || '',
+            vehicleBrandId: vehicle.vehicleBrandId || '',
+            vehicleModelId: vehicle.vehicleModelId || '',
             year: vehicle.year || new Date().getFullYear(),
             price: vehicle.price || 0,
             availability: vehicle.availability || 'available',
@@ -142,15 +149,68 @@ export const VehicleFormPage = () => {
     };
   }, [id, dealerId, isEdit, navigate, showToast]);
 
+  const showBrandModelFields = formData.vehicleType === 'Car' || formData.vehicleType === 'Bike';
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      if (!showBrandModelFields) {
+        setVehicleBrands([]);
+        return;
+      }
+      const response = await getVehicleBrands({
+        type: formData.vehicleType as 'Car' | 'Bike',
+        status: 'active',
+      });
+      setVehicleBrands((response.vehicleBrands || []).map((b) => ({ id: b.id, name: b.name })));
+    };
+    loadBrands().catch(() => setVehicleBrands([]));
+  }, [showBrandModelFields, formData.vehicleType]);
+
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!formData.vehicleBrandId) {
+        setVehicleModels([]);
+        return;
+      }
+      const response = await getVehicleModels(formData.vehicleBrandId, { status: 'active' });
+      setVehicleModels((response.vehicleModels || []).map((m) => ({ id: m.id, name: m.name })));
+    };
+    loadModels().catch(() => setVehicleModels([]));
+  }, [formData.vehicleBrandId]);
+
+  useEffect(() => {
+    if (formData.vehicleBrandId || !formData.brand.trim() || vehicleBrands.length === 0) {
+      return;
+    }
+    const matchedBrand = vehicleBrands.find(
+      (b) => b.name.toLowerCase() === formData.brand.trim().toLowerCase(),
+    );
+    if (matchedBrand) {
+      setFormData((prev) => ({ ...prev, vehicleBrandId: matchedBrand.id }));
+    }
+  }, [vehicleBrands, formData.brand, formData.vehicleBrandId]);
+
+  useEffect(() => {
+    if (formData.vehicleModelId || !formData.vehicleModel.trim() || vehicleModels.length === 0) {
+      return;
+    }
+    const matchedModel = vehicleModels.find(
+      (m) => m.name.toLowerCase() === formData.vehicleModel.trim().toLowerCase(),
+    );
+    if (matchedModel) {
+      setFormData((prev) => ({ ...prev, vehicleModelId: matchedModel.id }));
+    }
+  }, [vehicleModels, formData.vehicleModel, formData.vehicleModelId]);
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.brand.trim()) {
-      newErrors.brand = 'Brand is required';
+    if (!formData.vehicleBrandId) {
+      newErrors.vehicleBrandId = 'Brand is required';
     }
 
-    if (!formData.vehicleModel.trim()) {
-      newErrors.vehicleModel = 'Model is required';
+    if (!formData.vehicleModelId) {
+      newErrors.vehicleModelId = 'Model is required';
     }
 
     if (!formData.vehicleType.trim()) {
@@ -304,11 +364,16 @@ export const VehicleFormPage = () => {
         imagesArray.push(...processedImages);
       }
 
+      const selectedBrand = vehicleBrands.find((b) => b.id === formData.vehicleBrandId);
+      const selectedModel = vehicleModels.find((m) => m.id === formData.vehicleModelId);
+
       // Prepare payload according to API structure
       const payload: ICreateVehiclePayload = {
         vehicleType: formData.vehicleType,
-        brand: formData.brand,
-        vehicleModel: formData.vehicleModel,
+        vehicleBrandId: formData.vehicleBrandId,
+        vehicleModelId: formData.vehicleModelId,
+        brand: selectedBrand?.name || formData.brand,
+        vehicleModel: selectedModel?.name || formData.vehicleModel,
         year: formData.year,
         price: formData.price,
         availability: formData.availability,
@@ -601,30 +666,6 @@ export const VehicleFormPage = () => {
               marginBottom: theme.spacing.md,
             }}
           >
-            <Input
-              label="Brand"
-              value={formData.brand}
-              onChange={(value) => {
-                setFormData({ ...formData, brand: value });
-                setErrors({ ...errors, brand: undefined });
-              }}
-              placeholder="Enter brand"
-              error={errors.brand}
-              required
-            />
-
-            <Input
-              label="Model"
-              value={formData.vehicleModel}
-              onChange={(value) => {
-                setFormData({ ...formData, vehicleModel: value });
-                setErrors({ ...errors, vehicleModel: undefined });
-              }}
-              placeholder="Enter model"
-              error={errors.vehicleModel}
-              required
-            />
-
             <div style={{ marginBottom: theme.spacing.md }}>
               <label
                 style={{
@@ -639,8 +680,20 @@ export const VehicleFormPage = () => {
               <Select
                 value={formData.vehicleType}
                 onChange={(value) => {
-                  setFormData({ ...formData, vehicleType: value });
-                  setErrors({ ...errors, vehicleType: undefined });
+                  setFormData({
+                    ...formData,
+                    vehicleType: value,
+                    vehicleBrandId: '',
+                    vehicleModelId: '',
+                    brand: '',
+                    vehicleModel: '',
+                  });
+                  setErrors({
+                    ...errors,
+                    vehicleType: undefined,
+                    vehicleBrandId: undefined,
+                    vehicleModelId: undefined,
+                  });
                 }}
                 placeholder="Select vehicle type"
                 required
@@ -651,6 +704,49 @@ export const VehicleFormPage = () => {
                 ]}
               />
             </div>
+
+            {showBrandModelFields && (
+              <>
+                <Select
+                  label="Brand"
+                  value={formData.vehicleBrandId}
+                  onChange={(value) => {
+                    const brand = vehicleBrands.find((b) => b.id === value);
+                    setFormData({
+                      ...formData,
+                      vehicleBrandId: value,
+                      vehicleModelId: '',
+                      brand: brand?.name || '',
+                      vehicleModel: '',
+                    });
+                    setErrors({ ...errors, vehicleBrandId: undefined, vehicleModelId: undefined });
+                  }}
+                  placeholder="Select brand"
+                  options={vehicleBrands.map((b) => ({ value: b.id, label: b.name }))}
+                  error={errors.vehicleBrandId}
+                  required
+                />
+
+                <Select
+                  label="Model"
+                  value={formData.vehicleModelId}
+                  onChange={(value) => {
+                    const model = vehicleModels.find((m) => m.id === value);
+                    setFormData({
+                      ...formData,
+                      vehicleModelId: value,
+                      vehicleModel: model?.name || '',
+                    });
+                    setErrors({ ...errors, vehicleModelId: undefined });
+                  }}
+                  placeholder="Select model"
+                  options={vehicleModels.map((m) => ({ value: m.id, label: m.name }))}
+                  error={errors.vehicleModelId}
+                  required
+                  disabled={!formData.vehicleBrandId}
+                />
+              </>
+            )}
 
             <Input
               label="Year"

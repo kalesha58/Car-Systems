@@ -34,8 +34,10 @@ export interface IVehicleListResponse {
 
 export interface ICreateVehiclePayload {
   vehicleType: string;
-  brand: string;
-  vehicleModel: string;
+  brand?: string;
+  vehicleModel?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: 'available' | 'sold' | 'reserved';
@@ -55,6 +57,8 @@ export interface IUpdateVehiclePayload {
   vehicleType?: string;
   brand?: string;
   vehicleModel?: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year?: number;
   price?: number;
   availability?: 'available' | 'sold' | 'reserved';

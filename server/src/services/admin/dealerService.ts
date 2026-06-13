@@ -525,6 +525,8 @@ export const getDealerVehicleByIdForAdmin = async (
       vehicleType: vehicle.vehicleType,
       brand: vehicle.brand,
       vehicleModel: vehicle.vehicleModel,
+      vehicleBrandId: vehicle.vehicleBrandId,
+      vehicleModelId: vehicle.vehicleModelId,
       year: vehicle.year,
       price: vehicle.price,
       availability: vehicle.availability,

@@ -3,6 +3,8 @@ export interface IVehicle {
   vehicleType: string;
   brand: string;
   vehicleModel: string;
+  vehicleBrandId?: string;
+  vehicleModelId?: string;
   year: number;
   price: number;
   availability: 'available' | 'sold' | 'reserved';
@@ -35,6 +37,8 @@ export interface IVehicleFormData {
   vehicleType: string;
   brand: string;
   vehicleModel: string;
+  vehicleBrandId: string;
+  vehicleModelId: string;
   year: number;
   price: number;
   availability: 'available' | 'sold' | 'reserved';
