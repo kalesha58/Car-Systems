@@ -135,7 +135,7 @@ export const updateAdminTestDriveStatus = async (
 
   logger.info(`Admin updated test drive ${testDriveId} to ${data.status}`);
 
-  await notifyTestDriveStatusChange({
+  const notificationResult = await notifyTestDriveStatusChange({
     userId: testDrive.userId,
     testDriveId,
     vehicleId: testDrive.vehicleId,
@@ -145,6 +145,13 @@ export const updateAdminTestDriveStatus = async (
     preferredDate: testDrive.preferredDate.toISOString(),
     preferredTime: testDrive.preferredTime,
     dealerNotes: data.dealerNotes ?? testDrive.dealerNotes,
+  });
+
+  logger.info('Admin test drive notification dispatched', {
+    testDriveId,
+    userId: testDrive.userId,
+    status: data.status,
+    ...notificationResult,
   });
 
   return enrichTestDriveDetail(testDrive);

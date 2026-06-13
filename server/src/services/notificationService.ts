@@ -6,6 +6,22 @@ import { logger } from '../utils/logger';
 import * as admin from 'firebase-admin';
 import { emitToUserNotificationRoom } from './socket/socketService';
 
+/** FCM rejects the entire message when imageUrl is missing, non-HTTPS, or malformed. */
+export const resolveFcmImageUrl = (url?: string): string | undefined => {
+  if (!url || typeof url !== 'string') {
+    return undefined;
+  }
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('https://')) {
+    return undefined;
+  }
+  try {
+    return new URL(trimmed).toString();
+  } catch {
+    return undefined;
+  }
+};
+
 export interface INotificationPayload {
   title: string;
   body: string;
@@ -42,7 +58,9 @@ export const sendPushNotification = async (
     }
 
     if (!user.fcmToken) {
-      logger.warn(`No FCM token found for user: ${userId}`);
+      logger.warn(`No FCM token found for user: ${userId}`, {
+        notificationTitle: payload.title,
+      });
       return false;
     }
 
@@ -62,27 +80,35 @@ export const sendPushNotificationToToken = async (
 ): Promise<boolean> => {
   try {
     const messaging = getMessaging();
+    const safeImageUrl = resolveFcmImageUrl(payload.imageUrl);
+
+    const dataPayload = Object.entries({
+      ...(payload.data || {}),
+      title: payload.title,
+      body: payload.body,
+      ...(safeImageUrl ? { imageUrl: safeImageUrl } : {}),
+    }).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null) {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {} as { [key: string]: string });
 
     const message: admin.messaging.Message = {
       token: fcmToken,
       notification: {
         title: payload.title,
         body: payload.body,
-        imageUrl: payload.imageUrl,
+        ...(safeImageUrl ? { imageUrl: safeImageUrl } : {}),
       },
-      data: payload.data
-        ? Object.entries(payload.data).reduce((acc, [key, value]) => {
-            acc[key] = String(value);
-            return acc;
-          }, {} as { [key: string]: string })
-        : {},
+      data: dataPayload,
       android: {
         priority: 'high' as const,
         notification: {
           channelId: 'motonode_notifications',
           sound: 'default',
           priority: 'high' as const,
-          imageUrl: payload.imageUrl,
+          ...(safeImageUrl ? { imageUrl: safeImageUrl } : {}),
         },
       },
       apns: {
@@ -92,11 +118,13 @@ export const sendPushNotificationToToken = async (
             badge: 1,
           },
         },
-        fcmOptions: payload.imageUrl
+        ...(safeImageUrl
           ? {
-              imageUrl: payload.imageUrl,
+              fcmOptions: {
+                imageUrl: safeImageUrl,
+              },
             }
-          : undefined,
+          : {}),
       },
     };
 

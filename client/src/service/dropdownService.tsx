@@ -23,6 +23,7 @@ export interface IDropdownResponse {
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
+  dealerVehicleCount?: number;
   batteryTypes: IDropdownOption[];
   productBrands: IDropdownOption[];
 }
@@ -47,6 +48,7 @@ export const getDropdownOptions = async (
     condition: [],
     businessTypes: [],
     categories: [],
+    dealerVehicleCount: 0,
     batteryTypes: [],
     productBrands: [],
   };
@@ -89,6 +91,7 @@ export const getDropdownOptions = async (
         condition: Array.isArray(result.condition) ? result.condition : [],
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
+        dealerVehicleCount: typeof result.dealerVehicleCount === 'number' ? result.dealerVehicleCount : 0,
         batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
         productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
@@ -107,6 +110,7 @@ export const getDropdownOptions = async (
         condition: Array.isArray(result.condition) ? result.condition : [],
         businessTypes: Array.isArray(result.businessTypes) ? result.businessTypes : [],
         categories: Array.isArray(result.categories) ? result.categories : [],
+        dealerVehicleCount: typeof result.dealerVehicleCount === 'number' ? result.dealerVehicleCount : 0,
         batteryTypes: Array.isArray(result.batteryTypes) ? result.batteryTypes : [],
         productBrands: Array.isArray(result.productBrands) ? result.productBrands : [],
       };
@@ -129,6 +133,7 @@ export const getDropdownOptions = async (
         condition: Array.isArray(directData.condition) ? directData.condition : [],
         businessTypes: Array.isArray(directData.businessTypes) ? directData.businessTypes : [],
         categories: Array.isArray(directData.categories) ? directData.categories : [],
+        dealerVehicleCount: typeof directData.dealerVehicleCount === 'number' ? directData.dealerVehicleCount : 0,
         batteryTypes: Array.isArray(directData.batteryTypes) ? directData.batteryTypes : [],
         productBrands: Array.isArray(directData.productBrands) ? directData.productBrands : [],
       };

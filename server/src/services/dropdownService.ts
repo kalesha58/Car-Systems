@@ -6,6 +6,7 @@ import { Category, CategoryTileGroup } from '../models/Category';
 import { BatteryType } from '../models/BatteryType';
 import { ProductBrand } from '../models/ProductBrand';
 import { Product } from '../models/Product';
+import { DealerVehicle } from '../models/DealerVehicle';
 import { logger } from '../utils/logger';
 
 type LeanCategory = {
@@ -39,6 +40,8 @@ export interface IDropdownResponse {
   condition: IDropdownOption[];
   businessTypes: IDropdownOption[];
   categories: IDropdownCategoryOption[];
+  /** Available dealer listings (cars/bikes for sale) — used by Store home Vehicle Categories. */
+  dealerVehicleCount?: number;
   batteryTypes: IDropdownOption[];
   productBrands: IDropdownOption[];
 }
@@ -116,9 +119,14 @@ export const getDropdownOptions = async (
       .sort({ sortOrder: 1, name: 1 })
       .lean<LeanCategory[]>();
 
-    const productCountRows = await Product.aggregate<{ _id: string; count: number }>([
-      { $match: { status: 'active' } },
-      { $group: { _id: '$categoryId', count: { $sum: 1 } } },
+    const [productCountRows, dealerVehicleCount] = await Promise.all([
+      Product.aggregate<{ _id: string; count: number }>([
+        { $match: { status: 'active' } },
+        { $group: { _id: '$categoryId', count: { $sum: 1 } } },
+      ]),
+      storeTiles
+        ? DealerVehicle.countDocuments({ availability: 'available' })
+        : Promise.resolve(undefined),
     ]);
     const activeProductCountByCategory = new Map<string, number>(
       productCountRows.map((row) => [String(row._id), row.count]),
@@ -183,6 +191,7 @@ export const getDropdownOptions = async (
         value: opt.value,
       })),
       categories: categoryOptions,
+      ...(storeTiles ? { dealerVehicleCount: dealerVehicleCount ?? 0 } : {}),
       batteryTypes: batteryTypes.map((type) => ({
         label: type.name,
         value: type._id.toString(),

@@ -17,8 +17,8 @@ const SECTION_COPY: Record<
     icon: 'cube-outline',
   },
   vehicles: {
-    title: 'No vehicle categories yet',
-    message: 'Vehicle category tiles show up once matching products are listed.',
+    title: 'No vehicle listings yet',
+    message: 'Dealer vehicles appear here once they are listed as available.',
     icon: 'car-outline',
   },
   services: {

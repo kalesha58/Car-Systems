@@ -12,6 +12,8 @@ import { useTheme } from '@hooks/useTheme';
 import { getDropdownOptions, type IDropdownCategoryOption } from '@service/dropdownService';
 import type { StoreCategoryTile } from '../../types/category/ICategoryItem';
 
+const allVehiclesTileImage = require('@assets/images/All-Vehicles.jpeg');
+
 const tileGroupOrder = (a: IDropdownCategoryOption, b: IDropdownCategoryOption) =>
   (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.label.localeCompare(b.label);
 
@@ -24,9 +26,12 @@ const mapToTiles = (rows: IDropdownCategoryOption[]): StoreCategoryTile[] =>
 
 /**
  * Build Store home rows from dropdown categories that have active inventory.
- * Only categories with activeProductCount > 0 and a tileGroup are shown.
+ * Product/service tiles use activeProductCount; vehicle listings use dealerVehicleCount.
  */
-function buildStoreTileRows(all: IDropdownCategoryOption[]): {
+function buildStoreTileRows(
+  all: IDropdownCategoryOption[],
+  dealerVehicleCount = 0,
+): {
   products: StoreCategoryTile[];
   vehicles: StoreCategoryTile[];
   services: StoreCategoryTile[];
@@ -34,9 +39,21 @@ function buildStoreTileRows(all: IDropdownCategoryOption[]): {
   const withInventory = all.filter((c) => (c.activeProductCount ?? 0) > 0);
   const sorted = [...withInventory].sort(tileGroupOrder);
 
+  const accessoryVehicleTiles = mapToTiles(sorted.filter((c) => c.tileGroup === 'vehicles'));
+  const dealerListingTiles: StoreCategoryTile[] =
+    dealerVehicleCount > 0
+      ? [
+          {
+            id: 'all-vehicles',
+            name: 'All Vehicles',
+            image: allVehiclesTileImage,
+          },
+        ]
+      : [];
+
   return {
     products: mapToTiles(sorted.filter((c) => c.tileGroup === 'products')),
-    vehicles: mapToTiles(sorted.filter((c) => c.tileGroup === 'vehicles')),
+    vehicles: [...dealerListingTiles, ...accessoryVehicleTiles],
     services: mapToTiles(sorted.filter((c) => c.tileGroup === 'services')),
   };
 }
@@ -44,6 +61,7 @@ function buildStoreTileRows(all: IDropdownCategoryOption[]): {
 const Content: FC = () => {
   const { colors } = useTheme();
   const [dropdownCategories, setDropdownCategories] = useState<IDropdownCategoryOption[]>([]);
+  const [dealerVehicleCount, setDealerVehicleCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -53,10 +71,12 @@ const Content: FC = () => {
         const data = await getDropdownOptions(undefined, undefined, true);
         if (!cancelled) {
           setDropdownCategories(Array.isArray(data.categories) ? data.categories : []);
+          setDealerVehicleCount(typeof data.dealerVehicleCount === 'number' ? data.dealerVehicleCount : 0);
         }
       } catch {
         if (!cancelled) {
           setDropdownCategories([]);
+          setDealerVehicleCount(0);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -106,7 +126,7 @@ const Content: FC = () => {
   });
 
   const { products: productsCategories, vehicles: vehiclesCategories, services: servicesCategories } =
-    useMemo(() => buildStoreTileRows(dropdownCategories), [dropdownCategories]);
+    useMemo(() => buildStoreTileRows(dropdownCategories, dealerVehicleCount), [dropdownCategories, dealerVehicleCount]);
 
   if (loading) {
     return <ContentSkeleton />;

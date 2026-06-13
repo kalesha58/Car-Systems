@@ -370,7 +370,7 @@ export const TestDriveDetailsPage = () => {
         </div>
       </div>
 
-      <Card title="Booking Details" icon={<User size={18} />}>
+      <Card title="Booking Details" icon={User}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           <div>
             <p style={{ margin: 0, fontSize: '0.75rem', color: theme.colors.textSecondary }}>Preferred date</p>

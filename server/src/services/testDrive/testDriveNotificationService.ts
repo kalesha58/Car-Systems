@@ -77,57 +77,89 @@ export const notifyTestDriveStatusChange = async (
     return { pushSent: false, inAppCreated: false };
   }
 
+  if (params.previousStatus === params.newStatus) {
+    return { pushSent: false, inAppCreated: false };
+  }
+
+  let vehicleLabel = params.vehicleLabel;
+  let vehicleImageUrl = params.vehicleImageUrl;
+
   try {
-    let vehicleLabel = params.vehicleLabel;
-    let vehicleImageUrl = params.vehicleImageUrl;
     if (!vehicleLabel) {
       const ctx = await fetchVehicleNotificationContext(params.vehicleId);
       vehicleLabel = ctx.vehicleLabel;
       vehicleImageUrl = vehicleImageUrl || ctx.vehicleImageUrl;
     }
-
-    const schedule = formatSchedule(params.preferredDate, params.preferredTime);
-    const { title, body } = buildStatusMessage(
-      params.newStatus,
-      vehicleLabel,
-      schedule,
-      params.actor,
-      params.dealerNotes,
-    );
-
-    const data = {
-      type: 'test_drive_update' as const,
+  } catch (error) {
+    logger.error('Failed to load vehicle context for test drive notification:', {
       testDriveId: params.testDriveId,
       vehicleId: params.vehicleId,
-      status: params.newStatus,
-      actor: params.actor,
-    };
+      error,
+    });
+    vehicleLabel = vehicleLabel || 'your vehicle';
+  }
 
-    const pushSent = await sendPushNotification(params.userId, {
+  const schedule = formatSchedule(params.preferredDate, params.preferredTime);
+  const { title, body } = buildStatusMessage(
+    params.newStatus,
+    vehicleLabel || 'your vehicle',
+    schedule,
+    params.actor,
+    params.dealerNotes,
+  );
+
+  const data = {
+    type: 'test_drive_update' as const,
+    testDriveId: params.testDriveId,
+    vehicleId: params.vehicleId,
+    status: params.newStatus,
+    actor: params.actor,
+  };
+
+  let pushSent = false;
+  try {
+    pushSent = await sendPushNotification(params.userId, {
       title,
       body,
       imageUrl: vehicleImageUrl,
       data,
     });
-
-    let inAppCreated = false;
-    try {
-      await createNotification({
-        userId: params.userId,
-        type: 'test_drive_update',
-        title,
-        body,
-        data,
-        relatedId: params.testDriveId,
-      });
-      inAppCreated = true;
-    } catch (notifErr) {
-      logger.error('Failed to create in-app test drive notification:', notifErr);
-    }
-
-    return { pushSent, inAppCreated };
   } catch (error) {
-    logger.error('Error sending test drive status notification:', error);
-    return { pushSent: false, inAppCreated: false };
+    logger.error('Failed to send test drive push notification:', {
+      userId: params.userId,
+      testDriveId: params.testDriveId,
+      newStatus: params.newStatus,
+      error,
+    });
   }
+
+  let inAppCreated = false;
+  try {
+    await createNotification({
+      userId: params.userId,
+      type: 'test_drive_update',
+      title,
+      body,
+      data,
+      relatedId: params.testDriveId,
+    });
+    inAppCreated = true;
+  } catch (notifErr) {
+    logger.error('Failed to create in-app test drive notification:', {
+      userId: params.userId,
+      testDriveId: params.testDriveId,
+      error: notifErr,
+    });
+  }
+
+  logger.info('Test drive status notification result', {
+    userId: params.userId,
+    testDriveId: params.testDriveId,
+    newStatus: params.newStatus,
+    actor: params.actor,
+    pushSent,
+    inAppCreated,
+  });
+
+  return { pushSent, inAppCreated };
 };

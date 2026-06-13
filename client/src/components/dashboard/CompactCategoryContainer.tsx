@@ -56,13 +56,24 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
 
 
   const navigateForTile = (item: StoreCategoryTile) => {
+    if (item.id === 'all-vehicles') {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          initialCategoryId: 'all-vehicles',
+          initialCategoryType: 'vehicles',
+        },
+      });
+      return;
+    }
+
     if (item.id && MONGO_OBJECT_ID.test(item.id)) {
-      // Store tiles are Mongo product categories regardless of visual row (tileGroup)
+      // Mongo category tiles in the vehicle row are still product categories (parts/accessories).
       navigate('Category', {
         screen: 'ProductCategories',
         params: {
           initialCategoryId: item.id,
-          initialCategoryType: 'products',
+          initialCategoryType: categoryType === 'vehicles' ? 'products' : categoryType,
         },
       });
       return;
@@ -79,6 +90,9 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
 
   const renderImage = (item: StoreCategoryTile) => {
     const src = item.image;
+    if (typeof src === 'number') {
+      return <Image source={src} style={styles.image} />;
+    }
     if (src && typeof src === 'object' && 'uri' in src && src.uri) {
       return <Image source={src} style={styles.image} />;
     }
