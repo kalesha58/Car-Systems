@@ -20,6 +20,10 @@ interface ITableProps<T> {
   loading?: boolean;
   enableColumnReorder?: boolean;
   onColumnsChange?: (columns: IColumn<T>[]) => void;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectedIdsChange?: (ids: string[]) => void;
+  getRowId?: (item: T) => string;
 }
 
 export function Table<T extends { id: string }>({
@@ -29,6 +33,10 @@ export function Table<T extends { id: string }>({
   loading = false,
   enableColumnReorder = true,
   onColumnsChange,
+  selectable = false,
+  selectedIds = [],
+  onSelectedIdsChange,
+  getRowId = (item) => item.id,
 }: ITableProps<T>) {
   const [columns, setColumns] = useState<IColumn<T>[]>(initialColumns);
   const [sortConfig, setSortConfig] = useState<{
@@ -141,6 +149,38 @@ export function Table<T extends { id: string }>({
     });
   }, [data, sortConfig, columns]);
 
+  const visibleRowIds = useMemo(
+    () => sortedData.map((item) => getRowId(item)),
+    [sortedData, getRowId],
+  );
+
+  const allVisibleSelected =
+    visibleRowIds.length > 0 && visibleRowIds.every((id) => selectedIds.includes(id));
+  const someVisibleSelected =
+    visibleRowIds.some((id) => selectedIds.includes(id)) && !allVisibleSelected;
+
+  const toggleRowSelection = useCallback(
+    (rowId: string) => {
+      if (!onSelectedIdsChange) return;
+      if (selectedIds.includes(rowId)) {
+        onSelectedIdsChange(selectedIds.filter((id) => id !== rowId));
+      } else {
+        onSelectedIdsChange([...selectedIds, rowId]);
+      }
+    },
+    [onSelectedIdsChange, selectedIds],
+  );
+
+  const toggleAllVisible = useCallback(() => {
+    if (!onSelectedIdsChange) return;
+    if (allVisibleSelected) {
+      onSelectedIdsChange(selectedIds.filter((id) => !visibleRowIds.includes(id)));
+      return;
+    }
+    const merged = new Set([...selectedIds, ...visibleRowIds]);
+    onSelectedIdsChange(Array.from(merged));
+  }, [allVisibleSelected, onSelectedIdsChange, selectedIds, visibleRowIds]);
+
   if (loading) {
     return <SkeletonTable rows={5} columns={columns.length} />;
   }
@@ -236,6 +276,23 @@ export function Table<T extends { id: string }>({
         <table className="w-full border-separate border-spacing-0 bg-transparent">
           <thead className="sticky top-0 z-10 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-sm">
             <tr className="border-b-2 border-slate-200/50 dark:border-slate-700/50">
+              {selectable && (
+                <th className="px-4 py-3 w-10 bg-slate-50/80 dark:bg-slate-900/80">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all rows on this page"
+                    checked={allVisibleSelected}
+                    ref={(input) => {
+                      if (input) {
+                        input.indeterminate = someVisibleSelected;
+                      }
+                    }}
+                    onChange={toggleAllVisible}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-4 w-4 cursor-pointer accent-primary-600"
+                  />
+                </th>
+              )}
               {columns.map((column) => {
                 const isDragged = draggedColumn === column.key;
                 const isDragOver = dragOverColumn === column.key;
@@ -302,23 +359,40 @@ export function Table<T extends { id: string }>({
             {sortedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length}
+                  colSpan={columns.length + (selectable ? 1 : 0)}
                   className="px-6 py-12 text-center text-slate-500 dark:text-slate-400"
                 >
                   No data available
                 </td>
               </tr>
             ) : (
-              sortedData.map((item) => (
+              sortedData.map((item) => {
+                const rowId = getRowId(item);
+                const isSelected = selectedIds.includes(rowId);
+
+                return (
                 <motion.tr
-                  key={item.id}
+                  key={rowId}
                   variants={rowVariants}
                   onClick={() => onRowClick?.(item)}
                   className={`
                     border-b border-slate-200/50 dark:border-slate-700/50
                     ${onRowClick ? 'cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors' : ''}
+                    ${isSelected ? 'bg-primary-50/40 dark:bg-primary-900/10' : ''}
                   `}
                 >
+                  {selectable && (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        checked={isSelected}
+                        onChange={() => toggleRowSelection(rowId)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4 cursor-pointer accent-primary-600"
+                      />
+                    </td>
+                  )}
                   {columns.map((column) => (
                     <td
                       key={column.key}
@@ -330,7 +404,8 @@ export function Table<T extends { id: string }>({
                     </td>
                   ))}
                 </motion.tr>
-              ))
+              );
+              })
             )}
           </motion.tbody>
         </table>

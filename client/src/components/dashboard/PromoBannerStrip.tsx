@@ -16,7 +16,10 @@ import {IStoreBannerItem} from '@types/storeBanners';
 import {navigateFromBannerLink} from '@utils/bannerNavigation';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 40;
+const SIDE_INSET = 20;
+const BANNER_GAP = 12;
+const CARD_WIDTH = SCREEN_WIDTH - SIDE_INSET * 2 - 24;
+const ITEM_WIDTH = CARD_WIDTH + BANNER_GAP;
 
 interface BannerRow extends IStoreBannerItem {
   onPress: () => void;
@@ -97,6 +100,10 @@ const PromoBannerStrip: FC = () => {
     wrapper: {
       marginVertical: 6,
     },
+    bannerItem: {
+      width: ITEM_WIDTH,
+      paddingRight: BANNER_GAP,
+    },
     card: {
       width: CARD_WIDTH,
       height: 112,
@@ -156,13 +163,16 @@ const PromoBannerStrip: FC = () => {
       height: 6,
       borderRadius: 3,
     },
+    listContent: {
+      paddingHorizontal: SIDE_INSET,
+    },
   });
 
   const renderBanner = ({item}: {item: BannerRow}) => (
     <TouchableOpacity
       activeOpacity={0.88}
       onPress={item.onPress}
-      style={{width: CARD_WIDTH}}>
+      style={styles.bannerItem}>
       <View style={[styles.card, {backgroundColor: item.backgroundColor}]}>
         <View style={styles.emojiCircle}>
           <CustomText style={styles.emoji}>{item.emoji}</CustomText>
@@ -207,16 +217,19 @@ const PromoBannerStrip: FC = () => {
         renderItem={renderBanner}
         keyExtractor={item => item.id}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
+        snapToInterval={ITEM_WIDTH}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContent}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         onScrollBeginDrag={handleScrollBeginDrag}
         onScrollEndDrag={startAutoScroll}
         scrollEventThrottle={16}
         getItemLayout={(_, index) => ({
-          length: CARD_WIDTH,
-          offset: CARD_WIDTH * index,
+          length: ITEM_WIDTH,
+          offset: ITEM_WIDTH * index,
           index,
         })}
       />

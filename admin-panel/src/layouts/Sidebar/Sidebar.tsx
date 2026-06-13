@@ -201,6 +201,7 @@ export const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.path === '/settings'}
                 onClick={() => {
                   // Close sidebar on mobile when navigating
                   if (isMobile) {

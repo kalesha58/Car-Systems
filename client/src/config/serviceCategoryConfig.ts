@@ -149,6 +149,68 @@ export const SERVICE_SECTIONS: IServiceSection[] = [
   },
 ];
 
+/** Legacy IDs kept for backward compatibility with old banners/links */
+export const CATEGORY_ID_ALIASES: Record<string, string> = {
+  'car-wash': 'vehicle-wash',
+};
+
+/** Resolve a category id to its canonical service section id */
+export const resolveCategoryId = (id: string): string => CATEGORY_ID_ALIASES[id] ?? id;
+
 /** Get section config by category id (matches ICategoryItem._id) */
 export const getSectionById = (id: string): IServiceSection | undefined =>
-  SERVICE_SECTIONS.find(s => s.id === id);
+  SERVICE_SECTIONS.find(s => s.id === resolveCategoryId(id));
+
+export interface ServiceQueryParams {
+  serviceType?: ServiceTypeValue;
+  vehicleType?: 'Car' | 'Bike';
+}
+
+/** Map a service category id to API query params for GET /services */
+export const buildServiceQueryParams = (
+  categoryId: string,
+  routeOverrides?: { serviceType?: ServiceTypeValue; vehicleType?: 'Car' | 'Bike' },
+): ServiceQueryParams => {
+  const resolvedId = resolveCategoryId(categoryId);
+
+  if (resolvedId === 'bike-wash') {
+    return { serviceType: 'car_wash', vehicleType: 'Bike' };
+  }
+
+  const section = SERVICE_SECTIONS.find(s => s.id === resolvedId);
+  if (section) {
+    const params: ServiceQueryParams = { serviceType: section.serviceType };
+    if (section.vehicleType === 'Car' || section.vehicleType === 'Bike') {
+      params.vehicleType = section.vehicleType;
+    }
+    return params;
+  }
+
+  if (routeOverrides?.serviceType) {
+    return {
+      serviceType: routeOverrides.serviceType,
+      vehicleType: routeOverrides.vehicleType,
+    };
+  }
+
+  return {};
+};
+
+/** Build navigation params for a service section shortcut button */
+export const buildServiceNavigationParams = (
+  sectionId: string,
+): {
+  initialCategoryId: string;
+  initialCategoryType: 'services';
+  serviceType?: ServiceTypeValue;
+  vehicleType?: 'Car' | 'Bike';
+} => {
+  const resolvedId = resolveCategoryId(sectionId);
+  const query = buildServiceQueryParams(resolvedId);
+  return {
+    initialCategoryId: resolvedId,
+    initialCategoryType: 'services',
+    ...(query.serviceType ? { serviceType: query.serviceType } : {}),
+    ...(query.vehicleType ? { vehicleType: query.vehicleType } : {}),
+  };
+};

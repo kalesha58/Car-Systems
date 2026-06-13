@@ -23,6 +23,7 @@ export const getAllProductsController = async (
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
       search: req.query.search as string | undefined,
       category: req.query.category as string | undefined,
+      categoryId: req.query.categoryId as string | undefined,
       vehicleType: req.query.vehicleType as 'Car' | 'Bike' | undefined,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,

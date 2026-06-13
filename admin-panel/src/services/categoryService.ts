@@ -12,6 +12,9 @@ export interface ICategory {
   status: 'active' | 'inactive';
   products: number;
   createdAt: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
 }
 
 export interface ICategoryListQueryParams {
@@ -27,12 +30,18 @@ export interface ICreateCategoryPayload {
   name: string;
   description: string;
   status: 'active' | 'inactive';
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services';
 }
 
 export interface IUpdateCategoryPayload {
   name?: string;
   description?: string;
   status?: 'active' | 'inactive';
+  imageUrl?: string;
+  sortOrder?: number;
+  tileGroup?: 'products' | 'vehicles' | 'services' | null;
 }
 
 /**

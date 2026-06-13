@@ -1,10 +1,12 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
-import React, { FC } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import CustomText from '@components/ui/CustomText';
 import { Fonts, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '@hooks/useTheme';
 import { navigate } from '@utils/NavigationUtils';
+import { buildServiceNavigationParams } from '../../config/serviceCategoryConfig';
+import { getDropdownOptions } from '@service/dropdownService';
 
 interface CategoryButton {
   id: string;
@@ -16,101 +18,122 @@ interface CategoryButton {
   categoryId?: string;
 }
 
+const isSparePartsLabel = (label: string) => /^spare\s*parts$/i.test(label.trim());
+
 const CategoryButtons: FC = () => {
   const { colors } = useTheme();
+  const [sparePartsCategoryId, setSparePartsCategoryId] = useState<string | undefined>();
 
-  const categoryButtons: CategoryButton[] = [
-    {
-      id: 'car-service',
-      label: 'Car Service',
-      imageSource: require('@assets/services/car_service_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'car-service',
-    },
-    {
-      id: 'bike-service',
-      label: 'Bike Service',
-      imageSource: require('@assets/services/bike_service_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'bike-service',
-    },
-    {
-      id: 'vehicle-wash',
-      label: 'Vehicle Wash',
-      imageSource: require('@assets/services/car_wash_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'vehicle-wash',
-    },
-    {
-      id: 'tire-service',
-      label: 'Tire Service',
-      imageSource: require('@assets/services/tire_service_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'tire-service',
-    },
-    {
-      id: 'ppf-detailing',
-      label: 'PPF & Detailing',
-      imageSource: require('@assets/services/ppf_detailing_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'ppf-detailing',
-    },
-    {
-      id: 'spare-parts',
-      label: 'Spare Parts',
-      imageSource: require('@assets/services/spare_parts_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'products',
-      categoryId: '69de8a197f4ddefdad034e5c',
-    },
-    {
-      id: 'battery-service',
-      label: 'Battery',
-      imageSource: require('@assets/services/battery_service_new.png'),
-      backgroundColor: colors.cardBackground || '#FFFFFF',
-      textColor: colors.text || '#000000',
-      categoryType: 'services',
-      categoryId: 'battery-service',
-    },
-  ];
+  useEffect(() => {
+    const loadSparePartsCategory = async () => {
+      try {
+        const dropdown = await getDropdownOptions();
+        const spareParts = dropdown.categories?.find(c => isSparePartsLabel(c.label));
+        if (spareParts?.value) {
+          setSparePartsCategoryId(spareParts.value);
+        }
+      } catch {
+        setSparePartsCategoryId(undefined);
+      }
+    };
+    loadSparePartsCategory();
+  }, []);
+
+  const categoryButtons: CategoryButton[] = useMemo(
+    () => [
+      {
+        id: 'car-service',
+        label: 'Car Service',
+        imageSource: require('@assets/services/car_service_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'car-service',
+      },
+      {
+        id: 'bike-service',
+        label: 'Bike Service',
+        imageSource: require('@assets/services/bike_service_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'bike-service',
+      },
+      {
+        id: 'vehicle-wash',
+        label: 'Vehicle Wash',
+        imageSource: require('@assets/services/car_wash_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'vehicle-wash',
+      },
+      {
+        id: 'tire-service',
+        label: 'Tire Service',
+        imageSource: require('@assets/services/tire_service_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'tire-service',
+      },
+      {
+        id: 'ppf-detailing',
+        label: 'PPF & Detailing',
+        imageSource: require('@assets/services/ppf_detailing_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'ppf-detailing',
+      },
+      {
+        id: 'spare-parts',
+        label: 'Spare Parts',
+        imageSource: require('@assets/services/spare_parts_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'products',
+        categoryId: sparePartsCategoryId,
+      },
+      {
+        id: 'battery-service',
+        label: 'Battery',
+        imageSource: require('@assets/services/battery_service_new.png'),
+        backgroundColor: colors.cardBackground || '#FFFFFF',
+        textColor: colors.text || '#000000',
+        categoryType: 'services',
+        categoryId: 'battery-service',
+      },
+    ],
+    [colors.cardBackground, colors.text, sparePartsCategoryId],
+  );
 
   const handleCategoryPress = (button: CategoryButton) => {
-    const params: any = {
-      initialCategoryId: button.categoryId || `all-${button.categoryType}`,
-      initialCategoryType: button.categoryType,
-    };
-    
-    // Add service type filter for specific service categories
-    if (button.id === 'car-service') {
-      params.serviceType = 'car_automobile';
-      params.vehicleType = 'Car';
-    } else if (button.id === 'bike-service') {
-      params.serviceType = 'bike_automobile';
-      params.vehicleType = 'Bike';
-    } else if (button.id === 'vehicle-wash') {
-      params.serviceType = 'car_wash';
-    } else if (button.id === 'tire-service') {
-      params.serviceType = 'tire_service';
-    } else if (button.id === 'battery-service') {
-      params.serviceType = 'battery_service';
-    } else if (button.id === 'ppf-detailing') {
-      params.serviceType = 'car_detailing';
+    if (button.categoryType === 'services' && button.categoryId) {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: buildServiceNavigationParams(button.categoryId),
+      });
+      return;
     }
-    
+
+    if (button.categoryType === 'products' && button.categoryId) {
+      navigate('Category', {
+        screen: 'ProductCategories',
+        params: {
+          initialCategoryId: button.categoryId,
+          initialCategoryType: 'products',
+        },
+      });
+      return;
+    }
+
     navigate('Category', {
       screen: 'ProductCategories',
-      params,
+      params: {
+        initialCategoryId: `all-${button.categoryType}`,
+        initialCategoryType: button.categoryType,
+      },
     });
   };
 
@@ -189,7 +212,8 @@ const CategoryButtons: FC = () => {
               },
             ]}
             onPress={() => handleCategoryPress(button)}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            disabled={button.id === 'spare-parts' && !button.categoryId}>
             <View style={styles.buttonContent}>
               <View style={styles.iconContainer}>
                 <Image

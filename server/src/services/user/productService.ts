@@ -12,6 +12,7 @@ export interface IGetUserProductsRequest {
   limit?: number;
   search?: string;
   category?: string;
+  categoryId?: string;
   vehicleType?: 'Car' | 'Bike';
   vehicleBrandId?: string;
   vehicleModelId?: string;
@@ -181,7 +182,9 @@ export const getAllProductsForUsers = async (
       ];
     }
 
-    if (query.category) {
+    if (query.categoryId && mongoose.Types.ObjectId.isValid(query.categoryId)) {
+      filter.categoryId = query.categoryId;
+    } else if (query.category) {
       const category = await Category.findOne({ name: { $regex: query.category, $options: 'i' } });
       if (category) {
         filter.categoryId = (category._id as any).toString();

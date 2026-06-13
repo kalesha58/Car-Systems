@@ -45,6 +45,7 @@ export interface IGetProductsRequest {
   limit?: number;
   search?: string;
   category?: string;
+  categoryId?: string;
   vehicleType?: string;
   vehicleBrandId?: string;
   vehicleModelId?: string;

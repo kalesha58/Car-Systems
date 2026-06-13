@@ -18,21 +18,43 @@ interface IAppConfigStore {
 
 const cached = getCachedAppConfig();
 
+const applyConfig = (
+  set: (partial: Partial<IAppConfigStore>) => void,
+  config: { visualEffects: IVisualEffectsConfig; storeBanners: IStoreBannersConfig },
+): void => {
+  set({
+    visualEffects: config.visualEffects,
+    storeBanners: config.storeBanners,
+    isHydrated: true,
+  });
+};
+
 export const useAppConfigStore = create<IAppConfigStore>((set, get) => ({
   visualEffects: cached?.visualEffects ?? DEFAULT_VISUAL_EFFECTS,
   storeBanners: cached?.storeBanners ?? DEFAULT_STORE_BANNERS,
   isLoading: false,
-  isHydrated: false,
+  isHydrated: !!cached,
 
   fetchAppConfig: async (forceRefresh = false) => {
+    if (!forceRefresh) {
+      const localCache = getCachedAppConfig();
+      if (localCache) {
+        applyConfig(set, localCache);
+
+        try {
+          const freshConfig = await fetchAppConfig(true);
+          applyConfig(set, freshConfig);
+        } catch {
+          // Keep cached values when background revalidation fails.
+        }
+        return;
+      }
+    }
+
     set({ isLoading: true });
     try {
       const config = await fetchAppConfig(forceRefresh);
-      set({
-        visualEffects: config.visualEffects,
-        storeBanners: config.storeBanners,
-        isHydrated: true,
-      });
+      applyConfig(set, config);
     } finally {
       set({ isLoading: false });
     }

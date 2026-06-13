@@ -11,6 +11,7 @@ import { Tooltip } from '@components/Tooltip/Tooltip';
 import { deleteProduct, getProducts } from '@services/productService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
+import { bulkDeleteByIds } from '@utils/bulkDelete';
 import { debounce } from '@utils/debounce';
 import { extractErrorMessage } from '@utils/errorHandler';
 import { motion } from 'framer-motion';
@@ -44,6 +45,8 @@ export const ProductsListPage = () => {
     isOpen: false,
     product: null,
   });
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [statusSummary, setStatusSummary] = useState({ 
@@ -166,6 +169,10 @@ export const ProductsListPage = () => {
     fetchProducts();
   }, [fetchProducts]);
 
+  useEffect(() => {
+    setSelectedProductIds([]);
+  }, [currentPage, searchTerm, categoryFilter, statusFilter]);
+
   const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
@@ -200,6 +207,33 @@ export const ProductsListPage = () => {
     } catch (error: unknown) {
       console.error('Error deleting product:', error);
       const errorMessage = extractErrorMessage(error, 'Failed to delete product');
+      showToast(errorMessage, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProductIds.length === 0) return;
+
+    try {
+      setSubmitting(true);
+      const { succeeded, failed } = await bulkDeleteByIds(selectedProductIds, deleteProduct);
+      setBulkDeleteModalOpen(false);
+      setSelectedProductIds([]);
+
+      if (failed === 0) {
+        showToast(`${succeeded} product${succeeded === 1 ? '' : 's'} deleted successfully`, 'success');
+      } else if (succeeded === 0) {
+        showToast('Failed to delete selected products', 'error');
+      } else {
+        showToast(`${succeeded} deleted, ${failed} failed`, 'warning');
+      }
+
+      fetchProducts();
+    } catch (error: unknown) {
+      console.error('Error bulk deleting products:', error);
+      const errorMessage = extractErrorMessage(error, 'Failed to delete selected products');
       showToast(errorMessage, 'error');
     } finally {
       setSubmitting(false);
@@ -495,6 +529,17 @@ export const ProductsListPage = () => {
             </div>
             <div className="users-toolbar__spacer" />
             <div className="users-toolbar__actions">
+              {selectedProductIds.length > 0 && (
+                <div className="users-toolbar__button">
+                  <Button
+                    variant="danger"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    icon={Trash2}
+                  >
+                    Delete Selected ({selectedProductIds.length})
+                  </Button>
+                </div>
+              )}
               <div className="users-toolbar__button">
                 <Button
                   onClick={() => navigate('/products/new')}
@@ -587,6 +632,9 @@ export const ProductsListPage = () => {
                   columns={columns}
                   data={products}
                   onRowClick={(product) => navigate(`/products/${product.id}`)}
+                  selectable
+                  selectedIds={selectedProductIds}
+                  onSelectedIdsChange={setSelectedProductIds}
                 />
               </div>
               {totalItems > 0 && (
@@ -613,6 +661,17 @@ export const ProductsListPage = () => {
         title="Delete Product"
         message={`Are you sure you want to delete "${deleteModal.product?.name}"? This action cannot be undone.`}
         confirmText={submitting ? 'Deleting...' : 'Delete'}
+        type="danger"
+        disabled={submitting}
+      />
+
+      <ConfirmModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => !submitting && setBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Delete Selected Products"
+        message={`Are you sure you want to delete ${selectedProductIds.length} selected product${selectedProductIds.length === 1 ? '' : 's'}? This action cannot be undone.`}
+        confirmText={submitting ? 'Deleting...' : 'Delete All'}
         type="danger"
         disabled={submitting}
       />

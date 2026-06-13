@@ -61,6 +61,7 @@ const CompactCategoryContainer: FC<CompactCategoryContainerProps> = ({
 
   const navigateForTile = (item: StoreCategoryTile) => {
     if (item.id && MONGO_OBJECT_ID.test(item.id)) {
+      // Store tiles are Mongo product categories regardless of visual row (tileGroup)
       navigate('Category', {
         screen: 'ProductCategories',
         params: {

@@ -64,9 +64,11 @@ const App = () => {
       }
     }
 
-    // Handle app state changes - rejoin notification room when app becomes active
+    // Handle app state changes - refresh config and rejoin notification room when app becomes active
     const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
+        void fetchAppConfig(true);
+
         const accessToken = tokenStorage.getString('accessToken');
         if (accessToken && user?.userId) {
           void registerFCMTokenWithBackend();

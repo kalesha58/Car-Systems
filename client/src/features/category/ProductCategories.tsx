@@ -39,9 +39,61 @@ import {startVoiceSearch, isVoiceSearchAvailable} from '@utils/voiceSearch';
 import {useToast} from '@hooks/useToast';
 import {navigate} from '@utils/NavigationUtils';
 import {useNavigation} from '@react-navigation/native';
-import {getSectionById} from '../../config/serviceCategoryConfig';
+import {getSectionById, buildServiceQueryParams, resolveCategoryId, SERVICE_SECTIONS, type ServiceTypeValue} from '../../config/serviceCategoryConfig';
 
 type ItemType = IProduct | IDealerVehicle | IService;
+
+const MONGO_OBJECT_ID = /^[a-f\d]{24}$/i;
+
+const isSparePartsCategory = (category: ICategoryItem | null | undefined): boolean =>
+  !!category && /^spare\s*parts$/i.test(category.name.trim());
+
+const SERVICE_CATEGORY_IMAGES: Record<string, ReturnType<typeof require>> = {
+  'car-service': require('@assets/services/car_service.png'),
+  'bike-service': require('@assets/services/bike_service.jpg'),
+  'vehicle-wash': require('@assets/services/car_wash.jpg'),
+  'tire-service': require('@assets/services/tier_service.jpg'),
+  'ppf-detailing': require('@assets/services/ppf_detailing.png'),
+  'battery-service': require('@assets/services/batery_sevices.jpg'),
+};
+
+const buildStaticServiceCategories = (): ICategoryItem[] => [
+  ...SERVICE_SECTIONS.map(section => ({
+    _id: section.id,
+    name: section.label,
+    image: SERVICE_CATEGORY_IMAGES[section.id] ?? null,
+    type: 'services' as CategoryType,
+  })),
+  {
+    _id: 'bike-wash',
+    name: 'Bike Wash',
+    image: require('@assets/services/bike_service.jpg'),
+    type: 'services' as CategoryType,
+  },
+];
+
+const buildBaseCategories = (t: (key: string) => string, backendCategories: ICategoryItem[]): ICategoryItem[] => [
+  {
+    _id: 'all-products',
+    name: t('categories.allProducts'),
+    image: allProductsImage,
+    type: 'products' as CategoryType,
+  },
+  {
+    _id: 'all-vehicles',
+    name: t('categories.allVehicles'),
+    image: allVehiclesImage,
+    type: 'vehicles' as CategoryType,
+  },
+  {
+    _id: 'all-services',
+    name: t('categories.allServices'),
+    image: allServicesImage,
+    type: 'services' as CategoryType,
+  },
+  ...buildStaticServiceCategories(),
+  ...backendCategories,
+];
 
 const allProductsImage = require('@assets/images/AutoMobile-Services.jpeg');
 const allVehiclesImage = require('@assets/images/All-Vehicles.jpeg');
@@ -55,7 +107,7 @@ const ProductCategories = () => {
     initialCategoryType?: CategoryType;
     sortBy?: string;
     dealerId?: string;
-    serviceType?: 'car_wash' | 'car_detailing' | 'car_automobile' | 'bike_automobile' | 'general';
+    serviceType?: ServiceTypeValue;
     vehicleType?: 'Car' | 'Bike';
   } | undefined;
   
@@ -136,137 +188,14 @@ const ProductCategories = () => {
             type: 'products' as CategoryType,
           })) || [];
 
-        const allCategories: ICategoryItem[] = [
-          {
-            _id: 'all-products',
-            name: t('categories.allProducts'),
-            image: allProductsImage,
-            type: 'products' as CategoryType,
-          },
-          {
-            _id: 'all-vehicles',
-            name: t('categories.allVehicles'),
-            image: allVehiclesImage,
-            type: 'vehicles' as CategoryType,
-          },
-          {
-            _id: 'all-services',
-            name: t('categories.allServices'),
-            image: allServicesImage,
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'car-service',
-            name: 'Car Service',
-            image: require('@assets/services/car_service.png'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'bike-service',
-            name: 'Bike Service',
-            image: require('@assets/services/bike_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'car-wash',
-            name: 'Vehicle Wash',
-            image: require('@assets/services/car_wash.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'bike-wash',
-            name: 'Bike Wash',
-            image: require('@assets/services/bike_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'ppf-detailing',
-            name: 'PPF & Detailing',
-            image: require('@assets/services/ppf_detailing.png'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'tire-service',
-            name: 'Tire Service',
-            image: require('@assets/services/tier_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'battery-service',
-            name: 'Battery Service',
-            image: require('@assets/services/batery_sevices.jpg'),
-            type: 'services' as CategoryType,
-          },
-          ...backendCategories,
-        ];
+        const allCategories = buildBaseCategories(t, backendCategories);
 
         setCategories(allCategories);
         if (allCategories.length > 0) {
           setSelectedCategory(allCategories[0]);
         }
       } catch (error) {
-        const defaultCategories: ICategoryItem[] = [
-          {
-            _id: 'all-products',
-            name: t('categories.allProducts'),
-            image: allProductsImage,
-            type: 'products' as CategoryType,
-          },
-          {
-            _id: 'all-vehicles',
-            name: t('categories.allVehicles'),
-            image: allVehiclesImage,
-            type: 'vehicles' as CategoryType,
-          },
-          {
-            _id: 'all-services',
-            name: t('categories.allServices'),
-            image: allServicesImage,
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'car-service',
-            name: 'Car Service',
-            image: require('@assets/services/car_service.png'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'bike-service',
-            name: 'Bike Service',
-            image: require('@assets/services/bike_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'car-wash',
-            name: 'Vehicle Wash',
-            image: require('@assets/services/car_wash.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'bike-wash',
-            name: 'Bike Wash',
-            image: require('@assets/services/bike_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'ppf-detailing',
-            name: 'PPF & Detailing',
-            image: require('@assets/services/ppf_detailing.png'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'tire-service',
-            name: 'Tire Service',
-            image: require('@assets/services/tier_service.jpg'),
-            type: 'services' as CategoryType,
-          },
-          {
-            _id: 'battery-service',
-            name: 'Battery Service',
-            image: require('@assets/services/batery_sevices.jpg'),
-            type: 'services' as CategoryType,
-          },
-        ];
+        const defaultCategories = buildBaseCategories(t, []);
         setCategories(defaultCategories);
         // Set initial category - will be overridden by route params if they exist
         if (!routeParams?.initialCategoryId) {
@@ -288,10 +217,11 @@ const ProductCategories = () => {
 
     let categoryToSelect: ICategoryItem | null = null;
 
-    // If initialCategoryId is provided, find matching category
+    // If initialCategoryId is provided, find matching category (with legacy id aliases)
     if (routeParams.initialCategoryId) {
+      const resolvedId = resolveCategoryId(routeParams.initialCategoryId);
       categoryToSelect = categories.find(
-        cat => cat._id === routeParams.initialCategoryId
+        cat => cat._id === resolvedId || cat._id === routeParams.initialCategoryId,
       ) || null;
     }
     // Otherwise, if initialCategoryType is provided, find first category of that type
@@ -341,9 +271,13 @@ const ProductCategories = () => {
       for (const category of categories) {
         try {
           if (category.type === 'products') {
-            const response = await getProducts(
-              category._id !== 'all-products' ? {category: category.name} : {},
-            ).catch((err) => {
+            const productQuery =
+              category._id !== 'all-products'
+                ? MONGO_OBJECT_ID.test(category._id)
+                  ? { categoryId: category._id, limit: 1000 }
+                  : { category: category.name, limit: 1000 }
+                : { limit: 1000 };
+            const response = await getProducts(productQuery).catch((err) => {
               if (err?.response?.status === 401) {
                 hasFailedAuthRef.current = true;
               }
@@ -399,8 +333,14 @@ const ProductCategories = () => {
     // Build query params
     const queryParams: any = {};
     
-    // Set high limit to fetch all items for "all" categories
-    if (category._id === 'all-products' || category._id === 'all-vehicles' || category._id === 'all-services') {
+    // Set high limit to fetch all items for category views
+    if (
+      category._id === 'all-products' ||
+      category._id === 'all-vehicles' ||
+      category._id === 'all-services' ||
+      categoryType === 'products' ||
+      categoryType === 'services'
+    ) {
       queryParams.limit = 1000;
     }
     
@@ -416,32 +356,17 @@ const ProductCategories = () => {
       queryParams.dealerId = dealerId;
     }
     
-    // Apply service type and vehicle type filters
+    // Apply service type and vehicle type filters from centralized config
     if (categoryType === 'services') {
-      if (category._id === 'car-service') {
-        queryParams.serviceType = 'car_automobile';
-        queryParams.vehicleType = 'Car';
-      } else if (category._id === 'bike-service') {
-        queryParams.serviceType = 'bike_automobile';
-        queryParams.vehicleType = 'Bike';
-      } else if (category._id === 'car-wash') {
-        queryParams.serviceType = 'car_wash';
-      } else if (category._id === 'bike-wash') {
-        queryParams.serviceType = 'car_wash';
-        queryParams.vehicleType = 'Bike';
-      } else if (category._id === 'ppf-detailing') {
-        queryParams.serviceType = 'car_detailing';
-      } else if (category._id === 'tire-service') {
-        queryParams.serviceType = 'general';
-      } else if (category._id === 'battery-service') {
-        queryParams.serviceType = 'battery_service';
-      } else {
-        if (routeParams?.serviceType) {
-          queryParams.serviceType = routeParams.serviceType;
-        }
-        if (routeParams?.vehicleType) {
-          queryParams.vehicleType = routeParams.vehicleType;
-        }
+      const serviceParams = buildServiceQueryParams(category._id, {
+        serviceType: routeParams?.serviceType,
+        vehicleType: routeParams?.vehicleType,
+      });
+      if (serviceParams.serviceType) {
+        queryParams.serviceType = serviceParams.serviceType;
+      }
+      if (serviceParams.vehicleType) {
+        queryParams.vehicleType = serviceParams.vehicleType;
       }
     }
     
@@ -458,7 +383,11 @@ const ProductCategories = () => {
       queryParams.maxPrice = queryFilters.maxPrice;
     }
     if (categoryType === 'products' && category._id !== 'all-products') {
-      queryParams.category = category.name;
+      if (MONGO_OBJECT_ID.test(category._id)) {
+        queryParams.categoryId = category._id;
+      } else {
+        queryParams.category = category.name;
+      }
     }
 
     // Generate cache key
@@ -661,7 +590,9 @@ const ProductCategories = () => {
       return categories;
     }
 
-    const id = routeParams.initialCategoryId;
+    const id = routeParams.initialCategoryId
+      ? resolveCategoryId(routeParams.initialCategoryId)
+      : undefined;
 
     if (id === 'all-products') {
       // Show only product-type categories
@@ -679,9 +610,11 @@ const ProductCategories = () => {
     }
 
     if (id) {
-      // A specific sub-category was selected (e.g. 'car-wash') →
+      // A specific sub-category was selected (e.g. 'vehicle-wash') →
       // only show that one tab so the screen stays focused on the selection.
-      const matched = categories.filter(cat => cat._id === id);
+      const matched = categories.filter(
+        cat => cat._id === id || cat._id === routeParams.initialCategoryId,
+      );
       if (matched.length > 0) {
         return matched;
       }
@@ -920,9 +853,9 @@ const ProductCategories = () => {
     return result;
   }, [sortedItems, currentSection, selectedSubcategoryId, selectedPackage, selectedDeliveryMode, selectedCategory?.type]);
 
-  // ── Spare Parts: filter by vehicleType + brand ───────────────────────────
+  // ── Spare Parts: filter by vehicleType + brand (spare parts category only) ──
   const finalItems = useMemo(() => {
-    if (selectedCategory?.type !== 'products') {
+    if (selectedCategory?.type !== 'products' || !isSparePartsCategory(selectedCategory)) {
       return subcategoryFilteredItems;
     }
     let result = [...subcategoryFilteredItems];
@@ -939,7 +872,7 @@ const ProductCategories = () => {
       });
     }
     return result;
-  }, [subcategoryFilteredItems, selectedCategory?.type, sparePartsVehicleType, sparePartsBrand]);
+  }, [subcategoryFilteredItems, selectedCategory, sparePartsVehicleType, sparePartsBrand]);
 
   // Handle sort selection
   const handleSortSelect = (sort: SortOption) => {
@@ -1228,7 +1161,7 @@ const ProductCategories = () => {
           )}
 
           {/* ── Spare Parts: Vehicle Type + Brand filter ── */}
-          {!categoriesLoading && selectedCategory?.type === 'products' && (
+          {!categoriesLoading && isSparePartsCategory(selectedCategory) && (
             <View style={{paddingHorizontal: 16, paddingBottom: 4}}>
               {/* Vehicle type toggle */}
               <View style={{flexDirection: 'row', gap: 8, marginBottom: 6}}>

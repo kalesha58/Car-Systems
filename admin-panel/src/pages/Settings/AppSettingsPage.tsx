@@ -14,8 +14,18 @@ import {
   type IVisualEffectsConfig,
   type IRainNoticeConfig,
 } from '@services/settingsService';
+import { getCategories } from '@services/categoryService';
+import { getServiceCategories } from '@services/serviceCategoryService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
+import {
+  buildBannerDestinationOptions,
+  buildDestinationKey,
+  getDefaultDestination,
+  getDestinationSelectOptions,
+  resolveDestinationDisplay,
+  type IBannerDestinationOption,
+} from '@utils/bannerCategoryOptions';
 import { extractErrorMessage } from '@utils/errorHandler';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, Pencil, Plus, Settings2, Trash2 } from 'lucide-react';
@@ -46,7 +56,10 @@ const MAX_BANNERS = 10;
 const createBannerId = (): string =>
   `banner-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-const createEmptyBanner = (sortOrder: number): IStoreBannerItem => ({
+const createEmptyBanner = (
+  sortOrder: number,
+  defaultDestination?: IBannerDestinationOption,
+): IStoreBannerItem => ({
   id: createBannerId(),
   enabled: true,
   sortOrder,
@@ -55,12 +68,37 @@ const createEmptyBanner = (sortOrder: number): IStoreBannerItem => ({
   subtitle: 'Add a short description',
   cta: 'Learn More',
   backgroundColor: '#1565C0',
-  link: {
+  link: defaultDestination?.link ?? {
     type: 'category',
-    categoryId: '',
+    categoryId: 'all-services',
     categoryType: 'services',
   },
 });
+
+const isBannerLinkInvalid = (banner: IStoreBannerItem): boolean =>
+  banner.link.type === 'category' && !banner.link.categoryId?.trim();
+
+const repairInvalidBannerLinks = (
+  banners: IStoreBannersConfig,
+  defaultDestination?: IBannerDestinationOption,
+): IStoreBannersConfig => {
+  const fallbackLink =
+    defaultDestination?.link ?? {
+      type: 'category' as const,
+      categoryId: 'all-services',
+      categoryType: 'services' as const,
+    };
+
+  return {
+    ...banners,
+    items: banners.items.map((item) => {
+      if (isBannerLinkInvalid(item)) {
+        return { ...item, link: { ...fallbackLink } };
+      }
+      return item;
+    }),
+  };
+};
 
 const ToggleRow: React.FC<{
   label: string;
@@ -109,14 +147,31 @@ export const AppSettingsPage: React.FC = () => {
   const [storeBanners, setStoreBanners] = useState<IStoreBannersConfig>(DEFAULT_STORE_BANNERS);
   const [editingBanner, setEditingBanner] = useState<IStoreBannerItem | null>(null);
   const [activePreviewSlide, setActivePreviewSlide] = useState<number | undefined>(undefined);
+  const [destinationOptions, setDestinationOptions] = useState<IBannerDestinationOption[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const settings = await getSettings();
+        const [settings, serviceCategories, productCategories] = await Promise.all([
+          getSettings(),
+          getServiceCategories().catch(() => ({ sections: [] })),
+          getCategories({ status: 'active' }).catch(() => ({ categories: [] })),
+        ]);
+
+        const options = buildBannerDestinationOptions(
+          serviceCategories.sections,
+          productCategories.categories,
+        );
+        const defaultDestination = getDefaultDestination(options);
+        setDestinationOptions(options);
         setVisualEffects(settings.visualEffects ?? DEFAULT_VISUAL_EFFECTS);
-        setStoreBanners(settings.storeBanners ?? DEFAULT_STORE_BANNERS);
+        setStoreBanners(
+          repairInvalidBannerLinks(
+            settings.storeBanners ?? DEFAULT_STORE_BANNERS,
+            defaultDestination,
+          ),
+        );
       } catch (error) {
         showToast(extractErrorMessage(error), 'error');
       } finally {
@@ -188,10 +243,49 @@ export const AppSettingsPage: React.FC = () => {
       return;
     }
 
-    const banner = createEmptyBanner(sortedBanners.length);
+    const banner = createEmptyBanner(sortedBanners.length, getDefaultDestination(destinationOptions));
     updateBanners([...sortedBanners, banner]);
     setEditingBanner(banner);
     setActivePreviewSlide(sortedBanners.length);
+  };
+
+  const applyDestination = (destinationKey: string) => {
+    const destination = destinationOptions.find((option) => option.value === destinationKey);
+    if (!destination) {
+      return;
+    }
+
+    setEditingBanner((prev) =>
+      prev
+        ? {
+            ...prev,
+            link: { ...destination.link },
+          }
+        : prev,
+    );
+  };
+
+  const selectedDestination = editingBanner
+    ? resolveDestinationDisplay(destinationOptions, editingBanner.link)
+    : undefined;
+
+  const editingDestinationKey = editingBanner
+    ? buildDestinationKey(editingBanner.link)
+    : '';
+
+  const destinationSelectOptions = useMemo(
+    () => getDestinationSelectOptions(destinationOptions, editingBanner?.link),
+    [destinationOptions, editingBanner?.link],
+  );
+
+  const validateBannerLinks = (items: IStoreBannerItem[]): string | null => {
+    for (const banner of items) {
+      if (banner.link.type === 'category' && !banner.link.categoryId?.trim()) {
+        return `Banner "${banner.title}" needs a destination selected before saving.`;
+      }
+    }
+
+    return null;
   };
 
   const saveEditingBanner = () => {
@@ -208,7 +302,7 @@ export const AppSettingsPage: React.FC = () => {
     }
 
     if (editingBanner.link.type === 'category' && !editingBanner.link.categoryId?.trim()) {
-      showToast('Category ID is required for category links', 'error');
+      showToast('Please select a destination for this banner', 'error');
       return;
     }
 
@@ -222,6 +316,12 @@ export const AppSettingsPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    const linkError = validateBannerLinks(storeBanners.items);
+    if (linkError) {
+      showToast(linkError, 'error');
+      return;
+    }
+
     try {
       setSubmitting(true);
       await updateSettings({ visualEffects, storeBanners });
@@ -475,8 +575,12 @@ export const AppSettingsPage: React.FC = () => {
                   <div className="app-settings-banner-meta">
                     <div style={{ fontWeight: 600, color: theme.colors.text }}>{banner.title}</div>
                     <div style={{ fontSize: 12, color: theme.colors.textSecondary }}>
-                      {banner.enabled ? 'Enabled' : 'Disabled'} · {banner.cta}
+                      {banner.enabled ? 'Enabled' : 'Disabled'} · {banner.cta} ·{' '}
+                      {resolveDestinationDisplay(destinationOptions, banner.link).label}
                     </div>
+                    {isBannerLinkInvalid(banner) && (
+                      <span className="app-settings-banner-warning">Needs destination</span>
+                    )}
                   </div>
 
                   <label className="app-settings-banner-toggle">
@@ -619,73 +723,37 @@ export const AppSettingsPage: React.FC = () => {
             />
 
             {editingBanner.link.type === 'category' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <Input
-                  label="Category ID"
-                  value={editingBanner.link.categoryId ?? ''}
-                  onChange={(value) =>
-                    setEditingBanner((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            link: { ...prev.link, categoryId: value },
-                          }
-                        : prev,
-                    )
-                  }
-                />
+              <div>
                 <Select
-                  label="Category type"
-                  value={editingBanner.link.categoryType ?? 'services'}
-                  onChange={(value) =>
-                    setEditingBanner((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            link: {
-                              ...prev.link,
-                              categoryType: value as NonNullable<
-                                IStoreBannerItem['link']['categoryType']
-                              >,
-                            },
-                          }
-                        : prev,
-                    )
-                  }
-                  options={[
-                    { value: 'products', label: 'Products' },
-                    { value: 'services', label: 'Services' },
-                    { value: 'vehicles', label: 'Vehicles' },
-                  ]}
+                  label="Destination"
+                  searchable
+                  placeholder="Search categories and services..."
+                  value={editingDestinationKey}
+                  onChange={applyDestination}
+                  options={destinationSelectOptions}
                 />
-                <Input
-                  label="Service type (optional)"
-                  value={editingBanner.link.serviceType ?? ''}
-                  onChange={(value) =>
-                    setEditingBanner((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            link: { ...prev.link, serviceType: value || undefined },
-                          }
-                        : prev,
-                    )
-                  }
-                />
-                <Input
-                  label="Vehicle type (optional)"
-                  value={editingBanner.link.vehicleType ?? ''}
-                  onChange={(value) =>
-                    setEditingBanner((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            link: { ...prev.link, vehicleType: value || undefined },
-                          }
-                        : prev,
-                    )
-                  }
-                />
+                {selectedDestination ? (
+                  <p
+                    style={{
+                      margin: '8px 0 0',
+                      fontSize: 13,
+                      color: theme.colors.textSecondary,
+                    }}
+                  >
+                    Tapping this banner opens <strong>{selectedDestination.label}</strong> (
+                    {selectedDestination.hint}).
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      margin: '8px 0 0',
+                      fontSize: 13,
+                      color: theme.colors.error ?? '#dc2626',
+                    }}
+                  >
+                    Select where users should land when they tap this banner.
+                  </p>
+                )}
               </div>
             )}
 

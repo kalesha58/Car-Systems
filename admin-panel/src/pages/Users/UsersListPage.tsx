@@ -12,6 +12,7 @@ import { Tooltip } from '@components/Tooltip/Tooltip';
 import { createUser, deleteUser, getUsers, updateUser } from '@services/userService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
+import { bulkDeleteByIds } from '@utils/bulkDelete';
 import { debounce } from '@utils/debounce';
 import { extractErrorMessage } from '@utils/errorHandler';
 import { motion } from 'framer-motion';
@@ -46,6 +47,8 @@ export const UsersListPage = () => {
     isOpen: false,
     user: null,
   });
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [userFormData, setUserFormData] = useState({
     name: '',
     email: '',
@@ -122,6 +125,10 @@ export const UsersListPage = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    setSelectedUserIds([]);
+  }, [currentPage, searchTerm, statusFilter]);
 
   // Handle URL params for adding dealer
   useEffect(() => {
@@ -262,6 +269,33 @@ export const UsersListPage = () => {
     } catch (error: any) {
       console.error('Error deleting user:', error);
       const errorMessage = extractErrorMessage(error, 'Failed to delete user');
+      showToast(errorMessage, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    if (selectedUserIds.length === 0) return;
+
+    try {
+      setSubmitting(true);
+      const { succeeded, failed } = await bulkDeleteByIds(selectedUserIds, deleteUser);
+      setBulkDeleteModalOpen(false);
+      setSelectedUserIds([]);
+
+      if (failed === 0) {
+        showToast(`${succeeded} user${succeeded === 1 ? '' : 's'} deleted successfully`, 'success');
+      } else if (succeeded === 0) {
+        showToast('Failed to delete selected users', 'error');
+      } else {
+        showToast(`${succeeded} deleted, ${failed} failed`, 'warning');
+      }
+
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error bulk deleting users:', error);
+      const errorMessage = extractErrorMessage(error, 'Failed to delete selected users');
       showToast(errorMessage, 'error');
     } finally {
       setSubmitting(false);
@@ -466,6 +500,17 @@ export const UsersListPage = () => {
             </div>
             <div className="users-toolbar__spacer" />
             <div className="users-toolbar__actions">
+              {selectedUserIds.length > 0 && (
+                <div className="users-toolbar__button">
+                  <Button
+                    variant="danger"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    icon={Trash2}
+                  >
+                    Delete Selected ({selectedUserIds.length})
+                  </Button>
+                </div>
+              )}
               <div className="users-toolbar__button">
                 <Button
                   onClick={() => navigate('/users/new')}
@@ -558,6 +603,9 @@ export const UsersListPage = () => {
               columns={columns}
               data={users}
               onRowClick={(user) => navigate(`/users/${user.id}`)}
+              selectable
+              selectedIds={selectedUserIds}
+              onSelectedIdsChange={setSelectedUserIds}
             />
               </div>
             {totalItems > 0 && (
@@ -866,6 +914,17 @@ export const UsersListPage = () => {
         title="Delete User"
         message={`Are you sure you want to delete "${deleteModal.user?.name}"? This action cannot be undone.`}
         confirmText={submitting ? 'Deleting...' : 'Delete'}
+        type="danger"
+        disabled={submitting}
+      />
+
+      <ConfirmModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => !submitting && setBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDeleteUsers}
+        title="Delete Selected Users"
+        message={`Are you sure you want to delete ${selectedUserIds.length} selected user${selectedUserIds.length === 1 ? '' : 's'}? This action cannot be undone.`}
+        confirmText={submitting ? 'Deleting...' : 'Delete All'}
         type="danger"
         disabled={submitting}
       />

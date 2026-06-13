@@ -17,6 +17,7 @@ import { extractErrorMessage } from '@utils/errorHandler';
 import { motion } from 'framer-motion';
 import { 
   Lightbulb,
+  Pencil,
   Search, 
   Trash2, 
   UserPlus
@@ -48,6 +49,9 @@ export const CategoriesPage = () => {
     name: '',
     description: '',
     status: 'active',
+    imageUrl: '',
+    sortOrder: undefined,
+    tileGroup: '',
   });
   const [errors, setErrors] = useState<Partial<ICategoryFormData>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -87,6 +91,9 @@ export const CategoriesPage = () => {
         status: cat.status,
         productCount: cat.products || 0,
         createdDate: cat.createdAt || new Date().toISOString(),
+        imageUrl: cat.imageUrl,
+        sortOrder: cat.sortOrder,
+        tileGroup: cat.tileGroup,
       }));
       setAllCategories(mappedCategories);
 
@@ -189,6 +196,9 @@ export const CategoriesPage = () => {
         name: category.name,
         description: category.description,
         status: category.status,
+        imageUrl: category.imageUrl ?? '',
+        sortOrder: category.sortOrder,
+        tileGroup: category.tileGroup ?? '',
       });
     } else {
       setEditingCategory(null);
@@ -196,6 +206,9 @@ export const CategoriesPage = () => {
         name: '',
         description: '',
         status: 'active',
+        imageUrl: '',
+        sortOrder: undefined,
+        tileGroup: '',
       });
     }
     setErrors({});
@@ -209,6 +222,9 @@ export const CategoriesPage = () => {
       name: '',
       description: '',
       status: 'active',
+      imageUrl: '',
+      sortOrder: undefined,
+      tileGroup: '',
     });
     setErrors({});
   };
@@ -241,6 +257,9 @@ export const CategoriesPage = () => {
           name: formData.name,
           description: formData.description,
           status: formData.status,
+          imageUrl: formData.imageUrl?.trim() || undefined,
+          sortOrder: formData.sortOrder,
+          tileGroup: formData.tileGroup || null,
         });
         showToast('Category updated successfully', 'success');
       } else {
@@ -248,6 +267,9 @@ export const CategoriesPage = () => {
           name: formData.name,
           description: formData.description,
           status: formData.status,
+          imageUrl: formData.imageUrl?.trim() || undefined,
+          sortOrder: formData.sortOrder,
+          tileGroup: formData.tileGroup || undefined,
         });
         showToast('Category created successfully', 'success');
       }
@@ -309,12 +331,28 @@ export const CategoriesPage = () => {
       render: (category: ICategory) => category.productCount || 0,
     },
     {
+      key: 'tileGroup',
+      header: 'Store Row',
+      sortable: true,
+      render: (category: ICategory) => category.tileGroup ?? '—',
+    },
+    {
       key: 'actions',
       header: 'Actions',
       sortable: false,
       render: (category: ICategory) => (
         <div className="users-action-buttons">
-
+          <Tooltip text="Edit">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e?: React.MouseEvent) => {
+                e?.stopPropagation();
+                handleOpenModal(category);
+              }}
+              icon={Pencil}
+            />
+          </Tooltip>
           <Tooltip text="Delete">
             <Button
               size="sm"
@@ -611,6 +649,58 @@ export const CategoriesPage = () => {
               options={[
                 { value: 'active', label: 'Active' },
                 { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
+          </div>
+
+          <Input
+            label="Image URL"
+            value={formData.imageUrl ?? ''}
+            onChange={(value) => {
+              setFormData({ ...formData, imageUrl: value });
+            }}
+            placeholder="https://example.com/category-image.jpg"
+          />
+
+          <Input
+            label="Sort Order"
+            type="number"
+            value={formData.sortOrder !== undefined ? String(formData.sortOrder) : ''}
+            onChange={(value) => {
+              const parsed = value.trim() === '' ? undefined : Number(value);
+              setFormData({
+                ...formData,
+                sortOrder: Number.isFinite(parsed) ? parsed : undefined,
+              });
+            }}
+            placeholder="Lower numbers appear first on the store home"
+          />
+
+          <div style={{ marginBottom: theme.spacing.md }}>
+            <label
+              style={{
+                display: 'block',
+                marginBottom: theme.spacing.xs,
+                color: theme.colors.text,
+                fontWeight: '500',
+              }}
+            >
+              Store Home Row
+            </label>
+            <Select
+              value={formData.tileGroup ?? ''}
+              onChange={(value) =>
+                setFormData({
+                  ...formData,
+                  tileGroup: value as ICategoryFormData['tileGroup'],
+                })
+              }
+              placeholder="Select store row (optional)"
+              options={[
+                { value: '', label: 'None' },
+                { value: 'products', label: 'Product Categories' },
+                { value: 'vehicles', label: 'Vehicle Categories' },
+                { value: 'services', label: 'Service Categories' },
               ]}
             />
           </div>

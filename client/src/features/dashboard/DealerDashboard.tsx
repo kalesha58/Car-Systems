@@ -82,7 +82,9 @@ const DealerDashboard: React.FC = () => {
   const { scrollY, expand } = useCollapsibleContext();
   const previousScroll = useRef<number>(0);
   const seasonalTheme = useSeasonalTheme();
-  const rainNotice = useVisualEffectsStore(state => state.config.rainNotice);
+  const visualEffects = useVisualEffectsStore(state => state.config);
+  const rainNotice = visualEffects.rainNotice;
+  const overlayKey = `${visualEffects.enabled}-${visualEffects.overlayEffect}`;
 
   const [dealer, setDealer] = useState<IDealer | undefined>(undefined);
   const [businessRegistration, setBusinessRegistration] = useState<IBusinessRegistration | null>(null);
@@ -418,6 +420,7 @@ const DealerDashboard: React.FC = () => {
             {seasonalTheme.showOverlayOnDealerDashboard && seasonalTheme.animations.overlay && (
               <View style={styles.trainEffectBelow}>
                 <LottieView
+                  key={overlayKey}
                   autoPlay
                   loop
                   speed={1}
