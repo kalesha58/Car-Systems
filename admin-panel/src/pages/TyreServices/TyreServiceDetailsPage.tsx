@@ -372,10 +372,10 @@ export const TyreServiceDetailsPage = () => {
           }}
           onClick={() => !submitting && setStatusModal(null)}
         >
-          <Card
-            style={{ width: '100%', maxWidth: 440, padding: theme.spacing.lg }}
-            onClick={e => e.stopPropagation()}
-          >
+          <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <Card
+              style={{ width: '100%', maxWidth: 440, padding: theme.spacing.lg }}
+            >
             <h3 style={{ margin: '0 0 8px' }}>
               {statusModal.status === 'scheduled' ? 'Approve request' : 'Reject request'}
             </h3>
@@ -407,6 +407,7 @@ export const TyreServiceDetailsPage = () => {
               </Button>
             </div>
           </Card>
+          </div>
         </div>
       )}
     </motion.div>

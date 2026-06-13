@@ -410,7 +410,6 @@ export const TestDriveDetailsPage = () => {
           isOpen={isImageModalOpen}
           onClose={() => setIsImageModalOpen(false)}
           images={vehicleImages}
-          initialIndex={0}
         />
       )}
 
