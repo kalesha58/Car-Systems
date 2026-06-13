@@ -11,6 +11,7 @@ import { NotFoundError, AppError, ForbiddenError } from '../../utils/errorHandle
 import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import { resolveVehicleBrandModelStrings } from '../../utils/vehicleProductMapping';
+import { resolveDealerCatalogIds } from '../../utils/dealerCatalogIds';
 
 /**
  * Convert vehicle document to interface
@@ -164,7 +165,9 @@ export const getAllDealerVehicles = async (
 
     // Optional: Filter by dealerId if provided
     if (query.dealerId) {
-      filter.dealerId = query.dealerId;
+      const catalogIds = await resolveDealerCatalogIds(query.dealerId);
+      filter.dealerId =
+        catalogIds.length > 1 ? { $in: catalogIds } : catalogIds[0] ?? query.dealerId;
     }
 
     const sortBy = query.sortBy || 'createdAt';

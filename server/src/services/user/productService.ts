@@ -3,6 +3,7 @@ import { Product, IProductDocument } from '../../models/Product';
 import { Category } from '../../models/Category';
 import { BusinessRegistration } from '../../models/BusinessRegistration';
 import { resolveBatteryTypeName } from '../../utils/batteryProduct';
+import { resolveDealerCatalogIds } from '../../utils/dealerCatalogIds';
 import { resolveVehicleBrandModelNames } from '../../utils/vehicleProductMapping';
 import { NotFoundError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
@@ -211,7 +212,8 @@ export const getAllProductsForUsers = async (
 
     // Only filter by dealerId if explicitly specified in query
     if (query.dealerId) {
-      filter.userId = query.dealerId;
+      const catalogIds = await resolveDealerCatalogIds(query.dealerId);
+      filter.userId = catalogIds.length > 1 ? { $in: catalogIds } : catalogIds[0] ?? query.dealerId;
       logger.info(`[getAllProductsForUsers] Filtering products by dealerId: ${query.dealerId}`);
     }
 

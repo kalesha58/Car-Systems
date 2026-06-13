@@ -64,6 +64,11 @@ const DealerStoreScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [storeOpen, setStoreOpen] = useState(true);
 
+  const catalogDealerId = useMemo(
+    () => dealer?.businessRegistrationId ?? dealerId,
+    [dealer?.businessRegistrationId, dealerId],
+  );
+
   // Fetch Dealer details
   useEffect(() => {
     const fetchDealerDetails = async () => {
@@ -93,20 +98,29 @@ const DealerStoreScreen: React.FC = () => {
     }
   }, [dealerId]);
 
+  useEffect(() => {
+    setProducts([]);
+    setVehicles([]);
+    setServices([]);
+  }, [catalogDealerId]);
+
   // Fetch products, vehicles, and services based on activeTab
   useEffect(() => {
-    if (!dealerId) return;
+    if (!catalogDealerId) return;
 
     if (activeTab === 'products' && products.length === 0) {
       const fetchProducts = async () => {
         try {
           setProductsLoading(true);
-          const response = await getProducts({ dealerId, limit: 100 });
+          const response = await getProducts({ dealerId: catalogDealerId, limit: 100 });
           if (response.success && response.Response?.products) {
             setProducts(response.Response.products);
+          } else {
+            setProducts([]);
           }
         } catch (error) {
           console.error('Error fetching products:', error);
+          setProducts([]);
         } finally {
           setProductsLoading(false);
         }
@@ -116,34 +130,40 @@ const DealerStoreScreen: React.FC = () => {
       const fetchVehicles = async () => {
         try {
           setVehiclesLoading(true);
-          const response = await getDealerVehicles({ dealerId, limit: 100 });
+          const response = await getDealerVehicles({ dealerId: catalogDealerId, limit: 100 });
           if (response.success && response.Response?.vehicles) {
             setVehicles(response.Response.vehicles);
+          } else {
+            setVehicles([]);
           }
         } catch (error) {
           console.error('Error fetching vehicles:', error);
+          setVehicles([]);
         } finally {
           setVehiclesLoading(false);
         }
       };
       fetchVehicles();
-    } else if (activeTab === 'services' && services.length === 0) {
+    } else if (activeTab === 'services' && (!Array.isArray(services) || services.length === 0)) {
       const fetchServices = async () => {
         try {
           setServicesLoading(true);
-          const response = await getServicesByDealerId(dealerId, { limit: 100 });
-          if (response.success && response.Response) {
-            setServices(response.Response as any);
+          const response = await getServicesByDealerId(catalogDealerId, { limit: 100 });
+          if (response.success && response.Response?.services) {
+            setServices(response.Response.services);
+          } else {
+            setServices([]);
           }
         } catch (error) {
           console.error('Error fetching services:', error);
+          setServices([]);
         } finally {
           setServicesLoading(false);
         }
       };
       fetchServices();
     }
-  }, [activeTab, dealerId]);
+  }, [activeTab, catalogDealerId, products.length, vehicles.length, services.length]);
 
   // Handle Share Store
   const handleShare = async () => {
@@ -185,7 +205,8 @@ const DealerStoreScreen: React.FC = () => {
   }, [vehicles, searchQuery]);
 
   const filteredServices = useMemo(() => {
-    return services.filter((s) =>
+    const list = Array.isArray(services) ? services : [];
+    return list.filter((s) =>
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (s.description || '').toLowerCase().includes(searchQuery.toLowerCase())
     );

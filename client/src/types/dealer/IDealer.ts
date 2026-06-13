@@ -9,6 +9,7 @@ export interface IDealerInfo {
 
 export interface IDealer {
   id: string;
+  businessRegistrationId?: string;
   name: string;
   businessName: string;
   email: string;

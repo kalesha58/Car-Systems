@@ -10,6 +10,7 @@ import { NotFoundError, ConflictError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
 import { BusinessRegistration } from '../models/BusinessRegistration';
 import { IDealerInfo } from '../types/user/vehicle';
+import { resolveDealerCatalogIds } from '../utils/dealerCatalogIds';
 import mongoose from 'mongoose';
 
 /**
@@ -209,9 +210,13 @@ export const getServicesByDealerId = async (
     const limit = query?.limit || 10;
     const skip = (page - 1) * limit;
 
+    const catalogIds = await resolveDealerCatalogIds(dealerId);
+    const dealerFilter =
+      catalogIds.length > 1 ? { $in: catalogIds } : catalogIds[0] ?? dealerId;
+
     const [services, total] = await Promise.all([
-      Service.find({ dealerId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Service.countDocuments({ dealerId }),
+      Service.find({ dealerId: dealerFilter }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Service.countDocuments({ dealerId: dealerFilter }),
     ]);
 
     // Fetch dealer info for this dealerId

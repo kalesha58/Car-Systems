@@ -1083,7 +1083,11 @@ const ProductDetail: React.FC = () => {
                 </CustomText>
                 <View style={styles.dealerInfo}>
                   <TouchableOpacity
-                    onPress={() => navigate('DealerStore', { dealerId: dealer.id })}
+                    onPress={() =>
+                      navigate('DealerStore', {
+                        dealerId: product?.dealerId || dealer.id,
+                      })
+                    }
                     style={styles.dealerRow}
                     activeOpacity={0.7}
                   >
