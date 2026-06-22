@@ -38,6 +38,18 @@ export const initializeSocket = (httpServer: HttpServer): SocketServer => {
       logger.info(`Socket ${socket.id} joined room: ${roomName}`);
     });
 
+    // Handle joinUserNotifications event (for in-app notification updates)
+    socket.on('joinUserNotifications', (userId: string) => {
+      if (!userId) {
+        logger.warn(`Invalid userId for joinUserNotifications from socket ${socket.id}`);
+        return;
+      }
+
+      const roomName = `user:${userId}`;
+      socket.join(roomName);
+      logger.info(`Socket ${socket.id} joined user notification room: ${roomName}`);
+    });
+
     // Handle joinChat event (for chat rooms)
     socket.on('joinChat', (chatId: string) => {
       if (!chatId) {

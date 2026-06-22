@@ -14,6 +14,8 @@ import cartRoutes from './cartRoutes';
 import couponRoutes from './couponRoutes';
 import dealerRoutes from './dealerRoutes';
 import serviceSlotRoutes from './serviceSlotRoutes';
+import slotOfferRoutes from './slotOfferRoutes';
+import vehicleAlertRoutes from './vehicleAlertRoutes';
 
 const router = Router();
 
@@ -33,6 +35,8 @@ router.use('/coupons', couponRoutes);
 router.use('/dealer', dealerRoutes);
 router.use('/', notificationRoutes);
 router.use('/services', serviceSlotRoutes);
+router.use('/slot-offers', slotOfferRoutes);
+router.use('/vehicle-alerts', vehicleAlertRoutes);
 
 export default router;
 

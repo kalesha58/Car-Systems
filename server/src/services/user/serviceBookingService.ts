@@ -15,11 +15,25 @@ import { getSectionByServiceType } from '../../data/serviceCategoryConfig';
 import {
   notifyTyreServiceRequestCreated,
 } from '../tyreService/tyreServiceNotificationService';
+import { cancelBooking as releaseSlotBooking } from '../serviceSlotService';
+import { createSlotOffersOnCancellation } from '../slotOffer/slotOfferService';
 
 export interface ICreateServiceBookingFromSlotParams {
   userId: string;
   slot: IServiceSlotDocument;
   serviceRequest?: string;
+  vehicleId?: string;
+  vehicleInfo?: {
+    brand?: string;
+    model?: string;
+    registrationNumber?: string;
+  };
+  notes?: string;
+  requestLocation?: {
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+  };
 }
 
 /**
@@ -28,7 +42,7 @@ export interface ICreateServiceBookingFromSlotParams {
 export const createServiceBookingFromSlot = async (
   params: ICreateServiceBookingFromSlotParams,
 ): Promise<string> => {
-  const { userId, slot, serviceRequest } = params;
+  const { userId, slot, serviceRequest, vehicleId, vehicleInfo, notes, requestLocation } = params;
 
   const service = await Service.findById(slot.serviceId);
   if (!service) {
@@ -43,10 +57,14 @@ export const createServiceBookingFromSlot = async (
     dealerId: service.dealerId,
     serviceId: slot.serviceId,
     slotId: (slot._id as any).toString(),
+    vehicleId,
+    vehicleInfo,
     bookingDate: slotDate,
     bookingTime: slot.startTime,
     serviceRequest: serviceRequest?.trim() || service.name,
     status: 'scheduled',
+    notes: notes?.trim(),
+    requestLocation,
     serviceSubCategory: service.serviceSubCategory,
   });
 
@@ -262,12 +280,25 @@ export const cancelUserServiceBooking = async (
   if (booking.userId !== userId) {
     throw new AppError('Unauthorized', 403);
   }
-  if (booking.status !== 'new') {
-    throw new AppError('Only pending requests can be cancelled', 400);
+
+  const cancellableStatuses = ['new', 'scheduled'];
+  if (!cancellableStatuses.includes(booking.status)) {
+    throw new AppError('This booking cannot be cancelled', 400);
   }
+
+  const hadSlot = !!booking.slotId;
 
   booking.status = 'cancelled';
   await booking.save();
+
+  if (hadSlot && booking.slotId) {
+    try {
+      await releaseSlotBooking(booking.slotId);
+      await createSlotOffersOnCancellation(bookingId);
+    } catch (slotErr) {
+      logger.warn('Failed to release slot on user cancel:', slotErr);
+    }
+  }
 
   return bookingToInterface(booking);
 };

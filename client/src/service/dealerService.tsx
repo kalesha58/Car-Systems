@@ -818,3 +818,66 @@ export const getDealerInfoByDealerId = async (
   }
 };
 
+export interface IDealerServiceSlot {
+  id: string;
+  serviceId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  serviceType: 'center' | 'home';
+  maxBookings: number;
+  currentBookings: number;
+  isAvailable: boolean;
+}
+
+export const getDealerServiceSlots = async (
+  serviceId: string,
+  from?: string,
+  to?: string,
+): Promise<IDealerServiceSlot[]> => {
+  const params: Record<string, string> = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  const response = await appAxios.get<{
+    success: boolean;
+    Response: { slots: IDealerServiceSlot[] };
+  }>(`/dealer/services/${serviceId}/slots`, { params });
+  return response.data.Response?.slots || [];
+};
+
+export const createDealerServiceSlot = async (
+  serviceId: string,
+  data: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    serviceType?: 'center' | 'home';
+    maxBookings?: number;
+  },
+): Promise<IDealerServiceSlot> => {
+  const response = await appAxios.post<{
+    success: boolean;
+    Response: IDealerServiceSlot;
+  }>(`/dealer/services/${serviceId}/slots`, data);
+  return response.data.Response;
+};
+
+export const updateDealerServiceSlot = async (
+  serviceId: string,
+  slotId: string,
+  maxBookings: number,
+): Promise<IDealerServiceSlot> => {
+  const response = await appAxios.patch<{
+    success: boolean;
+    Response: IDealerServiceSlot;
+  }>(`/dealer/services/${serviceId}/slots/${slotId}`, { maxBookings });
+  return response.data.Response;
+};
+
+export const deleteDealerServiceSlot = async (
+  serviceId: string,
+  slotId: string,
+): Promise<void> => {
+  await appAxios.delete(`/dealer/services/${serviceId}/slots/${slotId}`);
+};
+

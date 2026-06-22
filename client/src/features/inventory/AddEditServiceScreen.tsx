@@ -824,6 +824,27 @@ const AddEditServiceScreen: React.FC = () => {
                 </View>
               </View>
             )}
+            {serviceType === 'tire_service' && isEditMode && service?.id && (
+              <TouchableOpacity
+                style={{
+                  marginTop: 16,
+                  padding: 14,
+                  borderRadius: 10,
+                  backgroundColor: colors.secondary + '15',
+                  borderWidth: 1,
+                  borderColor: colors.secondary,
+                }}
+                onPress={() =>
+                  (navigation as any).navigate('TyreSlotManagement', {
+                    serviceId: service.id,
+                    serviceName: service.name,
+                  })
+                }>
+                <CustomText style={{ color: colors.secondary, fontFamily: Fonts.SemiBold }}>
+                  Manage Tyre Time Slots
+                </CustomText>
+              </TouchableOpacity>
+            )}
           </View>
           </View>
 

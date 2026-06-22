@@ -12,6 +12,7 @@ import { Service } from '../../models/Service';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import { sendPushNotification, createNotification } from '../notificationService';
 import { cancelBooking } from '../serviceSlotService';
+import { createSlotOffersOnCancellation } from '../slotOffer/slotOfferService';
 import { notifyTyreServiceStatusChange } from '../tyreService/tyreServiceNotificationService';
 
 /**
@@ -203,6 +204,7 @@ export const updateServiceBookingStatus = async (
     if (data.status === 'cancelled' && booking.slotId) {
       try {
         await cancelBooking(booking.slotId);
+        await createSlotOffersOnCancellation(bookingId);
       } catch (slotErr) {
         logger.warn(`Failed to release slot ${booking.slotId} on booking cancel:`, slotErr);
       }

@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Store, User, Wrench } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import type { IAdminTyreServiceRequest } from '../../types/tyreServiceRequest';
+import type { IAdminTyreServiceRequest, TyreServiceRequestStatus } from '../../types/tyreServiceRequest';
 
 const STATUS_COLORS: Record<string, string> = {
   new: '#f59e0b',
@@ -24,8 +24,11 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Pending',
-  scheduled: 'Approved',
-  cancelled: 'Declined',
+  scheduled: 'Scheduled',
+  in_progress: 'In Progress',
+  awaiting: 'Awaiting',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
 
 const formatDate = (d?: string) => {
@@ -58,7 +61,7 @@ export const TyreServiceDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [statusModal, setStatusModal] = useState<{
-    status: 'scheduled' | 'cancelled';
+    status: TyreServiceRequestStatus;
     dealerNotes: string;
     rejectionReason: string;
   } | null>(null);
@@ -96,7 +99,11 @@ export const TyreServiceDetailsPage = () => {
       setRequest(updated);
       setStatusModal(null);
       showToast(
-        statusModal.status === 'scheduled' ? 'Request approved' : 'Request rejected',
+        statusModal.status === 'scheduled'
+          ? 'Request approved'
+          : statusModal.status === 'cancelled'
+            ? 'Booking cancelled'
+            : `Status updated to ${statusModal.status}`,
         'success',
       );
     } catch {
@@ -185,7 +192,7 @@ export const TyreServiceDetailsPage = () => {
               disabled={submitting}
               onClick={() => setStatusModal({ status: 'scheduled', dealerNotes: '', rejectionReason: '' })}
             >
-              Approve
+              Approve (legacy)
             </Button>
             <Button
               variant="outline"
@@ -193,7 +200,29 @@ export const TyreServiceDetailsPage = () => {
               onClick={() => setStatusModal({ status: 'cancelled', dealerNotes: '', rejectionReason: '' })}
               style={{ color: '#ef4444', borderColor: '#ef4444' }}
             >
-              Reject
+              Decline
+            </Button>
+          </div>
+        )}
+        {['scheduled', 'in_progress', 'awaiting'].includes(request.status) && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {request.status === 'scheduled' && (
+              <Button disabled={submitting} onClick={() => setStatusModal({ status: 'in_progress', dealerNotes: '', rejectionReason: '' })}>
+                Start Service
+              </Button>
+            )}
+            {request.status === 'in_progress' && (
+              <Button disabled={submitting} onClick={() => setStatusModal({ status: 'completed', dealerNotes: '', rejectionReason: '' })}>
+                Mark Completed
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              disabled={submitting}
+              onClick={() => setStatusModal({ status: 'cancelled', dealerNotes: '', rejectionReason: '' })}
+              style={{ color: '#ef4444', borderColor: '#ef4444' }}
+            >
+              Cancel
             </Button>
           </div>
         )}
@@ -307,11 +336,19 @@ export const TyreServiceDetailsPage = () => {
         <h3 style={{ margin: '0 0 16px' }}>Request Details</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           <div>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: theme.colors.textSecondary }}>Requested date/time</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: theme.colors.textSecondary }}>
+              {request.slotId ? 'Booked slot' : 'Requested date/time'}
+            </p>
             <p style={{ margin: 0, fontWeight: 600 }}>
               {formatDate(request.bookingDate)}
               {request.bookingTime ? ` at ${request.bookingTime}` : ''}
+              {request.slotEndTime ? ` – ${request.slotEndTime}` : ''}
             </p>
+            {request.slotId && request.slotMaxBookings != null && (
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: theme.colors.textSecondary }}>
+                Slot capacity: up to {request.slotMaxBookings} vehicles
+              </p>
+            )}
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '0.75rem', color: theme.colors.textSecondary }}>Submitted</p>

@@ -241,7 +241,8 @@ export const createDealerService = async (
       vehicleModelId: data.vehicleModelId,
       serviceSubCategory: data.serviceSubCategory,
       servicePackage: data.servicePackage,
-      slotBookingEnabled: data.slotBookingEnabled,
+      slotBookingEnabled:
+        data.serviceType === 'tire_service' ? true : data.slotBookingEnabled,
       slotDurationMinutes: data.slotDurationMinutes,
     });
 

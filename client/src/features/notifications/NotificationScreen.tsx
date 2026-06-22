@@ -24,9 +24,11 @@ import {
 } from '@service/notificationService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import EmptyState from '@components/common/EmptyState/EmptyState';
-import { navigate } from '@utils/NavigationUtils';
+import { navigate, push } from '@utils/NavigationUtils';
 import NotificationItemSkeleton from './NotificationItemSkeleton';
 import { onNotificationsInvalidated } from '@utils/notificationEvents';
+import { acceptSlotOffer, declineSlotOffer } from '@service/slotOfferService';
+import { Alert } from 'react-native';
 
 const NotificationScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -142,6 +144,50 @@ const NotificationScreen: React.FC = () => {
         navigate('MyServiceBookings' as never);
         return;
       }
+
+      if (notification.type === 'slot_offer') {
+        const offerId = notification.data?.offerId as string | undefined;
+        const slotStartTime = notification.data?.slotStartTime as string | undefined;
+        if (offerId) {
+          Alert.alert(
+            'Earlier Slot Available',
+            slotStartTime
+              ? `A slot at ${slotStartTime} opened up. Would you like to switch?`
+              : 'An earlier slot opened up. Would you like to switch?',
+            [
+              {
+                text: 'No',
+                style: 'cancel',
+                onPress: () => {
+                  void declineSlotOffer(offerId);
+                },
+              },
+              {
+                text: 'Yes, Switch',
+                onPress: async () => {
+                  try {
+                    await acceptSlotOffer(offerId);
+                    showSuccess('Slot switched successfully');
+                    navigate('MyServiceBookings' as never);
+                  } catch (error: any) {
+                    showError(error?.response?.data?.message || 'Failed to switch slot');
+                  }
+                },
+              },
+            ],
+          );
+        }
+        return;
+      }
+
+      if (notification.type === 'vehicle_alert') {
+        const chatId = notification.data?.chatId as string | undefined;
+        const alertId = notification.data?.alertId as string | undefined;
+        if (chatId) {
+          push('ChatMessage', { chatId, vehicleAlertId: alertId });
+        }
+        return;
+      }
     } catch (error: any) {
       showError('Failed to mark notification as read');
     }
@@ -160,7 +206,11 @@ const NotificationScreen: React.FC = () => {
   const isTyreServiceNotification = (type: string) =>
     type === 'tyre_service_update' || type === 'tyre_service_request';
 
+  const isUrgentNotification = (type: string) =>
+    type === 'vehicle_alert';
+
   const getNotificationIconBg = (type: string) => {
+    if (isUrgentNotification(type)) return '#ef444420';
     if (type === 'order_update') return colors.secondary + '20';
     if (type === 'service_update') return colors.primary + '20';
     if (type === 'test_drive_update') return colors.secondary + '15';
@@ -169,6 +219,7 @@ const NotificationScreen: React.FC = () => {
   };
 
   const getNotificationIconColor = (type: string) => {
+    if (isUrgentNotification(type)) return '#ef4444';
     if (type === 'order_update') return colors.secondary;
     if (type === 'service_update') return colors.primary;
     if (type === 'test_drive_update') return colors.secondary;
@@ -186,6 +237,10 @@ const NotificationScreen: React.FC = () => {
       case 'tyre_service_update':
       case 'tyre_service_request':
         return 'disc-outline';
+      case 'slot_offer':
+        return 'time-outline';
+      case 'vehicle_alert':
+        return 'warning';
       default:
         return 'notifications-outline';
     }

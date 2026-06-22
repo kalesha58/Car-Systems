@@ -10,6 +10,7 @@ import testDriveRoutes from './testDriveRoutes';
 import preBookingRoutes from './preBookingRoutes';
 import customerEnquiryRoutes from './customerEnquiryRoutes';
 import serviceBookingRoutes from './serviceBookingRoutes';
+import serviceSlotRoutes from './serviceSlotRoutes';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/orders', orderRoutes);
 router.use('/vehicles', vehicleRoutes);
 router.use('/products', productRoutes);
 router.use('/services', serviceRoutes);
+router.use('/services/:serviceId/slots', serviceSlotRoutes);
 router.use('/payout', payoutRoutes);
 router.use('/test-drives', testDriveRoutes);
 router.use('/pre-bookings', preBookingRoutes);

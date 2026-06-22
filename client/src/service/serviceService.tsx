@@ -100,6 +100,21 @@ export interface IBookServiceSlotResult {
 export const bookServiceSlot = async (
   serviceId: string,
   slotId: string,
+  body?: {
+    serviceRequest?: string;
+    vehicleId?: string;
+    vehicleInfo?: {
+      brand?: string;
+      model?: string;
+      registrationNumber?: string;
+    };
+    notes?: string;
+    requestLocation?: {
+      latitude?: number;
+      longitude?: number;
+      address?: string;
+    };
+  },
 ): Promise<IBookServiceSlotResult> => {
   try {
     const response = await appAxios.post<{
@@ -109,7 +124,7 @@ export const bookServiceSlot = async (
         bookingId: string;
         ReturnMessage: string;
       };
-    }>(`/user/services/${serviceId}/slots/${slotId}/book`);
+    }>(`/user/services/${serviceId}/slots/${slotId}/book`, body || {});
     if (response.data.success && response.data.Response) {
       return {
         slot: response.data.Response.slot,

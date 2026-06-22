@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 const STATUS_FILTERS: Array<{ key: string; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'new', label: 'Pending' },
-  { key: 'scheduled', label: 'Approved' },
+  { key: 'scheduled', label: 'Scheduled' },
   { key: 'cancelled', label: 'Declined' },
   { key: 'completed', label: 'Completed' },
 ];
@@ -37,7 +37,7 @@ const formatDate = (d?: string) => {
 
 const getDisplayStatus = (status: ServiceBookingStatus, rejectionReason?: string) => {
   if (status === 'new') return 'Pending';
-  if (status === 'scheduled') return 'Approved';
+  if (status === 'scheduled') return 'Scheduled';
   if (status === 'cancelled' && rejectionReason) return 'Declined';
   if (status === 'cancelled') return 'Cancelled';
   return status.replace('_', ' ');
@@ -211,13 +211,13 @@ const MyServiceBookingsScreen: React.FC = () => {
                   Reason: {item.rejectionReason}
                 </CustomText>
               )}
-              {item.status === 'new' && (
+              {(item.status === 'new' || item.status === 'scheduled') && (
                 <TouchableOpacity
                   style={styles.cancelBtn}
                   onPress={() => handleCancel(item.id)}
                   disabled={cancellingId === item.id}>
                   <CustomText style={{ color: colors.error, fontSize: RFValue(11) }}>
-                    {cancellingId === item.id ? 'Cancelling...' : 'Cancel Request'}
+                    {cancellingId === item.id ? 'Cancelling...' : 'Cancel Booking'}
                   </CustomText>
                 </TouchableOpacity>
               )}

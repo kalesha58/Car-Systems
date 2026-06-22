@@ -1,7 +1,17 @@
+jest.mock('../slotVisibilityService', () => ({
+  filterVisibleSlots: jest.fn(async (slots: unknown[]) => slots),
+}));
+
+jest.mock('../../utils/istTime', () => ({
+  isSlotEndTimePassed: jest.fn(() => false),
+}));
+
 jest.mock('../../models/ServiceSlot', () => ({
   ServiceSlot: {
     find: jest.fn(),
     findById: jest.fn(),
+    findOneAndUpdate: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
   },
 }));
 
@@ -45,7 +55,7 @@ describe('serviceSlotService daily cap', () => {
 
       const result = await getAvailableSlots({
         serviceId: 'svc1',
-        date: '2026-05-26',
+        date: '2026-12-26',
       });
 
       expect(result.slots).toEqual([]);
@@ -69,7 +79,7 @@ describe('serviceSlotService daily cap', () => {
           {
             _id: 'slot1',
             serviceId: 'svc1',
-            date: new Date('2026-05-26'),
+            date: new Date('2026-12-26'),
             startTime: '10:00',
             endTime: '11:00',
             serviceType: 'center',
@@ -84,7 +94,7 @@ describe('serviceSlotService daily cap', () => {
 
       const result = await getAvailableSlots({
         serviceId: 'svc1',
-        date: '2026-05-26',
+        date: '2026-12-26',
       });
 
       expect(result.slots).toHaveLength(1);
@@ -96,7 +106,7 @@ describe('serviceSlotService daily cap', () => {
     const mockSlot = {
       _id: 'slot1',
       serviceId: 'svc1',
-      date: new Date('2026-05-26'),
+      date: new Date('2026-12-26'),
       startTime: '10:00',
       endTime: '11:00',
       serviceType: 'center',
@@ -130,7 +140,13 @@ describe('serviceSlotService daily cap', () => {
     });
 
     it('creates booking and increments slot when under cap', async () => {
+      const updatedSlot = {
+        ...mockSlot,
+        currentBookings: 1,
+        isAvailable: true,
+      };
       (ServiceSlot.findById as jest.Mock).mockResolvedValue(mockSlot);
+      (ServiceSlot.findOneAndUpdate as jest.Mock).mockResolvedValue(updatedSlot);
       (Service.findById as jest.Mock).mockResolvedValue({
         _id: 'svc1',
         dealerId: 'dealer1',
@@ -146,8 +162,7 @@ describe('serviceSlotService daily cap', () => {
       const result = await bookSlot({ slotId: 'slot1', userId: 'user1' });
 
       expect(createServiceBookingFromSlot).toHaveBeenCalled();
-      expect(mockSlot.currentBookings).toBe(1);
-      expect(mockSlot.save).toHaveBeenCalled();
+      expect(ServiceSlot.findOneAndUpdate).toHaveBeenCalled();
       expect(result.bookingId).toBe('booking1');
     });
   });

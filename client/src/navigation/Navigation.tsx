@@ -74,6 +74,8 @@ import TermsAndConditionsScreen from '@features/profile/TermsAndConditionsScreen
 import MyTestDrivesScreen from '@features/profile/MyTestDrivesScreen';
 import MyServiceBookingsScreen from '@features/profile/MyServiceBookingsScreen';
 import TyreServiceRequestScreen from '@features/service/TyreServiceRequestScreen';
+import TyreSlotManagementScreen from '@features/inventory/TyreSlotManagementScreen';
+import VehicleAlertScreen from '@features/vehicle/VehicleAlertScreen';
 import TestDriveManagementScreen from '@features/dashboard/TestDriveManagementScreen';
 import PreBookingManagementScreen from '@features/dashboard/PreBookingManagementScreen';
 import QuickActionsScreen from '@features/dashboard/QuickActionsScreen';
@@ -696,6 +698,20 @@ const Navigation: FC = () => {
           <Stack.Screen
             name="TyreServiceRequest"
             component={TyreServiceRequestScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="TyreSlotManagement"
+            component={TyreSlotManagementScreen}
+            options={{
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="VehicleAlert"
+            component={VehicleAlertScreen}
             options={{
               animation: 'slide_from_right',
             }}

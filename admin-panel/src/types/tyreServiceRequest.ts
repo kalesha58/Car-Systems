@@ -11,6 +11,10 @@ export interface IAdminTyreServiceRequest {
   userId: string;
   dealerId: string;
   serviceId: string;
+  slotId?: string;
+  slotStartTime?: string;
+  slotEndTime?: string;
+  slotMaxBookings?: number;
   bookingDate: string;
   bookingTime?: string;
   serviceRequest: string;
@@ -63,7 +67,7 @@ export interface IGetAdminTyreServicesParams {
 }
 
 export interface IUpdateAdminTyreServiceStatusPayload {
-  status: 'scheduled' | 'cancelled';
+  status: TyreServiceRequestStatus;
   dealerNotes?: string;
   rejectionReason?: string;
 }

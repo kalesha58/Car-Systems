@@ -6,6 +6,8 @@ export type NotificationType =
   | 'test_drive_update'
   | 'tyre_service_update'
   | 'tyre_service_request'
+  | 'slot_offer'
+  | 'vehicle_alert'
   | 'general';
 
 export interface INotificationDocument extends Document {
@@ -41,6 +43,8 @@ const notificationSchema = new Schema<INotificationDocument>(
         'test_drive_update',
         'tyre_service_update',
         'tyre_service_request',
+        'slot_offer',
+        'vehicle_alert',
         'general',
       ],
       required: true,

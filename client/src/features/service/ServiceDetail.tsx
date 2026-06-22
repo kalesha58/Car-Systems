@@ -5,6 +5,7 @@ import {
   Image,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -49,6 +50,13 @@ const ServiceDetail: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<IServiceSlot | null>(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [vehicleBrand, setVehicleBrand] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [bookingNotes, setBookingNotes] = useState('');
+
+  const isTyreService = service?.serviceType === 'tire_service';
+  const showSlotBooking = !!(service?.slotBookingEnabled || isTyreService);
 
   const dateOptions = useMemo(() => {
     const options: Date[] = [];
@@ -85,11 +93,28 @@ const ServiceDetail: React.FC = () => {
   const handleBookSlot = async () => {
     if (!service?.id || !selectedSlot?.id) return;
 
+    if (isTyreService && !registrationNumber.trim()) {
+      showError('Please enter your vehicle registration number');
+      return;
+    }
+
     try {
       setBookingLoading(true);
-      await bookServiceSlot(service.id, selectedSlot.id);
+      await bookServiceSlot(service.id, selectedSlot.id, {
+        serviceRequest: service.name,
+        notes: bookingNotes.trim() || undefined,
+        vehicleInfo:
+          isTyreService && (vehicleBrand.trim() || vehicleModel.trim() || registrationNumber.trim())
+            ? {
+                brand: vehicleBrand.trim() || undefined,
+                model: vehicleModel.trim() || undefined,
+                registrationNumber: registrationNumber.trim().toUpperCase() || undefined,
+              }
+            : undefined,
+      });
       showSuccess(t('service.slotBooked') || 'Slot booked successfully');
       setSelectedSlot(null);
+      setBookingNotes('');
     } catch (e: any) {
       const message =
         e?.response?.data?.error ||
@@ -356,6 +381,14 @@ const ServiceDetail: React.FC = () => {
         },
         dateChipTextSelected: {
           color: colors.secondary,
+        },
+        vehicleInput: {
+          borderWidth: 1,
+          borderRadius: 10,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          fontSize: RFValue(12),
+          fontFamily: Fonts.Medium,
         },
         bookButton: {
           height: 48,
@@ -657,11 +690,48 @@ const ServiceDetail: React.FC = () => {
               )}
 
               {/* Service Slot Booking */}
-              {service?.slotBookingEnabled && (
+              {showSlotBooking && (
                 <>
                   <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
-                    {t('service.bookASlot') || 'Book a Slot'}
+                    {isTyreService
+                      ? t('service.bookTyreSlot') || 'Book Tyre Service Slot'
+                      : t('service.bookASlot') || 'Book a Slot'}
                   </CustomText>
+                  {isTyreService && (
+                    <View style={{ gap: 10, marginBottom: 12 }}>
+                      <TextInput
+                        style={[styles.vehicleInput, { borderColor: colors.border, color: colors.text }]}
+                        placeholder="Registration number *"
+                        placeholderTextColor={colors.textSecondary}
+                        value={registrationNumber}
+                        onChangeText={text => setRegistrationNumber(text.toUpperCase())}
+                        autoCapitalize="characters"
+                      />
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TextInput
+                          style={[styles.vehicleInput, { flex: 1, borderColor: colors.border, color: colors.text }]}
+                          placeholder="Brand"
+                          placeholderTextColor={colors.textSecondary}
+                          value={vehicleBrand}
+                          onChangeText={setVehicleBrand}
+                        />
+                        <TextInput
+                          style={[styles.vehicleInput, { flex: 1, borderColor: colors.border, color: colors.text }]}
+                          placeholder="Model"
+                          placeholderTextColor={colors.textSecondary}
+                          value={vehicleModel}
+                          onChangeText={setVehicleModel}
+                        />
+                      </View>
+                      <TextInput
+                        style={[styles.vehicleInput, { borderColor: colors.border, color: colors.text }]}
+                        placeholder="Notes (optional)"
+                        placeholderTextColor={colors.textSecondary}
+                        value={bookingNotes}
+                        onChangeText={setBookingNotes}
+                      />
+                    </View>
+                  )}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                     <View style={styles.dateChipsRow}>
                       {dateOptions.map((date) => {
@@ -707,31 +777,23 @@ const ServiceDetail: React.FC = () => {
             {service ? `₹${service.price?.toLocaleString()}` : '—'}
           </CustomText>
         </View>
-        {service?.serviceType === 'tire_service' && (
-          <TouchableOpacity
-            style={styles.bookButton}
-            onPress={() => {
-              withAuth(() => {
-                (navigation as any).navigate('TyreServiceRequest', { serviceId: service.id });
-              }, 'Please login to request tyre service.');
-            }}
-            activeOpacity={0.8}>
-            <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(11) }}>
-              Request Tyre Service
-            </CustomText>
-          </TouchableOpacity>
-        )}
-        {service?.slotBookingEnabled && selectedSlot && (
+        {showSlotBooking && selectedSlot && (
           <TouchableOpacity
             style={[styles.bookButton, bookingLoading && styles.bookButtonDisabled]}
-            onPress={handleBookSlot}
+            onPress={() => {
+              withAuth(() => {
+                handleBookSlot();
+              }, isTyreService ? 'Please login to book tyre service.' : 'Please login to book a slot.');
+            }}
             disabled={bookingLoading}
             activeOpacity={0.8}>
             {bookingLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(12) }}>
-                {t('service.bookSlot') || 'Book Slot'}
+                {isTyreService
+                  ? t('service.bookTyreSlot') || 'Book Slot'
+                  : t('service.bookSlot') || 'Book Slot'}
               </CustomText>
             )}
           </TouchableOpacity>

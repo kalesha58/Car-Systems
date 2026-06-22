@@ -97,6 +97,10 @@ export const bookServiceSlotController = async (
       slotId,
       userId,
       serviceRequest: req.body?.serviceRequest,
+      vehicleId: req.body?.vehicleId,
+      vehicleInfo: req.body?.vehicleInfo,
+      notes: req.body?.notes,
+      requestLocation: req.body?.requestLocation,
     });
 
     res.status(200).json({

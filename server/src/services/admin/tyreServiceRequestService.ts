@@ -1,5 +1,6 @@
 import { ServiceBooking, ServiceBookingStatus } from '../../models/ServiceBooking';
 import { Service } from '../../models/Service';
+import { ServiceSlot } from '../../models/ServiceSlot';
 import { SignUp } from '../../models/SignUp';
 import { BusinessRegistration } from '../../models/BusinessRegistration';
 import { NotFoundError, AppError } from '../../utils/errorHandler';
@@ -12,6 +13,10 @@ export interface IAdminTyreServiceRequest {
   userId: string;
   dealerId: string;
   serviceId: string;
+  slotId?: string;
+  slotStartTime?: string;
+  slotEndTime?: string;
+  slotMaxBookings?: number;
   bookingDate: string;
   bookingTime?: string;
   serviceRequest: string;
@@ -54,13 +59,18 @@ export interface IGetAdminTyreServiceRequestsQuery {
 }
 
 export interface IUpdateAdminTyreServiceStatusRequest {
-  status: 'scheduled' | 'cancelled';
+  status: ServiceBookingStatus;
   dealerNotes?: string;
   rejectionReason?: string;
 }
 
 const VALID_TRANSITIONS: Record<string, ServiceBookingStatus[]> = {
   new: ['scheduled', 'cancelled'],
+  scheduled: ['in_progress', 'completed', 'cancelled'],
+  in_progress: ['awaiting', 'completed', 'cancelled'],
+  awaiting: ['in_progress', 'completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
 };
 
 const getTyreServiceIds = async (): Promise<string[]> => {
@@ -69,10 +79,11 @@ const getTyreServiceIds = async (): Promise<string[]> => {
 };
 
 const enrichBooking = async (booking: any): Promise<IAdminTyreServiceRequest> => {
-  const [customer, service, dealerReg] = await Promise.all([
+  const [customer, service, dealerReg, slot] = await Promise.all([
     SignUp.findById(booking.userId).select('name phone email').lean(),
     Service.findById(booking.serviceId).lean(),
     BusinessRegistration.findById(booking.dealerId).lean(),
+    booking.slotId ? ServiceSlot.findById(booking.slotId).lean() : Promise.resolve(null),
   ]);
 
   const section = getSectionByServiceType('tire_service');
@@ -83,6 +94,10 @@ const enrichBooking = async (booking: any): Promise<IAdminTyreServiceRequest> =>
     userId: booking.userId,
     dealerId: booking.dealerId,
     serviceId: booking.serviceId,
+    slotId: booking.slotId,
+    slotStartTime: slot?.startTime,
+    slotEndTime: slot?.endTime,
+    slotMaxBookings: slot?.maxBookings,
     bookingDate: booking.bookingDate?.toISOString?.() || String(booking.bookingDate),
     bookingTime: booking.bookingTime,
     serviceRequest: booking.serviceRequest,
@@ -214,6 +229,17 @@ export const updateAdminTyreServiceRequestStatus = async (
   }
 
   await booking.save();
+
+  if (data.status === 'cancelled' && booking.slotId) {
+    const { cancelBooking } = await import('../serviceSlotService');
+    const { createSlotOffersOnCancellation } = await import('../slotOffer/slotOfferService');
+    try {
+      await cancelBooking(booking.slotId);
+      await createSlotOffersOnCancellation(id);
+    } catch (slotErr) {
+      logger.warn('Failed to release slot on admin cancel:', slotErr);
+    }
+  }
 
   logger.info(`Admin updated tyre service request ${id} to ${data.status}`);
 

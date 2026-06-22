@@ -54,6 +54,11 @@ const ActivitySection: FC = () => {
             label: t('service.myBookings') || 'My Service Bookings',
             onPress: () => navigation.navigate('MyServiceBookings' as never),
           },
+          {
+            icon: 'warning-outline',
+            label: 'Vehicle Alert',
+            onPress: () => navigation.navigate('VehicleAlert' as never),
+          },
         ]
       : []),
     {

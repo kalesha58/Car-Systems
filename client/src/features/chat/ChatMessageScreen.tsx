@@ -52,6 +52,7 @@ import {
   emitTyping,
   emitStopTyping,
 } from '@service/socketService';
+import { resolveVehicleAlert } from '@service/vehicleAlertService';
 import { IChat, IMessage } from '../../types/chat';
 import { useToast } from '@hooks/useToast';
 import useKeyboardOffsetHeight from '@utils/useKeyboardOffsetHeight';
@@ -63,7 +64,10 @@ import { IGroup } from '../../types/group';
 const ChatMessageScreen: React.FC = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { chatId } = route.params as { chatId: string };
+  const { chatId, vehicleAlertId } = route.params as {
+    chatId: string;
+    vehicleAlertId?: string;
+  };
   const { user } = useAuthStore();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -1062,6 +1066,45 @@ const ChatMessageScreen: React.FC = () => {
         iconColor={colors.white}
         rightComponent={headerRight()}
       />
+      {vehicleAlertId && (
+        <View
+          style={{
+            backgroundColor: '#ef444415',
+            borderBottomWidth: 1,
+            borderBottomColor: '#ef4444',
+            padding: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="warning" size={RFValue(18)} color="#ef4444" />
+            <CustomText style={{ flex: 1, fontSize: RFValue(11), color: colors.text }}>
+              Vehicle alert — please move your vehicle when possible.
+            </CustomText>
+          </View>
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                await resolveVehicleAlert(vehicleAlertId);
+                showSuccess('Alert resolved');
+                navigation.goBack();
+              } catch (error: any) {
+                showError(error?.response?.data?.message || 'Failed to resolve alert');
+              }
+            }}
+            style={{
+              backgroundColor: '#ef4444',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 8,
+            }}>
+            <CustomText style={{ color: '#fff', fontSize: RFValue(10), ...fontStyle(Fonts.SemiBold) }}>
+              Resolved
+            </CustomText>
+          </TouchableOpacity>
+        </View>
+      )}
       {renderGroupInfo()}
       <FlatList
         ref={flatListRef}

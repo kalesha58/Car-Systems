@@ -233,6 +233,24 @@ export const handleNotificationNavigation = async (data: Record<string, unknown>
   if (type === 'greeting') {
     return;
   }
+
+  if (type === 'tyre_service_update' || type === 'tyre_service_request') {
+    navigate('MyServiceBookings');
+    return;
+  }
+
+  if (type === 'slot_offer') {
+    navigate('NotificationScreen' as never);
+    return;
+  }
+
+  if (type === 'vehicle_alert' && chatId) {
+    push('ChatMessage', {
+      chatId,
+      vehicleAlertId: data.alertId ? String(data.alertId) : undefined,
+    });
+    return;
+  }
 };
 
 /**

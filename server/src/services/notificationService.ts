@@ -39,7 +39,9 @@ export interface INotificationPayload {
       | 'test_drive_update'
       | 'tyre_service_update'
       | 'tyre_service_request'
-      | 'service_update';
+      | 'service_update'
+      | 'slot_offer'
+      | 'vehicle_alert';
     orderId?: string;
     testDriveId?: string;
     bookingId?: string;
