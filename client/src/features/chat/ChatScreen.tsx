@@ -11,7 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuthStore } from '@state/authStore';
 import CustomHeader from '@components/ui/CustomHeader';
 import CustomText from '@components/ui/CustomText';
-import { Fonts, fontStyle } from '@utils/Constants';
+import { Fonts, MIN_TOUCH_TARGET, fontStyle } from '@utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@hooks/useTheme';
@@ -305,10 +305,6 @@ const ChatScreen: React.FC = () => {
           textAlign: 'center',
           lineHeight: RFValue(18),
         },
-        notificationIcon: {
-          marginRight: 12,
-          position: 'relative',
-        },
         notificationBadge: {
           position: 'absolute',
           top: -2,
@@ -327,6 +323,17 @@ const ChatScreen: React.FC = () => {
           color: colors.white,
           fontSize: RFValue(8),
           ...fontStyle(Fonts.Bold),
+        },
+        headerActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        headerActionButton: {
+          minWidth: MIN_TOUCH_TARGET,
+          minHeight: MIN_TOUCH_TARGET,
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative',
         },
       }),
     [colors],
@@ -502,6 +509,8 @@ const ChatScreen: React.FC = () => {
     </View>
   );
 
+  const headerIconSize = Math.min(RFValue(22), 24);
+
   const renderNotificationIcon = () => {
     if (totalPendingRequests === 0 || !firstGroupWithRequests) {
       return null;
@@ -510,9 +519,9 @@ const ChatScreen: React.FC = () => {
     return (
       <TouchableOpacity
         onPress={() => (navigation as any).navigate('JoinRequests', { groupId: firstGroupWithRequests })}
-        style={styles.notificationIcon}
+        style={styles.headerActionButton}
         activeOpacity={0.7}>
-        <Icon name="notifications-outline" size={RFValue(22)} color={colors.white} />
+        <Icon name="notifications-outline" size={headerIconSize} color={colors.white} />
         {totalPendingRequests > 0 && (
           <View style={styles.notificationBadge}>
             <CustomText style={styles.notificationBadgeText}>
@@ -526,29 +535,29 @@ const ChatScreen: React.FC = () => {
 
   const renderHeaderRight = () => {
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={styles.headerActions}>
         {selectedTab === 'messages' && (
           <>
             <TouchableOpacity
               onPress={handleStartNewChat}
-              style={{ marginRight: 8, padding: 4 }}
+              style={styles.headerActionButton}
               activeOpacity={0.7}>
-              <Icon name="add-circle-outline" size={RFValue(22)} color={colors.white} />
+              <Icon name="add-circle-outline" size={headerIconSize} color={colors.white} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleStartNewChat}
-              style={{ marginRight: 8, padding: 4 }}
+              style={styles.headerActionButton}
               activeOpacity={0.7}>
-              <Icon name="search-outline" size={RFValue(20)} color={colors.white} />
+              <Icon name="search-outline" size={Math.min(RFValue(20), 22)} color={colors.white} />
             </TouchableOpacity>
           </>
         )}
         {selectedTab === 'groups' && (
           <TouchableOpacity
             onPress={() => (navigation as any).navigate('CreateGroup')}
-            style={{ marginRight: 8, padding: 4 }}
+            style={styles.headerActionButton}
             activeOpacity={0.7}>
-            <Icon name="add-circle-outline" size={RFValue(24)} color={colors.white} />
+            <Icon name="add-circle-outline" size={headerIconSize} color={colors.white} />
           </TouchableOpacity>
         )}
         {renderNotificationIcon()}

@@ -8,19 +8,18 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { RFValue } from 'react-native-responsive-fontsize';
 import { useTranslation } from 'react-i18next';
 import CustomText from '@components/ui/CustomText';
 import { Fonts } from '@utils/Constants';
-import { playFeedText } from '@utils/playTypography';
+import { playFeedText, playFontSize, playIconSize } from '@utils/playTypography';
 import UserInitialAvatar from './UserInitialAvatar';
 import { IStoryFeedEntry } from '../../types/story/IStory';
 import { useTheme } from '@hooks/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const RING = 76;
-const INNER = 70;
-const AVATAR = 62;
+const RING = 68;
+const INNER = 62;
+const AVATAR = 56;
 
 interface PlayStoryRailProps {
   entries: IStoryFeedEntry[];
@@ -58,7 +57,7 @@ const PlayStoryRail: React.FC<PlayStoryRailProps> = ({ entries, loading, onSelec
         />
         {ownEmpty ? (
           <View style={[styles.addBadge, { backgroundColor: colors.secondary, borderColor: colors.background }]}>
-            <Icon name="add" size={RFValue(14)} color={colors.white} />
+            <Icon name="add" size={playIconSize(12)} color={colors.white} />
           </View>
         ) : null}
       </View>
@@ -118,7 +117,7 @@ const PlayStoryRail: React.FC<PlayStoryRailProps> = ({ entries, loading, onSelec
         )}
         <CustomText
           numberOfLines={1}
-          fontSize={RFValue(9)}
+          fontSize={playFontSize(8)}
           fontFamily={Fonts.Medium}
           style={[
             playFeedText.meta,

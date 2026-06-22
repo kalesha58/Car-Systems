@@ -77,6 +77,7 @@ export interface IUserListItem {
   name: string;
   email: string;
   profileImage?: string;
+  matchedPlate?: string;
 }
 
 export interface IGroupJoinRequest {

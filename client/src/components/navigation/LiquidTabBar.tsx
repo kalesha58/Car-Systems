@@ -14,8 +14,8 @@ import CustomText from '@components/ui/CustomText';
 import { useTheme } from '@hooks/useTheme';
 import { useSeasonalTheme } from '@hooks/useSeasonalTheme';
 
-const TAB_BAR_HEIGHT = 70;
-const ICON_SIZE = 24;
+const TAB_BAR_HEIGHT = 52;
+const ICON_SIZE = 22;
 
 const LiquidTabBar: React.FC<BottomTabBarProps> = ({
   state,
@@ -31,7 +31,7 @@ const LiquidTabBar: React.FC<BottomTabBarProps> = ({
 
 
 
-  const bottomPadding = Math.max(8, insets.bottom);
+  const bottomPadding = Math.max(4, insets.bottom);
   
   return (
     <View
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    paddingTop: 8,
+    paddingTop: 4,
     position: 'relative',
     overflow: 'visible',
     elevation: 8,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   tabContent: {
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
   },
   iconContainer: {
     justifyContent: 'center',

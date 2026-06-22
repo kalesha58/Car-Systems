@@ -1,6 +1,5 @@
 import {View, StyleSheet, Image, TouchableOpacity, Dimensions} from 'react-native';
 import React, {FC} from 'react';
-import {screenHeight, screenWidth} from '@utils/Scaling';
 import {Colors, Fonts} from '@utils/Constants';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -20,7 +19,6 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
   
   // Responsive calculations
   const windowWidth = Dimensions.get('window').width;
-  const windowHeight = Dimensions.get('window').height;
   const isTablet = windowWidth >= 768;
   const isDesktop = windowWidth >= 1024;
   const isSmallMobile = windowWidth < 360;
@@ -32,18 +30,16 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
     return mobile;
   };
 
-  // Mobile-optimized padding (reduced for small screens)
   const containerPadding = getResponsiveValue(
-    isSmallMobile ? 12 : 16,
-    windowWidth * 0.04,
-    Math.min(windowWidth * 0.03, 48)
+    isSmallMobile ? 10 : 12,
+    windowWidth * 0.03,
+    Math.min(windowWidth * 0.03, 40)
   );
   
-  // Smaller image on mobile
   const imageSize = getResponsiveValue(
-    isSmallMobile ? 32 : Math.min(windowWidth * 0.1, 40),
-    windowWidth * 0.08,
-    Math.min(windowWidth * 0.06, 60)
+    isSmallMobile ? 28 : 32,
+    windowWidth * 0.07,
+    Math.min(windowWidth * 0.05, 48)
   );
   
   // Reduced gap on mobile
@@ -60,11 +56,7 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
     Math.min(windowWidth * 0.06, 80)
   );
   
-  const buttonPaddingV = getResponsiveValue(
-    windowHeight * 0.01,
-    windowHeight * 0.012,
-    windowHeight * 0.014
-  );
+  const buttonPaddingV = getResponsiveValue(6, 8, 10);
 
   const styles = StyleSheet.create({
     container: {
@@ -72,8 +64,7 @@ const CartSummary: FC<CartSummaryProps> = ({cartCount, cartImage}) => {
       alignItems: 'center',
       flexDirection: 'row',
       paddingHorizontal: containerPadding,
-      paddingBottom: getResponsiveValue(windowHeight * 0.03, windowHeight * 0.025, windowHeight * 0.02),
-      paddingTop: getResponsiveValue(windowHeight * 0.014, windowHeight * 0.016, windowHeight * 0.018),
+      paddingVertical: getResponsiveValue(8, 10, 12),
       backgroundColor: colors.cardBackground,
       borderTopWidth: 1,
       borderTopColor: colors.border,

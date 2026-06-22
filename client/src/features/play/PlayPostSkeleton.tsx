@@ -4,16 +4,20 @@ import {RFValue} from 'react-native-responsive-fontsize';
 
 import SkeletonLoader from '@components/ui/SkeletonLoader';
 import {useTheme} from '@hooks/useTheme';
-import {screenWidth} from '@utils/Scaling';
 
-const PlayPostSkeleton: FC = () => {
+interface PlayPostSkeletonProps {
+  contentWidth?: number;
+}
+
+const PlayPostSkeleton: FC<PlayPostSkeletonProps> = ({contentWidth}) => {
   const {colors} = useTheme();
   const windowDims = Dimensions.get('window');
-  const imageHeight = Math.min(windowDims.width * 1.04, windowDims.height * 0.46);
+  const layoutWidth = contentWidth ?? windowDims.width;
+  const imageHeight = Math.min(layoutWidth * 1.04, windowDims.height * 0.46);
 
   const styles = StyleSheet.create({
     container: {
-      width: screenWidth,
+      width: layoutWidth,
       backgroundColor: colors.background,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,

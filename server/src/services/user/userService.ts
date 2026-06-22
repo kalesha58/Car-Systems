@@ -1,4 +1,5 @@
 import { SignUp } from '../../models/SignUp';
+import { Vehicle } from '../../models/user/Vehicle';
 import { logger } from '../../utils/logger';
 
 export interface IUserListItem {
@@ -6,6 +7,7 @@ export interface IUserListItem {
   name: string;
   email: string;
   profileImage?: string;
+  matchedPlate?: string;
 }
 
 export interface IUsersListResponse {
@@ -17,6 +19,12 @@ export interface IUsersListResponse {
     totalPages: number;
   };
 }
+
+const normalizePlate = (plate: string): string =>
+  plate.trim().toUpperCase().replace(/\s+/g, '');
+
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Get list of users for chat selection
@@ -45,15 +53,39 @@ export const getUsers = async (
       },
     ];
 
+    const plateOwnerMap = new Map<string, string>();
+
     // Add search filter if provided
     if (search) {
-      andConditions.push({
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } },
-        ],
-      });
+      const searchOr: any[] = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+
+      const normalizedPlate = normalizePlate(search);
+      if (normalizedPlate.length >= 3) {
+        const vehicles = await Vehicle.find({
+          numberPlate: { $regex: escapeRegex(normalizedPlate), $options: 'i' },
+        })
+          .select('ownerId numberPlate')
+          .lean();
+
+        const ownerIds: string[] = [];
+        for (const vehicle of vehicles) {
+          const ownerId = vehicle.ownerId;
+          if (!plateOwnerMap.has(ownerId)) {
+            plateOwnerMap.set(ownerId, vehicle.numberPlate);
+            ownerIds.push(ownerId);
+          }
+        }
+
+        if (ownerIds.length > 0) {
+          searchOr.push({ _id: { $in: ownerIds } });
+        }
+      }
+
+      andConditions.push({ $or: searchOr });
     }
 
     const filter: any = {
@@ -75,12 +107,17 @@ export const getUsers = async (
       SignUp.countDocuments(filter),
     ]);
 
-    const usersList: IUserListItem[] = users.map((user) => ({
-      id: (user._id as any).toString(),
-      name: user.name,
-      email: user.email,
-      profileImage: user.profileImage,
-    }));
+    const usersList: IUserListItem[] = users.map((user) => {
+      const id = (user._id as any).toString();
+      const matchedPlate = plateOwnerMap.get(id);
+      return {
+        id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage,
+        ...(matchedPlate ? { matchedPlate } : {}),
+      };
+    });
 
     return {
       users: usersList,

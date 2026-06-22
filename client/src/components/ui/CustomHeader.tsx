@@ -39,18 +39,21 @@ const CustomHeader: FC<CustomHeaderProps> = ({
   const insets = useSafeAreaInsets();
   const {colors} = useTheme();
   const navigation = useNavigation();
+  const headerIconSize = Math.min(RFValue(20), 22);
 
   const styles = StyleSheet.create({
     flexRow: {
       justifyContent: 'space-between',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      minHeight: 48,
+      paddingLeft: Math.max(12, insets.left),
+      paddingRight: Math.max(12, insets.right),
+      paddingVertical: 4,
+      minHeight: MIN_TOUCH_TARGET,
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground),
       borderBottomWidth: backgroundColor ? 0 : (transparent ? 0 : 0.6),
       borderColor: colors.border,
+      overflow: 'visible',
     },
     text: {
       textAlign: 'center',
@@ -62,17 +65,28 @@ const CustomHeader: FC<CustomHeaderProps> = ({
       minHeight: MIN_TOUCH_TARGET,
       justifyContent: 'center',
       alignItems: 'center',
+      overflow: 'visible',
     },
     headerBackPressable: {
       minWidth: MIN_TOUCH_TARGET,
       minHeight: MIN_TOUCH_TARGET,
       justifyContent: 'center',
       alignItems: 'center',
+      overflow: 'visible',
+    },
+    rightActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      overflow: 'visible',
     },
   });
 
   return (
-    <View style={{paddingTop: headerTopInset(insets.top), backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground)}}>
+    <View style={{
+      paddingTop: headerTopInset(insets.top),
+      backgroundColor: backgroundColor || (transparent ? 'transparent' : colors.cardBackground),
+      overflow: 'visible',
+    }}>
       <View style={styles.flexRow}>
         {showBackButton ? (
           <Pressable
@@ -87,10 +101,10 @@ const CustomHeader: FC<CustomHeaderProps> = ({
                 navigation.goBack();
               }
             }}>
-            <Icon name="chevron-back" color={iconColor || colors.text} size={RFValue(16)} />
+            <Icon name="chevron-back" color={iconColor || colors.text} size={headerIconSize} />
           </Pressable>
         ) : (
-          <View style={{width: RFValue(16)}} />
+          <View style={{width: headerIconSize}} />
         )}
         <CustomText
           style={styles.text}
@@ -99,12 +113,12 @@ const CustomHeader: FC<CustomHeaderProps> = ({
           {title}
         </CustomText>
 
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={styles.rightActions}>
           {rightComponent || (
             <>
               {search && (
                 <Pressable onPress={onSearchPress} style={styles.iconButton}>
-                  <Icon name="search" color={iconColor || colors.text} size={RFValue(20)} />
+                  <Icon name="search" color={iconColor || colors.text} size={headerIconSize} />
                 </Pressable>
               )}
               {!search && showNotificationIcon && <NotificationIcon color={iconColor} />}

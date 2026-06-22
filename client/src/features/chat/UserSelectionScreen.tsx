@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -19,43 +19,81 @@ import {getUsers, createDirectChat} from '@service/chatService';
 import {IUserListItem} from '../../types/chat';
 import {useToast} from '@hooks/useToast';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const UserSelectionScreen: React.FC = () => {
   const [users, setUsers] = useState<IUserListItem[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<IUserListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
   const {colors} = useTheme();
   const navigation = useNavigation();
   const {showError} = useToast();
+  const showErrorRef = useRef(showError);
+  const skipSearchOnMountRef = useRef(true);
+
+  showErrorRef.current = showError;
 
   useEffect(() => {
-    loadUsers();
+    let cancelled = false;
+
+    const fetchInitialUsers = async () => {
+      try {
+        setLoading(true);
+        const data = await getUsers(1, 50);
+        if (!cancelled) {
+          setUsers(data.users ?? []);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          showErrorRef.current(error?.response?.data?.message || 'Failed to load users');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchInitialUsers();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = users.filter(
-        user =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-      setFilteredUsers(filtered);
-    } else {
-      setFilteredUsers(users);
+    if (skipSearchOnMountRef.current) {
+      skipSearchOnMountRef.current = false;
+      return;
     }
-  }, [searchQuery, users]);
 
-  const loadUsers = async () => {
-    try {
-      const data = await getUsers(1, 100);
-      setUsers(data.users);
-      setFilteredUsers(data.users);
-    } catch (error: any) {
-      showError(error?.response?.data?.message || 'Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          setSearching(true);
+          const data = await getUsers(1, 50, searchQuery.trim() || undefined);
+          if (!cancelled) {
+            setUsers(data.users ?? []);
+          }
+        } catch (error: any) {
+          if (!cancelled) {
+            showErrorRef.current(error?.response?.data?.message || 'Failed to load users');
+          }
+        } finally {
+          if (!cancelled) {
+            setSearching(false);
+          }
+        }
+      })();
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
 
   const handleSelectUser = async (userId: string) => {
     try {
@@ -101,8 +139,12 @@ const UserSelectionScreen: React.FC = () => {
           color: colors.text,
           marginLeft: 8,
         },
+        searchSpinner: {
+          marginLeft: 8,
+        },
         listContent: {
           paddingBottom: 20,
+          flexGrow: 1,
         },
         userItem: {
           flexDirection: 'row',
@@ -143,6 +185,12 @@ const UserSelectionScreen: React.FC = () => {
           color: colors.textSecondary,
           marginTop: 2,
         },
+        matchedPlate: {
+          fontSize: RFValue(9),
+          ...fontStyle(Fonts.Medium),
+          color: colors.secondary,
+          marginTop: 2,
+        },
         loadingContainer: {
           flex: 1,
           justifyContent: 'center',
@@ -165,6 +213,10 @@ const UserSelectionScreen: React.FC = () => {
     [colors],
   );
 
+  const emptyMessage = searchQuery.trim()
+    ? 'No users found for this search'
+    : 'No users found';
+
   const renderUserItem = ({item}: {item: IUserListItem}) => (
     <TouchableOpacity
       style={styles.userItem}
@@ -180,6 +232,9 @@ const UserSelectionScreen: React.FC = () => {
       <View style={styles.userInfo}>
         <CustomText style={styles.userName}>{item.name}</CustomText>
         <CustomText style={styles.userEmail}>{item.email}</CustomText>
+        {item.matchedPlate ? (
+          <CustomText style={styles.matchedPlate}>Vehicle: {item.matchedPlate}</CustomText>
+        ) : null}
       </View>
       <Icon name="chevron-forward" size={RFValue(18)} color={colors.border} />
     </TouchableOpacity>
@@ -217,26 +272,33 @@ const UserSelectionScreen: React.FC = () => {
             <Icon name="search-outline" size={RFValue(14)} color={colors.disabled} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search users..."
+              placeholder="Search by name, email, or vehicle number"
               placeholderTextColor={colors.disabled}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              autoCapitalize="none"
+              autoCapitalize="characters"
+              autoCorrect={false}
             />
+            {searching ? (
+              <ActivityIndicator
+                size="small"
+                color={colors.secondary}
+                style={styles.searchSpinner}
+              />
+            ) : null}
           </View>
         </View>
         <FlatList
-          data={filteredUsers}
+          data={users}
           renderItem={renderUserItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Icon name="people-outline" size={RFValue(64)} color={colors.disabled} />
-              <CustomText style={[styles.emptyText, {marginTop: 16}]}>
-                No users found
-              </CustomText>
+              <CustomText style={[styles.emptyText, {marginTop: 16}]}>{emptyMessage}</CustomText>
             </View>
           }
         />
@@ -246,5 +308,3 @@ const UserSelectionScreen: React.FC = () => {
 };
 
 export default UserSelectionScreen;
-
-

@@ -27,6 +27,7 @@ const router = Router();
  *         name: search
  *         schema:
  *           type: string
+ *         description: Search by name, email, phone, or vehicle number plate (partial match)
  *     responses:
  *       200:
  *         description: Users retrieved successfully

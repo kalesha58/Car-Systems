@@ -22,8 +22,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Fonts, headerTopInset, fontStyle } from '@utils/Constants';
-import { PLAY_UI_FONT, playFeedText } from '@utils/playTypography';
-import { screenHeight, screenWidth } from '@utils/Scaling';
+import { PLAY_UI_FONT, playFeedText, playFontSize, playIconSize, PLAY_FEED_FONT, PLAY_FEED_ICON } from '@utils/playTypography';
+import { screenHeight } from '@utils/Scaling';
 import CustomText from '@components/ui/CustomText';
 import CustomActionBottomSheet, { IActionSheetItem } from '@components/ui/CustomActionBottomSheet';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -55,11 +55,17 @@ function captionWithoutLeadingUsername(raw: string, userName?: string | null): s
 
 interface IImagePostItemProps {
   post: IPost;
+  contentWidth?: number;
   onUserBlocked?: () => void;
   onStoryMutated?: () => void;
 }
 
-const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onStoryMutated }) => {
+const ImagePostItem: React.FC<IImagePostItemProps> = ({
+  post,
+  contentWidth,
+  onUserBlocked,
+  onStoryMutated,
+}) => {
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const { t } = useTranslation();
@@ -85,8 +91,28 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
   const handleLikeRef = useRef<() => void>(() => {});
   const animateBigHeartRef = useRef<() => void>(() => {});
   const windowDims = Dimensions.get('window');
-  const imageHeight = Math.min(windowDims.width * 1.04, windowDims.height * 0.46);
-  const commentAvatarSize = Math.round(screenWidth * 0.09);
+  const layoutWidth = contentWidth ?? windowDims.width;
+  const imageHeight = Math.min(layoutWidth * 1.04, windowDims.height * 0.46);
+  const commentAvatarSize = Math.round(layoutWidth * 0.09);
+
+  const layoutStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          width: layoutWidth,
+        },
+        commentItem: {
+          paddingHorizontal: layoutWidth * 0.04,
+        },
+        commentContent: {
+          paddingRight: layoutWidth * 0.02,
+        },
+        inputSection: {
+          paddingHorizontal: layoutWidth * 0.04,
+        },
+      }),
+    [layoutWidth],
+  );
 
   // Pan responder for swipe down to dismiss
   const panResponder = useRef(
@@ -544,7 +570,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
     const userName = item.userName || `User ${item.userId.substring(0, 8)}`;
 
     return (
-      <View style={[styles.commentItem, { backgroundColor: postBackground }]}>
+      <View style={[styles.commentItem, layoutStyles.commentItem, { backgroundColor: postBackground }]}>
         <View style={styles.commentLeft}>
           <UserInitialAvatar
             name={item.userName || ''}
@@ -555,27 +581,27 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
             borderWidth={StyleSheet.hairlineWidth}
             fallbackBackgroundColor={colors.secondary}
             initialsColor={colors.white}
-            containerStyle={{ marginRight: screenWidth * 0.03 }}
+            containerStyle={{ marginRight: layoutWidth * 0.03 }}
           />
-          <View style={styles.commentContent}>
+          <View style={[styles.commentContent, layoutStyles.commentContent]}>
             <View style={styles.commentHeader}>
               <CustomText
-                fontSize={RFValue(11)}
+                fontSize={playFontSize(PLAY_FEED_FONT.username)}
                 fontFamily={Fonts.SemiBold}
                 style={[playFeedText.username, { color: textColor }]}>
                 {userName}
               </CustomText>
               <CustomText
-                fontSize={RFValue(9)}
+                fontSize={playFontSize(PLAY_FEED_FONT.meta)}
                 fontFamily={Fonts.Regular}
                 style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 8 }]}>
                 {formatRelativeTime(item.createdAt)}
               </CustomText>
             </View>
             <CustomText
-              fontSize={RFValue(11)}
+              fontSize={playFontSize(PLAY_FEED_FONT.body)}
               fontFamily={Fonts.Regular}
-              style={[playFeedText.body, { color: textColor, marginTop: 4, lineHeight: RFValue(16) }]}>
+              style={[playFeedText.body, { color: textColor, marginTop: 4, lineHeight: playFontSize(13) }]}>
               {item.text}
             </CustomText>
             <TouchableOpacity
@@ -583,7 +609,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
               activeOpacity={0.7}
               onPress={() => handleReply(item.id, userName)}>
               <CustomText
-                fontSize={RFValue(9)}
+                fontSize={playFontSize(PLAY_FEED_FONT.meta)}
                 fontFamily={Fonts.Medium}
                 style={[playFeedText.meta, { color: secondaryTextColor }]}>
                 Reply
@@ -602,7 +628,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
           />
           {likes > 0 && (
             <CustomText
-              fontSize={RFValue(9)}
+              fontSize={playFontSize(PLAY_FEED_FONT.meta)}
               fontFamily={Fonts.Regular}
               style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 4 }]}>
               {likes}
@@ -617,13 +643,13 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
     return (
       <View style={[styles.emptyStateContainer, { backgroundColor: postBackground }]}>
         <CustomText
-          fontSize={RFValue(12)}
+          fontSize={playFontSize(PLAY_FEED_FONT.emptyTitle)}
           fontFamily={Fonts.SemiBold}
           style={[playFeedText.username, { color: textColor, marginBottom: 6 }]}>
           No comments yet
         </CustomText>
         <CustomText
-          fontSize={RFValue(10)}
+          fontSize={playFontSize(PLAY_FEED_FONT.emptyBody)}
           fontFamily={Fonts.Regular}
           style={[playFeedText.body, { color: secondaryTextColor }]}>
           Start the conversation.
@@ -640,6 +666,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
     <View
       style={[
         styles.container,
+        layoutStyles.container,
         { backgroundColor: postBackground, borderBottomColor: colors.border },
       ]}>
       {/* Post Header Section - matching reference */}
@@ -649,7 +676,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
             name={post?.userName || ''}
             userId={post?.userId}
             imageUri={post?.userAvatar}
-            size={40}
+            size={36}
             borderColor={isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'}
             borderWidth={StyleSheet.hairlineWidth}
             fallbackBackgroundColor={colors.secondary}
@@ -658,7 +685,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
           />
           <View style={styles.userInfo}>
             <CustomText
-              fontSize={RFValue(11)}
+              fontSize={playFontSize(PLAY_FEED_FONT.username)}
               fontFamily={Fonts.SemiBold}
               style={[playFeedText.username, { color: textColor }]}
               numberOfLines={1}>
@@ -668,7 +695,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
           </View>
         </View>
         <TouchableOpacity onPress={handleOpenPostActions} activeOpacity={0.7}>
-          <Icon name="ellipsis-horizontal" size={RFValue(18)} color={iconColor} />
+          <Icon name="ellipsis-horizontal" size={playIconSize(PLAY_FEED_ICON.menu)} color={iconColor} />
         </TouchableOpacity>
       </View>
 
@@ -676,7 +703,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
       <GestureDetector gesture={doubleTapGesture}>
         <View style={styles.imageContainer}>
           {post.images && post.images.length > 0 ? (
-            <ImageCarousel images={post.images} width={windowDims.width} height={imageHeight} />
+            <ImageCarousel images={post.images} width={layoutWidth} height={imageHeight} />
           ) : (
             <View style={[styles.placeholder, { height: imageHeight, backgroundColor: colors.backgroundSecondary }]}>
               <Icon name="image-outline" size={RFValue(48)} color={colors.disabled} />
@@ -713,12 +740,12 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
             <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
               <Icon
                 name={isLiked ? 'heart' : 'heart-outline'}
-                size={RFValue(18)}
+                size={playIconSize(PLAY_FEED_ICON.action)}
                 color={isLiked ? '#ff3040' : iconColor}
               />
             </Animated.View>
             <CustomText
-              fontSize={RFValue(10)}
+              fontSize={playFontSize(PLAY_FEED_FONT.meta)}
               fontFamily={Fonts.Regular}
               style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 5 }]}>
               {formatCount(likeCount)}
@@ -732,9 +759,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
               setShowCommentModal(true);
             }}
             activeOpacity={0.7}>
-            <Icon name="chatbubble-outline" size={RFValue(18)} color={iconColor} />
+            <Icon name="chatbubble-outline" size={playIconSize(PLAY_FEED_ICON.action)} color={iconColor} />
             <CustomText
-              fontSize={RFValue(10)}
+              fontSize={playFontSize(PLAY_FEED_FONT.meta)}
               fontFamily={Fonts.Regular}
               style={[playFeedText.meta, { color: secondaryTextColor, marginLeft: 5 }]}>
               {formatCount(commentCount)}
@@ -745,7 +772,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
             style={styles.engagementButton}
             activeOpacity={0.7}
             onPress={handleShare}>
-            <Icon name="arrow-redo-outline" size={RFValue(18)} color={iconColor} />
+            <Icon name="arrow-redo-outline" size={playIconSize(PLAY_FEED_ICON.action)} color={iconColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -754,9 +781,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
       {post?.text && (
         <View style={[styles.captionSection, { backgroundColor: postBackground }]}>
           <CustomText
-            fontSize={RFValue(11)}
+            fontSize={playFontSize(PLAY_FEED_FONT.body)}
             fontFamily={Fonts.Regular}
-            style={[playFeedText.body, { color: textColor, lineHeight: RFValue(16) }]}>
+            style={[playFeedText.body, { color: textColor, lineHeight: playFontSize(13) }]}>
             {captionWithoutLeadingUsername(post.text, post.userName)}
           </CustomText>
         </View>
@@ -929,7 +956,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
                 <Icon name="close" size={RFValue(22)} color={textColor} />
               </TouchableOpacity>
               <CustomText
-                fontSize={RFValue(13)}
+                fontSize={playFontSize(PLAY_FEED_FONT.modalTitle)}
                 fontFamily={Fonts.SemiBold}
                 style={[playFeedText.username, { color: textColor }]}>
                 Comments
@@ -955,6 +982,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
             <Animated.View
               style={[
                 styles.inputSection,
+                layoutStyles.inputSection,
                 {
                   backgroundColor: postBackground,
                   borderTopColor: colors.border,
@@ -978,7 +1006,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
                   borderWidth={StyleSheet.hairlineWidth}
                   fallbackBackgroundColor={colors.secondary}
                   initialsColor={colors.white}
-                  containerStyle={{ marginRight: screenWidth * 0.03 }}
+                  containerStyle={{ marginRight: layoutWidth * 0.03 }}
                 />
 
                 <View style={styles.inputWrapper}>
@@ -1003,9 +1031,9 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
                     {replyingTo && (
                       <View style={[styles.replyingToIndicator, { backgroundColor: colors.backgroundSecondary }]}>
                         <CustomText
-                          fontSize={RFValue(10)}
+                          fontSize={playFontSize(PLAY_FEED_FONT.meta)}
                           fontFamily={Fonts.Medium}
-                          style={[playFeedText.meta, { color: colors.primary }]}>
+                          style={[playFeedText.meta, { color: colors.secondary }]}>
                           Replying to {comments.find(c => c.id === replyingTo)?.userName || 'user'}
                         </CustomText>
                         <TouchableOpacity
@@ -1024,7 +1052,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
                         {
                           color: textColor,
                           backgroundColor: colors.backgroundSecondary,
-                          fontSize: RFValue(12),
+                          fontSize: playFontSize(PLAY_FEED_FONT.input),
                           fontFamily: PLAY_UI_FONT,
                         },
                       ]}
@@ -1041,7 +1069,7 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
                     {commentText.trim().length > 0 ? (
                       <TouchableOpacity
                         onPress={handleComment}
-                        style={[styles.sendButton, { backgroundColor: colors.primary }]}
+                        style={[styles.sendButton, { backgroundColor: colors.secondary }]}
                         activeOpacity={0.7}
                         disabled={isSubmitting}>
                         {isSubmitting ? (
@@ -1080,7 +1108,6 @@ const ImagePostItem: React.FC<IImagePostItemProps> = ({ post, onUserBlocked, onS
 
 const styles = StyleSheet.create({
   container: {
-    width: screenWidth,
     marginBottom: 0,
     overflow: 'hidden',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -1099,8 +1126,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 11,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -1123,14 +1150,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 10,
+    paddingHorizontal: 14,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
   engagementLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 18,
+    gap: 14,
   },
   engagementButton: {
     flexDirection: 'row',
@@ -1149,9 +1176,9 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   captionSection: {
-    paddingHorizontal: 16,
-    paddingTop: 2,
-    paddingBottom: 18,
+    paddingHorizontal: 14,
+    paddingTop: 0,
+    paddingBottom: 12,
   },
   modalKeyboardRoot: {
     flex: 1,
@@ -1194,7 +1221,6 @@ const styles = StyleSheet.create({
   },
   commentItem: {
     flexDirection: 'row',
-    paddingHorizontal: screenWidth * 0.04,
     paddingVertical: screenHeight * 0.015,
     alignItems: 'flex-start',
   },
@@ -1204,7 +1230,6 @@ const styles = StyleSheet.create({
   },
   commentContent: {
     flex: 1,
-    paddingRight: screenWidth * 0.02,
   },
   commentHeader: {
     flexDirection: 'row',
@@ -1223,7 +1248,6 @@ const styles = StyleSheet.create({
   },
   inputSection: {
     borderTopWidth: 1,
-    paddingHorizontal: screenWidth * 0.04,
     paddingVertical: screenHeight * 0.015,
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -1252,10 +1276,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    fontSize: RFValue(12),
+    fontSize: playFontSize(PLAY_FEED_FONT.input),
     maxHeight: 100,
-    minHeight: 40,
-    lineHeight: RFValue(17),
+    minHeight: 36,
+    lineHeight: playFontSize(15),
   },
   emojiPickerButton: {
     padding: 4,

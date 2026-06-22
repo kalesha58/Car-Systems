@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import { screenHeight, screenWidth } from '@utils/Scaling';
+import { getFeedColumnWidth } from '@utils/feedLayout';
 import { Fonts, headerTopInset } from '@utils/Constants';
-import { playFeedText } from '@utils/playTypography';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { playFeedText, playFontSize, playIconSize, PLAY_FEED_FONT, PLAY_FEED_ICON } from '@utils/playTypography';
 import CustomText from '@components/ui/CustomText';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getPosts } from '@service/postService';
@@ -39,6 +40,8 @@ const PlayScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
+  const { width: windowWidth } = useWindowDimensions();
+  const feedColumnWidth = getFeedColumnWidth(windowWidth);
   const [posts, setPosts] = useState<IPost[]>([]);
   const [storyFeed, setStoryFeed] = useState<IStoryFeedEntry[]>([]);
   const [storyLoading, setStoryLoading] = useState(true);
@@ -140,6 +143,7 @@ const PlayScreen: React.FC = () => {
     return (
       <ImagePostItem
         post={item}
+        contentWidth={feedColumnWidth}
         onUserBlocked={() => {
           void fetchPosts({ showSkeleton: false });
         }}
@@ -148,14 +152,14 @@ const PlayScreen: React.FC = () => {
         }}
       />
     );
-  }, [fetchPosts, fetchStoryFeed]);
+  }, [fetchPosts, fetchStoryFeed, feedColumnWidth]);
 
   const renderSkeletonList = () => {
     const skeletonData = Array.from({length: 5}, (_, i) => ({id: `skeleton-${i}`}));
     return (
       <FlatList
         data={skeletonData}
-        renderItem={() => <PlayPostSkeleton />}
+        renderItem={() => <PlayPostSkeleton contentWidth={feedColumnWidth} />}
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -174,15 +178,15 @@ const PlayScreen: React.FC = () => {
   const renderEmptyState = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Icon name="images-outline" size={RFValue(40)} color={colors.disabled} />
+        <Icon name="images-outline" size={playIconSize(32)} color={colors.disabled} />
         <CustomText
-          fontSize={RFValue(13)}
+          fontSize={playFontSize(PLAY_FEED_FONT.emptyTitle)}
           fontFamily={Fonts.SemiBold}
           style={[playFeedText.username, { color: colors.text, marginTop: 12, marginBottom: 6 }]}>
           No Posts Yet
         </CustomText>
         <CustomText
-          fontSize={RFValue(10)}
+          fontSize={playFontSize(PLAY_FEED_FONT.emptyBody)}
           fontFamily={Fonts.Regular}
           style={[
             playFeedText.body,
@@ -203,9 +207,9 @@ const PlayScreen: React.FC = () => {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.secondary }]}>
         <View style={styles.logoContainer}>
-          <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={styles.motoText}>
+          <CustomText fontSize={playFontSize(PLAY_FEED_FONT.brand)} fontFamily={Fonts.Bold} style={styles.motoText}>
             Moto
-            <CustomText fontSize={RFValue(20)} fontFamily={Fonts.Bold} style={styles.nodeText}>
+            <CustomText fontSize={playFontSize(PLAY_FEED_FONT.brand)} fontFamily={Fonts.Bold} style={styles.nodeText}>
               node
             </CustomText>
           </CustomText>
@@ -215,49 +219,51 @@ const PlayScreen: React.FC = () => {
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('UserSelection'))}
             activeOpacity={0.7}>
-            <Icon name="search" size={RFValue(18)} color={headerIconColor} />
+            <Icon name="search" size={playIconSize(PLAY_FEED_ICON.header)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('CreateNewPost'), 'Please login to share your car posts.')}
             activeOpacity={0.7}>
-            <Icon name="add" size={RFValue(18)} color={headerIconColor} />
+            <Icon name="add" size={playIconSize(PLAY_FEED_ICON.header)} color={headerIconColor} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => withAuth(() => navigate('Chat'))}
             activeOpacity={0.7}>
-            <Icon name="chatbubble-outline" size={RFValue(18)} color={headerIconColor} />
+            <Icon name="chatbubble-outline" size={playIconSize(PLAY_FEED_ICON.header)} color={headerIconColor} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Main Content Container with Curved Top */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        {(loading && posts.length === 0) || (!hasLoadedOnce && posts.length === 0) ? (
-          renderSkeletonList()
-        ) : (
-          <FlatList
-            data={posts}
-            renderItem={renderPostItem}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[
-              styles.listContent,
-              posts.length === 0 && styles.emptyListContent
-            ]}
-            ListEmptyComponent={!loading ? renderEmptyState : null}
-            ListHeaderComponent={listHeader}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={colors.secondary}
-                colors={[colors.secondary]}
-              />
-            }
-          />
-        )}
+        <View style={[styles.feedColumn, { width: feedColumnWidth }]}>
+          {(loading && posts.length === 0) || (!hasLoadedOnce && posts.length === 0) ? (
+            renderSkeletonList()
+          ) : (
+            <FlatList
+              data={posts}
+              renderItem={renderPostItem}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.listContent,
+                posts.length === 0 && styles.emptyListContent
+              ]}
+              ListEmptyComponent={!loading ? renderEmptyState : null}
+              ListHeaderComponent={listHeader}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor={colors.secondary}
+                  colors={[colors.secondary]}
+                />
+              }
+            />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -300,6 +306,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: 'hidden',
+  },
+  feedColumn: {
+    flex: 1,
+    alignSelf: 'center',
   },
   listContent: {
     paddingBottom: screenHeight * 0.05,
