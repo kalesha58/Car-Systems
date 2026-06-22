@@ -14,7 +14,22 @@ import { Building2, Edit } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { IUserDetails } from '../../types/user';
+import { IUserDetails, IUserVehicle } from '../../types/user';
+
+const normalizeUserVehicle = (vehicle: Record<string, unknown>): IUserVehicle => ({
+  id: String(vehicle.id || vehicle._id || ''),
+  brand: String(vehicle.brand || vehicle.make || ''),
+  model: String(vehicle.model || ''),
+  year: typeof vehicle.year === 'number' ? vehicle.year : undefined,
+  numberPlate: String(vehicle.numberPlate || vehicle.licensePlate || ''),
+  color: vehicle.color ? String(vehicle.color) : undefined,
+  images: Array.isArray(vehicle.images) ? (vehicle.images as string[]) : [],
+  documents:
+    vehicle.documents && typeof vehicle.documents === 'object'
+      ? (vehicle.documents as IUserVehicle['documents'])
+      : {},
+  createdAt: vehicle.createdAt ? String(vehicle.createdAt) : undefined,
+});
 
 export const UserDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -89,15 +104,9 @@ export const UserDetailsPage = () => {
             amount: order.amount,
             status: order.status,
           })),
-          /*
-          vehicles: vehiclesResponse.vehicles.map((vehicle) => ({
-            id: vehicle.id,
-            make: vehicle.brand,
-            model: vehicle.model,
-            year: vehicle.year || 0,
-            licensePlate: vehicle.numberPlate,
-          })),
-          */
+          vehicles: Array.isArray((userData as { vehicles?: Record<string, unknown>[] }).vehicles)
+            ? (userData as { vehicles: Record<string, unknown>[] }).vehicles.map(normalizeUserVehicle)
+            : [],
         } as IUserDetails);
 
 
@@ -409,26 +418,120 @@ export const UserDetailsPage = () => {
           </div>
         </Card>
 
-        {!isDealerContext && user.vehicles && user.vehicles.length > 0 && (
+        {!isDealerContext && (
           <Card title="Vehicles">
-            {user.vehicles.map((vehicle) => (
-              <div
-                key={vehicle.id}
-                style={{
-                  padding: theme.spacing.md,
-                  marginBottom: theme.spacing.sm,
-                  backgroundColor: theme.colors.background,
-                  borderRadius: theme.borderRadius.md,
-                }}
-              >
-                <p style={{ margin: 0, fontWeight: 'bold' }}>
-                  {vehicle.year} {vehicle.make} {vehicle.model}
-                </p>
-                <p style={{ margin: 0, color: theme.colors.textSecondary }}>
-                  License: {vehicle.licensePlate}
-                </p>
-              </div>
-            ))}
+            {user.vehicles && user.vehicles.length > 0 ? (
+              user.vehicles.map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  style={{
+                    padding: theme.spacing.md,
+                    marginBottom: theme.spacing.sm,
+                    backgroundColor: theme.colors.background,
+                    borderRadius: theme.borderRadius.md,
+                    border: `1px solid ${theme.colors.border}`,
+                  }}
+                >
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1rem' }}>
+                    {[vehicle.year, vehicle.brand, vehicle.model].filter(Boolean).join(' ')}
+                  </p>
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+                    style={{ marginTop: theme.spacing.sm }}
+                  >
+                    <div>
+                      <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                        Number Plate
+                      </strong>
+                      <p className="m-0 text-sm text-slate-800 dark:text-slate-200 font-medium">
+                        {vehicle.numberPlate || '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                        Color
+                      </strong>
+                      <p className="m-0 text-sm text-slate-800 dark:text-slate-200 font-medium">
+                        {vehicle.color || '—'}
+                      </p>
+                    </div>
+                    {vehicle.createdAt && (
+                      <div>
+                        <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                          Added On
+                        </strong>
+                        <p className="m-0 text-sm text-slate-800 dark:text-slate-200 font-medium">
+                          {new Date(vehicle.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {vehicle.documents &&
+                    (vehicle.documents.rc ||
+                      vehicle.documents.insurance ||
+                      vehicle.documents.pollution ||
+                      vehicle.documents.dl) && (
+                      <div style={{ marginTop: theme.spacing.md }}>
+                        <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                          Documents
+                        </strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs }}>
+                          {vehicle.documents.rc && (
+                            <a href={vehicle.documents.rc} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary }}>
+                              RC Document
+                            </a>
+                          )}
+                          {vehicle.documents.insurance && (
+                            <a href={vehicle.documents.insurance} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary }}>
+                              Insurance
+                            </a>
+                          )}
+                          {vehicle.documents.pollution && (
+                            <a href={vehicle.documents.pollution} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary }}>
+                              Pollution Certificate
+                            </a>
+                          )}
+                          {vehicle.documents.dl && (
+                            <a href={vehicle.documents.dl} target="_blank" rel="noopener noreferrer" style={{ color: theme.colors.primary }}>
+                              Driving License
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {vehicle.images && vehicle.images.length > 0 && (
+                    <div style={{ marginTop: theme.spacing.md }}>
+                      <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
+                        Photos
+                      </strong>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: theme.spacing.sm }}>
+                        {vehicle.images.map((imageUrl, index) => (
+                          <img
+                            key={`${vehicle.id}-img-${index}`}
+                            src={imageUrl}
+                            alt={`${vehicle.brand} ${vehicle.model} ${index + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '90px',
+                              objectFit: 'cover',
+                              borderRadius: theme.borderRadius.sm,
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => window.open(imageUrl, '_blank')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p style={{ margin: 0, color: theme.colors.textSecondary }}>
+                No vehicles registered for this user.
+              </p>
+            )}
           </Card>
         )}
       </div>

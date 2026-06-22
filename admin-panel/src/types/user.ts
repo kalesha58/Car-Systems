@@ -13,6 +13,23 @@ export interface IUserListItem {
   isVehicleRegistration?: boolean;
 }
 
+export interface IUserVehicle {
+  id: string;
+  brand: string;
+  model: string;
+  year?: number;
+  numberPlate: string;
+  color?: string;
+  images?: string[];
+  documents?: {
+    rc?: string;
+    insurance?: string;
+    pollution?: string;
+    dl?: string;
+  };
+  createdAt?: string;
+}
+
 export interface IUserDetails extends IUserListItem {
   orders: Array<{
     id: string;
@@ -20,13 +37,7 @@ export interface IUserDetails extends IUserListItem {
     amount: number;
     status: string;
   }>;
-  vehicles?: Array<{
-    id: string;
-    make: string;
-    model: string;
-    year: number;
-    licensePlate: string;
-  }>;
+  vehicles?: IUserVehicle[];
   addresses?: Array<{
     id: string;
     street: string;
