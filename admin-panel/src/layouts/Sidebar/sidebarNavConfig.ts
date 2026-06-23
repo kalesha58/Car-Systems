@@ -17,6 +17,7 @@ import {
   Car,
   CarTaxiFront,
   CircleDot,
+  Rss,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -71,6 +72,14 @@ export const navGroups: INavGroup[] = [
       { path: '/test-drives', label: 'Test Drives', icon: CarTaxiFront },
       { path: '/tyre-services', label: 'Tyre Service', icon: CircleDot },
       { path: '/coupons', label: 'Coupons', icon: Ticket },
+    ],
+  },
+  {
+    id: 'community',
+    label: 'Community',
+    icon: Rss,
+    items: [
+      { path: '/community/feed', label: 'Feed', icon: Rss },
     ],
   },
   {

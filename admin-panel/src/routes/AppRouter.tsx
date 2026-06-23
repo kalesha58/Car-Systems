@@ -57,6 +57,12 @@ const TyreServicesListPage = lazy(() =>
 const TyreServiceDetailsPage = lazy(() =>
   import('@pages/TyreServices/TyreServiceDetailsPage').then(module => ({ default: module.TyreServiceDetailsPage })),
 );
+const CommunityFeedListPage = lazy(() =>
+  import('@pages/Community/CommunityFeedListPage').then(module => ({ default: module.CommunityFeedListPage })),
+);
+const CommunityFeedDetailsPage = lazy(() =>
+  import('@pages/Community/CommunityFeedDetailsPage').then(module => ({ default: module.CommunityFeedDetailsPage })),
+);
 const DeleteAccountPage = lazy(() =>
   import('@pages/Public/DeleteAccountPage').then(module => ({ default: module.DeleteAccountPage })),
 );
@@ -413,6 +419,22 @@ export const AppRouter = () => {
             element={
               <Suspense fallback={<PageLoader />}>
                 <TyreServiceDetailsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="community/feed"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CommunityFeedListPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="community/feed/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <CommunityFeedDetailsPage />
               </Suspense>
             }
           />
