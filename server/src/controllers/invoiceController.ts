@@ -381,6 +381,13 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
               </div>
             </div>
 
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background-color: var(--bg-light); padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">
+                Scan this barcode to verify order status on delivery.
+              </div>
+              <svg id="barcode" style="background: transparent;"></svg>
+            </div>
+
             <div class="details-grid">
               <div class="details-block">
                 <h4>Bill To (Customer)</h4>
@@ -450,10 +457,6 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
                   <td style="text-align: right;">₹${order.totalAmount.toFixed(2)}</td>
                 </tr>
               </table>
-            </div>
-
-            <div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
-              <svg id="barcode"></svg>
             </div>
 
             <div class="footer-notes">
@@ -575,6 +578,13 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
               </div>
             </div>
 
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background-color: var(--bg-light); padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border-color);">
+              <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">
+                Scan this barcode to verify service details at the workshop.
+              </div>
+              <svg id="barcode" style="background: transparent;"></svg>
+            </div>
+
             <div class="details-grid">
               <div class="details-block">
                 <h4>Customer Details</h4>
@@ -641,10 +651,6 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
                   <td style="text-align: right;">₹${price.toFixed(2)}</td>
                 </tr>
               </table>
-            </div>
-
-            <div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
-              <svg id="barcode"></svg>
             </div>
 
             <div class="footer-notes">

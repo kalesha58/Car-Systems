@@ -20,17 +20,20 @@ import {getOrderStatusDisplay, isOrderAccepted, isOrderPickedUp} from '@utils/or
 import {io, Socket} from 'socket.io-client';
 import {IDealer} from '../../types/dealer/IDealer';
 import InAppBrowserModal from '@components/ui/InAppBrowserModal';
+import {useRoute} from '@react-navigation/native';
 
 const LiveTracking = () => {
   const {currentOrder, setCurrentOrder} = useAuthStore();
   const {colors} = useTheme();
+  const route = useRoute();
+  const routeParams = route?.params as { orderId?: string; id?: string } | undefined;
   const socketRef = useRef<Socket | null>(null);
   const [dealer, setDealer] = useState<IDealer | null>(null);
   const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState('');
 
   const handleShareInvoice = async () => {
-    const orderId = currentOrder?._id || currentOrder?.id;
+    const orderId = routeParams?.orderId || routeParams?.id || currentOrder?._id || currentOrder?.id;
     if (!orderId) {
       Alert.alert('Error', 'Order details are not loaded yet.');
       return;
@@ -52,7 +55,7 @@ const LiveTracking = () => {
   };
 
   const handleDownloadInvoice = () => {
-    const orderId = currentOrder?._id || currentOrder?.id;
+    const orderId = routeParams?.orderId || routeParams?.id || currentOrder?._id || currentOrder?.id;
     if (!orderId) {
       Alert.alert('Error', 'Order details are not loaded yet.');
       return;
@@ -68,12 +71,12 @@ const LiveTracking = () => {
   };
 
   const fetchOrderDetails = async () => {
-    if (!currentOrder?._id && !currentOrder?.id) {
+    const orderId = routeParams?.orderId || routeParams?.id || currentOrder?._id || currentOrder?.id;
+    if (!orderId) {
       return;
     }
 
     try {
-      const orderId = currentOrder._id || currentOrder.id;
       const data = await getOrderById(orderId);
       if (data) {
         setCurrentOrder(data);

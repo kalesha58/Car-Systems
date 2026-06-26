@@ -52,7 +52,7 @@ const DeliveryMap = () => {
   const [invoiceUrl, setInvoiceUrl] = useState('');
 
   const handleShareInvoice = async () => {
-    const orderId = orderData?.id || (orderData as any)?._id;
+    const orderId = orderData?.id || (orderData as any)?._id || (orderData as any)?.orderId;
     if (!orderId) {
       Alert.alert('Error', 'Order details are not loaded yet.');
       return;
@@ -74,7 +74,7 @@ const DeliveryMap = () => {
   };
 
   const handleDownloadInvoice = () => {
-    const orderId = orderData?.id || (orderData as any)?._id;
+    const orderId = orderData?.id || (orderData as any)?._id || (orderData as any)?.orderId;
     if (!orderId) {
       Alert.alert('Error', 'Order details are not loaded yet.');
       return;
@@ -166,7 +166,7 @@ const DeliveryMap = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      const orderId = orderDetails?.id || (orderDetails as any)?._id;
+      const orderId = orderDetails?.id || (orderDetails as any)?._id || (orderDetails as any)?.orderId;
       if (orderId) {
         // Check if user is a dealer and use appropriate endpoint
         const isDealer = user?.role === 'dealer' || 
