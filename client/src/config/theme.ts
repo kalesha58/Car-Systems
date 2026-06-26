@@ -11,6 +11,7 @@ export interface IThemeColors {
   background: string;
   backgroundSecondary: string;
   backgroundTertiary: string;
+  card: string;
   cardBackground: string;
   error: string;
   success: string;
@@ -35,6 +36,7 @@ const lightColors: IThemeColors = {
   background: '#ffffff',
   backgroundSecondary: '#f5f6fb',
   backgroundTertiary: '#fafafa',
+  card: '#ffffff',
   cardBackground: '#ffffff',
   error: '#e74c3c',
   success: '#0d8320',
@@ -59,6 +61,7 @@ const darkColors: IThemeColors = {
   background: '#121212',
   backgroundSecondary: '#1E1E1E',
   backgroundTertiary: '#2A2A2A',
+  card: '#1E1E1E',
   cardBackground: '#1E1E1E',
   error: '#EF4444',
   success: '#10B981',

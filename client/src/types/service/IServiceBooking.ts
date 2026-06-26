@@ -32,6 +32,8 @@ export interface IServiceBooking {
   serviceName?: string;
   serviceType?: string;
   dealerName?: string;
+  customerName?: string;
+  vehicleName?: string;
   createdAt: string;
   updatedAt: string;
 }

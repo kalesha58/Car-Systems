@@ -9,6 +9,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import CustomText from '@components/ui/CustomText';
@@ -24,6 +25,8 @@ import {
 } from '@service/serviceBookingService';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@hooks/useToast';
+import { BASE_URL } from '@service/config';
+import { tokenStorage } from '@state/storage';
 
 interface ServiceBookingsCardProps {
   limit?: number;
@@ -40,6 +43,20 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
   const [bookings, setBookings] = useState<IServiceBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  const handleDownloadInvoice = async (bookingId: string) => {
+    const token = tokenStorage.getString('accessToken');
+    if (!token) return;
+    const url = `${BASE_URL}/invoices/service/${bookingId}?token=${token}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.log('Error opening service receipt:', error);
+    }
+  };
 
   // Rejection modal state
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
@@ -450,7 +467,7 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
                 </CustomText>
               </View>
             </View>
-            {activeTab === 'new' && (
+            {activeTab === 'new' ? (
               <View style={styles.actionsContainer}>
                 <TouchableOpacity
                   style={styles.acceptButton}
@@ -470,6 +487,33 @@ const ServiceBookingsCard: FC<ServiceBookingsCardProps> = ({ limit = 5 }) => {
                   disabled={updating === booking.id}>
                   <CustomText style={styles.rejectButtonText}>
                     {t('dealer.reject') || 'Reject'}
+                  </CustomText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 6,
+                    backgroundColor: theme.primary,
+                  }}
+                  onPress={() => handleDownloadInvoice(booking.id)}>
+                  <CustomText style={styles.acceptButtonText}>
+                    Receipt
+                  </CustomText>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.actionsContainer}>
+                <TouchableOpacity
+                  style={{
+                    paddingVertical: 6,
+                    paddingHorizontal: 12,
+                    borderRadius: 6,
+                    backgroundColor: theme.primary,
+                  }}
+                  onPress={() => handleDownloadInvoice(booking.id)}>
+                  <CustomText style={styles.acceptButtonText}>
+                    Download Receipt
                   </CustomText>
                 </TouchableOpacity>
               </View>

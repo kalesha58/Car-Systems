@@ -2,6 +2,8 @@ import { Breadcrumbs } from '@components/Breadcrumbs/Breadcrumbs';
 import { Card } from '@components/Card/Card';
 import { Input } from '@components/Input/Input';
 import { useToastStore } from '@store/toastStore';
+import { useAuthStore } from '@store/authStore';
+import { API_BASE_URL } from '@constants/api';
 import { useTheme } from '@theme/ThemeContext';
 import { useCallback, useEffect, useState } from 'react';
 import { getAdminServiceBookings, type IAdminServiceBooking } from '@services/couponService';
@@ -26,6 +28,13 @@ export const ServiceBookingsListPage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleDownloadInvoice = (bookingId: string) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    const url = `${API_BASE_URL}api/invoices/service/${bookingId}?token=${token}`;
+    window.open(url, '_blank');
+  };
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -319,6 +328,18 @@ export const ServiceBookingsListPage = () => {
                                 <p style={{ margin: '4px 0 0', color: theme.colors.textSecondary, fontSize: '0.8rem' }}>
                                   {formatDate(booking.createdAt)}
                                 </p>
+                              </div>
+                              <div>
+                                <span style={{ fontWeight: 600, color: theme.colors.text, fontSize: '0.8rem', display: 'block', marginBottom: 4 }}>
+                                  Invoice:
+                                </span>
+                                <Button
+                                  variant="primary"
+                                  onClick={() => handleDownloadInvoice(booking.id)}
+                                  style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                                >
+                                  Download Invoice
+                                </Button>
                               </div>
                             </div>
                           </td>

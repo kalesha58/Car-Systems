@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useTheme } from '@hooks/useTheme';
 import CustomText from '@components/ui/CustomText';
@@ -17,6 +18,8 @@ import { getUserServiceBookings, cancelUserServiceBooking } from '@service/servi
 import { IServiceBooking, ServiceBookingStatus } from '../../types/service/IServiceBooking';
 import { useToast } from '@hooks/useToast';
 import { useTranslation } from 'react-i18next';
+import { BASE_URL } from '@service/config';
+import { tokenStorage } from '@state/storage';
 
 const STATUS_FILTERS: Array<{ key: string; label: string }> = [
   { key: 'all', label: 'All' },
@@ -55,6 +58,20 @@ const MyServiceBookingsScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleDownloadInvoice = async (bookingId: string) => {
+    const token = tokenStorage.getString('accessToken');
+    if (!token) return;
+    const url = `${BASE_URL}/invoices/service/${bookingId}?token=${token}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.log('Error opening service receipt:', error);
+    }
+  };
 
   const fetchBookings = useCallback(async (isRefresh = false) => {
     try {
@@ -211,16 +228,30 @@ const MyServiceBookingsScreen: React.FC = () => {
                   Reason: {item.rejectionReason}
                 </CustomText>
               )}
-              {(item.status === 'new' || item.status === 'scheduled') && (
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12, alignItems: 'center' }}>
                 <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => handleCancel(item.id)}
-                  disabled={cancellingId === item.id}>
-                  <CustomText style={{ color: colors.error, fontSize: RFValue(11) }}>
-                    {cancellingId === item.id ? 'Cancelling...' : 'Cancel Booking'}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    backgroundColor: colors.primary || '#0d8320',
+                  }}
+                  onPress={() => handleDownloadInvoice(item.id)}>
+                  <CustomText style={{ color: '#fff', fontSize: RFValue(11), fontFamily: Fonts.SemiBold }}>
+                    Download Receipt
                   </CustomText>
                 </TouchableOpacity>
-              )}
+                {(item.status === 'new' || item.status === 'scheduled') && (
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, { marginTop: 0 }]}
+                    onPress={() => handleCancel(item.id)}
+                    disabled={cancellingId === item.id}>
+                    <CustomText style={{ color: colors.error, fontSize: RFValue(11) }}>
+                      {cancellingId === item.id ? 'Cancelling...' : 'Cancel Booking'}
+                    </CustomText>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           )}
         />

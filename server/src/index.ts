@@ -46,6 +46,7 @@ import dropdownRoutes from './routes/dropdownRoutes';
 import appConfigRoutes from './routes/user/appConfigRoutes';
 import webhookRoutes, { razorpayWebhookHandler } from './routes/webhookRoutes';
 import { getServiceCategoriesController } from './controllers/serviceCategoryController';
+import invoiceRoutes from './routes/invoiceRoutes';
 import cors from 'cors';
 import { logger } from './utils/logger';
 
@@ -304,6 +305,10 @@ logger.info('[Routes] Users route mounted at /api/users');
 // Webhook Routes (no auth required - called by payment gateway)
 app.use('/api/webhooks', webhookRoutes);
 logger.info('[Routes] Webhook routes mounted at /api/webhooks');
+
+// Invoice Routes
+app.use('/api/invoices', invoiceRoutes);
+logger.info('[Routes] Invoice routes mounted at /api/invoices');
 
 // Admin Routes (all prefixed with /admin)
 app.use('/admin', adminRoutes);

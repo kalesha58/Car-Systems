@@ -4,10 +4,14 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Platform, PermissionsAndroid} from 'react-native';
 import {useAuthStore} from '@state/authStore';
+import {BASE_URL} from '@service/config';
+import {tokenStorage} from '@state/storage';
 import {
   confirmOrder,
   getOrderById,
@@ -40,6 +44,26 @@ const DeliveryMap = () => {
   const [loading, setLoading] = useState<boolean>(!orderDetails);
   const [myLocation, setMyLocation] = useState<ILocation | null>(null);
   const {setCurrentOrder} = useAuthStore();
+
+  const handleDownloadInvoice = async () => {
+    const orderId = orderData?.id || (orderData as any)?._id;
+    if (!orderId) {
+      return;
+    }
+    const token = tokenStorage.getString('accessToken');
+    if (!token) {
+      return;
+    }
+    const url = `${BASE_URL}/invoices/order/${orderId}?token=${token}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.log('Error opening invoice URL:', error);
+    }
+  };
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [locationModalMessage, setLocationModalMessage] = useState(
     'Please enable location permission and wait for GPS before continuing.',
@@ -481,6 +505,38 @@ const DeliveryMap = () => {
 
         <DeliveryDetails details={orderData?.customer} />
         <OrderSummary order={orderData} />
+
+        <View style={styles.flexRow}>
+          <View style={styles.iconContainer}>
+            <Icon
+              name="file-document-outline"
+              color={Colors.primary || '#0d8320'}
+              size={RFValue(20)}
+            />
+          </View>
+          <View style={{width: '82%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+            <View style={{flex: 1, paddingRight: 10}}>
+              <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
+                Order Invoice
+              </CustomText>
+              <CustomText variant="h9" fontFamily={Fonts.Medium}>
+                Download or print order invoice
+              </CustomText>
+            </View>
+            <TouchableOpacity
+              onPress={handleDownloadInvoice}
+              style={{
+                backgroundColor: Colors.primary || '#0d8320',
+                paddingVertical: 8,
+                paddingHorizontal: 15,
+                borderRadius: 8,
+              }}>
+              <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+                Download
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={styles.flexRow}>
           <View style={styles.iconContainer}>

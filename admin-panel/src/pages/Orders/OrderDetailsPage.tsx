@@ -7,6 +7,8 @@ import { SkeletonCard } from '@components/Skeleton';
 import { Table } from '@components/Table/Table';
 import { addTrackingInfo, cancelOrder, getOrderById, updateOrderStatus } from '@services/orderService';
 import { useToastStore } from '@store/toastStore';
+import { useAuthStore } from '@store/authStore';
+import { API_BASE_URL } from '@constants/api';
 import { useTheme } from '@theme/ThemeContext';
 import {
   CheckCircle,
@@ -45,6 +47,13 @@ export const OrderDetailsPage = () => {
     status: '',
     estimatedDelivery: '',
   });
+
+  const handleDownloadInvoice = () => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    const url = `${API_BASE_URL}api/invoices/order/${id}?token=${token}`;
+    window.open(url, '_blank');
+  };
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
@@ -747,6 +756,9 @@ export const OrderDetailsPage = () => {
             flexWrap: 'wrap',
           }}
         >
+          <Button variant="primary" size="sm" onClick={handleDownloadInvoice}>
+            Download Invoice
+          </Button>
           {!isOrderFinal(order.status) && (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowStatusModal(true)}>

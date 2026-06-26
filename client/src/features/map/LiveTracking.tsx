@@ -1,10 +1,11 @@
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking} from 'react-native';
 import React, {useEffect, useRef, useState, useMemo} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
 import {getDealerById} from '@service/dealerService';
 import {getProductById} from '@service/productService';
-import {SOCKET_URL} from '@service/config';
+import {BASE_URL, SOCKET_URL} from '@service/config';
+import {tokenStorage} from '@state/storage';
 import {Fonts} from '@utils/Constants';
 import {useTheme} from '@hooks/useTheme';
 import LiveHeader from './LiveHeader';
@@ -24,6 +25,26 @@ const LiveTracking = () => {
   const {colors} = useTheme();
   const socketRef = useRef<Socket | null>(null);
   const [dealer, setDealer] = useState<IDealer | null>(null);
+
+  const handleDownloadInvoice = async () => {
+    const orderId = currentOrder?._id || currentOrder?.id;
+    if (!orderId) {
+      return;
+    }
+    const token = tokenStorage.getString('accessToken');
+    if (!token) {
+      return;
+    }
+    const url = `${BASE_URL}/invoices/order/${orderId}?token=${token}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.log('Error opening invoice URL:', error);
+    }
+  };
 
   const fetchOrderDetails = async () => {
     if (!currentOrder?._id && !currentOrder?.id) {
@@ -249,6 +270,38 @@ const LiveTracking = () => {
         />
 
         <OrderSummary order={currentOrder} />
+
+        <View style={[styles.flexRow, {backgroundColor: colors.cardBackground, borderColor: colors.border}]}>
+          <View style={[styles.iconContainer, {backgroundColor: colors.backgroundSecondary}]}>
+            <Icon
+              name="file-document-outline"
+              color={colors.primary || '#0d8320'}
+              size={RFValue(20)}
+            />
+          </View>
+          <View style={{width: '82%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+            <View style={{flex: 1, paddingRight: 10}}>
+              <CustomText variant="h7" fontFamily={Fonts.SemiBold}>
+                Order Invoice
+              </CustomText>
+              <CustomText variant="h9" fontFamily={Fonts.Medium}>
+                Download or print order invoice
+              </CustomText>
+            </View>
+            <TouchableOpacity
+              onPress={handleDownloadInvoice}
+              style={{
+                backgroundColor: colors.primary || '#0d8320',
+                paddingVertical: 8,
+                paddingHorizontal: 15,
+                borderRadius: 8,
+              }}>
+              <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+                Download
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={[styles.flexRow, {backgroundColor: colors.cardBackground, borderColor: colors.border}]}>
           <View style={[styles.iconContainer, {backgroundColor: colors.backgroundSecondary}]}>
