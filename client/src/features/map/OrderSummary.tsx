@@ -10,6 +10,7 @@ import BillDetails from '@features/order/BillDetails';
 const OrderSummary: FC<{order: any}> = ({order}) => {
   const {colors} = useTheme();
   const totalPrice =
+    order?.subtotal ||
     order?.items?.reduce(
       (total: number, orderItem: any) => {
         // Handle both old format (item.item.price) and new format (item.price)
@@ -118,7 +119,7 @@ const OrderSummary: FC<{order: any}> = ({order}) => {
         );
       })}
 
-      <BillDetails totalItemPrice={totalPrice} />
+      <BillDetails totalItemPrice={totalPrice} codCharge={order?.codCharge} />
     </View>
   );
 };

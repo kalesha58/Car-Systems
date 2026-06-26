@@ -1,4 +1,4 @@
-import {View, StyleSheet, Pressable} from 'react-native';
+import {View, StyleSheet, Pressable, StatusBar} from 'react-native';
 import React, {FC} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuthStore} from '@state/authStore';
@@ -20,8 +20,9 @@ const LiveHeader: FC<{
   const {currentOrder, setCurrentOrder} = useAuthStore();
 
   return (
-    <SafeAreaView>
-      <View style={styles.headerContainer}>
+    <SafeAreaView style={{backgroundColor: colors.secondary}} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.secondary} />
+      <View style={[styles.headerContainer, {backgroundColor: colors.secondary, borderBottomWidth: 0}]}>
         <Pressable
           hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
           style={styles.backButton}
@@ -45,25 +46,23 @@ const LiveHeader: FC<{
           <Icon
             name="chevron-back"
             size={RFValue(16)}
-            color={isCustomer ? '#fff' : colors.text}
+            color={colors.white}
           />
         </Pressable>
 
         <CustomText
           variant="h8"
           fontFamily={Fonts.Medium}
-          style={isCustomer ? styles.titleTextWhite : {color: colors.text}}>
+          style={{color: '#f0f0f0'}}>
           {title}
         </CustomText>
 
         <CustomText
           variant="h4"
           fontFamily={Fonts.SemiBold}
-          style={isCustomer ? styles.titleTextWhite : {color: colors.text}}>
+          style={{color: colors.white}}>
           {secondTitle}
         </CustomText>
-
-        
       </View>
     </SafeAreaView>
   );
@@ -84,9 +83,6 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  titleTextWhite: {
-    color: 'white',
   },
 });
 

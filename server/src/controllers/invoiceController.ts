@@ -367,9 +367,12 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
           </div>
           <div class="invoice-container">
             <div class="invoice-header">
-              <div>
-                <div class="brand-logo">motonode</div>
-                <div class="brand-sub">Car Connect Network</div>
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="https://res.cloudinary.com/dzguxkrky/image/upload/v1779389686/motonode/notifications/rcggfm3pp5gpcvgzn9n0.jpg" alt="Motonode Logo" style="height: 50px; border-radius: 8px;" />
+                <div>
+                  <div class="brand-logo">motonode</div>
+                  <div class="brand-sub">Car Connect Network</div>
+                </div>
               </div>
               <div class="invoice-title-block">
                 <h1 class="invoice-title">INVOICE</h1>
@@ -449,11 +452,27 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
               </table>
             </div>
 
+            <div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
+              <svg id="barcode"></svg>
+            </div>
+
             <div class="footer-notes">
               <p>Thank you for purchasing through Car Connect Network.</p>
               <p style="margin-top: 8px; font-size: 10px; opacity: 0.7;">This is a computer-generated invoice and does not require a physical signature.</p>
             </div>
           </div>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script>
+            window.onload = function() {
+              JsBarcode("#barcode", "${order.orderNumber}", {
+                format: "CODE128",
+                lineColor: "#0d8320",
+                width: 1.5,
+                height: 40,
+                displayValue: true
+              });
+            }
+          </script>
         </body>
       </html>
     `;
@@ -542,9 +561,12 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
           </div>
           <div class="invoice-container">
             <div class="invoice-header">
-              <div>
-                <div class="brand-logo">motonode</div>
-                <div class="brand-sub">Workshop Service Network</div>
+              <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="https://res.cloudinary.com/dzguxkrky/image/upload/v1779389686/motonode/notifications/rcggfm3pp5gpcvgzn9n0.jpg" alt="Motonode Logo" style="height: 50px; border-radius: 8px;" />
+                <div>
+                  <div class="brand-logo">motonode</div>
+                  <div class="brand-sub">Workshop Service Network</div>
+                </div>
               </div>
               <div class="invoice-title-block">
                 <h1 class="invoice-title">RECEIPT</h1>
@@ -621,12 +643,28 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
               </table>
             </div>
 
+            <div style="text-align: center; margin-top: 20px; margin-bottom: 30px;">
+              <svg id="barcode"></svg>
+            </div>
+
             <div class="footer-notes">
               <p>Receipt created on ${formattedCreatedDate}</p>
               <p>Thank you for using Car Connect Service Network.</p>
               <p style="margin-top: 8px; font-size: 10px; opacity: 0.7;">This is a computer-generated receipt and does not require a physical signature.</p>
             </div>
           </div>
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+          <script>
+            window.onload = function() {
+              JsBarcode("#barcode", "${bookingId.slice(-8).toUpperCase()}", {
+                format: "CODE128",
+                lineColor: "#0d8320",
+                width: 1.5,
+                height: 40,
+                displayValue: true
+              });
+            }
+          </script>
         </body>
       </html>
     `;

@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, Share} from 'react-native';
 import React, {useEffect, useRef, useState, useMemo} from 'react';
 import {useAuthStore} from '@state/authStore';
 import {getOrderById} from '@service/orderService';
@@ -19,31 +19,52 @@ import OrderWorkflow from './OrderWorkflow';
 import {getOrderStatusDisplay, isOrderAccepted, isOrderPickedUp} from '@utils/orderStatusUtils';
 import {io, Socket} from 'socket.io-client';
 import {IDealer} from '../../types/dealer/IDealer';
+import InAppBrowserModal from '@components/ui/InAppBrowserModal';
 
 const LiveTracking = () => {
   const {currentOrder, setCurrentOrder} = useAuthStore();
   const {colors} = useTheme();
   const socketRef = useRef<Socket | null>(null);
   const [dealer, setDealer] = useState<IDealer | null>(null);
+  const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
 
-  const handleDownloadInvoice = async () => {
+  const handleShareInvoice = async () => {
     const orderId = currentOrder?._id || currentOrder?.id;
     if (!orderId) {
+      Alert.alert('Error', 'Order details are not loaded yet.');
       return;
     }
     const token = tokenStorage.getString('accessToken');
     if (!token) {
+      Alert.alert('Error', 'Session token is missing. Please log in again.');
       return;
     }
     const url = `${BASE_URL}/invoices/order/${orderId}?token=${token}`;
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      }
+      await Share.share({
+        message: `Order Invoice link: ${url}`,
+        title: `Invoice - ${orderId}`,
+      });
     } catch (error) {
-      console.log('Error opening invoice URL:', error);
+      Alert.alert('Share Failed', 'Unable to share invoice link.');
     }
+  };
+
+  const handleDownloadInvoice = () => {
+    const orderId = currentOrder?._id || currentOrder?.id;
+    if (!orderId) {
+      Alert.alert('Error', 'Order details are not loaded yet.');
+      return;
+    }
+    const token = tokenStorage.getString('accessToken');
+    if (!token) {
+      Alert.alert('Error', 'Session token is missing. Please log in again.');
+      return;
+    }
+    const url = `${BASE_URL}/invoices/order/${orderId}?token=${token}`;
+    setInvoiceUrl(url);
+    setInvoiceModalVisible(true);
   };
 
   const fetchOrderDetails = async () => {
@@ -275,7 +296,7 @@ const LiveTracking = () => {
           <View style={[styles.iconContainer, {backgroundColor: colors.backgroundSecondary}]}>
             <Icon
               name="file-document-outline"
-              color={colors.primary || '#0d8320'}
+              color={colors.success || '#0d8320'}
               size={RFValue(20)}
             />
           </View>
@@ -288,18 +309,32 @@ const LiveTracking = () => {
                 Download or print order invoice
               </CustomText>
             </View>
-            <TouchableOpacity
-              onPress={handleDownloadInvoice}
-              style={{
-                backgroundColor: colors.primary || '#0d8320',
-                paddingVertical: 8,
-                paddingHorizontal: 15,
-                borderRadius: 8,
-              }}>
-              <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
-                Download
-              </CustomText>
-            </TouchableOpacity>
+            <View style={{flexDirection: 'row', gap: 8, alignItems: 'center'}}>
+              <TouchableOpacity
+                onPress={handleShareInvoice}
+                style={{
+                  backgroundColor: colors.secondary || '#01875f',
+                  paddingVertical: 8,
+                  paddingHorizontal: 15,
+                  borderRadius: 8,
+                }}>
+                <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+                  Share
+                </CustomText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDownloadInvoice}
+                style={{
+                  backgroundColor: colors.success || '#0d8320',
+                  paddingVertical: 8,
+                  paddingHorizontal: 15,
+                  borderRadius: 8,
+                }}>
+                <CustomText variant="h8" fontFamily={Fonts.SemiBold} style={{color: '#fff'}}>
+                  Download
+                </CustomText>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -323,13 +358,28 @@ const LiveTracking = () => {
           </View>
         </View>
 
-        <CustomText
-          fontFamily={Fonts.SemiBold}
-          variant="h6"
-          style={{opacity: 0.6, marginTop: 20}}>
-           Car Connect 
-        </CustomText>
+        <View style={{marginTop: 20, paddingBottom: 20}}>
+          <CustomText
+            fontSize={RFValue(32)}
+            fontFamily={Fonts.Bold}
+            style={{opacity: 0.2}}>
+            MotoNode 🚗
+          </CustomText>
+          <CustomText
+            fontFamily={Fonts.Bold}
+            style={{marginTop: 10, opacity: 0.2}}>
+            Trust Us ❤️ 
+          </CustomText>
+        </View>
       </ScrollView>
+
+      <InAppBrowserModal
+        visible={invoiceModalVisible}
+        url={invoiceUrl}
+        onClose={() => setInvoiceModalVisible(false)}
+        title="Order Invoice"
+        orderId={String(currentOrder?._id || currentOrder?.id || 'invoice')}
+      />
     </View>
   );
 };
