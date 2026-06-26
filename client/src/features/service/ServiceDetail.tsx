@@ -18,6 +18,7 @@ import { Fonts, Colors, fontStyle } from '@utils/Constants';
 import { useTheme } from '@hooks/useTheme';
 import { useToast } from '@hooks/useToast';
 import { getServiceById, bookServiceSlot } from '@service/serviceService';
+import { createServiceBooking } from '@service/serviceBookingService';
 import { useTranslation } from 'react-i18next';
 import type { IService } from '../../types/service/IService';
 import { openDealerChat } from '@utils/openDealerChat';
@@ -54,6 +55,7 @@ const ServiceDetail: React.FC = () => {
   const [vehicleModel, setVehicleModel] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [bookingNotes, setBookingNotes] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
 
   const isTyreService = service?.serviceType === 'tire_service';
   const showSlotBooking = !!(service?.slotBookingEnabled || isTyreService);
@@ -122,6 +124,47 @@ const ServiceDetail: React.FC = () => {
         e?.response?.data?.message ||
         t('service.slotBookFailed') ||
         'Failed to book slot';
+      showError(message);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+  const handleDirectBook = async () => {
+    if (!service?.id) return;
+    if (!selectedTime) {
+      showError('Please select a preferred time');
+      return;
+    }
+
+    try {
+      setBookingLoading(true);
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      await createServiceBooking({
+        serviceId: service.id,
+        preferredDate: formattedDate,
+        preferredTime: selectedTime,
+        notes: bookingNotes.trim() || undefined,
+        vehicleInfo: (vehicleBrand.trim() || vehicleModel.trim() || registrationNumber.trim())
+          ? {
+              brand: vehicleBrand.trim() || undefined,
+              model: vehicleModel.trim() || undefined,
+              registrationNumber: registrationNumber.trim().toUpperCase() || undefined,
+            }
+          : undefined,
+      });
+      showSuccess('Service booked successfully');
+      setSelectedTime('');
+      setBookingNotes('');
+      setVehicleBrand('');
+      setVehicleModel('');
+      setRegistrationNumber('');
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.error ||
+        e?.response?.data?.Response?.ReturnMessage ||
+        e?.response?.data?.message ||
+        'Failed to book service';
       showError(message);
     } finally {
       setBookingLoading(false);
@@ -764,6 +807,103 @@ const ServiceDetail: React.FC = () => {
                   />
                 </>
               )}
+
+              {/* Direct Booking Flow */}
+              {!showSlotBooking && service && (
+                <>
+                  <CustomText fontFamily={Fonts.Bold} style={styles.sectionTitle}>
+                    Book Service
+                  </CustomText>
+                  
+                  {/* Vehicle Details */}
+                  <View style={{ gap: 10, marginBottom: 12 }}>
+                    <TextInput
+                      style={[styles.vehicleInput, { borderColor: colors.border, color: colors.text }]}
+                      placeholder="Registration number"
+                      placeholderTextColor={colors.textSecondary}
+                      value={registrationNumber}
+                      onChangeText={text => setRegistrationNumber(text.toUpperCase())}
+                      autoCapitalize="characters"
+                    />
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TextInput
+                        style={[styles.vehicleInput, { flex: 1, borderColor: colors.border, color: colors.text }]}
+                        placeholder="Brand"
+                        placeholderTextColor={colors.textSecondary}
+                        value={vehicleBrand}
+                        onChangeText={setVehicleBrand}
+                      />
+                      <TextInput
+                        style={[styles.vehicleInput, { flex: 1, borderColor: colors.border, color: colors.text }]}
+                        placeholder="Model"
+                        placeholderTextColor={colors.textSecondary}
+                        value={vehicleModel}
+                        onChangeText={setVehicleModel}
+                      />
+                    </View>
+                    <TextInput
+                      style={[styles.vehicleInput, { borderColor: colors.border, color: colors.text }]}
+                      placeholder="Notes (optional)"
+                      placeholderTextColor={colors.textSecondary}
+                      value={bookingNotes}
+                      onChangeText={setBookingNotes}
+                    />
+                  </View>
+
+                  {/* Preferred Date Selector */}
+                  <CustomText fontFamily={Fonts.Bold} style={[styles.sectionTitle, { marginTop: 12 }]}>
+                    Select Preferred Date
+                  </CustomText>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                    <View style={styles.dateChipsRow}>
+                      {dateOptions.map((date) => {
+                        const selected = isSameDay(date, selectedDate);
+                        return (
+                          <TouchableOpacity
+                            key={date.toISOString()}
+                            style={[styles.dateChip, selected && styles.dateChipSelected]}
+                            onPress={() => {
+                              setSelectedDate(date);
+                            }}
+                            activeOpacity={0.7}>
+                            <CustomText style={[styles.dateChipText, selected && styles.dateChipTextSelected]}>
+                              {formatDateChip(date)}
+                            </CustomText>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+
+                  {/* Preferred Time Selector */}
+                  <CustomText fontFamily={Fonts.Bold} style={[styles.sectionTitle, { marginTop: 12 }]}>
+                    Select Preferred Time *
+                  </CustomText>
+                  <View style={[styles.dateChipsRow, { marginBottom: 12 }]}>
+                    {['09:00 AM', '11:00 AM', '01:00 PM', '03:00 PM', '05:00 PM'].map((time) => {
+                      const selected = selectedTime === time;
+                      return (
+                        <TouchableOpacity
+                          key={time}
+                          style={[styles.dateChip, selected && styles.dateChipSelected]}
+                          onPress={() => setSelectedTime(time)}
+                          activeOpacity={0.7}>
+                          <CustomText style={[styles.dateChipText, selected && styles.dateChipTextSelected]}>
+                            {time}
+                          </CustomText>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  <TextInput
+                    style={[styles.vehicleInput, { borderColor: colors.border, color: colors.text }]}
+                    placeholder="Or enter custom time (e.g. 10:30 AM) *"
+                    placeholderTextColor={colors.textSecondary}
+                    value={selectedTime}
+                    onChangeText={setSelectedTime}
+                  />
+                </>
+              )}
             </>
           )}
         </View>
@@ -794,6 +934,25 @@ const ServiceDetail: React.FC = () => {
                 {isTyreService
                   ? t('service.bookTyreSlot') || 'Book Slot'
                   : t('service.bookSlot') || 'Book Slot'}
+              </CustomText>
+            )}
+          </TouchableOpacity>
+        )}
+        {!showSlotBooking && service && (
+          <TouchableOpacity
+            style={[styles.bookButton, (!selectedTime || bookingLoading) && styles.bookButtonDisabled]}
+            onPress={() => {
+              withAuth(() => {
+                handleDirectBook();
+              }, 'Please login to book a service.');
+            }}
+            disabled={!selectedTime || bookingLoading}
+            activeOpacity={0.8}>
+            {bookingLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <CustomText style={{ color: '#fff', ...fontStyle(Fonts.SemiBold), fontSize: RFValue(12) }}>
+                Book Service
               </CustomText>
             )}
           </TouchableOpacity>
