@@ -20,9 +20,10 @@ import { Select } from '@components/Select';
 import { SkeletonTable } from '@components/Skeleton';
 import { Table } from '@components/Table/Table';
 import { Tooltip } from '@components/Tooltip/Tooltip';
-import { createUser, deleteUser, updateUser } from '@services/userService';
-import { getDealers } from '@services/dealerService';
+import { createUser, updateUser } from '@services/userService';
+import { deleteDealer, getDealers } from '@services/dealerService';
 import { useToastStore } from '@store/toastStore';
+import { bulkDeleteByIds } from '@utils/bulkDelete';
 import { useTheme } from '@theme/ThemeContext';
 import { debounce } from '@utils/debounce';
 import { extractErrorMessage } from '@utils/errorHandler';
@@ -63,6 +64,8 @@ export const DealersListPage = () => {
     isOpen: false,
     dealer: null,
   });
+  const [selectedDealerIds, setSelectedDealerIds] = useState<string[]>([]);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<IUserListItem | null>(null);
@@ -177,6 +180,10 @@ export const DealersListPage = () => {
     setSearchInputValue(searchTerm);
   }, [searchTerm]);
 
+  useEffect(() => {
+    setSelectedDealerIds([]);
+  }, [currentPage, searchTerm, statusFilter, dealerTypeFilter]);
+
 
   const handleCloseUserModal = () => {
     setShowUserModal(false);
@@ -275,13 +282,40 @@ export const DealersListPage = () => {
 
     try {
       setSubmitting(true);
-      await deleteUser(deleteModal.dealer.id);
+      await deleteDealer(deleteModal.dealer.id);
       showToast('Dealer deleted successfully', 'success');
       setDeleteModal({ isOpen: false, dealer: null });
       fetchDealers();
     } catch (error) {
       console.error('Error deleting dealer:', error);
       showToast('Failed to delete dealer', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDeleteDealers = async () => {
+    if (selectedDealerIds.length === 0) return;
+
+    try {
+      setSubmitting(true);
+      const { succeeded, failed } = await bulkDeleteByIds(selectedDealerIds, deleteDealer);
+      setBulkDeleteModalOpen(false);
+      setSelectedDealerIds([]);
+
+      if (failed === 0) {
+        showToast(`${succeeded} dealer${succeeded === 1 ? '' : 's'} deleted successfully`, 'success');
+      } else if (succeeded === 0) {
+        showToast('Failed to delete selected dealers', 'error');
+      } else {
+        showToast(`${succeeded} deleted, ${failed} failed`, 'warning');
+      }
+
+      fetchDealers();
+    } catch (error: any) {
+      console.error('Error bulk deleting dealers:', error);
+      const errorMessage = extractErrorMessage(error, 'Failed to delete selected dealers');
+      showToast(errorMessage, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -560,6 +594,17 @@ export const DealersListPage = () => {
             </div>
             <div className="users-toolbar__spacer" />
             <div className="users-toolbar__actions">
+              {selectedDealerIds.length > 0 && (
+                <div className="users-toolbar__button">
+                  <Button
+                    variant="danger"
+                    onClick={() => setBulkDeleteModalOpen(true)}
+                    icon={Trash2}
+                  >
+                    Delete Selected ({selectedDealerIds.length})
+                  </Button>
+                </div>
+              )}
               <div className="users-toolbar__button">
                 <Button
                   onClick={() => navigate('/dealers/new?type=dealer')}
@@ -652,6 +697,9 @@ export const DealersListPage = () => {
                   columns={columns}
                   data={dealers}
                   onRowClick={(dealer) => navigate(`/dealers/${dealer.id}`)}
+                  selectable
+                  selectedIds={selectedDealerIds}
+                  onSelectedIdsChange={setSelectedDealerIds}
                 />
               </div>
               {totalItems > 0 && (
@@ -979,6 +1027,19 @@ export const DealersListPage = () => {
         title="Delete Dealer"
         message={`Are you sure you want to delete "${deleteModal.dealer?.name}"? This action cannot be undone.`}
         confirmText={submitting ? 'Deleting...' : 'Delete'}
+        type="danger"
+        disabled={submitting}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={bulkDeleteModalOpen}
+        onClose={() => setBulkDeleteModalOpen(false)}
+        onConfirm={handleBulkDeleteDealers}
+        title="Confirm Bulk Delete"
+        message={`Are you sure you want to delete the ${selectedDealerIds.length} selected dealers? This action cannot be undone.`}
+        confirmText="Delete Dealers"
+        cancelText="Cancel"
         type="danger"
         disabled={submitting}
       />

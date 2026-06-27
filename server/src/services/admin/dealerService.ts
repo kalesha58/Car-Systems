@@ -319,15 +319,47 @@ export const updateDealer = async (dealerId: string, data: IUpdateDealerRequest)
  */
 export const deleteDealer = async (dealerId: string): Promise<void> => {
   try {
-    const dealer = await Dealer.findById(dealerId);
-
-    if (!dealer) {
-      throw new NotFoundError('Dealer not found');
+    // 1. Check legacy Dealer model
+    const legacy = await Dealer.findById(dealerId);
+    if (legacy) {
+      await legacy.deleteOne();
+      logger.info(`Dealer deleted (legacy): ${legacy.email}`);
+      return;
     }
 
-    await dealer.deleteOne();
+    // 2. Check modern BusinessRegistration model (by ID or userId)
+    let reg = await BusinessRegistration.findById(dealerId);
+    if (!reg) {
+      reg = await BusinessRegistration.findOne({ userId: dealerId });
+    }
 
-    logger.info(`Dealer deleted: ${dealer.email}`);
+    if (reg) {
+      const userId = reg.userId;
+      await reg.deleteOne();
+      
+      if (userId) {
+        const user = await SignUp.findById(userId);
+        if (user) {
+          await SignUp.findByIdAndDelete(userId);
+          logger.info(`Dealer user and business registration deleted: ${user.email}`);
+        } else {
+          logger.info(`Dealer business registration deleted, user not found: ${userId}`);
+        }
+      } else {
+        logger.info(`Dealer business registration deleted, no userId associated`);
+      }
+      return;
+    }
+
+    // 3. Check if it's just a SignUp user with role 'dealer'
+    const user = await SignUp.findById(dealerId);
+    if (user && user.role?.includes('dealer')) {
+      await SignUp.findByIdAndDelete(dealerId);
+      logger.info(`Dealer user deleted: ${user.email}`);
+      return;
+    }
+
+    throw new NotFoundError('Dealer not found');
   } catch (error) {
     logger.error('Error deleting dealer:', error);
     throw error;
