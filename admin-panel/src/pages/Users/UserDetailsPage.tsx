@@ -104,8 +104,8 @@ export const UserDetailsPage = () => {
             amount: order.amount,
             status: order.status,
           })),
-          vehicles: Array.isArray((userData as { vehicles?: Record<string, unknown>[] }).vehicles)
-            ? (userData as { vehicles: Record<string, unknown>[] }).vehicles.map(normalizeUserVehicle)
+          vehicles: Array.isArray((userData as any).vehicles)
+            ? ((userData as any).vehicles as Record<string, unknown>[]).map(normalizeUserVehicle)
             : [],
         } as IUserDetails);
 

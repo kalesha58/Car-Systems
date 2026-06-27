@@ -18,8 +18,8 @@ const resolveApiBaseUrl = (): string => {
   if (!fromEnv) {
     return DEFAULT_API_BASE_URL;
   }
-  // Stale env files often still point at api.motonode.in (missing newer /admin routes).
-  if (fromEnv.includes('api.motonode.in')) {
+  // Stale env files often still point at api.motonode.in or onrender.com (missing newer /admin routes).
+  if (fromEnv.includes('api.motonode.in') || fromEnv.includes('onrender.com')) {
     return DEFAULT_API_BASE_URL;
   }
   return normalizeBaseUrl(fromEnv);
