@@ -427,7 +427,7 @@ export function RegistrationScreen({ navigation }: Props) {
               {selected && <Feather name="check" size={16} color={colors.primary} />}
             </Pressable>
           );
-        })}
+        }) : null}
       </BookingPickerSheet>
 
       <PhotoPickerSheet
