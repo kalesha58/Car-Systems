@@ -163,18 +163,20 @@ export const validateCreateVehicle = (
     }
 
     // Validate images
-    if (!images || !Array.isArray(images)) {
-      return next(new ValidationError('Images are required and must be an array'));
-    }
+    if (images !== undefined) {
+      if (!Array.isArray(images)) {
+        return next(new ValidationError('Images must be an array'));
+      }
 
-    if (images.length < 1 || images.length > 3) {
-      return next(new ValidationError('Vehicle must have between 1 and 3 images'));
-    }
+      if (images.length > 3) {
+        return next(new ValidationError('Vehicle must have at most 3 images'));
+      }
 
-    // Validate each image URL is a string
-    for (const image of images) {
-      if (typeof image !== 'string' || !image.trim()) {
-        return next(new ValidationError('Each image must be a valid URL string'));
+      // Validate each image URL is a string
+      for (const image of images) {
+        if (typeof image !== 'string' || !image.trim()) {
+          return next(new ValidationError('Each image must be a valid URL string'));
+        }
       }
     }
 

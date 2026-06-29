@@ -44,6 +44,7 @@ import { refreshTokenController } from './controllers/authController';
 import adminRoutes from './routes/admin';
 import dropdownRoutes from './routes/dropdownRoutes';
 import appConfigRoutes from './routes/user/appConfigRoutes';
+import vehicleAlertRoutes from './routes/user/vehicleAlertRoutes';
 import webhookRoutes, { razorpayWebhookHandler } from './routes/webhookRoutes';
 import { getServiceCategoriesController } from './controllers/serviceCategoryController';
 import invoiceRoutes from './routes/invoiceRoutes';
@@ -286,6 +287,8 @@ logger.info('[Routes] Dealer routes registered:', {
   path: '/api/user/dealer',
   routes: ['/:dealerId/info', '/:dealerId/verify'],
 });
+app.use('/api/user/vehicle-alerts', vehicleAlertRoutes);
+logger.info('[Routes] Vehicle alert routes mounted at /api/user/vehicle-alerts');
 // Mount notification routes after dealer routes to avoid route conflicts
 app.use('/api/user', notificationRoutes);
 app.use('/api/user/blocks', blockRoutes);

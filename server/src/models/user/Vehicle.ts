@@ -78,13 +78,13 @@ const vehicleSchema = new Schema<any>(
     },
     images: {
       type: [String],
-      required: true,
+      required: false,
       default: [],
       validate: {
         validator: function (v: string[]) {
-          return v.length >= 1 && v.length <= 3;
+          return v.length >= 0 && v.length <= 3;
         },
-        message: 'Vehicle must have between 1 and 3 images',
+        message: 'Vehicle must have at most 3 images',
       },
     },
   },

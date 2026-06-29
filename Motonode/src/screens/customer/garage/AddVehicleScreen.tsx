@@ -444,10 +444,6 @@ export function AddVehicleScreen({ navigation }: Props) {
       Alert.alert('Required', 'Please upload your driving licence.');
       return false;
     }
-    if (vehicleImageUris.length < 1) {
-      Alert.alert('Required', 'Please add at least one vehicle photo.');
-      return false;
-    }
     return true;
   };
 
@@ -479,13 +475,9 @@ export function AddVehicleScreen({ navigation }: Props) {
     setError(null);
 
     try {
-      const uploadedImages = await uploadImagesBatch(
-        vehicleImageUris.map((uri) => ({ uri })),
-      );
-
-      if (uploadedImages.length < 1) {
-        throw new Error('At least one vehicle photo is required.');
-      }
+      const uploadedImages = vehicleImageUris.length > 0
+        ? await uploadImagesBatch(vehicleImageUris.map((uri) => ({ uri })))
+        : [];
 
       const [rcUrl, insuranceUrl, pollutionUrl, dlUrl] = await Promise.all([
         uploadDocument(rcUri),
@@ -547,19 +539,43 @@ export function AddVehicleScreen({ navigation }: Props) {
 
   const renderStep1 = () => (
     <View style={styles.stepContent}>
-      <View style={[styles.introCard, { backgroundColor: colors.primarySubtle }]}>
-        <View style={styles.introText}>
-          <Text style={[styles.introTitle, { color: colors.textPrimary }]}>
-            Add your vehicle details
-          </Text>
-          <Text style={[styles.introSub, { color: colors.textSecondary }]}>
-            Get personalised services and recommendations for your vehicle.
-          </Text>
-        </View>
-        <View style={[styles.introIcon, { backgroundColor: colors.primary }]}>
-          <Feather name="truck" size={28} color={colors.primaryForeground} />
-        </View>
+      <View style={styles.introHeader}>
+        <Text style={[styles.introTitleText, { color: colors.textPrimary }]}>
+          Add your vehicle details
+        </Text>
+        <Text style={[styles.introSubText, { color: colors.textSecondary }]}>
+          Get personalised services and recommendations for your vehicle.
+        </Text>
       </View>
+
+      {/* Vehicle Cover Photo Banner */}
+      <Pressable
+        style={[styles.coverBannerContainer, { borderColor: colors.border }]}
+        onPress={() => {
+          lightHaptic();
+          openPhotoFlow('vehiclePhoto');
+        }}
+      >
+        {vehicleImageUris.length > 0 ? (
+          <View style={styles.coverImageWrapper}>
+            <Image source={{ uri: vehicleImageUris[0] }} style={styles.coverImage} resizeMode="cover" />
+            <View style={styles.coverEditBadge}>
+              <Feather name="camera" size={12} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.coverEditText}>Edit Cover Photo</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.coverPlaceholder, { backgroundColor: colors.primarySubtle }]}>
+            <Feather name="camera" size={24} color={colors.primary} />
+            <Text style={[styles.coverPlaceholderTitle, { color: colors.textPrimary }]}>
+              Add Cover Photo
+            </Text>
+            <Text style={[styles.coverPlaceholderSub, { color: colors.textSecondary }]}>
+              Upload a cover photo for your vehicle (Optional)
+            </Text>
+          </View>
+        )}
+      </Pressable>
 
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vehicle Type</Text>
       <View style={[styles.typeTabsRow, { borderBottomColor: colors.border }]}>
@@ -736,32 +752,6 @@ export function AddVehicleScreen({ navigation }: Props) {
         onPress={() => openPhotoFlow('dl')}
         onRemove={() => setDlUri(null)}
       />
-
-      <DocumentUploadCard
-        title="Vehicle Photo"
-        required
-        icon="camera"
-        iconColor="#3B82F6"
-        uri={vehicleImageUris[0] ?? null}
-        onPress={() => openPhotoFlow('vehiclePhoto')}
-        onRemove={() => setVehicleImageUris([])}
-      />
-
-      {vehicleImageUris.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.extraPhotos}>
-          {vehicleImageUris.slice(1).map((uri, i) => (
-            <View key={uri} style={styles.extraThumbWrap}>
-              <Image source={{ uri }} style={styles.extraThumb} />
-              <Pressable
-                style={styles.removeThumb}
-                onPress={() => setVehicleImageUris((prev) => prev.filter((_, idx) => idx !== i + 1))}
-              >
-                <Feather name="x" size={10} color="#fff" />
-              </Pressable>
-            </View>
-          ))}
-        </ScrollView>
-      )}
 
       <DocumentUploadCard
         title="Additional Documents (Optional)"
@@ -1293,4 +1283,66 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pickerOptionText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  introHeader: {
+    marginBottom: 16,
+    gap: 4,
+  },
+  introTitleText: {
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+  },
+  introSubText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 17,
+  },
+  coverBannerContainer: {
+    height: 150,
+    borderWidth: 1,
+    borderRadius: 16,
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  coverImageWrapper: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  coverEditBadge: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  coverEditText: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#ffffff',
+  },
+  coverPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 4,
+  },
+  coverPlaceholderTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+    marginTop: 6,
+  },
+  coverPlaceholderSub: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+  },
 });
