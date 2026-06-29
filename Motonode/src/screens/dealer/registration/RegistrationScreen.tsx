@@ -14,6 +14,17 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
+import {
+  launchCamera,
+  launchImageLibrary,
+  type ImagePickerResponse,
+} from 'react-native-image-picker';
+
+import { PhotoPermissionModal, PhotoPickerSheet, type PhotoPickerOption } from '@components/modals';
+import { uploadImage } from '@services/upload.service';
+import { getString, setString } from '@storage/index';
+import { StorageKeys } from '@storage/keys';
+import { hasPhotoPermission, requestPhotoPermission, type PhotoSource } from '@utils/photoPermissions';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
@@ -21,6 +32,7 @@ import { BusinessProfile } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { createBusinessRegistrationApi } from '@services/dealer.service';
 
 type DealerStackParamList = {
   [DealerStackRoutes.DealerTabs]: undefined;
@@ -37,19 +49,19 @@ type Props = NativeStackScreenProps<
 >;
 
 const EMPTY: BusinessProfile = {
-  businessName: 'Speed Auto Parts',
-  ownerName: 'Rajesh Kumar',
-  mobile: '+91 98765 43210',
-  email: 'store@example.com',
-  gst: '22AAAAA0000A1Z5',
-  address: 'Shop No, Street, Area',
-  city: 'Bengaluru',
-  state: 'Karnataka',
-  pincode: '560001',
-  upiId: 'store@upi',
-  bankName: 'State Bank of India',
-  accountNumber: '501001234567',
-  ifsc: 'SBIN0001234',
+  businessName: '',
+  ownerName: '',
+  mobile: '',
+  email: '',
+  gst: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
+  upiId: '',
+  bankName: '',
+  accountNumber: '',
+  ifsc: '',
   storeLogo: null,
   storeBanner: null,
 };
@@ -66,6 +78,129 @@ export function RegistrationScreen({ navigation }: Props) {
   const [bannerUploaded, setBannerUploaded] = useState(false);
   const [doc1Uploaded, setDoc1Uploaded] = useState(false);
   const [doc2Uploaded, setDoc2Uploaded] = useState(false);
+
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [permissionVisible, setPermissionVisible] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [permissionLoading, setPermissionLoading] = useState(false);
+  const [pendingSource, setPendingSource] = useState<PhotoSource | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<'banner' | 'logo' | 'gst' | 'pan' | null>(null);
+
+  const [gstDocUrl, setGstDocUrl] = useState<string | null>(null);
+  const [panDocUrl, setPanDocUrl] = useState<string | null>(null);
+
+  const openPhotoPickerFor = (target: 'banner' | 'logo' | 'gst' | 'pan') => {
+    lightHaptic();
+    setUploadTarget(target);
+    setPickerVisible(true);
+  };
+
+  const handlePhotoPickerSelect = (option: PhotoPickerOption) => {
+    lightHaptic();
+    void beginPhotoPick(option);
+  };
+
+  const beginPhotoPick = async (source: PhotoSource) => {
+    setPendingSource(source);
+
+    const rationaleAccepted = await getString(StorageKeys.PHOTO_PERMISSION_RATIONALE);
+    const systemGranted = await hasPhotoPermission(source);
+
+    if (rationaleAccepted === 'true' && systemGranted) {
+      openNativePicker(source);
+      setPendingSource(null);
+      return;
+    }
+
+    setPermissionDenied(false);
+    setPermissionVisible(true);
+  };
+
+  const openNativePicker = (source: PhotoSource) => {
+    const options = {
+      mediaType: 'photo' as const,
+      selectionLimit: 1,
+      quality: 0.8 as const,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      includeBase64: false,
+    };
+
+    if (source === 'camera') {
+      launchCamera(options, applyPickedImage);
+    } else {
+      launchImageLibrary(options, applyPickedImage);
+    }
+  };
+
+  const applyPickedImage = async (response: ImagePickerResponse) => {
+    if (response.didCancel || response.errorCode) {
+      if (response.errorCode === 'permission') {
+        setPendingSource(null);
+        setPermissionDenied(true);
+        setPermissionVisible(true);
+      }
+      return;
+    }
+
+    const pickedUri = response.assets?.[0]?.uri;
+    if (!pickedUri) return;
+
+    setSaving(true);
+    try {
+      const uploadedUrl = await uploadImage(pickedUri);
+      
+      if (uploadTarget === 'banner') {
+        setForm(prev => ({ ...prev, storeBanner: uploadedUrl }));
+        setBannerUploaded(true);
+      } else if (uploadTarget === 'logo') {
+        setForm(prev => ({ ...prev, storeLogo: uploadedUrl }));
+        setLogoUploaded(true);
+      } else if (uploadTarget === 'gst') {
+        setGstDocUrl(uploadedUrl);
+        setDoc1Uploaded(true);
+      } else if (uploadTarget === 'pan') {
+        setPanDocUrl(uploadedUrl);
+        setDoc2Uploaded(true);
+      }
+      successHaptic();
+    } catch (err: any) {
+      console.error('Image upload failed:', err);
+      Alert.alert('Upload Failed', err.message || 'Failed to upload photo. Please try again.');
+    } finally {
+      setSaving(false);
+      setUploadTarget(null);
+    }
+  };
+
+  const handlePermissionAllow = async () => {
+    if (!pendingSource) return;
+
+    setPermissionLoading(true);
+    try {
+      await setString(StorageKeys.PHOTO_PERMISSION_RATIONALE, 'true');
+      const granted = await requestPhotoPermission(pendingSource);
+
+      if (granted) {
+        setPermissionVisible(false);
+        const source = pendingSource;
+        setPendingSource(null);
+        setPermissionDenied(false);
+        openNativePicker(source);
+        return;
+      }
+
+      setPermissionDenied(true);
+    } finally {
+      setPermissionLoading(false);
+    }
+  };
+
+  const handlePermissionDeny = () => {
+    setPermissionVisible(false);
+    setPermissionDenied(false);
+    setPendingSource(null);
+  };
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -124,10 +259,55 @@ export function RegistrationScreen({ navigation }: Props) {
     }
     setSaving(true);
     try {
+      const docPayload = [];
+      if (doc1Uploaded) {
+        docPayload.push({
+          kind: 'GST' as const,
+          url: gstDocUrl || 'https://car-systems.s3.amazonaws.com/gst_cert_signed.pdf',
+        });
+      }
+      if (doc2Uploaded) {
+        docPayload.push({
+          kind: 'PAN' as const,
+          url: panDocUrl || 'https://car-systems.s3.amazonaws.com/pan_card_copy.jpg',
+        });
+      }
+
+      const payload = {
+        businessName: form.businessName,
+        type: dealerType || 'Automobile Showroom',
+        address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
+        phone: form.mobile,
+        gst: form.gst,
+        coverPhoto: form.storeBanner || undefined,
+        payout: form.upiId
+          ? {
+              type: 'UPI',
+              upiId: form.upiId,
+            }
+          : {
+              type: 'BANK',
+              bank: {
+                accountNumber: form.accountNumber || '',
+                ifsc: form.ifsc || '',
+                accountName: form.ownerName || '',
+              },
+            },
+        shopPhotos: form.storeBanner ? [{ url: form.storeBanner }] : [],
+        documents: docPayload,
+      };
+
+      await createBusinessRegistrationApi(payload);
       await saveBusinessProfile(form);
       await completeRegistration();
       successHaptic();
       navigation.replace(DealerStackRoutes.DealerTabs);
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      Alert.alert(
+        'Registration Failed',
+        error.response?.data?.Response?.ReturnMessage || error.message || 'Something went wrong while submitting registration.'
+      );
     } finally {
       setSaving(false);
     }
@@ -135,29 +315,68 @@ export function RegistrationScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <PhotoPickerSheet
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        onSelect={handlePhotoPickerSelect}
+      />
+
+      <PhotoPermissionModal
+        visible={permissionVisible && pendingSource !== null}
+        source={pendingSource ?? 'gallery'}
+        variant={permissionDenied ? 'denied' : 'request'}
+        loading={permissionLoading}
+        onAllow={handlePermissionAllow}
+        onDeny={handlePermissionDeny}
+      />
+
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         
         {/* Automobile Showroom Top Banner */}
-        <View style={styles.bannerContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
-            style={styles.bannerImg}
-          />
+        <Pressable 
+          style={styles.bannerContainer}
+          onPress={() => openPhotoPickerFor('banner')}
+        >
+          {form.storeBanner ? (
+            <Image source={{ uri: form.storeBanner }} style={styles.bannerImg} />
+          ) : (
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
+              style={[styles.bannerImg, { opacity: 0.15 }]}
+            />
+          )}
           <View style={styles.bannerOverlay} />
           
-          <View style={[styles.headerOverlayContent, { paddingTop: topPad + 12 }]}>
-            <Pressable
-              style={styles.backBtn}
-              onPress={handleBack}
-            >
-              <Feather name="arrow-left" size={20} color="#ffffff" />
-            </Pressable>
-            <View style={styles.headerTextGroup}>
-              <Text style={styles.bannerTitle}>Business Registration</Text>
-              <Text style={styles.bannerSubtitle}>{dealerType ?? 'Automobile Showroom'}</Text>
+          <View style={[styles.bannerContentColumn, { paddingTop: topPad + 12 }]}>
+            {/* Top Row: Back button + Title */}
+            <View style={styles.headerTopRow}>
+              <Pressable
+                style={styles.backBtn}
+                onPress={handleBack}
+                hitSlop={8}
+              >
+                <Feather name="arrow-left" size={20} color="#ffffff" />
+              </Pressable>
+              <View style={styles.headerTextGroup}>
+                <Text style={styles.bannerTitle}>Business Registration</Text>
+                <Text style={styles.bannerSubtitle}>{dealerType ?? 'Automobile Showroom'}</Text>
+              </View>
             </View>
+
+            {/* Bottom Row: Camera upload button */}
+            {!form.storeBanner ? (
+              <View style={styles.bannerUploadPromptContainer}>
+                <Feather name="camera" size={16} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.bannerUploadPromptText}>Upload Cover Photo (Optional)</Text>
+              </View>
+            ) : (
+              <View style={styles.bannerUploadedIndicator}>
+                <Feather name="camera" size={12} color="#ffffff" />
+                <Text style={styles.bannerUploadedText}>Change Cover Photo</Text>
+              </View>
+            )}
           </View>
-        </View>
+        </Pressable>
 
         {/* Stepper Card */}
         <View style={styles.stepperContainer}>
@@ -513,10 +732,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       { borderColor: colors.border, backgroundColor: colors.background },
                       logoUploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                     ]}
-                    onPress={() => {
-                      lightHaptic();
-                      setLogoUploaded(true);
-                    }}
+                    onPress={() => openPhotoPickerFor('logo')}
                   >
                     <Feather name={logoUploaded ? "check-circle" : "image"} size={24} color={logoUploaded ? "#10B981" : "#E60012"} />
                     <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Logo</Text>
@@ -529,10 +745,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       { borderColor: colors.border, backgroundColor: colors.background },
                       bannerUploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                     ]}
-                    onPress={() => {
-                      lightHaptic();
-                      setBannerUploaded(true);
-                    }}
+                    onPress={() => openPhotoPickerFor('banner')}
                   >
                     <Feather name={bannerUploaded ? "check-circle" : "camera"} size={24} color={bannerUploaded ? "#10B981" : "#E60012"} />
                     <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Banner</Text>
@@ -563,10 +776,7 @@ export function RegistrationScreen({ navigation }: Props) {
                   { borderColor: colors.border, backgroundColor: '#F8FAFC' },
                   doc1Uploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                 ]}
-                onPress={() => {
-                  lightHaptic();
-                  setDoc1Uploaded(true);
-                }}
+                onPress={() => openPhotoPickerFor('gst')}
               >
                 <View style={styles.docLeft}>
                   <View style={[styles.docIconWrapper, { backgroundColor: doc1Uploaded ? '#D1FAE5' : '#E2E8F0' }]}>
@@ -593,10 +803,7 @@ export function RegistrationScreen({ navigation }: Props) {
                   { borderColor: colors.border, backgroundColor: '#F8FAFC' },
                   doc2Uploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                 ]}
-                onPress={() => {
-                  lightHaptic();
-                  setDoc2Uploaded(true);
-                }}
+                onPress={() => openPhotoPickerFor('pan')}
               >
                 <View style={styles.docLeft}>
                   <View style={[styles.docIconWrapper, { backgroundColor: doc2Uploaded ? '#D1FAE5' : '#E2E8F0' }]}>
@@ -651,9 +858,12 @@ export function RegistrationScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   bannerContainer: {
-    height: 180,
+    height: 210,
     width: '100%',
     position: 'relative',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
   },
   bannerImg: {
     width: '100%',
@@ -661,13 +871,18 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
-  headerOverlayContent: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
+  bannerContentColumn: {
+    ...StyleSheet.absoluteFill,
     paddingHorizontal: 16,
+    justifyContent: 'space-between',
+    paddingBottom: 40,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
   backBtn: {
@@ -858,4 +1073,40 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   saveBtnText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  bannerUploadPromptContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderStyle: 'dashed',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  bannerUploadPromptText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  bannerUploadedIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignSelf: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  bannerUploadedText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+  },
 });

@@ -41,6 +41,7 @@ export const businessRegistrationToInterface = (
         }
       : undefined,
     payout: doc.payout,
+    coverPhoto: doc.coverPhoto,
     shopPhotos: doc.shopPhotos || [],
     documents: doc.documents || [],
     status: doc.status,
@@ -208,6 +209,7 @@ export const createBusinessRegistration = async (
       payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
+      coverPhoto: data.coverPhoto,
       // Validation above ensures shopPhotos exist and are non-empty
       shopPhotos: data.shopPhotos,
       documents: data.documents || [], // Documents are optional, default to empty array
@@ -385,6 +387,10 @@ export const updateBusinessRegistration = async (
         documents: JSON.stringify(docs),
       });
       (registration as any).documents = docs;
+    }
+
+    if (data.coverPhoto !== undefined) {
+      registration.coverPhoto = data.coverPhoto;
     }
 
     if (data.maxDailyBookings !== undefined) {

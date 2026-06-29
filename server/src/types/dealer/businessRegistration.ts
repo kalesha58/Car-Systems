@@ -25,6 +25,7 @@ export interface IBusinessRegistration {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  coverPhoto?: string;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
   status: BusinessRegistrationStatus;
@@ -46,6 +47,7 @@ export interface ICreateBusinessRegistrationRequest {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  coverPhoto?: string;
   shopPhotos: IBusinessRegistrationPhoto[];
   documents: IBusinessRegistrationDocumentFile[];
   maxDailyBookings?: number;
@@ -62,6 +64,7 @@ export interface IUpdateBusinessRegistrationRequest {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  coverPhoto?: string;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];
   maxDailyBookings?: number | null;

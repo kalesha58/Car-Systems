@@ -31,3 +31,8 @@ export async function fetchDealerOnboarding(): Promise<DealerOnboardingSnapshot>
     submittedAt: null,
   };
 }
+
+export async function createBusinessRegistrationApi(payload: any): Promise<any> {
+  const { data } = await api.post('/dealer/business-registration', payload);
+  return data;
+}

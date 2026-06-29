@@ -32,6 +32,7 @@ export interface IBusinessRegistrationDocument extends Document {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  coverPhoto?: string;
   shopPhotos?: {
     url: string;
     publicId?: string;
@@ -133,6 +134,10 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
         },
         accountName: { type: String, trim: true },
       },
+    },
+    coverPhoto: {
+      type: String,
+      default: null,
     },
     shopPhotos: {
       type: [shopPhotoSchema],

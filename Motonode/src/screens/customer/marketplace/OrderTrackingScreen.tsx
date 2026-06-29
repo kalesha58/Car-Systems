@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   },
   mapBg: { width: '100%', height: '100%' },
   mapOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.35)',
     flexDirection: 'row',
     alignItems: 'center',

@@ -24,7 +24,7 @@ import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
 import { useAuth } from '@context/index';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
-import { getUserVehicleById } from '@services/userVehicle.service';
+import { getUserVehicleById, deleteUserVehicle } from '@services/userVehicle.service';
 import type { UserVehicle } from '../../../types/userVehicle';
 import { extractAuthErrorMessage } from '@utils/authErrors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
@@ -52,6 +52,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingDocUrl, setViewingDocUrl] = useState<string | null>(null);
+  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [isPrimary, setIsPrimary] = useState(false);
 
   const loadVehicle = useCallback(
@@ -80,6 +81,14 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
     [vehicleId],
   );
 
+  const startSectionFocus = useCallback(() => {
+    if (focusSection === 'documents') {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: documentsY.current, animated: true });
+      }, 500);
+    }
+  }, [focusSection]);
+
   useFocusEffect(
     useCallback(() => {
       void loadVehicle();
@@ -87,12 +96,10 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
   );
 
   useEffect(() => {
-    if (!vehicle || focusSection !== 'documents') return;
-    const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: documentsY.current, animated: true });
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [vehicle, focusSection]);
+    if (vehicle) {
+      startSectionFocus();
+    }
+  }, [vehicle, startSectionFocus]);
 
   const handleBookService = () => {
     lightHaptic();
@@ -101,17 +108,36 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
     navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, { serviceId });
   };
 
-  const handleMoreOptions = () => {
+  const handleDeleteVehicle = () => {
     lightHaptic();
     Alert.alert(
-      'Vehicle Options',
-      'Manage documents and service history for this vehicle.',
+      'Delete Vehicle',
+      'Are you sure you want to delete this vehicle from your garage?',
       [
-        { text: 'Book Service Now', onPress: handleBookService },
-        { text: 'View Documents', onPress: () => scrollRef.current?.scrollTo({ y: documentsY.current, animated: true }) },
-        { text: 'Cancel', style: 'cancel' }
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await deleteUserVehicle(vehicleId);
+              successHaptic();
+              Alert.alert('Success', 'Vehicle has been successfully deleted.');
+              navigation.goBack();
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete vehicle. Please try again.');
+              setLoading(false);
+            }
+          }
+        }
       ]
     );
+  };
+
+  const handleMoreOptions = () => {
+    lightHaptic();
+    setOptionsModalVisible(true);
   };
 
   const handleEditDetails = () => {
@@ -304,6 +330,71 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
             <Image source={{ uri: viewingDocUrl }} style={styles.docModalImage} resizeMode="contain" />
           ) : null}
         </View>
+      </Modal>
+
+      {/* Custom Bottom Options Modal */}
+      <Modal
+        visible={optionsModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOptionsModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.optionsBackdrop} 
+          onPress={() => setOptionsModalVisible(false)}
+        >
+          <View style={[styles.optionsContent, { backgroundColor: colors.card }]}>
+            <View style={styles.optionsHeader}>
+              <Text style={[styles.optionsTitle, { color: colors.textPrimary }]}>Vehicle Options</Text>
+              <Text style={[styles.optionsSubtitle, { color: colors.textSecondary }]}>
+                Manage documents and options for this vehicle
+              </Text>
+            </View>
+
+            <View style={styles.optionsList}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.optionRow,
+                  pressed && { backgroundColor: colors.primarySubtle }
+                ]}
+                onPress={() => {
+                  setOptionsModalVisible(false);
+                  scrollRef.current?.scrollTo({ y: documentsY.current, animated: true });
+                }}
+              >
+                <View style={[styles.optionIconBox, { backgroundColor: colors.primarySubtle }]}>
+                  <Feather name="file-text" size={18} color={colors.primary} />
+                </View>
+                <Text style={[styles.optionText, { color: colors.textPrimary }]}>View Documents</Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.optionRow,
+                  pressed && { backgroundColor: '#FEE2E2' }
+                ]}
+                onPress={() => {
+                  setOptionsModalVisible(false);
+                  setTimeout(() => {
+                    handleDeleteVehicle();
+                  }, 300);
+                }}
+              >
+                <View style={[styles.optionIconBox, { backgroundColor: '#FEE2E2' }]}>
+                  <Feather name="trash-2" size={18} color="#EF4444" />
+                </View>
+                <Text style={[styles.optionText, { color: '#EF4444' }]}>Delete Vehicle</Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              style={[styles.optionsCancelBtn, { borderColor: colors.border }]}
+              onPress={() => setOptionsModalVisible(false)}
+            >
+              <Text style={[styles.optionsCancelText, { color: colors.textPrimary }]}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
       </Modal>
 
       <ChromeHeader contentPad={8}>
@@ -1042,5 +1133,69 @@ const styles = StyleSheet.create({
   docModalImage: {
     width: '100%',
     height: '80%',
+  },
+  optionsBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  optionsContent: {
+    width: '100%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  optionsHeader: {
+    marginBottom: 20,
+  },
+  optionsTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+    marginBottom: 4,
+  },
+  optionsSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  optionsList: {
+    gap: 12,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    gap: 12,
+  },
+  optionIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  optionsCancelBtn: {
+    marginTop: 16,
+    height: 48,
+    borderWidth: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionsCancelText: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
   },
 });

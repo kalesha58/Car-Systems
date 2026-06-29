@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalBgPressable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalSheet: {
     borderTopLeftRadius: 24,
