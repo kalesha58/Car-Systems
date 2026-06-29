@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -115,6 +116,34 @@ const CITIES_BY_STATE: Record<string, string[]> = {
   ],
 };
 
+const INDIAN_BANKS = [
+  'State Bank of India',
+  'HDFC Bank',
+  'ICICI Bank',
+  'Axis Bank',
+  'Kotak Mahindra Bank',
+  'IndusInd Bank',
+  'Yes Bank',
+  'Punjab National Bank',
+  'Bank of Baroda',
+  'Canara Bank',
+  'Union Bank of India',
+  'Bank of India',
+  'Indian Bank',
+  'Central Bank of India',
+  'Indian Overseas Bank',
+  'UCO Bank',
+  'Bank of Maharashtra',
+  'Federal Bank',
+  'IDBI Bank',
+  'South Indian Bank',
+  'Karnataka Bank',
+  'Karur Vysya Bank',
+  'RBL Bank',
+  'IDFC First Bank',
+  'Bandhan Bank',
+];
+
 export function RegistrationScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -124,23 +153,24 @@ export function RegistrationScreen({ navigation }: Props) {
   const [currentStep, setCurrentStep] = useState(1); // Step 1: Basic Info, Step 2: Business Details, Step 3: Documents
   const [statePickerVisible, setStatePickerVisible] = useState(false);
   const [cityPickerVisible, setCityPickerVisible] = useState(false);
+  const [bankPickerVisible, setBankPickerVisible] = useState(false);
   
-  const [logoUploaded, setLogoUploaded] = useState(false);
-  const [bannerUploaded, setBannerUploaded] = useState(false);
   const [doc1Uploaded, setDoc1Uploaded] = useState(false);
   const [doc2Uploaded, setDoc2Uploaded] = useState(false);
+  const [gstUploading, setGstUploading] = useState(false);
+  const [panUploading, setPanUploading] = useState(false);
 
   const [pickerVisible, setPickerVisible] = useState(false);
   const [permissionVisible, setPermissionVisible] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [pendingSource, setPendingSource] = useState<PhotoSource | null>(null);
-  const [uploadTarget, setUploadTarget] = useState<'banner' | 'logo' | 'gst' | 'pan' | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<'gst' | 'pan' | null>(null);
 
   const [gstDocUrl, setGstDocUrl] = useState<string | null>(null);
   const [panDocUrl, setPanDocUrl] = useState<string | null>(null);
 
-  const openPhotoPickerFor = (target: 'banner' | 'logo' | 'gst' | 'pan') => {
+  const openPhotoPickerFor = (target: 'gst' | 'pan') => {
     lightHaptic();
     setUploadTarget(target);
     setPickerVisible(true);
@@ -197,17 +227,16 @@ export function RegistrationScreen({ navigation }: Props) {
     const pickedUri = response.assets?.[0]?.uri;
     if (!pickedUri) return;
 
+    if (uploadTarget === 'gst') {
+      setGstUploading(true);
+    } else if (uploadTarget === 'pan') {
+      setPanUploading(true);
+    }
     setSaving(true);
     try {
       const uploadedUrl = await uploadImage(pickedUri);
       
-      if (uploadTarget === 'banner') {
-        setForm(prev => ({ ...prev, storeBanner: uploadedUrl }));
-        setBannerUploaded(true);
-      } else if (uploadTarget === 'logo') {
-        setForm(prev => ({ ...prev, storeLogo: uploadedUrl }));
-        setLogoUploaded(true);
-      } else if (uploadTarget === 'gst') {
+      if (uploadTarget === 'gst') {
         setGstDocUrl(uploadedUrl);
         setDoc1Uploaded(true);
       } else if (uploadTarget === 'pan') {
@@ -220,6 +249,8 @@ export function RegistrationScreen({ navigation }: Props) {
       Alert.alert('Upload Failed', err.message || 'Failed to upload photo. Please try again.');
     } finally {
       setSaving(false);
+      setGstUploading(false);
+      setPanUploading(false);
       setUploadTarget(null);
     }
   };
@@ -328,9 +359,10 @@ export function RegistrationScreen({ navigation }: Props) {
         businessName: form.businessName,
         type: dealerType || 'Automobile Showroom',
         address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
+        state: form.state,
+        city: form.city,
         phone: form.mobile,
         gst: form.gst,
-        coverPhoto: form.storeBanner || undefined,
         payout: form.upiId
           ? {
               type: 'UPI',
@@ -344,7 +376,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 accountName: form.ownerName || '',
               },
             },
-        shopPhotos: form.storeBanner ? [{ url: form.storeBanner }] : [],
+        shopPhotos: [],
         documents: docPayload,
       };
 
@@ -366,6 +398,40 @@ export function RegistrationScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <BookingPickerSheet
+        visible={bankPickerVisible}
+        title="Select Bank"
+        onClose={() => setBankPickerVisible(false)}
+      >
+        <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+          {INDIAN_BANKS.map((item) => {
+            const selected = form.bankName === item;
+            return (
+              <Pressable
+                key={item}
+                style={[
+                  styles.pickerOption,
+                  {
+                    backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                    borderColor: selected ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  lightHaptic();
+                  setForm(prev => ({ ...prev, bankName: item }));
+                  setBankPickerVisible(false);
+                }}
+              >
+                <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>
+                  {item}
+                </Text>
+                {selected && <Feather name="check" size={16} color={colors.primary} />}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </BookingPickerSheet>
+
       <BookingPickerSheet
         visible={statePickerVisible}
         title="Select State"
@@ -448,18 +514,11 @@ export function RegistrationScreen({ navigation }: Props) {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         
         {/* Automobile Showroom Top Banner */}
-        <Pressable 
-          style={styles.bannerContainer}
-          onPress={() => openPhotoPickerFor('banner')}
-        >
-          {form.storeBanner ? (
-            <Image source={{ uri: form.storeBanner }} style={styles.bannerImg} />
-          ) : (
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
-              style={[styles.bannerImg, { opacity: 0.15 }]}
-            />
-          )}
+        <View style={styles.bannerContainer}>
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
+            style={[styles.bannerImg, { opacity: 0.15 }]}
+          />
           <View style={styles.bannerOverlay} />
           
           <View style={[styles.bannerContentColumn, { paddingTop: topPad + 12 }]}>
@@ -477,21 +536,8 @@ export function RegistrationScreen({ navigation }: Props) {
                 <Text style={styles.bannerSubtitle}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
             </View>
-
-            {/* Bottom Row: Camera upload button */}
-            {!form.storeBanner ? (
-              <View style={styles.bannerUploadPromptContainer}>
-                <Feather name="camera" size={16} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.bannerUploadPromptText}>Upload Cover Photo (Optional)</Text>
-              </View>
-            ) : (
-              <View style={styles.bannerUploadedIndicator}>
-                <Feather name="camera" size={12} color="#ffffff" />
-                <Text style={styles.bannerUploadedText}>Change Cover Photo</Text>
-              </View>
-            )}
           </View>
-        </Pressable>
+        </View>
 
         {/* Stepper Card */}
         <View style={styles.stepperContainer}>
@@ -794,21 +840,32 @@ export function RegistrationScreen({ navigation }: Props) {
                 </View>
 
                 {/* Bank Name Input */}
-                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                <Pressable
+                  onPress={() => {
+                    lightHaptic();
+                    setBankPickerVisible(true);
+                  }}
+                  style={[styles.inputWrapper, { borderColor: colors.border }]}
+                >
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
                     <Feather name="home" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Bank Name *</Text>
-                    <TextInput
-                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                      value={form.bankName}
-                      onChangeText={(v) => set('bankName', v)}
-                      placeholder="State Bank of India"
-                      placeholderTextColor={colors.textTertiary}
-                    />
+                    <Text
+                      style={[
+                        styles.textInputStyle,
+                        {
+                          color: form.bankName ? colors.textPrimary : colors.textTertiary,
+                          paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+                        },
+                      ]}
+                    >
+                      {form.bankName || 'Select Bank Name'}
+                    </Text>
                   </View>
-                </View>
+                  <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                </Pressable>
 
                 {/* Account Number Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
@@ -846,47 +903,6 @@ export function RegistrationScreen({ navigation }: Props) {
                   </View>
                 </View>
               </View>
-
-              {/* Card 2: Store Media Uploads */}
-              <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={styles.cardHeaderRow}>
-                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
-                    <Feather name="image" size={16} color={colors.icon} />
-                  </View>
-                  <View>
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Store Branding</Text>
-                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>Upload logo and banners</Text>
-                  </View>
-                </View>
-
-                <View style={styles.mediaRow}>
-                  <Pressable
-                    style={[
-                      styles.mediaBtn,
-                      { borderColor: colors.border, backgroundColor: colors.background },
-                      logoUploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
-                    ]}
-                    onPress={() => openPhotoPickerFor('logo')}
-                  >
-                    <Feather name={logoUploaded ? "check-circle" : "image"} size={24} color={logoUploaded ? "#10B981" : "#E60012"} />
-                    <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Logo</Text>
-                    <Text style={[styles.mediaBtnSub, { color: colors.textTertiary }]}>{logoUploaded ? 'Uploaded ✓' : 'Tap to upload'}</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.mediaBtn,
-                      { borderColor: colors.border, backgroundColor: colors.background },
-                      bannerUploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
-                    ]}
-                    onPress={() => openPhotoPickerFor('banner')}
-                  >
-                    <Feather name={bannerUploaded ? "check-circle" : "camera"} size={24} color={bannerUploaded ? "#10B981" : "#E60012"} />
-                    <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Banner</Text>
-                    <Text style={[styles.mediaBtnSub, { color: colors.textTertiary }]}>{bannerUploaded ? 'Uploaded ✓' : 'Tap to upload'}</Text>
-                  </Pressable>
-                </View>
-              </View>
             </>
           )}
 
@@ -910,24 +926,33 @@ export function RegistrationScreen({ navigation }: Props) {
                   { borderColor: colors.border, backgroundColor: '#F8FAFC' },
                   doc1Uploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                 ]}
-                onPress={() => openPhotoPickerFor('gst')}
+                onPress={() => !gstUploading && openPhotoPickerFor('gst')}
+                disabled={gstUploading}
               >
                 <View style={styles.docLeft}>
                   <View style={[styles.docIconWrapper, { backgroundColor: doc1Uploaded ? '#D1FAE5' : '#E2E8F0' }]}>
-                    <Feather name="file-text" size={18} color={doc1Uploaded ? '#10B981' : '#64748B'} />
+                    {gstUploading ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Feather name="file-text" size={18} color={doc1Uploaded ? '#10B981' : '#64748B'} />
+                    )}
                   </View>
                   <View>
                     <Text style={[styles.docLabelTitle, { color: colors.textPrimary }]}>GST Registration Certificate *</Text>
                     <Text style={[styles.docLabelSub, { color: colors.textSecondary }]}>
-                      {doc1Uploaded ? 'gst_cert_signed.pdf (1.2 MB)' : 'Upload PDF copy of your GST certificate'}
+                      {gstUploading ? 'Uploading document...' : doc1Uploaded ? 'GST Certificate uploaded ✓' : 'Upload PDF or image of GST certificate'}
                     </Text>
                   </View>
                 </View>
-                <Feather
-                  name={doc1Uploaded ? "check-circle" : "upload-cloud"}
-                  size={18}
-                  color={doc1Uploaded ? "#10B981" : "#E60012"}
-                />
+                {gstUploading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Feather
+                    name={doc1Uploaded ? "check-circle" : "upload-cloud"}
+                    size={18}
+                    color={doc1Uploaded ? "#10B981" : "#E60012"}
+                  />
+                )}
               </Pressable>
 
               {/* Document 2: PAN Card */}
@@ -937,24 +962,33 @@ export function RegistrationScreen({ navigation }: Props) {
                   { borderColor: colors.border, backgroundColor: '#F8FAFC' },
                   doc2Uploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                 ]}
-                onPress={() => openPhotoPickerFor('pan')}
+                onPress={() => !panUploading && openPhotoPickerFor('pan')}
+                disabled={panUploading}
               >
                 <View style={styles.docLeft}>
                   <View style={[styles.docIconWrapper, { backgroundColor: doc2Uploaded ? '#D1FAE5' : '#E2E8F0' }]}>
-                    <Feather name="credit-card" size={18} color={doc2Uploaded ? '#10B981' : '#64748B'} />
+                    {panUploading ? (
+                      <ActivityIndicator size="small" color={colors.primary} />
+                    ) : (
+                      <Feather name="credit-card" size={18} color={doc2Uploaded ? '#10B981' : '#64748B'} />
+                    )}
                   </View>
                   <View>
                     <Text style={[styles.docLabelTitle, { color: colors.textPrimary }]}>Business PAN Card *</Text>
                     <Text style={[styles.docLabelSub, { color: colors.textSecondary }]}>
-                      {doc2Uploaded ? 'pan_card_copy.jpg (800 KB)' : 'Upload JPG or PDF copy of business PAN'}
+                      {panUploading ? 'Uploading document...' : doc2Uploaded ? 'PAN Card uploaded ✓' : 'Upload JPG or PDF copy of business PAN'}
                     </Text>
                   </View>
                 </View>
-                <Feather
-                  name={doc2Uploaded ? "check-circle" : "upload-cloud"}
-                  size={18}
-                  color={doc2Uploaded ? "#10B981" : "#E60012"}
-                />
+                {panUploading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Feather
+                    name={doc2Uploaded ? "check-circle" : "upload-cloud"}
+                    size={18}
+                    color={doc2Uploaded ? "#10B981" : "#E60012"}
+                  />
+                )}
               </Pressable>
 
             </View>
