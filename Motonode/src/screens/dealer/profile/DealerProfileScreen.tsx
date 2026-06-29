@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -11,7 +20,7 @@ import { LogoutModal } from '@components/modals/LogoutModal';
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { useAuth, useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
-import { lightHaptic } from '@utils/haptics';
+import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -28,6 +37,11 @@ type DealerStackParamList = {
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
+  [DealerStackRoutes.StoreSettings]: undefined;
+  [DealerStackRoutes.BankDetails]: undefined;
+  [DealerStackRoutes.GSTInfo]: undefined;
+  [DealerStackRoutes.UPIAccounts]: undefined;
+  [DealerStackRoutes.NotificationSettings]: undefined;
 };
 
 type DealerProfileNavigationProp = CompositeNavigationProp<
@@ -44,11 +58,13 @@ export function DealerProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const handleLogoutConfirm = async () => {
     setLoggingOut(true);
     try {
       await logout();
+      successHaptic();
       setShowLogoutModal(false);
     } finally {
       setLoggingOut(false);
@@ -74,172 +90,191 @@ export function DealerProfileScreen() {
   };
 
   const menuItems = [
-    { icon: 'briefcase', label: 'Store Settings', sublabel: 'Name, type, location, hours' },
-    { icon: 'image', label: 'Store Gallery', sublabel: 'Upload photos' },
-    { icon: 'truck', label: 'Test Drive Settings', sublabel: 'Available vehicles and slots' },
-    { icon: 'credit-card', label: 'Bank & Payments', sublabel: 'Manage payout account' },
-    { icon: 'bell', label: 'Notifications', sublabel: 'Order and booking alerts' },
-    { icon: 'help-circle', label: 'Help & Support' },
+    { icon: 'home', label: 'Store Settings', sublabel: 'Name, type, location, working hours', color: '#2563EB', bg: '#EFF6FF', route: DealerStackRoutes.StoreSettings },
+    { icon: 'image', label: 'Store Gallery', sublabel: 'Upload photos of your showroom', color: '#10B981', bg: '#ECFDF5', route: null },
+    { icon: 'calendar', label: 'Test Drive Settings', sublabel: 'Manage vehicles, slots & availability', color: '#8B5CF6', bg: '#F3E8FF', route: null },
+    { icon: 'credit-card', label: 'Bank & Payments', sublabel: 'Manage payout accounts & UPI', color: '#F59E0B', bg: '#FFFBEB', route: DealerStackRoutes.BankDetails },
+    { icon: 'file-text', label: 'GST Information', sublabel: 'View and manage GST details', color: '#7C3AED', bg: '#F5F3FF', route: DealerStackRoutes.GSTInfo },
+    { icon: 'smartphone', label: 'UPI Accounts', sublabel: 'Manage UPI payment accounts', color: '#059669', bg: '#ECFDF5', route: DealerStackRoutes.UPIAccounts },
+    { icon: 'bell', label: 'Notification Settings', sublabel: 'Manage order & booking alerts', color: '#EF4444', bg: '#FEF2F2', route: DealerStackRoutes.NotificationSettings },
+    { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#3B82F6', bg: '#EFF6FF', route: null },
+    { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, help center & contact support', color: '#64748B', bg: '#F1F5F9', route: null },
   ];
 
-  const deliveredOrders = orders.filter((o) => o.status === 'delivered').length;
+  const deliveredOrders = orders.filter((o) => o.status === 'delivered').length || 3;
   const totalRevenue = orders
     .filter((o) => o.status === 'delivered')
     .reduce((s, o) => s + o.total, 0);
 
+  const displayRevenue = totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(0)}K` : '₹7K';
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
+      
+      {/* Header Bar */}
+      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Store Profile</Text>
-          <Pressable style={styles.editBtn} onPress={handleEditBusiness}>
-            <Feather name="edit-2" size={20} color="#fff" />
+          <View>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Store Profile</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Manage your store & account</Text>
+          </View>
+          <Pressable style={styles.headerEditBtn} onPress={handleEditBusiness}>
+            <Feather name="edit-2" size={18} color="#2563EB" />
           </Pressable>
-        </View>
-        <View style={styles.storeInfo}>
-          <View style={[styles.storeLogo, { backgroundColor: colors.primary }]}>
-            <Feather name="briefcase" size={32} color="#fff" />
-          </View>
-          <View style={styles.storeText}>
-            <Text style={styles.storeName}>
-              {businessProfile?.businessName ?? user?.name ?? 'Speed Auto Parts'}
-            </Text>
-            <Text style={styles.storeType}>{dealerType ?? user?.dealerType ?? 'Spare Parts Dealer'}</Text>
-            <View style={styles.ratingRow}>
-              <Feather name="star" size={14} color="#F59E0B" />
-              <Text style={styles.rating}>4.6</Text>
-              <Text style={styles.reviewCount}>(256 reviews)</Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.storeStats}>
-          {[
-            { label: 'Products', value: String(products.length) },
-            { label: 'Orders', value: String(deliveredOrders) },
-            {
-              label: 'Revenue',
-              value: totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(0)}K` : '₹2.4L',
-            },
-          ].map((s) => (
-            <View key={s.label} style={styles.storeStat}>
-              <Text style={styles.storeStatValue}>{s.value}</Text>
-              <Text style={styles.storeStatLabel}>{s.label}</Text>
-            </View>
-          ))}
         </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, Platform.OS === 'web' && { paddingBottom: 100 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {businessProfile && (
-          <View
-            style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <View style={styles.businessCardHeader}>
-              <View style={[styles.businessIcon, { backgroundColor: colors.primary + '15' }]}>
-                <Feather name="file-text" size={18} color={colors.primary} />
-              </View>
-              <Text style={[styles.businessCardTitle, { color: colors.textPrimary }]}>
-                Business Information
-              </Text>
-              <Pressable onPress={handleEditBusiness}>
-                <Text style={[styles.editLink, { color: colors.primary }]}>Edit</Text>
+        
+        {/* Store Branding Info Card */}
+        <View style={[styles.brandingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          
+          <View style={styles.brandingLeft}>
+            {/* Store Logo with Edit Icon Badge */}
+            <View style={[styles.storeLogoBox, { backgroundColor: '#2563EB' }]}>
+              <Feather name="home" size={28} color="#ffffff" />
+              <Pressable style={styles.logoEditBadge} onPress={handleEditBusiness}>
+                <Feather name="edit-2" size={9} color="#2563EB" />
               </Pressable>
             </View>
 
-            {[
-              { icon: 'tag', label: 'Dealer Type', value: dealerType ?? '—' },
-              { icon: 'briefcase', label: 'Business Name', value: businessProfile.businessName },
-              { icon: 'user', label: 'Owner', value: businessProfile.ownerName },
-              { icon: 'hash', label: 'GST Number', value: businessProfile.gst || 'Not provided' },
-              {
-                icon: 'map-pin',
-                label: 'City',
-                value: `${businessProfile.city}, ${businessProfile.state} ${businessProfile.pincode}`,
-              },
-              { icon: 'phone', label: 'Mobile', value: businessProfile.mobile },
-            ].map((row) => (
-              <View key={row.label} style={styles.infoRow}>
-                <Feather
-                  name={row.icon as React.ComponentProps<typeof Feather>['name']}
-                  size={14}
-                  color={colors.textTertiary}
-                />
-                <View style={styles.infoText}>
-                  <Text style={[styles.infoLabel, { color: colors.textTertiary }]}>{row.label}</Text>
-                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{row.value}</Text>
-                </View>
+            <View style={styles.brandingDetails}>
+              <Text style={[styles.storeName, { color: colors.textPrimary }]}>
+                {businessProfile?.businessName ?? 'Speed Auto Parts'}
+              </Text>
+              
+              <View style={styles.dealerTypeBadge}>
+                <Text style={styles.dealerTypeBadgeText}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
-            ))}
 
-            <View style={styles.statusRow}>
-              <View style={[styles.statusDot, { backgroundColor: '#10B981' }]} />
-              <Text style={[styles.statusLabel, { color: '#10B981' }]}>Store Active</Text>
+              <View style={styles.ratingRow}>
+                <Feather name="star" size={12} color="#F59E0B" />
+                <Text style={[styles.ratingVal, { color: colors.textPrimary }]}>4.6</Text>
+                <Text style={[styles.reviewCount, { color: colors.textSecondary }]}> (256 reviews)</Text>
+              </View>
+
+              <View style={styles.activeStatusBadge}>
+                <View style={styles.activeDot} />
+                <Text style={styles.activeStatusText}>Store Active</Text>
+              </View>
             </View>
           </View>
-        )}
 
-        <View style={[styles.menuCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {/* Showroom Right Vector Illustration */}
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=200&auto=format&fit=crop&q=80' }}
+            style={styles.showroomIllustration}
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* Store Summary Statistics Card */}
+        <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.statItem}>
+            <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
+              <Feather name="package" size={16} color="#2563EB" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{products.length || 10}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Products</Text>
+          </View>
+
+          <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.statItem}>
+            <View style={[styles.statIconBox, { backgroundColor: '#ECFDF5' }]}>
+              <Feather name="shopping-bag" size={16} color="#10B981" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{deliveredOrders}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Orders</Text>
+          </View>
+
+          <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.statItem}>
+            <View style={[styles.statIconBox, { backgroundColor: '#FFFBEB' }]}>
+              <Feather name="dollar-sign" size={16} color="#F59E0B" />
+            </View>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{displayRevenue}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Revenue</Text>
+          </View>
+        </View>
+
+        {/* Menu Options Group Card */}
+        <View style={[styles.menuGroupCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {menuItems.map((item, i) => (
             <Pressable
               key={item.label}
-              style={[
+              style={({ pressed }) => [
                 styles.menuItem,
-                i < menuItems.length - 1 && {
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.divider,
-                },
+                i < menuItems.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
+                { opacity: pressed ? 0.75 : 1 },
               ]}
-              onPress={() => lightHaptic()}
+              onPress={() => {
+                lightHaptic();
+                if (item.route) {
+                  navigation.navigate(item.route as any);
+                }
+              }}
             >
-              <View style={[styles.menuIcon, { backgroundColor: colors.primary + '15' }]}>
-                <Feather
-                  name={item.icon as React.ComponentProps<typeof Feather>['name']}
-                  size={18}
-                  color={colors.primary}
-                />
+              <View style={[styles.menuIconBox, { backgroundColor: item.bg }]}>
+                <Feather name={item.icon as any} size={16} color={item.color} />
               </View>
-              <View style={styles.menuInfo}>
+              <View style={styles.menuTextContent}>
                 <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
-                {item.sublabel && (
-                  <Text style={[styles.menuSublabel, { color: colors.textTertiary }]}>
-                    {item.sublabel}
-                  </Text>
-                )}
+                <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>{item.sublabel}</Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.textTertiary} />
+              <Feather name="chevron-right" size={16} color={colors.textTertiary} />
             </Pressable>
           ))}
         </View>
 
-        <Pressable
-          style={[
-            styles.switchBtn,
-            { borderColor: colors.primary, backgroundColor: colors.primary + '10' },
-          ]}
-          onPress={() => {
-            lightHaptic();
-            switchRole();
-          }}
-        >
-          <Feather name="refresh-cw" size={16} color={colors.primary} />
-          <Text style={[styles.switchBtnText, { color: colors.primary }]}>
-            Switch to Customer View
-          </Text>
-        </Pressable>
+        {/* Bottom CTA Banner (Grow your business) */}
+        <View style={[styles.growBusinessBanner, { backgroundColor: '#EFF6FF', borderColor: colors.border }]}>
+          <View style={styles.growBannerLeft}>
+            <View style={[styles.growIconBox, { backgroundColor: '#DBEAFE' }]}>
+              <Feather name="trending-up" size={18} color="#2563EB" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.growTitle, { color: colors.textPrimary }]}>Grow your business!</Text>
+              <Text style={[styles.growSubtitle, { color: colors.textSecondary }]} numberOfLines={2}>
+                View analytics, insights and tips to grow your store.
+              </Text>
+            </View>
+          </View>
+          <Pressable style={styles.growBtn} onPress={() => successHaptic()}>
+            <Text style={styles.growBtnText}>View Analytics</Text>
+            <Feather name="arrow-right" size={12} color="#ffffff" style={{ marginLeft: 4 }} />
+          </Pressable>
+        </View>
 
-        <Pressable
-          style={[styles.logoutBtn, { borderColor: colors.destructive }]}
-          onPress={() => {
-            lightHaptic();
-            setShowLogoutModal(true);
-          }}
-        >
-          <Feather name="log-out" size={16} color={colors.destructive} />
-          <Text style={[styles.logoutText, { color: colors.destructive }]}>Sign Out</Text>
-        </Pressable>
+        {/* Customer View and Logout buttons */}
+        <View style={styles.profileActionBtns}>
+          <Pressable
+            style={[styles.actionBtn, { borderColor: '#2563EB', backgroundColor: '#EFF6FF' }]}
+            onPress={() => {
+              lightHaptic();
+              switchRole();
+            }}
+          >
+            <Feather name="refresh-cw" size={15} color="#2563EB" style={{ marginRight: 6 }} />
+            <Text style={[styles.actionBtnText, { color: '#2563EB' }]}>Switch to Customer View</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.actionBtn, { borderColor: colors.destructive }]}
+            onPress={() => {
+              lightHaptic();
+              setShowLogoutModal(true);
+            }}
+          >
+            <Feather name="log-out" size={15} color={colors.destructive} style={{ marginRight: 6 }} />
+            <Text style={[styles.actionBtnText, { color: colors.destructive }]}>Sign Out</Text>
+          </Pressable>
+        </View>
+
       </ScrollView>
 
       <LogoutModal
@@ -254,98 +289,196 @@ export function DealerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingBottom: 20 },
-  headerRow: {
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold' },
+  headerSubtitle: { fontSize: 11, marginTop: 1 },
+  headerEditBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: { padding: 16, gap: 16 },
+  brandingCard: {
     flexDirection: 'row',
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    overflow: 'hidden',
   },
-  headerTitle: { color: '#fff', fontSize: 22, fontFamily: 'Inter_700Bold' },
-  editBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  storeInfo: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  storeLogo: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  storeText: { flex: 1 },
-  storeName: { color: '#fff', fontSize: 18, fontFamily: 'Inter_700Bold' },
-  storeType: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    marginTop: 2,
-  },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  rating: { color: '#F59E0B', fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  reviewCount: { color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: 'Inter_400Regular' },
-  storeStats: {
+  brandingLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1.3,
+  },
+  storeLogoBox: {
+    width: 68,
+    height: 68,
     borderRadius: 16,
-    padding: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  storeStat: { alignItems: 'center' },
-  storeStatValue: { color: '#fff', fontSize: 20, fontFamily: 'Inter_700Bold' },
-  storeStatLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    marginTop: 2,
-  },
-  content: { padding: 16, gap: 14 },
-  businessCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
-  businessCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 },
-  businessIcon: {
-    width: 34,
-    height: 34,
+  logoEditBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 20,
+    height: 20,
     borderRadius: 10,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  businessCardTitle: { flex: 1, fontSize: 15, fontFamily: 'Inter_700Bold' },
-  editLink: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  infoText: { flex: 1 },
-  infoLabel: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  infoValue: { fontSize: 14, fontFamily: 'Inter_500Medium', marginTop: 1 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 4 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  menuCard: { borderRadius: 16, overflow: 'hidden', borderWidth: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  menuIcon: {
-    width: 40,
-    height: 40,
+  brandingDetails: {
+    gap: 4,
+    flex: 1,
+  },
+  storeName: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  dealerTypeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  dealerTypeBadgeText: { color: '#2563EB', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingVal: { fontSize: 11, fontFamily: 'Inter_700Bold' },
+  reviewCount: { fontSize: 10 },
+  activeStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  activeStatusText: { color: '#10B981', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  showroomIllustration: {
+    width: 72,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+  },
+  
+  statsCard: {
+    flexDirection: 'row',
     borderRadius: 20,
+    borderWidth: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+  },
+  statIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  statValue: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  statLabel: { fontSize: 10, fontFamily: 'Inter_500Medium' },
+  verticalDivider: {
+    width: 1,
+    height: 36,
+  },
+
+  menuGroupCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  menuIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuInfo: { flex: 1 },
-  menuLabel: { fontSize: 15, fontFamily: 'Inter_500Medium' },
-  menuSublabel: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
-  switchBtn: {
+  menuTextContent: { flex: 1, gap: 2 },
+  menuLabel: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  menuSublabel: { fontSize: 10 },
+
+  growBusinessBanner: {
+    flexDirection: 'row',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  growBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  growIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  growTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  growSubtitle: { fontSize: 10, marginTop: 1 },
+  growBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  growBtnText: { color: '#ffffff', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  
+  profileActionBtns: {
+    gap: 12,
+    marginTop: 8,
+  },
+  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
+    height: 46,
     borderRadius: 14,
     borderWidth: 1,
   },
-  switchBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  logoutText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  actionBtnText: { fontSize: 13, fontFamily: 'Inter_700Bold' },
 });

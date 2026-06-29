@@ -14,17 +14,18 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 
-import { AIBanner } from '@components/common/AIBanner';
-import { CategoryChip } from '@components/common/CategoryChip';
-import { SectionHeader } from '@components/common/SectionHeader';
+import { BannerCarousel, SectionHeader, PromoBanner, CartIconButton } from '@components/common';
 import { ProductCard } from '@components/cards/ProductCard';
 import { VehicleCard } from '@components/cards/VehicleCard';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
-import { useAuth, useCart } from '@context/index';
-import { CATEGORIES, PRODUCTS, VEHICLES } from '@data/mockData';
+import { useAuth } from '@context/index';
+import { PRODUCTS, VEHICLES, type Vehicle } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { spacing } from '@theme/spacing';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -45,94 +46,155 @@ export function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { count: cartCount } = useCart();
   const { user } = useAuth();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const tabBarPadding = useTabBarBottomPadding();
+
+  // Select one product per category to display variety, showcasing different selling dealers
+  const homeProducts = React.useMemo(() => {
+    const categoriesSeen = new Set<string>();
+    return PRODUCTS.reduce((acc, product) => {
+      if (!categoriesSeen.has(product.category)) {
+        categoriesSeen.add(product.category);
+        acc.push(product);
+      }
+      return acc;
+    }, [] as typeof PRODUCTS);
+  }, []);
+
+  const homeVehicles = [
+    VEHICLES.find((v) => v.id === 'v2'),
+    VEHICLES.find((v) => v.id === 'v3'),
+  ].filter(Boolean) as Vehicle[];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
+      {/* Redesigned Location Header with Swiggy/Zepto style Blue Gradient */}
+      <LinearGradient
+        colors={['#1D4ED8', '#3B82F6']}
+        style={[
+          styles.header,
+          { paddingTop: topPad + 12 },
+        ]}
+      >
         <View style={styles.headerTop}>
           <Pressable style={styles.locationBtn}>
-            <Feather name="map-pin" size={16} color={colors.primary} />
+            <View style={styles.locationIconWrapper}>
+              <View style={styles.whiteLocationDot}>
+                <Feather name="map-pin" size={12} color="#1D4ED8" />
+              </View>
+            </View>
             <View>
-              <Text style={styles.locationLabel}>Deliver to</Text>
+              <Text style={styles.locationLabelSwiggy}>
+                Deliver to
+              </Text>
               <View style={styles.locationRow}>
-                <Text style={styles.locationName}>{user?.location ?? 'Bengaluru'}</Text>
-                <Feather name="chevron-down" size={14} color="#fff" />
+                <Text style={styles.locationNameSwiggy}>
+                  {user?.location ?? 'Koramangala, Bengaluru'}
+                </Text>
+                <Feather name="chevron-down" size={14} color="#ffffff" style={{ marginTop: 2 }} />
               </View>
             </View>
           </Pressable>
           <View style={styles.headerActions}>
             <Pressable
-              style={styles.iconBtn}
+              style={styles.iconBtnSwiggy}
               onPress={() => navigation.navigate(CustomerStackRoutes.Notifications)}
             >
-              <Feather name="bell" size={22} color="#fff" />
+              <Feather name="bell" size={22} color="#ffffff" />
+              <View style={styles.whiteDotBadge} />
             </Pressable>
             <Pressable
-              style={styles.iconBtn}
+              style={styles.iconBtnSwiggy}
               onPress={() => navigation.navigate(CustomerStackRoutes.Cart)}
             >
-              <Feather name="shopping-cart" size={22} color="#fff" />
-              {cartCount > 0 && (
-                <View style={[styles.cartBadge, { backgroundColor: colors.destructive }]}>
-                  <Text style={styles.cartBadgeText}>{cartCount}</Text>
-                </View>
-              )}
+              <Feather name="shopping-cart" size={22} color="#ffffff" />
             </Pressable>
           </View>
         </View>
         <Pressable
-          style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.12)' }]}
+          style={styles.searchBarSwiggy}
           onPress={() => navigation.navigate(CustomerStackRoutes.Search)}
         >
-          <Feather name="search" size={18} color="rgba(255,255,255,0.7)" />
-          <Text style={styles.searchPlaceholder}>Search products, vehicles, services...</Text>
-          <Feather name="camera" size={18} color="rgba(255,255,255,0.7)" />
+          <Feather name="search" size={18} color="#94A3B8" />
+          <Text style={styles.searchPlaceholderSwiggy}>
+            Search products, vehicles, services...
+          </Text>
+          <Feather name="camera" size={18} color="#94A3B8" />
         </Pressable>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, Platform.OS === 'web' && { paddingBottom: 34 }]}
+        nestedScrollEnabled
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarPadding }]}
       >
-        <AIBanner onPress={() => navigation.navigate(CustomerStackRoutes.AiAssistant)} />
+        <BannerCarousel
+          onAiPress={() => navigation.navigate(CustomerStackRoutes.AiAssistant)}
+          onPromoPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
+        />
 
         <SectionHeader
           title="Categories"
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
-        <FlatList
-          data={CATEGORIES}
-          keyExtractor={(i) => i.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesRow}
-          renderItem={({ item }) => (
-            <CategoryChip
-              label={item.label}
-              icon={item.icon}
-              onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
-            />
-          )}
-        />
+        
+        {/* Redesigned 5-Column Category Row */}
+        <View style={styles.categoriesContainer}>
+          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
+            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
+              <Feather name="settings" size={20} color="#2563EB" />
+            </View>
+            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Spare Parts</Text>
+          </Pressable>
+
+          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
+            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
+              <Feather name="tool" size={20} color="#2563EB" />
+            </View>
+            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Accessories</Text>
+          </Pressable>
+
+          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
+            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
+              <Feather name="shield" size={20} color="#2563EB" />
+            </View>
+            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Riding Gear</Text>
+          </Pressable>
+
+          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
+            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
+              <Feather name="disc" size={20} color="#2563EB" />
+            </View>
+            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Tyres</Text>
+          </Pressable>
+
+          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
+            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
+              <Feather name="grid" size={20} color="#2563EB" />
+            </View>
+            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>All Categories</Text>
+          </Pressable>
+        </View>
 
         <SectionHeader
           title="Featured Products"
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
         <FlatList
-          data={PRODUCTS.slice(0, 6)}
+          data={homeProducts}
           keyExtractor={(i) => i.id}
           horizontal
+          nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
           renderItem={({ item }) => (
             <ProductCard
               product={item}
+              variant="compact"
+              showAddToCart
               style={styles.productCard}
               onPress={() =>
                 navigation.navigate(CustomerStackRoutes.ProductDetail, { id: item.id })
@@ -146,9 +208,10 @@ export function HomeScreen() {
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
         <FlatList
-          data={VEHICLES}
+          data={homeVehicles}
           keyExtractor={(i) => i.id}
           horizontal
+          nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
           renderItem={({ item }) => (
@@ -162,21 +225,7 @@ export function HomeScreen() {
           )}
         />
 
-        <View style={styles.offerBanner}>
-          <View style={[styles.offerCard, { backgroundColor: colors.primary }]}>
-            <View>
-              <Text style={styles.offerTitle}>First Service Free!</Text>
-              <Text style={styles.offerSubtitle}>Book any mechanic service and get ₹200 off</Text>
-              <Pressable
-                style={styles.offerBtn}
-                onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
-              >
-                <Text style={styles.offerBtnText}>Book Now</Text>
-              </Pressable>
-            </View>
-            <Feather name="tool" size={64} color="rgba(255,255,255,0.2)" />
-          </View>
-        </View>
+        <PromoBanner onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)} />
       </ScrollView>
     </View>
   );
@@ -184,42 +233,144 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 16, paddingBottom: 16 },
-  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  locationBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  locationLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontFamily: 'Inter_400Regular' },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locationName: { color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' },
-  headerActions: { flexDirection: 'row', gap: 4 },
-  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  cartBadge: {
-    position: 'absolute', top: 4, right: 4,
-    width: 16, height: 16, borderRadius: 8,
-    alignItems: 'center', justifyContent: 'center',
+  header: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  locationBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+  locationIconWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  locationGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationLabel: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationName: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  headerActions: { flexDirection: 'row', gap: 4 },
+  iconBtn: { 
+    width: 40, 
+    height: 40, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  blueDotBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#2563EB',
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
   },
-  searchPlaceholder: { flex: 1, color: 'rgba(255,255,255,0.6)', fontSize: 14, fontFamily: 'Inter_400Regular' },
+  whiteLocationDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationLabelSwiggy: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  locationNameSwiggy: {
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
+    color: '#ffffff',
+  },
+  iconBtnSwiggy: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  whiteDotBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+  },
+  searchBarSwiggy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+    backgroundColor: '#ffffff',
+    marginTop: 8,
+  },
+  searchPlaceholderSwiggy: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#94A3B8',
+  },
+  searchPlaceholder: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular' },
   content: { flex: 1 },
-  scrollContent: { padding: 16, paddingTop: 20 },
-  categoriesRow: { paddingRight: 16, gap: 10, marginBottom: 24 },
-  horizontalList: { paddingRight: 16, gap: 12, marginBottom: 24 },
+  scrollContent: { padding: spacing.md, paddingTop: 20 },
+  categoriesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+    paddingHorizontal: 4,
+  },
+  categoryCard: {
+    alignItems: 'center',
+    width: '18%',
+  },
+  categoryIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  categoryLabelText: {
+    fontSize: 9,
+    fontFamily: 'Inter_500Medium',
+    textAlign: 'center',
+    lineHeight: 12,
+  },
+  horizontalList: { paddingRight: spacing.md, gap: 12, marginBottom: spacing.lg },
   productCard: { marginBottom: 0 },
   vehicleCard: { marginBottom: 0 },
-  offerBanner: { marginBottom: 16 },
-  offerCard: {
-    borderRadius: 20, padding: 20,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  offerTitle: { color: '#fff', fontSize: 18, fontFamily: 'Inter_700Bold', marginBottom: 4 },
-  offerSubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontFamily: 'Inter_400Regular', marginBottom: 12 },
-  offerBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, alignSelf: 'flex-start' },
-  offerBtnText: { color: '#2563EB', fontSize: 13, fontFamily: 'Inter_700Bold' },
 });

@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import { cardShadow } from '@utils/shadows';
 import type { Vehicle } from '@data/mockData';
 
 interface VehicleCardProps {
@@ -18,14 +19,17 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
+        cardShadow,
         { backgroundColor: colors.card, opacity: pressed ? 0.95 : 1 },
         style,
       ]}
       onPress={onNavigate}
     >
       <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
-      <View style={[styles.typeBadge, { backgroundColor: colors.primary }]}>
-        <Text style={styles.typeText}>{vehicle.type === 'bike' ? 'Bike' : 'Car'}</Text>
+      <View style={[styles.typeBadge, { backgroundColor: 'rgba(37, 99, 235, 0.12)' }]}>
+        <Text style={[styles.typeText, { color: colors.primary }]}>
+          {vehicle.type === 'bike' ? 'Bike' : 'Car'}
+        </Text>
       </View>
       <View style={styles.info}>
         <Text style={[styles.brand, { color: colors.primary }]}>{vehicle.brand}</Text>
@@ -48,9 +52,12 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
             <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.year}</Text>
           </View>
         </View>
-        <Text style={[styles.price, { color: colors.textPrimary }]}>
-          ₹{(vehicle.price / 100000).toFixed(2)}L
-        </Text>
+        <View style={styles.priceRow}>
+          <View />
+          <Text style={[styles.price, { color: colors.textPrimary }]}>
+            ₹{(vehicle.price / 100000).toFixed(2)}L
+          </Text>
+        </View>
         <Text style={[styles.dealer, { color: colors.textTertiary }]} numberOfLines={1}>
           {vehicle.dealerName}
         </Text>
@@ -70,13 +77,19 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 20,
   },
-  typeText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  typeText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   info: { padding: 12 },
   brand: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   name: { fontSize: 14, fontFamily: 'Inter_600SemiBold', marginTop: 2, marginBottom: 8 },
   specs: { flexDirection: 'row', gap: 10, marginBottom: 8, flexWrap: 'wrap' },
   specItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   specText: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  price: { fontSize: 18, fontFamily: 'Inter_700Bold', marginBottom: 2 },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  price: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   dealer: { fontSize: 11, fontFamily: 'Inter_400Regular' },
 });

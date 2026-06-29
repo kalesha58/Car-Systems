@@ -47,10 +47,11 @@ export function AIBanner({ onPress }: AIBannerProps) {
         <View style={styles.text}>
           <Text style={styles.title}>AI Assistant</Text>
           <Text style={styles.subtitle}>Your Automotive Companion</Text>
-          <Text style={styles.description}>Diagnose issues, find parts, book services</Text>
+          <Text style={styles.description}>Diagnose issues, find parts, book services & more</Text>
         </View>
         <Pressable style={styles.chatBtn} onPress={handlePress}>
           <Text style={styles.chatBtnText}>Chat Now</Text>
+          <Feather name="chevron-right" size={14} color="#2563EB" />
         </Pressable>
       </View>
     </Pressable>
@@ -89,6 +90,9 @@ const styles = StyleSheet.create({
   },
   description: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontFamily: 'Inter_400Regular' },
   chatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#fff',
     paddingHorizontal: 14,
     paddingVertical: 8,

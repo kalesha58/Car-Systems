@@ -5,8 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@components/common/ErrorBoundary';
 import {
   AuthProvider,
+  BookingsProvider,
   CartProvider,
   DealerProvider,
+  ServiceBookingProvider,
   WishlistProvider,
 } from '@context/index';
 import { linking, RootNavigator } from '@navigation/index';
@@ -18,16 +20,20 @@ function App() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <AuthProvider>
-          <DealerProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-                <NavigationContainer linking={linking}>
-                  <RootNavigator />
-                </NavigationContainer>
-              </WishlistProvider>
-            </CartProvider>
-          </DealerProvider>
+          <BookingsProvider>
+            <DealerProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <ServiceBookingProvider>
+                    <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                    <NavigationContainer linking={linking}>
+                      <RootNavigator />
+                    </NavigationContainer>
+                  </ServiceBookingProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </DealerProvider>
+          </BookingsProvider>
         </AuthProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

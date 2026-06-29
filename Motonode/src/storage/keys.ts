@@ -13,6 +13,7 @@ export const StorageKeys = {
   DEALER_SERVICES: '@motonode_dealer_services',
   DEALER_ORDERS: '@motonode_dealer_orders',
   DRIVE_BOOKINGS: '@motonode_drive_bookings',
+  CUSTOMER_BOOKINGS: '@motonode_customer_bookings',
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

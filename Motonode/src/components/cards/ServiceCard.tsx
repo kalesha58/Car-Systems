@@ -88,7 +88,7 @@ export function ServiceCard({ service, onNavigate, onBookPress }: ServiceCardPro
           </Text>
           <Pressable
             style={[styles.bookBtn, { backgroundColor: colors.primary }]}
-            onPress={onBookPress}
+            onPress={() => onBookPress?.()}
           >
             <Text style={styles.bookBtnText}>Book Now</Text>
           </Pressable>

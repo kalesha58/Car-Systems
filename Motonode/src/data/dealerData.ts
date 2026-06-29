@@ -41,6 +41,24 @@ export const DEALER_TYPE_LIST: DealerTypeInfo[] = [
   { type: "Riding Gear Store",    icon: "shield",      description: "Helmets, jackets, gloves, boots and riding accessories",    color: "#E11D48" },
 ];
 
+/** Dashboard hero illustrations keyed by dealer business type */
+export const DEALER_TYPE_ILLUSTRATIONS: Record<DealerType, string> = {
+  "Automobile Showroom":
+    'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&auto=format&fit=crop&q=80',
+  "Bike Dealer":
+    'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400&auto=format&fit=crop&q=80',
+  "Spare Parts Dealer":
+    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&auto=format&fit=crop&q=80',
+  "Vehicle Wash Station":
+    'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&auto=format&fit=crop&q=80',
+  "Mechanic Workshop":
+    'https://images.unsplash.com/photo-1487754180451-cd872bc30ad5?w=400&auto=format&fit=crop&q=80',
+  "Detailing Center":
+    'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=400&auto=format&fit=crop&q=80',
+  "Riding Gear Store":
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80',
+};
+
 export interface BusinessProfile {
   businessName: string;
   ownerName: string;

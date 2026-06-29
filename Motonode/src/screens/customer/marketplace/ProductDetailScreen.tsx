@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   Platform,
@@ -26,6 +26,7 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.ProductDetail]: { id: string };
   [CustomerStackRoutes.VehicleDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
+  [CustomerStackRoutes.DealerStore]: { id: string };
 };
 
 type ProductDetailScreenProps = NativeStackScreenProps<
@@ -38,10 +39,24 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const insets = useSafeAreaInsets();
   const { id } = route.params;
   const product = PRODUCTS.find((p) => p.id === id);
-  const { addItem, isInCart } = useCart();
+  const { addItem, items, updateQuantity, isInCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  // Retrieve item quantity from cart, or manage local quantity before adding
+  const cartItem = items.find((i) => i.product.id === id);
+  const inCart = !!cartItem;
+  const [localQty, setLocalQty] = useState(cartItem ? cartItem.quantity : 1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const productImages = product ? [
+    product.image,
+    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=500&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=500&auto=format&fit=crop&q=80',
+  ] : [];
 
   if (!product) {
     return (
@@ -54,105 +69,230 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     );
   }
 
-  const inCart = isInCart(product.id);
   const wishlisted = isWishlisted(product.id);
+
+  const handleDecrease = () => {
+    lightHaptic();
+    if (localQty > 1) {
+      const nextQty = localQty - 1;
+      setLocalQty(nextQty);
+      if (inCart) {
+        updateQuantity(product.id, nextQty);
+      }
+    } else if (localQty === 1 && inCart) {
+      // Remove from cart if quantity hits 0
+      updateQuantity(product.id, 0);
+      setLocalQty(1);
+    }
+  };
+
+  const handleIncrease = () => {
+    lightHaptic();
+    const nextQty = localQty + 1;
+    setLocalQty(nextQty);
+    if (inCart) {
+      updateQuantity(product.id, nextQty);
+    }
+  };
 
   const handleAddToCart = () => {
     successHaptic();
     addItem(product);
+    if (localQty > 1) {
+      updateQuantity(product.id, localQty);
+    }
   };
+
+  const benefits = [
+    "Stronger oil film for maximum engine performance",
+    "Reduced engine wear across various driving conditions",
+    "Improved engine efficiency",
+    "Excellent low temperature performance"
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Premium Circular Header Buttons */}
       <View style={[styles.header, { paddingTop: topPad + 8 }]}>
         <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]} onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={22} color={colors.textPrimary} />
+          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
         </Pressable>
-        <Pressable
-          style={[styles.iconBtn, { backgroundColor: colors.card }]}
-          onPress={() => {
-            lightHaptic();
-            toggleWishlist(product.id);
-          }}
-        >
-          <Feather name="heart" size={22} color={wishlisted ? colors.destructive : colors.textSecondary} />
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]}>
+            <Feather name="share-2" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <Pressable
+            style={[styles.iconBtn, { backgroundColor: colors.card }]}
+            onPress={() => {
+              lightHaptic();
+              toggleWishlist(product.id);
+            }}
+          >
+            <Feather name="heart" size={20} color={wishlisted ? colors.destructive : colors.textPrimary} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="cover" />
-
-        <View style={[styles.content, { backgroundColor: colors.background }]}>
-          {product.discount > 0 && (
-            <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
-              <Text style={styles.discountText}>{product.discount}% OFF</Text>
-            </View>
-          )}
-          <Text style={[styles.brand, { color: colors.primary }]}>{product.brand}</Text>
-          <Text style={[styles.name, { color: colors.textPrimary }]}>{product.name}</Text>
-
-          <View style={styles.ratingRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Feather key={star} name="star" size={16} color={star <= Math.floor(product.rating) ? colors.starActive : colors.textTertiary} />
+        {/* Product Image Panel with Left Sidebar Selector */}
+        <View style={styles.imageContainerRow}>
+          {/* Left Thumbnails Selector Sidebar */}
+          <View style={styles.thumbnailSidebar}>
+            {productImages.map((imgUri, idx) => (
+              <Pressable
+                key={idx}
+                style={[
+                  styles.thumbnailWrapper,
+                  { borderColor: activeImageIndex === idx ? '#2563EB' : '#E2E8F0' }
+                ]}
+                onPress={() => {
+                  lightHaptic();
+                  setActiveImageIndex(idx);
+                }}
+              >
+                <Image source={{ uri: imgUri }} style={styles.thumbnailImg} resizeMode="cover" />
+              </Pressable>
             ))}
-            <Text style={[styles.ratingText, { color: colors.textSecondary }]}>{product.rating} ({product.reviews.toLocaleString()} reviews)</Text>
           </View>
 
+          {/* Main Product Image Panel */}
+          <View style={styles.mainImagePanel}>
+            <Image source={{ uri: productImages[activeImageIndex] }} style={styles.productImage} resizeMode="cover" />
+            {product.discount > 0 && (
+              <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
+                <Text style={styles.discountText}>{product.discount}% OFF</Text>
+              </View>
+            )}
+            <View style={styles.pageIndicator}>
+              <Text style={styles.pageIndicatorText}>{activeImageIndex + 1} / {productImages.length}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.content, { backgroundColor: colors.background }]}>
+          {/* Brand & Name */}
+          <Text style={styles.brand}>{product.brand}</Text>
+          <Text style={[styles.name, { color: colors.textPrimary }]}>{product.name}</Text>
+
+          {/* Rating Block */}
+          <View style={styles.ratingRow}>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4].map((star) => (
+                <Feather key={star} name="star" size={14} color="#FBBF24" style={{ marginRight: 2 }} />
+              ))}
+              <Feather name="star" size={14} color="#E2E8F0" />
+            </View>
+            <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>4.5</Text>
+            <Text style={styles.reviewsCount}>({product.reviews.toLocaleString()} reviews)</Text>
+          </View>
+
+          {/* Price Block */}
           <View style={styles.priceRow}>
             <Text style={[styles.price, { color: colors.textPrimary }]}>₹{product.price.toLocaleString('en-IN')}</Text>
             {product.discount > 0 && (
               <Text style={[styles.originalPrice, { color: colors.textTertiary }]}>₹{product.originalPrice.toLocaleString('en-IN')}</Text>
             )}
-            <View style={[styles.stockBadge, { backgroundColor: product.inStock ? colors.success + '20' : colors.destructive + '20' }]}>
-              <Text style={[styles.stockText, { color: product.inStock ? colors.success : colors.destructive }]}>
-                {product.inStock ? 'In Stock' : 'Out of Stock'}
-              </Text>
+            <View style={styles.stockBadge}>
+              <Text style={styles.stockText}>In Stock</Text>
             </View>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Description</Text>
+          {/* Trust Value Badges Row */}
+          <View style={styles.trustBadgesRow}>
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIconWrapper}>
+                <Feather name="shield" size={16} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>100% Genuine</Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>Original Products</Text>
+              </View>
+            </View>
+
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIconWrapper}>
+                <Feather name="refresh-cw" size={16} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Easy Returns</Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>7 Days Return</Text>
+              </View>
+            </View>
+
+            <View style={styles.trustBadge}>
+              <View style={styles.trustIconWrapper}>
+                <Feather name="truck" size={16} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Fast Delivery</Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>2-4 Days Delivery</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Clickable Dealer Card */}
+          <Pressable
+            style={[styles.dealerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => navigation.navigate(CustomerStackRoutes.DealerStore, { id: product.dealerId || 'd1' })}
+          >
+            <View style={[styles.dealerIcon, { backgroundColor: colors.primary + '20' }]}>
+              <Feather name="briefcase" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.dealerInfo}>
+              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{product.dealerName || 'Motonode Auto Hub'}</Text>
+              <Text style={[styles.dealerLabel, { color: colors.textTertiary }]}>Authorized Dealer • {product.distance || '1.2 km'}</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+          </Pressable>
+
+          {/* Description Section */}
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 24 }]}>Description</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{product.description}</Text>
 
-          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tags</Text>
-          <View style={styles.tagsRow}>
-            {product.tags.map((tag) => (
-              <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-                <Text style={[styles.tagText, { color: colors.textSecondary }]}>#{tag}</Text>
+          {/* Key Benefits */}
+          <View style={[styles.benefitsCard, { borderColor: colors.border }]}>
+            <Text style={[styles.benefitsTitle, { color: colors.textPrimary }]}>Key Benefits</Text>
+            {benefits.map((benefit, index) => (
+              <View key={index} style={styles.benefitRow}>
+                <Feather name="check-circle" size={14} color="#3B82F6" style={{ marginTop: 1 }} />
+                <Text style={[styles.benefitText, { color: colors.textSecondary }]}>{benefit}</Text>
               </View>
             ))}
           </View>
 
-          <View style={[styles.deliveryCard, { backgroundColor: colors.card }]}>
-            <Feather name="truck" size={20} color={colors.primary} />
-            <View>
-              <Text style={[styles.deliveryTitle, { color: colors.textPrimary }]}>Free Delivery</Text>
-              <Text style={[styles.deliverySubtitle, { color: colors.textSecondary }]}>Estimated 3-5 business days</Text>
-            </View>
+          {/* Specifications */}
+          <View style={styles.specsHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Specifications</Text>
+            <Pressable style={styles.viewAllBtn}>
+              <Text style={styles.viewAllText}>View All</Text>
+              <Feather name="chevron-right" size={12} color="#2563EB" />
+            </Pressable>
           </View>
         </View>
       </ScrollView>
 
+      {/* Sticky Bottom Bar */}
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
-        {inCart ? (
-          <Pressable
-            style={[styles.cartBtn, { backgroundColor: colors.success }]}
-            onPress={() => navigation.navigate(CustomerStackRoutes.Cart)}
-          >
-            <Feather name="shopping-cart" size={20} color="#fff" />
-            <Text style={styles.cartBtnText}>View Cart</Text>
+        <View style={styles.quantityContainer}>
+          <Pressable style={styles.qtyBtn} onPress={handleDecrease}>
+            <Feather name="minus" size={14} color="#1F2937" />
           </Pressable>
-        ) : (
-          <Pressable
-            style={({ pressed }) => [styles.cartBtn, { backgroundColor: product.inStock ? colors.primary : colors.disabled, opacity: pressed ? 0.9 : 1 }]}
-            onPress={handleAddToCart}
-            disabled={!product.inStock}
-          >
-            <Feather name="shopping-cart" size={20} color="#fff" />
-            <Text style={styles.cartBtnText}>{product.inStock ? 'Add to Cart' : 'Out of Stock'}</Text>
+          <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{localQty}</Text>
+          <Pressable style={styles.qtyBtn} onPress={handleIncrease}>
+            <Feather name="plus" size={14} color="#1F2937" />
           </Pressable>
-        )}
+        </View>
+
+        <Pressable
+          style={[
+            styles.cartBtn,
+            { backgroundColor: '#2563EB' }
+          ]}
+          onPress={handleAddToCart}
+        >
+          <Feather name="shopping-cart" size={18} color="#fff" />
+          <Text style={styles.cartBtnText}>Add to Cart</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -160,34 +300,213 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8, position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
-  iconBtn: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
-  scrollContent: { paddingBottom: 100 },
-  productImage: { width: '100%', height: 300 },
-  content: { padding: 20, marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  discountBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginBottom: 10 },
-  discountText: { color: '#fff', fontSize: 12, fontFamily: 'Inter_700Bold' },
-  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
-  name: { fontSize: 22, fontFamily: 'Inter_700Bold', lineHeight: 30, marginBottom: 12 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 14 },
-  ratingText: { fontSize: 13, fontFamily: 'Inter_400Regular', marginLeft: 4 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' },
-  price: { fontSize: 28, fontFamily: 'Inter_700Bold' },
-  originalPrice: { fontSize: 16, fontFamily: 'Inter_400Regular', textDecorationLine: 'line-through' },
-  stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  stockText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  divider: { height: 1, marginVertical: 16 },
-  sectionTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginBottom: 8 },
-  description: { fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 22 },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  tagText: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  deliveryCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, marginTop: 16 },
-  deliveryTitle: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
-  deliverySubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  bottomBar: { borderTopWidth: 1, padding: 16 },
-  cartBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 16 },
-  cartBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  scrollContent: { paddingBottom: 110 },
+  imageContainerRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginTop: 100,
+    gap: 12,
+    height: 280,
+  },
+  thumbnailSidebar: {
+    width: 54,
+    gap: 8,
+    justifyContent: 'center',
+  },
+  thumbnailWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    borderWidth: 2,
+    overflow: 'hidden',
+    padding: 2,
+    backgroundColor: '#ffffff',
+  },
+  thumbnailImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 5,
+  },
+  mainImagePanel: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+    height: '100%',
+    position: 'relative',
+    backgroundColor: '#F8FAFC',
+  },
+  productImage: { width: '100%', height: '100%' },
+  discountBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  discountText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  pageIndicator: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pageIndicatorText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  content: { paddingHorizontal: 16, paddingTop: 16 },
+  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB', marginBottom: 4 },
+  name: { fontSize: 20, fontFamily: 'Inter_700Bold', lineHeight: 28, marginBottom: 8 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  starsContainer: { flexDirection: 'row', alignItems: 'center' },
+  ratingScore: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium', color: '#2563EB' },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  price: { fontSize: 24, fontFamily: 'Inter_700Bold' },
+  originalPrice: { fontSize: 14, fontFamily: 'Inter_400Regular', textDecorationLine: 'line-through' },
+  stockBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  stockText: { fontSize: 10, fontFamily: 'Inter_700Bold', color: '#15803D' },
+  trustBadgesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 12,
+    marginVertical: 4,
+    gap: 8,
+  },
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  trustIconWrapper: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  trustTitle: { fontSize: 9, fontFamily: 'Inter_700Bold' },
+  trustSub: { fontSize: 8, fontFamily: 'Inter_400Regular', marginTop: 1 },
+  dealerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    marginTop: 16,
+    borderWidth: 1,
+  },
+  dealerIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  dealerInfo: { flex: 1 },
+  dealerName: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  dealerLabel: { fontSize: 10, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', marginBottom: 8 },
+  description: { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20, marginBottom: 16 },
+  benefitsCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginVertical: 12,
+  },
+  benefitsTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginBottom: 10 },
+  benefitRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  benefitText: { fontSize: 12, fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 16 },
+  specsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  viewAllText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  bottomBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    padding: 16,
+    alignItems: 'center',
+    gap: 12,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 4,
+    height: 48,
+    backgroundColor: '#ffffff',
+  },
+  qtyBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+    width: 24,
+    textAlign: 'center',
+  },
+  cartBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 12,
+  },
+  cartBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
   notFound: { fontSize: 18, fontFamily: 'Inter_600SemiBold', marginBottom: 12 },
   backLink: { fontSize: 15, fontFamily: 'Inter_500Medium' },
 });

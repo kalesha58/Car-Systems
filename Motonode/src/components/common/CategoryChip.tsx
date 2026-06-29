@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import { cardShadow } from '@utils/shadows';
 
 interface CategoryChipProps {
   label: string;
@@ -18,6 +19,7 @@ export function CategoryChip({ label, icon, isSelected, onPress }: CategoryChipP
     <Pressable
       style={[
         styles.container,
+        cardShadow,
         {
           backgroundColor: isSelected ? colors.primary : colors.card,
           borderColor: isSelected ? colors.primary : colors.border,

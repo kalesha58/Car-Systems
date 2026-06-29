@@ -12,6 +12,9 @@ export interface Product {
   description: string;
   inStock: boolean;
   tags: string[];
+  dealerName?: string;
+  dealerId?: string;
+  distance?: string;
 }
 
 export interface Vehicle {
@@ -122,6 +125,8 @@ export const PRODUCTS: Product[] = [
     description: "Castrol EDGE with Fluid TITANIUM Technology is our strongest oil yet, formulated with Fluid TITANIUM Technology to strengthen the oil film and reduce metal-to-metal contact.",
     inStock: true,
     tags: ["engine-oil", "castrol", "5w30"],
+    dealerName: "Speed Auto Parts",
+    distance: "1.2 km",
   },
   {
     id: "p2",
@@ -137,6 +142,8 @@ export const PRODUCTS: Product[] = [
     description: "The Michelin Pilot Street 2 is designed for sport and sport-touring motorcycles requiring high performance and durability.",
     inStock: true,
     tags: ["tyre", "michelin", "rear"],
+    dealerName: "Balaji Tyre Care",
+    distance: "2.4 km",
   },
   {
     id: "p3",
@@ -152,6 +159,8 @@ export const PRODUCTS: Product[] = [
     description: "Full face helmet with ABS shell, EPS liner for energy absorption, and quick-release visor mechanism.",
     inStock: true,
     tags: ["helmet", "full-face", "steelbird"],
+    dealerName: "Riderz Zone",
+    distance: "3.1 km",
   },
   {
     id: "p4",
@@ -167,6 +176,8 @@ export const PRODUCTS: Product[] = [
     description: "Maintenance-free battery with superior starting power and long life. Suitable for all 150-250cc motorcycles.",
     inStock: true,
     tags: ["battery", "exide", "12v"],
+    dealerName: "Power House Batteries",
+    distance: "1.8 km",
   },
   {
     id: "p5",
@@ -182,6 +193,8 @@ export const PRODUCTS: Product[] = [
     description: "OEM-quality Brembo brake pads for superior stopping power and fade resistance. Compatible with major bike models.",
     inStock: false,
     tags: ["brake-pads", "brembo", "front"],
+    dealerName: "Krishna Bike Workshop",
+    distance: "1.1 km",
   },
   {
     id: "p6",
@@ -197,6 +210,8 @@ export const PRODUCTS: Product[] = [
     description: "Waterproof magnetic tank bag with 20L capacity, transparent map pocket, and quick-release system.",
     inStock: true,
     tags: ["tank-bag", "royal-enfield", "accessories"],
+    dealerName: "RE Indiranagar",
+    distance: "4.0 km",
   },
   {
     id: "p7",
@@ -212,6 +227,8 @@ export const PRODUCTS: Product[] = [
     description: "Universal lambda sensor with 4-wire wideband design. Reduces emissions and improves fuel economy.",
     inStock: true,
     tags: ["sensor", "bosch", "lambda"],
+    dealerName: "Speed Auto Parts",
+    distance: "1.2 km",
   },
   {
     id: "p8",
@@ -227,6 +244,8 @@ export const PRODUCTS: Product[] = [
     description: "Race-replica leather gloves with carbon fiber knuckle protection and Superfabric palm reinforcement.",
     inStock: true,
     tags: ["gloves", "alpinestars", "leather"],
+    dealerName: "Riderz Zone",
+    distance: "3.1 km",
   },
 ];
 
@@ -466,27 +485,27 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
 export const GARAGE_VEHICLES: GarageVehicle[] = [
   {
     id: "gv1",
-    name: "Duke 390",
-    brand: "KTM",
-    year: 2023,
-    regNumber: "KA 01 HB 4832",
-    fuel: "Petrol",
-    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&q=80",
-    nextService: "Jul 15, 2026",
-    insurance: "Expires Dec 2026",
-    kmsDriven: 12480,
-  },
-  {
-    id: "gv2",
     name: "Nexon EV",
     brand: "Tata",
     year: 2024,
     regNumber: "KA 05 EV 2210",
     fuel: "Electric",
-    image: "https://images.unsplash.com/photo-1551830820-330a71b99659?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500&auto=format&fit=crop&q=80",
     nextService: "Sep 10, 2026",
-    insurance: "Expires Mar 2027",
+    insurance: "Expires: Mar 2027",
     kmsDriven: 8230,
+  },
+  {
+    id: "gv2",
+    name: "Nexon EV",
+    brand: "Tata",
+    year: 2023,
+    regNumber: "KA 01 AB 1234",
+    fuel: "Electric",
+    image: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500&auto=format&fit=crop&q=80",
+    nextService: "Jul 15, 2026",
+    insurance: "Expires: Dec 2026",
+    kmsDriven: 12480,
   },
 ];
 
@@ -548,3 +567,81 @@ export const DEALER_INVENTORY = [
   { id: "i4", name: "Exide 12V 35Ah Battery", sku: "EX-BAT-35", price: 3499, stock: 0, category: "Batteries", status: "out_of_stock" },
   { id: "i5", name: "Brembo Front Brake Pads", sku: "BR-BRK-F", price: 1850, stock: 8, category: "Spare Parts", status: "in_stock" },
 ];
+
+export interface ServiceAddon {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface ServiceWorkshop {
+  id: string;
+  name: string;
+  address: string;
+  rating: number;
+  distance: string;
+  dealerId: string;
+}
+
+export interface TimeSlotGroup {
+  period: "Morning" | "Afternoon" | "Evening";
+  slots: string[];
+}
+
+export const SERVICE_ADDONS: ServiceAddon[] = [
+  { id: "a1", name: "Air Filter Cleaning", description: "Deep clean of engine air filter", price: 399 },
+  { id: "a2", name: "Cabin Filter Replacement", description: "Fresh cabin air filter install", price: 699 },
+  { id: "a3", name: "Engine Flush", description: "Flush old oil residues before refill", price: 499 },
+  { id: "a4", name: "Brake Pad Inspection", description: "Full brake system safety check", price: 299 },
+];
+
+export const SERVICE_WORKSHOPS: ServiceWorkshop[] = [
+  {
+    id: "w1",
+    name: "Speed Auto Detailing",
+    address: "MG Road, Koramangala, Bengaluru",
+    rating: 4.6,
+    distance: "2.3 km",
+    dealerId: "d5",
+  },
+  {
+    id: "w2",
+    name: "Krishna Bike Workshop",
+    address: "HSR Layout, Sector 2, Bengaluru",
+    rating: 4.4,
+    distance: "1.1 km",
+    dealerId: "d6",
+  },
+  {
+    id: "w3",
+    name: "AutoFix Service Center",
+    address: "Whitefield Main Road, Bengaluru",
+    rating: 4.3,
+    distance: "4.8 km",
+    dealerId: "d7",
+  },
+];
+
+export const SERVICE_TIME_SLOTS: TimeSlotGroup[] = [
+  { period: "Morning", slots: ["9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM"] },
+  { period: "Afternoon", slots: ["1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM"] },
+  { period: "Evening", slots: ["5:00 PM", "6:00 PM", "7:00 PM"] },
+];
+
+export function getServiceBookingDates(count = 14): { label: string; value: string }[] {
+  const dates: { label: string; value: string }[] = [];
+  const today = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const label = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    const value = d.toISOString().slice(0, 10);
+    dates.push({ label, value });
+  }
+  return dates;
+}
+
+export function generateBookingId(): string {
+  return `SB${Date.now().toString().slice(-8)}`;
+}

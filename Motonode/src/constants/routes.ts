@@ -21,6 +21,22 @@ export const CustomerStackRoutes = {
   ProductDetail: 'ProductDetail',
   VehicleDetail: 'VehicleDetail',
   AiAssistant: 'AiAssistant',
+  DealerStore: 'DealerStore',
+  ServiceDetail: 'ServiceDetail',
+  DriveDetail: 'DriveDetail',
+  MyOrders: 'MyOrders',
+  OrderTracking: 'OrderTracking',
+  Checkout: 'Checkout',
+  Payment: 'Payment',
+  ServiceBookingDateTime: 'ServiceBookingDateTime',
+  ServiceBookingVehicle: 'ServiceBookingVehicle',
+  ServiceBookingLocation: 'ServiceBookingLocation',
+  ServiceBookingAddons: 'ServiceBookingAddons',
+  ServiceBookingSummary: 'ServiceBookingSummary',
+  ServiceBookingPayment: 'ServiceBookingPayment',
+  ServiceBookingConfirmed: 'ServiceBookingConfirmed',
+  ServiceBookingTracking: 'ServiceBookingTracking',
+  BookingDetail: 'BookingDetail',
 } as const;
 
 export const DealerTabRoutes = {
@@ -38,6 +54,13 @@ export const DealerStackRoutes = {
   ProductForm: 'ProductForm',
   VehicleForm: 'VehicleForm',
   ServiceForm: 'ServiceForm',
+  StoreSettings: 'StoreSettings',
+  BankDetails: 'BankDetails',
+  GSTInfo: 'GSTInfo',
+  UPIAccounts: 'UPIAccounts',
+  NotificationSettings: 'NotificationSettings',
+  ServiceBookings: 'ServiceBookings',
+  DealerBookingDetail: 'DealerBookingDetail',
 } as const;
 
 export const RootRoutes = {
