@@ -25,6 +25,8 @@ export interface IBusinessRegistrationDocument extends Document {
   businessName: string;
   type: DealerType;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst?: string;
   location?: {
@@ -99,6 +101,14 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
     address: {
       type: String,
       required: true,
+      trim: true,
+    },
+    state: {
+      type: String,
+      trim: true,
+    },
+    city: {
+      type: String,
       trim: true,
     },
     location: {

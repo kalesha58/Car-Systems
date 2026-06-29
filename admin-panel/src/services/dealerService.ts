@@ -166,6 +166,8 @@ export interface IBusinessRegistration {
   businessName: string;
   type: string;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst: string;
   dealerId?: string;
@@ -265,6 +267,8 @@ export interface ICreateBusinessRegistrationPayload {
   businessName: string;
   type: string;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst: string;
 }
@@ -295,6 +299,8 @@ export interface IUpdateBusinessRegistrationPayload {
   businessName: string;
   type: string;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst: string;
 }

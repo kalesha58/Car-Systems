@@ -32,6 +32,8 @@ export const businessRegistrationToInterface = (
     businessName: doc.businessName,
     type: doc.type,
     address: doc.address,
+    state: doc.state,
+    city: doc.city,
     phone: doc.phone,
     gst: doc.gst,
     location: doc.location
@@ -121,6 +123,14 @@ export const createBusinessRegistration = async (
       throw new AppError('Address is required', 400);
     }
 
+    if (!data.state?.trim()) {
+      throw new AppError('State is required', 400);
+    }
+
+    if (!data.city?.trim()) {
+      throw new AppError('City is required', 400);
+    }
+
     if (!data.phone?.trim()) {
       throw new AppError('Phone number is required', 400);
     }
@@ -204,6 +214,8 @@ export const createBusinessRegistration = async (
       businessName: data.businessName.trim(),
       type: data.type,
       address: data.address.trim(),
+      state: data.state?.trim(),
+      city: data.city?.trim(),
       phone: data.phone.trim(),
       gst: data.gst.trim().toUpperCase(),
       payout: payoutData,
@@ -340,6 +352,20 @@ export const updateBusinessRegistration = async (
         throw new AppError('Address cannot be empty', 400);
       }
       registration.address = data.address.trim();
+    }
+
+    if (data.state !== undefined) {
+      if (!data.state.trim()) {
+        throw new AppError('State cannot be empty', 400);
+      }
+      registration.state = data.state.trim();
+    }
+
+    if (data.city !== undefined) {
+      if (!data.city.trim()) {
+        throw new AppError('City cannot be empty', 400);
+      }
+      registration.city = data.city.trim();
     }
 
     if (data.phone !== undefined) {

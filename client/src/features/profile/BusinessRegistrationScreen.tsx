@@ -56,43 +56,52 @@ const PAYOUT_TYPES: IDropdownOption[] = [
 ];
 
 const INDIAN_STATES: IDropdownOption[] = [
-  { label: 'Andhra Pradesh', value: 'Andhra Pradesh' },
-  { label: 'Arunachal Pradesh', value: 'Arunachal Pradesh' },
-  { label: 'Assam', value: 'Assam' },
-  { label: 'Bihar', value: 'Bihar' },
-  { label: 'Chhattisgarh', value: 'Chhattisgarh' },
-  { label: 'Goa', value: 'Goa' },
-  { label: 'Gujarat', value: 'Gujarat' },
-  { label: 'Haryana', value: 'Haryana' },
-  { label: 'Himachal Pradesh', value: 'Himachal Pradesh' },
-  { label: 'Jharkhand', value: 'Jharkhand' },
-  { label: 'Karnataka', value: 'Karnataka' },
-  { label: 'Kerala', value: 'Kerala' },
-  { label: 'Madhya Pradesh', value: 'Madhya Pradesh' },
-  { label: 'Maharashtra', value: 'Maharashtra' },
-  { label: 'Manipur', value: 'Manipur' },
-  { label: 'Meghalaya', value: 'Meghalaya' },
-  { label: 'Mizoram', value: 'Mizoram' },
-  { label: 'Nagaland', value: 'Nagaland' },
-  { label: 'Odisha', value: 'Odisha' },
-  { label: 'Punjab', value: 'Punjab' },
-  { label: 'Rajasthan', value: 'Rajasthan' },
-  { label: 'Sikkim', value: 'Sikkim' },
-  { label: 'Tamil Nadu', value: 'Tamil Nadu' },
   { label: 'Telangana', value: 'Telangana' },
-  { label: 'Tripura', value: 'Tripura' },
-  { label: 'Uttar Pradesh', value: 'Uttar Pradesh' },
-  { label: 'Uttarakhand', value: 'Uttarakhand' },
-  { label: 'West Bengal', value: 'West Bengal' },
-  { label: 'Andaman and Nicobar Islands', value: 'Andaman and Nicobar Islands' },
-  { label: 'Chandigarh', value: 'Chandigarh' },
-  { label: 'Dadra and Nagar Haveli and Daman and Diu', value: 'Dadra and Nagar Haveli and Daman and Diu' },
-  { label: 'Delhi', value: 'Delhi' },
-  { label: 'Jammu and Kashmir', value: 'Jammu and Kashmir' },
-  { label: 'Ladakh', value: 'Ladakh' },
-  { label: 'Lakshadweep', value: 'Lakshadweep' },
-  { label: 'Puducherry', value: 'Puducherry' },
+  { label: 'Andhra Pradesh', value: 'Andhra Pradesh' },
 ];
+
+const CITIES_BY_STATE: Record<string, IDropdownOption[]> = {
+  'Telangana': [
+    { label: 'Hyderabad', value: 'Hyderabad' },
+    { label: 'Warangal', value: 'Warangal' },
+    { label: 'Nizamabad', value: 'Nizamabad' },
+    { label: 'Karimnagar', value: 'Karimnagar' },
+    { label: 'Khammam', value: 'Khammam' },
+    { label: 'Ramagundam', value: 'Ramagundam' },
+    { label: 'Mahbubnagar', value: 'Mahbubnagar' },
+    { label: 'Nalgonda', value: 'Nalgonda' },
+    { label: 'Adilabad', value: 'Adilabad' },
+    { label: 'Suryapet', value: 'Suryapet' },
+    { label: 'Siddipet', value: 'Siddipet' },
+    { label: 'Miryalaguda', value: 'Miryalaguda' },
+    { label: 'Jagtial', value: 'Jagtial' },
+    { label: 'Mancherial', value: 'Mancherial' },
+  ],
+  'Andhra Pradesh': [
+    { label: 'Visakhapatnam', value: 'Visakhapatnam' },
+    { label: 'Vijayawada', value: 'Vijayawada' },
+    { label: 'Guntur', value: 'Guntur' },
+    { label: 'Nellore', value: 'Nellore' },
+    { label: 'Kurnool', value: 'Kurnool' },
+    { label: 'Rajahmundry', value: 'Rajahmundry' },
+    { label: 'Tirupati', value: 'Tirupati' },
+    { label: 'Kakinada', value: 'Kakinada' },
+    { label: 'Kadapa', value: 'Kadapa' },
+    { label: 'Anantapur', value: 'Anantapur' },
+    { label: 'Eluru', value: 'Eluru' },
+    { label: 'Vizianagaram', value: 'Vizianagaram' },
+    { label: 'Ongole', value: 'Ongole' },
+    { label: 'Nandyal', value: 'Nandyal' },
+    { label: 'Machilipatnam', value: 'Machilipatnam' },
+    { label: 'Adoni', value: 'Adoni' },
+    { label: 'Tenali', value: 'Tenali' },
+    { label: 'Proddatur', value: 'Proddatur' },
+    { label: 'Chittoor', value: 'Chittoor' },
+    { label: 'Hindupur', value: 'Hindupur' },
+    { label: 'Bhimavaram', value: 'Bhimavaram' },
+    { label: 'Madanapalle', value: 'Madanapalle' },
+  ],
+};
 
 const MAX_SHOP_PHOTOS = 2;
 const MAX_UPLOAD_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -212,6 +221,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [pincode, setPincode] = useState(initialDraft?.pincode ?? '');
   const [nearLandmark, setNearLandmark] = useState(initialDraft?.nearLandmark ?? '');
   const [state, setState] = useState(initialDraft?.state ?? '');
+  const [city, setCity] = useState(initialDraft?.city ?? registrationData?.city ?? '');
   const [phone, setPhone] = useState(initialDraft?.phone ?? registrationData?.phone ?? user?.phone ?? '');
   const [gst, setGst] = useState(initialDraft?.gst ?? registrationData?.gst ?? '');
 
@@ -233,6 +243,7 @@ const BusinessRegistrationScreen: React.FC = () => {
   const [dropdownModalVisible, setDropdownModalVisible] = useState(false);
   const [payoutTypeModalVisible, setPayoutTypeModalVisible] = useState(false);
   const [stateModalVisible, setStateModalVisible] = useState(false);
+  const [cityModalVisible, setCityModalVisible] = useState(false);
 
   const existingShopPhotos = useMemo(() => {
     const urls = (registrationData?.shopPhotos || []).map(p => p?.url).filter(Boolean) as string[];
@@ -267,6 +278,8 @@ const BusinessRegistrationScreen: React.FC = () => {
     businessName?: string;
     type?: string;
     address?: string;
+    state?: string;
+    city?: string;
     phone?: string;
     gst?: string;
     upiId?: string;
@@ -296,6 +309,7 @@ const BusinessRegistrationScreen: React.FC = () => {
       pincode,
       nearLandmark,
       state,
+      city,
     };
 
     // 1) MMKV (survives activity recreation). Per-user key so another dealer never loads this draft.
@@ -347,6 +361,7 @@ const BusinessRegistrationScreen: React.FC = () => {
     pincode,
     nearLandmark,
     state,
+    city,
   ]);
 
   const getValidImagePickerAssets = (
@@ -696,6 +711,18 @@ const BusinessRegistrationScreen: React.FC = () => {
         // Documents are optional - no validation needed
         return undefined;
 
+      case 'state':
+        if (!value || !value.trim()) {
+          return 'State is required';
+        }
+        return undefined;
+
+      case 'city':
+        if (!value || !value.trim()) {
+          return 'City is required';
+        }
+        return undefined;
+
       case 'gst':
         if (!value || !value.trim()) {
           return t('dealer.gstRequired') || 'GST number is required';
@@ -719,6 +746,8 @@ const BusinessRegistrationScreen: React.FC = () => {
     errors.businessName = validateField('businessName', businessName);
     errors.type = validateField('type', type);
     errors.address = validateField('address', address);
+    errors.state = validateField('state', state);
+    errors.city = validateField('city', city);
     errors.phone = validateField('phone', phone);
     errors.gst = validateField('gst', gst);
     errors.shopPhotos = validateField('shopPhotos', shopPhotoUris);
@@ -777,6 +806,8 @@ const BusinessRegistrationScreen: React.FC = () => {
       businessName: !!businessName.trim(),
       type: !!type,
       address: !!address.trim(),
+      state: !!state.trim(),
+      city: !!city.trim(),
       phone: !!phone.trim() && isValidPhone(phone),
       gst: isGstValid,
       payout: payoutValid,
@@ -962,15 +993,18 @@ const BusinessRegistrationScreen: React.FC = () => {
 
       // Combine address fields into full address string
       const addressParts = [address.trim()];
+      if (city.trim()) addressParts.push(city.trim());
+      if (state.trim()) addressParts.push(state.trim());
       if (nearLandmark.trim()) addressParts.push(`Near ${nearLandmark.trim()}`);
       if (pincode.trim()) addressParts.push(`Pincode: ${pincode.trim()}`);
-      if (state.trim()) addressParts.push(`State: ${state.trim()}`);
       const fullAddress = addressParts.join(', ');
 
       const data: ICreateBusinessRegistrationRequest = {
         businessName: businessName.trim(),
         type: type as any, // Type assertion to match DealerType enum
         address: fullAddress,
+        state: state.trim(),
+        city: city.trim(),
         phone: phone.trim(),
         gst: gst.trim().toUpperCase(),
         payout: payoutData,
@@ -1538,6 +1572,61 @@ const BusinessRegistrationScreen: React.FC = () => {
               editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
             />
           </View>
+
+          <View style={{ marginTop: screenHeight * 0.012 }}>
+            <CustomText style={styles.label}>State *</CustomText>
+            <TouchableOpacity
+              style={[
+                styles.dropdownButton,
+                !isEdit || (canUpdateFields && editableFields.includes('address')) ? {} : { opacity: 0.6 },
+              ]}
+              onPress={() => {
+                if (!isEdit || (canUpdateFields && editableFields.includes('address'))) {
+                  setStateModalVisible(true);
+                }
+              }}
+              disabled={isEdit && (!canUpdateFields || !editableFields.includes('address'))}>
+              <CustomText style={[styles.dropdownButtonText, !state && { color: colors.disabled }]}>
+                {state || 'Select State'}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
+            </TouchableOpacity>
+            {fieldErrors.state && (
+              <CustomText style={{ color: colors.error, fontSize: RFValue(10), marginTop: 4 }}>
+                {fieldErrors.state}
+              </CustomText>
+            )}
+          </View>
+
+          <View style={{ marginTop: screenHeight * 0.012 }}>
+            <CustomText style={styles.label}>City *</CustomText>
+            <TouchableOpacity
+              style={[
+                styles.dropdownButton,
+                (!isEdit || (canUpdateFields && editableFields.includes('address'))) && state ? {} : { opacity: 0.6 },
+              ]}
+              onPress={() => {
+                if (!state) {
+                  Alert.alert('Select State First', 'Please select a state before selecting a city.');
+                  return;
+                }
+                if (!isEdit || (canUpdateFields && editableFields.includes('address'))) {
+                  setCityModalVisible(true);
+                }
+              }}
+              disabled={(isEdit && (!canUpdateFields || !editableFields.includes('address'))) || !state}>
+              <CustomText style={[styles.dropdownButtonText, !city && { color: colors.disabled }]}>
+                {city || (state ? 'Select City' : 'Select state first')}
+              </CustomText>
+              <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
+            </TouchableOpacity>
+            {fieldErrors.city && (
+              <CustomText style={{ color: colors.error, fontSize: RFValue(10), marginTop: 4 }}>
+                {fieldErrors.city}
+              </CustomText>
+            )}
+          </View>
+
           <View style={{ flexDirection: 'row', gap: screenWidth * 0.02, marginTop: screenHeight * 0.012 }}>
             <View style={{ flex: 1 }}>
               <CustomText style={styles.label}>Pincode</CustomText>
@@ -1555,23 +1644,17 @@ const BusinessRegistrationScreen: React.FC = () => {
               </View>
             </View>
             <View style={{ flex: 1 }}>
-              <CustomText style={styles.label}>State</CustomText>
-              <TouchableOpacity
-                style={[
-                  styles.dropdownButton,
-                  !isEdit || (canUpdateFields && editableFields.includes('address')) ? {} : { opacity: 0.6 },
-                ]}
-                onPress={() => {
-                  if (!isEdit || (canUpdateFields && editableFields.includes('address'))) {
-                    setStateModalVisible(true);
-                  }
-                }}
-                disabled={isEdit && (!canUpdateFields || !editableFields.includes('address'))}>
-                <CustomText style={[styles.dropdownButtonText, !state && { color: colors.disabled }]}>
-                  {state || 'Select State'}
-                </CustomText>
-                <Icon name="chevron-down" size={RFValue(16)} color={colors.text} />
-              </TouchableOpacity>
+              <CustomText style={styles.label}>Landmark</CustomText>
+              <View style={styles.textInputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Near landmark (optional)"
+                  placeholderTextColor={colors.disabled}
+                  value={nearLandmark}
+                  onChangeText={setNearLandmark}
+                  editable={!isEdit || (canUpdateFields && editableFields.includes('address'))}
+                />
+              </View>
             </View>
           </View>
           <View style={{ marginTop: screenHeight * 0.012 }}>
@@ -2158,9 +2241,23 @@ const BusinessRegistrationScreen: React.FC = () => {
         selectedValue={state}
         onSelect={(value) => {
           setState(value);
+          setCity(''); // Reset city on state change
           setStateModalVisible(false);
         }}
         title="Select State"
+        searchable={true}
+      />
+
+      <CustomDropdownModal
+        visible={cityModalVisible}
+        onClose={() => setCityModalVisible(false)}
+        options={state ? (CITIES_BY_STATE[state] || []) : []}
+        selectedValue={city}
+        onSelect={(value) => {
+          setCity(value);
+          setCityModalVisible(false);
+        }}
+        title="Select City"
         searchable={true}
       />
 

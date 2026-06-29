@@ -29,6 +29,54 @@ const BUSINESS_TYPES = [
   'Riding Gear Store',
 ] as const;
 
+const STATES = [
+  'Telangana',
+  'Andhra Pradesh',
+] as const;
+
+const CITIES_BY_STATE: Record<string, string[]> = {
+  'Telangana': [
+    'Hyderabad',
+    'Warangal',
+    'Nizamabad',
+    'Karimnagar',
+    'Khammam',
+    'Ramagundam',
+    'Mahbubnagar',
+    'Nalgonda',
+    'Adilabad',
+    'Suryapet',
+    'Siddipet',
+    'Miryalaguda',
+    'Jagtial',
+    'Mancherial',
+  ],
+  'Andhra Pradesh': [
+    'Visakhapatnam',
+    'Vijayawada',
+    'Guntur',
+    'Nellore',
+    'Kurnool',
+    'Rajahmundry',
+    'Tirupati',
+    'Kakinada',
+    'Kadapa',
+    'Anantapur',
+    'Eluru',
+    'Vizianagaram',
+    'Ongole',
+    'Nandyal',
+    'Machilipatnam',
+    'Adoni',
+    'Tenali',
+    'Proddatur',
+    'Chittoor',
+    'Hindupur',
+    'Bhimavaram',
+    'Madanapalle',
+  ],
+};
+
 export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps> = ({
   isOpen,
   onClose,
@@ -43,6 +91,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
     businessName: '',
     type: 'Automobile Showroom',
     address: '',
+    state: '',
+    city: '',
     phone: '',
     gst: '',
   });
@@ -63,6 +113,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
               businessName: response.Response.businessName || '',
               type: response.Response.type || 'Automobile Showroom',
               address: response.Response.address || '',
+              state: response.Response.state || '',
+              city: response.Response.city || '',
               phone: response.Response.phone || '',
               gst: response.Response.gst || '',
             });
@@ -78,6 +130,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
           businessName: '',
           type: 'Automobile Showroom',
           address: '',
+          state: '',
+          city: '',
           phone: '',
           gst: '',
         });
@@ -101,6 +155,14 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
 
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
+    }
+
+    if (!formData.state || !formData.state.trim()) {
+      newErrors.state = 'State is required';
+    }
+
+    if (!formData.city || !formData.city.trim()) {
+      newErrors.city = 'City is required';
     }
 
     if (!formData.phone.trim()) {
@@ -156,6 +218,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
           businessName: '',
           type: 'Automobile Showroom',
           address: '',
+          state: '',
+          city: '',
           phone: '',
           gst: '',
         });
@@ -197,6 +261,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
           businessName: '',
           type: 'Automobile Showroom',
           address: '',
+          state: '',
+          city: '',
           phone: '',
           gst: '',
         });
@@ -210,6 +276,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
           businessName: '',
           type: 'Automobile Showroom',
           address: '',
+          state: '',
+          city: '',
           phone: '',
           gst: '',
         });
@@ -251,6 +319,8 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
           businessName: '',
           type: 'Automobile Showroom',
           address: '',
+          state: '',
+          city: '',
           phone: '',
           gst: '',
         });
@@ -356,6 +426,73 @@ export const BusinessRegistrationModal: React.FC<IBusinessRegistrationModalProps
               error={errors.address}
               required
             />
+
+            <div style={{ marginBottom: theme.spacing.md }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: theme.spacing.xs,
+                  color: theme.colors.text,
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                }}
+              >
+                State <span style={{ color: theme.colors.error }}>*</span>
+              </label>
+              <Select
+                value={formData.state || ''}
+                onChange={(value) => {
+                  setFormData({ ...formData, state: value, city: '' });
+                  setErrors({ ...errors, state: undefined, city: undefined });
+                }}
+                placeholder="Select state"
+                required
+                error={errors.state}
+                options={STATES.map((state) => ({
+                  value: state,
+                  label: state,
+                }))}
+              />
+              {errors.state && (
+                <div style={{ marginTop: theme.spacing.xs, color: theme.colors.error, fontSize: '0.875rem' }}>
+                  {errors.state}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: theme.spacing.md }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: theme.spacing.xs,
+                  color: theme.colors.text,
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                }}
+              >
+                City <span style={{ color: theme.colors.error }}>*</span>
+              </label>
+              <Select
+                value={formData.city || ''}
+                onChange={(value) => {
+                  setFormData({ ...formData, city: value });
+                  setErrors({ ...errors, city: undefined });
+                }}
+                placeholder={formData.state ? "Select city" : "Select state first"}
+                required
+                disabled={!formData.state}
+                error={errors.city}
+                options={formData.state ? (CITIES_BY_STATE[formData.state] || []).map((city) => ({
+                  value: city,
+                  label: city,
+                })) : []}
+              />
+              {errors.city && (
+                <div style={{ marginTop: theme.spacing.xs, color: theme.colors.error, fontSize: '0.875rem' }}>
+                  {errors.city}
+                </div>
+              )}
+            </div>
 
             <Input
               label="Phone Number"

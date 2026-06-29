@@ -237,6 +237,8 @@ export interface IBusinessRegistration {
   businessName: string;
   type: string;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst?: string;
   location?: {
@@ -343,6 +345,8 @@ export interface ICreateBusinessRegistrationRequest {
   businessName: string;
   type: string;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst?: string;
   payout?: IPayoutCredentials;

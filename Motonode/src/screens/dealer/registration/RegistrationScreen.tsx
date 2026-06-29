@@ -21,6 +21,7 @@ import {
 } from 'react-native-image-picker';
 
 import { PhotoPermissionModal, PhotoPickerSheet, type PhotoPickerOption } from '@components/modals';
+import { BookingPickerSheet } from '@components/booking/pickers/BookingPickerSheet';
 import { uploadImage } from '@services/upload.service';
 import { getString, setString } from '@storage/index';
 import { StorageKeys } from '@storage/keys';
@@ -66,6 +67,54 @@ const EMPTY: BusinessProfile = {
   storeBanner: null,
 };
 
+const STATES = [
+  'Telangana',
+  'Andhra Pradesh',
+];
+
+const CITIES_BY_STATE: Record<string, string[]> = {
+  'Telangana': [
+    'Hyderabad',
+    'Warangal',
+    'Nizamabad',
+    'Karimnagar',
+    'Khammam',
+    'Ramagundam',
+    'Mahbubnagar',
+    'Nalgonda',
+    'Adilabad',
+    'Suryapet',
+    'Siddipet',
+    'Miryalaguda',
+    'Jagtial',
+    'Mancherial',
+  ],
+  'Andhra Pradesh': [
+    'Visakhapatnam',
+    'Vijayawada',
+    'Guntur',
+    'Nellore',
+    'Kurnool',
+    'Rajahmundry',
+    'Tirupati',
+    'Kakinada',
+    'Kadapa',
+    'Anantapur',
+    'Eluru',
+    'Vizianagaram',
+    'Ongole',
+    'Nandyal',
+    'Machilipatnam',
+    'Adoni',
+    'Tenali',
+    'Proddatur',
+    'Chittoor',
+    'Hindupur',
+    'Bhimavaram',
+    'Madanapalle',
+  ],
+};
+
 export function RegistrationScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -73,6 +122,8 @@ export function RegistrationScreen({ navigation }: Props) {
   const [form, setForm] = useState<BusinessProfile>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // Step 1: Basic Info, Step 2: Business Details, Step 3: Documents
+  const [statePickerVisible, setStatePickerVisible] = useState(false);
+  const [cityPickerVisible, setCityPickerVisible] = useState(false);
   
   const [logoUploaded, setLogoUploaded] = useState(false);
   const [bannerUploaded, setBannerUploaded] = useState(false);
@@ -315,6 +366,70 @@ export function RegistrationScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <BookingPickerSheet
+        visible={statePickerVisible}
+        title="Select State"
+        onClose={() => setStatePickerVisible(false)}
+      >
+        {STATES.map((item) => {
+          const selected = form.state === item;
+          return (
+            <Pressable
+              key={item}
+              style={[
+                styles.pickerOption,
+                {
+                  backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                  borderColor: selected ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => {
+                lightHaptic();
+                setForm(prev => ({ ...prev, state: item, city: '' }));
+                setStatePickerVisible(false);
+              }}
+            >
+              <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>
+                {item}
+              </Text>
+              {selected && <Feather name="check" size={16} color={colors.primary} />}
+            </Pressable>
+          );
+        })}
+      </BookingPickerSheet>
+
+      <BookingPickerSheet
+        visible={cityPickerVisible}
+        title="Select City"
+        onClose={() => setCityPickerVisible(false)}
+      >
+        {form.state ? (CITIES_BY_STATE[form.state] || []).map((item) => {
+          const selected = form.city === item;
+          return (
+            <Pressable
+              key={item}
+              style={[
+                styles.pickerOption,
+                {
+                  backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                  borderColor: selected ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => {
+                lightHaptic();
+                setForm(prev => ({ ...prev, city: item }));
+                setCityPickerVisible(false);
+              }}
+            >
+              <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>
+                {item}
+              </Text>
+              {selected && <Feather name="check" size={16} color={colors.primary} />}
+            </Pressable>
+          );
+        })}
+      </BookingPickerSheet>
+
       <PhotoPickerSheet
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
@@ -564,46 +679,65 @@ export function RegistrationScreen({ navigation }: Props) {
                   </View>
                 </View>
 
-                {/* City & State Row (Dropdown chevrons) */}
-                <View style={styles.formRow}>
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="map" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>City *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.city}
-                          onChangeText={(v) => set('city', v)}
-                          placeholder="Bengaluru"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
-                      <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
-                    </View>
+                {/* State Input */}
+                <Pressable
+                  onPress={() => {
+                    lightHaptic();
+                    setStatePickerVisible(true);
+                  }}
+                  style={[styles.inputWrapper, { borderColor: colors.border }]}
+                >
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="map" size={14} color={colors.icon} />
                   </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>State *</Text>
+                    <Text
+                      style={[
+                        styles.textInputStyle,
+                        {
+                          color: form.state ? colors.textPrimary : colors.textTertiary,
+                          paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+                        },
+                      ]}
+                    >
+                      {form.state || 'Select State'}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                </Pressable>
 
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="map" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>State *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.state}
-                          onChangeText={(v) => set('state', v)}
-                          placeholder="Karnataka"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
-                      <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
-                    </View>
+                {/* City Input */}
+                <Pressable
+                  onPress={() => {
+                    if (!form.state) {
+                      Alert.alert('Select State First', 'Please select a state before selecting a city.');
+                      return;
+                    }
+                    lightHaptic();
+                    setCityPickerVisible(true);
+                  }}
+                  style={[styles.inputWrapper, { borderColor: colors.border, opacity: form.state ? 1 : 0.6 }]}
+                >
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="map" size={14} color={colors.icon} />
                   </View>
-                </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>City *</Text>
+                    <Text
+                      style={[
+                        styles.textInputStyle,
+                        {
+                          color: form.city ? colors.textPrimary : colors.textTertiary,
+                          paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+                        },
+                      ]}
+                    >
+                      {form.city || (form.state ? 'Select City' : 'Select state first')}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                </Pressable>
 
                 {/* Pincode Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
@@ -1109,4 +1243,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
   },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  pickerOptionText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
 });

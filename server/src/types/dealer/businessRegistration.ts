@@ -18,6 +18,8 @@ export interface IBusinessRegistration {
   businessName: string;
   type: DealerType;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst?: string;
   location?: {
@@ -40,6 +42,8 @@ export interface ICreateBusinessRegistrationRequest {
   businessName: string;
   type: DealerType;
   address: string;
+  state?: string;
+  city?: string;
   phone: string;
   gst?: string;
   location?: {
@@ -57,6 +61,8 @@ export interface IUpdateBusinessRegistrationRequest {
   businessName?: string;
   type?: DealerType;
   address?: string;
+  state?: string;
+  city?: string;
   phone?: string;
   gst?: string;
   location?: {

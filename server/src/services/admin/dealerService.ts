@@ -794,6 +794,20 @@ export const updateBusinessRegistrationForDealer = async (
       registration.address = data.address.trim();
     }
 
+    if (data.state !== undefined) {
+      if (!data.state.trim()) {
+        throw new NotFoundError('State cannot be empty');
+      }
+      registration.state = data.state.trim();
+    }
+
+    if (data.city !== undefined) {
+      if (!data.city.trim()) {
+        throw new NotFoundError('City cannot be empty');
+      }
+      registration.city = data.city.trim();
+    }
+
     if (data.phone !== undefined) {
       if (!data.phone.trim()) {
         throw new NotFoundError('Phone number cannot be empty');

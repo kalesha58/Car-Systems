@@ -10,6 +10,8 @@ interface IBusinessRegistrationViewModalProps {
     businessName: string;
     type: string;
     address: string;
+    state?: string;
+    city?: string;
     phone: string;
     gst: string;
     status?: string;
@@ -93,6 +95,28 @@ export const BusinessRegistrationViewModal: React.FC<IBusinessRegistrationViewMo
               {data.address}
             </p>
           </div>
+
+          {data.state && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                State
+              </label>
+              <p className="text-sm font-medium text-slate-900 dark:text-white m-0">
+                {data.state}
+              </p>
+            </div>
+          )}
+
+          {data.city && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                City
+              </label>
+              <p className="text-sm font-medium text-slate-900 dark:text-white m-0">
+                {data.city}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
