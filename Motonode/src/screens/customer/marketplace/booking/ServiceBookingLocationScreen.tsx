@@ -48,7 +48,7 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
       </View>
 
       <View style={[styles.mapPlaceholder, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-        <Feather name="map-pin" size={24} color="#2563EB" />
+        <Feather name="map-pin" size={24} color={colors.icon} />
         <Text style={[styles.mapText, { color: colors.textSecondary }]}>
           {draft.locationType === 'pickup'
             ? 'Vehicle will be picked up from your location'
@@ -65,7 +65,7 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
               styles.workshopCard,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#2563EB' : colors.border,
+                borderColor: selected ? '#E60012' : colors.border,
               },
             ]}
             onPress={() => updateBooking({ workshopId: workshop.id })}
@@ -84,7 +84,7 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
                 </Text>
               </View>
             </View>
-            {selected && <Feather name="check-circle" size={20} color="#2563EB" />}
+            {selected && <Feather name="check-circle" size={20} color={colors.icon} />}
           </Pressable>
         );
       })}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  toggleBtnActive: { backgroundColor: '#2563EB' },
+  toggleBtnActive: { backgroundColor: '#E60012' },
   toggleText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
   toggleTextActive: { color: '#ffffff' },
   mapPlaceholder: {

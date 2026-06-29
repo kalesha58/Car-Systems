@@ -11,9 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { BookingStepBar, type BookingStep } from '@components/booking/BookingStepBar';
+import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
 
 interface BookingFlowLayoutProps {
@@ -39,16 +40,14 @@ export function BookingFlowLayout({
   contentContainerStyle,
   children,
 }: BookingFlowLayoutProps) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 10 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={10}>
         <Pressable
           style={styles.backBtn}
           onPress={() => {
@@ -60,7 +59,7 @@ export function BookingFlowLayout({
         </Pressable>
         <Text style={styles.headerTitle}>{title}</Text>
         <View style={styles.headerSpacer} />
-      </LinearGradient>
+      </ChromeHeader>
 
       <View style={styles.stepBarWrap}>
         <BookingStepBar current={step} />
@@ -125,7 +124,7 @@ const styles = StyleSheet.create({
   ctaBtn: {
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
   },

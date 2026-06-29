@@ -11,7 +11,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { VEHICLES } from '@data/mockData';
@@ -48,10 +48,7 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header Panel */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
         </Pressable>
@@ -59,7 +56,7 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
         <Pressable style={styles.iconBtn}>
           <Feather name="share-2" size={20} color="#ffffff" />
         </Pressable>
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Top Vehicle Info Card */}

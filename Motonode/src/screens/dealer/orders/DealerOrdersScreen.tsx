@@ -19,6 +19,7 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { DealerOrder } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -26,7 +27,7 @@ const FILTERS = ['All', 'Pending', 'Accepted', 'Packed', 'Ready', 'Delivered', '
 
 const STATUS_COLORS: Record<string, string> = {
   pending: '#F59E0B',
-  accepted: '#3B82F6',
+  accepted: '#FF1A1A',
   packed: '#8B5CF6',
   ready: '#10B981',
   delivered: '#10B981',
@@ -109,7 +110,7 @@ export function DealerOrdersScreen() {
       case 'pending':
         return { icon: 'shopping-bag', bg: '#FEF3C7', color: '#F59E0B' };
       case 'accepted':
-        return { icon: 'shopping-bag', bg: '#EFF6FF', color: '#3B82F6' };
+        return { icon: 'shopping-bag', bg: '#F2F2F2', color: '#FF1A1A' };
       case 'packed':
         return { icon: 'box', bg: '#F3E8FF', color: '#8B5CF6' };
       default:
@@ -136,7 +137,7 @@ export function DealerOrdersScreen() {
                 <Text style={styles.redBadgeText}>3</Text>
               </View>
             </Pressable>
-            <View style={[styles.totalBadge, { backgroundColor: '#2563EB' }]}>
+            <View style={[styles.totalBadge, { backgroundColor: '#E60012' }]}>
               <Text style={styles.totalBadgeText}>{orders.length} Total</Text>
             </View>
           </View>
@@ -175,7 +176,7 @@ export function DealerOrdersScreen() {
                   key={item}
                   style={[
                     styles.filterChip,
-                    isSelected ? { backgroundColor: '#2563EB' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -211,7 +212,7 @@ export function DealerOrdersScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
-          const statusColor = STATUS_COLORS[item.status] || '#2563EB';
+          const statusColor = STATUS_COLORS[item.status] || '#E60012';
           const canAdvance = NEXT_STATUS[item.status] !== null && item.status !== 'cancelled';
           const headerIconInfo = getHeaderIcon(item.status);
           
@@ -277,7 +278,7 @@ export function DealerOrdersScreen() {
                       {item.item}
                     </Text>
                     <Text style={[styles.productQty, { color: colors.textSecondary }]}>× {item.qty}</Text>
-                    <Text style={[styles.productPrice, { color: '#2563EB' }]}>
+                    <Text style={[styles.productPrice, { color: themeLight.textSecondary }]}>
                       ₹{item.total.toLocaleString('en-IN')}
                     </Text>
                   </View>
@@ -301,7 +302,7 @@ export function DealerOrdersScreen() {
                     // Split buttons for pending & accepted
                     <>
                       <Pressable
-                        style={[styles.splitActionBtn, { backgroundColor: item.status === 'pending' ? '#FFFBEB' : '#EFF6FF' }]}
+                        style={[styles.splitActionBtn, { backgroundColor: item.status === 'pending' ? '#FFFBEB' : '#F2F2F2' }]}
                         onPress={() => handleStatusChange(item)}
                       >
                         <Feather name="arrow-right" size={15} color={statusColor} />
@@ -337,10 +338,10 @@ export function DealerOrdersScreen() {
       />
 
       {/* Redesigned Bottom Business Performance Banner */}
-      <View style={[styles.bottomPerformanceBanner, { backgroundColor: '#EFF6FF', borderTopColor: colors.border }]}>
+      <View style={[styles.bottomPerformanceBanner, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
         <View style={styles.performanceLeft}>
-          <View style={[styles.analyticsIconWrapper, { backgroundColor: '#DBEAFE' }]}>
-            <Feather name="trending-up" size={18} color="#2563EB" />
+          <View style={[styles.analyticsIconWrapper, { backgroundColor: '#F2F2F2' }]}>
+            <Feather name="trending-up" size={18} color={colors.icon} />
           </View>
           <View>
             <Text style={[styles.performanceTitle, { color: colors.textPrimary }]}>Track your business performance</Text>
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold' },
   typeToggle: { flexDirection: 'row', borderRadius: 12, padding: 4, marginTop: 12 },
   typeBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
-  typeBtnActive: { backgroundColor: '#2563EB' },
+  typeBtnActive: { backgroundColor: '#E60012' },
   typeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
   typeTextActive: { color: '#ffffff' },
   headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
@@ -554,7 +555,7 @@ const styles = StyleSheet.create({
   viewAnalyticsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,

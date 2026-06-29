@@ -51,7 +51,7 @@ export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps)
       title: 'AI Assistant',
       subtitle: 'Your Automotive Companion',
       description: 'Diagnose issues, find parts, book services & more',
-      colors: ['#1E40AF', '#3B82F6'],
+      colors: ['#B0000F', '#FF1A1A'],
       icon: 'cpu',
     },
     {
@@ -189,7 +189,7 @@ export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps)
               key={idx}
               style={[
                 styles.dot,
-                isActive ? { backgroundColor: '#2563EB', width: 16 } : { backgroundColor: '#CBD5E1', width: 6 }
+                isActive ? { backgroundColor: '#E60012', width: 16 } : { backgroundColor: '#CBD5E1', width: 6 }
               ]}
             />
           );

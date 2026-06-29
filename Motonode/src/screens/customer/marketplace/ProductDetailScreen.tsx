@@ -16,6 +16,7 @@ import { CustomerStackRoutes } from '@constants/routes';
 import { useCart, useWishlist } from '@context/index';
 import { PRODUCTS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type CustomerStackParamList = {
@@ -143,7 +144,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
                 key={idx}
                 style={[
                   styles.thumbnailWrapper,
-                  { borderColor: activeImageIndex === idx ? '#2563EB' : '#E2E8F0' }
+                  { borderColor: activeImageIndex === idx ? '#E60012' : '#E2E8F0' }
                 ]}
                 onPress={() => {
                   lightHaptic();
@@ -201,7 +202,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           <View style={styles.trustBadgesRow}>
             <View style={styles.trustBadge}>
               <View style={styles.trustIconWrapper}>
-                <Feather name="shield" size={16} color="#2563EB" />
+                <Feather name="shield" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>100% Genuine</Text>
@@ -211,7 +212,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
             <View style={styles.trustBadge}>
               <View style={styles.trustIconWrapper}>
-                <Feather name="refresh-cw" size={16} color="#2563EB" />
+                <Feather name="refresh-cw" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Easy Returns</Text>
@@ -221,7 +222,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
             <View style={styles.trustBadge}>
               <View style={styles.trustIconWrapper}>
-                <Feather name="truck" size={16} color="#2563EB" />
+                <Feather name="truck" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Fast Delivery</Text>
@@ -254,7 +255,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             <Text style={[styles.benefitsTitle, { color: colors.textPrimary }]}>Key Benefits</Text>
             {benefits.map((benefit, index) => (
               <View key={index} style={styles.benefitRow}>
-                <Feather name="check-circle" size={14} color="#3B82F6" style={{ marginTop: 1 }} />
+                <Feather name="check-circle" size={14} color="#FF1A1A" style={{ marginTop: 1 }} />
                 <Text style={[styles.benefitText, { color: colors.textSecondary }]}>{benefit}</Text>
               </View>
             ))}
@@ -265,7 +266,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Specifications</Text>
             <Pressable style={styles.viewAllBtn}>
               <Text style={styles.viewAllText}>View All</Text>
-              <Feather name="chevron-right" size={12} color="#2563EB" />
+              <Feather name="chevron-right" size={12} color={colors.icon} />
             </Pressable>
           </View>
         </View>
@@ -286,7 +287,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
         <Pressable
           style={[
             styles.cartBtn,
-            { backgroundColor: '#2563EB' }
+            { backgroundColor: '#E60012' }
           ]}
           onPress={handleAddToCart}
         >
@@ -387,12 +388,12 @@ const styles = StyleSheet.create({
   },
   pageIndicatorText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   content: { paddingHorizontal: 16, paddingTop: 16 },
-  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB', marginBottom: 4 },
+  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary, marginBottom: 4 },
   name: { fontSize: 20, fontFamily: 'Inter_700Bold', lineHeight: 28, marginBottom: 8 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
   starsContainer: { flexDirection: 'row', alignItems: 'center' },
   ratingScore: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium', color: '#2563EB' },
+  reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   price: { fontSize: 24, fontFamily: 'Inter_700Bold' },
   originalPrice: { fontSize: 14, fontFamily: 'Inter_400Regular', textDecorationLine: 'line-through' },
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  viewAllText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  viewAllText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
   bottomBar: {
     flexDirection: 'row',
     borderTopWidth: 1,

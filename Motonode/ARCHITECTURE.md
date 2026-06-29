@@ -69,6 +69,26 @@ RootNavigator
 - @shopify/flash-list
 - react-native-haptic-feedback
 
+## Theming (brand palette)
+
+All UI colors flow from a single source:
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| Raw tokens | `src/theme/brand.ts` | Logo palette hex values only |
+| Semantic palettes | `src/theme/colors.ts` | Light + dark mappings (`primary`, `background`, `textPrimary`, etc.) |
+| Gradients | `src/theme/gradients.ts` | `LinearGradient` presets (`primary`, `header`, `dark`) |
+| Runtime hook | `src/hooks/useColors.ts` | `const colors = useColors()` in components |
+
+**Rules:**
+- Do not add new hex colors in screens or components.
+- Use `colors.primary`, `colors.textSecondary`, `colors.border`, etc. from `useColors()`.
+- For static `StyleSheet.create`, use `themeLight` from `@theme/colors` (light-only) or inline styles with `useColors()`.
+- Import `brand` only inside `src/theme/`.
+- Info blue (`colors.info`) is for informational badges, not primary CTAs.
+
+**Brand primary:** `#E60012` (Primary Red) with deep `#B0000F` for pressed states and gradients.
+
 ## Verification
 
 ```sh

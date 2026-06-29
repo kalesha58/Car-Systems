@@ -14,7 +14,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { LogoutModal } from '@components/modals/LogoutModal';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
@@ -52,10 +52,9 @@ export function CustomerProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<CustomerProfileScreenNavigationProp>();
-  const { user, logout, switchRole } = useAuth();
+  const { user, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const handleLogoutConfirm = async () => {
@@ -87,10 +86,9 @@ export function CustomerProfileScreen() {
       ],
     },
     {
-      title: 'Settings & Dealer',
+      title: 'Settings',
       items: [
         { icon: 'bell', label: 'Notifications', sublabel: 'Manage push notifications', action: () => navigation.navigate(CustomerStackRoutes.Notifications) },
-        { icon: 'briefcase', label: 'Switch to Dealer Mode', sublabel: 'Access and manage dealer profile', action: switchRole },
       ],
     },
   ];
@@ -99,17 +97,14 @@ export function CustomerProfileScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       
       {/* Header Bar */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 12 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
-          <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Profile</Text>
           <Pressable style={styles.settingsBtn}>
-            <Feather name="settings" size={22} color="#ffffff" />
+            <Feather name="settings" size={22} color={colors.headerForeground} />
           </Pressable>
         </View>
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
@@ -123,8 +118,8 @@ export function CustomerProfileScreen() {
             {user?.avatar ? (
               <Image source={{ uri: user.avatar }} style={styles.avatar} />
             ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: '#2563EB' }]}>
-                <Text style={styles.avatarInitial}>{user?.name?.[0] ?? 'U'}</Text>
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primarySubtle }]}>
+                <Text style={[styles.avatarInitial, { color: colors.link }]}>{user?.name?.[0] ?? 'U'}</Text>
               </View>
             )}
             
@@ -133,9 +128,9 @@ export function CustomerProfileScreen() {
               <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email ?? 'arjun@example.com'}</Text>
               
               <View style={styles.metaBadgesRow}>
-                <View style={styles.customerBadge}>
-                  <Feather name="user" size={10} color="#2563EB" style={{ marginRight: 4 }} />
-                  <Text style={styles.customerBadgeText}>Customer</Text>
+                <View style={[styles.customerBadge, { backgroundColor: colors.primarySubtle }]}>
+                  <Feather name="user" size={10} color={colors.link} style={{ marginRight: 4 }} />
+                  <Text style={[styles.customerBadgeText, { color: colors.link }]}>Customer</Text>
                 </View>
                 
                 <View style={styles.locationContainer}>
@@ -147,8 +142,8 @@ export function CustomerProfileScreen() {
               </View>
             </View>
 
-            <Pressable style={styles.editBtn}>
-              <Feather name="edit-2" size={15} color="#2563EB" />
+            <Pressable style={[styles.editBtn, { backgroundColor: colors.muted }]}>
+              <Feather name="edit-2" size={15} color={colors.icon} />
             </Pressable>
           </View>
 
@@ -157,8 +152,8 @@ export function CustomerProfileScreen() {
           {/* Inline stats block */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <View style={[styles.statIconWrapper, { backgroundColor: '#EFF6FF' }]}>
-                <Feather name="shopping-bag" size={16} color="#2563EB" />
+              <View style={[styles.statIconWrapper, { backgroundColor: colors.primarySubtle }]}>
+                <Feather name="shopping-bag" size={16} color={colors.link} />
               </View>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>3</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Orders</Text>
@@ -167,8 +162,8 @@ export function CustomerProfileScreen() {
             <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
 
             <View style={styles.statItem}>
-              <View style={[styles.statIconWrapper, { backgroundColor: '#ECFDF5' }]}>
-                <Feather name="truck" size={16} color="#10B981" />
+              <View style={[styles.statIconWrapper, { backgroundColor: colors.muted }]}>
+                <Feather name="truck" size={16} color={colors.success} />
               </View>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>2</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vehicles</Text>
@@ -177,8 +172,8 @@ export function CustomerProfileScreen() {
             <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
 
             <View style={styles.statItem}>
-              <View style={[styles.statIconWrapper, { backgroundColor: '#FFFBEB' }]}>
-                <Feather name="star" size={16} color="#F59E0B" />
+              <View style={[styles.statIconWrapper, { backgroundColor: colors.muted }]}>
+                <Feather name="star" size={16} color={colors.starActive} />
               </View>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>8</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Reviews</Text>
@@ -205,8 +200,8 @@ export function CustomerProfileScreen() {
                     item.action();
                   }}
                 >
-                  <View style={[styles.menuIcon, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name={item.icon as 'user'} size={18} color="#2563EB" />
+                  <View style={[styles.menuIcon, { backgroundColor: colors.muted }]}>
+                    <Feather name={item.icon as 'user'} size={18} color={colors.icon} />
                   </View>
                   <View style={styles.menuText}>
                     <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>{item.label}</Text>
@@ -248,12 +243,9 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold' },
+  headerTitle: { fontSize: 20, fontFamily: 'Inter_700Bold' },
   settingsBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16 },
   profileCardWrapper: {
@@ -269,7 +261,7 @@ const styles = StyleSheet.create({
   },
   avatar: { width: 72, height: 72, borderRadius: 36 },
   avatarPlaceholder: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { color: '#fff', fontSize: 28, fontFamily: 'Inter_700Bold' },
+  avatarInitial: { fontSize: 28, fontFamily: 'Inter_700Bold' },
   profileInfo: { flex: 1 },
   profileName: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   profileEmail: { fontSize: 12, marginTop: 2 },
@@ -282,12 +274,11 @@ const styles = StyleSheet.create({
   customerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
-  customerBadgeText: { color: '#2563EB', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  customerBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold' },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,7 +288,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },

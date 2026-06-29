@@ -5,6 +5,7 @@
     "types": ["jest"],
     "baseUrl": ".",
     "paths": {
+      "@components/common": ["src/components/common/index.ts"],
       "@components/*": ["src/components/*"],
       "@screens/*": ["src/screens/*"],
       "@navigation/*": ["src/navigation/*"],

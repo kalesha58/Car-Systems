@@ -14,6 +14,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -119,7 +120,7 @@ export function GSTInfoScreen({ navigation }: Props) {
           }}
         >
           <Text style={styles.portalBtnText}>View GST Portal</Text>
-          <Feather name="external-link" size={14} color="#2563EB" />
+          <Feather name="external-link" size={14} color={colors.icon} />
         </Pressable>
       </ScrollView>
     </View>
@@ -157,8 +158,8 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B', marginBottom: 4 },
-  editBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: '#EFF6FF' },
-  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  editBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F2F2F2' },
+  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   gstRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 10, gap: 12 },
   gstLabel: { fontSize: 12, color: '#64748B', fontFamily: 'Inter_400Regular', flex: 1 },
   gstValue: { fontSize: 12, color: '#1E293B', fontFamily: 'Inter_600SemiBold', textAlign: 'right', flex: 1 },
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   portalBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#ffffff', borderRadius: 14, padding: 14,
-    borderWidth: 1.5, borderColor: '#2563EB',
+    borderWidth: 1.5, borderColor: '#E60012',
   },
-  portalBtnText: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  portalBtnText: { fontSize: 14, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
 });

@@ -4,6 +4,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import type { Service } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface ServiceSummaryCardProps {
   service: Service;
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, flexWrap: 'wrap' },
   meta: { fontSize: 10, fontFamily: 'Inter_500Medium' },
   priceCol: { alignItems: 'flex-end', gap: 2 },
-  price: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  price: { fontSize: 16, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   originalPrice: {
     fontSize: 10,
     fontFamily: 'Inter_400Regular',

@@ -1,5 +1,7 @@
 export const StorageKeys = {
   AUTH_TOKEN: 'auth_token',
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER: 'motonode_user',
   ONBOARDED: 'motonode_onboarded',
   CART: 'motonode_cart',
@@ -14,6 +16,7 @@ export const StorageKeys = {
   DEALER_ORDERS: '@motonode_dealer_orders',
   DRIVE_BOOKINGS: '@motonode_drive_bookings',
   CUSTOMER_BOOKINGS: '@motonode_customer_bookings',
+  PHOTO_PERMISSION_RATIONALE: '@motonode_photo_permission_rationale',
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

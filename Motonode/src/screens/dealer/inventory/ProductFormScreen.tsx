@@ -19,6 +19,7 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { DealerProduct } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -145,14 +146,14 @@ export function ProductFormScreen({ route, navigation }: Props) {
               </View>
             </View>
             <View style={styles.imageUploadArea}>
-              <View style={[styles.uploadDropZone, { borderColor: '#BFDBFE' }]}>
-                <View style={[styles.uploadIcon, { backgroundColor: '#EFF6FF' }]}>
-                  <Feather name="upload-cloud" size={22} color="#2563EB" />
+              <View style={[styles.uploadDropZone, { borderColor: '#D9D9D9' }]}>
+                <View style={[styles.uploadIcon, { backgroundColor: '#F2F2F2' }]}>
+                  <Feather name="upload-cloud" size={22} color={colors.icon} />
                 </View>
                 <Text style={[styles.uploadText, { color: colors.textSecondary }]}>Drag & drop images here</Text>
                 <Text style={[styles.uploadOr, { color: colors.textTertiary }]}>or</Text>
                 <Pressable style={styles.galleryBtn} onPress={() => lightHaptic()}>
-                  <Feather name="image" size={13} color="#2563EB" style={{ marginRight: 5 }} />
+                  <Feather name="image" size={13} color={colors.icon} style={{ marginRight: 5 }} />
                   <Text style={styles.galleryBtnText}>Upload from Gallery</Text>
                 </Pressable>
                 <Text style={[styles.uploadHint, { color: colors.textTertiary }]}>JPG, PNG up to 5MB</Text>
@@ -228,8 +229,8 @@ export function ProductFormScreen({ route, navigation }: Props) {
                       key={cat}
                       onPress={() => { lightHaptic(); set('category', cat); }}
                       style={[styles.smallChip, {
-                        backgroundColor: form.category === cat ? '#2563EB' : colors.card,
-                        borderColor: form.category === cat ? '#2563EB' : colors.border,
+                        backgroundColor: form.category === cat ? '#E60012' : colors.card,
+                        borderColor: form.category === cat ? '#E60012' : colors.border,
                       }]}
                     >
                       <Text style={[styles.smallChipText, { color: form.category === cat ? '#fff' : colors.textSecondary }]}>{cat}</Text>
@@ -376,7 +377,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
               <Switch
                 value={form.lowStockAlert as boolean}
                 onValueChange={(v) => set('lowStockAlert', v)}
-                trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
+                trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                 thumbColor="#ffffff"
               />
             </View>
@@ -384,13 +385,13 @@ export function ProductFormScreen({ route, navigation }: Props) {
         </ScrollView>
 
         {/* Product Summary Footer */}
-        <View style={[styles.previewFooter, { backgroundColor: '#EFF6FF', borderTopColor: colors.border }]}>
-          <View style={[styles.previewIconBox, { backgroundColor: '#DBEAFE' }]}>
-            <Feather name="box" size={18} color="#2563EB" />
+        <View style={[styles.previewFooter, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
+          <View style={[styles.previewIconBox, { backgroundColor: '#F2F2F2' }]}>
+            <Feather name="box" size={18} color={colors.icon} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.previewTitle, { color: '#1E3A8A' }]}>Product Summary</Text>
-            <Text style={[styles.previewSub, { color: '#3B82F6' }]}>
+            <Text style={[styles.previewSub, { color: '#FF1A1A' }]}>
               {form.name || 'Product Name'} • {form.category} • {form.sku || 'SKU'}
             </Text>
           </View>
@@ -401,7 +402,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
             </View>
             <View style={{ alignItems: 'center', marginLeft: 14 }}>
               <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-              <Text style={[styles.previewStatValue, { color: '#2563EB' }]}>₹{form.price || '0'}</Text>
+              <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>₹{form.price || '0'}</Text>
             </View>
           </View>
         </View>
@@ -409,7 +410,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
         {/* Sticky Add button */}
         <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
           <Pressable
-            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#2563EB' }]}
+            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={handleSave}
             disabled={saving}
           >
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontSize: 10, marginTop: 1 },
   saveHeaderBtn: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#2563EB', paddingHorizontal: 12,
+    backgroundColor: '#E60012', paddingHorizontal: 12,
     paddingVertical: 7, borderRadius: 8,
   },
   saveHeaderText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionNumberBadge: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#E60012', alignItems: 'center', justifyContent: 'center',
   },
   sectionNumberText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
@@ -461,10 +462,10 @@ const styles = StyleSheet.create({
   uploadOr: { fontSize: 10 },
   galleryBtn: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#2563EB', borderRadius: 8,
+    borderWidth: 1.5, borderColor: '#E60012', borderRadius: 8,
     paddingHorizontal: 14, paddingVertical: 7,
   },
-  galleryBtnText: { color: '#2563EB', fontSize: 11, fontFamily: 'Inter_700Bold' },
+  galleryBtnText: { color: themeLight.textSecondary, fontSize: 11, fontFamily: 'Inter_700Bold' },
   uploadHint: { fontSize: 9, marginTop: 4 },
   twoColRow: { flexDirection: 'row', gap: 12 },
   inputWrapper: { gap: 5 },

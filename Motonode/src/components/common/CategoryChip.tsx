@@ -36,7 +36,7 @@ export function CategoryChip({ label, icon, isSelected, onPress }: CategoryChipP
         <Feather
           name={icon as React.ComponentProps<typeof Feather>['name']}
           size={20}
-          color={isSelected ? '#fff' : colors.primary}
+          color={isSelected ? '#fff' : colors.icon}
         />
       </View>
       <Text style={[styles.label, { color: isSelected ? '#fff' : colors.textPrimary }]}>

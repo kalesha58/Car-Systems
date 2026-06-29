@@ -21,6 +21,9 @@ import { ServiceBookingSummaryScreen } from '@screens/customer/marketplace/booki
 import { ServiceBookingTrackingScreen } from '@screens/customer/marketplace/booking/ServiceBookingTrackingScreen';
 import { ServiceBookingVehicleScreen } from '@screens/customer/marketplace/booking/ServiceBookingVehicleScreen';
 import { BookingDetailScreen } from '@screens/customer/bookings/BookingDetailScreen';
+import { CreateCommunityPostScreen } from '@screens/customer/community/CreateCommunityPostScreen';
+import { AddVehicleScreen } from '@screens/customer/garage/AddVehicleScreen';
+import { GarageVehicleDetailScreen } from '@screens/customer/garage/GarageVehicleDetailScreen';
 import { NotificationsScreen } from '@screens/shared/NotificationsScreen';
 import { SearchScreen } from '@screens/shared/SearchScreen';
 import { CustomerTabsNavigator } from './CustomerTabsNavigator';
@@ -49,6 +52,12 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.ServiceBookingConfirmed]: { bookingId: string };
   [CustomerStackRoutes.ServiceBookingTracking]: { bookingId: string };
   [CustomerStackRoutes.BookingDetail]: { bookingId: string };
+  [CustomerStackRoutes.CreateCommunityPost]: undefined;
+  [CustomerStackRoutes.AddVehicle]: undefined;
+  [CustomerStackRoutes.GarageVehicleDetail]: {
+    vehicleId: string;
+    focusSection?: 'documents';
+  };
 };
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -104,6 +113,18 @@ export function CustomerNavigator() {
       <Stack.Screen
         name={CustomerStackRoutes.BookingDetail}
         component={BookingDetailScreen}
+      />
+      <Stack.Screen
+        name={CustomerStackRoutes.CreateCommunityPost}
+        component={CreateCommunityPostScreen}
+      />
+      <Stack.Screen
+        name={CustomerStackRoutes.AddVehicle}
+        component={AddVehicleScreen}
+      />
+      <Stack.Screen
+        name={CustomerStackRoutes.GarageVehicleDetail}
+        component={GarageVehicleDetailScreen}
       />
       <Stack.Screen
         name={CustomerStackRoutes.AiAssistant}

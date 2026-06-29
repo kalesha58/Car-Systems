@@ -19,6 +19,7 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { BusinessProfile } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type DealerStackParamList = {
@@ -204,8 +205,8 @@ export function RegistrationScreen({ navigation }: Props) {
               {/* Card 1: Basic Information */}
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="home" size={16} color="#2563EB" />
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="home" size={16} color={colors.icon} />
                   </View>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Basic Information</Text>
@@ -217,8 +218,8 @@ export function RegistrationScreen({ navigation }: Props) {
                 <View style={styles.formRow}>
                   <View style={[styles.inputBox, { flex: 1 }]}>
                     <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                        <Feather name="home" size={14} color="#2563EB" />
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="home" size={14} color={colors.icon} />
                       </View>
                       <View style={styles.inputTextContainer}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Business Name *</Text>
@@ -235,8 +236,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                   <View style={[styles.inputBox, { flex: 1 }]}>
                     <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                        <Feather name="user" size={14} color="#2563EB" />
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="user" size={14} color={colors.icon} />
                       </View>
                       <View style={styles.inputTextContainer}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Owner Name *</Text>
@@ -254,8 +255,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Mobile Number input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="phone" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="phone" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Mobile Number *</Text>
@@ -275,8 +276,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Email Address input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="mail" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="mail" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Email Address *</Text>
@@ -297,8 +298,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* GST Number input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="file-text" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="file-text" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>GST Number</Text>
@@ -318,8 +319,8 @@ export function RegistrationScreen({ navigation }: Props) {
               {/* Card 2: Location Information */}
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="map-pin" size={16} color="#2563EB" />
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="map-pin" size={16} color={colors.icon} />
                   </View>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Location</Text>
@@ -329,8 +330,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Address Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="map-pin" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="map-pin" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Address *</Text>
@@ -348,8 +349,8 @@ export function RegistrationScreen({ navigation }: Props) {
                 <View style={styles.formRow}>
                   <View style={[styles.inputBox, { flex: 1 }]}>
                     <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                        <Feather name="map" size={14} color="#2563EB" />
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="map" size={14} color={colors.icon} />
                       </View>
                       <View style={styles.inputTextContainer}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>City *</Text>
@@ -367,8 +368,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                   <View style={[styles.inputBox, { flex: 1 }]}>
                     <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                        <Feather name="map" size={14} color="#2563EB" />
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="map" size={14} color={colors.icon} />
                       </View>
                       <View style={styles.inputTextContainer}>
                         <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>State *</Text>
@@ -387,8 +388,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Pincode Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="hash" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="hash" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Pincode *</Text>
@@ -412,8 +413,8 @@ export function RegistrationScreen({ navigation }: Props) {
               {/* Card 1: Bank & Payment */}
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="credit-card" size={16} color="#2563EB" />
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="credit-card" size={16} color={colors.icon} />
                   </View>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Bank & Payments</Text>
@@ -423,8 +424,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* UPI ID Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="link" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="link" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>UPI ID *</Text>
@@ -441,8 +442,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Bank Name Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="home" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="home" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Bank Name *</Text>
@@ -458,8 +459,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* Account Number Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="hash" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="hash" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Account Number *</Text>
@@ -476,8 +477,8 @@ export function RegistrationScreen({ navigation }: Props) {
 
                 {/* IFSC Code Input */}
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="code" size={14} color="#2563EB" />
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="code" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
                     <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>IFSC Code *</Text>
@@ -496,8 +497,8 @@ export function RegistrationScreen({ navigation }: Props) {
               {/* Card 2: Store Media Uploads */}
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#EFF6FF' }]}>
-                    <Feather name="image" size={16} color="#2563EB" />
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="image" size={16} color={colors.icon} />
                   </View>
                   <View>
                     <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Store Branding</Text>
@@ -517,7 +518,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       setLogoUploaded(true);
                     }}
                   >
-                    <Feather name={logoUploaded ? "check-circle" : "image"} size={24} color={logoUploaded ? "#10B981" : "#2563EB"} />
+                    <Feather name={logoUploaded ? "check-circle" : "image"} size={24} color={logoUploaded ? "#10B981" : "#E60012"} />
                     <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Logo</Text>
                     <Text style={[styles.mediaBtnSub, { color: colors.textTertiary }]}>{logoUploaded ? 'Uploaded ✓' : 'Tap to upload'}</Text>
                   </Pressable>
@@ -533,7 +534,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       setBannerUploaded(true);
                     }}
                   >
-                    <Feather name={bannerUploaded ? "check-circle" : "camera"} size={24} color={bannerUploaded ? "#10B981" : "#2563EB"} />
+                    <Feather name={bannerUploaded ? "check-circle" : "camera"} size={24} color={bannerUploaded ? "#10B981" : "#E60012"} />
                     <Text style={[styles.mediaBtnLabel, { color: colors.textSecondary }]}>Store Banner</Text>
                     <Text style={[styles.mediaBtnSub, { color: colors.textTertiary }]}>{bannerUploaded ? 'Uploaded ✓' : 'Tap to upload'}</Text>
                   </Pressable>
@@ -546,8 +547,8 @@ export function RegistrationScreen({ navigation }: Props) {
           {currentStep === 3 && (
             <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardHeaderRow}>
-                <View style={[styles.cardHeaderIcon, { backgroundColor: '#EFF6FF' }]}>
-                  <Feather name="file-text" size={16} color="#2563EB" />
+                <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                  <Feather name="file-text" size={16} color={colors.icon} />
                 </View>
                 <View>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Business Verification</Text>
@@ -581,7 +582,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 <Feather
                   name={doc1Uploaded ? "check-circle" : "upload-cloud"}
                   size={18}
-                  color={doc1Uploaded ? "#10B981" : "#2563EB"}
+                  color={doc1Uploaded ? "#10B981" : "#E60012"}
                 />
               </Pressable>
 
@@ -611,7 +612,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 <Feather
                   name={doc2Uploaded ? "check-circle" : "upload-cloud"}
                   size={18}
-                  color={doc2Uploaded ? "#10B981" : "#2563EB"}
+                  color={doc2Uploaded ? "#10B981" : "#E60012"}
                 />
               </Pressable>
 
@@ -624,7 +625,7 @@ export function RegistrationScreen({ navigation }: Props) {
         <View style={[styles.stickyBottomBar, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
           {currentStep < 3 ? (
             <Pressable
-              style={[styles.saveBtn, { backgroundColor: '#2563EB' }]}
+              style={[styles.saveBtn, { backgroundColor: '#E60012' }]}
               onPress={handleNext}
             >
               <Text style={styles.saveBtnText}>Save & Continue</Text>
@@ -719,12 +720,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeStepCircle: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
   },
   stepText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
   activeStepText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#ffffff' },
   stepLabel: { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: '#94A3B8' },
-  activeStepLabel: { color: '#2563EB' },
+  activeStepLabel: { color: themeLight.textSecondary },
   stepDivider: {
     width: 40,
     height: 2,
@@ -733,7 +734,7 @@ const styles = StyleSheet.create({
     marginTop: -14,
   },
   activeStepDivider: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
   },
 
   content: { padding: 16, paddingTop: 20, gap: 16 },

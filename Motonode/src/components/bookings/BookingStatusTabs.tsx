@@ -41,7 +41,7 @@ export function BookingStatusTabs({ active, onChange }: BookingStatusTabsProps) 
             <Text
               style={[
                 styles.tabText,
-                { color: selected ? '#2563EB' : colors.textSecondary },
+                { color: selected ? '#E60012' : colors.textSecondary },
                 selected && styles.tabTextActive,
               ]}
             >
@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
   tabWrap: { alignItems: 'center', gap: 6, paddingBottom: 4 },
   tabText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
   tabTextActive: { fontFamily: 'Inter_700Bold' },
-  underline: { height: 2, width: '100%', backgroundColor: '#2563EB', borderRadius: 1 },
+  underline: { height: 2, width: '100%', backgroundColor: '#E60012', borderRadius: 1 },
 });

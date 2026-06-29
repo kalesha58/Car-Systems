@@ -16,7 +16,7 @@ export function SectionHeader({ title, onViewAll }: SectionHeaderProps) {
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {onViewAll && (
         <Pressable onPress={onViewAll}>
-          <Text style={[styles.viewAll, { color: colors.primary }]}>View all</Text>
+          <Text style={[styles.viewAll, { color: colors.link }]}>View all</Text>
         </Pressable>
       )}
     </View>

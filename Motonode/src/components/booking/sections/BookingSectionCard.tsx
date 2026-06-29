@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface BookingSectionCardProps {
   title: string;
@@ -47,5 +48,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  changeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  changeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
 });

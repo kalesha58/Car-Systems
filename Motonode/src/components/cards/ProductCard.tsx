@@ -72,7 +72,7 @@ export function ProductCard({
           <Feather
             name="heart"
             size={16}
-            color={liked ? colors.destructive : colors.primary}
+            color={liked ? colors.destructive : colors.icon}
           />
         </Pressable>
         {!product.inStock && (
@@ -82,7 +82,7 @@ export function ProductCard({
         )}
       </View>
       <View style={styles.info}>
-        <Text style={[styles.brand, { color: colors.primary }]} numberOfLines={1}>
+        <Text style={[styles.brand, { color: colors.textSecondary }]} numberOfLines={1}>
           {product.brand}
         </Text>
         <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>

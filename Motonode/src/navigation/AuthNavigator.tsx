@@ -6,7 +6,7 @@ import { LoginScreen, OtpVerifyScreen, OnboardingScreen, SignupScreen } from '@s
 
 export type AuthStackParamList = {
   [AuthRoutes.Onboarding]: undefined;
-  [AuthRoutes.Login]: undefined;
+  [AuthRoutes.Login]: { prefillEmail?: string } | undefined;
   [AuthRoutes.Signup]: undefined;
   [AuthRoutes.OtpVerify]: undefined;
 };

@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { themeLight as colors } from '@theme/colors';
+import { useColors } from '@hooks/useColors';
 import { spacing } from '@theme/spacing';
 import { typography } from '@theme/typography';
 
@@ -9,9 +9,16 @@ interface HeaderProps {
 }
 
 export function Header({ title }: HeaderProps) {
+  const colors = useColors();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, borderBottomColor: colors.border },
+      ]}
+    >
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
     </View>
   );
 }
@@ -20,13 +27,10 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  } satisfies ViewStyle,
+  },
   title: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  } satisfies TextStyle,
+  },
 });

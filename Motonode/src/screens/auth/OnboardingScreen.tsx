@@ -17,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { AuthRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 const { width } = Dimensions.get('window');
@@ -28,7 +29,7 @@ const SLIDES = [
     title: "India's Largest Auto Marketplace",
     subtitle:
       'Buy spare parts, riding gear, tyres, batteries — everything for your vehicle in one place.',
-    color: '#2563EB',
+    color: themeLight.textSecondary,
   },
   {
     id: '2',

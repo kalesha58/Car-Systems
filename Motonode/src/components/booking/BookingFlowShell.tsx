@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   ctaBtn: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useCart } from '@context/index';
@@ -118,16 +118,13 @@ export function CartScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Sticky header */}
-        <LinearGradient
-          colors={['#1D4ED8', '#3B82F6']}
-          style={[styles.header, { paddingTop: topPad + 8 }]}
-        >
+        <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.circularBackBtn} onPress={() => navigation.goBack()}>
             <Feather name="chevron-left" size={24} color="#ffffff" />
           </Pressable>
           <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Placed!</Text>
           <View style={{ width: 40 }} />
-        </LinearGradient>
+        </ChromeHeader>
         
         <View style={styles.successContainer}>
           <View style={[styles.successIcon, { backgroundColor: colors.success + '20' }]}>
@@ -163,10 +160,7 @@ export function CartScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Redesigned Premium Header */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.circularBackBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
         </Pressable>
@@ -178,7 +172,7 @@ export function CartScreen() {
         ) : (
           <View style={{ width: 40 }} />
         )}
-      </LinearGradient>
+      </ChromeHeader>
 
       {items.length === 0 ? (
         <View style={styles.emptyContainer}>

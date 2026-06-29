@@ -4,6 +4,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 interface AIBannerProps {
@@ -51,7 +52,7 @@ export function AIBanner({ onPress }: AIBannerProps) {
         </View>
         <Pressable style={styles.chatBtn} onPress={handlePress}>
           <Text style={styles.chatBtnText}>Chat Now</Text>
-          <Feather name="chevron-right" size={14} color="#2563EB" />
+          <Feather name="chevron-right" size={14} color={colors.icon} />
         </Pressable>
       </View>
     </Pressable>
@@ -98,5 +99,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  chatBtnText: { color: '#2563EB', fontSize: 13, fontFamily: 'Inter_700Bold' },
+  chatBtnText: { color: themeLight.textSecondary, fontSize: 13, fontFamily: 'Inter_700Bold' },
 });

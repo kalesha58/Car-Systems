@@ -7,7 +7,7 @@ import type { Order } from '@data/mockData';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: '#F59E0B', icon: 'clock' },
-  confirmed: { label: 'Confirmed', color: '#3B82F6', icon: 'check-circle' },
+  confirmed: { label: 'Confirmed', color: '#FF1A1A', icon: 'check-circle' },
   shipped: { label: 'Out for Delivery', color: '#8B5CF6', icon: 'truck' },
   delivered: { label: 'Delivered', color: '#10B981', icon: 'check-circle' },
   cancelled: { label: 'Cancelled', color: '#EF4444', icon: 'x-circle' },

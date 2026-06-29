@@ -11,7 +11,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
@@ -48,16 +48,13 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
         </Pressable>
         <Text style={styles.headerTitle}>My Booking</Text>
         <View style={styles.iconBtn} />
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}

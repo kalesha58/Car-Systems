@@ -8,6 +8,7 @@ import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { GARAGE_VEHICLES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
@@ -47,7 +48,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#2563EB' : colors.border,
+                borderColor: selected ? '#E60012' : colors.border,
               },
             ]}
             onPress={() => {
@@ -68,7 +69,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
               </Text>
             </View>
             {draft.vehicleLocked ? (
-              <Feather name="check-circle" size={20} color="#2563EB" />
+              <Feather name="check-circle" size={20} color={colors.icon} />
             ) : (
               <View style={[styles.radio, selected && styles.radioSelected]}>
                 {selected && <View style={styles.radioInner} />}
@@ -83,7 +84,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
           style={[styles.addBtn, { borderColor: colors.border }]}
           onPress={() => lightHaptic()}
         >
-          <Feather name="plus" size={16} color="#2563EB" />
+          <Feather name="plus" size={16} color={colors.icon} />
           <Text style={styles.addText}>Add New Vehicle</Text>
         </Pressable>
       )}
@@ -115,8 +116,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: '#2563EB' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2563EB' },
+  radioSelected: { borderColor: '#E60012' },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -127,5 +128,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
-  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
 });

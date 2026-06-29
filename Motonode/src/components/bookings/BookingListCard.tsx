@@ -10,6 +10,7 @@ import {
   type CustomerBooking,
 } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 interface BookingListCardProps {
@@ -85,13 +86,13 @@ export function BookingListCard({ booking, onPress }: BookingListCardProps) {
             </Text>
           ) : null}
           <View style={styles.iconRow}>
-            <Feather name="calendar" size={12} color="#2563EB" />
+            <Feather name="calendar" size={12} color={colors.icon} />
             <Text style={[styles.iconText, { color: colors.textSecondary }]}>
               {dateLabel} • {booking.timeSlot}
             </Text>
           </View>
           <View style={styles.iconRow}>
-            <Feather name="map-pin" size={12} color="#2563EB" />
+            <Feather name="map-pin" size={12} color={colors.icon} />
             <Text style={[styles.iconText, { color: colors.textSecondary }]} numberOfLines={2}>
               {locationLine}
             </Text>
@@ -105,7 +106,7 @@ export function BookingListCard({ booking, onPress }: BookingListCardProps) {
           )}
           <View style={styles.viewRow}>
             <Text style={styles.viewText}>View Details</Text>
-            <Feather name="chevron-right" size={12} color="#2563EB" />
+            <Feather name="chevron-right" size={12} color={colors.icon} />
           </View>
         </View>
       </View>
@@ -153,5 +154,5 @@ const styles = StyleSheet.create({
   priceCol: { alignItems: 'flex-end', gap: 6 },
   price: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   viewRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  viewText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  viewText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
 });

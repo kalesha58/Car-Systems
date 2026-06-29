@@ -49,7 +49,7 @@ export function BookingLocationPicker({
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#2563EB' : colors.border,
+                borderColor: selected ? '#E60012' : colors.border,
               },
             ]}
             onPress={() => onSelectWorkshop(workshop.id)}
@@ -64,7 +64,7 @@ export function BookingLocationPicker({
                 </Text>
               </View>
             </View>
-            {selected && <Feather name="check-circle" size={20} color="#2563EB" />}
+            {selected && <Feather name="check-circle" size={20} color={colors.icon} />}
           </Pressable>
         );
       })}
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   wrap: { gap: 10 },
   toggle: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  toggleBtnActive: { backgroundColor: '#2563EB' },
+  toggleBtnActive: { backgroundColor: '#E60012' },
   toggleText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
   toggleTextActive: { color: '#ffffff' },
   card: {

@@ -58,7 +58,7 @@ export function DealerBookingStepper({ status, dateTimeLabel }: DealerBookingSte
                 <Text
                   style={[
                     styles.stepLabel,
-                    { color: active ? '#2563EB' : done ? '#10B981' : colors.textSecondary },
+                    { color: active ? '#E60012' : done ? '#10B981' : colors.textSecondary },
                   ]}
                 >
                   {step.label}
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   circleDone: { backgroundColor: '#10B981', borderColor: '#10B981' },
-  circleActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  circleActive: { backgroundColor: '#E60012', borderColor: '#E60012' },
   circlePending: { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
   stepLabel: { fontSize: 9, fontFamily: 'Inter_700Bold', textAlign: 'center' },
   stepDate: { fontSize: 8, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 11 },

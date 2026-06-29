@@ -12,7 +12,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
@@ -131,16 +131,13 @@ export function PaymentScreen({ navigation }: Props) {
   return (
     <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
       {/* Header */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 10 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={10}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </Pressable>
         <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Payment</Text>
         <View style={{ width: 36 }} />
-      </LinearGradient>
+      </ChromeHeader>
 
       {/* Progress */}
       <View style={{ backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>

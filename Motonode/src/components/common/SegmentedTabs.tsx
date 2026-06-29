@@ -45,7 +45,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
                   style={[
                     styles.tabText,
                     isActive
-                      ? { color: colors.primaryDark, fontFamily: 'Inter_700Bold' }
+                      ? { color: colors.textPrimary, fontFamily: 'Inter_700Bold' }
                       : { color: colors.textSecondary, fontFamily: 'Inter_500Medium' },
                   ]}
                   numberOfLines={1}
@@ -56,7 +56,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
                   style={[
                     styles.badge,
                     isActive
-                      ? { backgroundColor: '#DBEAFE' }
+                      ? { backgroundColor: '#F2F2F2' }
                       : { backgroundColor: colors.border },
                   ]}
                 >
@@ -64,7 +64,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
                     style={[
                       styles.badgeText,
                       isActive
-                        ? { color: colors.primaryDark }
+                        ? { color: colors.textPrimary }
                         : { color: colors.textSecondary },
                     ]}
                   >
@@ -73,7 +73,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
                 </View>
               </View>
               {isActive && (
-                <View style={[styles.indicator, { backgroundColor: colors.primaryDark }]} />
+                <View style={[styles.indicator, { backgroundColor: colors.textPrimary }]} />
               )}
             </Pressable>
           );

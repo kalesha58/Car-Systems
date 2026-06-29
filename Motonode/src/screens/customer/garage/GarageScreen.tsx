@@ -1,35 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
-  Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { OrderCard } from '@components/cards/OrderCard';
 import { GarageBookingsPanel } from '@components/garage/GarageBookingsPanel';
-import { GarageDocumentsPanel, GARAGE_DOCUMENTS_COUNT } from '@components/garage/GarageDocumentsPanel';
 import { SegmentedTabs } from '@components/common/SegmentedTabs';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth, useBookings } from '@context/index';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { GARAGE_VEHICLES, ORDERS, SERVICES } from '@data/mockData';
+import { ORDERS, SERVICES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { getUserVehicles } from '@services/userVehicle.service';
+import type { UserVehicle } from '../../../types/userVehicle';
 import { spacing } from '@theme/spacing';
-import { lightHaptic, successHaptic } from '@utils/haptics';
+import { extractAuthErrorMessage } from '@utils/authErrors';
+import { lightHaptic } from '@utils/haptics';
 
 type GarageScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<CustomerTabParamList, typeof CustomerTabRoutes.Garage>,
@@ -40,22 +43,26 @@ const GARAGE_TABS = [
   { label: 'Vehicles', key: 'vehicles' },
   { label: 'Bookings', key: 'bookings' },
   { label: 'Orders', key: 'orders' },
-  { label: 'Documents', key: 'documents' },
 ] as const;
 
 const BOOKINGS_TAB_INDEX = 1;
+const DEFAULT_VEHICLE_IMAGE =
+  'https://images.unsplash.com/photo-1494976388531-d1058498cdd5?w=600&q=80';
 
 export function GarageScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<GarageScreenNavigationProp>();
   const route = useRoute();
   const { user } = useAuth();
   const { getCustomerBookings } = useBookings();
   const { startBookingFromGarage } = useServiceBooking();
   const [activeTab, setActiveTab] = useState(0);
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const tabBarPadding = useTabBarBottomPadding();
+
+  const [vehicles, setVehicles] = useState<UserVehicle[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [vehicleError, setVehicleError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = route.params as { initialTab?: string } | undefined;
@@ -63,6 +70,57 @@ export function GarageScreen() {
       setActiveTab(BOOKINGS_TAB_INDEX);
     }
   }, [route.params]);
+
+  const loadVehicles = useCallback(async (opts?: { showLoader?: boolean }) => {
+    const showLoader = opts?.showLoader ?? false;
+
+    if (user?.isGuest) {
+      setVehicles([]);
+      setVehicleError('Sign in to view your garage vehicles.');
+      setLoadingVehicles(false);
+      setRefreshing(false);
+      return;
+    }
+
+    if (showLoader) setLoadingVehicles(true);
+    setVehicleError(null);
+
+    try {
+      const response = await getUserVehicles();
+      if (response.success !== false && Array.isArray(response.Response)) {
+        setVehicles(response.Response);
+      } else {
+        setVehicles([]);
+      }
+    } catch (err) {
+      setVehicleError(extractAuthErrorMessage(err));
+      setVehicles([]);
+    } finally {
+      setLoadingVehicles(false);
+      setRefreshing(false);
+    }
+  }, [user?.isGuest]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadVehicles({ showLoader: vehicles.length === 0 });
+    }, [loadVehicles, vehicles.length]),
+  );
+
+  const handleAddVehicle = () => {
+    lightHaptic();
+    if (user?.isGuest) {
+      Alert.alert('Sign in required', 'Please sign in to add a vehicle to your garage.');
+      return;
+    }
+    navigation.navigate(CustomerStackRoutes.AddVehicle);
+  };
+
+  const handleRefresh = () => {
+    lightHaptic();
+    setRefreshing(true);
+    void loadVehicles();
+  };
 
   const triggerBooking = (vehicleId: string) => {
     lightHaptic();
@@ -72,10 +130,14 @@ export function GarageScreen() {
   };
 
   const tabCounts = {
-    vehicles: GARAGE_VEHICLES.length,
+    vehicles: vehicles.length,
     bookings: getCustomerBookings(user?.id ?? 'u1').length,
     orders: ORDERS.length,
-    documents: GARAGE_DOCUMENTS_COUNT,
+  };
+
+  const openVehicleDetail = (vehicleId: string, focusSection?: 'documents') => {
+    lightHaptic();
+    navigation.navigate(CustomerStackRoutes.GarageVehicleDetail, { vehicleId, focusSection });
   };
 
   const handleTabChange = (index: number) => {
@@ -83,24 +145,100 @@ export function GarageScreen() {
     setActiveTab(index);
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: '#1D4ED8' }]}>
-      <LinearGradient
-        colors={['#1D4ED8', '#2563EB']}
-        style={[styles.header, { paddingTop: topPad + 12 }]}
+  const renderVehicleCard = (v: UserVehicle) => {
+    const image = v.images?.[0] ?? DEFAULT_VEHICLE_IMAGE;
+    const docCount = [v.documents?.rc, v.documents?.insurance, v.documents?.pollution, v.documents?.dl].filter(
+      Boolean,
+    ).length;
+
+    return (
+      <View
+        key={v.id}
+        style={[styles.vehicleCard, { backgroundColor: colors.card, borderColor: colors.border }]}
       >
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>My Garage</Text>
-          <View style={styles.headerActions}>
+        <Pressable onPress={() => openVehicleDetail(v.id)}>
+          <Image source={{ uri: image }} style={styles.vehicleImg} resizeMode="cover" />
+        </Pressable>
+
+        <View style={styles.vehicleInfo}>
+          <Pressable onPress={() => openVehicleDetail(v.id)}>
+            <View style={styles.cardHeaderRow}>
+              <View>
+                <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>
+                  {v.brand} {v.model}
+                </Text>
+                <Text style={[styles.vehiclePlate, { color: colors.textSecondary }]}>
+                  {v.numberPlate}
+                </Text>
+              </View>
+              {v.year ? (
+                <View style={[styles.yearBadge, { backgroundColor: colors.primarySubtle }]}>
+                  <Text style={[styles.yearBadgeText, { color: colors.textSecondary }]}>{v.year}</Text>
+                </View>
+              ) : null}
+            </View>
+          </Pressable>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.statsGrid}>
+            {v.color ? (
+              <View style={styles.statRowItem}>
+                <Feather name="droplet" size={14} color={colors.icon} style={{ marginRight: 8 }} />
+                <Text style={[styles.statText, { color: colors.textPrimary }]}>{v.color}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.statRowItem}>
+              <Feather name="file-text" size={14} color={colors.warning} style={{ marginRight: 8 }} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>
+                {docCount}/4 documents uploaded
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actionsRow}>
             <Pressable
-              style={styles.iconBtn}
-              onPress={() => successHaptic()}
+              style={[styles.bookServiceBtn, { backgroundColor: colors.primary }]}
+              onPress={() => triggerBooking(v.id)}
             >
-              <Feather name="plus" size={20} color="#ffffff" />
+              <Feather name="tool" size={14} color={colors.primaryForeground} style={{ marginRight: 6 }} />
+              <Text style={[styles.bookServiceText, { color: colors.primaryForeground }]}>Book Service</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.docsBtn, { borderColor: colors.border }]}
+              onPress={() => openVehicleDetail(v.id)}
+            >
+              <Feather name="info" size={14} color={colors.icon} style={{ marginRight: 6 }} />
+              <Text style={[styles.docsText, { color: colors.textSecondary }]}>Details</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.docsBtn, { borderColor: colors.border }]}
+              onPress={() => openVehicleDetail(v.id, 'documents')}
+            >
+              <Feather name="file-text" size={14} color={colors.icon} style={{ marginRight: 6 }} />
+              <Text style={[styles.docsText, { color: colors.textSecondary }]}>Documents</Text>
             </Pressable>
           </View>
         </View>
-      </LinearGradient>
+      </View>
+    );
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ChromeHeader style={styles.header} contentPad={12}>
+        <View style={styles.headerRow}>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>My Garage</Text>
+          <View style={styles.headerActions}>
+            <Pressable style={styles.iconBtn} onPress={handleAddVehicle}>
+              <Feather name="plus" size={20} color={colors.headerForeground} />
+            </Pressable>
+          </View>
+        </View>
+      </ChromeHeader>
 
       <View style={[styles.contentSheet, { backgroundColor: colors.card }]}>
         <View style={styles.tabsWrapper}>
@@ -119,86 +257,55 @@ export function GarageScreen() {
           style={styles.listFlex}
           contentContainerStyle={[styles.content, { paddingBottom: tabBarPadding }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            activeTab === 0 ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={colors.link}
+                colors={[colors.link]}
+              />
+            ) : undefined
+          }
         >
         {activeTab === 0 && (
           <View style={styles.vehiclesListContainer}>
-            {GARAGE_VEHICLES.map((v) => (
-              <View key={v.id} style={[styles.vehicleCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                
-                {/* Vehicle Image */}
-                <Image source={{ uri: v.image }} style={styles.vehicleImg} resizeMode="cover" />
+            {loadingVehicles && vehicles.length === 0 ? (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={colors.link} />
+              </View>
+            ) : (
+              <>
+                {vehicles.map(renderVehicleCard)}
 
-                {/* Info Section */}
-                <View style={styles.vehicleInfo}>
-                  <View style={styles.cardHeaderRow}>
+                {vehicles.length === 0 && !loadingVehicles && (
+                  <View style={styles.empty}>
+                    <Feather name="truck" size={48} color={colors.textTertiary} />
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                      {vehicleError ?? 'No vehicles in your garage yet'}
+                    </Text>
+                  </View>
+                )}
+
+                <Pressable
+                  style={[styles.addDottedBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                  onPress={handleAddVehicle}
+                >
+                  <View style={styles.dottedBtnLeft}>
+                    <View style={[styles.plusCircleBadge, { backgroundColor: colors.primarySubtle }]}>
+                      <Feather name="plus" size={16} color={colors.link} />
+                    </View>
                     <View>
-                      <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>
-                        {v.brand} {v.name}
-                      </Text>
-                      <Text style={styles.vehiclePlate}>{v.regNumber}</Text>
-                    </View>
-                    <View style={styles.yearBadge}>
-                      <Text style={styles.yearBadgeText}>{v.year}</Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                  {/* Stats list */}
-                  <View style={styles.statsGrid}>
-                    <View style={styles.statRowItem}>
-                      <Feather name="activity" size={14} color="#2563EB" style={{ marginRight: 8 }} />
-                      <Text style={[styles.statText, { color: colors.textPrimary }]}>
-                        {v.kmsDriven.toLocaleString('en-IN')} km
+                      <Text style={[styles.dottedTitle, { color: colors.textPrimary }]}>Add New Vehicle</Text>
+                      <Text style={[styles.dottedSub, { color: colors.textSecondary }]}>
+                        Add your vehicle to get personalized service reminders
                       </Text>
                     </View>
-                    
-                    <View style={styles.statRowItem}>
-                      <Feather name="tool" size={14} color="#F59E0B" style={{ marginRight: 8 }} />
-                      <Text style={[styles.statText, { color: colors.textSecondary }]}>
-                        Service: {v.nextService}
-                      </Text>
-                    </View>
-
-                    <View style={styles.statRowItem}>
-                      <Feather name="shield" size={14} color="#10B981" style={{ marginRight: 8 }} />
-                      <Text style={[styles.statText, { color: colors.textSecondary }]}>{v.insurance}</Text>
-                    </View>
                   </View>
-
-                  {/* Bottom Action buttons */}
-                  <View style={styles.actionsRow}>
-                    <Pressable style={styles.bookServiceBtn} onPress={() => triggerBooking(v.id)}>
-                      <Feather name="tool" size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                      <Text style={styles.bookServiceText}>Book Service</Text>
-                    </Pressable>
-
-                    <Pressable style={styles.docsBtn} onPress={() => lightHaptic()}>
-                      <Feather name="file-text" size={14} color="#2563EB" style={{ marginRight: 6 }} />
-                      <Text style={styles.docsText}>Documents</Text>
-                    </Pressable>
-                  </View>
-
-                </View>
-
-              </View>
-            ))}
-
-            {/* Dotted Add Vehicle button widget */}
-            <Pressable style={[styles.addDottedBtn, { borderColor: '#CBD5E1' }]} onPress={() => successHaptic()}>
-              <View style={styles.dottedBtnLeft}>
-                <View style={styles.plusCircleBadge}>
-                  <Feather name="plus" size={16} color="#2563EB" />
-                </View>
-                <View>
-                  <Text style={[styles.dottedTitle, { color: colors.textPrimary }]}>Add New Vehicle</Text>
-                  <Text style={[styles.dottedSub, { color: colors.textSecondary }]}>
-                    Add your vehicle to get personalized service reminders
-                  </Text>
-                </View>
-              </View>
-              <Feather name="chevron-right" size={18} color={colors.textSecondary} />
-            </Pressable>
+                  <Feather name="chevron-right" size={18} color={colors.textSecondary} />
+                </Pressable>
+              </>
+            )}
           </View>
         )}
 
@@ -215,8 +322,6 @@ export function GarageScreen() {
             )}
           </View>
         )}
-
-        {activeTab === 3 && <GarageDocumentsPanel />}
         </ScrollView>
         )}
       </View>
@@ -239,7 +344,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontFamily: 'Inter_700Bold',
-    color: '#ffffff',
     textAlign: 'center',
   },
   headerActions: {
@@ -263,6 +367,11 @@ const styles = StyleSheet.create({
   vehiclesListContainer: {
     gap: 16,
   },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
   vehicleCard: {
     borderRadius: 20,
     borderWidth: 1,
@@ -281,14 +390,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   vehicleName: { fontSize: 16, fontFamily: 'Inter_700Bold' },
-  vehiclePlate: { fontSize: 12, color: '#2563EB', fontFamily: 'Inter_700Bold', marginTop: 2 },
+  vehiclePlate: { fontSize: 12, fontFamily: 'Inter_700Bold', marginTop: 2 },
   yearBadge: {
-    backgroundColor: '#EFF6FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  yearBadgeText: { color: '#2563EB', fontSize: 11, fontFamily: 'Inter_700Bold' },
+  yearBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   divider: { height: 1, marginVertical: 12 },
   statsGrid: {
     gap: 8,
@@ -301,29 +409,27 @@ const styles = StyleSheet.create({
   statText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   actionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   bookServiceBtn: {
-    flex: 1.2,
+    flex: 1,
     flexDirection: 'row',
     height: 38,
     borderRadius: 10,
-    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bookServiceText: { color: '#ffffff', fontSize: 12, fontFamily: 'Inter_700Bold' },
+  bookServiceText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   docsBtn: {
     flex: 1,
     flexDirection: 'row',
     height: 38,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  docsText: { color: '#2563EB', fontSize: 12, fontFamily: 'Inter_700Bold' },
+  docsText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   addDottedBtn: {
     flexDirection: 'row',
     borderWidth: 1.5,
@@ -332,7 +438,6 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
     marginTop: 4,
   },
   dottedBtnLeft: {
@@ -345,13 +450,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   dottedTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   dottedSub: { fontSize: 10, marginTop: 2, flexWrap: 'wrap', flex: 1 },
   ordersContainer: { gap: 12 },
-  empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 10 },
-  emptyText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  empty: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10 },
+  emptyText: { fontSize: 14, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 24 },
 });

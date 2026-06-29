@@ -37,6 +37,9 @@ export const CustomerStackRoutes = {
   ServiceBookingConfirmed: 'ServiceBookingConfirmed',
   ServiceBookingTracking: 'ServiceBookingTracking',
   BookingDetail: 'BookingDetail',
+  CreateCommunityPost: 'CreateCommunityPost',
+  AddVehicle: 'AddVehicle',
+  GarageVehicleDetail: 'GarageVehicleDetail',
 } as const;
 
 export const DealerTabRoutes = {

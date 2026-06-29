@@ -5,6 +5,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
 import type { ServiceWorkshop } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 const WORKSHOP_IMAGE =
   'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=200&auto=format&fit=crop&q=80';
@@ -26,7 +27,7 @@ export function BookingLocationSection({
     return (
       <BookingSectionCard title="Select Location" onChange={onPress}>
         <Pressable style={styles.emptyRow} onPress={onPress}>
-          <Feather name="map-pin" size={20} color="#2563EB" />
+          <Feather name="map-pin" size={20} color={colors.icon} />
           <Text style={styles.emptyText}>Choose service location</Text>
           <Feather name="chevron-right" size={18} color={colors.textTertiary} />
         </Pressable>
@@ -70,13 +71,13 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' },
   meta: { fontSize: 10, fontFamily: 'Inter_500Medium' },
   pickupBadge: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginLeft: 4,
   },
-  pickupText: { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  pickupText: { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium', color: '#2563EB' },
+  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
 });

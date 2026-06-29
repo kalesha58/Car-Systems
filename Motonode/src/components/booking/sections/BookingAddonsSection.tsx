@@ -6,6 +6,7 @@ import { BookingSectionCard } from '@components/booking/sections/BookingSectionC
 import type { ServiceAddon } from '@data/mockData';
 import { SERVICE_ADDONS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 const ADDON_ICONS: Record<string, React.ComponentProps<typeof Feather>['name']> = {
   a1: 'wind',
@@ -58,12 +59,12 @@ function AddonChip({
         style={[
           styles.iconCircle,
           {
-            backgroundColor: selected ? '#EFF6FF' : '#F8FAFC',
-            borderColor: selected ? '#2563EB' : '#E2E8F0',
+            backgroundColor: selected ? '#F2F2F2' : '#F8FAFC',
+            borderColor: selected ? '#E60012' : '#E2E8F0',
           },
         ]}
       >
-        <Feather name={icon} size={20} color={selected ? '#2563EB' : colors.textSecondary} />
+        <Feather name={icon} size={20} color={selected ? '#E60012' : colors.textSecondary} />
         {selected && (
           <View style={styles.checkBadge}>
             <Feather name="check" size={10} color="#fff" />
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -109,5 +110,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 13,
   },
-  chipPrice: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  chipPrice: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
 });

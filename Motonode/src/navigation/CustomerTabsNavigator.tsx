@@ -40,7 +40,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   return (
     <View style={[styles.tabBarWrapper, { height: 60 + bottomInset }]}>
       {/* Docked Tab Bar with Top Rounded Corners */}
-      <View style={[styles.mainTabBar, { backgroundColor: '#ffffff', borderColor: '#E2E8F0', paddingBottom: bottomInset }]}>
+      <View style={[styles.mainTabBar, { backgroundColor: colors.tabBar, borderColor: colors.border, paddingBottom: bottomInset }]}>
         
         {/* Concave Cutout Background Overlay (screen background color overlaying the tab bar top edge) */}
         <View style={[styles.cutoutOverlay, { backgroundColor: colors.background }]} />
@@ -73,14 +73,14 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               >
                 <View style={[
                   styles.raisedCircle,
-                  { backgroundColor: isFocused ? '#1E40AF' : '#2563EB' }
+                  { backgroundColor: isFocused ? colors.primaryDark : colors.primary }
                 ]}>
-                  <Feather name="users" size={20} color="#ffffff" />
+                  <Feather name="users" size={20} color={colors.white} />
                 </View>
                 
                 {/* Active Indicator dot under the raised button */}
                 {isFocused && (
-                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: '#2563EB' }]} />
+                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: colors.primary }]} />
                 )}
               </Pressable>
             );
@@ -96,12 +96,12 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               <Feather
                 name={iconMap[route.name] ?? 'circle'}
                 size={22}
-                color={isFocused ? '#2563EB' : '#94A3B8'}
+                color={isFocused ? colors.primary : colors.textTertiary}
               />
               
               {/* Active Indicator Dot */}
               {isFocused && (
-                <View style={[styles.activeDot, { backgroundColor: '#2563EB' }]} />
+                <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
               )}
             </Pressable>
           );
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
     top: -24,
-    shadowColor: '#2563EB',
+    shadowColor: '#E60012',
     shadowOpacity: 0.3,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },

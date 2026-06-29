@@ -46,7 +46,7 @@ const NOTIFICATIONS = [
     title: 'New Community Post',
     body: 'Arjun Sharma shared a ride story from Bangalore-Mysore',
     time: '1d ago',
-    color: '#3B82F6',
+    color: '#FF1A1A',
     read: true,
   },
   {

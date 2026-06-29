@@ -28,7 +28,7 @@ export function GarageCard({ vehicle, onPress }: GarageCardProps) {
             <Text style={[styles.name, { color: colors.textPrimary }]}>
               {vehicle.brand} {vehicle.name}
             </Text>
-            <Text style={[styles.regNumber, { color: colors.primary }]}>{vehicle.regNumber}</Text>
+            <Text style={[styles.regNumber, { color: colors.textSecondary }]}>{vehicle.regNumber}</Text>
           </View>
           <View style={[styles.yearBadge, { backgroundColor: colors.muted }]}>
             <Text style={[styles.year, { color: colors.textSecondary }]}>{vehicle.year}</Text>
@@ -37,7 +37,7 @@ export function GarageCard({ vehicle, onPress }: GarageCardProps) {
         <View style={[styles.divider, { backgroundColor: colors.divider }]} />
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Feather name="activity" size={14} color={colors.primary} />
+            <Feather name="activity" size={14} color={colors.icon} />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {vehicle.kmsDriven.toLocaleString('en-IN')} km
             </Text>
@@ -57,8 +57,8 @@ export function GarageCard({ vehicle, onPress }: GarageCardProps) {
         </View>
         <View style={styles.actions}>
           <Pressable style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
-            <Feather name="tool" size={14} color="#fff" />
-            <Text style={styles.actionBtnText}>Book Service</Text>
+            <Feather name="tool" size={14} color={colors.primaryForeground} />
+            <Text style={[styles.actionBtnText, { color: colors.primaryForeground }]}>Book Service</Text>
           </Pressable>
           <Pressable style={[styles.actionBtnOutline, { borderColor: colors.border }]}>
             <Feather name="file-text" size={14} color={colors.textSecondary} />
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
   },
-  actionBtnText: { color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  actionBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   actionBtnOutline: {
     flex: 1,
     flexDirection: 'row',

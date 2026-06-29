@@ -96,8 +96,8 @@ function Chip({
       style={[
         styles.chip,
         {
-          backgroundColor: selected ? '#EFF6FF' : colors.card,
-          borderColor: selected ? '#2563EB' : colors.border,
+          backgroundColor: selected ? '#F2F2F2' : colors.card,
+          borderColor: selected ? '#E60012' : colors.border,
         },
       ]}
       onPress={onPress}
@@ -105,7 +105,7 @@ function Chip({
       <Text
         style={[
           styles.chipText,
-          { color: selected ? '#2563EB' : colors.textSecondary },
+          { color: selected ? '#E60012' : colors.textSecondary },
         ]}
       >
         {label}
@@ -142,7 +142,7 @@ function ToggleRow({
       <View
         style={[
           styles.toggleTrack,
-          { backgroundColor: value ? '#2563EB' : colors.muted },
+          { backgroundColor: value ? '#E60012' : colors.muted },
         ]}
       >
         <View style={[styles.toggleThumb, value && styles.toggleThumbOn]} />
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     flex: 2,
     height: 46,
     borderRadius: 12,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
   },

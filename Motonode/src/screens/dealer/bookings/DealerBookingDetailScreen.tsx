@@ -20,6 +20,7 @@ import { useBookings } from '@context/index';
 import type { CustomerBooking } from '@data/bookingsData';
 import { SERVICE_ADDONS, SERVICES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -52,7 +53,7 @@ function SectionCard({
   return (
     <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.sectionHeader}>
-        <Feather name={icon} size={14} color="#2563EB" />
+        <Feather name={icon} size={14} color={colors.icon} />
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
       </View>
       {children}
@@ -190,13 +191,13 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
                 </Text>
               ) : null}
               <View style={styles.iconLine}>
-                <Feather name="calendar" size={12} color="#2563EB" />
+                <Feather name="calendar" size={12} color={colors.icon} />
                 <Text style={[styles.iconLineText, { color: colors.textSecondary }]}>
                   {dateLabel} • {booking.timeSlot}
                 </Text>
               </View>
               <View style={styles.iconLine}>
-                <Feather name="map-pin" size={12} color="#2563EB" />
+                <Feather name="map-pin" size={12} color={colors.icon} />
                 <Text style={[styles.iconLineText, { color: colors.textSecondary }]} numberOfLines={2}>
                   {booking.workshopName ?? booking.dealerName}
                   {booking.workshopAddress ? `, ${booking.workshopAddress}` : ''}
@@ -213,7 +214,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
 
           <Pressable style={styles.viewCustomerLink} onPress={() => lightHaptic()}>
             <Text style={styles.viewCustomerText}>View Customer Details</Text>
-            <Feather name="chevron-right" size={14} color="#2563EB" />
+            <Feather name="chevron-right" size={14} color={colors.icon} />
           </Pressable>
 
           {showAcceptReject && (
@@ -223,7 +224,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
                   style={styles.acceptOutlineBtn}
                   onPress={() => runAction(isService ? 'confirmed' : 'confirmed')}
                 >
-                  <Feather name="check" size={16} color="#2563EB" />
+                  <Feather name="check" size={16} color={colors.icon} />
                   <Text style={styles.acceptOutlineText}>Accept Booking</Text>
                 </Pressable>
                 <Pressable
@@ -248,7 +249,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
         <SectionCard title="Customer Details" icon="user">
           <View style={styles.customerRow}>
             <View style={styles.avatar}>
-              <Feather name="user" size={20} color="#2563EB" />
+              <Feather name="user" size={20} color={colors.icon} />
             </View>
             <View style={styles.customerInfo}>
               <Text style={[styles.customerName, { color: colors.textPrimary }]}>
@@ -312,7 +313,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
               </Text>
             </View>
             <Pressable style={styles.receiptBtn} onPress={() => lightHaptic()}>
-              <Feather name="download" size={14} color="#2563EB" />
+              <Feather name="download" size={14} color={colors.icon} />
               <Text style={styles.receiptText}>View Payment Receipt</Text>
             </Pressable>
           </SectionCard>
@@ -371,14 +372,14 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
           <Pressable
             style={({ pressed }) => [
               styles.actionTile,
-              { backgroundColor: '#EFF6FF' },
+              { backgroundColor: '#F2F2F2' },
               booking.status !== 'confirmed' && styles.actionTileDisabled,
               pressed && styles.actionTilePressed,
             ]}
             onPress={() => booking.status === 'confirmed' && runAction('in_progress')}
             disabled={booking.status !== 'confirmed'}
           >
-            <View style={[styles.actionIcon, { backgroundColor: '#2563EB' }]}>
+            <View style={[styles.actionIcon, { backgroundColor: '#E60012' }]}>
               <Feather name="play" size={12} color="#fff" />
             </View>
             <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
@@ -464,8 +465,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   heroCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 12 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  newBadge: { backgroundColor: '#EFF6FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  newBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  newBadge: { backgroundColor: '#F2F2F2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+  newBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   idCopyRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   idText: { fontSize: 10, fontFamily: 'Inter_500Medium' },
   heroBody: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
@@ -482,7 +483,7 @@ const styles = StyleSheet.create({
   iconLineText: { flex: 1, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 },
   heroPrice: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   viewCustomerLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  viewCustomerText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  viewCustomerText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
   acceptRejectRow: { flexDirection: 'row', gap: 10 },
   acceptOutlineBtn: {
     flex: 1,
@@ -493,10 +494,10 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#2563EB',
+    borderColor: '#E60012',
     backgroundColor: '#fff',
   },
-  acceptOutlineText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  acceptOutlineText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   rejectOutlineBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -546,10 +547,10 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#2563EB',
+    borderColor: '#E60012',
     marginTop: 4,
   },
-  receiptText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  receiptText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
   serviceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   serviceName: { fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 },
   servicePrice: { fontSize: 13, fontFamily: 'Inter_700Bold' },

@@ -5,6 +5,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
 import type { GarageVehicle } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface BookingVehicleSectionProps {
   vehicle: GarageVehicle | undefined;
@@ -19,7 +20,7 @@ export function BookingVehicleSection({ vehicle, locked, onPress }: BookingVehic
     return (
       <BookingSectionCard title="Select Vehicle" onChange={onPress}>
         <Pressable style={styles.emptyRow} onPress={onPress}>
-          <Feather name="plus-circle" size={20} color="#2563EB" />
+          <Feather name="plus-circle" size={20} color={colors.icon} />
           <Text style={styles.emptyText}>Choose a vehicle</Text>
           <Feather name="chevron-right" size={18} color={colors.textTertiary} />
         </Pressable>
@@ -44,7 +45,7 @@ export function BookingVehicleSection({ vehicle, locked, onPress }: BookingVehic
           </Text>
         </View>
         {locked ? (
-          <Feather name="check-circle" size={20} color="#2563EB" />
+          <Feather name="check-circle" size={20} color={colors.icon} />
         ) : (
           <Feather name="chevron-right" size={18} color={colors.textTertiary} />
         )}
@@ -58,8 +59,8 @@ const styles = StyleSheet.create({
   image: { width: 64, height: 48, borderRadius: 10 },
   info: { flex: 1, gap: 2 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   meta: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium', color: '#2563EB' },
+  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
 });

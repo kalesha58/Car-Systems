@@ -56,8 +56,8 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
         style={[
           styles.mainTabBar,
           {
-            backgroundColor: '#ffffff',
-            borderColor: '#E2E8F0',
+            backgroundColor: colors.tabBar,
+            borderColor: colors.border,
             paddingBottom: bottomInset,
           },
         ]}
@@ -88,22 +88,22 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
                 <View
                   style={[
                     styles.raisedCircle,
-                    { backgroundColor: isFocused ? '#1E40AF' : '#2563EB' },
+                    { backgroundColor: isFocused ? colors.primaryDark : colors.primary },
                   ]}
                 >
-                  <Feather name="shopping-cart" size={20} color="#ffffff" />
+                  <Feather name="shopping-cart" size={20} color={colors.white} />
                 </View>
                 {/* Small label below raised circle */}
                 <Text
                   style={[
                     styles.middleLabel,
-                    { color: isFocused ? '#2563EB' : '#94A3B8', marginTop: 28 },
+                    { color: isFocused ? colors.primary : colors.textTertiary, marginTop: 28 },
                   ]}
                 >
                   Orders
                 </Text>
                 {isFocused && (
-                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: '#2563EB' }]} />
+                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: colors.primary }]} />
                 )}
               </Pressable>
             );
@@ -115,19 +115,19 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
               <Feather
                 name={(ICON_MAP[route.name] ?? 'circle') as any}
                 size={22}
-                color={isFocused ? '#2563EB' : '#94A3B8'}
+                color={isFocused ? colors.primary : colors.textTertiary}
               />
               <Text
                 style={[
                   styles.tabLabel,
-                  { color: isFocused ? '#2563EB' : '#94A3B8' },
+                  { color: isFocused ? colors.primary : colors.textTertiary },
                 ]}
                 numberOfLines={1}
               >
                 {LABEL_MAP[route.name] ?? route.name}
               </Text>
               {isFocused && (
-                <View style={[styles.activeDot, { backgroundColor: '#2563EB' }]} />
+                <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
               )}
             </Pressable>
           );
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'absolute',
     top: -24,
-    shadowColor: '#2563EB',
+    shadowColor: '#E60012',
     shadowOpacity: 0.35,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },

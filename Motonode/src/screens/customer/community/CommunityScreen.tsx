@@ -1,78 +1,191 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   FlatList,
-  Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { CommunityPostCard } from '@components/cards/CommunityPostCard';
 import { CommunityStoriesRow } from '@components/community/CommunityStoriesRow';
-import { COMMUNITY_POSTS } from '@data/mockData';
+import { ChromeHeader } from '@components/common';
+import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
+import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
+import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { getPosts } from '@services/post.service';
+import { getStoryFeed } from '@services/story.service';
+import type { Post } from '../../../types/post';
+import type { StoryFeedEntry } from '../../../types/story';
+import { extractAuthErrorMessage } from '@utils/authErrors';
 import { lightHaptic } from '@utils/haptics';
+
+type CommunityNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<CustomerTabParamList, typeof CustomerTabRoutes.Community>,
+  NativeStackNavigationProp<CustomerStackParamList>
+>;
 
 export function CommunityScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<CommunityNavigationProp>();
+  const { user } = useAuth();
   const tabBarPadding = useTabBarBottomPadding();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [storyFeed, setStoryFeed] = useState<StoryFeedEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCommunity = useCallback(async (opts?: { showLoader?: boolean }) => {
+    const showLoader = opts?.showLoader ?? false;
+
+    if (user?.isGuest) {
+      setPosts([]);
+      setStoryFeed([]);
+      setError('Sign in to view the community feed.');
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
+    if (showLoader) setLoading(true);
+    setError(null);
+
+    try {
+      const [postsResponse, storiesResponse] = await Promise.all([
+        getPosts(),
+        getStoryFeed(),
+      ]);
+
+      if (postsResponse.success !== false && Array.isArray(postsResponse.Response)) {
+        setPosts(postsResponse.Response);
+      } else {
+        setPosts([]);
+      }
+
+      if (storiesResponse.success !== false && Array.isArray(storiesResponse.Response)) {
+        setStoryFeed(storiesResponse.Response);
+      } else {
+        setStoryFeed([]);
+      }
+    } catch (err) {
+      setError(extractAuthErrorMessage(err));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [user?.isGuest]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadCommunity({ showLoader: posts.length === 0 });
+    }, [loadCommunity, posts.length]),
+  );
+
+  const handleRefresh = () => {
+    lightHaptic();
+    setRefreshing(true);
+    void loadCommunity();
+  };
+
+  const handlePostUpdated = (updated: Post) => {
+    setPosts((current) => current.map((post) => (post.id === updated.id ? updated : post)));
+  };
+
+  const handleCreate = () => {
+    lightHaptic();
+    if (user?.isGuest) {
+      Alert.alert('Sign in required', 'Please sign in to create a community post.');
+      return;
+    }
+    navigation.navigate(CustomerStackRoutes.CreateCommunityPost);
+  };
+
+  const listHeader = (
+    <CommunityStoriesRow
+      stories={storyFeed}
+      loading={loading && storyFeed.length === 0}
+      ownAvatar={user?.avatar}
+      ownLabel="Your story"
+    />
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: topPad + 8,
-            backgroundColor: colors.card,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Community</Text>
-        <View style={styles.headerActions}>
-          <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
-            <Feather name="heart" size={24} color={colors.textPrimary} />
-          </Pressable>
-          <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
-            <Feather name="send" size={22} color={colors.textPrimary} />
-          </Pressable>
-        </View>
-      </View>
-
-      <FlatList
-        data={COMMUNITY_POSTS}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
-        ListHeaderComponent={<CommunityStoriesRow />}
-        renderItem={({ item }) => <CommunityPostCard post={item} />}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="users" size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No posts yet</Text>
+      <ChromeHeader contentPad={8}>
+        <View style={styles.headerRow}>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Community</Text>
+          <View style={styles.headerActions}>
+            <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
+              <Feather name="heart" size={22} color={colors.headerForeground} />
+            </Pressable>
+            <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
+              <Feather name="send" size={20} color={colors.headerForeground} />
+            </Pressable>
+            <Pressable style={styles.createBtn} onPress={handleCreate} hitSlop={6}>
+              <Feather name="plus" size={16} color={colors.primary} />
+              <Text style={[styles.createText, { color: colors.primary }]}>Create</Text>
+            </Pressable>
           </View>
-        }
-      />
+        </View>
+      </ChromeHeader>
+
+      {loading && posts.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.link} />
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: tabBarPadding, flexGrow: 1 }}
+          ListHeaderComponent={listHeader}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.link}
+              colors={[colors.link]}
+            />
+          }
+          renderItem={({ item }) => (
+            <CommunityPostCard post={item} onPostUpdated={handlePostUpdated} />
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Feather name="users" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {error ?? 'No posts yet'}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 8,
+    paddingBottom: 12,
   },
   headerTitle: {
     fontSize: 22,
@@ -82,11 +195,29 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
   },
   iconBtn: {
     width: 32,
     height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  createText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  centered: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -96,5 +227,10 @@ const styles = StyleSheet.create({
     padding: 60,
     gap: 12,
   },
-  emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular' },
+  emptyText: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
 });

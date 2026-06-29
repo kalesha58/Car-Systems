@@ -1,87 +1,103 @@
 import React from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import type { StoryFeedEntry } from '../../types/story';
 import { lightHaptic } from '@utils/haptics';
 
-interface Story {
-  id: string;
-  user: string;
-  avatar: string;
-  isOwn?: boolean;
+const DEFAULT_AVATAR =
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80';
+
+interface CommunityStoriesRowProps {
+  stories: StoryFeedEntry[];
+  loading?: boolean;
+  ownAvatar?: string;
+  ownLabel?: string;
 }
 
-const STORIES: Story[] = [
-  {
-    id: 'you',
-    user: 'Your story',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-    isOwn: true,
-  },
-  {
-    id: 's1',
-    user: 'Arjun',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80',
-  },
-  {
-    id: 's2',
-    user: 'Priya',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e3eb?w=100&q=80',
-  },
-  {
-    id: 's3',
-    user: 'Rahul',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
-  },
-  {
-    id: 's4',
-    user: 'Sneha',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
-  },
-  {
-    id: 's5',
-    user: 'Vikram',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80',
-  },
-];
-
-export function CommunityStoriesRow() {
+export function CommunityStoriesRow({
+  stories,
+  loading = false,
+  ownAvatar,
+  ownLabel = 'Your story',
+}: CommunityStoriesRowProps) {
   const colors = useColors();
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingWrap, { borderBottomColor: colors.border }]}>
+        <ActivityIndicator size="small" color={colors.link} />
+      </View>
+    );
+  }
+
+  const ownEntry = stories.find((entry) => entry.isOwn);
+  const otherStories = stories.filter((entry) => !entry.isOwn);
+
+  const displayStories: StoryFeedEntry[] = [
+    ...(ownEntry
+      ? [ownEntry]
+      : [
+          {
+            userId: 'own',
+            userName: ownLabel,
+            userAvatar: ownAvatar,
+            itemCount: 0,
+            hasUnseen: false,
+            isOwn: true,
+          } satisfies StoryFeedEntry,
+        ]),
+    ...otherStories,
+  ];
 
   return (
     <View style={[styles.container, { borderBottomColor: colors.border }]}>
       <FlatList
-        data={STORIES}
-        keyExtractor={(item) => item.id}
+        data={displayStories}
+        keyExtractor={(item) => item.userId}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
-        renderItem={({ item }) => (
-          <Pressable style={styles.storyItem} onPress={() => lightHaptic()}>
-            {item.isOwn ? (
-              <View style={[styles.ownRing, { borderColor: colors.border }]}>
-                <Image source={{ uri: item.avatar }} style={styles.avatar} />
-                <View style={[styles.addBadge, { backgroundColor: colors.primary, borderColor: colors.card }]}>
-                  <Feather name="plus" size={10} color="#fff" />
+        renderItem={({ item }) => {
+          const avatar = item.userAvatar ?? item.previewMediaUrl ?? DEFAULT_AVATAR;
+          const label = item.isOwn ? ownLabel : (item.userName ?? 'User');
+
+          return (
+            <Pressable style={styles.storyItem} onPress={() => lightHaptic()}>
+              {item.isOwn ? (
+                <View style={[styles.ownRing, { borderColor: colors.border }]}>
+                  <Image source={{ uri: avatar }} style={styles.avatar} />
+                  <View
+                    style={[
+                      styles.addBadge,
+                      { backgroundColor: colors.primary, borderColor: colors.card },
+                    ]}
+                  >
+                    <Feather name="plus" size={10} color={colors.primaryForeground} />
+                  </View>
                 </View>
-              </View>
-            ) : (
-              <LinearGradient
-                colors={['#F58529', '#DD2A7B', '#8134AF', '#515BD4']}
-                style={styles.storyRing}
-              >
-                <View style={[styles.storyInner, { backgroundColor: colors.card }]}>
-                  <Image source={{ uri: item.avatar }} style={styles.avatar} />
-                </View>
-              </LinearGradient>
-            )}
-            <Text style={[styles.storyLabel, { color: colors.textPrimary }]} numberOfLines={1}>
-              {item.user}
-            </Text>
-          </Pressable>
-        )}
+              ) : (
+                <LinearGradient
+                  colors={
+                    item.hasUnseen
+                      ? [colors.link, '#DD2A7B', '#8134AF']
+                      : [colors.border, colors.border]
+                  }
+                  style={styles.storyRing}
+                >
+                  <View style={[styles.storyInner, { backgroundColor: colors.card }]}>
+                    <Image source={{ uri: avatar }} style={styles.avatar} />
+                  </View>
+                </LinearGradient>
+              )}
+              <Text style={[styles.storyLabel, { color: colors.textPrimary }]} numberOfLines={1}>
+                {label}
+              </Text>
+            </Pressable>
+          );
+        }}
       />
     </View>
   );
@@ -91,6 +107,11 @@ const styles = StyleSheet.create({
   container: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingBottom: 10,
+  },
+  loadingWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
   },
   row: {
     paddingHorizontal: 12,

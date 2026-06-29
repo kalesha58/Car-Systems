@@ -15,7 +15,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { ProductCard } from '@components/cards/ProductCard';
 import { ServiceCard } from '@components/cards/ServiceCard';
@@ -116,10 +116,7 @@ export function MarketplaceScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: '#1D4ED8' }]}>
-      <LinearGradient
-        colors={['#1D4ED8', '#2563EB']}
-        style={[styles.header, { paddingTop: topPad + 12 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Marketplace</Text>
           <View style={styles.headerActions}>
@@ -144,7 +141,7 @@ export function MarketplaceScreen() {
             <CartIconButton onPress={() => navigation.navigate(CustomerStackRoutes.Cart)} />
           </View>
         </View>
-      </LinearGradient>
+      </ChromeHeader>
 
       <View style={[styles.contentSheet, { backgroundColor: colors.card }]}>
         <View style={styles.tabsWrapper}>

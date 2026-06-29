@@ -27,7 +27,7 @@ const PAYMENT_METHODS: {
   iconBg: string;
 }[] = [
   { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#F59E0B', iconBg: '#FEF3C7' },
-  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#2563EB', iconBg: '#DBEAFE' },
+  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#E60012', iconBg: '#F2F2F2' },
   { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#1E293B', iconBg: '#F1F5F9' },
   { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED', iconBg: '#EDE9FE' },
 ];
@@ -72,7 +72,7 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
       footerExtra={<BookingTrustFooter />}
     >
       <View style={styles.secureBanner}>
-        <Feather name="shield" size={16} color="#2563EB" />
+        <Feather name="shield" size={16} color={colors.icon} />
         <View>
           <Text style={styles.secureTitle}>100% Secure Payments</Text>
           <Text style={styles.secureSub}>Your payment information is safe with us.</Text>
@@ -138,14 +138,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#D9D9D9',
   },
   secureTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E3A8A' },
-  secureSub: { fontSize: 10, color: '#3B82F6', marginTop: 1 },
+  secureSub: { fontSize: 10, color: '#FF1A1A', marginTop: 1 },
   summaryCard: { borderRadius: 16, borderWidth: 1, padding: 14 },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   thumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: '#E2E8F0' },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: '#2563EB' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2563EB' },
+  radioSelected: { borderColor: '#E60012' },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
   divider: { height: 1, backgroundColor: '#F1F5F9' },
 });

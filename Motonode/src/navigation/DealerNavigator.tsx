@@ -1,7 +1,10 @@
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { getDealerOnboardingDestination } from '../auth/dealerOnboarding';
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/DealerContext';
+import type { DealerOnboardingDestination } from '../types/api';
 import { ProductFormScreen } from '@screens/dealer/inventory/ProductFormScreen';
 import { ServiceFormScreen } from '@screens/dealer/inventory/ServiceFormScreen';
 import { VehicleFormScreen } from '@screens/dealer/inventory/VehicleFormScreen';
@@ -34,14 +37,48 @@ export type DealerStackParamList = {
 
 const Stack = createNativeStackNavigator<DealerStackParamList>();
 
+function mapDestinationToRoute(destination: DealerOnboardingDestination) {
+  switch (destination) {
+    case 'DealerTabs':
+      return DealerStackRoutes.DealerTabs;
+    case 'BusinessRegistration':
+      return DealerStackRoutes.BusinessRegistration;
+    case 'DealerType':
+    default:
+      return DealerStackRoutes.DealerType;
+  }
+}
+
 export function DealerNavigator() {
-  const { registrationCompleted } = useDealer();
-  const initialRoute = registrationCompleted
-    ? DealerStackRoutes.DealerTabs
-    : DealerStackRoutes.DealerType;
+  const [initialRoute, setInitialRoute] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function resolveInitialRoute() {
+      const destination = await getDealerOnboardingDestination();
+      if (mounted) {
+        setInitialRoute(mapDestinationToRoute(destination));
+      }
+    }
+
+    resolveInitialRoute();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!initialRoute) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
-    <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName={initialRoute as keyof DealerStackParamList} screenOptions={{ headerShown: false }}>
       <Stack.Screen name={DealerStackRoutes.DealerTabs} component={DealerTabsNavigator} />
       <Stack.Screen name={DealerStackRoutes.DealerType} component={DealerTypeScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessRegistration} component={RegistrationScreen} />
@@ -58,3 +95,11 @@ export function DealerNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

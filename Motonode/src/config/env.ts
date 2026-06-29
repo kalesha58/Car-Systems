@@ -1,1 +1,1 @@
-export const API_BASE_URL = 'https://api.motonode.in/api';
+export const API_BASE_URL = 'https://car-systems.vercel.app/api';

@@ -30,7 +30,7 @@ function ReviewRow({
   return (
     <View style={styles.reviewRow}>
       <View style={styles.reviewIcon}>
-        <Feather name={icon} size={14} color="#2563EB" />
+        <Feather name={icon} size={14} color={colors.icon} />
       </View>
       <View style={styles.reviewBody}>
         <Text style={[styles.reviewLabel, { color: colors.textSecondary }]}>{label}</Text>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },

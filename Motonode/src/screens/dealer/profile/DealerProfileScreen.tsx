@@ -20,6 +20,7 @@ import { LogoutModal } from '@components/modals/LogoutModal';
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { useAuth, useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type DealerTabParamList = {
@@ -53,7 +54,7 @@ export function DealerProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerProfileNavigationProp>();
-  const { user, logout, switchRole } = useAuth();
+  const { user, logout } = useAuth();
   const { dealerType, businessProfile, products, orders, resetRegistration } = useDealer();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -90,14 +91,14 @@ export function DealerProfileScreen() {
   };
 
   const menuItems = [
-    { icon: 'home', label: 'Store Settings', sublabel: 'Name, type, location, working hours', color: '#2563EB', bg: '#EFF6FF', route: DealerStackRoutes.StoreSettings },
+    { icon: 'home', label: 'Store Settings', sublabel: 'Name, type, location, working hours', color: themeLight.textSecondary, bg: '#F2F2F2', route: DealerStackRoutes.StoreSettings },
     { icon: 'image', label: 'Store Gallery', sublabel: 'Upload photos of your showroom', color: '#10B981', bg: '#ECFDF5', route: null },
     { icon: 'calendar', label: 'Test Drive Settings', sublabel: 'Manage vehicles, slots & availability', color: '#8B5CF6', bg: '#F3E8FF', route: null },
     { icon: 'credit-card', label: 'Bank & Payments', sublabel: 'Manage payout accounts & UPI', color: '#F59E0B', bg: '#FFFBEB', route: DealerStackRoutes.BankDetails },
     { icon: 'file-text', label: 'GST Information', sublabel: 'View and manage GST details', color: '#7C3AED', bg: '#F5F3FF', route: DealerStackRoutes.GSTInfo },
     { icon: 'smartphone', label: 'UPI Accounts', sublabel: 'Manage UPI payment accounts', color: '#059669', bg: '#ECFDF5', route: DealerStackRoutes.UPIAccounts },
     { icon: 'bell', label: 'Notification Settings', sublabel: 'Manage order & booking alerts', color: '#EF4444', bg: '#FEF2F2', route: DealerStackRoutes.NotificationSettings },
-    { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#3B82F6', bg: '#EFF6FF', route: null },
+    { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#FF1A1A', bg: '#F2F2F2', route: null },
     { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, help center & contact support', color: '#64748B', bg: '#F1F5F9', route: null },
   ];
 
@@ -119,7 +120,7 @@ export function DealerProfileScreen() {
             <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Manage your store & account</Text>
           </View>
           <Pressable style={styles.headerEditBtn} onPress={handleEditBusiness}>
-            <Feather name="edit-2" size={18} color="#2563EB" />
+            <Feather name="edit-2" size={18} color={colors.icon} />
           </Pressable>
         </View>
       </View>
@@ -134,10 +135,10 @@ export function DealerProfileScreen() {
           
           <View style={styles.brandingLeft}>
             {/* Store Logo with Edit Icon Badge */}
-            <View style={[styles.storeLogoBox, { backgroundColor: '#2563EB' }]}>
+            <View style={[styles.storeLogoBox, { backgroundColor: '#E60012' }]}>
               <Feather name="home" size={28} color="#ffffff" />
               <Pressable style={styles.logoEditBadge} onPress={handleEditBusiness}>
-                <Feather name="edit-2" size={9} color="#2563EB" />
+                <Feather name="edit-2" size={9} color={colors.icon} />
               </Pressable>
             </View>
 
@@ -174,8 +175,8 @@ export function DealerProfileScreen() {
         {/* Store Summary Statistics Card */}
         <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.statItem}>
-            <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
-              <Feather name="package" size={16} color="#2563EB" />
+            <View style={[styles.statIconBox, { backgroundColor: '#F2F2F2' }]}>
+              <Feather name="package" size={16} color={colors.icon} />
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{products.length || 10}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Products</Text>
@@ -232,10 +233,10 @@ export function DealerProfileScreen() {
         </View>
 
         {/* Bottom CTA Banner (Grow your business) */}
-        <View style={[styles.growBusinessBanner, { backgroundColor: '#EFF6FF', borderColor: colors.border }]}>
+        <View style={[styles.growBusinessBanner, { backgroundColor: '#F2F2F2', borderColor: colors.border }]}>
           <View style={styles.growBannerLeft}>
-            <View style={[styles.growIconBox, { backgroundColor: '#DBEAFE' }]}>
-              <Feather name="trending-up" size={18} color="#2563EB" />
+            <View style={[styles.growIconBox, { backgroundColor: '#F2F2F2' }]}>
+              <Feather name="trending-up" size={18} color={colors.icon} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.growTitle, { color: colors.textPrimary }]}>Grow your business!</Text>
@@ -252,17 +253,6 @@ export function DealerProfileScreen() {
 
         {/* Customer View and Logout buttons */}
         <View style={styles.profileActionBtns}>
-          <Pressable
-            style={[styles.actionBtn, { borderColor: '#2563EB', backgroundColor: '#EFF6FF' }]}
-            onPress={() => {
-              lightHaptic();
-              switchRole();
-            }}
-          >
-            <Feather name="refresh-cw" size={15} color="#2563EB" style={{ marginRight: 6 }} />
-            <Text style={[styles.actionBtnText, { color: '#2563EB' }]}>Switch to Customer View</Text>
-          </Pressable>
-
           <Pressable
             style={[styles.actionBtn, { borderColor: colors.destructive }]}
             onPress={() => {
@@ -303,7 +293,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -351,12 +341,12 @@ const styles = StyleSheet.create({
   storeName: { fontSize: 16, fontFamily: 'Inter_700Bold' },
   dealerTypeBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
-  dealerTypeBadgeText: { color: '#2563EB', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  dealerTypeBadgeText: { color: themeLight.textSecondary, fontSize: 9, fontFamily: 'Inter_700Bold' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingVal: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   reviewCount: { fontSize: 10 },
@@ -461,7 +451,7 @@ const styles = StyleSheet.create({
   growBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,

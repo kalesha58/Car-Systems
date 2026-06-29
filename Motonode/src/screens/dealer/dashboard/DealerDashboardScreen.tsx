@@ -24,6 +24,7 @@ import {
   type DealerType,
 } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { elevatedCardShadow } from '@utils/shadows';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
@@ -53,7 +54,7 @@ type DealerDashboardNavigationProp = CompositeNavigationProp<
 const STATUS_COLORS: Record<string, string> = {
   pending: '#F59E0B',
   confirmed: '#10B981',
-  completed: '#3B82F6',
+  completed: '#FF1A1A',
   rejected: '#EF4444',
 };
 
@@ -97,7 +98,7 @@ export function DealerDashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerDashboardNavigationProp>();
-  const { user, switchRole } = useAuth();
+  const { user } = useAuth();
   const { capabilities, orders, products, vehicles, services, driveBookings, dealerType } =
     useDealer();
   const { getPendingServiceCount } = useBookings();
@@ -109,7 +110,7 @@ export function DealerDashboardScreen() {
   const revenueIllustration =
     DEALER_TYPE_ILLUSTRATIONS[resolvedDealerType] ??
     DEALER_TYPE_ILLUSTRATIONS['Automobile Showroom'];
-  const illustrationTint = dealerTypeMeta?.color ?? '#2563EB';
+  const illustrationTint = dealerTypeMeta?.color ?? '#E60012';
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -118,7 +119,7 @@ export function DealerDashboardScreen() {
 
   const stats = [
     { label: 'Products', value: String(products.length || 10), icon: 'box', color: '#8B5CF6', bg: '#F3E8FF', trend: '0%' },
-    { label: 'Vehicles', value: String(vehicles.length || 6), icon: 'truck', color: '#2563EB', bg: '#EFF6FF', trend: '0%' },
+    { label: 'Vehicles', value: String(vehicles.length || 6), icon: 'truck', color: themeLight.textSecondary, bg: '#F2F2F2', trend: '0%' },
     { label: 'Services', value: String(services.length || 8), icon: 'tool', color: '#10B981', bg: '#ECFDF5', trend: '0%' },
     { label: 'Test Drives', value: String(driveBookings.length || 6), icon: 'calendar', color: '#F59E0B', bg: '#FFFBEB', trend: '5%' },
     { label: 'Orders', value: String(orders.length || 4), icon: 'shopping-bag', color: '#EF4444', bg: '#FEF2F2', trend: '12%' },
@@ -128,7 +129,7 @@ export function DealerDashboardScreen() {
   const quickActions = [
     { label: 'Add Product', icon: 'plus', color: '#8B5CF6', bg: '#F3E8FF', route: DealerStackRoutes.ProductForm },
     { label: 'Add Service', icon: 'tool', color: '#10B981', bg: '#ECFDF5', route: DealerStackRoutes.ServiceForm },
-    { label: 'Service Bookings', icon: 'calendar', color: '#2563EB', bg: '#EFF6FF', route: DealerStackRoutes.ServiceBookings, badge: pendingServiceBookings },
+    { label: 'Service Bookings', icon: 'calendar', color: themeLight.textSecondary, bg: '#F2F2F2', route: DealerStackRoutes.ServiceBookings, badge: pendingServiceBookings },
     { label: 'New Order', icon: 'shopping-bag', color: '#F59E0B', bg: '#FFFBEB', route: DealerTabRoutes.Orders },
     { label: 'Test Drive', icon: 'wind', color: '#6366F1', bg: '#EEF2FF', route: DealerTabRoutes.Drive },
   ];
@@ -287,7 +288,7 @@ export function DealerDashboardScreen() {
 
         <View style={[styles.ordersContainerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {displayOrders.map((order, i) => {
-            const stColor = STATUS_COLORS[order.status] || '#2563EB';
+            const stColor = STATUS_COLORS[order.status] || '#E60012';
             return (
               <Pressable
                 key={order.id}
@@ -496,7 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  viewAllLink: { color: '#2563EB', fontSize: 11, fontFamily: 'Inter_700Bold' },
+  viewAllLink: { color: themeLight.textSecondary, fontSize: 11, fontFamily: 'Inter_700Bold' },
 
   actionsScrollRow: {
     gap: 12,

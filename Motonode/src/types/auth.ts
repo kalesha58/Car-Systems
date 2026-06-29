@@ -9,4 +9,5 @@ export interface AuthUser {
   avatar?: string;
   dealerType?: string;
   location: string;
+  isGuest?: boolean;
 }

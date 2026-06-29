@@ -47,8 +47,8 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
               style={[
                 styles.dateChip,
                 {
-                  backgroundColor: selected ? '#2563EB' : colors.card,
-                  borderColor: selected ? '#2563EB' : colors.border,
+                  backgroundColor: selected ? '#E60012' : colors.card,
+                  borderColor: selected ? '#E60012' : colors.border,
                 },
               ]}
               onPress={() => updateBooking({ date: d.value })}
@@ -73,8 +73,8 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
                   style={[
                     styles.slotChip,
                     {
-                      backgroundColor: selected ? '#EFF6FF' : colors.card,
-                      borderColor: selected ? '#2563EB' : colors.border,
+                      backgroundColor: selected ? '#F2F2F2' : colors.card,
+                      borderColor: selected ? '#E60012' : colors.border,
                     },
                   ]}
                   onPress={() => updateBooking({ timeSlot: slot })}
@@ -82,7 +82,7 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
                   <Text
                     style={[
                       styles.slotText,
-                      { color: selected ? '#2563EB' : colors.textSecondary },
+                      { color: selected ? '#E60012' : colors.textSecondary },
                     ]}
                   >
                     {slot}

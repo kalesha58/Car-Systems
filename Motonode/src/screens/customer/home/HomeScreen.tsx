@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,11 +11,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
 
-import { BannerCarousel, SectionHeader, PromoBanner, CartIconButton } from '@components/common';
+import { BannerCarousel, SectionHeader, PromoBanner, ChromeHeader, SubtlePatternBackground } from '@components/common';
 import { ProductCard } from '@components/cards/ProductCard';
 import { VehicleCard } from '@components/cards/VehicleCard';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
@@ -44,11 +41,9 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
 
 export function HomeScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { user } = useAuth();
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const tabBarPadding = useTabBarBottomPadding();
 
   // Select one product per category to display variety, showcasing different selling dealers
@@ -68,21 +63,24 @@ export function HomeScreen() {
     VEHICLES.find((v) => v.id === 'v3'),
   ].filter(Boolean) as Vehicle[];
 
+  const categories = [
+    { icon: 'settings', label: 'Spare Parts' },
+    { icon: 'tool', label: 'Accessories' },
+    { icon: 'shield', label: 'Riding Gear' },
+    { icon: 'disc', label: 'Tyres' },
+    { icon: 'grid', label: 'All Categories' },
+  ] as const;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Redesigned Location Header with Swiggy/Zepto style Blue Gradient */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[
-          styles.header,
-          { paddingTop: topPad + 12 },
-        ]}
-      >
+      <SubtlePatternBackground />
+      {/* Location header — solid black chrome from theme */}
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerTop}>
           <Pressable style={styles.locationBtn}>
             <View style={styles.locationIconWrapper}>
               <View style={styles.whiteLocationDot}>
-                <Feather name="map-pin" size={12} color="#1D4ED8" />
+                <Feather name="map-pin" size={12} color={colors.link} />
               </View>
             </View>
             <View>
@@ -123,7 +121,7 @@ export function HomeScreen() {
           </Text>
           <Feather name="camera" size={18} color="#94A3B8" />
         </Pressable>
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView
         style={styles.content}
@@ -143,40 +141,29 @@ export function HomeScreen() {
         
         {/* Redesigned 5-Column Category Row */}
         <View style={styles.categoriesContainer}>
-          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
-            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
-              <Feather name="settings" size={20} color="#2563EB" />
-            </View>
-            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Spare Parts</Text>
-          </Pressable>
-
-          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
-            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
-              <Feather name="tool" size={20} color="#2563EB" />
-            </View>
-            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Accessories</Text>
-          </Pressable>
-
-          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
-            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
-              <Feather name="shield" size={20} color="#2563EB" />
-            </View>
-            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Riding Gear</Text>
-          </Pressable>
-
-          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
-            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
-              <Feather name="disc" size={20} color="#2563EB" />
-            </View>
-            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>Tyres</Text>
-          </Pressable>
-
-          <Pressable style={styles.categoryCard} onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}>
-            <View style={[styles.categoryIconBox, { borderColor: colors.border }]}>
-              <Feather name="grid" size={20} color="#2563EB" />
-            </View>
-            <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>All Categories</Text>
-          </Pressable>
+          {categories.map((category) => (
+            <Pressable
+              key={category.label}
+              style={styles.categoryCard}
+              onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
+            >
+              <View
+                style={[
+                  styles.categoryIconBox,
+                  { borderColor: colors.border, backgroundColor: colors.card },
+                ]}
+              >
+                <Feather
+                  name={category.icon}
+                  size={20}
+                  color={colors.textPrimary}
+                />
+              </View>
+              <Text style={[styles.categoryLabelText, { color: colors.textPrimary }]}>
+                {category.label}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <SectionHeader
@@ -337,7 +324,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   searchPlaceholder: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular' },
-  content: { flex: 1 },
+  content: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: { padding: spacing.md, paddingTop: 20 },
   categoriesContainer: {
     flexDirection: 'row',
@@ -353,7 +340,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

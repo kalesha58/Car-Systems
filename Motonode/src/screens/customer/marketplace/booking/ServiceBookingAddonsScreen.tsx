@@ -57,7 +57,7 @@ export function ServiceBookingAddonsScreen({ navigation }: Props) {
               styles.row,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#2563EB' : colors.border,
+                borderColor: selected ? '#E60012' : colors.border,
               },
             ]}
             onPress={() => toggleAddon(addon.id)}
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxSelected: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  checkboxSelected: { backgroundColor: '#E60012', borderColor: '#E60012' },
   rowBody: { flex: 1 },
   addonName: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   addonDesc: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },

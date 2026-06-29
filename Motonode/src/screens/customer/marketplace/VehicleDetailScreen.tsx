@@ -14,6 +14,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useAuth, useBookings } from '@context/index';
@@ -46,7 +47,6 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
   const { createTestDriveBooking } = useBookings();
   const { id } = route.params;
   const vehicle = VEHICLES.find((v) => v.id === id);
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   // Booking Modal States
@@ -124,15 +124,23 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header Panel */}
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+      {/* Header */}
+      <ChromeHeader style={styles.header} contentPad={8}>
+        <Pressable style={styles.headerSide} onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
-        <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]}>
-          <Feather name="share-2" size={20} color={colors.textPrimary} />
-        </Pressable>
-      </View>
+        <Text
+          style={[styles.headerTitle, { color: colors.headerForeground }]}
+          numberOfLines={1}
+        >
+          {vehicle.name}
+        </Text>
+        <View style={[styles.headerSide, styles.headerSideRight]}>
+          <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
+            <Feather name="share-2" size={20} color={colors.headerForeground} />
+          </Pressable>
+        </View>
+      </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
         {/* Multi-Image Sidebar selector */}
@@ -143,7 +151,10 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                 key={idx}
                 style={[
                   styles.thumbnailWrapper,
-                  { borderColor: activeImageIndex === idx ? '#2563EB' : '#E2E8F0' }
+                  {
+                    borderColor: activeImageIndex === idx ? colors.textPrimary : colors.border,
+                    backgroundColor: colors.card,
+                  },
                 ]}
                 onPress={() => {
                   lightHaptic();
@@ -155,7 +166,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             ))}
           </View>
 
-          <View style={styles.mainImagePanel}>
+          <View style={[styles.mainImagePanel, { backgroundColor: colors.muted }]}>
             <Image source={{ uri: vehicleImages[activeImageIndex] }} style={styles.vehicleImage} resizeMode="cover" />
             <View style={styles.pageIndicator}>
               <Text style={styles.pageIndicatorText}>{activeImageIndex + 1} / {vehicleImages.length}</Text>
@@ -165,11 +176,11 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
 
         <View style={[styles.content, { backgroundColor: colors.background }]}>
           {/* Brand & Name header */}
-          <Text style={styles.brandText}>{vehicle.brand.toUpperCase()}</Text>
+          <Text style={[styles.brandText, { color: colors.textSecondary }]}>{vehicle.brand.toUpperCase()}</Text>
           <View style={styles.titleRow}>
             <Text style={[styles.name, { color: colors.textPrimary }]}>{vehicle.name}</Text>
-            <View style={styles.yearBadge}>
-              <Text style={styles.yearText}>{vehicle.year}</Text>
+            <View style={[styles.yearBadge, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.yearText, { color: colors.textSecondary }]}>{vehicle.year}</Text>
             </View>
           </View>
 
@@ -182,8 +193,8 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           {/* Premium Quick Highlights grid */}
           <View style={styles.quickSpecsGrid}>
             <View style={[styles.specGridItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.specIconWrapper}>
-                <Feather name="droplet" size={16} color="#2563EB" />
+              <View style={[styles.specIconWrapper, { backgroundColor: colors.muted }]}>
+                <Feather name="droplet" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Fuel Type</Text>
@@ -192,8 +203,8 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             </View>
 
             <View style={[styles.specGridItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.specIconWrapper}>
-                <Feather name="settings" size={16} color="#2563EB" />
+              <View style={[styles.specIconWrapper, { backgroundColor: colors.muted }]}>
+                <Feather name="settings" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Transmission</Text>
@@ -202,8 +213,8 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             </View>
 
             <View style={[styles.specGridItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.specIconWrapper}>
-                <Feather name="trending-up" size={16} color="#2563EB" />
+              <View style={[styles.specIconWrapper, { backgroundColor: colors.muted }]}>
+                <Feather name="trending-up" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Mileage / Range</Text>
@@ -240,8 +251,8 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             style={[styles.dealerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => navigation.navigate(CustomerStackRoutes.DealerStore, { id: vehicle.dealerId || 'd1' })}
           >
-            <View style={[styles.dealerIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Feather name="briefcase" size={20} color={colors.primary} />
+            <View style={[styles.dealerIcon, { backgroundColor: colors.primarySubtle }]}>
+              <Feather name="briefcase" size={20} color={colors.link} />
             </View>
             <View style={styles.dealerInfo}>
               <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{vehicle.dealerName}</Text>
@@ -249,10 +260,10 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             </View>
             <Feather name="chevron-right" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
             <Pressable
-              style={[styles.callBtn, { backgroundColor: colors.primary + '15' }]}
+              style={[styles.callBtn, { backgroundColor: colors.primarySubtle }]}
               onPress={(e) => { e.stopPropagation(); lightHaptic(); }}
             >
-              <Feather name="phone" size={18} color={colors.primary} />
+              <Feather name="phone" size={18} color={colors.link} />
             </Pressable>
           </Pressable>
         </View>
@@ -266,11 +277,11 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           <Text style={[styles.enquireBtnText, { color: colors.primary }]}>Enquire Now</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [styles.testDriveBtn, { backgroundColor: '#2563EB', opacity: pressed ? 0.9 : 1 }]}
+          style={({ pressed }) => [styles.testDriveBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
           onPress={handleBookTestDrive}
         >
-          <Feather name="truck" size={18} color="#fff" />
-          <Text style={styles.testDriveBtnText}>Book Test Drive</Text>
+          <Feather name="truck" size={18} color={colors.primaryForeground} />
+          <Text style={[styles.testDriveBtnText, { color: colors.primaryForeground }]}>Book Test Drive</Text>
         </Pressable>
       </View>
 
@@ -295,14 +306,14 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
             {isBookingSuccess ? (
               <View style={styles.successContainer}>
                 <View style={styles.successIconWrapper}>
-                  <Feather name="check-circle" size={48} color="#10B981" />
+                  <Feather name="check-circle" size={48} color={colors.success} />
                 </View>
                 <Text style={[styles.successTitle, { color: colors.textPrimary }]}>Booking Confirmed!</Text>
                 <Text style={[styles.successSub, { color: colors.textSecondary }]}>
                   Your test drive for {vehicle.name} has been booked for {bookingDate} at {bookingSlot}.
                 </Text>
-                <Pressable style={[styles.successDoneBtn, { backgroundColor: '#2563EB' }]} onPress={handleCloseBookingModal}>
-                  <Text style={styles.doneBtnText}>Awesome</Text>
+                <Pressable style={[styles.successDoneBtn, { backgroundColor: colors.primary }]} onPress={handleCloseBookingModal}>
+                  <Text style={[styles.doneBtnText, { color: colors.primaryForeground }]}>Awesome</Text>
                 </Pressable>
               </View>
             ) : (
@@ -311,7 +322,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                 <View style={[styles.summaryCard, { backgroundColor: colors.muted }]}>
                   <Image source={{ uri: vehicle.image }} style={styles.summaryImg} />
                   <View>
-                    <Text style={[styles.summaryBrand, { color: colors.primary }]}>{vehicle.brand}</Text>
+                    <Text style={[styles.summaryBrand, { color: colors.link }]}>{vehicle.brand}</Text>
                     <Text style={[styles.summaryName, { color: colors.textPrimary }]}>{vehicle.name}</Text>
                     <Text style={[styles.summarySpecs, { color: colors.textSecondary }]}>{vehicle.fuel} • {vehicle.transmission}</Text>
                   </View>
@@ -325,14 +336,24 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                       key={date}
                       style={[
                         styles.selectorChip,
-                        bookingDate === date ? { backgroundColor: '#2563EB', borderColor: '#2563EB' } : { borderColor: colors.border }
+                        { backgroundColor: colors.card },
+                        bookingDate === date
+                          ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                          : { borderColor: colors.border },
                       ]}
                       onPress={() => {
                         lightHaptic();
                         setBookingDate(date);
                       }}
                     >
-                      <Text style={[styles.chipText, bookingDate === date ? { color: '#ffffff' } : { color: colors.textSecondary }]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          bookingDate === date
+                            ? { color: colors.primaryForeground }
+                            : { color: colors.textSecondary },
+                        ]}
+                      >
                         {date}
                       </Text>
                     </Pressable>
@@ -347,14 +368,24 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                       key={slot}
                       style={[
                         styles.selectorChip,
-                        bookingSlot === slot ? { backgroundColor: '#2563EB', borderColor: '#2563EB' } : { borderColor: colors.border }
+                        { backgroundColor: colors.card },
+                        bookingSlot === slot
+                          ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                          : { borderColor: colors.border },
                       ]}
                       onPress={() => {
                         lightHaptic();
                         setBookingSlot(slot);
                       }}
                     >
-                      <Text style={[styles.chipText, bookingSlot === slot ? { color: '#ffffff' } : { color: colors.textSecondary }]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          bookingSlot === slot
+                            ? { color: colors.primaryForeground }
+                            : { color: colors.textSecondary },
+                        ]}
+                      >
                         {slot}
                       </Text>
                     </Pressable>
@@ -363,14 +394,16 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
 
                 {/* Confirm Action Button */}
                 <Pressable
-                  style={[styles.confirmBtn, { backgroundColor: '#2563EB' }]}
+                  style={[styles.confirmBtn, { backgroundColor: colors.primary }]}
                   onPress={handleConfirmBooking}
                   disabled={isBookingSubmitting}
                 >
                   {isBookingSubmitting ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.primaryForeground} />
                   ) : (
-                    <Text style={styles.confirmBtnText}>Confirm Test Drive Booking</Text>
+                    <Text style={[styles.confirmBtnText, { color: colors.primaryForeground }]}>
+                      Confirm Test Drive Booking
+                    </Text>
                   )}
                 </Pressable>
               </View>
@@ -387,33 +420,34 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingBottom: 8,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
+    gap: 4,
+  },
+  headerSide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 48,
+  },
+  headerSideRight: {
+    justifyContent: 'flex-end',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   imageContainerRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginTop: 100,
+    marginTop: 12,
     gap: 12,
     height: 250,
   },
@@ -429,7 +463,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     overflow: 'hidden',
     padding: 2,
-    backgroundColor: '#ffffff',
   },
   thumbnailImg: {
     width: '100%',
@@ -442,7 +475,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     height: '100%',
     position: 'relative',
-    backgroundColor: '#F8FAFC',
   },
   vehicleImage: { width: '100%', height: '100%' },
   pageIndicator: {
@@ -456,16 +488,15 @@ const styles = StyleSheet.create({
   },
   pageIndicatorText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   content: { padding: 20, marginTop: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-  brandText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB', letterSpacing: 1, marginBottom: 2 },
+  brandText: { fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 1, marginBottom: 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   name: { fontSize: 22, fontFamily: 'Inter_700Bold', lineHeight: 30 },
   yearBadge: {
-    backgroundColor: '#EEF2F6',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  yearText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#64748B' },
+  yearText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   priceRow: {
     marginBottom: 16,
   },
@@ -496,7 +527,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -530,7 +560,7 @@ const styles = StyleSheet.create({
   enquireBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 48, borderRadius: 12, borderWidth: 1.5 },
   enquireBtnText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   testDriveBtn: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12 },
-  testDriveBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  testDriveBtnText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   
   // Modal Sheet Styles
   modalOverlay: {
@@ -539,7 +569,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalBgPressable: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   modalSheet: {
     borderTopLeftRadius: 24,
@@ -604,7 +634,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 18,
-    backgroundColor: '#ffffff',
   },
   chipText: {
     fontSize: 11,
@@ -618,7 +647,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmBtnText: {
-    color: '#ffffff',
     fontSize: 14,
     fontFamily: 'Inter_700Bold',
   },
@@ -650,7 +678,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneBtnText: {
-    color: '#ffffff',
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
   },

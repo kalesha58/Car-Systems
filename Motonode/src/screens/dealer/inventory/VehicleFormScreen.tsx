@@ -20,6 +20,7 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { DealerVehicle } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -157,13 +158,13 @@ export function VehicleFormScreen({ route, navigation }: Props) {
                   <Pressable
                     key={t}
                     style={[styles.typeBtn, {
-                      borderColor: isSelected ? '#2563EB' : '#E2E8F0',
-                      backgroundColor: isSelected ? '#EFF6FF' : '#ffffff',
+                      borderColor: isSelected ? '#E60012' : '#E2E8F0',
+                      backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
                     }]}
                     onPress={() => { lightHaptic(); set('type', t); }}
                   >
-                    <Feather name={t === 'car' ? 'truck' : 'wind'} size={15} color={isSelected ? '#2563EB' : colors.textSecondary} />
-                    <Text style={[styles.typeBtnText, { color: isSelected ? '#2563EB' : colors.textSecondary }]}>
+                    <Feather name={t === 'car' ? 'truck' : 'wind'} size={15} color={isSelected ? '#E60012' : colors.textSecondary} />
+                    <Text style={[styles.typeBtnText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>
                       {t === 'car' ? 'Car' : 'Bike'}
                     </Text>
                   </Pressable>
@@ -278,13 +279,13 @@ export function VehicleFormScreen({ route, navigation }: Props) {
                     <Pressable
                       key={f}
                       style={[styles.specChip, {
-                        borderColor: isSelected ? '#2563EB' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#EFF6FF' : '#ffffff',
+                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
+                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
                       }]}
                       onPress={() => { lightHaptic(); set('fuel', f); }}
                     >
-                      <Feather name={(FUEL_ICONS[f] || 'droplet') as any} size={12} color={isSelected ? '#2563EB' : colors.textSecondary} />
-                      <Text style={[styles.specChipText, { color: isSelected ? '#2563EB' : colors.textSecondary }]}>{f}</Text>
+                      <Feather name={(FUEL_ICONS[f] || 'droplet') as any} size={12} color={isSelected ? '#E60012' : colors.textSecondary} />
+                      <Text style={[styles.specChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{f}</Text>
                     </Pressable>
                   );
                 })}
@@ -301,13 +302,13 @@ export function VehicleFormScreen({ route, navigation }: Props) {
                     <Pressable
                       key={t}
                       style={[styles.specChip, {
-                        borderColor: isSelected ? '#2563EB' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#EFF6FF' : '#ffffff',
+                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
+                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
                       }]}
                       onPress={() => { lightHaptic(); set('transmission', t); }}
                     >
-                      <Feather name="sliders" size={12} color={isSelected ? '#2563EB' : colors.textSecondary} />
-                      <Text style={[styles.specChipText, { color: isSelected ? '#2563EB' : colors.textSecondary }]}>{t}</Text>
+                      <Feather name="sliders" size={12} color={isSelected ? '#E60012' : colors.textSecondary} />
+                      <Text style={[styles.specChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{t}</Text>
                     </Pressable>
                   );
                 })}
@@ -384,8 +385,8 @@ export function VehicleFormScreen({ route, navigation }: Props) {
             {/* Test Drive Toggle */}
             <View style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.toggleLeft}>
-                <View style={[styles.toggleIconBox, { backgroundColor: '#EFF6FF' }]}>
-                  <Feather name="calendar" size={14} color="#2563EB" />
+                <View style={[styles.toggleIconBox, { backgroundColor: '#F2F2F2' }]}>
+                  <Feather name="calendar" size={14} color={colors.icon} />
                 </View>
                 <View>
                   <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Enable Test Drive Bookings</Text>
@@ -395,7 +396,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
               <Switch
                 value={form.testDriveEnabled as boolean}
                 onValueChange={(v) => set('testDriveEnabled', v)}
-                trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
+                trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                 thumbColor="#ffffff"
               />
             </View>
@@ -416,7 +417,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
           <View style={{ alignItems: 'flex-end', gap: 2 }}>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-            <Text style={[styles.previewPrice, { color: '#2563EB' }]}>₹{Number(form.price || 0).toLocaleString('en-IN')}</Text>
+            <Text style={[styles.previewPrice, { color: themeLight.textSecondary }]}>₹{Number(form.price || 0).toLocaleString('en-IN')}</Text>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Stock</Text>
             <Text style={[styles.previewStock, { color: '#1E3A8A' }]}>{form.stock || '1'} Unit</Text>
           </View>
@@ -425,7 +426,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
         {/* Sticky Add Button */}
         <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
           <Pressable
-            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#2563EB' }]}
+            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={handleSave} disabled={saving}
           >
             <Feather name={isEdit ? 'check' : 'plus'} size={16} color="#ffffff" style={{ marginRight: 8 }} />
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   headerSubtitle: { fontSize: 10, marginTop: 1 },
   saveHeaderBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#2563EB',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#E60012',
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
   },
   saveHeaderText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
   sectionLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   sectionNumberBadge: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#E60012', alignItems: 'center', justifyContent: 'center',
   },
   sectionNumberText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },

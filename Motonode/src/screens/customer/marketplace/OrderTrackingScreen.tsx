@@ -12,7 +12,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
@@ -59,10 +59,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sticky Header */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
         </Pressable>
@@ -70,7 +67,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
         <Pressable style={styles.iconBtn}>
           <Feather name="headphones" size={20} color="#ffffff" />
         </Pressable>
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 20 }]}>
         

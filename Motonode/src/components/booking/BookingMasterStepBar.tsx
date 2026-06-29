@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { themeLight } from '@theme/colors';
+
 export type BookingMasterStep = 1 | 2 | 3 | 4;
 
 const STEPS = [
@@ -68,12 +70,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleDone: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  circleActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  circleDone: { backgroundColor: '#E60012', borderColor: '#E60012' },
+  circleActive: { backgroundColor: '#E60012', borderColor: '#E60012' },
   num: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
   numActive: { color: '#ffffff' },
   label: { fontSize: 10, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
-  labelActive: { color: '#2563EB', fontFamily: 'Inter_700Bold' },
+  labelActive: { color: themeLight.textPrimary, fontFamily: 'Inter_700Bold' },
   line: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginBottom: 18, marginHorizontal: 4 },
-  lineDone: { backgroundColor: '#2563EB' },
+  lineDone: { backgroundColor: '#E60012' },
 });

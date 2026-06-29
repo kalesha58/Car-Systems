@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface BookingPriceSummaryProps {
   serviceAmount: number;
@@ -82,5 +83,5 @@ const styles = StyleSheet.create({
   },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  totalValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  totalValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
 });

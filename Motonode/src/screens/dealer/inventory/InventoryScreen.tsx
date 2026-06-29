@@ -22,6 +22,7 @@ import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { DealerProduct, DealerService, DealerVehicle } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type DealerTabParamList = {
@@ -137,7 +138,7 @@ export function InventoryScreen() {
   const getSummary = () => {
     if (activeTab === 'products') {
       return [
-        { label: 'Total Items', value: products.length, color: '#2563EB', icon: 'shopping-bag', bg: '#EFF6FF' },
+        { label: 'Total Items', value: products.length, color: themeLight.textSecondary, icon: 'shopping-bag', bg: '#F2F2F2' },
         {
           label: 'In Stock',
           value: products.filter((p) => p.status === 'in_stock').length,
@@ -163,7 +164,7 @@ export function InventoryScreen() {
     }
     if (activeTab === 'vehicles') {
       return [
-        { label: 'Total Items', value: vehicles.length, color: '#2563EB', icon: 'truck', bg: '#EFF6FF' },
+        { label: 'Total Items', value: vehicles.length, color: themeLight.textSecondary, icon: 'truck', bg: '#F2F2F2' },
         {
           label: 'Available',
           value: vehicles.filter((v) => v.status === 'available').length,
@@ -182,7 +183,7 @@ export function InventoryScreen() {
       ];
     }
     return [
-      { label: 'Total Items', value: services.length, color: '#2563EB', icon: 'tool', bg: '#EFF6FF' },
+      { label: 'Total Items', value: services.length, color: themeLight.textSecondary, icon: 'tool', bg: '#F2F2F2' },
       { label: 'Active', value: services.filter((s) => s.available).length, color: '#10B981', icon: 'check-circle', bg: '#ECFDF5' },
       { label: 'Paused', value: services.filter((s) => !s.available).length, color: '#F59E0B', icon: 'pause-circle', bg: '#FFFBEB' },
       {
@@ -235,13 +236,13 @@ export function InventoryScreen() {
           
           <View style={styles.itemActions}>
             <Pressable
-              style={[styles.actionIcon, { borderColor: '#2563EB', backgroundColor: '#EFF6FF' }]}
+              style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
                 navigation.navigate(DealerStackRoutes.ProductForm, { id: item.id });
               }}
             >
-              <Feather name="edit-2" size={14} color="#2563EB" />
+              <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
@@ -295,13 +296,13 @@ export function InventoryScreen() {
           
           <View style={styles.itemActions}>
             <Pressable
-              style={[styles.actionIcon, { borderColor: '#2563EB', backgroundColor: '#EFF6FF' }]}
+              style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
                 navigation.navigate(DealerStackRoutes.VehicleForm, { id: item.id });
               }}
             >
-              <Feather name="edit-2" size={14} color="#2563EB" />
+              <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
@@ -359,13 +360,13 @@ export function InventoryScreen() {
           
           <View style={styles.itemActions}>
             <Pressable
-              style={[styles.actionIcon, { borderColor: '#2563EB', backgroundColor: '#EFF6FF' }]}
+              style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
                 navigation.navigate(DealerStackRoutes.ServiceForm, { id: item.id });
               }}
             >
-              <Feather name="edit-2" size={14} color="#2563EB" />
+              <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
@@ -439,7 +440,7 @@ export function InventoryScreen() {
                   key={tab.key}
                   style={[
                     styles.tab,
-                    isSelected ? { backgroundColor: '#2563EB' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -478,7 +479,7 @@ export function InventoryScreen() {
           <Text style={[styles.sortText, { color: colors.textSecondary }]}>Sort by: Newest</Text>
           <Feather name="chevron-down" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
           <Pressable style={styles.gridToggleBtn}>
-            <Feather name="grid" size={14} color="#2563EB" />
+            <Feather name="grid" size={14} color={colors.icon} />
           </Pressable>
         </View>
       </View>
@@ -509,10 +510,10 @@ export function InventoryScreen() {
       />
 
       {/* Floating Action Button (FAB) + Prompt Banner */}
-      <View style={[styles.bottomCTAContainer, { backgroundColor: '#EFF6FF', borderTopColor: colors.border }]}>
+      <View style={[styles.bottomCTAContainer, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
         <View style={styles.ctaLeft}>
           <View style={styles.ctaIconBox}>
-            <Feather name="box" size={18} color="#2563EB" />
+            <Feather name="box" size={18} color={colors.icon} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.ctaTitle, { color: colors.textPrimary }]}>Keep your inventory updated!</Text>
@@ -576,7 +577,7 @@ const styles = StyleSheet.create({
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -637,7 +638,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -702,14 +703,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   ctaSubtitle: { fontSize: 10, marginTop: 1 },
   ctaBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -722,10 +723,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#E60012',
     shadowOpacity: 0.3,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },

@@ -32,7 +32,7 @@ export interface DealerTypeInfo {
 }
 
 export const DEALER_TYPE_LIST: DealerTypeInfo[] = [
-  { type: "Automobile Showroom",  icon: "truck",       description: "Sell cars, bikes, and offer full servicing and test drives",  color: "#2563EB" },
+  { type: "Automobile Showroom",  icon: "truck",       description: "Sell cars, bikes, and offer full servicing and test drives",  color: "#E60012" },
   { type: "Bike Dealer",          icon: "wind",        description: "Two-wheeler showroom with inventory, service and test rides", color: "#7C3AED" },
   { type: "Spare Parts Dealer",   icon: "tool",        description: "Sell spare parts and accessories across all vehicle brands",  color: "#DC2626" },
   { type: "Vehicle Wash Station", icon: "droplet",     description: "Offer car and bike wash, detailing and cleaning services",   color: "#0891B2" },

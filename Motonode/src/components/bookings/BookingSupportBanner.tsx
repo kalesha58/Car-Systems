@@ -8,7 +8,7 @@ export function BookingSupportBanner() {
   return (
     <View style={styles.banner}>
       <View style={styles.iconWrap}>
-        <Feather name="headphones" size={18} color="#2563EB" />
+        <Feather name="headphones" size={18} color="#E60012" />
       </View>
       <View style={styles.body}>
         <Text style={styles.title}>Need Help?</Text>
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#0F172A' },
   sub: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#64748B', marginTop: 2 },
   btn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,

@@ -13,6 +13,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -99,7 +100,7 @@ export function BankDetailsScreen({ navigation }: Props) {
           <Text style={styles.cardTitle}>Documents</Text>
           <View style={styles.documentRow}>
             <View style={styles.documentIconBox}>
-              <Feather name="file-text" size={18} color="#2563EB" />
+              <Feather name="file-text" size={18} color={colors.icon} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.documentName}>Cancelled Cheque</Text>
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#2563EB', borderRadius: 16, padding: 20,
+    backgroundColor: '#E60012', borderRadius: 16, padding: 20,
     overflow: 'hidden',
   },
   bannerIconBox: {
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B', marginBottom: 4 },
-  editBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: '#EFF6FF' },
-  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  editBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F2F2F2' },
+  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   accountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, gap: 12 },
   accountLabel: { fontSize: 12, color: '#64748B', fontFamily: 'Inter_400Regular' },
   accountValue: { fontSize: 12, color: '#1E293B', fontFamily: 'Inter_600SemiBold', textAlign: 'right', flex: 1 },
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
   verifiedSubtitle: { fontSize: 10, color: '#047857', marginTop: 1 },
   documentRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
   documentIconBox: {
-    width: 42, height: 42, borderRadius: 10, backgroundColor: '#EFF6FF',
+    width: 42, height: 42, borderRadius: 10, backgroundColor: '#F2F2F2',
     alignItems: 'center', justifyContent: 'center',
   },
   documentName: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },

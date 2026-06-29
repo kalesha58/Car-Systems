@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
 import { getServiceBookingDates, SERVICE_TIME_SLOTS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface BookingDateTimeSectionProps {
   date: string;
@@ -53,8 +54,8 @@ export function BookingDateTimeSection({
               style={[
                 styles.dateChip,
                 {
-                  backgroundColor: selected ? '#2563EB' : '#F1F5F9',
-                  borderColor: selected ? '#2563EB' : '#E2E8F0',
+                  backgroundColor: selected ? '#E60012' : '#F1F5F9',
+                  borderColor: selected ? '#E60012' : '#E2E8F0',
                 },
               ]}
               onPress={() => onDateChange(d.value)}
@@ -82,8 +83,8 @@ export function BookingDateTimeSection({
               style={[
                 styles.timeChip,
                 {
-                  backgroundColor: selected ? '#2563EB' : '#F1F5F9',
-                  borderColor: selected ? '#2563EB' : '#E2E8F0',
+                  backgroundColor: selected ? '#E60012' : '#F1F5F9',
+                  borderColor: selected ? '#E60012' : '#E2E8F0',
                 },
               ]}
               onPress={() => onTimeChange(slot)}
@@ -134,5 +135,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     justifyContent: 'center',
   },
-  moreText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  moreText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
 });

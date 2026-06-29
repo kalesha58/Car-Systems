@@ -1,5 +1,9 @@
 export { PlaceholderScreen } from './PlaceholderScreen';
 export { Header } from './Header';
+export { ChromeHeader } from './ChromeHeader';
+export { AppStatusBar } from './AppStatusBar';
+export { ScreenStatusBar } from './ScreenStatusBar';
+export { SubtlePatternBackground } from './SubtlePatternBackground';
 export { CategoryChip } from './CategoryChip';
 export { AIBanner } from './AIBanner';
 export { BannerCarousel } from './BannerCarousel';

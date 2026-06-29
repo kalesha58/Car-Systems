@@ -40,7 +40,7 @@ export function BookingProgressStepper({ steps, compact }: BookingProgressSteppe
             <Text
               style={[
                 styles.label,
-                { color: step.active ? '#2563EB' : colors.textSecondary },
+                { color: step.active ? '#E60012' : colors.textSecondary },
                 step.completed && { color: '#10B981' },
               ]}
               numberOfLines={2}
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   circleDone: { backgroundColor: '#10B981', borderColor: '#10B981' },
-  circleActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  circleActive: { backgroundColor: '#E60012', borderColor: '#E60012' },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#CBD5E1' },
   label: { fontSize: 9, fontFamily: 'Inter_500Medium', textAlign: 'center', lineHeight: 12 },
   dateLabel: { fontSize: 8, fontFamily: 'Inter_400Regular' },

@@ -19,6 +19,7 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useDealer } from '@context/index';
 import { DealerService } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -180,13 +181,13 @@ export function ServiceFormScreen({ route, navigation }: Props) {
                     <Pressable
                       key={cat.label}
                       style={[styles.categoryChip, {
-                        borderColor: isSelected ? '#2563EB' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#EFF6FF' : '#ffffff',
+                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
+                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
                       }]}
                       onPress={() => { lightHaptic(); set('category', cat.label); }}
                     >
-                      <Feather name={cat.icon as any} size={12} color={isSelected ? '#2563EB' : colors.textSecondary} />
-                      <Text style={[styles.categoryChipText, { color: isSelected ? '#2563EB' : colors.textSecondary }]}>{cat.label}</Text>
+                      <Feather name={cat.icon as any} size={12} color={isSelected ? '#E60012' : colors.textSecondary} />
+                      <Text style={[styles.categoryChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{cat.label}</Text>
                     </Pressable>
                   );
                 })}
@@ -243,13 +244,13 @@ export function ServiceFormScreen({ route, navigation }: Props) {
                     <Pressable
                       key={d}
                       style={[styles.durationChip, {
-                        borderColor: isSelected ? '#2563EB' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#EFF6FF' : '#ffffff',
+                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
+                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
                       }]}
                       onPress={() => { lightHaptic(); set('duration', d); }}
                     >
-                      <Feather name="clock" size={10} color={isSelected ? '#2563EB' : colors.textSecondary} />
-                      <Text style={[styles.durationChipText, { color: isSelected ? '#2563EB' : colors.textSecondary }]}>{d}</Text>
+                      <Feather name="clock" size={10} color={isSelected ? '#E60012' : colors.textSecondary} />
+                      <Text style={[styles.durationChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{d}</Text>
                     </Pressable>
                   );
                 })}
@@ -292,7 +293,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
               <Switch
                 value={form.onlineBooking as boolean}
                 onValueChange={(v) => set('onlineBooking', v)}
-                trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
+                trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                 thumbColor="#ffffff"
               />
             </View>
@@ -301,33 +302,33 @@ export function ServiceFormScreen({ route, navigation }: Props) {
 
         {/* Service Preview Footer */}
         <View style={[styles.previewFooter, { borderTopColor: colors.border }]}>
-          <View style={[styles.previewIconBox, { backgroundColor: '#EFF6FF' }]}>
-            <Feather name={currentCategoryIcon as any} size={18} color="#2563EB" />
+          <View style={[styles.previewIconBox, { backgroundColor: '#F2F2F2' }]}>
+            <Feather name={currentCategoryIcon as any} size={18} color={colors.icon} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>Service Preview</Text>
             <Text style={[styles.previewName, { color: colors.textPrimary }]}>{form.name || 'Service Name'}</Text>
             <View style={styles.previewTagRow}>
               {form.duration ? (
-                <View style={[styles.previewTag, { backgroundColor: '#EFF6FF' }]}>
-                  <Text style={[styles.previewTagText, { color: '#2563EB' }]}>{form.duration}</Text>
+                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
+                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>{form.duration}</Text>
                 </View>
               ) : null}
               {form.slotsPerDay ? (
-                <View style={[styles.previewTag, { backgroundColor: '#EFF6FF' }]}>
-                  <Text style={[styles.previewTagText, { color: '#2563EB' }]}>{form.slotsPerDay} Slots/Day</Text>
+                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
+                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>{form.slotsPerDay} Slots/Day</Text>
                 </View>
               ) : null}
               {form.price ? (
-                <View style={[styles.previewTag, { backgroundColor: '#EFF6FF' }]}>
-                  <Text style={[styles.previewTagText, { color: '#2563EB' }]}>₹{form.price}</Text>
+                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
+                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>₹{form.price}</Text>
                 </View>
               ) : null}
             </View>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 2 }}>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-            <Text style={[styles.previewPrice, { color: '#2563EB' }]}>₹{Number(form.price || 0).toLocaleString('en-IN')}</Text>
+            <Text style={[styles.previewPrice, { color: themeLight.textSecondary }]}>₹{Number(form.price || 0).toLocaleString('en-IN')}</Text>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Duration</Text>
             <Text style={[styles.previewStock, { color: '#1E3A8A' }]}>{form.duration || '-'}</Text>
           </View>
@@ -336,7 +337,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
         {/* Sticky Add Button */}
         <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
           <Pressable
-            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#2563EB' }]}
+            style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={handleSave} disabled={saving}
           >
             <Feather name={isEdit ? 'check' : 'plus'} size={16} color="#ffffff" style={{ marginRight: 8 }} />
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   headerSubtitle: { fontSize: 10, marginTop: 1 },
   saveHeaderBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#2563EB',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#E60012',
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
   },
   saveHeaderText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionNumberBadge: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#E60012', alignItems: 'center', justifyContent: 'center',
   },
   sectionNumberText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },

@@ -13,7 +13,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
@@ -141,10 +141,7 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sticky Header */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <View style={styles.headerLeft}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <Feather name="chevron-left" size={24} color="#ffffff" />
@@ -159,7 +156,7 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
             <Feather name="sliders" size={20} color="#ffffff" />
           </Pressable>
         </View>
-      </LinearGradient>
+      </ChromeHeader>
 
       {/* Tabs list selector */}
       <View style={[styles.tabsContainer, { backgroundColor: colors.card }]}>

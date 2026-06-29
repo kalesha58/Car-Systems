@@ -1,8 +1,7 @@
-import { StatusBar, useColorScheme } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ErrorBoundary } from '@components/common/ErrorBoundary';
+import { AppStatusBar, ErrorBoundary } from '@components/common';
 import {
   AuthProvider,
   BookingsProvider,
@@ -14,8 +13,6 @@ import {
 import { linking, RootNavigator } from '@navigation/index';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
@@ -25,7 +22,7 @@ function App() {
               <CartProvider>
                 <WishlistProvider>
                   <ServiceBookingProvider>
-                    <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+                    <AppStatusBar />
                     <NavigationContainer linking={linking}>
                       <RootNavigator />
                     </NavigationContainer>

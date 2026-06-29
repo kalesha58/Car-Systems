@@ -13,7 +13,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
-import LinearGradient from 'react-native-linear-gradient';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { PRODUCTS, SERVICES, DEALERS } from '@data/mockData';
@@ -70,10 +70,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top Header */}
-      <LinearGradient
-        colors={['#1D4ED8', '#3B82F6']}
-        style={[styles.header, { paddingTop: topPad + 8 }]}
-      >
+      <ChromeHeader style={styles.header} contentPad={8}>
         <View style={styles.headerLeft}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
             <Feather name="arrow-left" size={22} color="#ffffff" />
@@ -90,7 +87,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
             <Feather name="share-2" size={22} color="#ffffff" />
           </Pressable>
         </View>
-      </LinearGradient>
+      </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Shopfront Banner image */}

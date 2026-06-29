@@ -5,6 +5,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import type { GarageVehicle } from '@data/mockData';
 import { GARAGE_VEHICLES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 
 interface BookingVehiclePickerProps {
   selectedId: string;
@@ -29,7 +30,7 @@ export function BookingVehiclePicker({ selectedId, locked, onSelect }: BookingVe
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#2563EB' : colors.border,
+                borderColor: selected ? '#E60012' : colors.border,
               },
             ]}
             onPress={() => !locked && onSelect(vehicle.id)}
@@ -45,14 +46,14 @@ export function BookingVehiclePicker({ selectedId, locked, onSelect }: BookingVe
                 {vehicle.year} • {vehicle.fuel}
               </Text>
             </View>
-            {selected && <Feather name="check-circle" size={20} color="#2563EB" />}
+            {selected && <Feather name="check-circle" size={20} color={colors.icon} />}
           </Pressable>
         );
       })}
 
       {!locked && (
         <Pressable style={[styles.addBtn, { borderColor: colors.border }]}>
-          <Feather name="plus" size={16} color="#2563EB" />
+          <Feather name="plus" size={16} color={colors.icon} />
           <Text style={styles.addText}>Add New Vehicle</Text>
         </Pressable>
       )}
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   image: { width: 72, height: 52, borderRadius: 8 },
   info: { flex: 1 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB', marginTop: 2 },
+  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary, marginTop: 2 },
   meta: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
   addBtn: {
     flexDirection: 'row',
@@ -85,5 +86,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
-  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
 });

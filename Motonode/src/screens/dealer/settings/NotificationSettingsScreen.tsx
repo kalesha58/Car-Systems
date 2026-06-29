@@ -30,15 +30,15 @@ type NotifRow = {
 };
 
 const PUSH_NOTIFICATIONS: NotifRow[] = [
-  { id: 'orders', icon: 'shopping-bag', iconBg: '#EFF6FF', iconColor: '#2563EB', title: 'Orders & Bookings', subtitle: 'Get notified for new orders and bookings', enabled: true },
+  { id: 'orders', icon: 'shopping-bag', iconBg: '#F2F2F2', iconColor: '#E60012', title: 'Orders & Bookings', subtitle: 'Get notified for new orders and bookings', enabled: true },
   { id: 'inventory', icon: 'package', iconBg: '#F0FDF4', iconColor: '#10B981', title: 'Inventory Alerts', subtitle: 'Low stock and out of stock alerts', enabled: true },
   { id: 'payments', icon: 'dollar-sign', iconBg: '#F0FDF4', iconColor: '#059669', title: 'Payments & Settlements', subtitle: 'Payment received and settlement updates', enabled: true },
-  { id: 'messages', icon: 'message-circle', iconBg: '#EFF6FF', iconColor: '#2563EB', title: 'Customer Messages', subtitle: 'New messages from customers', enabled: true },
+  { id: 'messages', icon: 'message-circle', iconBg: '#F2F2F2', iconColor: '#E60012', title: 'Customer Messages', subtitle: 'New messages from customers', enabled: true },
   { id: 'promotions', icon: 'percent', iconBg: '#FEF2F2', iconColor: '#EF4444', title: 'Promotions & Offers', subtitle: 'Updates on offers and promotions', enabled: false },
 ];
 
 const EMAIL_NOTIFICATIONS: NotifRow[] = [
-  { id: 'order_updates', icon: 'mail', iconBg: '#EFF6FF', iconColor: '#2563EB', title: 'Order Updates', subtitle: 'Receive order updates via email', enabled: true },
+  { id: 'order_updates', icon: 'mail', iconBg: '#F2F2F2', iconColor: '#E60012', title: 'Order Updates', subtitle: 'Receive order updates via email', enabled: true },
   { id: 'weekly', icon: 'bar-chart-2', iconBg: '#F0FDF4', iconColor: '#10B981', title: 'Weekly Reports', subtitle: 'Get weekly business reports', enabled: true },
   { id: 'promo_email', icon: 'gift', iconBg: '#FFF7ED', iconColor: '#F59E0B', title: 'Promotions', subtitle: 'Receive promotional emails', enabled: false },
 ];
@@ -84,7 +84,7 @@ export function NotificationSettingsScreen({ navigation }: Props) {
         <Switch
           value={isEnabled}
           onValueChange={() => onToggle(row.id)}
-          trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
+          trackColor={{ false: '#E2E8F0', true: '#E60012' }}
           thumbColor="#ffffff"
         />
       </View>

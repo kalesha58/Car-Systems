@@ -144,7 +144,7 @@ export function getStatusColor(status: BookingStatus): string {
     upcoming: '#10B981',
     pending: '#F59E0B',
     confirmed: '#10B981',
-    in_progress: '#2563EB',
+    in_progress: '#E60012',
     completed: '#10B981',
     cancelled: '#EF4444',
     rejected: '#EF4444',

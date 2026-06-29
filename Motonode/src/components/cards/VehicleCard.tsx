@@ -26,13 +26,13 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
       onPress={onNavigate}
     >
       <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
-      <View style={[styles.typeBadge, { backgroundColor: 'rgba(37, 99, 235, 0.12)' }]}>
-        <Text style={[styles.typeText, { color: colors.primary }]}>
+      <View style={[styles.typeBadge, { backgroundColor: colors.primarySubtle }]}>
+        <Text style={[styles.typeText, { color: colors.textSecondary }]}>
           {vehicle.type === 'bike' ? 'Bike' : 'Car'}
         </Text>
       </View>
       <View style={styles.info}>
-        <Text style={[styles.brand, { color: colors.primary }]}>{vehicle.brand}</Text>
+        <Text style={[styles.brand, { color: colors.textSecondary }]}>{vehicle.brand}</Text>
         <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
           {vehicle.name}
         </Text>

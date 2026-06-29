@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import type { CustomerBooking } from '@data/bookingsData';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 interface BookingCardFooterProps {
@@ -30,7 +31,7 @@ export function BookingCardFooter({ booking }: BookingCardFooterProps) {
         </Text>
         <View style={styles.btnRow}>
           <Pressable style={styles.outlineBtn} onPress={handleCall}>
-            <Feather name="phone" size={12} color="#2563EB" />
+            <Feather name="phone" size={12} color="#E60012" />
             <Text style={styles.outlineText}>Call Workshop</Text>
           </Pressable>
           <Pressable style={styles.solidBtn} onPress={handleDirections}>
@@ -51,7 +52,7 @@ export function BookingCardFooter({ booking }: BookingCardFooterProps) {
             : 'Our team is working on your car'}
         </Text>
         <Pressable style={styles.outlineBtn} onPress={handleCall}>
-          <Feather name="phone" size={12} color="#2563EB" />
+          <Feather name="phone" size={12} color="#E60012" />
           <Text style={styles.outlineText}>Call Workshop</Text>
         </Pressable>
       </View>
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   footerHint: { fontSize: 11, fontFamily: 'Inter_500Medium', color: '#166534' },
   btnRow: { flexDirection: 'row', gap: 8 },
   progressFooter: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F2F2F2',
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
@@ -81,7 +82,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 4,
   },
-  progressHint: { flex: 1, fontSize: 11, fontFamily: 'Inter_500Medium', color: '#1E40AF' },
+  progressHint: { flex: 1, fontSize: 11, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
   outlineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -90,10 +91,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2563EB',
+    borderColor: '#E60012',
     backgroundColor: '#fff',
   },
-  outlineText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  outlineText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: themeLight.link },
   solidBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
   },
   solidText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#fff' },
 });

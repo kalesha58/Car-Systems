@@ -19,13 +19,14 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useBookings } from '@context/index';
 import type { CustomerBooking } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
   pending: { color: '#F59E0B', label: 'Pending' },
   confirmed: { color: '#10B981', label: 'Confirmed' },
-  completed: { color: '#3B82F6', label: 'Completed' },
+  completed: { color: '#FF1A1A', label: 'Completed' },
   rejected: { color: '#EF4444', label: 'Rejected' },
 };
 
@@ -110,7 +111,7 @@ export function DriveScreen() {
       case 'pending':
         return { icon: 'truck', bg: '#FFFBEB', color: '#F59E0B' };
       case 'confirmed':
-        return { icon: 'truck', bg: '#EFF6FF', color: '#2563EB' };
+        return { icon: 'truck', bg: '#F2F2F2', color: themeLight.textSecondary };
       default:
         return { icon: 'truck', bg: '#F3E8FF', color: '#8B5CF6' };
     }
@@ -145,7 +146,7 @@ export function DriveScreen() {
                   key={item}
                   style={[
                     styles.filterChip,
-                    isSelected ? { backgroundColor: '#2563EB' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -170,10 +171,10 @@ export function DriveScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           // Calendar Hint Card
-          <View style={[styles.calendarHint, { backgroundColor: '#EFF6FF', borderColor: colors.border }]}>
+          <View style={[styles.calendarHint, { backgroundColor: '#F2F2F2', borderColor: colors.border }]}>
             <View style={styles.hintLeft}>
-              <View style={[styles.hintIconWrapper, { backgroundColor: '#DBEAFE' }]}>
-                <Feather name="calendar" size={16} color="#2563EB" />
+              <View style={[styles.hintIconWrapper, { backgroundColor: '#F2F2F2' }]}>
+                <Feather name="calendar" size={16} color={colors.icon} />
               </View>
               <View>
                 <Text style={[styles.hintTitle, { color: colors.textPrimary }]}>Showing all scheduled test drives</Text>
@@ -184,7 +185,7 @@ export function DriveScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const st = STATUS_CONFIG[item.status] || { color: '#2563EB', label: 'Confirmed' };
+          const st = STATUS_CONFIG[item.status] || { color: themeLight.textSecondary, label: 'Confirmed' };
           const headerIconInfo = getHeaderIcon(item.status);
           const vehicleImage = item.vehicleImage ?? 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=300&auto=format&fit=crop&q=80';
           const vehicleLabel = `${item.vehicleBrand ?? ''} ${item.vehicleName ?? ''}`.trim();
@@ -255,13 +256,13 @@ export function DriveScreen() {
                 <View style={[
                   styles.specialNoteBox,
                   {
-                    backgroundColor: item.status === 'pending' ? '#FFFBEB' : '#EFF6FF',
+                    backgroundColor: item.status === 'pending' ? '#FFFBEB' : '#F2F2F2',
                   }
                 ]}>
-                  <Feather name="info" size={12} color={item.status === 'pending' ? '#F59E0B' : '#2563EB'} style={{ marginRight: 6, marginTop: 1 }} />
+                  <Feather name="info" size={12} color={item.status === 'pending' ? '#F59E0B' : '#E60012'} style={{ marginRight: 6, marginTop: 1 }} />
                   <Text style={[
                     styles.specialNoteText,
-                    { color: item.status === 'pending' ? '#D97706' : '#1D4ED8' }
+                    { color: item.status === 'pending' ? '#D97706' : '#B0000F' }
                   ]}>
                     {item.notes}
                   </Text>
@@ -291,7 +292,7 @@ export function DriveScreen() {
                 {item.status === 'confirmed' && (
                   <>
                     <Pressable
-                      style={[styles.actionBtn, { backgroundColor: '#2563EB' }]}
+                      style={[styles.actionBtn, { backgroundColor: '#E60012' }]}
                       onPress={() => handleComplete(item)}
                     >
                       <Feather name="check-circle" size={14} color="#ffffff" />
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
   upcomingBadgeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 10,
@@ -418,11 +419,11 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  vehicleName: { fontSize: 12, color: '#2563EB', fontFamily: 'Inter_700Bold', marginTop: 1 },
+  vehicleName: { fontSize: 12, color: themeLight.textSecondary, fontFamily: 'Inter_700Bold', marginTop: 1 },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,

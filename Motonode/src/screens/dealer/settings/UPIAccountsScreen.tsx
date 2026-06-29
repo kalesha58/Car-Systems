@@ -14,6 +14,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -121,7 +122,7 @@ export function UPIAccountsScreen({ navigation }: Props) {
                 Alert.alert('Add UPI', 'Enter your UPI ID to add a new payment account.');
               }}
             >
-              <Feather name="plus" size={12} color="#2563EB" />
+              <Feather name="plus" size={12} color={colors.icon} />
               <Text style={styles.addNewText}>Add New</Text>
             </Pressable>
           </View>
@@ -197,15 +198,15 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
-  addNewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#EFF6FF' },
-  addNewText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  addNewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#F2F2F2' },
+  addNewText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
   upiRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
   upiAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   upiAvatarText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   upiTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   upiId: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#1E293B' },
-  primaryBadge: { backgroundColor: '#DBEAFE', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  primaryBadgeText: { color: '#2563EB', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  primaryBadge: { backgroundColor: '#F2F2F2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  primaryBadgeText: { color: themeLight.textSecondary, fontSize: 9, fontFamily: 'Inter_700Bold' },
   upiAppName: { fontSize: 10, color: '#94A3B8', marginTop: 2, fontFamily: 'Inter_400Regular' },
   upiRightCol: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   activePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
