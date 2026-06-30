@@ -2,27 +2,31 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
-import type { GarageVehicle } from '@data/mockData';
-import { GARAGE_VEHICLES } from '@data/mockData';
+import type { UserVehicle } from '../../../types/userVehicle';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 
 interface BookingVehiclePickerProps {
+  vehicles: UserVehicle[];
   selectedId: string;
   locked?: boolean;
   onSelect: (id: string) => void;
 }
 
-export function BookingVehiclePicker({ selectedId, locked, onSelect }: BookingVehiclePickerProps) {
+export function BookingVehiclePicker({
+  vehicles,
+  selectedId,
+  locked,
+  onSelect,
+}: BookingVehiclePickerProps) {
   const colors = useColors();
-  const vehicles = locked
-    ? GARAGE_VEHICLES.filter((v) => v.id === selectedId)
-    : GARAGE_VEHICLES;
+  const list = locked ? vehicles.filter((v) => v.id === selectedId) : vehicles;
 
   return (
     <View style={styles.wrap}>
-      {vehicles.map((vehicle) => {
+      {list.map((vehicle) => {
         const selected = selectedId === vehicle.id;
+        const imageUri = vehicle.images?.[0];
         return (
           <Pressable
             key={vehicle.id}
@@ -36,15 +40,21 @@ export function BookingVehiclePicker({ selectedId, locked, onSelect }: BookingVe
             onPress={() => !locked && onSelect(vehicle.id)}
             disabled={locked}
           >
-            <Image source={{ uri: vehicle.image }} style={styles.image} />
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.image} />
+            ) : (
+              <View style={[styles.image, styles.imagePlaceholder]}>
+                <Feather name="truck" size={16} color={colors.icon} />
+              </View>
+            )}
             <View style={styles.info}>
               <Text style={[styles.name, { color: colors.textPrimary }]}>
-                {vehicle.brand} {vehicle.name}
+                {vehicle.brand} {vehicle.model}
               </Text>
-              <Text style={styles.plate}>{vehicle.regNumber}</Text>
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>
-                {vehicle.year} • {vehicle.fuel}
-              </Text>
+              <Text style={styles.plate}>{vehicle.numberPlate}</Text>
+              {vehicle.year ? (
+                <Text style={[styles.meta, { color: colors.textSecondary }]}>{vehicle.year}</Text>
+              ) : null}
             </View>
             {selected && <Feather name="check-circle" size={20} color={colors.icon} />}
           </Pressable>
@@ -72,6 +82,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   image: { width: 72, height: 52, borderRadius: 8 },
+  imagePlaceholder: {
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   info: { flex: 1 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary, marginTop: 2 },

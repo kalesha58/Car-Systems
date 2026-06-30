@@ -11,7 +11,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { CATEGORIES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
 
@@ -59,6 +58,14 @@ export const DEFAULT_SERVICE_FILTERS: ServiceFilters = {
   priceRange: 'all',
 };
 
+const PRODUCT_CATEGORIES = [
+  { id: 'spare-parts', label: 'Spare Parts' },
+  { id: 'accessories', label: 'Accessories' },
+  { id: 'riding-gear', label: 'Riding Gear' },
+  { id: 'tyres', label: 'Tyres' },
+  { id: 'batteries', label: 'Batteries' },
+  { id: 'oils', label: 'Oils & Fluids' },
+];
 const PRODUCT_BRANDS = ['Castrol', 'Michelin', 'Exide', 'Bosch', 'Motul'];
 const VEHICLE_BRANDS = ['KTM', 'Royal Enfield', 'Tata', 'Hyundai'];
 const SERVICE_CATEGORIES = [
@@ -244,7 +251,7 @@ export function MarketplaceFilterSheet({
             {tab === 'products' && (
               <>
                 <Section title="Category">
-                  {CATEGORIES.slice(0, 6).map((cat) => (
+                  {PRODUCT_CATEGORIES.map((cat) => (
                     <Chip
                       key={cat.id}
                       label={cat.label}

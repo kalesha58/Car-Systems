@@ -17,6 +17,7 @@ import { DealerBookingDetailScreen } from '@screens/dealer/bookings/DealerBookin
 import { DealerServiceBookingsScreen } from '@screens/dealer/bookings/DealerServiceBookingsScreen';
 import { StoreSettingsScreen } from '@screens/dealer/settings/StoreSettingsScreen';
 import { UPIAccountsScreen } from '@screens/dealer/settings/UPIAccountsScreen';
+import { BusinessDetailsScreen } from '@screens/dealer/profile/BusinessDetailsScreen';
 import { DealerTabsNavigator } from './DealerTabsNavigator';
 
 export type DealerStackParamList = {
@@ -32,7 +33,11 @@ export type DealerStackParamList = {
   [DealerStackRoutes.UPIAccounts]: undefined;
   [DealerStackRoutes.NotificationSettings]: undefined;
   [DealerStackRoutes.ServiceBookings]: undefined;
-  [DealerStackRoutes.DealerBookingDetail]: { bookingId: string };
+  [DealerStackRoutes.DealerBookingDetail]: {
+    bookingId: string;
+    bookingType?: 'service' | 'test_drive';
+  };
+  [DealerStackRoutes.BusinessDetails]: undefined;
 };
 
 const Stack = createNativeStackNavigator<DealerStackParamList>();
@@ -92,6 +97,7 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.NotificationSettings} component={NotificationSettingsScreen} />
       <Stack.Screen name={DealerStackRoutes.ServiceBookings} component={DealerServiceBookingsScreen} />
       <Stack.Screen name={DealerStackRoutes.DealerBookingDetail} component={DealerBookingDetailScreen} />
+      <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
     </Stack.Navigator>
   );
 }

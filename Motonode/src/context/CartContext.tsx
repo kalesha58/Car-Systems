@@ -8,11 +8,12 @@ import React, {
   type ReactNode,
 } from 'react';
 
-import type { Product } from '@data/mockData';
+import type { IProduct } from '@app-types/product';
+import { getProductId } from '@utils/displayMappers';
 import { getJSON, setJSON, StorageKeys } from '@storage/index';
 
 interface CartItem {
-  product: Product;
+  product: IProduct;
   quantity: number;
 }
 
@@ -20,7 +21,7 @@ interface CartContextValue {
   items: CartItem[];
   count: number;
   total: number;
-  addItem: (product: Product) => void;
+  addItem: (product: IProduct) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -46,12 +47,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addItem = useCallback(
-    (product: Product) => {
+    (product: IProduct) => {
+      const productId = getProductId(product);
       setItems(prev => {
-        const existing = prev.find(i => i.product.id === product.id);
+        const existing = prev.find(i => getProductId(i.product) === productId);
         const updated = existing
           ? prev.map(i =>
-              i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+              getProductId(i.product) === productId ? { ...i, quantity: i.quantity + 1 } : i,
             )
           : [...prev, { product, quantity: 1 }];
         void setJSON(StorageKeys.CART, updated);
@@ -63,7 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeItem = useCallback((productId: string) => {
     setItems(prev => {
-      const updated = prev.filter(i => i.product.id !== productId);
+      const updated = prev.filter(i => getProductId(i.product) !== productId);
       void setJSON(StorageKeys.CART, updated);
       return updated;
     });
@@ -73,8 +75,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(prev => {
       const updated =
         quantity <= 0
-          ? prev.filter(i => i.product.id !== productId)
-          : prev.map(i => (i.product.id === productId ? { ...i, quantity } : i));
+          ? prev.filter(i => getProductId(i.product) !== productId)
+          : prev.map(i =>
+              getProductId(i.product) === productId ? { ...i, quantity } : i,
+            );
       void setJSON(StorageKeys.CART, updated);
       return updated;
     });
@@ -85,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [persist]);
 
   const isInCart = useCallback(
-    (productId: string) => items.some(i => i.product.id === productId),
+    (productId: string) => items.some(i => getProductId(i.product) === productId),
     [items],
   );
 

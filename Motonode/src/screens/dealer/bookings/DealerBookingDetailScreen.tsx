@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,29 +17,28 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerBookingStepper } from '@components/bookings/DealerBookingStepper';
 import { DealerStackRoutes } from '@constants/routes';
-import { useBookings } from '@context/index';
 import type { CustomerBooking } from '@data/bookingsData';
-import { SERVICE_ADDONS, SERVICES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { getDealerTestDriveById } from '@services/testDrive.service';
+import {
+  getDealerServiceBookings,
+  updateServiceBookingStatus,
+} from '@services/serviceBooking.service';
+import { updateTestDriveStatus } from '@services/testDrive.service';
+import {
+  mapServiceBookingToCustomerBooking,
+  mapTestDriveToCustomerBooking,
+} from '@utils/bookingMappers';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
+import type { ServiceBookingStatus } from '../../../types/serviceBooking';
+import type { TestDriveStatus } from '../../../types/testDrive';
 
 type Props = NativeStackScreenProps<
   DealerStackParamList,
   typeof DealerStackRoutes.DealerBookingDetail
 >;
-
-function getBookingPricing(booking: CustomerBooking) {
-  const service = SERVICES.find((s) => s.id === booking.serviceId);
-  const serviceAmount = service?.price ?? booking.total;
-  const addons = (booking.addonNames ?? []).map((name) => {
-    const addon = SERVICE_ADDONS.find((a) => a.name === name);
-    return { name, price: addon?.price ?? 0 };
-  });
-  const addonsTotal = addons.reduce((sum, a) => sum + a.price, 0);
-  return { serviceAmount, addons, addonsTotal };
-}
 
 function SectionCard({
   title,
@@ -66,16 +66,70 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-  const { bookingId } = route.params;
-  const { getBookingById, loadBookings, updateBookingStatus } = useBookings();
+  const { bookingId, bookingType } = route.params;
+  const [booking, setBooking] = useState<CustomerBooking | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBooking = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (bookingType === 'test_drive') {
+        const response = await getDealerTestDriveById(bookingId);
+        setBooking(mapTestDriveToCustomerBooking(response.Response));
+      } else {
+        const data = await getDealerServiceBookings({ limit: 100 });
+        const found = data?.bookings?.find((b) => b.id === bookingId);
+        setBooking(found ? mapServiceBookingToCustomerBooking(found) : null);
+      }
+    } catch {
+      setBooking(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [bookingId, bookingType]);
 
   useFocusEffect(
     useCallback(() => {
-      loadBookings();
-    }, [loadBookings]),
+      fetchBooking();
+    }, [fetchBooking]),
   );
 
-  const booking = getBookingById(bookingId);
+  const runAction = async (status: CustomerBooking['status']) => {
+    if (!booking) return;
+    lightHaptic();
+    try {
+      if (booking.type === 'test_drive') {
+        const map: Partial<Record<CustomerBooking['status'], TestDriveStatus>> = {
+          confirmed: 'approved',
+          completed: 'completed',
+          cancelled: 'cancelled',
+          rejected: 'rejected',
+          in_progress: 'approved',
+        };
+        await updateTestDriveStatus(bookingId, { status: map[status] ?? 'pending' });
+      } else {
+        const map: Partial<Record<CustomerBooking['status'], ServiceBookingStatus>> = {
+          confirmed: 'scheduled',
+          in_progress: 'in_progress',
+          completed: 'completed',
+          cancelled: 'cancelled',
+        };
+        await updateServiceBookingStatus(bookingId, { status: map[status] ?? 'new' });
+      }
+      await fetchBooking();
+      if (status === 'completed') successHaptic();
+    } catch {
+      Alert.alert('Error', 'Failed to update booking status.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color="#E60012" />
+      </View>
+    );
+  }
 
   if (!booking) {
     return (
@@ -86,7 +140,6 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
   }
 
   const isService = booking.type === 'service';
-  const pricing = isService ? getBookingPricing(booking) : null;
 
   const dateLabel = booking.date
     ? new Date(booking.date).toLocaleDateString('en-IN', {
@@ -101,33 +154,16 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
     ? `${new Date(booking.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${booking.timeSlot}`
     : booking.timeSlot;
 
-  const vehicleMeta = [
-    booking.vehicleBrand,
-    booking.vehicleName,
-    booking.vehicleReg,
-    booking.vehicleYear,
-    booking.vehicleFuel,
-  ]
+  const vehicleMeta = [booking.vehicleBrand, booking.vehicleName, booking.vehicleReg]
     .filter(Boolean)
     .join(' • ');
 
-  const customerEmail =
-    booking.customerEmail ??
-    `${booking.customerName.toLowerCase().replace(/\s+/g, '.')}@email.com`;
-
-  const runAction = async (status: CustomerBooking['status']) => {
-    lightHaptic();
-    await updateBookingStatus(bookingId, status);
-    if (status === 'completed') successHaptic();
-  };
-
   const showAcceptReject =
-    (isService && booking.status === 'upcoming') ||
+    (isService && booking.status === 'pending') ||
     (!isService && booking.status === 'pending');
 
   return (
     <View style={[styles.container, { backgroundColor: '#F1F5F9' }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card }]}>
         <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.textPrimary} />
@@ -136,7 +172,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
         <View style={styles.headerRight}>
           <Pressable
             style={styles.headerBtn}
-            onPress={() => Alert.alert('Call Customer', `Calling ${booking.customerPhone}…`)}
+            onPress={() => Alert.alert('Call Customer', `Calling ${booking.customerPhone || 'customer'}…`)}
           >
             <Feather name="phone" size={20} color={colors.textPrimary} />
           </Pressable>
@@ -152,14 +188,11 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
       >
         <DealerBookingStepper status={booking.status} dateTimeLabel={shortDateLabel} />
 
-        {/* Hero booking card */}
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.heroTop}>
             <View style={styles.newBadge}>
               <Text style={styles.newBadgeText}>
-                {booking.status === 'upcoming' || booking.status === 'pending'
-                  ? 'New Booking'
-                  : 'Booking'}
+                {booking.status === 'pending' ? 'New Booking' : 'Booking'}
               </Text>
             </View>
             <Pressable
@@ -201,51 +234,28 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
                 <Text style={[styles.iconLineText, { color: colors.textSecondary }]} numberOfLines={2}>
                   {booking.workshopName ?? booking.dealerName}
                   {booking.workshopAddress ? `, ${booking.workshopAddress}` : ''}
-                  {booking.workshopDistance ? ` • ${booking.workshopDistance} away` : ''}
                 </Text>
               </View>
             </View>
-            {booking.total > 0 && (
-              <Text style={[styles.heroPrice, { color: colors.textPrimary }]}>
-                ₹{booking.total.toLocaleString('en-IN')}
-              </Text>
-            )}
           </View>
 
-          <Pressable style={styles.viewCustomerLink} onPress={() => lightHaptic()}>
-            <Text style={styles.viewCustomerText}>View Customer Details</Text>
-            <Feather name="chevron-right" size={14} color={colors.icon} />
-          </Pressable>
-
           {showAcceptReject && (
-            <>
-              <View style={styles.acceptRejectRow}>
-                <Pressable
-                  style={styles.acceptOutlineBtn}
-                  onPress={() => runAction(isService ? 'confirmed' : 'confirmed')}
-                >
-                  <Feather name="check" size={16} color={colors.icon} />
-                  <Text style={styles.acceptOutlineText}>Accept Booking</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.rejectOutlineBtn}
-                  onPress={() => runAction(isService ? 'cancelled' : 'rejected')}
-                >
-                  <Feather name="x" size={16} color="#EF4444" />
-                  <Text style={styles.rejectOutlineText}>Reject Booking</Text>
-                </Pressable>
-              </View>
-              <View style={styles.timerRow}>
-                <Feather name="clock" size={12} color={colors.textTertiary} />
-                <Text style={[styles.timerText, { color: colors.textTertiary }]}>
-                  Auto reject in 15:00 mins if no action is taken
-                </Text>
-              </View>
-            </>
+            <View style={styles.acceptRejectRow}>
+              <Pressable style={styles.acceptOutlineBtn} onPress={() => runAction('confirmed')}>
+                <Feather name="check" size={16} color={colors.icon} />
+                <Text style={styles.acceptOutlineText}>Accept Booking</Text>
+              </Pressable>
+              <Pressable
+                style={styles.rejectOutlineBtn}
+                onPress={() => runAction(isService ? 'cancelled' : 'rejected')}
+              >
+                <Feather name="x" size={16} color="#EF4444" />
+                <Text style={styles.rejectOutlineText}>Reject Booking</Text>
+              </Pressable>
+            </View>
           )}
         </View>
 
-        {/* Customer details */}
         <SectionCard title="Customer Details" icon="user">
           <View style={styles.customerRow}>
             <View style={styles.avatar}>
@@ -255,107 +265,15 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
               <Text style={[styles.customerName, { color: colors.textPrimary }]}>
                 {booking.customerName}
               </Text>
-              <Text style={[styles.customerSub, { color: colors.textSecondary }]}>
-                {booking.customerPhone}
-              </Text>
-              <Text style={[styles.customerSub, { color: colors.textSecondary }]}>
-                {customerEmail}
-              </Text>
+              {booking.customerPhone ? (
+                <Text style={[styles.customerSub, { color: colors.textSecondary }]}>
+                  {booking.customerPhone}
+                </Text>
+              ) : null}
             </View>
-            <Feather name="chevron-right" size={18} color={colors.textTertiary} />
           </View>
         </SectionCard>
 
-        {/* Vehicle details */}
-        <SectionCard title="Vehicle Details" icon="truck">
-          <View style={styles.customerRow}>
-            {booking.vehicleImage ? (
-              <Image source={{ uri: booking.vehicleImage }} style={styles.vehicleThumb} />
-            ) : (
-              <View style={[styles.vehicleThumb, styles.heroThumbPlaceholder]}>
-                <Feather name="truck" size={16} color="#94A3B8" />
-              </View>
-            )}
-            <View style={styles.customerInfo}>
-              <Text style={[styles.customerName, { color: colors.textPrimary }]}>
-                {booking.vehicleBrand} {booking.vehicleName}
-              </Text>
-              <Text style={[styles.customerSub, { color: colors.textSecondary }]}>
-                {booking.vehicleReg}
-              </Text>
-              <Text style={[styles.customerSub, { color: colors.textSecondary }]}>
-                {[booking.vehicleYear, booking.vehicleFuel].filter(Boolean).join(' • ')}
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.textTertiary} />
-          </View>
-        </SectionCard>
-
-        {/* Payment details */}
-        {booking.total > 0 && (
-          <SectionCard title="Payment Details" icon="credit-card">
-            <View style={styles.paymentRow}>
-              <Text style={[styles.paymentLabel, { color: colors.textSecondary }]}>Payment Method</Text>
-              <Text style={[styles.paymentValue, { color: colors.textPrimary }]}>Online</Text>
-            </View>
-            <View style={styles.paymentRow}>
-              <Text style={[styles.paymentLabel, { color: colors.textSecondary }]}>Payment Status</Text>
-              <View style={styles.paidBadge}>
-                <Text style={styles.paidText}>
-                  {booking.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.paymentRow}>
-              <Text style={[styles.paymentLabel, { color: colors.textSecondary }]}>Amount</Text>
-              <Text style={[styles.paymentAmount, { color: colors.textPrimary }]}>
-                ₹{booking.total.toLocaleString('en-IN')}
-              </Text>
-            </View>
-            <Pressable style={styles.receiptBtn} onPress={() => lightHaptic()}>
-              <Feather name="download" size={14} color={colors.icon} />
-              <Text style={styles.receiptText}>View Payment Receipt</Text>
-            </Pressable>
-          </SectionCard>
-        )}
-
-        {/* Service & add-ons */}
-        {isService && pricing && (
-          <SectionCard title="Service & Add-ons" icon="tool">
-            <View style={styles.serviceRow}>
-              <Text style={[styles.serviceName, { color: colors.textPrimary }]}>
-                {booking.serviceName}
-              </Text>
-              <Text style={[styles.servicePrice, { color: colors.textPrimary }]}>
-                ₹{pricing.serviceAmount.toLocaleString('en-IN')}
-              </Text>
-            </View>
-            {pricing.addons.length > 0 && (
-              <>
-                <Text style={[styles.addonHeader, { color: colors.textSecondary }]}>
-                  Add-on Services ({pricing.addons.length})
-                </Text>
-                {pricing.addons.map((addon) => (
-                  <View key={addon.name} style={styles.addonRow}>
-                    <View style={styles.addonLeft}>
-                      <Feather name="check-circle" size={14} color="#10B981" />
-                      <Text style={[styles.addonName, { color: colors.textPrimary }]}>{addon.name}</Text>
-                    </View>
-                    <Text style={[styles.addonPrice, { color: colors.textPrimary }]}>
-                      ₹{addon.price.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
-                ))}
-              </>
-            )}
-            <View style={styles.totalBar}>
-              <Text style={styles.totalBarLabel}>Total Amount</Text>
-              <Text style={styles.totalBarValue}>₹{booking.total.toLocaleString('en-IN')}</Text>
-            </View>
-          </SectionCard>
-        )}
-
-        {/* Customer notes */}
         {booking.notes && (
           <View style={styles.notesCard}>
             <View style={styles.notesHeader}>
@@ -366,84 +284,48 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
           </View>
         )}
 
-        {/* Dealer actions */}
-        <Text style={[styles.dealerActionsTitle, { color: colors.textPrimary }]}>Dealer Actions</Text>
-        <View style={styles.dealerActionsRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionTile,
-              { backgroundColor: '#F2F2F2' },
-              booking.status !== 'confirmed' && styles.actionTileDisabled,
-              pressed && styles.actionTilePressed,
-            ]}
-            onPress={() => booking.status === 'confirmed' && runAction('in_progress')}
-            disabled={booking.status !== 'confirmed'}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#E60012' }]}>
-              <Feather name="play" size={12} color="#fff" />
-            </View>
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
-              Start Service
+        {isService && (
+          <>
+            <Text style={[styles.dealerActionsTitle, { color: colors.textPrimary }]}>
+              Dealer Actions
             </Text>
-          </Pressable>
+            <View style={styles.dealerActionsRow}>
+              <Pressable
+                style={[
+                  styles.actionTile,
+                  { backgroundColor: '#F2F2F2' },
+                  booking.status !== 'confirmed' && styles.actionTileDisabled,
+                ]}
+                onPress={() => booking.status === 'confirmed' && runAction('in_progress')}
+                disabled={booking.status !== 'confirmed'}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: '#E60012' }]}>
+                  <Feather name="play" size={12} color="#fff" />
+                </View>
+                <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
+                  Start Service
+                </Text>
+              </Pressable>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionTile,
-              { backgroundColor: '#FFF7ED' },
-              booking.status !== 'confirmed' && booking.status !== 'upcoming' && styles.actionTileDisabled,
-              pressed && styles.actionTilePressed,
-            ]}
-            onPress={() =>
-              (booking.status === 'confirmed' || booking.status === 'upcoming') &&
-              runAction('in_progress')
-            }
-            disabled={booking.status !== 'confirmed' && booking.status !== 'upcoming'}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#F59E0B' }]}>
-              <Feather name="tool" size={12} color="#fff" />
+              <Pressable
+                style={[
+                  styles.actionTile,
+                  { backgroundColor: '#ECFDF5' },
+                  booking.status !== 'in_progress' && styles.actionTileDisabled,
+                ]}
+                onPress={() => booking.status === 'in_progress' && runAction('completed')}
+                disabled={booking.status !== 'in_progress'}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: '#10B981' }]}>
+                  <Feather name="check" size={12} color="#fff" />
+                </View>
+                <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
+                  Complete Service
+                </Text>
+              </Pressable>
             </View>
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
-              Mark In Progress
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionTile,
-              { backgroundColor: '#F5F3FF' },
-              booking.status !== 'in_progress' && styles.actionTileDisabled,
-              pressed && styles.actionTilePressed,
-            ]}
-            onPress={() => Alert.alert('Quality Check', 'Quality check checklist opened.')}
-            disabled={booking.status !== 'in_progress'}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#8B5CF6' }]}>
-              <Feather name="clipboard" size={12} color="#fff" />
-            </View>
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
-              Quality Check
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionTile,
-              { backgroundColor: '#ECFDF5' },
-              booking.status !== 'in_progress' && styles.actionTileDisabled,
-              pressed && styles.actionTilePressed,
-            ]}
-            onPress={() => booking.status === 'in_progress' && runAction('completed')}
-            disabled={booking.status !== 'in_progress'}
-          >
-            <View style={[styles.actionIcon, { backgroundColor: '#10B981' }]}>
-              <Feather name="check" size={12} color="#fff" />
-            </View>
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]} numberOfLines={2}>
-              Complete Service
-            </Text>
-          </Pressable>
-        </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -451,6 +333,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,9 +364,6 @@ const styles = StyleSheet.create({
   heroMeta: { fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 },
   iconLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 2 },
   iconLineText: { flex: 1, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 },
-  heroPrice: { fontSize: 18, fontFamily: 'Inter_700Bold' },
-  viewCustomerLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  viewCustomerText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
   acceptRejectRow: { flexDirection: 'row', gap: 10 },
   acceptOutlineBtn: {
     flex: 1,
@@ -511,8 +391,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   rejectOutlineText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#EF4444' },
-  timerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  timerText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
   sectionCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
@@ -525,51 +403,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  vehicleThumb: { width: 56, height: 42, borderRadius: 8 },
   customerInfo: { flex: 1, gap: 2 },
   customerName: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   customerSub: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  paymentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  paymentLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  paymentValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  paidBadge: { backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  paidText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#10B981' },
-  paymentAmount: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  receiptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 40,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E60012',
-    marginTop: 4,
-  },
-  receiptText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
-  serviceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  serviceName: { fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 },
-  servicePrice: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  addonHeader: { fontSize: 11, fontFamily: 'Inter_500Medium', marginTop: 4 },
-  addonRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  addonLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
-  addonName: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  addonPrice: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  totalBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 6,
-  },
-  totalBarLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#166534' },
-  totalBarValue: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#166534' },
   notesCard: {
     backgroundColor: '#FFFBEB',
     borderRadius: 14,
@@ -594,7 +430,6 @@ const styles = StyleSheet.create({
     minHeight: 72,
   },
   actionTileDisabled: { opacity: 0.4 },
-  actionTilePressed: { opacity: 0.85 },
   actionIcon: {
     width: 28,
     height: 28,

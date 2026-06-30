@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -14,8 +15,10 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
-import { VEHICLES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { getUserTestDriveById } from '@services/testDrive.service';
+import type { ITestDrive } from '@app-types/testDrive';
+import { getApiErrorMessage } from '@utils/apiHelpers';
 import { successHaptic } from '@utils/haptics';
 
 type CustomerStackParamList = {
@@ -28,26 +31,110 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.AiAssistant]: undefined;
   [CustomerStackRoutes.DealerStore]: { id: string };
   [CustomerStackRoutes.ServiceDetail]: { id: string };
-  DriveDetail: { id: string };
+  [CustomerStackRoutes.DriveDetail]: { id: string };
 };
 
 type DriveDetailScreenProps = NativeStackScreenProps<
   CustomerStackParamList,
-  'DriveDetail'
+  typeof CustomerStackRoutes.DriveDetail
 >;
+
+function formatDateLabel(dateStr: string) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    weekday: 'short',
+  });
+}
+
+function formatDateTimeLabel(dateStr: string) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  return date.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function getStatusLabel(status: ITestDrive['status']) {
+  if (status === 'approved') return 'Confirmed';
+  if (status === 'pending') return 'Pending';
+  if (status === 'cancelled') return 'Cancelled';
+  if (status === 'rejected') return 'Rejected';
+  return 'Completed';
+}
 
 export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { id } = route.params;
+  const [testDrive, setTestDrive] = useState<ITestDrive | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const vehicle = VEHICLES.find((v) => v.id === id) || VEHICLES[0];
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTestDrive = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getUserTestDriveById(id);
+        if (cancelled) return;
+        if (response.success && response.Response) {
+          setTestDrive(response.Response);
+        } else {
+          setError('Booking not found');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Failed to load booking'));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadTestDrive();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!testDrive) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textPrimary }}>{error ?? 'Booking not found'}</Text>
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text style={{ color: colors.primary }}>Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const vehicleLabel = testDrive.vehicleLabel ?? 'Test Drive Vehicle';
+  const dealerName = testDrive.dealerName ?? 'Dealer';
+  const statusLabel = getStatusLabel(testDrive.status);
+  const isConfirmed = testDrive.status === 'approved' || testDrive.status === 'pending';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header Panel */}
       <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
@@ -59,43 +146,34 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
       </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Top Vehicle Info Card */}
         <View style={[styles.vehicleOverviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.vehicleOverviewLeft}>
             <View style={styles.testDriveBadge}>
               <Feather name="navigation" size={10} color="#fff" style={{ marginRight: 4 }} />
               <Text style={styles.testDriveBadgeText}>Test Drive</Text>
             </View>
-            <Text style={[styles.vehicleBrand, { color: colors.textPrimary }]}>{vehicle.brand}</Text>
-            <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>{vehicle.name}</Text>
-            
-            {/* License plate chip */}
-            <View style={[styles.plateChip, { backgroundColor: colors.muted }]}>
-              <Text style={[styles.plateText, { color: colors.textSecondary }]}>KA 05 EV 2210</Text>
-              <Pressable onPress={() => successHaptic()}>
-                <Feather name="copy" size={12} color={colors.textSecondary} />
-              </Pressable>
-            </View>
+            <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>{vehicleLabel}</Text>
 
             <View style={styles.miniSpecsRow}>
-              <View style={styles.miniSpec}>
-                <Feather name="zap" size={12} color="#2563EB" />
-                <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{vehicle.fuel}</Text>
-              </View>
-              <View style={styles.miniSpec}>
-                <Feather name="settings" size={12} color="#2563EB" />
-                <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{vehicle.transmission}</Text>
-              </View>
+              {testDrive.vehicleType ? (
+                <View style={styles.miniSpec}>
+                  <Feather name="zap" size={12} color="#2563EB" />
+                  <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{testDrive.vehicleType}</Text>
+                </View>
+              ) : null}
               <View style={styles.miniSpec}>
                 <Feather name="map-pin" size={12} color="#2563EB" />
-                <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>Koramangala, Bengaluru</Text>
+                <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{dealerName}</Text>
               </View>
             </View>
           </View>
-          <Image source={{ uri: vehicle.image }} style={styles.vehicleOverviewImg} resizeMode="contain" />
+          {testDrive.vehicleImage ? (
+            <Image source={{ uri: testDrive.vehicleImage }} style={styles.vehicleOverviewImg} resizeMode="contain" />
+          ) : (
+            <View style={[styles.vehicleOverviewImg, { backgroundColor: colors.muted }]} />
+          )}
         </View>
 
-        {/* Tab Indicator inside Card (Matching reference mockup) */}
         <View style={[styles.subTabsContainer, { backgroundColor: colors.card }]}>
           <View style={[styles.subTab, styles.subTabActive]}>
             <Feather name="navigation" size={14} color="#2563EB" style={{ marginRight: 6 }} />
@@ -107,7 +185,6 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           </View>
         </View>
 
-        {/* Date & Location Info Row */}
         <View style={styles.infoBlocksRow}>
           <View style={[styles.infoBlockItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.infoBlockIconWrapper, { backgroundColor: '#EFF6FF' }]}>
@@ -115,8 +192,10 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.infoBlockLabel, { color: colors.textSecondary }]}>Date & Time</Text>
-              <Text style={[styles.infoBlockVal, { color: colors.textPrimary }]}>18 May 2026, Mon</Text>
-              <Text style={[styles.infoBlockSub, { color: colors.textSecondary }]}>11:00 AM - 12:00 PM</Text>
+              <Text style={[styles.infoBlockVal, { color: colors.textPrimary }]}>
+                {formatDateLabel(testDrive.preferredDate)}
+              </Text>
+              <Text style={[styles.infoBlockSub, { color: colors.textSecondary }]}>{testDrive.preferredTime}</Text>
             </View>
           </View>
 
@@ -125,23 +204,21 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
               <Feather name="map-pin" size={16} color="#2563EB" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.infoBlockLabel, { color: colors.textSecondary }]}>Location</Text>
-              <Text style={[styles.infoBlockVal, { color: colors.textPrimary }]}>Motonode Koramangala</Text>
-              <Text style={[styles.infoBlockSub, { color: colors.textSecondary }]} numberOfLines={1}>Bengaluru, Karnataka</Text>
+              <Text style={[styles.infoBlockLabel, { color: colors.textSecondary }]}>Dealer</Text>
+              <Text style={[styles.infoBlockVal, { color: colors.textPrimary }]}>{dealerName}</Text>
             </View>
           </View>
         </View>
 
-        {/* Booking Details Section */}
         <View style={[styles.detailsSectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Booking Details</Text>
-          
+
           <View style={styles.detailRow}>
             <View style={styles.detailLabelRow}>
               <Feather name="file-text" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Booking ID</Text>
             </View>
-            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>TD65897123</Text>
+            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>{testDrive.id}</Text>
           </View>
 
           <View style={styles.detailRow}>
@@ -149,7 +226,9 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
               <Feather name="calendar" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Booked On</Text>
             </View>
-            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>12 May 2026, 09:30 AM</Text>
+            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>
+              {formatDateTimeLabel(testDrive.createdAt)}
+            </Text>
           </View>
 
           <View style={styles.detailRow}>
@@ -167,29 +246,32 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
               <Feather name="check-circle" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Status</Text>
             </View>
-            <View style={styles.badgeGreen}>
-              <Text style={styles.badgeGreenText}>Confirmed</Text>
+            <View style={[styles.badgeGreen, !isConfirmed && styles.badgePending]}>
+              <Text style={[styles.badgeGreenText, !isConfirmed && styles.badgePendingText]}>{statusLabel}</Text>
             </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailLabelRow}>
-              <Feather name="user" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
-              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Booked For</Text>
+          {testDrive.customerName ? (
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelRow}>
+                <Feather name="user" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Booked For</Text>
+              </View>
+              <Text style={[styles.detailVal, { color: colors.textPrimary }]}>{testDrive.customerName}</Text>
             </View>
-            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>Arjun Sharma</Text>
-          </View>
+          ) : null}
 
-          <View style={styles.detailRow}>
-            <View style={styles.detailLabelRow}>
-              <Feather name="phone" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
-              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Contact</Text>
+          {testDrive.notes ? (
+            <View style={styles.detailRow}>
+              <View style={styles.detailLabelRow}>
+                <Feather name="message-square" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Notes</Text>
+              </View>
+              <Text style={[styles.detailVal, { color: colors.textPrimary }]}>{testDrive.notes}</Text>
             </View>
-            <Text style={[styles.detailVal, { color: colors.textPrimary }]}>+91 98765 43210</Text>
-          </View>
+          ) : null}
         </View>
 
-        {/* Dealer Profile details */}
         <View style={[styles.dealerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Image
             source={{ uri: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=300&auto=format&fit=crop&q=80' }}
@@ -197,19 +279,11 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           />
           <View style={styles.dealerInfo}>
             <View style={styles.dealerHeaderRow}>
-              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>Motonode Koramangala</Text>
+              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{dealerName}</Text>
               <View style={styles.verifiedCheck}>
                 <Feather name="check" size={10} color="#fff" />
               </View>
             </View>
-            <View style={styles.dealerRatingRow}>
-              <Feather name="star" size={12} color="#FBBF24" style={{ marginRight: 2 }} />
-              <Text style={styles.dealerRatingVal}>4.7</Text>
-              <Text style={[styles.dealerReviews, { color: colors.textSecondary }]}> (512 reviews)</Text>
-            </View>
-            <Text style={[styles.dealerAddress, { color: colors.textSecondary }]} numberOfLines={2}>
-              80 Feet Rd, Koramangala 3 Block, Bengaluru, Karnataka 560034
-            </Text>
           </View>
           <View style={styles.dealerActions}>
             <Pressable style={styles.dealerIconAction}>
@@ -221,7 +295,6 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           </View>
         </View>
 
-        {/* Important Instructions section */}
         <View style={[styles.instructionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Important Instructions</Text>
           <View style={styles.instructionsGrid}>
@@ -249,7 +322,6 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Actions Bar */}
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
         <Pressable style={styles.cancelBtn}>
           <Feather name="x-circle" size={16} color="#EF4444" style={{ marginRight: 6 }} />
@@ -266,6 +338,7 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -317,22 +390,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   testDriveBadgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
-  vehicleBrand: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
   vehicleName: { fontSize: 18, fontFamily: 'Inter_700Bold', marginTop: 2 },
-  plateChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  plateText: { fontSize: 10, fontFamily: 'Inter_700Bold' },
   miniSpecsRow: {
     gap: 6,
+    marginTop: 8,
   },
   miniSpec: {
     flexDirection: 'row',
@@ -343,6 +404,7 @@ const styles = StyleSheet.create({
   vehicleOverviewImg: {
     width: 130,
     height: 90,
+    borderRadius: 8,
   },
   subTabsContainer: {
     flexDirection: 'row',
@@ -410,7 +472,7 @@ const styles = StyleSheet.create({
   },
   detailLabelRow: { flexDirection: 'row', alignItems: 'center' },
   detailLabel: { fontSize: 12, fontFamily: 'Inter_500Medium' },
-  detailVal: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  detailVal: { fontSize: 12, fontFamily: 'Inter_700Bold', flex: 1, textAlign: 'right', marginLeft: 8 },
   badgeBlue: {
     backgroundColor: '#DBEAFE',
     paddingHorizontal: 8,
@@ -425,6 +487,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   badgeGreenText: { color: '#065F46', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  badgePending: { backgroundColor: '#FEF3C7' },
+  badgePendingText: { color: '#92400E' },
   dealerCard: {
     flexDirection: 'row',
     borderRadius: 20,
@@ -450,10 +514,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dealerRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  dealerRatingVal: { fontSize: 11, fontFamily: 'Inter_700Bold' },
-  dealerReviews: { fontSize: 10 },
-  dealerAddress: { fontSize: 10, marginTop: 4 },
   dealerActions: { flexDirection: 'row', gap: 6 },
   dealerIconAction: {
     width: 32,

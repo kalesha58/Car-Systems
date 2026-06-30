@@ -183,6 +183,8 @@ export interface IBusinessRegistrationResponse {
     businessName: string;
     type: string;
     address: string;
+    state?: string;
+    city?: string;
     phone: string;
     gst: string;
     status?: 'pending' | 'approved' | 'rejected';

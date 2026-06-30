@@ -23,10 +23,10 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { bookingId } = route.params;
 
-  const { getService, getVehicle, getWorkshop, draft, resetBooking } = useServiceBooking();
+  const { getService, getVehicle, getLocation, draft, resetBooking } = useServiceBooking();
   const service = getService();
   const vehicle = getVehicle();
-  const workshop = getWorkshop();
+  const location = getLocation();
 
   const dateLabel = draft.date
     ? new Date(draft.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -63,10 +63,10 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
             {dateLabel} • {draft.timeSlot}
           </Text>
           <Text style={[styles.recapLine, { color: colors.textSecondary }]}>
-            {vehicle ? `${vehicle.brand} ${vehicle.name}` : ''}
+            {vehicle ? `${vehicle.brand} ${vehicle.model}` : ''}
           </Text>
           <Text style={[styles.recapLine, { color: colors.textSecondary }]}>
-            {workshop?.name}
+            {location?.name}
           </Text>
         </View>
       </ScrollView>

@@ -29,6 +29,19 @@ export interface IBusinessRegistrationDocument extends Document {
   city?: string;
   phone: string;
   gst?: string;
+  registrationNumber?: string;
+  establishedYear?: number;
+  website?: string;
+  workingDays?: string;
+  workingHours?: {
+    open: string;
+    close: string;
+  };
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+  };
   location?: {
     latitude: number;
     longitude: number;
@@ -123,6 +136,32 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
     gst: {
       type: String,
       trim: true,
+    },
+    registrationNumber: {
+      type: String,
+      trim: true,
+    },
+    establishedYear: {
+      type: Number,
+      min: 1900,
+      max: 2100,
+    },
+    website: {
+      type: String,
+      trim: true,
+    },
+    workingDays: {
+      type: String,
+      trim: true,
+    },
+    workingHours: {
+      open: { type: String, trim: true },
+      close: { type: String, trim: true },
+    },
+    socialLinks: {
+      facebook: { type: String, trim: true },
+      instagram: { type: String, trim: true },
+      youtube: { type: String, trim: true },
     },
     payout: {
       type: {

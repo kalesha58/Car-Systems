@@ -8,6 +8,8 @@ export * from './userVehicle.service';
 export * from './vehicleAlert.service';
 export * from './dropdown.service';
 export * from './service.service';
+export * from './testDrive.service';
+export * from './serviceBooking.service';
 export * from './order.service';
 export * from './notification.service';
 export * from './ai.service';

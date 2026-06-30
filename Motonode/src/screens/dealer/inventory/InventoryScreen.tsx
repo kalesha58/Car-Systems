@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -11,7 +13,7 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,11 +21,37 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
+import { ChromeHeader } from '@components/common';
+import { RegistrationStatusBanner } from '@components/dealer/RegistrationStatusBanner';
 import { useDealer } from '@context/index';
-import { DealerProduct, DealerService, DealerVehicle } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
+import {
+  deleteDealerProduct,
+  deleteDealerService,
+  deleteDealerVehicle,
+  getDealerInventoryVehicles,
+  getDealerProducts,
+  getDealerServices,
+} from '@services/dealer.service';
+import type { IProduct } from '@app-types/product';
+import type { IService } from '@app-types/service';
+import type { IDealerVehicle } from '@app-types/vehicle';
 import { themeLight } from '@theme/colors';
-import { lightHaptic, successHaptic } from '@utils/haptics';
+import { getApiErrorMessage, isApiForbiddenError } from '@utils/apiHelpers';
+import { showRegistrationBlockedAlert } from '@utils/dealerRegistration';
+import {
+  getProductId,
+  getProductImage,
+  getProductStockStatus,
+  getServiceDurationLabel,
+  getServiceId,
+  getServiceImage,
+  getVehicleId,
+  getVehicleDisplayName,
+  getVehicleImage,
+} from '@utils/displayMappers';
+import { lightHaptic } from '@utils/haptics';
 
 type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -59,26 +87,65 @@ const VEHICLE_STATUS: Record<string, { label: string; color: string }> = {
   sold: { label: 'Sold', color: '#EF4444' },
 };
 
-// Image mappings for visual excellence
-const INVENTORY_IMAGES: Record<string, string> = {
-  'p1': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80', // Bosch filter (Battery/part placeholder)
-  'p2': 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80', // Castrol oil
-  'p3': 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=200&auto=format&fit=crop&q=80', // MRF Tyre
-  'p4': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80', // Amaron Battery
-};
-
 export function InventoryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<InventoryNavigationProp>();
-  const { capabilities, products, vehicles, services, deleteProduct, deleteVehicle, deleteService } =
-    useDealer();
+  const { capabilities } = useDealer();
+  const { status, canAccessDealerApis, isPending } = useDealerOnboardingStatus();
   const [search, setSearch] = useState('');
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [vehicles, setVehicles] = useState<IDealerVehicle[]>([]);
+  const [services, setServices] = useState<IService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>(
     capabilities.hasProducts ? 'products' : capabilities.hasServices ? 'services' : 'products',
   );
+
+  const fetchInventory = useCallback(async (isRefresh = false) => {
+    if (!canAccessDealerApis) {
+      setProducts([]);
+      setVehicles([]);
+      setServices([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
+    try {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+
+      const [productsRes, vehiclesRes, servicesRes] = await Promise.all([
+        capabilities.hasProducts ? getDealerProducts({ limit: 1000 }) : Promise.resolve(null),
+        capabilities.hasVehicles ? getDealerInventoryVehicles({ limit: 1000 }) : Promise.resolve(null),
+        capabilities.hasServices ? getDealerServices({ limit: 1000 }) : Promise.resolve(null),
+      ]);
+
+      setProducts(productsRes?.Response?.products ?? []);
+      setVehicles(vehiclesRes?.Response?.vehicles ?? []);
+      setServices(servicesRes?.Response?.services ?? []);
+    } catch (error) {
+      if (isApiForbiddenError(error) || isPending) {
+        setProducts([]);
+        setVehicles([]);
+        setServices([]);
+      } else {
+        Alert.alert('Error', getApiErrorMessage(error, 'Failed to load inventory'));
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [canAccessDealerApis, capabilities.hasProducts, capabilities.hasVehicles, capabilities.hasServices, isPending]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchInventory();
+    }, [fetchInventory]),
+  );
   
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const tabs = [
@@ -90,21 +157,28 @@ export function InventoryScreen() {
   const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()),
+      p.brand.toLowerCase().includes(search.toLowerCase()) ||
+      (p.category || '').toLowerCase().includes(search.toLowerCase()),
   );
   const filteredVehicles = vehicles.filter(
     (v) =>
-      v.name.toLowerCase().includes(search.toLowerCase()) ||
+      getVehicleDisplayName(v).toLowerCase().includes(search.toLowerCase()) ||
       v.brand.toLowerCase().includes(search.toLowerCase()),
   );
   const filteredServices = services.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.category.toLowerCase().includes(search.toLowerCase()),
+      (s.category || '').toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleAddNew = () => {
     lightHaptic();
+    if (!canAccessDealerApis) {
+      showRegistrationBlockedAlert(status, {
+        onViewRegistration: () => navigation.navigate(DealerStackRoutes.BusinessRegistration),
+      });
+      return;
+    }
     if (activeTab === 'products') {
       navigation.navigate(DealerStackRoutes.ProductForm, {});
     } else if (activeTab === 'vehicles') {
@@ -117,21 +191,54 @@ export function InventoryScreen() {
   const handleDeleteProduct = (id: string, name: string) => {
     Alert.alert('Delete Product', `Remove "${name}" from inventory?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteProduct(id) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteDealerProduct(id);
+            await fetchInventory(true);
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete product'));
+          }
+        },
+      },
     ]);
   };
 
   const handleDeleteVehicle = (id: string, name: string) => {
     Alert.alert('Delete Vehicle', `Remove "${name}" from inventory?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteVehicle(id) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteDealerVehicle(id);
+            await fetchInventory(true);
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete vehicle'));
+          }
+        },
+      },
     ]);
   };
 
   const handleDeleteService = (id: string, name: string) => {
     Alert.alert('Delete Service', `Remove "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteService(id) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteDealerService(id);
+            await fetchInventory(true);
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete service'));
+          }
+        },
+      },
     ]);
   };
 
@@ -141,21 +248,21 @@ export function InventoryScreen() {
         { label: 'Total Items', value: products.length, color: themeLight.textSecondary, icon: 'shopping-bag', bg: '#F2F2F2' },
         {
           label: 'In Stock',
-          value: products.filter((p) => p.status === 'in_stock').length,
+          value: products.filter((p) => getProductStockStatus(p.stock) === 'in_stock').length,
           color: '#10B981',
           icon: 'check-circle',
           bg: '#ECFDF5'
         },
         {
           label: 'Low Stock',
-          value: products.filter((p) => p.status === 'low_stock').length,
+          value: products.filter((p) => getProductStockStatus(p.stock) === 'low_stock').length,
           color: '#F59E0B',
           icon: 'alert-triangle',
           bg: '#FFFBEB'
         },
         {
           label: 'Out of Stock',
-          value: products.filter((p) => p.status === 'out_of_stock').length,
+          value: products.filter((p) => getProductStockStatus(p.stock) === 'out_of_stock').length,
           color: '#EF4444',
           icon: 'x-circle',
           bg: '#FEF2F2'
@@ -167,25 +274,25 @@ export function InventoryScreen() {
         { label: 'Total Items', value: vehicles.length, color: themeLight.textSecondary, icon: 'truck', bg: '#F2F2F2' },
         {
           label: 'Available',
-          value: vehicles.filter((v) => v.status === 'available').length,
+          value: vehicles.filter((v) => v.availability === 'available').length,
           color: '#10B981',
           icon: 'check-circle',
           bg: '#ECFDF5'
         },
         {
           label: 'Reserved',
-          value: vehicles.filter((v) => v.status === 'reserved').length,
+          value: vehicles.filter((v) => v.availability === 'reserved').length,
           color: '#F59E0B',
           icon: 'clock',
           bg: '#FFFBEB'
         },
-        { label: 'Sold', value: vehicles.filter((v) => v.status === 'sold').length, color: '#EF4444', icon: 'shopping-cart', bg: '#FEF2F2' },
+        { label: 'Sold', value: vehicles.filter((v) => v.availability === 'sold').length, color: '#EF4444', icon: 'shopping-cart', bg: '#FEF2F2' },
       ];
     }
     return [
       { label: 'Total Items', value: services.length, color: themeLight.textSecondary, icon: 'tool', bg: '#F2F2F2' },
-      { label: 'Active', value: services.filter((s) => s.available).length, color: '#10B981', icon: 'check-circle', bg: '#ECFDF5' },
-      { label: 'Paused', value: services.filter((s) => !s.available).length, color: '#F59E0B', icon: 'pause-circle', bg: '#FFFBEB' },
+      { label: 'Active', value: services.filter((s) => s.isActive !== false).length, color: '#10B981', icon: 'check-circle', bg: '#ECFDF5' },
+      { label: 'Paused', value: services.filter((s) => s.isActive === false).length, color: '#F59E0B', icon: 'pause-circle', bg: '#FFFBEB' },
       {
         label: 'Avg Price',
         value: '₹' + (services.length > 0
@@ -198,23 +305,24 @@ export function InventoryScreen() {
     ];
   };
 
-  const renderProduct = ({ item }: { item: DealerProduct }) => {
-    const st = PRODUCT_STATUS[item.status] || { label: 'In Stock', color: '#10B981' };
-    const fallbackImage = 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80';
-    
+  const renderProduct = ({ item }: { item: IProduct }) => {
+    const stockStatus = getProductStockStatus(item.stock);
+    const st = PRODUCT_STATUS[stockStatus] || { label: 'In Stock', color: '#10B981' };
+    const productId = getProductId(item);
+
     return (
       <View style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image
-          source={{ uri: INVENTORY_IMAGES[item.id] || fallbackImage }}
+          source={{ uri: getProductImage(item) }}
           style={styles.itemImage}
         />
-        
+
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
             {item.name}
           </Text>
           <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
-            {item.sku} • {item.brand}
+            {item.category || 'General'} • {item.brand}
           </Text>
           <View style={styles.itemMeta}>
             <Text style={[styles.itemCategory, { color: colors.textTertiary }]}>
@@ -239,14 +347,14 @@ export function InventoryScreen() {
               style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
-                navigation.navigate(DealerStackRoutes.ProductForm, { id: item.id });
+                navigation.navigate(DealerStackRoutes.ProductForm, { id: productId });
               }}
             >
               <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
-              onPress={() => handleDeleteProduct(item.id, item.name)}
+              onPress={() => handleDeleteProduct(productId, item.name)}
             >
               <Feather name="trash-2" size={14} color="#EF4444" />
             </Pressable>
@@ -256,29 +364,28 @@ export function InventoryScreen() {
     );
   };
 
-  const renderVehicle = ({ item }: { item: DealerVehicle }) => {
-    const st = VEHICLE_STATUS[item.status] || { label: 'Available', color: '#10B981' };
-    const vehicleImage = item.type === 'bike' 
-      ? 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=200&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=200&auto=format&fit=crop&q=80';
+  const renderVehicle = ({ item }: { item: IDealerVehicle }) => {
+    const st = VEHICLE_STATUS[item.availability] || { label: 'Available', color: '#10B981' };
+    const vehicleId = getVehicleId(item);
+    const displayName = getVehicleDisplayName(item);
 
     return (
       <View style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image
-          source={{ uri: vehicleImage }}
+          source={{ uri: getVehicleImage(item) }}
           style={styles.itemImage}
         />
-        
+
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
-            {item.name}
+            {displayName}
           </Text>
           <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
-            {item.brand} • {item.year} • {item.fuel}
+            {item.brand} • {item.year} • {item.fuelType || '—'}
           </Text>
           <View style={styles.itemMeta}>
             <Text style={[styles.itemCategory, { color: colors.textTertiary }]}>
-              {item.transmission}
+              {item.transmission || '—'}
             </Text>
             <View style={[styles.badge, { backgroundColor: st.color + '15' }]}>
               <Text style={[styles.badgeText, { color: st.color }]}>{st.label}</Text>
@@ -291,22 +398,22 @@ export function InventoryScreen() {
             ₹{(item.price / 100000).toFixed(1)}L
           </Text>
           <Text style={[styles.itemStock, { color: colors.textSecondary }]}>
-            {item.stock} units
+            {item.allowTestDrive ? 'Test drive on' : 'No test drive'}
           </Text>
-          
+
           <View style={styles.itemActions}>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
-                navigation.navigate(DealerStackRoutes.VehicleForm, { id: item.id });
+                navigation.navigate(DealerStackRoutes.VehicleForm, { id: vehicleId });
               }}
             >
               <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
-              onPress={() => handleDeleteVehicle(item.id, item.name)}
+              onPress={() => handleDeleteVehicle(vehicleId, displayName)}
             >
               <Feather name="trash-2" size={14} color="#EF4444" />
             </Pressable>
@@ -316,61 +423,63 @@ export function InventoryScreen() {
     );
   };
 
-  const renderService = ({ item }: { item: DealerService }) => {
-    const serviceImage = 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
+  const renderService = ({ item }: { item: IService }) => {
+    const serviceId = getServiceId(item);
+    const duration = getServiceDurationLabel(item);
+    const isActive = item.isActive !== false;
 
     return (
       <View style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Image
-          source={{ uri: serviceImage }}
+          source={{ uri: getServiceImage(item) }}
           style={styles.itemImage}
         />
-        
+
         <View style={styles.itemInfo}>
           <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
             {item.name}
           </Text>
           <Text style={[styles.itemSub, { color: colors.textSecondary }]}>
-            {item.category} • {item.duration}
+            {item.category || 'Service'} • {duration}
           </Text>
           <View style={styles.itemMeta}>
             <Text style={[styles.itemCategory, { color: colors.textTertiary }]}>
-              {item.slotsPerDay} slots/day
+              {item.slotBookingEnabled ? 'Slot booking' : 'Walk-in'}
             </Text>
             <View
               style={[
                 styles.badge,
-                { backgroundColor: (item.available ? '#10B981' : '#F59E0B') + '15' },
+                { backgroundColor: (isActive ? '#10B981' : '#F59E0B') + '15' },
               ]}
             >
-              <Text style={[styles.badgeText, { color: item.available ? '#10B981' : '#F59E0B' }]}>
-                {item.available ? 'Active' : 'Paused'}
+              <Text style={[styles.badgeText, { color: isActive ? '#10B981' : '#F59E0B' }]}>
+                {isActive ? 'Active' : 'Paused'}
               </Text>
             </View>
           </View>
         </View>
-        
+
         <View style={styles.itemRight}>
           <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>
             ₹{item.price.toLocaleString('en-IN')}
           </Text>
           <Text style={[styles.itemStock, { color: colors.textSecondary }]}>
-            {item.duration}
+            {duration}
           </Text>
-          
+
           <View style={styles.itemActions}>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#E60012', backgroundColor: '#F2F2F2' }]}
               onPress={() => {
                 lightHaptic();
-                navigation.navigate(DealerStackRoutes.ServiceForm, { id: item.id });
+                navigation.navigate(DealerStackRoutes.ServiceForm, { id: serviceId });
               }}
             >
               <Feather name="edit-2" size={14} color={colors.icon} />
             </Pressable>
             <Pressable
               style={[styles.actionIcon, { borderColor: '#EF4444', backgroundColor: '#FEF2F2' }]}
-              onPress={() => handleDeleteService(item.id, item.name)}
+              onPress={() => handleDeleteService(serviceId, item.name)}
             >
               <Feather name="trash-2" size={14} color="#EF4444" />
             </Pressable>
@@ -392,18 +501,17 @@ export function InventoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       
-      {/* Mockup Header Row */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Inventory</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Inventory</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
               Manage your products, vehicles & services
             </Text>
           </View>
           <View style={styles.headerRight}>
             <Pressable style={styles.notificationBtn}>
-              <Feather name="bell" size={22} color={colors.textPrimary} />
+              <Feather name="bell" size={22} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>
               </View>
@@ -415,7 +523,19 @@ export function InventoryScreen() {
           </View>
         </View>
 
-        {/* Capsule Search Bar */}
+        <RegistrationStatusBanner
+          status={status}
+          onPress={
+            status !== 'approved'
+              ? () =>
+                  showRegistrationBlockedAlert(status, {
+                    onViewRegistration: () =>
+                      navigation.navigate(DealerStackRoutes.BusinessRegistration),
+                  })
+              : undefined
+          }
+        />
+
         <View style={[styles.searchBar, { backgroundColor: '#ffffff', borderColor: '#E2E8F0' }]}>
           <Feather name="search" size={18} color={colors.textSecondary} />
           <TextInput
@@ -430,7 +550,6 @@ export function InventoryScreen() {
           </Pressable>
         </View>
 
-        {/* Tab Selection Row */}
         {tabs.length > 1 && (
           <View style={styles.tabsRow}>
             {tabs.map((tab) => {
@@ -455,7 +574,7 @@ export function InventoryScreen() {
             })}
           </View>
         )}
-      </View>
+      </ChromeHeader>
 
       {/* Summary Row (4-column Grid) */}
       <View style={styles.summaryRow}>
@@ -485,27 +604,52 @@ export function InventoryScreen() {
       </View>
 
       {/* Scrollable Inventory List */}
-      <FlatList<DealerProduct | DealerVehicle | DealerService>
+      <FlatList<IProduct | IDealerVehicle | IService>
         data={data}
-        keyExtractor={i => i.id}
+        keyExtractor={(item) => {
+          if (activeTab === 'products') return getProductId(item as IProduct);
+          if (activeTab === 'vehicles') return getVehicleId(item as IDealerVehicle);
+          return getServiceId(item as IService);
+        }}
         contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 110 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => fetchInventory(true)} />
+        }
         renderItem={info => {
           if (activeTab === 'products') {
-            return renderProduct({ item: info.item as DealerProduct });
+            return renderProduct({ item: info.item as IProduct });
           }
           if (activeTab === 'vehicles') {
-            return renderVehicle({ item: info.item as DealerVehicle });
+            return renderVehicle({ item: info.item as IDealerVehicle });
           }
-          return renderService({ item: info.item as DealerService });
+          return renderService({ item: info.item as IService });
         }}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="package" size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No {activeTab} found
-            </Text>
-          </View>
+          loading ? (
+            <View style={styles.empty}>
+              <ActivityIndicator color="#E60012" />
+            </View>
+          ) : !canAccessDealerApis ? (
+            <View style={styles.empty}>
+              <Feather name="clock" size={48} color="#F59E0B" />
+              <Text style={[styles.emptyText, { color: colors.textPrimary, fontFamily: 'Inter_600SemiBold' }]}>
+                {status === 'pending' ? 'Registration pending' : 'Registration required'}
+              </Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                {status === 'pending'
+                  ? 'Your business registration is under review. Inventory will unlock once approved.'
+                  : 'Complete business registration to start adding products, vehicles, and services.'}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Feather name="package" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No {activeTab} found
+              </Text>
+            </View>
+          )
         }
       />
 
@@ -541,9 +685,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerRow: {
     flexDirection: 'row',
@@ -679,6 +820,7 @@ const styles = StyleSheet.create({
   },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
   emptyText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  emptySubtext: { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', marginTop: 8, paddingHorizontal: 24 },
 
   bottomCTAContainer: {
     position: 'absolute',

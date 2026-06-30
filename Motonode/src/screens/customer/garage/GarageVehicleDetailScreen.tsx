@@ -19,13 +19,15 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { ChromeHeader } from '@components/common';
 import { CustomerStackRoutes } from '@constants/routes';
-import { SERVICES } from '@data/mockData';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
 import { useAuth } from '@context/index';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { getServices } from '@services/service.service';
 import { getUserVehicleById, deleteUserVehicle } from '@services/userVehicle.service';
+import type { IService } from '@app-types/service';
 import type { UserVehicle } from '../../../types/userVehicle';
+import { getServiceId } from '@utils/displayMappers';
 import { extractAuthErrorMessage } from '@utils/authErrors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
@@ -48,12 +50,30 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
   const { startBookingFromGarage } = useServiceBooking();
 
   const [vehicle, setVehicle] = useState<UserVehicle | null>(null);
+  const [services, setServices] = useState<IService[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingDocUrl, setViewingDocUrl] = useState<string | null>(null);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
   const [isPrimary, setIsPrimary] = useState(false);
+
+  const loadServices = useCallback(async (currentVehicle?: UserVehicle | null) => {
+    try {
+      const query: Parameters<typeof getServices>[0] = { limit: 10 };
+      const v = currentVehicle ?? vehicle;
+      if (v?.brand) query.vehicleBrand = v.brand;
+      if (v?.model) query.vehicleModel = v.model;
+      const response = await getServices(query);
+      if (response.success && response.Response?.services) {
+        setServices(response.Response.services);
+      } else {
+        setServices([]);
+      }
+    } catch {
+      setServices([]);
+    }
+  }, [vehicle]);
 
   const loadVehicle = useCallback(
     async (opts?: { refreshing?: boolean }) => {
@@ -68,6 +88,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
         const response = await getUserVehicleById(vehicleId);
         if (response.Response) {
           setVehicle(response.Response);
+          void loadServices(response.Response);
         } else {
           setError('Vehicle not found');
         }
@@ -78,7 +99,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
         setRefreshing(false);
       }
     },
-    [vehicleId],
+    [vehicleId, loadServices],
   );
 
   const startSectionFocus = useCallback(() => {
@@ -103,7 +124,11 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
 
   const handleBookService = () => {
     lightHaptic();
-    const serviceId = SERVICES[0]?.id ?? '';
+    const serviceId = getServiceId(services[0]) || '';
+    if (!serviceId) {
+      Alert.alert('No Services', 'No recommended services are available for this vehicle.');
+      return;
+    }
     startBookingFromGarage(vehicleId, serviceId);
     navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, { serviceId });
   };

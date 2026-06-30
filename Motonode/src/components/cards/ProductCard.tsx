@@ -7,10 +7,11 @@ import { useWishlist } from '@context/WishlistContext';
 import { useColors } from '@hooks/useColors';
 import { cardShadow } from '@utils/shadows';
 import { lightHaptic } from '@utils/haptics';
-import type { Product } from '@data/mockData';
+import type { IProduct } from '@app-types/product';
+import { getProductId } from '@utils/displayMappers';
 
 interface ProductCardProps {
-  product: Product;
+  product: IProduct;
   style?: object;
   variant?: 'compact' | 'grid';
   showAddToCart?: boolean;
@@ -29,7 +30,12 @@ export function ProductCard({
   const colors = useColors();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { addItem } = useCart();
-  const liked = isWishlisted(product.id);
+  const productId = getProductId(product);
+  const liked = isWishlisted(productId);
+  const imageUri = product.images?.[0] || '';
+  const discount = product.discountPercentage ?? 0;
+  const inStock = product.stock > 0 && product.status === 'active';
+  const dealerName = product.dealer?.businessName;
   const isGrid = variant === 'grid';
 
   const handleWishlist = () => {
@@ -37,7 +43,7 @@ export function ProductCard({
     if (onWishlistPress) {
       onWishlistPress();
     } else {
-      toggleWishlist(product.id);
+      toggleWishlist(productId);
     }
   };
 
@@ -58,10 +64,10 @@ export function ProductCard({
       onPress={onPress}
     >
       <View style={[styles.imageContainer, isGrid && styles.imageContainerGrid]}>
-        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
-        {product.discount > 0 && (
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+        {discount > 0 && (
           <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
-            <Text style={styles.discountText}>{product.discount}% OFF</Text>
+            <Text style={styles.discountText}>{discount}% OFF</Text>
           </View>
         )}
         <Pressable
@@ -75,7 +81,7 @@ export function ProductCard({
             color={liked ? colors.destructive : colors.icon}
           />
         </Pressable>
-        {!product.inStock && (
+        {!inStock && (
           <View style={[styles.outOfStock, { backgroundColor: colors.overlay }]}>
             <Text style={styles.outOfStockText}>Out of Stock</Text>
           </View>
@@ -88,32 +94,34 @@ export function ProductCard({
         <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
           {product.name}
         </Text>
-        {product.dealerName && (
+        {dealerName && (
           <View style={styles.dealerRow}>
             <Feather name="map-pin" size={9} color={colors.textSecondary} style={{ marginTop: 1 }} />
             <Text style={[styles.dealerText, { color: colors.textSecondary }]} numberOfLines={1}>
-              {product.dealerName} {product.distance ? `• ${product.distance}` : ''}
+              {dealerName}
             </Text>
           </View>
         )}
-        <View style={styles.ratingRow}>
-          <Feather name="star" size={10} color={colors.starActive} />
-          <Text style={[styles.rating, { color: colors.textSecondary }]}>
-            {' '}
-            {product.rating} ({product.reviews})
-          </Text>
-        </View>
+        {(product.rating != null || product.reviewCount != null) && (
+          <View style={styles.ratingRow}>
+            <Feather name="star" size={10} color={colors.starActive} />
+            <Text style={[styles.rating, { color: colors.textSecondary }]}>
+              {' '}
+              {product.rating ?? 0} ({product.reviewCount ?? 0})
+            </Text>
+          </View>
+        )}
         <View style={styles.priceRow}>
           <Text style={[styles.price, { color: colors.textPrimary }]}>
             ₹{product.price.toLocaleString('en-IN')}
           </Text>
-          {product.discount > 0 && (
+          {discount > 0 && product.originalPrice != null && (
             <Text style={[styles.originalPrice, { color: colors.textTertiary }]}>
               ₹{product.originalPrice.toLocaleString('en-IN')}
             </Text>
           )}
         </View>
-        {showAddToCart && product.inStock && (
+        {showAddToCart && inStock && (
           <Pressable
             style={[styles.addToCartBtn, { borderColor: colors.primary }]}
             onPress={handleAddToCart}

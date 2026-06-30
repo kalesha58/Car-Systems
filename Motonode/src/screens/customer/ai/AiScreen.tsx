@@ -16,6 +16,8 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { sendAiMessage } from '@services/ai.service';
+import { getApiErrorMessage } from '@utils/apiHelpers';
 import { lightHaptic } from '@utils/haptics';
 
 interface Message {
@@ -78,23 +80,26 @@ export function AiScreen() {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const responses = [
-        "Based on your description, this could be worn brake pads or warped rotors. I'd recommend getting your brakes inspected at a certified workshop. Would you like me to find nearby service centers?",
-        "For your KTM Duke 390 2023, I'd recommend OEM KTM spare parts for critical components. Authorized dealers stock genuine parts with warranty. Would you like me to show dealers near you?",
-        'For optimal performance, your KTM Duke should be serviced every 3,000 km or 3 months, whichever comes first. Key checks include engine oil, chain tension, brake pads, and air filter.',
-        'I found 8 automobile dealers within 5km of your location in Koramangala. Speed Auto Parts, KTM Bangalore, and AutoZone are rated 4.5+ with great reviews.',
-      ];
-      const response = responses[Math.floor(Math.random() * responses.length)];
+    try {
+      const response = await sendAiMessage(text.trim());
       const assistantMsg: Message = {
-        id: Date.now().toString() + 'a',
+        id: `${Date.now()}a`,
         role: 'assistant',
-        content: response,
+        content: response.content,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err) {
+      const assistantMsg: Message = {
+        id: `${Date.now()}e`,
+        role: 'assistant',
+        content: getApiErrorMessage(err, 'Sorry, I could not process your request. Please try again.'),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;

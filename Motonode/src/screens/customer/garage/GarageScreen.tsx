@@ -23,15 +23,20 @@ import { SegmentedTabs } from '@components/common/SegmentedTabs';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth, useBookings } from '@context/index';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { ORDERS, SERVICES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { getUserOrders } from '@services/order.service';
+import { getServices } from '@services/service.service';
 import { getUserVehicles } from '@services/userVehicle.service';
+import type { IOrderData } from '@app-types/order';
+import type { IService } from '@app-types/service';
 import type { UserVehicle } from '../../../types/userVehicle';
 import { spacing } from '@theme/spacing';
 import { extractAuthErrorMessage } from '@utils/authErrors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getOrderId, getServiceId } from '@utils/displayMappers';
 import { lightHaptic } from '@utils/haptics';
 
 type GarageScreenNavigationProp = CompositeNavigationProp<
@@ -46,6 +51,7 @@ const GARAGE_TABS = [
 ] as const;
 
 const BOOKINGS_TAB_INDEX = 1;
+const ORDERS_TAB_INDEX = 2;
 const DEFAULT_VEHICLE_IMAGE =
   'https://images.unsplash.com/photo-1494976388531-d1058498cdd5?w=600&q=80';
 
@@ -60,9 +66,13 @@ export function GarageScreen() {
   const tabBarPadding = useTabBarBottomPadding();
 
   const [vehicles, setVehicles] = useState<UserVehicle[]>([]);
+  const [orders, setOrders] = useState<IOrderData[]>([]);
+  const [services, setServices] = useState<IService[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [vehicleError, setVehicleError] = useState<string | null>(null);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = route.params as { initialTab?: string } | undefined;
@@ -101,11 +111,51 @@ export function GarageScreen() {
     }
   }, [user?.isGuest]);
 
+  const loadServices = useCallback(async () => {
+    try {
+      const response = await getServices({ limit: 20 });
+      if (response.success && response.Response?.services) {
+        setServices(response.Response.services);
+      } else {
+        setServices([]);
+      }
+    } catch {
+      setServices([]);
+    }
+  }, []);
+
+  const loadOrders = useCallback(async () => {
+    if (user?.isGuest) {
+      setOrders([]);
+      setOrdersError('Sign in to view your orders.');
+      return;
+    }
+
+    setLoadingOrders(true);
+    setOrdersError(null);
+    try {
+      const data = await getUserOrders();
+      setOrders(data);
+    } catch (err) {
+      setOrdersError(getApiErrorMessage(err, 'Failed to load orders'));
+      setOrders([]);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [user?.isGuest]);
+
   useFocusEffect(
     useCallback(() => {
       void loadVehicles({ showLoader: vehicles.length === 0 });
-    }, [loadVehicles, vehicles.length]),
+      void loadServices();
+    }, [loadVehicles, loadServices, vehicles.length]),
   );
+
+  useEffect(() => {
+    if (activeTab === ORDERS_TAB_INDEX) {
+      void loadOrders();
+    }
+  }, [activeTab, loadOrders]);
 
   const handleAddVehicle = () => {
     lightHaptic();
@@ -124,7 +174,11 @@ export function GarageScreen() {
 
   const triggerBooking = (vehicleId: string) => {
     lightHaptic();
-    const serviceId = SERVICES[0]?.id ?? '';
+    const serviceId = getServiceId(services[0]) || '';
+    if (!serviceId) {
+      Alert.alert('No Services', 'No services are available to book right now.');
+      return;
+    }
     startBookingFromGarage(vehicleId, serviceId);
     navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, { serviceId });
   };
@@ -132,7 +186,7 @@ export function GarageScreen() {
   const tabCounts = {
     vehicles: vehicles.length,
     bookings: getCustomerBookings(user?.id ?? 'u1').length,
-    orders: ORDERS.length,
+    orders: orders.length,
   };
 
   const openVehicleDetail = (vehicleId: string, focusSection?: 'documents') => {
@@ -309,16 +363,34 @@ export function GarageScreen() {
           </View>
         )}
 
-        {activeTab === 2 && (
+        {activeTab === ORDERS_TAB_INDEX && (
           <View style={styles.ordersContainer}>
-            {ORDERS.map((order) => (
-              <OrderCard key={order.id} order={order} />
-            ))}
-            {ORDERS.length === 0 && (
-              <View style={styles.empty}>
-                <Feather name="package" size={48} color={colors.textTertiary} />
-                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No orders yet</Text>
+            {loadingOrders && orders.length === 0 ? (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color={colors.link} />
               </View>
+            ) : (
+              <>
+                {orders.map((order) => (
+                  <OrderCard
+                    key={getOrderId(order)}
+                    order={order}
+                    onPress={() =>
+                      navigation.navigate(CustomerStackRoutes.OrderTracking, {
+                        id: getOrderId(order),
+                      })
+                    }
+                  />
+                ))}
+                {orders.length === 0 && !loadingOrders && (
+                  <View style={styles.empty}>
+                    <Feather name="package" size={48} color={colors.textTertiary} />
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                      {ordersError ?? 'No orders yet'}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
           </View>
         )}

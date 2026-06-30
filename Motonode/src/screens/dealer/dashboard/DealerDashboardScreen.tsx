@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -8,7 +9,7 @@ import {
   View,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +18,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
+import { ChromeHeader } from '@components/common';
 import { useAuth, useBookings, useDealer } from '@context/index';
 import {
   DEALER_TYPE_ILLUSTRATIONS,
@@ -24,9 +26,27 @@ import {
   type DealerType,
 } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
+import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
+import {
+  getDealerInventoryVehicles,
+  getDealerProducts,
+  getDealerServices,
+} from '@services/dealer.service';
+import { getDealerOrderStats, getDealerOrders } from '@services/order.service';
+import { getDealerTestDrives } from '@services/testDrive.service';
+import type { IOrderData } from '@app-types/order';
 import { themeLight } from '@theme/colors';
 import { elevatedCardShadow } from '@utils/shadows';
-import { lightHaptic, successHaptic } from '@utils/haptics';
+import {
+  formatCurrency,
+  formatOrderDateParts,
+  getOrderId,
+  getOrderPrimaryItemName,
+  getOrderStatusColor,
+  getOrderStatusLabel,
+  getProductStockStatus,
+} from '@utils/displayMappers';
+import { lightHaptic } from '@utils/haptics';
 
 type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -51,59 +71,35 @@ type DealerDashboardNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<DealerStackParamList>
 >;
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: '#F59E0B',
-  confirmed: '#10B981',
-  completed: '#FF1A1A',
-  rejected: '#EF4444',
-};
-
 const ORDER_IMAGES: Record<string, string> = {
-  'Arjun Sharma': 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80',
-  'Priya Nair': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80',
-  'Rohit Verma': 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=200&auto=format&fit=crop&q=80',
+  default: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80',
 };
 
-const MOCK_RECENT_ORDERS = [
-  {
-    id: 'o1',
-    customer: 'Arjun Sharma',
-    item: 'Castrol GTX 20W-50 5L',
-    orderNumber: '#ORD-1025',
-    total: 2300,
-    status: 'pending',
-    time: '10:32 AM',
-  },
-  {
-    id: 'o2',
-    customer: 'Priya Nair',
-    item: 'Amaron PRO 35Ah Battery',
-    orderNumber: '#ORD-1024',
-    total: 1800,
-    status: 'confirmed',
-    time: 'Yesterday',
-  },
-  {
-    id: 'o3',
-    customer: 'Rohit Verma',
-    item: 'MRF Zapper ES 90/90-17',
-    orderNumber: '#ORD-1023',
-    total: 950,
-    status: 'completed',
-    time: '28 Jun 2026',
-  },
-];
+function formatRevenue(amount: number): string {
+  if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
+  if (amount >= 1000) return `₹${(amount / 1000).toFixed(1)}K`;
+  return formatCurrency(amount);
+}
 
 export function DealerDashboardScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerDashboardNavigationProp>();
   const { user } = useAuth();
-  const { capabilities, orders, products, vehicles, services, driveBookings, dealerType } =
-    useDealer();
-  const { getPendingServiceCount } = useBookings();
-  const pendingServiceBookings = getPendingServiceCount('d1');
+  const { capabilities, dealerType } = useDealer();
+  const { canAccessDealerApis } = useDealerOnboardingStatus();
+  const { getPendingServiceCount, loadDealerBookings } = useBookings();
+  const pendingServiceBookings = getPendingServiceCount();
   const [storeOpen, setStoreOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [productCount, setProductCount] = useState(0);
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [serviceCount, setServiceCount] = useState(0);
+  const [testDriveCount, setTestDriveCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
+  const [revenueMtd, setRevenueMtd] = useState(0);
+  const [recentOrders, setRecentOrders] = useState<IOrderData[]>([]);
+  const [lowStockCount, setLowStockCount] = useState(0);
 
   const resolvedDealerType = (dealerType ?? 'Automobile Showroom') as DealerType;
   const dealerTypeMeta = DEALER_TYPE_LIST.find((d) => d.type === resolvedDealerType);
@@ -112,18 +108,88 @@ export function DealerDashboardScreen() {
     DEALER_TYPE_ILLUSTRATIONS['Automobile Showroom'];
   const illustrationTint = dealerTypeMeta?.color ?? '#E60012';
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  const displayOrders = MOCK_RECENT_ORDERS;
+  const fetchDashboardData = useCallback(async () => {
+    if (!canAccessDealerApis) {
+      setProductCount(0);
+      setVehicleCount(0);
+      setServiceCount(0);
+      setTestDriveCount(0);
+      setOrderCount(0);
+      setRevenueMtd(0);
+      setRecentOrders([]);
+      setLowStockCount(0);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const [productsRes, vehiclesRes, servicesRes, orderStats, orders, testDrivesRes] =
+        await Promise.all([
+          capabilities.hasProducts ? getDealerProducts({ limit: 1000 }) : Promise.resolve(null),
+          capabilities.hasVehicles ? getDealerInventoryVehicles({ limit: 1000 }) : Promise.resolve(null),
+          capabilities.hasServices ? getDealerServices({ limit: 1000 }) : Promise.resolve(null),
+          getDealerOrderStats(),
+          getDealerOrders({ limit: 5 }),
+          capabilities.hasDrive ? getDealerTestDrives({ limit: 100 }) : Promise.resolve(null),
+        ]);
+
+      const products = productsRes?.Response?.products ?? [];
+      const vehicles = vehiclesRes?.Response?.vehicles ?? [];
+      const services = servicesRes?.Response?.services ?? [];
+      const testDrives = testDrivesRes?.Response?.testDrives ?? [];
+
+      setProductCount(products.length);
+      setVehicleCount(vehicles.length);
+      setServiceCount(services.length);
+      setTestDriveCount(testDrives.length);
+      setOrderCount(orderStats.total ?? orders.length);
+      setRevenueMtd(orderStats.totalRevenue ?? 0);
+      setRecentOrders(orders);
+      setLowStockCount(
+        products.filter((p) => {
+          const status = getProductStockStatus(p.stock);
+          return status === 'low_stock' || status === 'out_of_stock';
+        }).length,
+      );
+    } catch {
+      setProductCount(0);
+      setVehicleCount(0);
+      setServiceCount(0);
+      setTestDriveCount(0);
+      setOrderCount(0);
+      setRevenueMtd(0);
+      setRecentOrders([]);
+      setLowStockCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    canAccessDealerApis,
+    capabilities.hasProducts,
+    capabilities.hasVehicles,
+    capabilities.hasServices,
+    capabilities.hasDrive,
+  ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchDashboardData();
+      if (canAccessDealerApis) {
+        void loadDealerBookings();
+      }
+    }, [fetchDashboardData, loadDealerBookings, canAccessDealerApis]),
+  );
 
   const stats = [
-    { label: 'Products', value: String(products.length || 10), icon: 'box', color: '#8B5CF6', bg: '#F3E8FF', trend: '0%' },
-    { label: 'Vehicles', value: String(vehicles.length || 6), icon: 'truck', color: themeLight.textSecondary, bg: '#F2F2F2', trend: '0%' },
-    { label: 'Services', value: String(services.length || 8), icon: 'tool', color: '#10B981', bg: '#ECFDF5', trend: '0%' },
-    { label: 'Test Drives', value: String(driveBookings.length || 6), icon: 'calendar', color: '#F59E0B', bg: '#FFFBEB', trend: '5%' },
-    { label: 'Orders', value: String(orders.length || 4), icon: 'shopping-bag', color: '#EF4444', bg: '#FEF2F2', trend: '12%' },
-    { label: 'Revenue (MTD)', value: '₹2.4L', icon: 'dollar-sign', color: '#F59E0B', bg: '#FFFBEB', trend: '8%' },
+    { label: 'Products', value: String(productCount), icon: 'box', color: '#8B5CF6', bg: '#F3E8FF', trend: '0%' },
+    { label: 'Vehicles', value: String(vehicleCount), icon: 'truck', color: themeLight.textSecondary, bg: '#F2F2F2', trend: '0%' },
+    { label: 'Services', value: String(serviceCount), icon: 'tool', color: '#10B981', bg: '#ECFDF5', trend: '0%' },
+    { label: 'Test Drives', value: String(testDriveCount), icon: 'calendar', color: '#F59E0B', bg: '#FFFBEB', trend: '0%' },
+    { label: 'Orders', value: String(orderCount), icon: 'shopping-bag', color: '#EF4444', bg: '#FEF2F2', trend: '0%' },
+    { label: 'Revenue (MTD)', value: formatRevenue(revenueMtd), icon: 'dollar-sign', color: '#F59E0B', bg: '#FFFBEB', trend: '0%' },
   ];
 
   const quickActions = [
@@ -161,26 +227,25 @@ export function DealerDashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       
-      {/* Header bar */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+            <Text style={[styles.greeting, { color: 'rgba(255,255,255,0.72)' }]}>
               {dealerType ?? 'Automobile Showroom'}
             </Text>
-            <Text style={[styles.storeName, { color: colors.textPrimary }]}>
+            <Text style={[styles.storeName, { color: colors.headerForeground }]}>
               {user?.name ?? 'Speed Auto Parts'}
             </Text>
           </View>
           <View style={styles.headerRight}>
             <Pressable style={styles.notificationBtn} onPress={() => lightHaptic()}>
-              <Feather name="bell" size={20} color={colors.textPrimary} />
+              <Feather name="bell" size={20} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>
               </View>
             </Pressable>
             <Pressable
-              style={styles.openStatusBtn}
+              style={[styles.openStatusBtn, { borderColor: 'rgba(255,255,255,0.28)' }]}
               onPress={() => {
                 lightHaptic();
                 setStoreOpen(!storeOpen);
@@ -190,11 +255,11 @@ export function DealerDashboardScreen() {
               <Text style={[styles.statusText, { color: storeOpen ? '#10B981' : '#EF4444' }]}>
                 {storeOpen ? 'Open' : 'Closed'}
               </Text>
-              <Feather name="chevron-down" size={12} color={colors.textSecondary} />
+              <Feather name="chevron-down" size={12} color="rgba(255,255,255,0.72)" />
             </Pressable>
           </View>
         </View>
-      </View>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
@@ -211,7 +276,9 @@ export function DealerDashboardScreen() {
         >
           <View style={styles.revenueLeft}>
             <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Today's Revenue</Text>
-            <Text style={[styles.revenueValue, { color: colors.textPrimary }]}>₹6,800</Text>
+            <Text style={[styles.revenueValue, { color: colors.textPrimary }]}>
+              {formatRevenue(revenueMtd)}
+            </Text>
 
             <View style={styles.revenueTrendRow}>
               <View style={styles.trendPill}>
@@ -287,49 +354,61 @@ export function DealerDashboardScreen() {
         </View>
 
         <View style={[styles.ordersContainerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {displayOrders.map((order, i) => {
-            const stColor = STATUS_COLORS[order.status] || '#E60012';
-            return (
-              <Pressable
-                key={order.id}
-                style={[
-                  styles.orderRowItem,
-                  i < displayOrders.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider }
-                ]}
-                onPress={() => {
-                  lightHaptic();
-                  navigation.navigate(DealerTabRoutes.Orders);
-                }}
-              >
-                <Image
-                  source={{ uri: ORDER_IMAGES[order.customer] || 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80' }}
-                  style={styles.orderProductThumb}
-                />
+          {loading ? (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <ActivityIndicator color="#E60012" />
+            </View>
+          ) : recentOrders.length === 0 ? (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>No recent orders</Text>
+            </View>
+          ) : (
+            recentOrders.map((order, i) => {
+              const stColor = getOrderStatusColor(order.status);
+              const { time } = formatOrderDateParts(order.createdAt);
+              const customerName = order.customer?.name || 'Customer';
+              return (
+                <Pressable
+                  key={getOrderId(order)}
+                  style={[
+                    styles.orderRowItem,
+                    i < recentOrders.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
+                  ]}
+                  onPress={() => {
+                    lightHaptic();
+                    navigation.navigate(DealerTabRoutes.Orders);
+                  }}
+                >
+                  <Image
+                    source={{ uri: ORDER_IMAGES.default }}
+                    style={styles.orderProductThumb}
+                  />
 
-                <View style={styles.orderMidCol}>
-                  <Text style={[styles.orderCustomerName, { color: colors.textPrimary }]}>{order.customer}</Text>
-                  <Text style={[styles.orderItemName, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {order.item}
-                  </Text>
-                  <Text style={[styles.orderCodeText, { color: colors.textTertiary }]}>{order.orderNumber}</Text>
-                </View>
-
-                <View style={styles.orderRightCol}>
-                  <Text style={[styles.orderPriceTag, { color: colors.textPrimary }]}>
-                    ₹{order.total.toLocaleString('en-IN')}
-                  </Text>
-                  <View style={[styles.statusBadge, { backgroundColor: stColor + '15' }]}>
-                    <Text style={[styles.statusBadgeText, { color: stColor }]}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  <View style={styles.orderMidCol}>
+                    <Text style={[styles.orderCustomerName, { color: colors.textPrimary }]}>{customerName}</Text>
+                    <Text style={[styles.orderItemName, { color: colors.textSecondary }]} numberOfLines={1}>
+                      {getOrderPrimaryItemName(order)}
                     </Text>
+                    <Text style={[styles.orderCodeText, { color: colors.textTertiary }]}>#{order.orderNumber}</Text>
                   </View>
-                  <Text style={[styles.orderTimeText, { color: colors.textTertiary }]}>{order.time}</Text>
-                </View>
 
-                <Feather name="chevron-right" size={16} color={colors.textTertiary} style={{ marginLeft: 4 }} />
-              </Pressable>
-            );
-          })}
+                  <View style={styles.orderRightCol}>
+                    <Text style={[styles.orderPriceTag, { color: colors.textPrimary }]}>
+                      ₹{order.totalAmount.toLocaleString('en-IN')}
+                    </Text>
+                    <View style={[styles.statusBadge, { backgroundColor: stColor + '15' }]}>
+                      <Text style={[styles.statusBadgeText, { color: stColor }]}>
+                        {getOrderStatusLabel(order.status)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.orderTimeText, { color: colors.textTertiary }]}>{time}</Text>
+                  </View>
+
+                  <Feather name="chevron-right" size={16} color={colors.textTertiary} style={{ marginLeft: 4 }} />
+                </Pressable>
+              );
+            })
+          )}
         </View>
 
         {/* Low Stock Alert soft banner */}
@@ -340,7 +419,11 @@ export function DealerDashboardScreen() {
             </View>
             <View>
               <Text style={styles.alertTitle}>Low Stock Alert</Text>
-              <Text style={styles.alertSubtitle}>3 products are running low</Text>
+              <Text style={styles.alertSubtitle}>
+                {lowStockCount > 0
+                  ? `${lowStockCount} products are running low`
+                  : 'Inventory levels look healthy'}
+              </Text>
             </View>
           </View>
           <Pressable
@@ -364,9 +447,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerRow: {
     flexDirection: 'row',
@@ -400,7 +480,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,

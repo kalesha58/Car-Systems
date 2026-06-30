@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -8,7 +9,6 @@ import {
   Text,
   View,
   Dimensions,
-  TextInput,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,8 +16,16 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
-import { PRODUCTS, SERVICES, DEALERS } from '@data/mockData';
+import { useCart } from '@context/CartContext';
 import { useColors } from '@hooks/useColors';
+import { getDealerById } from '@services/dealer.service';
+import { getProducts } from '@services/product.service';
+import { getServicesByDealerId } from '@services/service.service';
+import type { IDealer } from '@app-types/dealer';
+import type { IProduct } from '@app-types/product';
+import type { IService } from '@app-types/service';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getProductId, getServiceId } from '@utils/displayMappers';
 import { successHaptic, lightHaptic } from '@utils/haptics';
 
 const { width } = Dimensions.get('window');
@@ -43,29 +51,75 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { id } = route.params;
-  
-  const dealer = DEALERS.find((d) => d.id === id) || {
-    id: 'd1',
-    name: 'Motonode Auto Hub',
-    type: 'Auto Parts & Services Store',
-    rating: 4.7,
-    reviews: 512,
-    distance: '1.2 km',
-    isOpen: true,
-    closingTime: '9 PM',
-    address: 'Koramangala, Bengaluru',
-  };
+  const { items, total } = useCart();
 
+  const [dealer, setDealer] = useState<IDealer | null>(null);
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [services, setServices] = useState<IService[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'shop' | 'services' | 'about' | 'reviews'>('shop');
   const [isFollowed, setIsFollowed] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDealerStore = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [dealerRes, productsRes, servicesRes] = await Promise.all([
+          getDealerById(id),
+          getProducts({ dealerId: id, limit: 20 }),
+          getServicesByDealerId(id, { limit: 20 }),
+        ]);
+
+        if (cancelled) return;
+
+        if (dealerRes.success && dealerRes.Response) {
+          setDealer(dealerRes.Response);
+        }
+        if (productsRes.success && productsRes.Response?.products) {
+          setProducts(productsRes.Response.products);
+        }
+        if (servicesRes.success && servicesRes.Response?.services) {
+          setServices(servicesRes.Response.services);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Failed to load store'));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadDealerStore();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const dealerName = dealer?.businessName ?? dealer?.name ?? 'Dealer Store';
+  const dealerType = dealer?.dealerType ?? 'Auto Parts & Services Store';
+  const dealerAddress = dealer?.address ?? dealer?.location ?? 'Address not available';
+  const isOpen = dealer?.storeOpen !== false;
+
   const handleFollowToggle = () => {
     lightHaptic();
     setIsFollowed(!isFollowed);
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -76,7 +130,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
             <Feather name="arrow-left" size={22} color="#ffffff" />
           </Pressable>
           <Text style={[styles.headerTitle, { color: '#ffffff' }]} numberOfLines={1}>
-            {dealer.name}
+            {dealerName}
           </Text>
         </View>
         <View style={styles.headerRight}>
@@ -102,18 +156,13 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
             <View style={styles.profileHeader}>
               <View style={{ flex: 1 }}>
                 <View style={styles.verifiedRow}>
-                  <Text style={styles.storeName}>{dealer.name}</Text>
+                  <Text style={styles.storeName}>{dealerName}</Text>
                   <View style={styles.checkBadge}>
                     <Feather name="check" size={10} color="#fff" />
                   </View>
                 </View>
-                <View style={styles.ratingRow}>
-                  <Feather name="star" size={12} color="#FBBF24" />
-                  <Text style={styles.ratingText}>{dealer.rating}</Text>
-                  <Text style={styles.reviewsText}>({dealer.reviews} reviews)</Text>
-                </View>
-                <Text style={styles.storeSub}>{dealer.type}</Text>
-                <Text style={styles.storeAddress}>{dealer.address}</Text>
+                <Text style={styles.storeSub}>{dealerType}</Text>
+                <Text style={styles.storeAddress}>{dealerAddress}</Text>
               </View>
               <Pressable
                 style={[
@@ -130,8 +179,8 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
 
             <View style={styles.profileFooter}>
               <View style={styles.statusRow}>
-                <View style={[styles.statusDot, { backgroundColor: dealer.isOpen ? '#10B981' : '#EF4444' }]} />
-                <Text style={styles.statusText}>{dealer.isOpen ? 'Open' : 'Closed'}</Text>
+                <View style={[styles.statusDot, { backgroundColor: isOpen ? '#10B981' : '#EF4444' }]} />
+                <Text style={styles.statusText}>{isOpen ? 'Open' : 'Closed'}</Text>
               </View>
             </View>
           </View>
@@ -218,21 +267,26 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-              {PRODUCTS.slice(0, 4).map((product) => (
+              {products.length === 0 ? (
+                <Text style={[styles.emptyTabText, { color: colors.textSecondary }]}>No products listed yet</Text>
+              ) : (
+              products.slice(0, 4).map((product) => (
                 <Pressable
-                  key={product.id}
+                  key={getProductId(product)}
                   style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => navigation.navigate(CustomerStackRoutes.ProductDetail, { id: product.id })}
+                  onPress={() => navigation.navigate(CustomerStackRoutes.ProductDetail, { id: getProductId(product) })}
                 >
-                  <Image source={{ uri: product.image }} style={styles.productImg} />
+                  <Image source={{ uri: product.images?.[0] ?? '' }} style={styles.productImg} />
                   <Text style={[styles.productBrand, { color: colors.primary }]}>{product.brand}</Text>
                   <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>
                     {product.name}
                   </Text>
-                  <View style={styles.productRatingRow}>
-                    <Feather name="star" size={10} color="#FBBF24" />
-                    <Text style={[styles.productRatingVal, { color: colors.textSecondary }]}>{product.rating}</Text>
-                  </View>
+                  {product.rating != null ? (
+                    <View style={styles.productRatingRow}>
+                      <Feather name="star" size={10} color="#FBBF24" />
+                      <Text style={[styles.productRatingVal, { color: colors.textSecondary }]}>{product.rating}</Text>
+                    </View>
+                  ) : null}
                   <View style={styles.productPriceRow}>
                     <Text style={[styles.productPrice, { color: colors.textPrimary }]}>₹{product.price}</Text>
                     <Pressable style={styles.addBtn} onPress={() => successHaptic()}>
@@ -241,7 +295,8 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                     </Pressable>
                   </View>
                 </Pressable>
-              ))}
+              ))
+              )}
             </ScrollView>
           </View>
         )}
@@ -252,16 +307,21 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Popular Services</Text>
               <Text style={styles.viewAllText}>View All</Text>
             </View>
-            {SERVICES.map((service) => (
+            {services.length === 0 ? (
+              <Text style={[styles.emptyTabText, { color: colors.textSecondary }]}>No services listed yet</Text>
+            ) : (
+            services.map((service) => (
               <Pressable
-                key={service.id}
+                key={getServiceId(service)}
                 style={[styles.serviceCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: service.id })}
+                onPress={() => navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: getServiceId(service) })}
               >
-                <Image source={{ uri: service.image }} style={styles.serviceImg} />
+                <Image source={{ uri: service.images?.[0] ?? '' }} style={styles.serviceImg} />
                 <View style={styles.serviceInfo}>
                   <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
-                  <Text style={[styles.serviceDuration, { color: colors.textSecondary }]}>Duration: {service.duration}</Text>
+                  <Text style={[styles.serviceDuration, { color: colors.textSecondary }]}>
+                    Duration: {service.durationMinutes} min
+                  </Text>
                   <View style={styles.serviceBottom}>
                     <Text style={[styles.servicePrice, { color: colors.textPrimary }]}>₹{service.price}</Text>
                     <Pressable style={styles.serviceBookBtn} onPress={() => successHaptic()}>
@@ -270,7 +330,8 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                   </View>
                 </View>
               </Pressable>
-            ))}
+            ))
+            )}
           </View>
         )}
 
@@ -278,11 +339,11 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
           <View style={{ padding: 20 }}>
             <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>About Store</Text>
             <Text style={[styles.aboutText, { color: colors.textSecondary }]}>
-              {dealer.name} is your one-stop destination for genuine auto parts, accessories and professional car care services. Quality you can trust, service you can rely on.
+              {dealerName} is your one-stop destination for genuine auto parts, accessories and professional car care services. Quality you can trust, service you can rely on.
             </Text>
             <View style={[styles.divider, { backgroundColor: colors.divider }]} />
             <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>Store Location</Text>
-            <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{dealer.address}</Text>
+            <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{dealerAddress}</Text>
           </View>
         )}
 
@@ -291,13 +352,13 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
             <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>Customer Reviews</Text>
             <View style={styles.reviewsSummary}>
               <View style={styles.ratingBigContainer}>
-                <Text style={[styles.ratingBig, { color: colors.textPrimary }]}>{dealer.rating}</Text>
+                <Text style={[styles.ratingBig, { color: colors.textPrimary }]}>4.7</Text>
                 <View style={styles.starsRow}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Feather key={star} name="star" size={14} color="#FBBF24" />
                   ))}
                 </View>
-                <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>Based on {dealer.reviews} reviews</Text>
+                <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>Customer reviews</Text>
               </View>
               <View style={styles.ratingBars}>
                 {[5, 4, 3, 2, 1].map((stars) => (
@@ -320,7 +381,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
           <View style={styles.cartBadgeWrapper}>
             <Feather name="shopping-cart" size={20} color="#2563EB" />
             <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>2</Text>
+              <Text style={styles.cartBadgeText}>{items.length}</Text>
             </View>
           </View>
         </View>
@@ -328,7 +389,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
           style={[styles.checkoutBtn, { backgroundColor: '#2563EB' }]}
           onPress={() => navigation.navigate(CustomerStackRoutes.Cart)}
         >
-          <Text style={styles.checkoutText}>View Cart • ₹4,798</Text>
+          <Text style={styles.checkoutText}>View Cart • ₹{total.toLocaleString('en-IN')}</Text>
         </Pressable>
       </View>
     </View>
@@ -337,6 +398,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -519,6 +581,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
   },
+  emptyTabText: { fontSize: 13, fontFamily: 'Inter_400Regular', paddingVertical: 12 },
   couponContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFBEB',

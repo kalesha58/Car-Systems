@@ -64,6 +64,7 @@ export const DealerStackRoutes = {
   NotificationSettings: 'NotificationSettings',
   ServiceBookings: 'ServiceBookings',
   DealerBookingDetail: 'DealerBookingDetail',
+  BusinessDetails: 'BusinessDetails',
 } as const;
 
 export const RootRoutes = {

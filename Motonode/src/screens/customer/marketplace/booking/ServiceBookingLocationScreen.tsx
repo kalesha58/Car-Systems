@@ -7,7 +7,6 @@ import { BookingFlowLayout } from '@components/booking/BookingFlowLayout';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import type { LocationType } from '@context/ServiceBookingContext';
-import { SERVICE_WORKSHOPS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
@@ -18,92 +17,67 @@ type Props = NativeStackScreenProps<
 
 export function ServiceBookingLocationScreen({ navigation }: Props) {
   const colors = useColors();
-  const { draft, updateBooking } = useServiceBooking();
+  const { draft, updateBooking, getService, getLocation } = useServiceBooking();
+  const service = getService();
+  const location = getLocation();
+  const homeServiceEnabled = service?.homeService ?? false;
 
-  const setLocationType = (locationType: LocationType) => updateBooking({ locationType });
+  const setLocationType = (locationType: LocationType) => {
+    updateBooking({ locationType });
+  };
 
   return (
     <BookingFlowLayout
       title="Choose Location"
       step={3}
       onBack={() => navigation.goBack()}
-      onContinue={() => navigation.navigate(CustomerStackRoutes.ServiceBookingAddons)}
-      continueDisabled={!draft.workshopId}
+      onContinue={() => navigation.navigate(CustomerStackRoutes.ServiceBookingSummary)}
+      continueDisabled={!location}
     >
-      <View style={[styles.toggle, { backgroundColor: colors.muted }]}>
-        {(['workshop', 'pickup'] as LocationType[]).map((type) => {
-          const selected = draft.locationType === type;
-          return (
-            <Pressable
-              key={type}
-              style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
-              onPress={() => setLocationType(type)}
-            >
-              <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
-                {type === 'workshop' ? 'Workshop' : 'Pick & Drop'}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {homeServiceEnabled && (
+        <View style={[styles.toggle, { backgroundColor: colors.muted }]}>
+          {(['workshop', 'pickup'] as LocationType[]).map((type) => {
+            const selected = draft.locationType === type;
+            return (
+              <Pressable
+                key={type}
+                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                onPress={() => setLocationType(type)}
+              >
+                <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
+                  {type === 'workshop' ? 'Workshop' : 'Home Service'}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <View style={[styles.mapPlaceholder, { backgroundColor: colors.muted, borderColor: colors.border }]}>
         <Feather name="map-pin" size={24} color={colors.icon} />
         <Text style={[styles.mapText, { color: colors.textSecondary }]}>
           {draft.locationType === 'pickup'
-            ? 'Vehicle will be picked up from your location'
-            : 'Service centers near you'}
+            ? 'Service will be performed at your location'
+            : 'Service center location'}
         </Text>
       </View>
 
-      {SERVICE_WORKSHOPS.map((workshop) => {
-        const selected = draft.workshopId === workshop.id;
-        return (
-          <Pressable
-            key={workshop.id}
-            style={[
-              styles.workshopCard,
-              {
-                backgroundColor: colors.card,
-                borderColor: selected ? '#E60012' : colors.border,
-              },
-            ]}
-            onPress={() => updateBooking({ workshopId: workshop.id })}
-          >
-            <View style={styles.workshopInfo}>
-              <Text style={[styles.workshopName, { color: colors.textPrimary }]}>
-                {workshop.name}
-              </Text>
-              <Text style={[styles.workshopAddr, { color: colors.textSecondary }]}>
-                {workshop.address}
-              </Text>
-              <View style={styles.workshopMeta}>
-                <Feather name="star" size={12} color="#F59E0B" />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                  {workshop.rating} • {workshop.distance}
-                </Text>
-              </View>
-            </View>
-            {selected && <Feather name="check-circle" size={20} color={colors.icon} />}
-          </Pressable>
-        );
-      })}
+      {location && (
+        <View style={[styles.workshopCard, { backgroundColor: colors.card, borderColor: '#E60012' }]}>
+          <View style={styles.workshopInfo}>
+            <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{location.name}</Text>
+            <Text style={[styles.workshopAddr, { color: colors.textSecondary }]}>{location.address}</Text>
+          </View>
+          <Feather name="check-circle" size={20} color={colors.icon} />
+        </View>
+      )}
     </BookingFlowLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  toggle: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: 4,
-  },
-  toggleBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
+  toggle: { flexDirection: 'row', borderRadius: 12, padding: 4 },
+  toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
   toggleBtnActive: { backgroundColor: '#E60012' },
   toggleText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
   toggleTextActive: { color: '#ffffff' },
@@ -127,6 +101,4 @@ const styles = StyleSheet.create({
   workshopInfo: { flex: 1, gap: 4 },
   workshopName: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   workshopAddr: { fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 16 },
-  workshopMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  metaText: { fontSize: 11, fontFamily: 'Inter_500Medium' },
 });

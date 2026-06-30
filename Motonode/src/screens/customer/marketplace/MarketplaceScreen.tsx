@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -36,11 +37,14 @@ import {
 import { MarketplaceTabs } from '@components/marketplace/MarketplaceTabs';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { PRODUCTS, SERVICES, VEHICLES } from '@data/mockData';
+import { useDealerVehiclesCatalog, useProducts, useServicesCatalog } from '@hooks/useCatalogData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { getUserTestDrives, type ITestDrive } from '@services/testDrive.service';
 import { spacing } from '@theme/spacing';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getProductId, getServiceId, getVehicleId } from '@utils/displayMappers';
 import { filterProducts, filterServices, filterVehicles } from '@utils/marketplaceFilters';
 
 type CustomerStackParamList = {
@@ -53,6 +57,7 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.AiAssistant]: undefined;
   [CustomerStackRoutes.ServiceDetail]: { id: string };
   [CustomerStackRoutes.ServiceBookingDateTime]: { serviceId: string };
+  [CustomerStackRoutes.DriveDetail]: { id: string };
 };
 
 type MarketplaceScreenNavigationProp = CompositeNavigationProp<
@@ -65,6 +70,11 @@ export function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<MarketplaceScreenNavigationProp>();
   const { startBooking } = useServiceBooking();
+  const { products, loading: productsLoading } = useProducts(50);
+  const { vehicles, loading: vehiclesLoading } = useDealerVehiclesCatalog(50);
+  const { services, loading: servicesLoading } = useServicesCatalog(50);
+  const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
+  const [testDrivesLoading, setTestDrivesLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [productFilters, setProductFilters] = useState<ProductFilters>(DEFAULT_PRODUCT_FILTERS);
@@ -82,17 +92,44 @@ export function MarketplaceScreen() {
     : 0;
 
   const filteredProducts = useMemo(
-    () => filterProducts(PRODUCTS, productFilters),
-    [productFilters],
+    () => filterProducts(products, productFilters),
+    [products, productFilters],
   );
   const filteredVehicles = useMemo(
-    () => filterVehicles(VEHICLES, vehicleFilters),
-    [vehicleFilters],
+    () => filterVehicles(vehicles, vehicleFilters),
+    [vehicles, vehicleFilters],
   );
   const filteredServices = useMemo(
-    () => filterServices(SERVICES, serviceFilters),
-    [serviceFilters],
+    () => filterServices(services, serviceFilters),
+    [services, serviceFilters],
   );
+
+  useEffect(() => {
+    if (activeTab !== 3) return;
+
+    let cancelled = false;
+    const loadTestDrives = async () => {
+      try {
+        setTestDrivesLoading(true);
+        const response = await getUserTestDrives({ limit: 20 });
+        if (!cancelled && response.success && response.Response?.testDrives) {
+          setTestDrives(response.Response.testDrives);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTestDrives([]);
+          console.warn(getApiErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) setTestDrivesLoading(false);
+      }
+    };
+
+    void loadTestDrives();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
 
   const openFilterSheet = () => {
     if (filterTab) setShowFilterSheet(true);
@@ -111,7 +148,23 @@ export function MarketplaceScreen() {
     products: filteredProducts.length,
     vehicles: filteredVehicles.length,
     services: filteredServices.length,
-    drive: 1,
+    drive: testDrives.length,
+  };
+
+  const formatTestDriveDate = (drive: ITestDrive) => {
+    const date = new Date(drive.preferredDate);
+    const dateLabel = Number.isNaN(date.getTime())
+      ? drive.preferredDate
+      : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    return `${dateLabel}, ${drive.preferredTime}`;
+  };
+
+  const getDriveStatusLabel = (status: ITestDrive['status']) => {
+    if (status === 'approved') return 'Confirmed';
+    if (status === 'pending') return 'Pending';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'rejected') return 'Rejected';
+    return 'Completed';
   };
 
   return (
@@ -164,10 +217,15 @@ export function MarketplaceScreen() {
         )}
 
         {activeTab === 0 && (
+          productsLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
           <FlatList
             style={styles.listFlex}
           data={filteredProducts}
-          keyExtractor={(i) => i.id}
+          keyExtractor={(i) => getProductId(i)}
           numColumns={2}
           contentContainerStyle={[styles.gridContent, { paddingBottom: tabBarPadding }]}
           columnWrapperStyle={styles.columnWrapper}
@@ -179,7 +237,7 @@ export function MarketplaceScreen() {
               showAddToCart
               style={styles.gridItem}
               onPress={() =>
-                navigation.navigate(CustomerStackRoutes.ProductDetail, { id: item.id })
+                navigation.navigate(CustomerStackRoutes.ProductDetail, { id: getProductId(item) })
               }
             />
           )}
@@ -192,13 +250,19 @@ export function MarketplaceScreen() {
             </View>
           }
         />
+          )
         )}
 
         {activeTab === 1 && (
+          vehiclesLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
           <FlatList
             style={styles.listFlex}
           data={filteredVehicles}
-          keyExtractor={(i) => i.id}
+          keyExtractor={(i) => getVehicleId(i)}
           contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPadding }]}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
@@ -206,7 +270,7 @@ export function MarketplaceScreen() {
               vehicle={item}
               style={styles.vehicleItem}
               onNavigate={() =>
-                navigation.navigate(CustomerStackRoutes.VehicleDetail, { id: item.id })
+                navigation.navigate(CustomerStackRoutes.VehicleDetail, { id: getVehicleId(item) })
               }
             />
           )}
@@ -219,9 +283,15 @@ export function MarketplaceScreen() {
             </View>
           }
         />
+          )
         )}
 
         {activeTab === 2 && (
+          servicesLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
           <ScrollView
             style={styles.listFlex}
           contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPadding }]}
@@ -237,24 +307,30 @@ export function MarketplaceScreen() {
           ) : (
             filteredServices.map((service) => (
               <ServiceCard
-                key={service.id}
+                key={getServiceId(service)}
                 service={service}
                 onNavigate={() =>
-                  navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: service.id })
+                  navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: getServiceId(service) })
                 }
                 onBookPress={() => {
-                  startBooking(service.id);
+                  startBooking(getServiceId(service));
                   navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
-                    serviceId: service.id,
+                    serviceId: getServiceId(service),
                   });
                 }}
               />
             ))
           )}
         </ScrollView>
+          )
         )}
 
         {activeTab === 3 && (
+          testDrivesLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
           <ScrollView
             style={styles.listFlex}
           contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPadding }]}
@@ -262,33 +338,54 @@ export function MarketplaceScreen() {
         >
           <View style={styles.bookingCardContainer}>
             <Text style={[styles.bookingTitle, { color: colors.textPrimary }]}>Your Booked Test Drives</Text>
-            
-            {/* Booked Drive Card */}
-            <Pressable
-              style={[styles.driveCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => navigation.navigate(CustomerStackRoutes.DriveDetail as any, { id: 'v3' })}
-            >
-              <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500&auto=format&fit=crop&q=80' }}
-                style={styles.driveCardImg}
-              />
-              <View style={styles.driveCardInfo}>
-                <View style={styles.badgeRow}>
-                  <View style={styles.confirmedBadge}>
-                    <Text style={styles.confirmedBadgeText}>Confirmed</Text>
-                  </View>
-                  <Text style={[styles.driveDate, { color: colors.textSecondary }]}>18 May, 11:00 AM</Text>
-                </View>
-                <Text style={[styles.driveName, { color: colors.textPrimary }]}>Tata Nexon EV</Text>
-                <Text style={[styles.driveSubtitle, { color: colors.textSecondary }]}>Dealer: Motonode Koramangala</Text>
-                <View style={styles.viewDetailsRow}>
-                  <Text style={styles.viewDetailsText}>View Booking Details</Text>
-                  <Feather name="arrow-right" size={12} color="#2563EB" />
-                </View>
+
+            {testDrives.length === 0 ? (
+              <View style={styles.empty}>
+                <Feather name="navigation" size={48} color={colors.textTertiary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  No test drive bookings yet
+                </Text>
               </View>
-            </Pressable>
+            ) : (
+              testDrives.map((drive) => (
+                <Pressable
+                  key={drive.id}
+                  style={[styles.driveCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => navigation.navigate(CustomerStackRoutes.DriveDetail, { id: drive.id })}
+                >
+                  {drive.vehicleImage ? (
+                    <Image source={{ uri: drive.vehicleImage }} style={styles.driveCardImg} />
+                  ) : (
+                    <View style={[styles.driveCardImg, { backgroundColor: colors.muted }]} />
+                  )}
+                  <View style={styles.driveCardInfo}>
+                    <View style={styles.badgeRow}>
+                      <View style={styles.confirmedBadge}>
+                        <Text style={styles.confirmedBadgeText}>{getDriveStatusLabel(drive.status)}</Text>
+                      </View>
+                      <Text style={[styles.driveDate, { color: colors.textSecondary }]}>
+                        {formatTestDriveDate(drive)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.driveName, { color: colors.textPrimary }]}>
+                      {drive.vehicleLabel ?? 'Test Drive'}
+                    </Text>
+                    {drive.dealerName ? (
+                      <Text style={[styles.driveSubtitle, { color: colors.textSecondary }]}>
+                        Dealer: {drive.dealerName}
+                      </Text>
+                    ) : null}
+                    <View style={styles.viewDetailsRow}>
+                      <Text style={styles.viewDetailsText}>View Booking Details</Text>
+                      <Feather name="arrow-right" size={12} color="#2563EB" />
+                    </View>
+                  </View>
+                </Pressable>
+              ))
+            )}
           </View>
         </ScrollView>
+          )
         )}
       </View>
 
@@ -372,6 +469,7 @@ const styles = StyleSheet.create({
   listContent: { paddingTop: 4, paddingBottom: spacing.md },
   vehicleItem: { width: '100%', marginBottom: 12 },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 60 },
   emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular' },
   bookingCardContainer: { paddingVertical: 8 },
   bookingTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginBottom: 12 },

@@ -7,12 +7,14 @@ import Feather from 'react-native-vector-icons/Feather';
 import { DealerTabRoutes } from '@constants/routes';
 import { useDealer } from '@context/DealerContext';
 import { useColors } from '@hooks/useColors';
+import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
 import { DealerDashboardScreen } from '@screens/dealer/dashboard/DealerDashboardScreen';
 import { DriveScreen } from '@screens/dealer/drive/DriveScreen';
 import { InventoryScreen } from '@screens/dealer/inventory/InventoryScreen';
 import { DealerOrdersScreen } from '@screens/dealer/orders/DealerOrdersScreen';
 import { DealerProfileScreen } from '@screens/dealer/profile/DealerProfileScreen';
 import { lightHaptic } from '@utils/haptics';
+import { showRegistrationBlockedAlert } from '@utils/dealerRegistration';
 
 export type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -47,7 +49,26 @@ const MIDDLE_ROUTE = DealerTabRoutes.Orders;
 function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { canAccessDealerApis, status } = useDealerOnboardingStatus();
   const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 8);
+
+  // Dynamically calculate the horizontal center of the middle tab (Orders)
+  const middleIndex = state.routes.findIndex(r => r.name === MIDDLE_ROUTE);
+  let leftPercentage = '50%';
+  if (middleIndex !== -1) {
+    let totalFlex = 0;
+    let flexBeforeMiddle = 0;
+    state.routes.forEach((route, index) => {
+      const isMiddle = route.name === MIDDLE_ROUTE;
+      const flexVal = isMiddle ? 1.2 : 1;
+      totalFlex += flexVal;
+      if (index < middleIndex) {
+        flexBeforeMiddle += flexVal;
+      }
+    });
+    const middleFlexCenter = flexBeforeMiddle + 0.6; // 1.2 / 2
+    leftPercentage = `${(middleFlexCenter / totalFlex) * 100}%`;
+  }
 
   return (
     <View style={[styles.tabBarWrapper, { height: 60 + bottomInset }]}>
@@ -63,7 +84,7 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
         ]}
       >
         {/* Concave cutout overlay so the raised button has a background notch */}
-        <View style={[styles.cutoutOverlay, { backgroundColor: colors.background }]} />
+        <View style={[styles.cutoutOverlay, { backgroundColor: colors.background, left: leftPercentage as any }]} />
 
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -71,6 +92,9 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
 
           const onPress = () => {
             lightHaptic();
+            if (route.name === DealerTabRoutes.Inventory && !canAccessDealerApis) {
+              showRegistrationBlockedAlert(status);
+            }
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
@@ -187,7 +211,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 33,
     position: 'absolute',
     top: -1,
-    left: '50%',
     marginLeft: -33,
     zIndex: 0,
   },

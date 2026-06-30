@@ -17,10 +17,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/index';
-import { DealerVehicle } from '@data/dealerData';
+import { ChromeHeader } from '@components/common';
+import { InventoryImageUploadSection } from '@components/dealer/InventoryImageUploadSection';
 import { useColors } from '@hooks/useColors';
+import {
+  createDealerVehicle,
+  deleteDealerVehicle,
+  getDealerInventoryVehicles,
+  updateDealerVehicle,
+} from '@services/dealer.service';
+import type { VehicleAvailability } from '@app-types/vehicle';
 import { themeLight } from '@theme/colors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getVehicleId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -28,7 +37,7 @@ type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRout
 
 const FUEL_TYPES = ['Petrol', 'Diesel', 'Electric', 'CNG', 'Hybrid'];
 const TRANSMISSIONS = ['Manual', 'Automatic', 'CVT', 'AMT'];
-const STATUS_OPTIONS: { value: DealerVehicle['status']; label: string; icon: string; color: string }[] = [
+const STATUS_OPTIONS: { value: VehicleAvailability; label: string; icon: string; color: string }[] = [
   { value: 'available', label: 'Available', icon: 'check-circle', color: '#10B981' },
   { value: 'reserved', label: 'Reserved', icon: 'clock', color: '#F59E0B' },
   { value: 'sold', label: 'Sold', icon: 'shopping-cart', color: '#6B7280' },
@@ -41,41 +50,69 @@ const FUEL_ICONS: Record<string, string> = {
 export function VehicleFormScreen({ route, navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { addVehicle, updateVehicle, vehicles } = useDealer();
-  const editVehicle = route.params?.id ? vehicles.find((v) => v.id === route.params?.id) : null;
-  const isEdit = !!editVehicle;
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const editId = route.params?.id;
+  const isEdit = !!editId;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const [loadingVehicle, setLoadingVehicle] = useState(!!editId);
   const [form, setForm] = useState({
-    name: editVehicle?.name ?? '',
-    brand: editVehicle?.brand ?? '',
-    type: editVehicle?.type ?? ('car' as 'car' | 'bike'),
-    year: editVehicle ? String(editVehicle.year) : String(new Date().getFullYear()),
-    price: editVehicle ? String(editVehicle.price) : '',
-    fuel: editVehicle?.fuel ?? 'Petrol',
-    transmission: editVehicle?.transmission ?? 'Manual',
-    color: editVehicle?.color ?? '',
-    mileage: editVehicle?.mileage ?? '',
-    stock: editVehicle ? String(editVehicle.stock) : '1',
-    status: editVehicle?.status ?? ('available' as DealerVehicle['status']),
-    testDriveEnabled: editVehicle?.testDriveEnabled ?? true,
-    description: editVehicle?.description ?? '',
-    image: editVehicle?.image ?? '',
+    name: '',
+    brand: '',
+    type: 'car' as 'car' | 'bike',
+    year: String(new Date().getFullYear()),
+    price: '',
+    fuel: 'Petrol',
+    transmission: 'Manual',
+    color: '',
+    mileage: '',
+    stock: '1',
+    status: 'available' as VehicleAvailability,
+    testDriveEnabled: true,
+    description: '',
+    image: '',
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (editVehicle) {
-      setForm({
-        name: editVehicle.name, brand: editVehicle.brand, type: editVehicle.type,
-        year: String(editVehicle.year), price: String(editVehicle.price),
-        fuel: editVehicle.fuel, transmission: editVehicle.transmission, color: editVehicle.color,
-        mileage: editVehicle.mileage, stock: String(editVehicle.stock), status: editVehicle.status,
-        testDriveEnabled: editVehicle.testDriveEnabled, description: editVehicle.description, image: editVehicle.image,
-      });
-    }
-  }, [editVehicle]);
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingVehicle(true);
+        const response = await getDealerInventoryVehicles({ limit: 1000 });
+        const vehicle = (response.Response?.vehicles ?? []).find(
+          (item) => getVehicleId(item) === editId,
+        );
+        if (!cancelled && vehicle) {
+          setForm({
+            name: vehicle.vehicleModel,
+            brand: vehicle.brand,
+            type: vehicle.vehicleType === 'Bike' ? 'bike' : 'car',
+            year: String(vehicle.year),
+            price: String(vehicle.price),
+            fuel: vehicle.fuelType || 'Petrol',
+            transmission: vehicle.transmission || 'Manual',
+            color: vehicle.color || '',
+            mileage: vehicle.mileage ? String(vehicle.mileage) : '',
+            stock: '1',
+            status: vehicle.availability,
+            testDriveEnabled: vehicle.allowTestDrive ?? true,
+            description: vehicle.description || '',
+            image: vehicle.images?.[0] || '',
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          Alert.alert('Error', getApiErrorMessage(error, 'Failed to load vehicle'));
+        }
+      } finally {
+        if (!cancelled) setLoadingVehicle(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editId]);
 
   const set = (key: string, value: string | boolean) => setForm((p) => ({ ...p, [key]: value }));
 
@@ -87,60 +124,131 @@ export function VehicleFormScreen({ route, navigation }: Props) {
     lightHaptic();
     setSaving(true);
     try {
-      const payload: Omit<DealerVehicle, 'id'> = {
-        name: form.name, brand: form.brand, type: form.type,
+      const placeholderImage = `https://placehold.co/400x250/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 14))}`;
+      const images = form.image ? [form.image] : [placeholderImage];
+      const fuelType = ['Petrol', 'Diesel', 'Electric', 'Hybrid'].includes(form.fuel)
+        ? (form.fuel as 'Petrol' | 'Diesel' | 'Electric' | 'Hybrid')
+        : 'Petrol';
+      const transmission = (form.transmission === 'Automatic' ? 'Automatic' : 'Manual') as 'Manual' | 'Automatic';
+      const payload = {
+        vehicleType: (form.type === 'bike' ? 'Bike' : 'Car') as 'Car' | 'Bike',
+        brand: form.brand,
+        vehicleModel: form.name,
         year: parseInt(form.year, 10) || new Date().getFullYear(),
-        price: parseFloat(form.price) || 0, fuel: form.fuel,
-        transmission: form.transmission, color: form.color, mileage: form.mileage,
-        stock: parseInt(form.stock, 10) || 1, status: form.status,
-        testDriveEnabled: form.testDriveEnabled, description: form.description,
-        image: form.image || `https://placehold.co/400x250/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 14))}`,
+        price: parseFloat(form.price) || 0,
+        availability: form.status,
+        images,
+        mileage: form.mileage ? parseInt(form.mileage, 10) || undefined : undefined,
+        color: form.color || undefined,
+        fuelType,
+        transmission,
+        description: form.description || undefined,
+        allowTestDrive: form.testDriveEnabled,
       };
-      if (isEdit && route.params?.id) {
-        await updateVehicle(route.params.id, payload);
+
+      if (isEdit && editId) {
+        await updateDealerVehicle(editId, payload);
       } else {
-        await addVehicle(payload);
+        await createDealerVehicle(payload);
       }
       successHaptic();
       navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Failed to save vehicle'));
     } finally {
       setSaving(false);
     }
   };
 
-  const vehicleImage = form.type === 'bike'
+  const handleDelete = () => {
+    if (!editId) return;
+    Alert.alert('Delete Vehicle', 'Remove this vehicle from inventory?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setSaving(true);
+            await deleteDealerVehicle(editId);
+            successHaptic();
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete vehicle'));
+          } finally {
+            setSaving(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loadingVehicle) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.textSecondary }}>Loading vehicle…</Text>
+      </View>
+    );
+  }
+
+  const vehicleImage = form.image || (form.type === 'bike'
     ? 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=200&auto=format&fit=crop&q=80'
-    : 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=200&auto=format&fit=crop&q=80';
+    : 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=200&auto=format&fit=crop&q=80');
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Clean White Header */}
-        <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-            <Feather name="arrow-left" size={20} color={colors.textPrimary} />
+            <Feather name="arrow-left" size={20} color={colors.headerForeground} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{isEdit ? 'Edit Vehicle' : 'Add Vehicle'}</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Add a new vehicle to your fleet</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{isEdit ? 'Edit Vehicle' : 'Add Vehicle'}</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Add a new vehicle to your fleet</Text>
           </View>
           <Pressable style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>
             <Feather name="save" size={13} color="#ffffff" style={{ marginRight: 5 }} />
             <Text style={styles.saveHeaderText}>{saving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
-        </View>
+          {isEdit ? (
+            <Pressable style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]} onPress={handleDelete} disabled={saving}>
+              <Feather name="trash-2" size={13} color="#ffffff" />
+            </Pressable>
+          ) : null}
+        </ChromeHeader>
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 120 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Section 1: Vehicle Details */}
+          {/* Section 0: Vehicle Images */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionLeft}>
                 <View style={styles.sectionNumberBadge}>
                   <Text style={styles.sectionNumberText}>1</Text>
+                </View>
+                <View>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vehicle Images</Text>
+                  <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Upload clear photos of your vehicle</Text>
+                </View>
+              </View>
+            </View>
+            <InventoryImageUploadSection
+              imageUri={form.image || undefined}
+              title="Upload clear photos of your vehicle"
+              onImageChange={(url) => set('image', url)}
+            />
+          </View>
+
+          {/* Section 1: Vehicle Details */}
+          <View style={styles.sectionBlock}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionLeft}>
+                <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
+                  <Text style={styles.sectionNumberText}>2</Text>
                 </View>
                 <View>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vehicle Details</Text>
@@ -233,8 +341,8 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionLeft}>
-                <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
-                  <Text style={styles.sectionNumberText}>2</Text>
+                <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
+                  <Text style={styles.sectionNumberText}>3</Text>
                 </View>
                 <View>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Specifications</Text>
@@ -320,8 +428,8 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionLeft}>
-                <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
-                  <Text style={styles.sectionNumberText}>3</Text>
+                <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
+                  <Text style={styles.sectionNumberText}>4</Text>
                 </View>
                 <View>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Availability</Text>
@@ -443,7 +551,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingBottom: 12,
-    borderBottomWidth: 1, backgroundColor: '#ffffff',
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },

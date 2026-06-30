@@ -3,15 +3,16 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
-import type { GarageVehicle } from '@data/mockData';
+import type { IUserVehicle } from '@app-types/vehicle';
 
 interface GarageCardProps {
-  vehicle: GarageVehicle;
+  vehicle: IUserVehicle;
   onPress?: () => void;
 }
 
 export function GarageCard({ vehicle, onPress }: GarageCardProps) {
   const colors = useColors();
+  const imageUri = vehicle.images?.[0] || '';
 
   return (
     <Pressable
@@ -21,40 +22,40 @@ export function GarageCard({ vehicle, onPress }: GarageCardProps) {
       ]}
       onPress={onPress}
     >
-      <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+      ) : (
+        <View style={[styles.image, { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
+          <Feather name="truck" size={32} color={colors.icon} />
+        </View>
+      )}
       <View style={styles.info}>
         <View style={styles.header}>
           <View>
             <Text style={[styles.name, { color: colors.textPrimary }]}>
-              {vehicle.brand} {vehicle.name}
+              {vehicle.brand} {vehicle.model}
             </Text>
-            <Text style={[styles.regNumber, { color: colors.textSecondary }]}>{vehicle.regNumber}</Text>
+            <Text style={[styles.regNumber, { color: colors.textSecondary }]}>
+              {vehicle.numberPlate}
+            </Text>
           </View>
-          <View style={[styles.yearBadge, { backgroundColor: colors.muted }]}>
-            <Text style={[styles.year, { color: colors.textSecondary }]}>{vehicle.year}</Text>
-          </View>
+          {vehicle.year ? (
+            <View style={[styles.yearBadge, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.year, { color: colors.textSecondary }]}>{vehicle.year}</Text>
+            </View>
+          ) : null}
         </View>
-        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-        <View style={styles.stats}>
-          <View style={styles.stat}>
-            <Feather name="activity" size={14} color={colors.icon} />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {vehicle.kmsDriven.toLocaleString('en-IN')} km
-            </Text>
-          </View>
-          <View style={styles.stat}>
-            <Feather name="tool" size={14} color={colors.warning} />
-            <Text style={[styles.statValue, { color: colors.textSecondary }]} numberOfLines={1}>
-              Service: {vehicle.nextService}
-            </Text>
-          </View>
-          <View style={styles.stat}>
-            <Feather name="shield" size={14} color={colors.success} />
-            <Text style={[styles.statValue, { color: colors.textSecondary }]} numberOfLines={1}>
-              {vehicle.insurance}
-            </Text>
-          </View>
-        </View>
+        {vehicle.color ? (
+          <>
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+            <View style={styles.stats}>
+              <View style={styles.stat}>
+                <Feather name="droplet" size={14} color={colors.icon} />
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{vehicle.color}</Text>
+              </View>
+            </View>
+          </>
+        ) : null}
         <View style={styles.actions}>
           <Pressable style={[styles.actionBtn, { backgroundColor: colors.primary }]}>
             <Feather name="tool" size={14} color={colors.primaryForeground} />

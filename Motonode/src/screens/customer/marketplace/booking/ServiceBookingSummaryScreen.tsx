@@ -42,19 +42,11 @@ function ReviewRow({
 
 export function ServiceBookingSummaryScreen({ navigation }: Props) {
   const colors = useColors();
-  const {
-    draft,
-    getService,
-    getVehicle,
-    getWorkshop,
-    getSelectedAddons,
-    getTotals,
-  } = useServiceBooking();
+  const { draft, getService, getVehicle, getLocation, getTotals } = useServiceBooking();
 
   const service = getService();
   const vehicle = getVehicle();
-  const workshop = getWorkshop();
-  const addons = getSelectedAddons();
+  const location = getLocation();
   const totals = getTotals();
 
   const dateLabel = draft.date
@@ -86,28 +78,23 @@ export function ServiceBookingSummaryScreen({ navigation }: Props) {
         <ReviewRow
           icon="truck"
           label="Vehicle"
-          value={vehicle ? `${vehicle.brand} ${vehicle.name} (${vehicle.regNumber})` : '—'}
+          value={vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.numberPlate})` : '—'}
         />
         <ReviewRow
           icon="map-pin"
           label="Location"
           value={
             draft.locationType === 'pickup'
-              ? `Pick & Drop • ${workshop?.name ?? ''}`
-              : workshop?.name ?? '—'
+              ? `Home Service • ${location?.address ?? ''}`
+              : location?.name ?? '—'
           }
-        />
-        <ReviewRow
-          icon="plus-circle"
-          label="Add-ons"
-          value={addons.length ? addons.map((a) => a.name).join(', ') : 'None selected'}
         />
       </View>
 
       <BookingPriceSummary
         serviceAmount={totals.serviceAmount}
-        addonsAmount={totals.addonsAmount}
-        addonsCount={draft.selectedAddonIds.length}
+        addonsAmount={0}
+        addonsCount={0}
         platformFee={totals.platformFee}
         couponDiscount={totals.couponDiscount}
         total={totals.total}

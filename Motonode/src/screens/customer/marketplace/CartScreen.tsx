@@ -199,7 +199,7 @@ export function CartScreen() {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={[styles.cartItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Image source={{ uri: item.product.image }} style={styles.itemImage} resizeMode="cover" />
+                <Image source={{ uri: item.product.images?.[0] || '' }} style={styles.itemImage} resizeMode="cover" />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemBrand}>{item.product.brand}</Text>
                   <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>{item.product.name}</Text>

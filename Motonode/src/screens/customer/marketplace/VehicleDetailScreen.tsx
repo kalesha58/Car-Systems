@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Platform,
@@ -17,9 +17,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
-import { useAuth, useBookings } from '@context/index';
-import { VEHICLES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { createTestDrive } from '@services/testDrive.service';
+import { getVehicleById } from '@services/vehicle.service';
+import type { IDealerVehicle } from '@app-types/vehicle';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getVehicleDisplayName, getVehicleId } from '@utils/displayMappers';
 import { successHaptic, lightHaptic } from '@utils/haptics';
 
 const { height: screenHeight } = Dimensions.get('window');
@@ -43,40 +46,85 @@ type VehicleDetailScreenProps = NativeStackScreenProps<
 export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
-  const { createTestDriveBooking } = useBookings();
   const { id } = route.params;
-  const vehicle = VEHICLES.find((v) => v.id === id);
+  const [vehicle, setVehicle] = useState<IDealerVehicle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  // Booking Modal States
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [bookingDate, setBookingDate] = useState('Tomorrow');
   const [bookingSlot, setBookingSlot] = useState('10:00 AM - 12:00 PM');
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [isBookingSuccess, setIsBookingSuccess] = useState(false);
-
-  // Selector state for dynamic image previews
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const vehicleImages = vehicle ? (
-    vehicle.type === 'bike' ? [
-      vehicle.image,
-      'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=500&auto=format&fit=crop&q=80',
-    ] : [
-      vehicle.image,
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1551830820-330a71b99659?w=500&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1609429019995-8c40f49535a5?w=500&auto=format&fit=crop&q=80',
-    ]
-  ) : [];
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVehicle = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getVehicleById(id);
+        if (cancelled) return;
+        const found = response.Response?.vehicles?.[0] ?? null;
+        if (found) {
+          setVehicle(found);
+        } else {
+          setError('Vehicle not found');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Failed to load vehicle'));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadVehicle();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const vehicleImages = useMemo(() => {
+    if (!vehicle) return [];
+    const primary = vehicle.images?.[0];
+    if (vehicle.images && vehicle.images.length > 0) return vehicle.images;
+    return primary ? [primary] : [];
+  }, [vehicle]);
+
+  const vehicleSpecs = useMemo(() => {
+    if (!vehicle) return [];
+    const specs: { label: string; value: string }[] = [];
+    if (vehicle.fuelType) specs.push({ label: 'Fuel Type', value: vehicle.fuelType });
+    if (vehicle.transmission) specs.push({ label: 'Transmission', value: vehicle.transmission });
+    if (vehicle.mileage != null) specs.push({ label: 'Mileage', value: `${vehicle.mileage} km` });
+    if (vehicle.color) specs.push({ label: 'Color', value: vehicle.color });
+    if (vehicle.condition) specs.push({ label: 'Condition', value: vehicle.condition });
+    vehicle.features?.forEach((feature) => specs.push({ label: 'Feature', value: feature }));
+    return specs;
+  }, [vehicle]);
+
+  const displayName = vehicle ? getVehicleDisplayName(vehicle) : '';
+  const dealerName = vehicle?.dealer?.businessName ?? 'Authorized Dealer';
+  const dealerId = vehicle?.dealerId || vehicle?.dealer?.id || '';
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   if (!vehicle) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={{ color: colors.textPrimary }}>Vehicle not found</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textPrimary }}>{error ?? 'Vehicle not found'}</Text>
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={{ color: colors.primary }}>Go Back</Text>
         </Pressable>
@@ -89,37 +137,36 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
     setIsBookingModalVisible(true);
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     successHaptic();
     setIsBookingSubmitting(true);
-    setTimeout(async () => {
-      const dateMap: Record<string, string> = {
-        Today: new Date().toISOString().slice(0, 10),
-        Tomorrow: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
-      };
-      await createTestDriveBooking({
-        customerId: user?.id ?? 'u1',
-        customerName: user?.name ?? 'Customer',
-        customerPhone: user?.phone ?? '',
-        dealerId: vehicle.dealerId,
-        dealerName: vehicle.dealerName,
-        vehicleListingId: vehicle.id,
-        vehicleName: vehicle.name,
-        vehicleBrand: vehicle.brand,
-        vehicleImage: vehicle.image,
-        date: dateMap[bookingDate] ?? new Date().toISOString().slice(0, 10),
-        timeSlot: bookingSlot.split(' - ')[0] ?? bookingSlot,
-        notes: `Test drive for ${vehicle.name}`,
+    setBookingError(null);
+
+    const dateMap: Record<string, string> = {
+      Today: new Date().toISOString().slice(0, 10),
+      Tomorrow: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+    };
+
+    try {
+      await createTestDrive({
+        vehicleId: getVehicleId(vehicle),
+        preferredDate: dateMap[bookingDate] ?? new Date().toISOString().slice(0, 10),
+        preferredTime: bookingSlot.split(' - ')[0] ?? bookingSlot,
+        notes: `Test drive for ${displayName}`,
       });
-      setIsBookingSubmitting(false);
       setIsBookingSuccess(true);
-    }, 1500);
+    } catch (err) {
+      setBookingError(getApiErrorMessage(err, 'Failed to book test drive'));
+    } finally {
+      setIsBookingSubmitting(false);
+    }
   };
 
   const handleCloseBookingModal = () => {
     lightHaptic();
     setIsBookingModalVisible(false);
     setIsBookingSuccess(false);
+    setBookingError(null);
   };
 
   return (
@@ -133,7 +180,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           style={[styles.headerTitle, { color: colors.headerForeground }]}
           numberOfLines={1}
         >
-          {vehicle.name}
+          {displayName}
         </Text>
         <View style={[styles.headerSide, styles.headerSideRight]}>
           <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
@@ -167,7 +214,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           </View>
 
           <View style={[styles.mainImagePanel, { backgroundColor: colors.muted }]}>
-            <Image source={{ uri: vehicleImages[activeImageIndex] }} style={styles.vehicleImage} resizeMode="cover" />
+            <Image source={{ uri: vehicleImages[activeImageIndex] ?? vehicle.images?.[0] }} style={styles.vehicleImage} resizeMode="cover" />
             <View style={styles.pageIndicator}>
               <Text style={styles.pageIndicatorText}>{activeImageIndex + 1} / {vehicleImages.length}</Text>
             </View>
@@ -178,7 +225,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           {/* Brand & Name header */}
           <Text style={[styles.brandText, { color: colors.textSecondary }]}>{vehicle.brand.toUpperCase()}</Text>
           <View style={styles.titleRow}>
-            <Text style={[styles.name, { color: colors.textPrimary }]}>{vehicle.name}</Text>
+            <Text style={[styles.name, { color: colors.textPrimary }]}>{displayName}</Text>
             <View style={[styles.yearBadge, { backgroundColor: colors.muted }]}>
               <Text style={[styles.yearText, { color: colors.textSecondary }]}>{vehicle.year}</Text>
             </View>
@@ -198,7 +245,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Fuel Type</Text>
-                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>{vehicle.fuel}</Text>
+                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>{vehicle.fuelType ?? '—'}</Text>
               </View>
             </View>
 
@@ -208,7 +255,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Transmission</Text>
-                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>{vehicle.transmission}</Text>
+                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>{vehicle.transmission ?? '—'}</Text>
               </View>
             </View>
 
@@ -218,7 +265,9 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
               </View>
               <View>
                 <Text style={[styles.specLabelTitle, { color: colors.textSecondary }]}>Mileage / Range</Text>
-                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>{vehicle.mileage}</Text>
+                <Text style={[styles.specValueVal, { color: colors.textPrimary }]}>
+                  {vehicle.mileage != null ? `${vehicle.mileage} km` : '—'}
+                </Text>
               </View>
             </View>
           </View>
@@ -226,37 +275,48 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
           {/* Technical Specifications */}
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Key Specifications</Text>
           <View style={[styles.specsContainer, { borderColor: colors.border }]}>
-            {vehicle.specs.map((spec, i) => (
-              <View
-                key={spec.label}
-                style={[
-                  styles.specRow,
-                  i < vehicle.specs.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider }
-                ]}
-              >
-                <Text style={[styles.specLabel, { color: colors.textSecondary }]}>{spec.label}</Text>
-                <Text style={[styles.specValue, { color: colors.textPrimary }]}>{spec.value}</Text>
+            {vehicleSpecs.length > 0 ? (
+              vehicleSpecs.map((spec, i) => (
+                <View
+                  key={`${spec.label}-${i}`}
+                  style={[
+                    styles.specRow,
+                    i < vehicleSpecs.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
+                  ]}
+                >
+                  <Text style={[styles.specLabel, { color: colors.textSecondary }]}>{spec.label}</Text>
+                  <Text style={[styles.specValue, { color: colors.textPrimary }]}>{spec.value}</Text>
+                </View>
+              ))
+            ) : (
+              <View style={styles.specRow}>
+                <Text style={[styles.specLabel, { color: colors.textSecondary }]}>Details</Text>
+                <Text style={[styles.specValue, { color: colors.textPrimary }]}>Available on request</Text>
               </View>
-            ))}
+            )}
           </View>
 
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
           
           {/* About Section */}
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>About Vehicle</Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{vehicle.description}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {vehicle.description ?? 'Contact the dealer for more details about this vehicle.'}
+          </Text>
 
           {/* Dealer Card */}
           <Pressable
             style={[styles.dealerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => navigation.navigate(CustomerStackRoutes.DealerStore, { id: vehicle.dealerId || 'd1' })}
+            onPress={() => dealerId && navigation.navigate(CustomerStackRoutes.DealerStore, { id: dealerId })}
           >
             <View style={[styles.dealerIcon, { backgroundColor: colors.primarySubtle }]}>
               <Feather name="briefcase" size={20} color={colors.link} />
             </View>
             <View style={styles.dealerInfo}>
-              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{vehicle.dealerName}</Text>
-              <Text style={[styles.dealerLabel, { color: colors.textTertiary }]}>Authorized Dealer • Koramangala</Text>
+              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{dealerName}</Text>
+              <Text style={[styles.dealerLabel, { color: colors.textTertiary }]}>
+                Authorized Dealer{vehicle.dealer?.address ? ` • ${vehicle.dealer.address}` : ''}
+              </Text>
             </View>
             <Feather name="chevron-right" size={20} color={colors.textSecondary} style={{ marginRight: 8 }} />
             <Pressable
@@ -310,7 +370,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                 </View>
                 <Text style={[styles.successTitle, { color: colors.textPrimary }]}>Booking Confirmed!</Text>
                 <Text style={[styles.successSub, { color: colors.textSecondary }]}>
-                  Your test drive for {vehicle.name} has been booked for {bookingDate} at {bookingSlot}.
+                  Your test drive for {displayName} has been booked for {bookingDate} at {bookingSlot}.
                 </Text>
                 <Pressable style={[styles.successDoneBtn, { backgroundColor: colors.primary }]} onPress={handleCloseBookingModal}>
                   <Text style={[styles.doneBtnText, { color: colors.primaryForeground }]}>Awesome</Text>
@@ -320,11 +380,13 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
               <View style={styles.modalBody}>
                 {/* Vehicle Quick Summary Card */}
                 <View style={[styles.summaryCard, { backgroundColor: colors.muted }]}>
-                  <Image source={{ uri: vehicle.image }} style={styles.summaryImg} />
+                  <Image source={{ uri: vehicle.images?.[0] ?? '' }} style={styles.summaryImg} />
                   <View>
                     <Text style={[styles.summaryBrand, { color: colors.link }]}>{vehicle.brand}</Text>
-                    <Text style={[styles.summaryName, { color: colors.textPrimary }]}>{vehicle.name}</Text>
-                    <Text style={[styles.summarySpecs, { color: colors.textSecondary }]}>{vehicle.fuel} • {vehicle.transmission}</Text>
+                    <Text style={[styles.summaryName, { color: colors.textPrimary }]}>{displayName}</Text>
+                    <Text style={[styles.summarySpecs, { color: colors.textSecondary }]}>
+                      {vehicle.fuelType ?? '—'} • {vehicle.transmission ?? '—'}
+                    </Text>
                   </View>
                 </View>
 
@@ -392,6 +454,10 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
                   ))}
                 </View>
 
+                {bookingError ? (
+                  <Text style={[styles.bookingErrorText, { color: colors.destructive }]}>{bookingError}</Text>
+                ) : null}
+
                 {/* Confirm Action Button */}
                 <Pressable
                   style={[styles.confirmBtn, { backgroundColor: colors.primary }]}
@@ -417,6 +483,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -649,6 +716,12 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_700Bold',
+  },
+  bookingErrorText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    textAlign: 'center',
+    marginTop: 8,
   },
   successContainer: {
     alignItems: 'center',

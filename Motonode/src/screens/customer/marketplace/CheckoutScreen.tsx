@@ -17,9 +17,19 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
+import { useCart } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { formatCurrency, getProductId } from '@utils/displayMappers';
+
+export const DEFAULT_SHIPPING_ADDRESS = {
+  street: '45, 2nd Cross, Koramangala 3 Block',
+  city: 'Bengaluru',
+  state: 'Karnataka',
+  zipCode: '560034',
+  country: 'India',
+};
 
 type Props = NativeStackScreenProps<CustomerStackParamList, typeof CustomerStackRoutes.Checkout>;
 
@@ -82,14 +92,13 @@ const stepStyles = StyleSheet.create({
 export function CheckoutScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+  const { items, total } = useCart();
   const [couponCode, setCouponCode] = useState('HUB10');
-  const [couponApplied, setCouponApplied] = useState(true);
+  const [couponApplied, setCouponApplied] = useState(false);
 
-  const servicePrice = 999;
-  const discount = couponApplied ? 100 : 0;
-  const total = servicePrice - discount;
+  const discount = couponApplied ? Math.min(100, Math.round(total * 0.1)) : 0;
+  const orderTotal = Math.max(0, total - discount);
 
   const handleApplyCoupon = () => {
     lightHaptic();
@@ -102,9 +111,15 @@ export function CheckoutScreen({ navigation }: Props) {
   };
 
   const handleContinue = () => {
+    if (items.length === 0) {
+      Alert.alert('Empty Cart', 'Add items to your cart before checking out.');
+      return;
+    }
     lightHaptic();
     navigation.navigate(CustomerStackRoutes.Payment);
   };
+
+  const address = DEFAULT_SHIPPING_ADDRESS;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#F8FAFC' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -139,25 +154,32 @@ export function CheckoutScreen({ navigation }: Props) {
               <View style={styles.homeBadge}><Text style={styles.homeBadgeText}>HOME</Text></View>
             </View>
             <Text style={styles.addressPhone}>+91 98765 43210</Text>
-            <Text style={styles.addressLine}>45, 2nd Cross, Koramangala 3 Block,{'\n'}Bengaluru, Karnataka 560034</Text>
+            <Text style={styles.addressLine}>
+              {address.street},{'\n'}
+              {address.city}, {address.state} {address.zipCode}
+            </Text>
           </View>
           <Feather name="chevron-right" size={18} color="#CBD5E1" />
         </Pressable>
 
-        {/* Service Details */}
-        <Text style={styles.sectionLabel}>Service Details</Text>
-        <View style={styles.card}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=120&auto=format&fit=crop&q=80' }}
-            style={styles.serviceThumb}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.serviceName}>Premium Oil Change Service</Text>
-            <Text style={styles.serviceIncludes}>• Engine Oil • Oil Filter • Inspection</Text>
-            <Text style={styles.serviceQty}>Qty: 1</Text>
+        {/* Order Items */}
+        <Text style={styles.sectionLabel}>Order Items</Text>
+        {items.map((item) => (
+          <View key={getProductId(item.product)} style={[styles.card, { marginBottom: 8 }]}>
+            <Image
+              source={{ uri: item.product.images?.[0] || 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=120&auto=format&fit=crop&q=80' }}
+              style={styles.serviceThumb}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.serviceName}>{item.product.name}</Text>
+              <Text style={styles.serviceIncludes}>{item.product.brand}</Text>
+              <Text style={styles.serviceQty}>Qty: {item.quantity}</Text>
+            </View>
+            <Text style={styles.servicePrice}>
+              {formatCurrency(item.product.price * item.quantity)}
+            </Text>
           </View>
-          <Text style={styles.servicePrice}>₹{servicePrice}</Text>
-        </View>
+        ))}
 
         {/* Choose Date & Time */}
         <Text style={styles.sectionLabel}>Choose Date & Time</Text>
@@ -205,9 +227,9 @@ export function CheckoutScreen({ navigation }: Props) {
       <View style={[styles.bottomBar, { paddingBottom: bottomPad + 10, borderTopColor: '#E2E8F0' }]}>
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-            <Text style={styles.totalAmount}>₹{total}</Text>
+            <Text style={styles.totalAmount}>{formatCurrency(orderTotal)}</Text>
             {couponApplied && (
-              <Text style={styles.totalOriginal}>₹{servicePrice}</Text>
+              <Text style={styles.totalOriginal}>{formatCurrency(total)}</Text>
             )}
           </View>
           {couponApplied && (

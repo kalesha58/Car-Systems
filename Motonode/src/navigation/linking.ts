@@ -57,6 +57,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
           [DealerStackRoutes.ProductForm]: 'dealer/product-form',
           [DealerStackRoutes.VehicleForm]: 'dealer/vehicle-form',
           [DealerStackRoutes.ServiceForm]: 'dealer/service-form',
+          [DealerStackRoutes.BusinessDetails]: 'dealer/business-details',
         },
       },
     },

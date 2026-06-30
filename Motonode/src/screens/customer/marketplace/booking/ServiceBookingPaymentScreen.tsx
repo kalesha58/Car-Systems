@@ -7,8 +7,8 @@ import { BookingFlowShell } from '@components/booking/BookingFlowShell';
 import { BookingPriceSummary } from '@components/booking/sections/BookingPriceSummary';
 import { BookingTrustFooter } from '@components/booking/sections/BookingTrustFooter';
 import { CustomerStackRoutes } from '@constants/routes';
-import { useAuth, useBookings } from '@context/index';
 import { useServiceBooking, type BookingPaymentMethod } from '@context/ServiceBookingContext';
+import { useBookings } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
@@ -34,31 +34,26 @@ const PAYMENT_METHODS: {
 
 export function ServiceBookingPaymentScreen({ navigation }: Props) {
   const colors = useColors();
-  const { user } = useAuth();
-  const { createServiceBooking } = useBookings();
+  const { loadBookings } = useBookings();
   const { draft, updateBooking, confirmBooking, getService, getTotals } = useServiceBooking();
   const service = getService();
   const totals = getTotals();
   const [paying, setPaying] = useState(false);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (paying) return;
     lightHaptic();
     setPaying(true);
-    setTimeout(async () => {
-      const bookingId = confirmBooking();
-      await createServiceBooking({
-        draft,
-        bookingId,
-        customerId: user?.id ?? 'u1',
-        customerName: user?.name ?? 'Customer',
-        customerPhone: user?.phone ?? '',
-        total: totals.total,
-      });
-      setPaying(false);
+    try {
+      const bookingId = await confirmBooking();
+      await loadBookings();
       successHaptic();
       navigation.replace(CustomerStackRoutes.ServiceBookingConfirmed, { bookingId });
-    }, 1500);
+    } catch {
+      // payment/booking failed
+    } finally {
+      setPaying(false);
+    }
   };
 
   return (
@@ -82,10 +77,16 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
       {service && (
         <View style={[styles.summaryCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
           <View style={styles.summaryRow}>
-            <Image source={{ uri: service.image }} style={styles.thumb} />
+            {service.images?.[0] ? (
+              <Image source={{ uri: service.images[0] }} style={styles.thumb} />
+            ) : (
+              <View style={[styles.thumb, { backgroundColor: '#E2E8F0' }]} />
+            )}
             <View style={{ flex: 1 }}>
               <Text style={[styles.itemName, { color: colors.textPrimary }]}>{service.name}</Text>
-              <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>{service.dealerName}</Text>
+              <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+                {service.dealer?.businessName ?? 'Dealer'}
+              </Text>
             </View>
           </View>
         </View>

@@ -16,10 +16,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/index';
-import { DealerProduct } from '@data/dealerData';
+import { ChromeHeader } from '@components/common';
+import { InventoryImageUploadSection } from '@components/dealer/InventoryImageUploadSection';
 import { useColors } from '@hooks/useColors';
+import {
+  createDealerProduct,
+  deleteDealerProduct,
+  getDealerProducts,
+  updateDealerProduct,
+} from '@services/dealer.service';
 import { themeLight } from '@theme/colors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -30,22 +38,21 @@ const CATEGORIES = ['Filters', 'Lubricants', 'Tyres', 'Batteries', 'Wipers', 'Ig
 export function ProductFormScreen({ route, navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { addProduct, updateProduct, products } = useDealer();
-  const editProduct = route.params?.id ? products.find((p) => p.id === route.params?.id) : null;
-  const isEdit = !!editProduct;
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const editId = route.params?.id;
+  const isEdit = !!editId;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const [loadingProduct, setLoadingProduct] = useState(!!editId);
   const [form, setForm] = useState({
-    name: editProduct?.name ?? '',
-    brand: editProduct?.brand ?? '',
-    category: editProduct?.category ?? 'Lubricants',
-    price: editProduct ? String(editProduct.price) : '',
-    mrp: editProduct ? String(editProduct.mrp) : '',
-    sku: editProduct?.sku ?? '',
-    stock: editProduct ? String(editProduct.stock) : '',
-    description: editProduct?.description ?? '',
-    image: editProduct?.image ?? '',
+    name: '',
+    brand: '',
+    category: 'Lubricants',
+    price: '',
+    mrp: '',
+    sku: '',
+    stock: '',
+    description: '',
+    image: '',
     hsnCode: '',
     weight: '',
     lowStockAlert: true,
@@ -53,31 +60,45 @@ export function ProductFormScreen({ route, navigation }: Props) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (editProduct) {
-      setForm({
-        name: editProduct.name,
-        brand: editProduct.brand,
-        category: editProduct.category,
-        price: String(editProduct.price),
-        mrp: String(editProduct.mrp),
-        sku: editProduct.sku,
-        stock: String(editProduct.stock),
-        description: editProduct.description,
-        image: editProduct.image,
-        hsnCode: '',
-        weight: '',
-        lowStockAlert: true,
-      });
-    }
-  }, [editProduct]);
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingProduct(true);
+        const response = await getDealerProducts({ limit: 1000 });
+        const product = (response.Response?.products ?? []).find(
+          (item) => getProductId(item) === editId,
+        );
+        if (!cancelled && product) {
+          setForm({
+            name: product.name,
+            brand: product.brand,
+            category: product.category || 'Lubricants',
+            price: String(product.price),
+            mrp: String(product.originalPrice ?? product.price),
+            sku: product.tags?.[0] || '',
+            stock: String(product.stock),
+            description: product.description || '',
+            image: product.images?.[0] || '',
+            hsnCode: '',
+            weight: '',
+            lowStockAlert: true,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          Alert.alert('Error', getApiErrorMessage(error, 'Failed to load product'));
+        }
+      } finally {
+        if (!cancelled) setLoadingProduct(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editId]);
 
   const set = (key: string, value: string | boolean) => setForm((p) => ({ ...p, [key]: value }));
-
-  const getStatus = (stock: number): DealerProduct['status'] => {
-    if (stock === 0) return 'out_of_stock';
-    if (stock <= 10) return 'low_stock';
-    return 'in_stock';
-  };
 
   const handleSave = async () => {
     if (!form.name || !form.brand || !form.price) {
@@ -88,48 +109,98 @@ export function ProductFormScreen({ route, navigation }: Props) {
     setSaving(true);
     try {
       const stockNum = parseInt(form.stock, 10) || 0;
-      const payload: Omit<DealerProduct, 'id'> = {
-        name: form.name,
-        brand: form.brand,
-        category: form.category,
-        price: parseFloat(form.price) || 0,
-        mrp: parseFloat(form.mrp) || parseFloat(form.price) || 0,
-        sku: form.sku || `SKU-${Date.now()}`,
-        stock: stockNum,
-        status: getStatus(stockNum),
-        description: form.description,
-        image: form.image || `https://placehold.co/200x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 12))}`,
-      };
-      if (isEdit && route.params?.id) {
-        await updateProduct(route.params.id, payload);
+      const parsedPrice = parseFloat(form.price) || 0;
+      const parsedMrp = parseFloat(form.mrp) || parsedPrice;
+      const placeholderImage = `https://placehold.co/200x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 12))}`;
+      const images = form.image ? [form.image] : [placeholderImage];
+
+      if (isEdit && editId) {
+        await updateDealerProduct(editId, {
+          name: form.name,
+          brand: form.brand,
+          category: form.category,
+          price: parsedPrice,
+          originalPrice: parsedMrp,
+          stock: stockNum,
+          description: form.description,
+          images,
+          tags: form.sku ? [form.sku] : undefined,
+        });
       } else {
-        await addProduct(payload);
+        await createDealerProduct({
+          name: form.name,
+          brand: form.brand,
+          category: form.category,
+          price: parsedPrice,
+          originalPrice: parsedMrp,
+          stock: stockNum,
+          description: form.description,
+          images,
+          tags: form.sku ? [form.sku] : undefined,
+        });
       }
       successHaptic();
       navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Failed to save product'));
     } finally {
       setSaving(false);
     }
   };
 
+  const handleDelete = () => {
+    if (!editId) return;
+    Alert.alert('Delete Product', 'Remove this product from inventory?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setSaving(true);
+            await deleteDealerProduct(editId);
+            successHaptic();
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete product'));
+          } finally {
+            setSaving(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loadingProduct) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.textSecondary }}>Loading product…</Text>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-        {/* Clean white header */}
-        <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: '#ffffff', borderBottomColor: '#E2E8F0' }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-            <Feather name="arrow-left" size={20} color={colors.textPrimary} />
+            <Feather name="arrow-left" size={20} color={colors.headerForeground} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{isEdit ? 'Edit Product' : 'Add Product'}</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Add new product to your inventory</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{isEdit ? 'Edit Product' : 'Add Product'}</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Add new product to your inventory</Text>
           </View>
           <Pressable style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>
             <Feather name="save" size={13} color="#ffffff" style={{ marginRight: 5 }} />
             <Text style={styles.saveHeaderText}>{saving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
-        </View>
+          {isEdit ? (
+            <Pressable style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]} onPress={handleDelete} disabled={saving}>
+              <Feather name="trash-2" size={13} color="#ffffff" />
+            </Pressable>
+          ) : null}
+        </ChromeHeader>
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 120 }]}
@@ -145,20 +216,11 @@ export function ProductFormScreen({ route, navigation }: Props) {
                 <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Upload clear images of your product</Text>
               </View>
             </View>
-            <View style={styles.imageUploadArea}>
-              <View style={[styles.uploadDropZone, { borderColor: '#D9D9D9' }]}>
-                <View style={[styles.uploadIcon, { backgroundColor: '#F2F2F2' }]}>
-                  <Feather name="upload-cloud" size={22} color={colors.icon} />
-                </View>
-                <Text style={[styles.uploadText, { color: colors.textSecondary }]}>Drag & drop images here</Text>
-                <Text style={[styles.uploadOr, { color: colors.textTertiary }]}>or</Text>
-                <Pressable style={styles.galleryBtn} onPress={() => lightHaptic()}>
-                  <Feather name="image" size={13} color={colors.icon} style={{ marginRight: 5 }} />
-                  <Text style={styles.galleryBtnText}>Upload from Gallery</Text>
-                </Pressable>
-                <Text style={[styles.uploadHint, { color: colors.textTertiary }]}>JPG, PNG up to 5MB</Text>
-              </View>
-            </View>
+            <InventoryImageUploadSection
+              imageUri={form.image || undefined}
+              title="Upload clear images of your product"
+              onImageChange={(url) => set('image', url)}
+            />
           </View>
 
           {/* Section 2: Basic Information */}
@@ -427,7 +489,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1,
+    paddingHorizontal: 16, paddingBottom: 12,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
@@ -452,21 +514,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   sectionSubtitle: { fontSize: 10, marginTop: 1 },
   optionalTag: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  imageUploadArea: { gap: 10 },
-  uploadDropZone: {
-    borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 14,
-    padding: 24, alignItems: 'center', gap: 6, backgroundColor: '#F8FBFF',
-  },
-  uploadIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  uploadText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  uploadOr: { fontSize: 10 },
-  galleryBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E60012', borderRadius: 8,
-    paddingHorizontal: 14, paddingVertical: 7,
-  },
-  galleryBtnText: { color: themeLight.textSecondary, fontSize: 11, fontFamily: 'Inter_700Bold' },
-  uploadHint: { fontSize: 9, marginTop: 4 },
   twoColRow: { flexDirection: 'row', gap: 12 },
   inputWrapper: { gap: 5 },
   inputIconRow: { flexDirection: 'row', alignItems: 'center' },

@@ -7,45 +7,49 @@ import React, {
   type ReactNode,
 } from 'react';
 
-import {
-  GARAGE_VEHICLES,
-  generateBookingId,
-  SERVICE_ADDONS,
-  SERVICE_WORKSHOPS,
-  SERVICES,
-  type GarageVehicle,
-  type Service,
-  type ServiceAddon,
-  type ServiceWorkshop,
-} from '@data/mockData';
+import type { IService, IServiceSlot } from '../types/service';
+import type { UserVehicle } from '../types/userVehicle';
+import { getServiceById, getServiceSlots, bookServiceSlot } from '../services/service.service';
+import { createServiceBooking } from '../services/serviceBooking.service';
+import { getUserVehicles } from '../services/userVehicle.service';
+import { formatSlotTime } from '../utils/bookingMappers';
 
 export type LocationType = 'workshop' | 'pickup';
 export type BookingPaymentMethod = 'upi' | 'card' | 'netbanking' | 'wallet' | 'paylater';
+
+export interface ServiceLocationInfo {
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+}
 
 export interface ServiceBookingDraft {
   serviceId: string;
   date: string;
   timeSlot: string;
+  slotId: string;
   vehicleId: string;
   vehicleLocked: boolean;
   locationType: LocationType;
-  workshopId: string;
   selectedAddonIds: string[];
   couponCode: string;
   paymentMethod: BookingPaymentMethod;
   bookingId: string;
+  notes?: string;
+  pickupAddress?: string;
 }
 
 const EMPTY_DRAFT: ServiceBookingDraft = {
   serviceId: '',
   date: '',
   timeSlot: '',
+  slotId: '',
   vehicleId: '',
   vehicleLocked: false,
   locationType: 'workshop',
-  workshopId: '',
   selectedAddonIds: [],
-  couponCode: 'HUB10',
+  couponCode: '',
   paymentMethod: 'upi',
   bookingId: '',
 };
@@ -57,15 +61,21 @@ interface StartBookingOptions {
 
 interface ServiceBookingContextValue {
   draft: ServiceBookingDraft;
-  startBooking: (serviceId: string, options?: StartBookingOptions) => void;
-  startBookingFromGarage: (vehicleId: string, serviceId?: string) => void;
+  service: IService | null;
+  vehicles: UserVehicle[];
+  slots: IServiceSlot[];
+  slotsLoading: boolean;
+  serviceLoading: boolean;
+  startBooking: (serviceId: string, options?: StartBookingOptions) => Promise<void>;
+  startBookingFromGarage: (vehicleId: string, serviceId?: string) => Promise<void>;
   updateBooking: (patch: Partial<ServiceBookingDraft>) => void;
   resetBooking: () => void;
-  confirmBooking: () => string;
-  getService: () => Service | undefined;
-  getVehicle: () => GarageVehicle | undefined;
-  getWorkshop: () => ServiceWorkshop | undefined;
-  getSelectedAddons: () => ServiceAddon[];
+  loadSlots: (date?: string) => Promise<void>;
+  confirmBooking: () => Promise<string>;
+  getService: () => IService | undefined;
+  getVehicle: () => UserVehicle | undefined;
+  getLocation: () => ServiceLocationInfo | undefined;
+  getSelectedAddons: () => [];
   getTotals: () => {
     serviceAmount: number;
     addonsAmount: number;
@@ -77,27 +87,99 @@ interface ServiceBookingContextValue {
 
 const ServiceBookingContext = createContext<ServiceBookingContextValue | null>(null);
 
+function serviceTypeForLocation(locationType: LocationType): 'center' | 'home' {
+  return locationType === 'pickup' ? 'home' : 'center';
+}
+
 export function ServiceBookingProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<ServiceBookingDraft>(EMPTY_DRAFT);
+  const [service, setService] = useState<IService | null>(null);
+  const [vehicles, setVehicles] = useState<UserVehicle[]>([]);
+  const [slots, setSlots] = useState<IServiceSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [serviceLoading, setServiceLoading] = useState(false);
 
-  const startBooking = useCallback((serviceId: string, options?: StartBookingOptions) => {
-    const today = new Date();
-    const defaultDate = today.toISOString().slice(0, 10);
+  const loadSlots = useCallback(
+    async (date?: string) => {
+      const serviceId = draft.serviceId;
+      const slotDate = date ?? draft.date;
+      if (!serviceId || !slotDate) {
+        setSlots([]);
+        return;
+      }
+      setSlotsLoading(true);
+      try {
+        const result = await getServiceSlots(
+          serviceId,
+          slotDate,
+          serviceTypeForLocation(draft.locationType),
+        );
+        const available = (result.slots ?? []).filter((s) => s.isAvailable);
+        setSlots(available);
+        if (available.length > 0) {
+          const first = available[0];
+          setDraft((prev) => ({
+            ...prev,
+            timeSlot: formatSlotTime(first.startTime),
+            slotId: first.id,
+          }));
+        } else {
+          setDraft((prev) => ({ ...prev, timeSlot: '', slotId: '' }));
+        }
+      } catch {
+        setSlots([]);
+        setDraft((prev) => ({ ...prev, timeSlot: '', slotId: '' }));
+      } finally {
+        setSlotsLoading(false);
+      }
+    },
+    [draft.serviceId, draft.date, draft.locationType],
+  );
+
+  const startBooking = useCallback(async (serviceId: string, options?: StartBookingOptions) => {
+    const today = new Date().toISOString().slice(0, 10);
+    setServiceLoading(true);
     setDraft({
       ...EMPTY_DRAFT,
       serviceId,
-      date: defaultDate,
-      timeSlot: '10:00 AM',
-      vehicleId: options?.vehicleId ?? GARAGE_VEHICLES[0]?.id ?? '',
+      date: today,
+      vehicleId: options?.vehicleId ?? '',
       vehicleLocked: options?.vehicleLocked ?? false,
-      workshopId: SERVICE_WORKSHOPS[0]?.id ?? '',
     });
+    try {
+      const [serviceRes, vehiclesRes] = await Promise.all([
+        getServiceById(serviceId),
+        getUserVehicles(),
+      ]);
+      const r = serviceRes.Response as IService | { services?: IService[] } | undefined;
+      const loadedService =
+        r && 'services' in r && Array.isArray(r.services)
+          ? r.services[0] ?? null
+          : (r as IService | undefined) ?? null;
+      setService(loadedService);
+      const userVehicles = vehiclesRes.Response ?? [];
+      setVehicles(userVehicles);
+      const defaultVehicleId = options?.vehicleId ?? userVehicles[0]?.id ?? '';
+      setDraft((prev) => ({
+        ...prev,
+        vehicleId: defaultVehicleId,
+        locationType: loadedService?.homeService ? prev.locationType : 'workshop',
+      }));
+    } catch {
+      setService(null);
+      setVehicles([]);
+    } finally {
+      setServiceLoading(false);
+    }
   }, []);
 
-  const startBookingFromGarage = useCallback((vehicleId: string, serviceId?: string) => {
-    const defaultServiceId = serviceId ?? SERVICES[0]?.id ?? '';
-    startBooking(defaultServiceId, { vehicleId, vehicleLocked: true });
-  }, [startBooking]);
+  const startBookingFromGarage = useCallback(
+    async (vehicleId: string, serviceId?: string) => {
+      if (!serviceId) return;
+      await startBooking(serviceId, { vehicleId, vehicleLocked: true });
+    },
+    [startBooking],
+  );
 
   const updateBooking = useCallback((patch: Partial<ServiceBookingDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -105,70 +187,117 @@ export function ServiceBookingProvider({ children }: { children: ReactNode }) {
 
   const resetBooking = useCallback(() => {
     setDraft(EMPTY_DRAFT);
+    setService(null);
+    setVehicles([]);
+    setSlots([]);
   }, []);
 
-  const confirmBooking = useCallback(() => {
-    const bookingId = generateBookingId();
+  const confirmBooking = useCallback(async () => {
+    const vehicle = vehicles.find((v) => v.id === draft.vehicleId);
+    const vehicleInfo = vehicle
+      ? {
+          brand: vehicle.brand,
+          model: vehicle.model,
+          registrationNumber: vehicle.numberPlate,
+        }
+      : undefined;
+
+    const requestLocation =
+      draft.locationType === 'pickup' && draft.pickupAddress
+        ? { address: draft.pickupAddress }
+        : undefined;
+
+    let bookingId = '';
+
+    if (draft.slotId && service?.slotBookingEnabled !== false) {
+      const result = await bookServiceSlot(draft.serviceId, draft.slotId, {
+        vehicleId: draft.vehicleId || undefined,
+        vehicleInfo,
+        notes: draft.notes,
+        requestLocation,
+      });
+      bookingId = result.bookingId;
+    } else {
+      const response = await createServiceBooking({
+        serviceId: draft.serviceId,
+        preferredDate: draft.date,
+        preferredTime: draft.timeSlot,
+        notes: draft.notes,
+        vehicleInfo,
+        requestLocation,
+      });
+      bookingId = response.Response?.id ?? '';
+    }
+
     setDraft((prev) => ({ ...prev, bookingId }));
     return bookingId;
-  }, []);
+  }, [draft, service, vehicles]);
 
-  const getService = useCallback(
-    () => SERVICES.find((s) => s.id === draft.serviceId),
-    [draft.serviceId],
-  );
+  const getService = useCallback(() => service ?? undefined, [service]);
 
   const getVehicle = useCallback(
-    () => GARAGE_VEHICLES.find((v) => v.id === draft.vehicleId),
-    [draft.vehicleId],
+    () => vehicles.find((v) => v.id === draft.vehicleId),
+    [vehicles, draft.vehicleId],
   );
 
-  const getWorkshop = useCallback(
-    () => SERVICE_WORKSHOPS.find((w) => w.id === draft.workshopId),
-    [draft.workshopId],
-  );
+  const getLocation = useCallback((): ServiceLocationInfo | undefined => {
+    if (!service) return undefined;
+    const dealerName = service.dealer?.businessName ?? 'Service Center';
+    return {
+      name: dealerName,
+      address: service.location?.address ?? 'Address not available',
+      latitude: service.location?.latitude,
+      longitude: service.location?.longitude,
+    };
+  }, [service]);
 
-  const getSelectedAddons = useCallback(
-    () => SERVICE_ADDONS.filter((a) => draft.selectedAddonIds.includes(a.id)),
-    [draft.selectedAddonIds],
-  );
+  const getSelectedAddons = useCallback(() => [] as [], []);
 
   const getTotals = useCallback(() => {
-    const service = SERVICES.find((s) => s.id === draft.serviceId);
     const serviceAmount = service?.price ?? 0;
-    const addonsAmount = SERVICE_ADDONS.filter((a) =>
-      draft.selectedAddonIds.includes(a.id),
-    ).reduce((sum, a) => sum + a.price, 0);
-    const couponDiscount = draft.couponCode === 'HUB10' ? 100 : 0;
-    const platformFee = 20;
-    const total = serviceAmount + addonsAmount + platformFee - couponDiscount;
+    const addonsAmount = 0;
+    const couponDiscount = 0;
+    const platformFee = 0;
+    const total = serviceAmount + platformFee - couponDiscount;
     return { serviceAmount, addonsAmount, couponDiscount, platformFee, total };
-  }, [draft.serviceId, draft.selectedAddonIds, draft.couponCode]);
+  }, [service]);
 
   const value = useMemo(
     () => ({
       draft,
+      service,
+      vehicles,
+      slots,
+      slotsLoading,
+      serviceLoading,
       startBooking,
       startBookingFromGarage,
       updateBooking,
       resetBooking,
+      loadSlots,
       confirmBooking,
       getService,
       getVehicle,
-      getWorkshop,
+      getLocation,
       getSelectedAddons,
       getTotals,
     }),
     [
       draft,
+      service,
+      vehicles,
+      slots,
+      slotsLoading,
+      serviceLoading,
       startBooking,
       startBookingFromGarage,
       updateBooking,
       resetBooking,
+      loadSlots,
       confirmBooking,
       getService,
       getVehicle,
-      getWorkshop,
+      getLocation,
       getSelectedAddons,
       getTotals,
     ],

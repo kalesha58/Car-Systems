@@ -86,7 +86,7 @@ export function BookingDetailScreen({ route, navigation }: Props) {
         text: 'Yes, Cancel',
         style: 'destructive',
         onPress: async () => {
-          await cancelBooking(bookingId);
+          await cancelBooking(bookingId, booking.type);
           navigation.goBack();
         },
       },

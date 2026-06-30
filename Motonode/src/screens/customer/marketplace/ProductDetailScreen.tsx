@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -14,9 +15,12 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart, useWishlist } from '@context/index';
-import { PRODUCTS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { getProductById } from '@services/product.service';
+import type { IProduct } from '@app-types/product';
 import { themeLight } from '@theme/colors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type CustomerStackParamList = {
@@ -39,30 +43,75 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { id } = route.params;
-  const product = PRODUCTS.find((p) => p.id === id);
-  const { addItem, items, updateQuantity, isInCart } = useCart();
+  const [product, setProduct] = useState<IProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { addItem, items, updateQuantity } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  // Retrieve item quantity from cart, or manage local quantity before adding
-  const cartItem = items.find((i) => i.product.id === id);
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getProductById(id);
+        if (cancelled) return;
+        const found = response.Response?.products?.[0] ?? null;
+        if (found) {
+          setProduct(found);
+        } else {
+          setError('Product not found');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Failed to load product'));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadProduct();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const productId = product ? getProductId(product) : id;
+  const cartItem = items.find((i) => getProductId(i.product) === productId);
   const inCart = !!cartItem;
   const [localQty, setLocalQty] = useState(cartItem ? cartItem.quantity : 1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const productImages = product ? [
-    product.image,
-    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=500&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=500&auto=format&fit=crop&q=80',
-  ] : [];
+  useEffect(() => {
+    setLocalQty(cartItem ? cartItem.quantity : 1);
+  }, [cartItem]);
+
+  const productImages = product?.images?.length
+    ? product.images
+    : product
+      ? ['https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80']
+      : [];
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   if (!product) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={[styles.notFound, { color: colors.textPrimary }]}>Product not found</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.notFound, { color: colors.textPrimary }]}>
+          {error ?? 'Product not found'}
+        </Text>
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go Back</Text>
         </Pressable>
@@ -70,7 +119,13 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     );
   }
 
-  const wishlisted = isWishlisted(product.id);
+  const discount = product.discountPercentage ?? 0;
+  const reviewCount = product.reviewCount ?? 0;
+  const inStock = product.stock > 0 && product.status === 'active';
+  const dealerName = product.dealer?.businessName ?? 'Authorized Dealer';
+  const dealerId = product.dealerId || product.dealer?.id || '';
+
+  const wishlisted = isWishlisted(productId);
 
   const handleDecrease = () => {
     lightHaptic();
@@ -78,11 +133,10 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
       const nextQty = localQty - 1;
       setLocalQty(nextQty);
       if (inCart) {
-        updateQuantity(product.id, nextQty);
+        updateQuantity(productId, nextQty);
       }
     } else if (localQty === 1 && inCart) {
-      // Remove from cart if quantity hits 0
-      updateQuantity(product.id, 0);
+      updateQuantity(productId, 0);
       setLocalQty(1);
     }
   };
@@ -92,7 +146,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     const nextQty = localQty + 1;
     setLocalQty(nextQty);
     if (inCart) {
-      updateQuantity(product.id, nextQty);
+      updateQuantity(productId, nextQty);
     }
   };
 
@@ -100,7 +154,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     successHaptic();
     addItem(product);
     if (localQty > 1) {
-      updateQuantity(product.id, localQty);
+      updateQuantity(productId, localQty);
     }
   };
 
@@ -126,7 +180,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             style={[styles.iconBtn, { backgroundColor: colors.card }]}
             onPress={() => {
               lightHaptic();
-              toggleWishlist(product.id);
+              toggleWishlist(productId);
             }}
           >
             <Feather name="heart" size={20} color={wishlisted ? colors.destructive : colors.textPrimary} />
@@ -159,9 +213,9 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           {/* Main Product Image Panel */}
           <View style={styles.mainImagePanel}>
             <Image source={{ uri: productImages[activeImageIndex] }} style={styles.productImage} resizeMode="cover" />
-            {product.discount > 0 && (
+            {discount > 0 && (
               <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
-                <Text style={styles.discountText}>{product.discount}% OFF</Text>
+                <Text style={styles.discountText}>{discount}% OFF</Text>
               </View>
             )}
             <View style={styles.pageIndicator}>
@@ -184,17 +238,19 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               <Feather name="star" size={14} color="#E2E8F0" />
             </View>
             <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>4.5</Text>
-            <Text style={styles.reviewsCount}>({product.reviews.toLocaleString()} reviews)</Text>
+            <Text style={styles.reviewsCount}>({reviewCount.toLocaleString()} reviews)</Text>
           </View>
 
           {/* Price Block */}
           <View style={styles.priceRow}>
             <Text style={[styles.price, { color: colors.textPrimary }]}>₹{product.price.toLocaleString('en-IN')}</Text>
-            {product.discount > 0 && (
+            {product.originalPrice != null && product.originalPrice > product.price && (
               <Text style={[styles.originalPrice, { color: colors.textTertiary }]}>₹{product.originalPrice.toLocaleString('en-IN')}</Text>
             )}
-            <View style={styles.stockBadge}>
-              <Text style={styles.stockText}>In Stock</Text>
+            <View style={[styles.stockBadge, !inStock && { backgroundColor: '#FEE2E2' }]}>
+              <Text style={[styles.stockText, !inStock && { color: '#B91C1C' }]}>
+                {inStock ? 'In Stock' : 'Out of Stock'}
+              </Text>
             </View>
           </View>
 
@@ -234,21 +290,23 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           {/* Clickable Dealer Card */}
           <Pressable
             style={[styles.dealerCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => navigation.navigate(CustomerStackRoutes.DealerStore, { id: product.dealerId || 'd1' })}
+            onPress={() => dealerId && navigation.navigate(CustomerStackRoutes.DealerStore, { id: dealerId })}
           >
             <View style={[styles.dealerIcon, { backgroundColor: colors.primary + '20' }]}>
               <Feather name="briefcase" size={20} color={colors.primary} />
             </View>
             <View style={styles.dealerInfo}>
-              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{product.dealerName || 'Motonode Auto Hub'}</Text>
-              <Text style={[styles.dealerLabel, { color: colors.textTertiary }]}>Authorized Dealer • {product.distance || '1.2 km'}</Text>
+              <Text style={[styles.dealerName, { color: colors.textPrimary }]}>{dealerName}</Text>
+              <Text style={[styles.dealerLabel, { color: colors.textTertiary }]}>Authorized Dealer</Text>
             </View>
             <Feather name="chevron-right" size={18} color={colors.textSecondary} />
           </Pressable>
 
           {/* Description Section */}
           <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginTop: 24 }]}>Description</Text>
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{product.description}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {product.description ?? 'No description available.'}
+          </Text>
 
           {/* Key Benefits */}
           <View style={[styles.benefitsCard, { borderColor: colors.border }]}>
@@ -301,6 +359,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

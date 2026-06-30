@@ -1,12 +1,11 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingFlowLayout } from '@components/booking/BookingFlowLayout';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { GARAGE_VEHICLES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
@@ -19,11 +18,11 @@ type Props = NativeStackScreenProps<
 
 export function ServiceBookingVehicleScreen({ navigation }: Props) {
   const colors = useColors();
-  const { draft, updateBooking } = useServiceBooking();
+  const { draft, updateBooking, vehicles, serviceLoading } = useServiceBooking();
 
-  const vehicles = draft.vehicleLocked
-    ? GARAGE_VEHICLES.filter((v) => v.id === draft.vehicleId)
-    : GARAGE_VEHICLES;
+  const list = draft.vehicleLocked
+    ? vehicles.filter((v) => v.id === draft.vehicleId)
+    : vehicles;
 
   return (
     <BookingFlowLayout
@@ -39,45 +38,60 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
         </Text>
       )}
 
-      {vehicles.map((vehicle) => {
-        const selected = draft.vehicleId === vehicle.id;
-        return (
-          <Pressable
-            key={vehicle.id}
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderColor: selected ? '#E60012' : colors.border,
-              },
-            ]}
-            onPress={() => {
-              if (!draft.vehicleLocked) {
-                updateBooking({ vehicleId: vehicle.id });
-              }
-            }}
-            disabled={draft.vehicleLocked}
-          >
-            <Image source={{ uri: vehicle.image }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={[styles.name, { color: colors.textPrimary }]}>
-                {vehicle.brand} {vehicle.name}
-              </Text>
-              <Text style={[styles.plate, { color: colors.primary }]}>{vehicle.regNumber}</Text>
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>
-                {vehicle.year} • {vehicle.fuel}
-              </Text>
-            </View>
-            {draft.vehicleLocked ? (
-              <Feather name="check-circle" size={20} color={colors.icon} />
-            ) : (
-              <View style={[styles.radio, selected && styles.radioSelected]}>
-                {selected && <View style={styles.radioInner} />}
+      {serviceLoading ? (
+        <ActivityIndicator color="#E60012" style={{ marginVertical: 24 }} />
+      ) : list.length === 0 ? (
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          No vehicles in your garage. Add a vehicle first.
+        </Text>
+      ) : (
+        list.map((vehicle) => {
+          const selected = draft.vehicleId === vehicle.id;
+          const imageUri = vehicle.images?.[0];
+          return (
+            <Pressable
+              key={vehicle.id}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: selected ? '#E60012' : colors.border,
+                },
+              ]}
+              onPress={() => {
+                if (!draft.vehicleLocked) {
+                  updateBooking({ vehicleId: vehicle.id });
+                }
+              }}
+              disabled={draft.vehicleLocked}
+            >
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.image} />
+              ) : (
+                <View style={[styles.image, styles.imagePlaceholder]}>
+                  <Feather name="truck" size={20} color={colors.icon} />
+                </View>
+              )}
+              <View style={styles.info}>
+                <Text style={[styles.name, { color: colors.textPrimary }]}>
+                  {vehicle.brand} {vehicle.model}
+                </Text>
+                <Text style={[styles.plate, { color: colors.primary }]}>{vehicle.numberPlate}</Text>
+                {vehicle.year ? (
+                  <Text style={[styles.meta, { color: colors.textSecondary }]}>{vehicle.year}</Text>
+                ) : null}
               </View>
-            )}
-          </Pressable>
-        );
-      })}
+              {draft.vehicleLocked ? (
+                <Feather name="check-circle" size={20} color={colors.icon} />
+              ) : (
+                <View style={[styles.radio, selected && styles.radioSelected]}>
+                  {selected && <View style={styles.radioInner} />}
+                </View>
+              )}
+            </Pressable>
+          );
+        })
+      )}
 
       {!draft.vehicleLocked && (
         <Pressable
@@ -94,6 +108,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   lockedHint: { fontSize: 12, fontFamily: 'Inter_400Regular', marginBottom: 4 },
+  emptyText: { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingVertical: 24 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -103,6 +118,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   image: { width: 72, height: 52, borderRadius: 8 },
+  imagePlaceholder: {
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   info: { flex: 1 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   plate: { fontSize: 11, fontFamily: 'Inter_700Bold', marginTop: 2 },

@@ -38,9 +38,9 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { bookingId } = route.params;
 
-  const { getService, getWorkshop, draft } = useServiceBooking();
+  const { getService, getLocation, draft } = useServiceBooking();
   const service = getService();
-  const workshop = getWorkshop();
+  const location = getLocation();
 
   const dateLabel = draft.date
     ? new Date(draft.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
@@ -73,7 +73,7 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
         <View style={[styles.serviceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service?.name}</Text>
           <Text style={[styles.serviceMeta, { color: colors.textSecondary }]}>
-            {dateLabel} • {draft.timeSlot} • {workshop?.name}
+            {dateLabel} • {draft.timeSlot} • {location?.name}
           </Text>
         </View>
 
@@ -119,7 +119,7 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
           style={styles.footerAction}
           onPress={() => {
             lightHaptic();
-            Alert.alert('Call Workshop', `Calling ${workshop?.name ?? 'workshop'}…`);
+            Alert.alert('Call Workshop', `Calling ${location?.name ?? 'service center'}…`);
           }}
         >
           <Feather name="phone" size={18} color="#2563EB" />
@@ -129,7 +129,7 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
           style={styles.footerAction}
           onPress={() => {
             lightHaptic();
-            Alert.alert('Directions', `Opening directions to ${workshop?.address ?? 'workshop'}`);
+            Alert.alert('Directions', `Opening directions to ${location?.address ?? 'service center'}`);
           }}
         >
           <Feather name="navigation" size={18} color="#2563EB" />

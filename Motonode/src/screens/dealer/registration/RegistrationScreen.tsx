@@ -56,10 +56,19 @@ const EMPTY: BusinessProfile = {
   mobile: '',
   email: '',
   gst: '',
+  registrationNumber: '',
+  establishedYear: '',
+  website: '',
   address: '',
   city: '',
   state: '',
   pincode: '',
+  workingDays: 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
+  workingHoursOpen: '9:00 AM',
+  workingHoursClose: '8:00 PM',
+  facebook: '',
+  instagram: '',
+  youtube: '',
   upiId: '',
   bankName: '',
   accountNumber: '',
@@ -67,6 +76,16 @@ const EMPTY: BusinessProfile = {
   storeLogo: null,
   storeBanner: null,
 };
+
+const WEEKDAYS = [
+  { key: 'Monday', short: 'Mon' },
+  { key: 'Tuesday', short: 'Tue' },
+  { key: 'Wednesday', short: 'Wed' },
+  { key: 'Thursday', short: 'Thu' },
+  { key: 'Friday', short: 'Fri' },
+  { key: 'Saturday', short: 'Sat' },
+  { key: 'Sunday', short: 'Sun' },
+] as const;
 
 const STATES = [
   'Telangana',
@@ -159,18 +178,55 @@ export function RegistrationScreen({ navigation }: Props) {
   const [doc2Uploaded, setDoc2Uploaded] = useState(false);
   const [gstUploading, setGstUploading] = useState(false);
   const [panUploading, setPanUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [bannerUploaded, setBannerUploaded] = useState(false);
+
+  const [gstVerified, setGstVerified] = useState(false);
+  const [gstVerifying, setGstVerifying] = useState(false);
+  const [gstError, setGstError] = useState<string | null>(null);
 
   const [pickerVisible, setPickerVisible] = useState(false);
   const [permissionVisible, setPermissionVisible] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [pendingSource, setPendingSource] = useState<PhotoSource | null>(null);
-  const [uploadTarget, setUploadTarget] = useState<'gst' | 'pan' | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<'banner' | 'gst' | 'pan' | null>(null);
 
   const [gstDocUrl, setGstDocUrl] = useState<string | null>(null);
   const [panDocUrl, setPanDocUrl] = useState<string | null>(null);
 
-  const openPhotoPickerFor = (target: 'gst' | 'pan') => {
+  const handleGstChange = (val: string) => {
+    setForm(prev => ({ ...prev, gst: val.toUpperCase() }));
+    setGstVerified(false);
+    setGstError(null);
+  };
+
+  const verifyGst = () => {
+    const gstVal = form.gst.trim().toUpperCase();
+    if (!gstVal) {
+      setGstError('GST number is required.');
+      return;
+    }
+
+    setGstVerifying(true);
+    setGstError(null);
+
+    // Simulate API check delay
+    setTimeout(() => {
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (gstRegex.test(gstVal)) {
+        setGstVerified(true);
+        setGstError(null);
+        successHaptic();
+      } else {
+        setGstVerified(false);
+        setGstError('Invalid GST format. Expected: 27AABCU9603R1ZX');
+      }
+      setGstVerifying(false);
+    }, 800);
+  };
+
+  const openPhotoPickerFor = (target: 'banner' | 'gst' | 'pan') => {
     lightHaptic();
     setUploadTarget(target);
     setPickerVisible(true);
@@ -231,6 +287,8 @@ export function RegistrationScreen({ navigation }: Props) {
       setGstUploading(true);
     } else if (uploadTarget === 'pan') {
       setPanUploading(true);
+    } else if (uploadTarget === 'banner') {
+      setBannerUploading(true);
     }
     setSaving(true);
     try {
@@ -242,6 +300,9 @@ export function RegistrationScreen({ navigation }: Props) {
       } else if (uploadTarget === 'pan') {
         setPanDocUrl(uploadedUrl);
         setDoc2Uploaded(true);
+      } else if (uploadTarget === 'banner') {
+        setForm(prev => ({ ...prev, storeBanner: uploadedUrl }));
+        setBannerUploaded(true);
       }
       successHaptic();
     } catch (err: any) {
@@ -251,6 +312,7 @@ export function RegistrationScreen({ navigation }: Props) {
       setSaving(false);
       setGstUploading(false);
       setPanUploading(false);
+      setBannerUploading(false);
       setUploadTarget(null);
     }
   };
@@ -290,31 +352,65 @@ export function RegistrationScreen({ navigation }: Props) {
   const set = (key: keyof BusinessProfile, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const selectedWorkingDays = form.workingDays
+    ? form.workingDays.split(',').map((d) => d.trim()).filter(Boolean)
+    : [];
+
+  const toggleWorkingDay = (day: string) => {
+    lightHaptic();
+    const next = selectedWorkingDays.includes(day)
+      ? selectedWorkingDays.filter((d) => d !== day)
+      : [...selectedWorkingDays, day];
+    set('workingDays', next.join(','));
+  };
+
+  const formatWorkingDaysLabel = (days: string) =>
+    days
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .join(' – ')
+      .replace(/,([^,]*)$/, ' –$1');
+
   const handleNext = () => {
     lightHaptic();
     if (currentStep === 1) {
-      // Validate Step 1
       const missing: string[] = [];
       if (!form.businessName) missing.push('Business Name');
       if (!form.ownerName) missing.push('Owner Name');
       if (!form.mobile) missing.push('Mobile Number');
       if (!form.email) missing.push('Email');
+      if (!form.establishedYear) missing.push('Established Year');
       if (!form.city) missing.push('City');
       if (!form.state) missing.push('State');
       if (!form.pincode) missing.push('Pincode');
+      if (!form.gst) missing.push('GST Number');
 
       if (missing.length > 0) {
         Alert.alert('Missing Fields', `Please fill in: ${missing.join(', ')}`);
         return;
       }
+
+      const year = parseInt(form.establishedYear, 10);
+      if (!Number.isInteger(year) || year < 1900 || year > new Date().getFullYear()) {
+        Alert.alert('Invalid Year', 'Please enter a valid established year.');
+        return;
+      }
+
+      if (!gstVerified) {
+        Alert.alert('GST Unverified', 'Please verify your GST Number before proceeding.');
+        return;
+      }
       setCurrentStep(2);
     } else if (currentStep === 2) {
-      // Validate Step 2
       const missing: string[] = [];
       if (!form.upiId) missing.push('UPI ID');
       if (!form.bankName) missing.push('Bank Name');
       if (!form.accountNumber) missing.push('Account Number');
       if (!form.ifsc) missing.push('IFSC Code');
+      if (!form.workingDays) missing.push('Working Days');
+      if (!form.workingHoursOpen) missing.push('Opening Time');
+      if (!form.workingHoursClose) missing.push('Closing Time');
 
       if (missing.length > 0) {
         Alert.alert('Missing Fields', `Please fill in: ${missing.join(', ')}`);
@@ -363,6 +459,20 @@ export function RegistrationScreen({ navigation }: Props) {
         city: form.city,
         phone: form.mobile,
         gst: form.gst,
+        registrationNumber: form.registrationNumber || undefined,
+        establishedYear: parseInt(form.establishedYear, 10),
+        website: form.website || undefined,
+        workingDays: formatWorkingDaysLabel(form.workingDays),
+        workingHours: {
+          open: form.workingHoursOpen,
+          close: form.workingHoursClose,
+        },
+        socialLinks: {
+          facebook: form.facebook || undefined,
+          instagram: form.instagram || undefined,
+          youtube: form.youtube || undefined,
+        },
+        coverPhoto: form.storeBanner || undefined,
         payout: form.upiId
           ? {
               type: 'UPI',
@@ -376,7 +486,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 accountName: form.ownerName || '',
               },
             },
-        shopPhotos: [],
+        shopPhotos: form.storeBanner ? [{ url: form.storeBanner }] : [],
         documents: docPayload,
       };
 
@@ -514,11 +624,19 @@ export function RegistrationScreen({ navigation }: Props) {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         
         {/* Automobile Showroom Top Banner */}
-        <View style={styles.bannerContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
-            style={[styles.bannerImg, { opacity: 0.15 }]}
-          />
+        <Pressable 
+          style={styles.bannerContainer}
+          onPress={() => !bannerUploading && openPhotoPickerFor('banner')}
+          disabled={bannerUploading}
+        >
+          {form.storeBanner ? (
+            <Image source={{ uri: form.storeBanner }} style={styles.bannerImg} />
+          ) : (
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80' }}
+              style={[styles.bannerImg, { opacity: 0.15 }]}
+            />
+          )}
           <View style={styles.bannerOverlay} />
           
           <View style={[styles.bannerContentColumn, { paddingTop: topPad + 12 }]}>
@@ -536,8 +654,23 @@ export function RegistrationScreen({ navigation }: Props) {
                 <Text style={styles.bannerSubtitle}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
             </View>
+
+            {/* Bottom Row: Camera upload button */}
+            {bannerUploading ? (
+              <ActivityIndicator size="small" color="#ffffff" style={{ alignSelf: 'flex-start', marginLeft: 16 }} />
+            ) : !form.storeBanner ? (
+              <View style={styles.bannerUploadPromptContainer}>
+                <Feather name="camera" size={16} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.bannerUploadPromptText}>Upload Cover Photo (Optional)</Text>
+              </View>
+            ) : (
+              <View style={styles.bannerUploadedIndicator}>
+                <Feather name="camera" size={12} color="#ffffff" />
+                <Text style={styles.bannerUploadedText}>Change Cover Photo</Text>
+              </View>
+            )}
           </View>
-        </View>
+        </Pressable>
 
         {/* Stepper Card */}
         <View style={styles.stepperContainer}>
@@ -677,22 +810,106 @@ export function RegistrationScreen({ navigation }: Props) {
                 </View>
 
                 {/* GST Number input */}
+                <View style={{ marginBottom: 12 }}>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      {
+                        borderColor: gstError ? colors.error : gstVerified ? '#10B981' : colors.border,
+                        marginBottom: 0,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                      <Feather name="file-text" size={14} color={colors.icon} />
+                    </View>
+                    <View style={styles.inputTextContainer}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>GST Number *</Text>
+                      <TextInput
+                        style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                        value={form.gst}
+                        onChangeText={handleGstChange}
+                        onBlur={verifyGst}
+                        autoCapitalize="characters"
+                        placeholder="22AAAAA0000A1Z5"
+                        placeholderTextColor={colors.textTertiary}
+                      />
+                    </View>
+                    {gstVerifying ? (
+                      <ActivityIndicator size="small" color={colors.primary} style={styles.rightFieldIcon} />
+                    ) : gstVerified ? (
+                      <Feather name="check-circle" size={16} color="#10B981" style={styles.rightFieldIcon} />
+                    ) : (
+                      <Pressable style={styles.verifyBtn} onPress={verifyGst}>
+                        <Text style={styles.verifyBtnText}>Verify</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                  {gstError ? (
+                    <Text style={{ color: colors.error, fontSize: 10, marginTop: 4, marginLeft: 12 }}>
+                      {gstError}
+                    </Text>
+                  ) : gstVerified ? (
+                    <Text style={{ color: '#10B981', fontSize: 10, marginTop: 4, marginLeft: 12 }}>
+                      GST verified successfully ✓
+                    </Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.inputBox, { flex: 1 }]}>
+                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="hash" size={14} color={colors.icon} />
+                      </View>
+                      <View style={styles.inputTextContainer}>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Registration No. (Optional)</Text>
+                        <TextInput
+                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                          value={form.registrationNumber}
+                          onChangeText={(v) => set('registrationNumber', v)}
+                          placeholder="BRN-2024-001"
+                          placeholderTextColor={colors.textTertiary}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={[styles.inputBox, { flex: 1 }]}>
+                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="calendar" size={14} color={colors.icon} />
+                      </View>
+                      <View style={styles.inputTextContainer}>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Established Year *</Text>
+                        <TextInput
+                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                          value={form.establishedYear}
+                          onChangeText={(v) => set('establishedYear', v.replace(/[^0-9]/g, '').slice(0, 4))}
+                          keyboardType="numeric"
+                          placeholder="2018"
+                          placeholderTextColor={colors.textTertiary}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
                 <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                    <Feather name="file-text" size={14} color={colors.icon} />
+                    <Feather name="globe" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>GST Number</Text>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Website (Optional)</Text>
                     <TextInput
                       style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                      value={form.gst}
-                      onChangeText={(v) => set('gst', v)}
-                      autoCapitalize="characters"
-                      placeholder="22AAAAA0000A1Z5"
+                      value={form.website}
+                      onChangeText={(v) => set('website', v)}
+                      autoCapitalize="none"
+                      placeholder="https://yourbusiness.com"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
-                  <Feather name="info" size={16} color={colors.textTertiary} style={styles.rightFieldIcon} />
                 </View>
               </View>
 
@@ -898,6 +1115,144 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('ifsc', v)}
                       autoCapitalize="characters"
                       placeholder="SBIN0001234"
+                      placeholderTextColor={colors.textTertiary}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Card 2: Working Hours */}
+              <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="clock" size={16} color={colors.icon} />
+                  </View>
+                  <View>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Working Days & Hours</Text>
+                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>When is your business open?</Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: 8 }]}>Working Days *</Text>
+                <View style={styles.dayChipRow}>
+                  {WEEKDAYS.map((day) => {
+                    const selected = selectedWorkingDays.includes(day.key);
+                    return (
+                      <Pressable
+                        key={day.key}
+                        style={[
+                          styles.dayChip,
+                          {
+                            backgroundColor: selected ? '#E60012' : colors.muted,
+                            borderColor: selected ? '#E60012' : colors.border,
+                          },
+                        ]}
+                        onPress={() => toggleWorkingDay(day.key)}
+                      >
+                        <Text style={[styles.dayChipText, { color: selected ? '#ffffff' : colors.textSecondary }]}>
+                          {day.short}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <View style={[styles.formRow, { marginTop: 12 }]}>
+                  <View style={[styles.inputBox, { flex: 1 }]}>
+                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="sunrise" size={14} color={colors.icon} />
+                      </View>
+                      <View style={styles.inputTextContainer}>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Opens At *</Text>
+                        <TextInput
+                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                          value={form.workingHoursOpen}
+                          onChangeText={(v) => set('workingHoursOpen', v)}
+                          placeholder="9:00 AM"
+                          placeholderTextColor={colors.textTertiary}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={[styles.inputBox, { flex: 1 }]}>
+                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                        <Feather name="sunset" size={14} color={colors.icon} />
+                      </View>
+                      <View style={styles.inputTextContainer}>
+                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Closes At *</Text>
+                        <TextInput
+                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                          value={form.workingHoursClose}
+                          onChangeText={(v) => set('workingHoursClose', v)}
+                          placeholder="8:00 PM"
+                          placeholderTextColor={colors.textTertiary}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Card 3: Social Media */}
+              <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="share-2" size={16} color={colors.icon} />
+                  </View>
+                  <View>
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Social Media Links</Text>
+                    <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>Optional — add if you have them</Text>
+                  </View>
+                </View>
+
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#EFF6FF' }]}>
+                    <Feather name="facebook" size={14} color="#1877F2" />
+                  </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Facebook (Optional)</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.facebook}
+                      onChangeText={(v) => set('facebook', v)}
+                      autoCapitalize="none"
+                      placeholder="facebook.com/yourpage"
+                      placeholderTextColor={colors.textTertiary}
+                    />
+                  </View>
+                </View>
+
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#FDF2F8' }]}>
+                    <Feather name="instagram" size={14} color="#E1306C" />
+                  </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Instagram (Optional)</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.instagram}
+                      onChangeText={(v) => set('instagram', v)}
+                      autoCapitalize="none"
+                      placeholder="instagram.com/yourpage"
+                      placeholderTextColor={colors.textTertiary}
+                    />
+                  </View>
+                </View>
+
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#FEF2F2' }]}>
+                    <Feather name="youtube" size={14} color="#FF0000" />
+                  </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>YouTube (Optional)</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.youtube}
+                      onChangeText={(v) => set('youtube', v)}
+                      autoCapitalize="none"
+                      placeholder="youtube.com/@yourchannel"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1147,6 +1502,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  dayChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  dayChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  dayChipText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   inputBox: {
     gap: 6,
   },
@@ -1287,4 +1654,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pickerOptionText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  verifyBtn: {
+    backgroundColor: '#E60012',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+    alignSelf: 'center',
+  },
+  verifyBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
 });

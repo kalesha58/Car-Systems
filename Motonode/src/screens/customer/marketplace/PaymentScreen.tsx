@@ -15,9 +15,15 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
+import { useCart } from '@context/index';
 import { useColors } from '@hooks/useColors';
+import { createOrder } from '@services/order.service';
+import type { ICreateOrderRequest } from '@app-types/order';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { formatCurrency, getOrderId, getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { DEFAULT_SHIPPING_ADDRESS } from './CheckoutScreen';
 
 type Props = NativeStackScreenProps<CustomerStackParamList, typeof CustomerStackRoutes.Payment>;
 
@@ -98,34 +104,81 @@ const PAYMENT_METHODS: {
 export function PaymentScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+  const { items, total, clearCart } = useCart();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('upi');
   const [paying, setPaying] = useState(false);
 
-  const serviceAmount = 999;
-  const couponDiscount = 100;
-  const platformFee = 20;
-  const totalAmount = serviceAmount - couponDiscount + platformFee;
+  const platformFee = 0;
+  const totalAmount = total + platformFee;
 
-  const handlePay = () => {
+  const mapPaymentMethod = (method: PaymentMethod): ICreateOrderRequest['paymentMethod'] => {
+    switch (method) {
+      case 'upi':
+        return 'upi';
+      case 'card':
+        return 'credit_card';
+      case 'netbanking':
+        return 'debit_card';
+      default:
+        return 'cash_on_delivery';
+    }
+  };
+
+  const handlePay = async () => {
+    if (items.length === 0) {
+      Alert.alert('Empty Cart', 'Your cart is empty. Add items before paying.');
+      return;
+    }
+
     lightHaptic();
     setPaying(true);
-    setTimeout(() => {
-      setPaying(false);
+
+    try {
+      const orderItems = items.map((item) => ({
+        productId: getProductId(item.product),
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        total: item.product.price * item.quantity,
+      }));
+
+      const dealerId = items[0]?.product.dealerId;
+
+      const order = await createOrder({
+        items: orderItems,
+        shippingAddress: DEFAULT_SHIPPING_ADDRESS,
+        paymentMethod: mapPaymentMethod(selectedMethod),
+        dealerId,
+      });
+
+      if (!order) {
+        throw new Error('Failed to place order');
+      }
+
+      clearCart();
       successHaptic();
+      const orderId = getOrderId(order);
       Alert.alert(
-        '🎉 Payment Successful!',
-        `Your payment of ₹${totalAmount} has been received. Order confirmed!`,
+        'Payment Successful!',
+        `Your order ${order.orderNumber} has been placed.`,
         [
           {
-            text: 'View Order',
+            text: 'Track Order',
+            onPress: () =>
+              navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId }),
+          },
+          {
+            text: 'My Orders',
             onPress: () => navigation.navigate(CustomerStackRoutes.MyOrders),
           },
-          { text: 'Done', onPress: () => navigation.popToTop() },
-        ]
+        ],
       );
-    }, 1500);
+    } catch (err) {
+      Alert.alert('Order Failed', getApiErrorMessage(err, 'Could not place your order. Please try again.'));
+    } finally {
+      setPaying(false);
+    }
   };
 
   return (
@@ -168,45 +221,47 @@ export function PaymentScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.summaryCard}>
-          {/* Item row */}
-          <View style={styles.summaryItemRow}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=120&auto=format&fit=crop&q=80' }}
-              style={styles.summaryThumb}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.summaryItemName}>Premium Oil Change Service</Text>
-              <Text style={styles.summaryItemQty}>Qty: 1</Text>
+          {items.map((item) => (
+            <View key={getProductId(item.product)} style={styles.summaryItemRow}>
+              <Image
+                source={{
+                  uri:
+                    item.product.images?.[0] ||
+                    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=120&auto=format&fit=crop&q=80',
+                }}
+                style={styles.summaryThumb}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.summaryItemName}>{item.product.name}</Text>
+                <Text style={styles.summaryItemQty}>Qty: {item.quantity}</Text>
+              </View>
+              <Text style={styles.summaryItemPrice}>
+                {formatCurrency(item.product.price * item.quantity)}
+              </Text>
             </View>
-            <Text style={styles.summaryItemPrice}>₹{serviceAmount}</Text>
-          </View>
+          ))}
 
           <View style={styles.divider} />
 
-          {/* Price Breakdown */}
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Service Amount</Text>
-            <Text style={styles.priceValue}>₹{serviceAmount}</Text>
+            <Text style={styles.priceLabel}>Subtotal</Text>
+            <Text style={styles.priceValue}>{formatCurrency(total)}</Text>
           </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>
-              Coupon Discount <Text style={styles.couponCode}>(HUB10)</Text>
-            </Text>
-            <Text style={styles.discountValue}>-₹{couponDiscount}</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={styles.priceLabel}>Platform Fee</Text>
-              <Feather name="info" size={11} color="#94A3B8" />
+          {platformFee > 0 && (
+            <View style={styles.priceRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.priceLabel}>Platform Fee</Text>
+                <Feather name="info" size={11} color="#94A3B8" />
+              </View>
+              <Text style={styles.priceValue}>{formatCurrency(platformFee)}</Text>
             </View>
-            <Text style={styles.priceValue}>₹{platformFee}</Text>
-          </View>
+          )}
 
           <View style={styles.totalDivider} />
 
           <View style={styles.priceRow}>
             <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>₹{totalAmount}</Text>
+            <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
           </View>
         </View>
 
@@ -243,7 +298,7 @@ export function PaymentScreen({ navigation }: Props) {
       <View style={[styles.bottomBar, { paddingBottom: bottomPad + 10, borderTopColor: '#E2E8F0' }]}>
         <View>
           <Text style={styles.amountPayLabel}>Amount to Pay</Text>
-          <Text style={styles.amountPayValue}>₹{totalAmount}</Text>
+          <Text style={styles.amountPayValue}>{formatCurrency(totalAmount)}</Text>
           <Pressable onPress={() => lightHaptic()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
             <Text style={styles.viewDetails}>View Price Details</Text>
             <Feather name="chevron-right" size={12} color="#2563EB" />

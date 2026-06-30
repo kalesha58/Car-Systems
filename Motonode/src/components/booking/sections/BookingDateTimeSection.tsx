@@ -1,16 +1,19 @@
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
-import { getServiceBookingDates, SERVICE_TIME_SLOTS } from '@data/mockData';
+import type { IServiceSlot } from '../../../types/service';
 import { useColors } from '@hooks/useColors';
+import { getBookingDateOptions, formatSlotTime } from '@utils/bookingMappers';
 import { themeLight } from '@theme/colors';
 
 interface BookingDateTimeSectionProps {
   date: string;
   timeSlot: string;
+  slots: IServiceSlot[];
+  slotsLoading?: boolean;
   onDateChange: (date: string) => void;
-  onTimeChange: (time: string) => void;
+  onTimeChange: (slotId: string, startTime: string) => void;
   expanded?: boolean;
   onToggleExpand?: () => void;
 }
@@ -18,20 +21,18 @@ interface BookingDateTimeSectionProps {
 export function BookingDateTimeSection({
   date,
   timeSlot,
+  slots,
+  slotsLoading,
   onDateChange,
   onTimeChange,
   expanded = true,
   onToggleExpand,
 }: BookingDateTimeSectionProps) {
   const colors = useColors();
-  const dates = getServiceBookingDates(7);
+  const dates = getBookingDateOptions(7);
 
-  const visibleSlots = useMemo(() => {
-    const all = SERVICE_TIME_SLOTS.flatMap((g) => g.slots);
-    return expanded ? all : all.slice(0, 5);
-  }, [expanded]);
-
-  const hasMore = SERVICE_TIME_SLOTS.flatMap((g) => g.slots).length > 5;
+  const visibleSlots = useMemo(() => (expanded ? slots : slots.slice(0, 5)), [expanded, slots]);
+  const hasMore = slots.length > 5;
 
   return (
     <BookingSectionCard
@@ -74,33 +75,42 @@ export function BookingDateTimeSection({
         })}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeRow}>
-        {visibleSlots.map((slot) => {
-          const selected = timeSlot === slot;
-          return (
-            <Pressable
-              key={slot}
-              style={[
-                styles.timeChip,
-                {
-                  backgroundColor: selected ? '#E60012' : '#F1F5F9',
-                  borderColor: selected ? '#E60012' : '#E2E8F0',
-                },
-              ]}
-              onPress={() => onTimeChange(slot)}
-            >
-              <Text style={[styles.timeText, { color: selected ? '#fff' : colors.textPrimary }]}>
-                {slot}
-              </Text>
+      {slotsLoading ? (
+        <ActivityIndicator color="#E60012" style={{ marginVertical: 8 }} />
+      ) : visibleSlots.length === 0 ? (
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          No slots available for this date
+        </Text>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeRow}>
+          {visibleSlots.map((slot) => {
+            const label = formatSlotTime(slot.startTime);
+            const selected = timeSlot === label;
+            return (
+              <Pressable
+                key={slot.id}
+                style={[
+                  styles.timeChip,
+                  {
+                    backgroundColor: selected ? '#E60012' : '#F1F5F9',
+                    borderColor: selected ? '#E60012' : '#E2E8F0',
+                  },
+                ]}
+                onPress={() => onTimeChange(slot.id, slot.startTime)}
+              >
+                <Text style={[styles.timeText, { color: selected ? '#fff' : colors.textPrimary }]}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {hasMore && onToggleExpand && (
+            <Pressable style={styles.moreChip} onPress={onToggleExpand}>
+              <Text style={styles.moreText}>{expanded ? 'Less' : 'More'}</Text>
             </Pressable>
-          );
-        })}
-        {hasMore && onToggleExpand && (
-          <Pressable style={styles.moreChip} onPress={onToggleExpand}>
-            <Text style={styles.moreText}>{expanded ? 'Less' : 'More'}</Text>
-          </Pressable>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      )}
     </BookingSectionCard>
   );
 }
@@ -136,4 +146,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  emptyText: { fontSize: 11, fontFamily: 'Inter_400Regular', paddingVertical: 8 },
 });

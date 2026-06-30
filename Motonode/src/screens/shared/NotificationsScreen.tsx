@@ -1,65 +1,40 @@
-import React from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import {
+  getNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from '@services/notification.service';
+import type { INotification, NotificationType } from '@app-types/notification';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { formatRelativeTime } from '@utils/formatRelativeTime';
+import { lightHaptic } from '@utils/haptics';
 
-const NOTIFICATIONS = [
-  {
-    id: '1',
-    type: 'order',
-    icon: 'package',
-    title: 'Order Shipped!',
-    body: 'Your Steelbird SBA-2 Helmet is out for delivery',
-    time: '10 min ago',
-    color: '#8B5CF6',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'service',
-    icon: 'tool',
-    title: 'Service Reminder',
-    body: 'KTM Duke 390 service due in 500 km. Book now!',
-    time: '2h ago',
-    color: '#F59E0B',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'offer',
-    icon: 'tag',
-    title: 'Flash Sale! 40% Off',
-    body: 'Helmets and riding gear — today only until midnight',
-    time: '5h ago',
-    color: '#10B981',
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'community',
-    icon: 'users',
-    title: 'New Community Post',
-    body: 'Arjun Sharma shared a ride story from Bangalore-Mysore',
-    time: '1d ago',
-    color: '#FF1A1A',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'insurance',
-    icon: 'shield',
-    title: 'Insurance Reminder',
-    body: 'Vehicle insurance for KA 01 HB 4832 expires in 30 days',
-    time: '2d ago',
-    color: '#EF4444',
-    read: true,
-  },
-];
+const NOTIFICATION_STYLE: Record<
+  NotificationType,
+  { icon: React.ComponentProps<typeof Feather>['name']; color: string }
+> = {
+  order_update: { icon: 'package', color: '#8B5CF6' },
+  service_update: { icon: 'tool', color: '#F59E0B' },
+  test_drive_update: { icon: 'truck', color: '#2563EB' },
+  general: { icon: 'bell', color: '#10B981' },
+};
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -69,6 +44,7 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.ProductDetail]: { id: string };
   [CustomerStackRoutes.VehicleDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
+  [CustomerStackRoutes.OrderTracking]: { id: string };
 };
 
 type NotificationsNavigationProp = NativeStackNavigationProp<
@@ -81,7 +57,68 @@ export function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NotificationsNavigationProp>();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
+
+  const [notifications, setNotifications] = useState<INotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadNotifications = useCallback(async (opts?: { refreshing?: boolean }) => {
+    if (opts?.refreshing) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+
+    try {
+      const response = await getNotifications({ page: 1, limit: 50 });
+      setNotifications(response.notifications ?? []);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to load notifications'));
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadNotifications();
+    }, [loadNotifications]),
+  );
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAllRead = async () => {
+    lightHaptic();
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to mark notifications as read'));
+    }
+  };
+
+  const handleNotificationPress = async (notification: INotification) => {
+    lightHaptic();
+    if (!notification.read) {
+      try {
+        await markNotificationAsRead(notification.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)),
+        );
+      } catch {
+        // Keep UI responsive even if mark-read fails
+      }
+    }
+
+    const orderId = notification.data?.orderId;
+    if (orderId) {
+      navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId });
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -90,65 +127,90 @@ export function NotificationsScreen() {
           <Feather name="arrow-left" size={24} color="#fff" />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <Pressable>
-          <Text style={[styles.markAllText, { color: 'rgba(255,255,255,0.7)' }]}>
+        <Pressable onPress={handleMarkAllRead} disabled={unreadCount === 0}>
+          <Text
+            style={[
+              styles.markAllText,
+              { color: unreadCount > 0 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)' },
+            ]}
+          >
             Mark all read
           </Text>
         </Pressable>
       </View>
 
-      <FlatList
-        data={NOTIFICATIONS}
-        keyExtractor={(i) => i.id}
-        contentContainerStyle={[styles.content, Platform.OS === 'web' && { paddingBottom: 34 }]}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          unreadCount > 0 ? (
-            <View style={[styles.unreadBanner, { backgroundColor: colors.primary + '15' }]}>
-              <Feather name="bell" size={16} color={colors.primary} />
-              <Text style={[styles.unreadText, { color: colors.primary }]}>
-                {unreadCount} unread notifications
-              </Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <Pressable
-            style={({ pressed }) => [
-              styles.notificationItem,
-              {
-                backgroundColor: item.read ? colors.card : colors.primary + '08',
-                borderColor: colors.border,
-                opacity: pressed ? 0.9 : 1,
-              },
-            ]}
-          >
-            <View style={[styles.notifIcon, { backgroundColor: item.color + '20' }]}>
-              <Feather name={item.icon as 'package'} size={20} color={item.color} />
-            </View>
-            <View style={styles.notifContent}>
-              <View style={styles.notifHeader}>
-                <Text style={[styles.notifTitle, { color: colors.textPrimary }]}>{item.title}</Text>
-                {!item.read && (
-                  <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-                )}
+      {loading && notifications.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.content, Platform.OS === 'web' && { paddingBottom: 34 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadNotifications({ refreshing: true })}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          ListHeaderComponent={
+            unreadCount > 0 ? (
+              <View style={[styles.unreadBanner, { backgroundColor: colors.primary + '15' }]}>
+                <Feather name="bell" size={16} color={colors.primary} />
+                <Text style={[styles.unreadText, { color: colors.primary }]}>
+                  {unreadCount} unread notifications
+                </Text>
               </View>
-              <Text style={[styles.notifBody, { color: colors.textSecondary }]} numberOfLines={2}>
-                {item.body}
+            ) : null
+          }
+          renderItem={({ item }) => {
+            const style = NOTIFICATION_STYLE[item.type] ?? NOTIFICATION_STYLE.general;
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.notificationItem,
+                  {
+                    backgroundColor: item.read ? colors.card : colors.primary + '08',
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+                onPress={() => handleNotificationPress(item)}
+              >
+                <View style={[styles.notifIcon, { backgroundColor: style.color + '20' }]}>
+                  <Feather name={style.icon} size={20} color={style.color} />
+                </View>
+                <View style={styles.notifContent}>
+                  <View style={styles.notifHeader}>
+                    <Text style={[styles.notifTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+                    {!item.read && (
+                      <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                    )}
+                  </View>
+                  <Text style={[styles.notifBody, { color: colors.textSecondary }]} numberOfLines={2}>
+                    {item.body}
+                  </Text>
+                  <Text style={[styles.notifTime, { color: colors.textTertiary }]}>
+                    {formatRelativeTime(item.createdAt)}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Feather name="bell-off" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {error ?? 'No notifications'}
               </Text>
-              <Text style={[styles.notifTime, { color: colors.textTertiary }]}>{item.time}</Text>
             </View>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="bell-off" size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No notifications
-            </Text>
-          </View>
-        }
-      />
+          }
+        />
+      )}
     </View>
   );
 }
@@ -166,6 +228,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#fff', fontSize: 20, fontFamily: 'Inter_700Bold' },
   markAllText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
   content: { padding: 16, gap: 10 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   unreadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,5 +260,5 @@ const styles = StyleSheet.create({
   notifBody: { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 18, marginBottom: 4 },
   notifTime: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
-  emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular' },
+  emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingHorizontal: 24 },
 });

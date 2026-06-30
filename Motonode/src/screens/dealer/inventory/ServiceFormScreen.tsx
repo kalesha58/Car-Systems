@@ -16,10 +16,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/index';
-import { DealerService } from '@data/dealerData';
+import { ChromeHeader } from '@components/common';
+import { InventoryImageUploadSection } from '@components/dealer/InventoryImageUploadSection';
 import { useColors } from '@hooks/useColors';
+import {
+  createDealerService,
+  deleteDealerService,
+  getDealerServices,
+  updateDealerService,
+} from '@services/dealer.service';
 import { themeLight } from '@theme/colors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getServiceDurationLabel, getServiceId, parseDurationMinutes } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -42,36 +50,59 @@ const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs', '4 h
 export function ServiceFormScreen({ route, navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { addService, updateService, services } = useDealer();
-  const editService = route.params?.id ? services.find((s) => s.id === route.params?.id) : null;
-  const isEdit = !!editService;
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const editId = route.params?.id;
+  const isEdit = !!editId;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const [loadingService, setLoadingService] = useState(!!editId);
   const [form, setForm] = useState({
-    name: editService?.name ?? '',
-    category: editService?.category ?? 'Service',
-    price: editService ? String(editService.price) : '',
-    duration: editService?.duration ?? '1 hr',
-    description: editService?.description ?? '',
-    available: editService?.available ?? true,
-    slotsPerDay: editService ? String(editService.slotsPerDay) : '6',
-    image: editService?.image ?? '',
+    name: '',
+    category: 'Service',
+    price: '',
+    duration: '1 hr',
+    description: '',
+    available: true,
+    slotsPerDay: '6',
+    image: '',
     onlineBooking: true,
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (editService) {
-      setForm({
-        name: editService.name, category: editService.category,
-        price: String(editService.price), duration: editService.duration,
-        description: editService.description, available: editService.available,
-        slotsPerDay: String(editService.slotsPerDay), image: editService.image,
-        onlineBooking: true,
-      });
-    }
-  }, [editService]);
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadingService(true);
+        const response = await getDealerServices({ limit: 1000 });
+        const service = (response.Response?.services ?? []).find(
+          (item) => getServiceId(item) === editId,
+        );
+        if (!cancelled && service) {
+          setForm({
+            name: service.name,
+            category: service.category || 'Service',
+            price: String(service.price),
+            duration: getServiceDurationLabel(service),
+            description: service.description || '',
+            available: service.isActive !== false,
+            slotsPerDay: '6',
+            image: service.images?.[0] || '',
+            onlineBooking: service.slotBookingEnabled ?? true,
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          Alert.alert('Error', getApiErrorMessage(error, 'Failed to load service'));
+        }
+      } finally {
+        if (!cancelled) setLoadingService(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editId]);
 
   const set = (key: string, value: string | boolean) => setForm((p) => ({ ...p, [key]: value }));
 
@@ -83,24 +114,64 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     lightHaptic();
     setSaving(true);
     try {
-      const payload: Omit<DealerService, 'id'> = {
-        name: form.name, category: form.category,
-        price: parseFloat(form.price) || 0, duration: form.duration,
-        description: form.description, available: form.available,
-        slotsPerDay: parseInt(form.slotsPerDay, 10) || 6,
-        image: form.image || `https://placehold.co/400x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 16))}`,
+      const placeholderImage = `https://placehold.co/400x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 16))}`;
+      const images = form.image ? [form.image] : [placeholderImage];
+      const payload = {
+        name: form.name,
+        category: form.category,
+        price: parseFloat(form.price) || 0,
+        durationMinutes: parseDurationMinutes(form.duration),
+        homeService: false,
+        description: form.description,
+        images,
+        isActive: form.available,
+        slotBookingEnabled: form.onlineBooking,
       };
-      if (isEdit && route.params?.id) {
-        await updateService(route.params.id, payload);
+
+      if (isEdit && editId) {
+        await updateDealerService(editId, payload);
       } else {
-        await addService(payload);
+        await createDealerService(payload);
       }
       successHaptic();
       navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Failed to save service'));
     } finally {
       setSaving(false);
     }
   };
+
+  const handleDelete = () => {
+    if (!editId) return;
+    Alert.alert('Delete Service', 'Remove this service from your catalog?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setSaving(true);
+            await deleteDealerService(editId);
+            successHaptic();
+            navigation.goBack();
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to delete service'));
+          } finally {
+            setSaving(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loadingService) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.textSecondary }}>Loading service…</Text>
+      </View>
+    );
+  }
 
   const currentCategoryIcon = CATEGORIES.find((c) => c.label === form.category)?.icon ?? 'settings';
 
@@ -108,30 +179,53 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Clean White Header */}
-        <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-            <Feather name="arrow-left" size={20} color={colors.textPrimary} />
+            <Feather name="arrow-left" size={20} color={colors.headerForeground} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{isEdit ? 'Edit Service' : 'Add Service'}</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Add a new service to your catalog</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{isEdit ? 'Edit Service' : 'Add Service'}</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Add a new service to your catalog</Text>
           </View>
           <Pressable style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>
             <Feather name="save" size={13} color="#ffffff" style={{ marginRight: 5 }} />
             <Text style={styles.saveHeaderText}>{saving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
-        </View>
+          {isEdit ? (
+            <Pressable style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]} onPress={handleDelete} disabled={saving}>
+              <Feather name="trash-2" size={13} color="#ffffff" />
+            </Pressable>
+          ) : null}
+        </ChromeHeader>
 
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 120 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Section 1: Service Information */}
+          {/* Section 0: Service Images */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionNumberBadge}>
                 <Text style={styles.sectionNumberText}>1</Text>
+              </View>
+              <View>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Images</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Upload a photo for your service listing</Text>
+              </View>
+            </View>
+            <InventoryImageUploadSection
+              imageUri={form.image || undefined}
+              title="Upload a photo for your service"
+              onImageChange={(url) => set('image', url)}
+            />
+          </View>
+
+          {/* Section 1: Service Information */}
+          <View style={styles.sectionBlock}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
+                <Text style={styles.sectionNumberText}>2</Text>
               </View>
               <View>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Information</Text>
@@ -199,7 +293,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
-                <Text style={styles.sectionNumberText}>2</Text>
+                <Text style={styles.sectionNumberText}>3</Text>
               </View>
               <View>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Booking</Text>
@@ -272,7 +366,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeaderRow}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
-                <Text style={styles.sectionNumberText}>3</Text>
+                <Text style={styles.sectionNumberText}>4</Text>
               </View>
               <View>
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Additional Settings</Text>
@@ -354,7 +448,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingBottom: 12,
-    borderBottomWidth: 1, backgroundColor: '#ffffff',
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },

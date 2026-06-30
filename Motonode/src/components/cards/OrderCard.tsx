@@ -3,24 +3,39 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
-import type { Order } from '@data/mockData';
+import type { IOrderData } from '@app-types/order';
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+  ORDER_PLACED: { label: 'Placed', color: '#F59E0B', icon: 'clock' },
+  ORDER_CONFIRMED: { label: 'Confirmed', color: '#FF1A1A', icon: 'check-circle' },
+  SHIPPED: { label: 'Out for Delivery', color: '#8B5CF6', icon: 'truck' },
+  DELIVERED: { label: 'Delivered', color: '#10B981', icon: 'check-circle' },
+  CANCELLED: { label: 'Cancelled', color: '#EF4444', icon: 'x-circle' },
   pending: { label: 'Pending', color: '#F59E0B', icon: 'clock' },
   confirmed: { label: 'Confirmed', color: '#FF1A1A', icon: 'check-circle' },
   shipped: { label: 'Out for Delivery', color: '#8B5CF6', icon: 'truck' },
   delivered: { label: 'Delivered', color: '#10B981', icon: 'check-circle' },
   cancelled: { label: 'Cancelled', color: '#EF4444', icon: 'x-circle' },
-} as const;
+};
 
 interface OrderCardProps {
-  order: Order;
+  order: IOrderData;
   onPress?: () => void;
 }
 
 export function OrderCard({ order, onPress }: OrderCardProps) {
   const colors = useColors();
-  const status = STATUS_CONFIG[order.status];
+  const statusKey = order.status?.toUpperCase?.() || order.status;
+  const status = STATUS_CONFIG[statusKey] || STATUS_CONFIG[order.status] || {
+    label: order.status,
+    color: '#6B7280',
+    icon: 'package',
+  };
+  const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 
   return (
     <Pressable
@@ -32,8 +47,10 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
     >
       <View style={styles.header}>
         <View>
-          <Text style={[styles.orderId, { color: colors.textPrimary }]}>Order #{order.id}</Text>
-          <Text style={[styles.date, { color: colors.textSecondary }]}>{order.date}</Text>
+          <Text style={[styles.orderId, { color: colors.textPrimary }]}>
+            Order #{order.orderNumber || order.id}
+          </Text>
+          <Text style={[styles.date, { color: colors.textSecondary }]}>{orderDate}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
           <Feather
@@ -51,7 +68,7 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
             {item.name}
           </Text>
           <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-            Qty: {item.qty} · ₹{item.price.toLocaleString('en-IN')}
+            Qty: {item.quantity} · ₹{item.price.toLocaleString('en-IN')}
           </Text>
         </View>
       ))}
@@ -60,15 +77,15 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
         <View>
           <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total</Text>
           <Text style={[styles.total, { color: colors.textPrimary }]}>
-            ₹{order.total.toLocaleString('en-IN')}
+            ₹{order.totalAmount.toLocaleString('en-IN')}
           </Text>
         </View>
-        {order.status === 'shipped' && (
+        {order.expectedDeliveryDate ? (
           <Text style={[styles.delivery, { color: colors.primary }]}>
-            Arriving {order.estimatedDelivery}
+            Est. {new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN')}
           </Text>
-        )}
-        <Pressable style={[styles.trackBtn, { borderColor: colors.primary }]}>
+        ) : null}
+        <Pressable style={[styles.trackBtn, { borderColor: colors.primary }]} onPress={onPress}>
           <Text style={[styles.trackBtnText, { color: colors.primary }]}>Track Order</Text>
         </Pressable>
       </View>

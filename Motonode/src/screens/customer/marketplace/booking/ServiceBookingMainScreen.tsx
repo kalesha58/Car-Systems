@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { BookingFlowShell } from '@components/booking/BookingFlowShell';
 import { BookingPickerSheet } from '@components/booking/pickers/BookingPickerSheet';
 import { BookingLocationPicker } from '@components/booking/pickers/BookingLocationPicker';
 import { BookingVehiclePicker } from '@components/booking/pickers/BookingVehiclePicker';
-import { BookingAddonsSection } from '@components/booking/sections/BookingAddonsSection';
 import { BookingDateTimeSection } from '@components/booking/sections/BookingDateTimeSection';
 import { BookingLocationSection } from '@components/booking/sections/BookingLocationSection';
 import { BookingPriceSummary } from '@components/booking/sections/BookingPriceSummary';
@@ -14,6 +13,7 @@ import { BookingVehicleSection } from '@components/booking/sections/BookingVehic
 import { ServiceSummaryCard } from '@components/booking/sections/ServiceSummaryCard';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
+import { formatSlotTime } from '@utils/bookingMappers';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
 type Props = NativeStackScreenProps<
@@ -24,28 +24,34 @@ type Props = NativeStackScreenProps<
 type PickerType = 'vehicle' | 'location' | null;
 
 export function ServiceBookingMainScreen({ navigation }: Props) {
-  const { draft, updateBooking, getService, getVehicle, getWorkshop, getTotals } =
-    useServiceBooking();
+  const {
+    draft,
+    updateBooking,
+    getService,
+    getVehicle,
+    getLocation,
+    getTotals,
+    vehicles,
+    slots,
+    slotsLoading,
+    loadSlots,
+  } = useServiceBooking();
 
   const service = getService();
   const vehicle = getVehicle();
-  const workshop = getWorkshop();
+  const location = getLocation();
   const totals = getTotals();
 
   const [picker, setPicker] = useState<PickerType>(null);
   const [timeExpanded, setTimeExpanded] = useState(false);
 
-  const toggleAddon = (id: string) => {
-    const selected = draft.selectedAddonIds.includes(id);
-    updateBooking({
-      selectedAddonIds: selected
-        ? draft.selectedAddonIds.filter((x) => x !== id)
-        : [...draft.selectedAddonIds, id],
-    });
-  };
+  useEffect(() => {
+    if (draft.date) loadSlots(draft.date);
+  }, [draft.date, draft.locationType, loadSlots]);
 
-  const canContinue =
-    Boolean(draft.date && draft.timeSlot && draft.vehicleId && draft.workshopId && service);
+  const canContinue = Boolean(
+    draft.date && draft.timeSlot && draft.vehicleId && location && service,
+  );
 
   return (
     <>
@@ -62,8 +68,12 @@ export function ServiceBookingMainScreen({ navigation }: Props) {
         <BookingDateTimeSection
           date={draft.date}
           timeSlot={draft.timeSlot}
+          slots={slots}
+          slotsLoading={slotsLoading}
           onDateChange={(date) => updateBooking({ date })}
-          onTimeChange={(timeSlot) => updateBooking({ timeSlot })}
+          onTimeChange={(slotId, startTime) =>
+            updateBooking({ slotId, timeSlot: formatSlotTime(startTime) })
+          }
           expanded={timeExpanded}
           onToggleExpand={() => setTimeExpanded((v) => !v)}
         />
@@ -75,20 +85,15 @@ export function ServiceBookingMainScreen({ navigation }: Props) {
         />
 
         <BookingLocationSection
-          workshop={workshop}
+          location={location}
           locationType={draft.locationType}
           onPress={() => setPicker('location')}
         />
 
-        <BookingAddonsSection
-          selectedIds={draft.selectedAddonIds}
-          onToggle={toggleAddon}
-        />
-
         <BookingPriceSummary
           serviceAmount={totals.serviceAmount}
-          addonsAmount={totals.addonsAmount}
-          addonsCount={draft.selectedAddonIds.length}
+          addonsAmount={0}
+          addonsCount={0}
           platformFee={totals.platformFee}
           couponDiscount={totals.couponDiscount}
           total={totals.total}
@@ -101,6 +106,7 @@ export function ServiceBookingMainScreen({ navigation }: Props) {
         onClose={() => setPicker(null)}
       >
         <BookingVehiclePicker
+          vehicles={vehicles}
           selectedId={draft.vehicleId}
           locked={draft.vehicleLocked}
           onSelect={(vehicleId) => {
@@ -112,16 +118,13 @@ export function ServiceBookingMainScreen({ navigation }: Props) {
 
       <BookingPickerSheet
         visible={picker === 'location'}
-        title="Select Location"
+        title="Service Location"
         onClose={() => setPicker(null)}
       >
         <BookingLocationPicker
-          workshopId={draft.workshopId}
+          location={location}
           locationType={draft.locationType}
-          onSelectWorkshop={(workshopId) => {
-            updateBooking({ workshopId });
-            setPicker(null);
-          }}
+          homeServiceEnabled={service?.homeService ?? false}
           onSelectLocationType={(locationType) => updateBooking({ locationType })}
         />
       </BookingPickerSheet>

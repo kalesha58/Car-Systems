@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -9,7 +9,7 @@ import {
   View,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,9 +17,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { LogoutModal } from '@components/modals/LogoutModal';
+import { ChromeHeader } from '@components/common';
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { useAuth, useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
+import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
+import { getDealerProducts } from '@services/dealer.service';
+import { getDealerOrderStats } from '@services/order.service';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
@@ -43,6 +47,7 @@ type DealerStackParamList = {
   [DealerStackRoutes.GSTInfo]: undefined;
   [DealerStackRoutes.UPIAccounts]: undefined;
   [DealerStackRoutes.NotificationSettings]: undefined;
+  [DealerStackRoutes.BusinessDetails]: undefined;
 };
 
 type DealerProfileNavigationProp = CompositeNavigationProp<
@@ -55,11 +60,34 @@ export function DealerProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerProfileNavigationProp>();
   const { user, logout } = useAuth();
-  const { dealerType, businessProfile, products, orders, resetRegistration } = useDealer();
+  const { dealerType, businessProfile, resetRegistration, registrationCompleted } = useDealer();
+  const { status: onboardingStatus } = useDealerOnboardingStatus();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const [productCount, setProductCount] = useState(0);
+  const [deliveredOrders, setDeliveredOrders] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  const fetchProfileStats = useCallback(async () => {
+    try {
+      const [productsRes, orderStats] = await Promise.all([
+        getDealerProducts({ limit: 1000 }),
+        getDealerOrderStats(),
+      ]);
+      setProductCount(productsRes.Response?.products?.length ?? 0);
+      setDeliveredOrders(orderStats.delivered ?? 0);
+      setTotalRevenue(orderStats.totalRevenue ?? 0);
+    } catch {
+      // Keep profile usable if stats fail to load.
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfileStats();
+    }, [fetchProfileStats]),
+  );
 
   const handleLogoutConfirm = async () => {
     setLoggingOut(true);
@@ -90,9 +118,31 @@ export function DealerProfileScreen() {
     );
   };
 
+  const handleViewBusinessDetails = () => {
+    lightHaptic();
+    navigation.navigate(DealerStackRoutes.BusinessDetails);
+  };
+
+  const registrationStatusLabel =
+    onboardingStatus === 'approved'
+      ? 'Verified'
+      : onboardingStatus === 'pending'
+        ? 'Pending Review'
+        : onboardingStatus === 'rejected'
+          ? 'Rejected'
+          : registrationCompleted
+            ? 'Submitted'
+            : 'Not Registered';
+
+  const registrationStatusColor =
+    onboardingStatus === 'approved'
+      ? '#10B981'
+      : onboardingStatus === 'rejected'
+        ? '#EF4444'
+        : '#F59E0B';
+
   const menuItems = [
-    { icon: 'home', label: 'Store Settings', sublabel: 'Name, type, location, working hours', color: themeLight.textSecondary, bg: '#F2F2F2', route: DealerStackRoutes.StoreSettings },
-    { icon: 'image', label: 'Store Gallery', sublabel: 'Upload photos of your showroom', color: '#10B981', bg: '#ECFDF5', route: null },
+    { icon: 'file-text', label: 'Business Details', sublabel: 'View your submitted registration info', color: '#E60012', bg: '#FEF2F2', route: DealerStackRoutes.BusinessDetails },
     { icon: 'calendar', label: 'Test Drive Settings', sublabel: 'Manage vehicles, slots & availability', color: '#8B5CF6', bg: '#F3E8FF', route: null },
     { icon: 'credit-card', label: 'Bank & Payments', sublabel: 'Manage payout accounts & UPI', color: '#F59E0B', bg: '#FFFBEB', route: DealerStackRoutes.BankDetails },
     { icon: 'file-text', label: 'GST Information', sublabel: 'View and manage GST details', color: '#7C3AED', bg: '#F5F3FF', route: DealerStackRoutes.GSTInfo },
@@ -102,28 +152,22 @@ export function DealerProfileScreen() {
     { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, help center & contact support', color: '#64748B', bg: '#F1F5F9', route: null },
   ];
 
-  const deliveredOrders = orders.filter((o) => o.status === 'delivered').length || 3;
-  const totalRevenue = orders
-    .filter((o) => o.status === 'delivered')
-    .reduce((s, o) => s + o.total, 0);
-
-  const displayRevenue = totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(0)}K` : '₹7K';
+  const displayRevenue = totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(0)}K` : '₹0';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       
-      {/* Header Bar */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Store Profile</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Manage your store & account</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Store Profile</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Manage your store & account</Text>
           </View>
-          <Pressable style={styles.headerEditBtn} onPress={handleEditBusiness}>
-            <Feather name="edit-2" size={18} color={colors.icon} />
+          <Pressable style={[styles.headerEditBtn, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={handleEditBusiness}>
+            <Feather name="edit-2" size={18} color={colors.headerForeground} />
           </Pressable>
         </View>
-      </View>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
@@ -131,46 +175,41 @@ export function DealerProfileScreen() {
       >
         
         {/* Store Branding Info Card */}
-        <View style={[styles.brandingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          
+        <Pressable
+          style={[styles.brandingCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={handleViewBusinessDetails}
+        >
           <View style={styles.brandingLeft}>
-            {/* Store Logo with Edit Icon Badge */}
-            <View style={[styles.storeLogoBox, { backgroundColor: '#E60012' }]}>
-              <Feather name="home" size={28} color="#ffffff" />
-              <Pressable style={styles.logoEditBadge} onPress={handleEditBusiness}>
-                <Feather name="edit-2" size={9} color={colors.icon} />
-              </Pressable>
-            </View>
+            {businessProfile?.storeBanner ? (
+              <Image source={{ uri: businessProfile.storeBanner }} style={styles.storeCoverThumb} resizeMode="cover" />
+            ) : (
+              <View style={[styles.storeLogoBox, { backgroundColor: '#E60012' }]}>
+                <Feather name="home" size={28} color="#ffffff" />
+              </View>
+            )}
 
             <View style={styles.brandingDetails}>
               <Text style={[styles.storeName, { color: colors.textPrimary }]}>
-                {businessProfile?.businessName ?? 'Speed Auto Parts'}
+                {businessProfile?.businessName ?? 'Your Business'}
               </Text>
               
               <View style={styles.dealerTypeBadge}>
                 <Text style={styles.dealerTypeBadgeText}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
 
-              <View style={styles.ratingRow}>
-                <Feather name="star" size={12} color="#F59E0B" />
-                <Text style={[styles.ratingVal, { color: colors.textPrimary }]}>4.6</Text>
-                <Text style={[styles.reviewCount, { color: colors.textSecondary }]}> (256 reviews)</Text>
+              <View style={[styles.registrationStatusBadge, { backgroundColor: `${registrationStatusColor}18` }]}>
+                <View style={[styles.activeDot, { backgroundColor: registrationStatusColor }]} />
+                <Text style={[styles.registrationStatusText, { color: registrationStatusColor }]}>
+                  {registrationStatusLabel}
+                </Text>
               </View>
 
-              <View style={styles.activeStatusBadge}>
-                <View style={styles.activeDot} />
-                <Text style={styles.activeStatusText}>Store Active</Text>
-              </View>
+              <Text style={[styles.viewDetailsLink, { color: '#E60012' }]}>View business details →</Text>
             </View>
           </View>
 
-          {/* Showroom Right Vector Illustration */}
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=200&auto=format&fit=crop&q=80' }}
-            style={styles.showroomIllustration}
-            resizeMode="cover"
-          />
-        </View>
+          <Feather name="chevron-right" size={18} color={colors.textTertiary} />
+        </Pressable>
 
         {/* Store Summary Statistics Card */}
         <View style={[styles.statsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -178,7 +217,7 @@ export function DealerProfileScreen() {
             <View style={[styles.statIconBox, { backgroundColor: '#F2F2F2' }]}>
               <Feather name="package" size={16} color={colors.icon} />
             </View>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{products.length || 10}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{productCount}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Products</Text>
           </View>
 
@@ -282,9 +321,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold' },
@@ -293,7 +329,6 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -305,13 +340,18 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
-    overflow: 'hidden',
   },
   brandingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    flex: 1.3,
+    flex: 1,
+  },
+  storeCoverThumb: {
+    width: 68,
+    height: 68,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
   },
   storeLogoBox: {
     width: 68,
@@ -319,20 +359,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-  },
-  logoEditBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   brandingDetails: {
     gap: 4,
@@ -347,31 +373,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   dealerTypeBadgeText: { color: themeLight.textSecondary, fontSize: 9, fontFamily: 'Inter_700Bold' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  ratingVal: { fontSize: 11, fontFamily: 'Inter_700Bold' },
-  reviewCount: { fontSize: 10 },
-  activeStatusBadge: {
+  registrationStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
+  registrationStatusText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
+  viewDetailsLink: { fontSize: 10, fontFamily: 'Inter_600SemiBold', marginTop: 2 },
   activeDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
     backgroundColor: '#10B981',
     marginRight: 6,
-  },
-  activeStatusText: { color: '#10B981', fontSize: 9, fontFamily: 'Inter_700Bold' },
-  showroomIllustration: {
-    width: 72,
-    height: 52,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
   },
   
   statsCard: {

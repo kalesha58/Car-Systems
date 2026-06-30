@@ -3,12 +3,12 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
-import type { GarageVehicle } from '@data/mockData';
+import type { UserVehicle } from '../../../types/userVehicle';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 
 interface BookingVehicleSectionProps {
-  vehicle: GarageVehicle | undefined;
+  vehicle: UserVehicle | undefined;
   locked?: boolean;
   onPress?: () => void;
 }
@@ -28,21 +28,29 @@ export function BookingVehicleSection({ vehicle, locked, onPress }: BookingVehic
     );
   }
 
+  const imageUri = vehicle.images?.[0];
+
   return (
     <BookingSectionCard
       title={locked ? 'Your Vehicle' : 'Select Vehicle'}
       onChange={locked ? undefined : onPress}
     >
       <Pressable style={styles.row} onPress={locked ? undefined : onPress} disabled={locked}>
-        <Image source={{ uri: vehicle.image }} style={styles.image} />
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Feather name="truck" size={16} color={colors.icon} />
+          </View>
+        )}
         <View style={styles.info}>
           <Text style={[styles.name, { color: colors.textPrimary }]}>
-            {vehicle.brand} {vehicle.name}
+            {vehicle.brand} {vehicle.model}
           </Text>
-          <Text style={styles.plate}>{vehicle.regNumber}</Text>
-          <Text style={[styles.meta, { color: colors.textSecondary }]}>
-            {vehicle.year} • {vehicle.fuel}
-          </Text>
+          <Text style={styles.plate}>{vehicle.numberPlate}</Text>
+          {vehicle.year ? (
+            <Text style={[styles.meta, { color: colors.textSecondary }]}>{vehicle.year}</Text>
+          ) : null}
         </View>
         {locked ? (
           <Feather name="check-circle" size={20} color={colors.icon} />
@@ -57,6 +65,11 @@ export function BookingVehicleSection({ vehicle, locked, onPress }: BookingVehic
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   image: { width: 64, height: 48, borderRadius: 10 },
+  imagePlaceholder: {
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   info: { flex: 1, gap: 2 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },

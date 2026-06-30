@@ -1,22 +1,34 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import type { IOrderData } from '@app-types/order';
+import { getUserOrders } from '@services/order.service';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import {
+  formatCurrency,
+  formatOrderDate,
+  getOrderId,
+  normalizeOrderDisplayStatus,
+  type OrderDisplayStatus,
+} from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type CustomerStackParamList = {
@@ -39,91 +51,63 @@ type MyOrdersScreenProps = NativeStackScreenProps<
   typeof CustomerStackRoutes.MyOrders
 >;
 
-interface OrderItem {
-  id: string;
-  orderId: string;
-  date: string;
-  status: 'Delivered' | 'Out for Delivery' | 'Shipped' | 'Processing' | 'Cancelled';
-  name: string;
-  extraItems?: string;
-  price: number;
-  image: string;
-  statusText: string;
-}
+type OrderTab = 'All' | OrderDisplayStatus;
+
+const DEFAULT_PRODUCT_IMAGE =
+  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
+
+const TABS: OrderTab[] = [
+  'All',
+  'Processing',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+  'Cancelled',
+];
 
 export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  const [activeTab, setActiveTab] = useState<'All' | 'Processing' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled'>('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<OrderTab>('All');
+  const [orders, setOrders] = useState<IOrderData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const tabs: ('All' | 'Processing' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled')[] = [
-    'All',
-    'Processing',
-    'Shipped',
-    'Out for Delivery',
-    'Delivered',
-    'Cancelled'
-  ];
+  const loadOrders = useCallback(async (opts?: { refreshing?: boolean }) => {
+    if (opts?.refreshing) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
 
-  const mockOrders: OrderItem[] = [
-    {
-      id: 'o1',
-      orderId: 'MN1234567890',
-      date: '12 May 2026, 09:30 AM',
-      status: 'Delivered',
-      name: 'Castrol EDGE 5W30 Engine Oil 4L',
-      extraItems: '+ 2 more items',
-      price: 2999,
-      image: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80',
-      statusText: 'Delivered on 14 May 2026',
-    },
-    {
-      id: 'o2',
-      orderId: 'MN1234567889',
-      date: '10 May 2026, 04:15 PM',
-      status: 'Out for Delivery',
-      name: 'Bosch Disc Brake Pad Set',
-      extraItems: '+ 1 more item',
-      price: 1799,
-      image: 'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=200&auto=format&fit=crop&q=80',
-      statusText: 'Arriving today by 8 PM',
-    },
-    {
-      id: 'o3',
-      orderId: 'MN1234567888',
-      date: '08 May 2026, 11:20 AM',
-      status: 'Shipped',
-      name: 'Exide Mileage Car Battery',
-      extraItems: '55D23L',
-      price: 7499,
-      image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80',
-      statusText: 'Shipped on 09 May 2026',
-    },
-    {
-      id: 'o4',
-      orderId: 'MN1234567887',
-      date: '05 May 2026, 02:40 PM',
-      status: 'Processing',
-      name: 'Mann Engine Air Filter',
-      extraItems: 'C27011',
-      price: 649,
-      image: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80',
-      statusText: 'Will be shipped soon',
-    },
-  ];
+    try {
+      const data = await getUserOrders();
+      setOrders(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to load orders'));
+      setOrders([]);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const matchesTab = activeTab === 'All' || order.status === activeTab;
-    const matchesSearch = order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
+  useFocusEffect(
+    useCallback(() => {
+      void loadOrders();
+    }, [loadOrders]),
+  );
+
+  const filteredOrders = orders.filter((order) => {
+    const displayStatus = normalizeOrderDisplayStatus(order.status);
+    return activeTab === 'All' || displayStatus === activeTab;
   });
 
-  const getStatusStyle = (status: OrderItem['status']) => {
+  const getStatusStyle = (status: OrderDisplayStatus) => {
     switch (status) {
       case 'Delivered':
         return { bg: '#DCFCE7', text: '#15803D' };
@@ -138,9 +122,132 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
     }
   };
 
+  const getStatusText = (order: IOrderData, displayStatus: OrderDisplayStatus) => {
+    if (order.expectedDeliveryDate && displayStatus === 'Out for Delivery') {
+      const eta = new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+      });
+      return `Arriving by ${eta}`;
+    }
+    if (displayStatus === 'Delivered') {
+      return `Delivered on ${formatOrderDate(order.updatedAt).split(',')[0]}`;
+    }
+    if (displayStatus === 'Shipped') {
+      return `Shipped on ${formatOrderDate(order.updatedAt).split(',')[0]}`;
+    }
+    if (displayStatus === 'Cancelled') {
+      return order.cancellationReason || 'Order was cancelled';
+    }
+    return 'Will be shipped soon';
+  };
+
+  const renderOrder = ({ item: order }: { item: IOrderData }) => {
+    const orderId = getOrderId(order);
+    const displayStatus = normalizeOrderDisplayStatus(order.status);
+    const statusColors = getStatusStyle(displayStatus);
+    const firstItem = order.items[0];
+    const extraCount = order.items.length - 1;
+
+    return (
+      <Pressable
+        style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId })}
+      >
+        <View style={styles.cardHeader}>
+          <View>
+            <Text style={[styles.orderIdText, { color: colors.textPrimary }]}>
+              Order ID: {order.orderNumber}
+            </Text>
+            <Text style={[styles.orderDate, { color: colors.textTertiary }]}>
+              {formatOrderDate(order.createdAt)}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
+            <Text style={[styles.statusTextBadge, { color: statusColors.text }]}>{displayStatus}</Text>
+          </View>
+        </View>
+
+        <View style={styles.cardBody}>
+          <Image source={{ uri: DEFAULT_PRODUCT_IMAGE }} style={styles.productImg} />
+          <View style={styles.productInfo}>
+            <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
+              {firstItem?.name ?? 'Order items'}
+            </Text>
+            {extraCount > 0 && (
+              <Text style={[styles.extraItemsText, { color: colors.textSecondary }]}>
+                + {extraCount} more {extraCount === 1 ? 'item' : 'items'}
+              </Text>
+            )}
+            <Text style={[styles.productPrice, { color: colors.textPrimary }]}>
+              {formatCurrency(order.totalAmount)}
+            </Text>
+          </View>
+        </View>
+
+        <Text
+          style={[
+            styles.deliveryStatusText,
+            { color: displayStatus === 'Delivered' ? '#15803D' : '#7E22CE' },
+          ]}
+        >
+          {getStatusText(order, displayStatus)}
+        </Text>
+
+        <View style={styles.cardActions}>
+          {displayStatus === 'Out for Delivery' || displayStatus === 'Shipped' ? (
+            <>
+              <Pressable
+                style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}
+                onPress={() =>
+                  navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId })
+                }
+              >
+                <Text style={[styles.actionText, { color: colors.textPrimary }]}>Track Order</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}
+                onPress={() =>
+                  navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId })
+                }
+              >
+                <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
+              </Pressable>
+            </>
+          ) : displayStatus === 'Delivered' ? (
+            <>
+              <Pressable
+                style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}
+                onPress={() =>
+                  navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId })
+                }
+              >
+                <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.actionBtn, { backgroundColor: '#2563EB' }]}
+                onPress={() => successHaptic()}
+              >
+                <Text style={[styles.actionText, { color: '#ffffff' }]}>Buy Again</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1, flex: 1 }]}
+              onPress={() =>
+                navigation.navigate(CustomerStackRoutes.OrderTracking, { id: orderId })
+              }
+            >
+              <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
+            </Pressable>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Sticky Header */}
       <ChromeHeader style={styles.header} contentPad={8}>
         <View style={styles.headerLeft}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
@@ -158,10 +265,9 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
         </View>
       </ChromeHeader>
 
-      {/* Tabs list selector */}
       <View style={[styles.tabsContainer, { backgroundColor: colors.card }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsScroll}>
-          {tabs.map((tab) => {
+          {TABS.map((tab) => {
             const isActive = activeTab === tab;
             return (
               <Pressable
@@ -172,7 +278,14 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
                   setActiveTab(tab);
                 }}
               >
-                <Text style={[styles.tabText, isActive ? { color: '#2563EB', fontFamily: 'Inter_700Bold' } : { color: colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    isActive
+                      ? { color: '#2563EB', fontFamily: 'Inter_700Bold' }
+                      : { color: colors.textSecondary },
+                  ]}
+                >
                   {tab}
                 </Text>
               </Pressable>
@@ -181,92 +294,35 @@ export function MyOrdersScreen({ navigation }: MyOrdersScreenProps) {
         </ScrollView>
       </View>
 
-      {/* Orders List */}
-      <FlatList
-        data={filteredOrders}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.listContent, { paddingBottom: bottomPad + 20 }]}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const statusColors = getStatusStyle(item.status);
-          return (
-            <Pressable
-              style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => navigation.navigate(CustomerStackRoutes.OrderTracking, { id: item.id })}
-            >
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={[styles.orderIdText, { color: colors.textPrimary }]}>Order ID: {item.orderId}</Text>
-                  <Text style={[styles.orderDate, { color: colors.textTertiary }]}>{item.date}</Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: statusColors.bg }]}>
-                  <Text style={[styles.statusTextBadge, { color: statusColors.text }]}>{item.status}</Text>
-                </View>
-              </View>
-
-              <View style={styles.cardBody}>
-                <Image source={{ uri: item.image }} style={styles.productImg} />
-                <View style={styles.productInfo}>
-                  <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  {item.extraItems && (
-                    <Text style={[styles.extraItemsText, { color: colors.textSecondary }]}>
-                      {item.extraItems}
-                    </Text>
-                  )}
-                  <Text style={[styles.productPrice, { color: colors.textPrimary }]}>
-                    ₹{item.price.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={[styles.deliveryStatusText, { color: item.status === 'Delivered' ? '#15803D' : '#7E22CE' }]}>
-                {item.statusText}
+      {loading && orders.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.link} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredOrders}
+          keyExtractor={(item) => getOrderId(item)}
+          contentContainerStyle={[styles.listContent, { paddingBottom: bottomPad + 20 }]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadOrders({ refreshing: true })}
+              tintColor={colors.link}
+              colors={[colors.link]}
+            />
+          }
+          renderItem={renderOrder}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="package" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                {error ?? 'No orders found'}
               </Text>
-
-              {/* Action buttons */}
-              <View style={styles.cardActions}>
-                {(item.status === 'Out for Delivery' || item.status === 'Shipped') ? (
-                  <>
-                    <Pressable
-                      style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}
-                      onPress={() => navigation.navigate(CustomerStackRoutes.OrderTracking, { id: item.id })}
-                    >
-                      <Text style={[styles.actionText, { color: colors.textPrimary }]}>Track Order</Text>
-                    </Pressable>
-                    <Pressable style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}>
-                      <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
-                    </Pressable>
-                  </>
-                ) : item.status === 'Delivered' ? (
-                  <>
-                    <Pressable style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1 }]}>
-                      <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
-                    </Pressable>
-                    <Pressable
-                      style={[styles.actionBtn, { backgroundColor: '#2563EB' }]}
-                      onPress={() => successHaptic()}
-                    >
-                      <Text style={[styles.actionText, { color: '#ffffff' }]}>Buy Again</Text>
-                    </Pressable>
-                  </>
-                ) : (
-                  <Pressable style={[styles.actionBtn, { borderColor: '#E2E8F0', borderWidth: 1, flex: 1 }]}>
-                    <Text style={[styles.actionText, { color: colors.textPrimary }]}>View Details</Text>
-                  </Pressable>
-                )}
-              </View>
-            </Pressable>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Feather name="package" size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No orders found</Text>
-          </View>
-        }
-      />
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -324,6 +380,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
     gap: 16,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   orderCard: {
     borderRadius: 20,
@@ -409,5 +470,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
 });

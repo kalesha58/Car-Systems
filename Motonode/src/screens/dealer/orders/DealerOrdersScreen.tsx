@@ -1,138 +1,159 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
   Image,
   ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/index';
-import { DealerOrder } from '@data/dealerData';
+import { ChromeHeader } from '@components/common';
 import { useColors } from '@hooks/useColors';
+import { getDealerOrders, updateDealerOrderStatus } from '@services/order.service';
+import type { IOrderData } from '@app-types/order';
 import { themeLight } from '@theme/colors';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import {
+  canCancelDealerOrder,
+  formatOrderDateParts,
+  getNextDealerOrderLabel,
+  getNextDealerOrderStatus,
+  getOrderId,
+  getOrderItemQty,
+  getOrderPrimaryItemName,
+  getOrderShippingAddress,
+  getOrderStatusColor,
+  getOrderStatusLabel,
+  matchesOrderFilter,
+} from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
 const FILTERS = ['All', 'Pending', 'Accepted', 'Packed', 'Ready', 'Delivered', 'Cancelled'];
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: '#F59E0B',
-  accepted: '#FF1A1A',
-  packed: '#8B5CF6',
-  ready: '#10B981',
-  delivered: '#10B981',
-  cancelled: '#EF4444',
-};
-
-const NEXT_STATUS: Record<string, DealerOrder['status'] | null> = {
-  pending: 'accepted',
-  accepted: 'packed',
-  packed: 'ready',
-  ready: 'delivered',
-  delivered: null,
-  cancelled: null,
-};
-
-const NEXT_LABEL: Record<string, string> = {
-  pending: 'Accept',
-  accepted: 'Mark Packed',
-  packed: 'Mark Ready',
-  ready: 'Mark Delivered',
-};
-
-// Mock product images for dealer orders
-const ORDER_IMAGES: Record<string, string> = {
-  'ORD-1001': 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80', // Engine Oil
-  'ORD-1002': 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80', // Service
-  'ORD-1003': 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80', // Battery
-};
+const FALLBACK_ORDER_IMAGE =
+  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
 
 export function DealerOrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<DealerStackParamList>>();
-  const { orders, updateOrderStatus } = useDealer();
+  const [orders, setOrders] = useState<IOrderData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState(0);
   const [orderView, setOrderView] = useState<'products' | 'services'>('products');
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  const fetchOrders = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+      const data = await getDealerOrders({ limit: 100 });
+      setOrders(data);
+    } catch (error) {
+      Alert.alert('Error', getApiErrorMessage(error, 'Failed to load orders'));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [fetchOrders]),
+  );
 
   const filtered =
     activeFilter === 0
       ? orders
-      : orders.filter((o) => o.status === FILTERS[activeFilter].toLowerCase());
+      : orders.filter((o) => matchesOrderFilter(o.status, FILTERS[activeFilter]));
 
-  const handleStatusChange = (order: DealerOrder) => {
-    const next = NEXT_STATUS[order.status];
-    if (!next) return;
-    const label = NEXT_LABEL[order.status];
-    Alert.alert(label, `Move order #${order.id} to "${next}"?`, [
+  const handleStatusChange = (order: IOrderData) => {
+    const next = getNextDealerOrderStatus(order.status);
+    const label = getNextDealerOrderLabel(order.status);
+    if (!next || !label) return;
+    const orderId = getOrderId(order);
+    Alert.alert(label, `Move order #${order.orderNumber} to "${getOrderStatusLabel(next)}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: label,
-        onPress: () => {
-          lightHaptic();
-          updateOrderStatus(order.id, next);
+        onPress: async () => {
+          try {
+            lightHaptic();
+            await updateDealerOrderStatus(orderId, next);
+            await fetchOrders(true);
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to update order'));
+          }
         },
       },
     ]);
   };
 
-  const handleCancel = (order: DealerOrder) => {
-    if (order.status === 'delivered' || order.status === 'cancelled') return;
-    Alert.alert('Cancel Order', `Cancel order #${order.id}?`, [
+  const handleCancel = (order: IOrderData) => {
+    if (!canCancelDealerOrder(order.status)) return;
+    const orderId = getOrderId(order);
+    Alert.alert('Cancel Order', `Cancel order #${order.orderNumber}?`, [
       { text: 'No', style: 'cancel' },
       {
         text: 'Cancel Order',
         style: 'destructive',
-        onPress: () => {
-          lightHaptic();
-          updateOrderStatus(order.id, 'cancelled');
+        onPress: async () => {
+          try {
+            lightHaptic();
+            await updateDealerOrderStatus(orderId, 'CANCELLED_BY_DEALER');
+            await fetchOrders(true);
+          } catch (error) {
+            Alert.alert('Error', getApiErrorMessage(error, 'Failed to cancel order'));
+          }
         },
       },
     ]);
   };
 
-  const countByStatus = (status: string) => orders.filter((o) => o.status === status).length;
+  const countByStatus = (filter: string) =>
+    orders.filter((o) => matchesOrderFilter(o.status, filter)).length;
 
   const getHeaderIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { icon: 'shopping-bag', bg: '#FEF3C7', color: '#F59E0B' };
-      case 'accepted':
-        return { icon: 'shopping-bag', bg: '#F2F2F2', color: '#FF1A1A' };
-      case 'packed':
-        return { icon: 'box', bg: '#F3E8FF', color: '#8B5CF6' };
-      default:
-        return { icon: 'package', bg: '#F1F5F9', color: '#64748B' };
+    const label = getOrderStatusLabel(status);
+    if (label === 'Pending') {
+      return { icon: 'shopping-bag', bg: '#FEF3C7', color: '#F59E0B' };
     }
+    if (label === 'Accepted') {
+      return { icon: 'shopping-bag', bg: '#F2F2F2', color: '#FF1A1A' };
+    }
+    if (label === 'Packed') {
+      return { icon: 'box', bg: '#F3E8FF', color: '#8B5CF6' };
+    }
+    return { icon: 'package', bg: '#F1F5F9', color: '#64748B' };
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      
-      {/* Redesigned Mockup Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12 }]}>
+      <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Orders</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Orders</Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
               Manage and track all customer orders
             </Text>
           </View>
           <View style={styles.headerRight}>
             <Pressable style={styles.notificationBtn}>
-              <Feather name="bell" size={22} color={colors.textPrimary} />
+              <Feather name="bell" size={22} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>
               </View>
@@ -143,7 +164,7 @@ export function DealerOrdersScreen() {
           </View>
         </View>
 
-        <View style={[styles.typeToggle, { backgroundColor: colors.muted }]}>
+        <View style={[styles.typeToggle, { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
           <Pressable
             style={[styles.typeBtn, orderView === 'products' && styles.typeBtnActive]}
             onPress={() => setOrderView('products')}
@@ -165,11 +186,10 @@ export function DealerOrdersScreen() {
           </Pressable>
         </View>
 
-        {/* Dynamic Filters Row */}
         <View style={styles.filtersWrapper}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
             {FILTERS.map((item, index) => {
-              const count = index === 0 ? orders.length : countByStatus(item.toLowerCase());
+              const count = index === 0 ? orders.length : countByStatus(item);
               const isSelected = activeFilter === index;
               return (
                 <Pressable
@@ -196,119 +216,111 @@ export function DealerOrdersScreen() {
                 </Pressable>
               );
             })}
-            
-            {/* Filter Slider icon */}
+
             <Pressable style={styles.sliderIconBtn}>
               <Feather name="sliders" size={16} color={colors.textSecondary} />
             </Pressable>
           </ScrollView>
         </View>
-      </View>
+      </ChromeHeader>
 
-      {/* Orders List */}
       <FlatList
         data={filtered}
-        keyExtractor={(i) => i.id}
+        keyExtractor={(item) => getOrderId(item)}
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => fetchOrders(true)} />
+        }
         renderItem={({ item }) => {
-          const statusColor = STATUS_COLORS[item.status] || '#E60012';
-          const canAdvance = NEXT_STATUS[item.status] !== null && item.status !== 'cancelled';
+          const statusColor = getOrderStatusColor(item.status);
+          const nextStatus = getNextDealerOrderStatus(item.status);
+          const nextLabel = getNextDealerOrderLabel(item.status);
+          const canAdvance = nextStatus !== null && canCancelDealerOrder(item.status);
           const headerIconInfo = getHeaderIcon(item.status);
-          
+          const { date, time } = formatOrderDateParts(item.createdAt);
+          const statusLabel = getOrderStatusLabel(item.status);
+
           return (
             <View style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              
-              {/* Card Header Row */}
               <View style={styles.cardHeader}>
                 <View style={styles.cardHeaderLeft}>
                   <View style={[styles.headerIconContainer, { backgroundColor: headerIconInfo.bg }]}>
                     <Feather name={headerIconInfo.icon as any} size={16} color={headerIconInfo.color} />
                   </View>
                   <View>
-                    <Text style={[styles.orderIdText, { color: colors.textPrimary }]}>#{item.id}</Text>
+                    <Text style={[styles.orderIdText, { color: colors.textPrimary }]}>#{item.orderNumber}</Text>
                     <Text style={[styles.orderDateText, { color: colors.textTertiary }]}>
-                      {item.date} • {item.time}
+                      {date} • {time}
                     </Text>
                   </View>
                 </View>
-                
-                {/* Status Badges */}
+
                 <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
-                  {item.status === 'pending' && <Feather name="clock" size={12} color={statusColor} style={{ marginRight: 4 }} />}
-                  {item.status === 'accepted' && <Feather name="check" size={12} color={statusColor} style={{ marginRight: 4 }} />}
-                  {item.status === 'packed' && <Feather name="package" size={12} color={statusColor} style={{ marginRight: 4 }} />}
-                  <Text style={[styles.statusTextLabel, { color: statusColor }]}>
-                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                  </Text>
+                  <Text style={[styles.statusTextLabel, { color: statusColor }]}>{statusLabel}</Text>
                 </View>
               </View>
 
               <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-              {/* Card Body Grid (Left Customer info, Right Product Preview) */}
               <View style={styles.cardBody}>
-                
-                {/* Left Customer Info column */}
                 <View style={styles.customerCol}>
                   <View style={styles.infoRow}>
                     <Feather name="user" size={14} color={colors.textSecondary} />
-                    <Text style={[styles.customerVal, { color: colors.textPrimary }]}>{item.customer}</Text>
+                    <Text style={[styles.customerVal, { color: colors.textPrimary }]}>
+                      {item.customer?.name || 'Customer'}
+                    </Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Feather name="phone" size={14} color={colors.textSecondary} />
-                    <Text style={[styles.customerVal, { color: colors.textSecondary }]}>{item.phone}</Text>
+                    <Text style={[styles.customerVal, { color: colors.textSecondary }]}>
+                      {item.customer?.phone || '—'}
+                    </Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Feather name="map-pin" size={14} color={colors.textSecondary} />
                     <Text style={[styles.customerVal, { color: colors.textSecondary }]} numberOfLines={1}>
-                      {item.address}
+                      {getOrderShippingAddress(item)}
                     </Text>
                   </View>
                 </View>
 
-                {/* Right Product Preview column */}
                 <View style={styles.productCol}>
-                  <Image
-                    source={{ uri: ORDER_IMAGES[item.id] || 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80' }}
-                    style={styles.productThumbnail}
-                  />
+                  <Image source={{ uri: FALLBACK_ORDER_IMAGE }} style={styles.productThumbnail} />
                   <View style={styles.productMeta}>
                     <Text style={[styles.productTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {item.item}
+                      {getOrderPrimaryItemName(item)}
                     </Text>
-                    <Text style={[styles.productQty, { color: colors.textSecondary }]}>× {item.qty}</Text>
+                    <Text style={[styles.productQty, { color: colors.textSecondary }]}>
+                      × {getOrderItemQty(item)}
+                    </Text>
                     <Text style={[styles.productPrice, { color: themeLight.textSecondary }]}>
-                      ₹{item.total.toLocaleString('en-IN')}
+                      ₹{item.totalAmount.toLocaleString('en-IN')}
                     </Text>
                   </View>
                 </View>
-
               </View>
 
-              {/* Action Buttons Row */}
               <View style={styles.cardActionsRow}>
-                {canAdvance ? (
-                  item.status === 'packed' ? (
-                    // Spans full width for packed
+                {canAdvance && nextLabel ? (
+                  statusLabel === 'Packed' ? (
                     <Pressable
                       style={[styles.fullWidthActionBtn, { backgroundColor: '#ECFDF5' }]}
                       onPress={() => handleStatusChange(item)}
                     >
                       <Feather name="check" size={15} color="#10B981" />
-                      <Text style={[styles.fullWidthActionText, { color: '#10B981' }]}>{NEXT_LABEL[item.status]}</Text>
+                      <Text style={[styles.fullWidthActionText, { color: '#10B981' }]}>{nextLabel}</Text>
                     </Pressable>
                   ) : (
-                    // Split buttons for pending & accepted
                     <>
                       <Pressable
-                        style={[styles.splitActionBtn, { backgroundColor: item.status === 'pending' ? '#FFFBEB' : '#F2F2F2' }]}
+                        style={[styles.splitActionBtn, { backgroundColor: statusLabel === 'Pending' ? '#FFFBEB' : '#F2F2F2' }]}
                         onPress={() => handleStatusChange(item)}
                       >
                         <Feather name="arrow-right" size={15} color={statusColor} />
-                        <Text style={[styles.splitActionText, { color: statusColor }]}>{NEXT_LABEL[item.status]}</Text>
+                        <Text style={[styles.splitActionText, { color: statusColor }]}>{nextLabel}</Text>
                       </Pressable>
-                      
+
                       <Pressable
                         style={[styles.splitActionBtn, { backgroundColor: '#FEF2F2' }]}
                         onPress={() => handleCancel(item)}
@@ -319,25 +331,28 @@ export function DealerOrdersScreen() {
                     </>
                   )
                 ) : (
-                  // General View details for finished/delivered
                   <Pressable style={[styles.fullWidthActionBtn, { backgroundColor: '#F1F5F9' }]}>
                     <Text style={[styles.fullWidthActionText, { color: colors.textPrimary }]}>View Order Details</Text>
                   </Pressable>
                 )}
               </View>
-
             </View>
           );
         }}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="clipboard" size={48} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No orders found</Text>
-          </View>
+          loading ? (
+            <View style={styles.empty}>
+              <ActivityIndicator color="#E60012" />
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Feather name="clipboard" size={48} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No orders found</Text>
+            </View>
+          )
         }
       />
 
-      {/* Redesigned Bottom Business Performance Banner */}
       <View style={[styles.bottomPerformanceBanner, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
         <View style={styles.performanceLeft}>
           <View style={[styles.analyticsIconWrapper, { backgroundColor: '#F2F2F2' }]}>
@@ -353,7 +368,6 @@ export function DealerOrdersScreen() {
           <Feather name="arrow-right" size={12} color="#fff" />
         </Pressable>
       </View>
-
     </View>
   );
 }
@@ -363,9 +377,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 4,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerTop: {
     flexDirection: 'row',
@@ -377,7 +388,7 @@ const styles = StyleSheet.create({
   typeToggle: { flexDirection: 'row', borderRadius: 12, padding: 4, marginTop: 12 },
   typeBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
   typeBtnActive: { backgroundColor: '#E60012' },
-  typeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
+  typeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: 'rgba(255,255,255,0.72)' },
   typeTextActive: { color: '#ffffff' },
   headerSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
   headerRight: {

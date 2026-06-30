@@ -4,16 +4,19 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
 import { cardShadow } from '@utils/shadows';
-import type { Vehicle } from '@data/mockData';
+import type { IDealerVehicle } from '@app-types/vehicle';
+import { getVehicleDisplayName } from '@utils/displayMappers';
 
 interface VehicleCardProps {
-  vehicle: Vehicle;
+  vehicle: IDealerVehicle;
   style?: object;
   onNavigate?: () => void;
 }
 
 export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
   const colors = useColors();
+  const imageUri = vehicle.images?.[0] || '';
+  const typeLabel = vehicle.vehicleType === 'Bike' ? 'Bike' : 'Car';
 
   return (
     <Pressable
@@ -25,28 +28,30 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
       ]}
       onPress={onNavigate}
     >
-      <Image source={{ uri: vehicle.image }} style={styles.image} resizeMode="cover" />
+      <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
       <View style={[styles.typeBadge, { backgroundColor: colors.primarySubtle }]}>
-        <Text style={[styles.typeText, { color: colors.textSecondary }]}>
-          {vehicle.type === 'bike' ? 'Bike' : 'Car'}
-        </Text>
+        <Text style={[styles.typeText, { color: colors.textSecondary }]}>{typeLabel}</Text>
       </View>
       <View style={styles.info}>
         <Text style={[styles.brand, { color: colors.textSecondary }]}>{vehicle.brand}</Text>
         <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-          {vehicle.name}
+          {getVehicleDisplayName(vehicle)}
         </Text>
         <View style={styles.specs}>
-          <View style={styles.specItem}>
-            <Feather name="droplet" size={11} color={colors.textTertiary} />
-            <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.fuel}</Text>
-          </View>
-          <View style={styles.specItem}>
-            <Feather name="trending-up" size={11} color={colors.textTertiary} />
-            <Text style={[styles.specText, { color: colors.textSecondary }]}>
-              {vehicle.mileage}
-            </Text>
-          </View>
+          {vehicle.fuelType ? (
+            <View style={styles.specItem}>
+              <Feather name="droplet" size={11} color={colors.textTertiary} />
+              <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.fuelType}</Text>
+            </View>
+          ) : null}
+          {vehicle.mileage != null ? (
+            <View style={styles.specItem}>
+              <Feather name="trending-up" size={11} color={colors.textTertiary} />
+              <Text style={[styles.specText, { color: colors.textSecondary }]}>
+                {vehicle.mileage} km
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.specItem}>
             <Feather name="calendar" size={11} color={colors.textTertiary} />
             <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.year}</Text>
@@ -58,9 +63,11 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
             ₹{(vehicle.price / 100000).toFixed(2)}L
           </Text>
         </View>
-        <Text style={[styles.dealer, { color: colors.textTertiary }]} numberOfLines={1}>
-          {vehicle.dealerName}
-        </Text>
+        {vehicle.dealer?.businessName ? (
+          <Text style={[styles.dealer, { color: colors.textTertiary }]} numberOfLines={1}>
+            {vehicle.dealer.businessName}
+          </Text>
+        ) : null}
       </View>
     </Pressable>
   );

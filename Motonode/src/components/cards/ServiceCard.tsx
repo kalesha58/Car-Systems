@@ -3,16 +3,20 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
-import type { Service } from '@data/mockData';
+import type { IService } from '@app-types/service';
+import { getServiceDurationLabel } from '@utils/displayMappers';
 
 interface ServiceCardProps {
-  service: Service;
+  service: IService;
   onNavigate?: () => void;
   onBookPress?: () => void;
 }
 
 export function ServiceCard({ service, onNavigate, onBookPress }: ServiceCardProps) {
   const colors = useColors();
+  const imageUri = service.images?.[0] || '';
+  const isActive = service.isActive !== false;
+  const dealerName = service.dealer?.businessName || '';
 
   return (
     <Pressable
@@ -22,65 +26,61 @@ export function ServiceCard({ service, onNavigate, onBookPress }: ServiceCardPro
       ]}
       onPress={onNavigate}
     >
-      <Image source={{ uri: service.image }} style={styles.image} resizeMode="cover" />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+      ) : (
+        <View style={[styles.image, { backgroundColor: colors.border }]} />
+      )}
       <View style={styles.info}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
               {service.name}
             </Text>
-            <Text style={[styles.dealer, { color: colors.textSecondary }]} numberOfLines={1}>
-              {service.dealerName}
-            </Text>
+            {dealerName ? (
+              <Text style={[styles.dealer, { color: colors.textSecondary }]} numberOfLines={1}>
+                {dealerName}
+              </Text>
+            ) : null}
           </View>
           <View
             style={[
               styles.statusBadge,
               {
-                backgroundColor: service.isOpen
-                  ? colors.success + '20'
-                  : colors.destructive + '20',
+                backgroundColor: isActive ? colors.success + '20' : colors.destructive + '20',
               },
             ]}
           >
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: service.isOpen ? colors.success : colors.destructive },
+                { backgroundColor: isActive ? colors.success : colors.destructive },
               ]}
             />
             <Text
               style={[
                 styles.statusText,
-                { color: service.isOpen ? colors.success : colors.destructive },
+                { color: isActive ? colors.success : colors.destructive },
               ]}
             >
-              {service.isOpen ? 'Open' : 'Closed'}
+              {isActive ? 'Active' : 'Inactive'}
             </Text>
           </View>
         </View>
         <View style={styles.meta}>
           <View style={styles.metaItem}>
-            <Feather name="star" size={12} color={colors.starActive} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-              {' '}
-              {service.rating} ({service.reviews})
-            </Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Feather name="map-pin" size={12} color={colors.textTertiary} />
-            <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-              {' '}
-              {service.distance}
-            </Text>
-          </View>
-          <View style={styles.metaItem}>
             <Feather name="clock" size={12} color={colors.textTertiary} />
             <Text style={[styles.metaText, { color: colors.textSecondary }]}>
               {' '}
-              {service.duration}
+              {getServiceDurationLabel(service)}
             </Text>
           </View>
+          {service.homeService ? (
+            <View style={styles.metaItem}>
+              <Feather name="home" size={12} color={colors.textTertiary} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]}> Home</Text>
+            </View>
+          ) : null}
         </View>
         <View style={styles.footer}>
           <Text style={[styles.price, { color: colors.textPrimary }]}>

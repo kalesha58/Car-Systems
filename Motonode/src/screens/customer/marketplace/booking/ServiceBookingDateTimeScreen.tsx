@@ -1,12 +1,13 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { BookingFlowLayout } from '@components/booking/BookingFlowLayout';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { getServiceBookingDates, SERVICE_TIME_SLOTS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { getBookingDateOptions, formatSlotTime } from '@utils/bookingMappers';
+import { getServiceDurationLabel } from '@utils/displayMappers';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
 type Props = NativeStackScreenProps<
@@ -16,9 +17,19 @@ type Props = NativeStackScreenProps<
 
 export function ServiceBookingDateTimeScreen({ navigation }: Props) {
   const colors = useColors();
-  const { draft, updateBooking, getService } = useServiceBooking();
+  const { draft, updateBooking, getService, slots, slotsLoading, loadSlots } = useServiceBooking();
   const service = getService();
-  const dates = getServiceBookingDates();
+  const dates = getBookingDateOptions();
+
+  useEffect(() => {
+    if (draft.date) {
+      loadSlots(draft.date);
+    }
+  }, [draft.date, draft.locationType, loadSlots]);
+
+  const selectSlot = (slotId: string, startTime: string) => {
+    updateBooking({ slotId, timeSlot: formatSlotTime(startTime) });
+  };
 
   return (
     <BookingFlowLayout
@@ -32,7 +43,7 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
         <View style={[styles.serviceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
           <Text style={[styles.serviceMeta, { color: colors.textSecondary }]}>
-            {service.dealerName} • {service.duration}
+            {service.dealer?.businessName ?? 'Dealer'} • {getServiceDurationLabel(service)}
           </Text>
         </View>
       )}
@@ -61,38 +72,39 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
         })}
       </ScrollView>
 
-      {SERVICE_TIME_SLOTS.map((group) => (
-        <View key={group.period} style={styles.slotGroup}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{group.period}</Text>
-          <View style={styles.slotRow}>
-            {group.slots.map((slot) => {
-              const selected = draft.timeSlot === slot;
-              return (
-                <Pressable
-                  key={slot}
-                  style={[
-                    styles.slotChip,
-                    {
-                      backgroundColor: selected ? '#F2F2F2' : colors.card,
-                      borderColor: selected ? '#E60012' : colors.border,
-                    },
-                  ]}
-                  onPress={() => updateBooking({ timeSlot: slot })}
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Slots</Text>
+      {slotsLoading ? (
+        <ActivityIndicator color="#E60012" style={{ marginVertical: 16 }} />
+      ) : slots.length === 0 ? (
+        <Text style={[styles.emptySlots, { color: colors.textSecondary }]}>
+          No slots available for this date
+        </Text>
+      ) : (
+        <View style={styles.slotRow}>
+          {slots.map((slot) => {
+            const selected = draft.slotId === slot.id;
+            return (
+              <Pressable
+                key={slot.id}
+                style={[
+                  styles.slotChip,
+                  {
+                    backgroundColor: selected ? '#F2F2F2' : colors.card,
+                    borderColor: selected ? '#E60012' : colors.border,
+                  },
+                ]}
+                onPress={() => selectSlot(slot.id, slot.startTime)}
+              >
+                <Text
+                  style={[styles.slotText, { color: selected ? '#E60012' : colors.textSecondary }]}
                 >
-                  <Text
-                    style={[
-                      styles.slotText,
-                      { color: selected ? '#E60012' : colors.textSecondary },
-                    ]}
-                  >
-                    {slot}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                  {formatSlotTime(slot.startTime)}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
-      ))}
+      )}
     </BookingFlowLayout>
   );
 }
@@ -112,7 +124,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  slotGroup: { gap: 10 },
   slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slotChip: {
     paddingHorizontal: 14,
@@ -121,4 +132,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   slotText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  emptySlots: { fontSize: 12, fontFamily: 'Inter_400Regular', paddingVertical: 12 },
 });

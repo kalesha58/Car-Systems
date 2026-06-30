@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -15,8 +16,11 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { ProductCard } from '@components/cards/ProductCard';
 import { CustomerStackRoutes } from '@constants/routes';
-import { PRODUCTS } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
+import { getProducts } from '@services/product.service';
+import type { IProduct } from '@app-types/product';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getProductId } from '@utils/displayMappers';
 
 const RECENT = ['Castrol Engine Oil', 'KTM Duke 390', 'Michelin Tyre', 'Helmet', 'Service'];
 const TRENDING = ['Engine Oil', 'Helmets', 'Tyres', 'Brake Pads', 'Chain Lube'];
@@ -41,17 +45,48 @@ export function SearchScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<SearchNavigationProp>();
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<IProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
-  const results =
-    query.length >= 2
-      ? PRODUCTS.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query.toLowerCase()) ||
-            p.brand.toLowerCase().includes(query.toLowerCase()) ||
-            p.category.toLowerCase().includes(query.toLowerCase()),
-        )
-      : [];
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getProducts({ search: query.trim(), limit: 30 });
+        if (cancelled) return;
+        if (response.success && response.Response?.products) {
+          setResults(response.Response.products);
+        } else {
+          setResults([]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Search failed'));
+          setResults([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  const showResults = query.trim().length >= 2;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -80,7 +115,7 @@ export function SearchScreen() {
         </View>
       </View>
 
-      {query.length === 0 ? (
+      {!showResults ? (
         <FlatList
           data={[]}
           renderItem={() => null}
@@ -125,6 +160,10 @@ export function SearchScreen() {
           }
           showsVerticalScrollIndicator={false}
         />
+      ) : loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       ) : results.length === 0 ? (
         <View style={styles.noResults}>
           <Feather name="search" size={48} color={colors.textTertiary} />
@@ -132,13 +171,13 @@ export function SearchScreen() {
             No results for "{query}"
           </Text>
           <Text style={[styles.noResultsSubtitle, { color: colors.textSecondary }]}>
-            Try different keywords or browse categories
+            {error ?? 'Try different keywords or browse categories'}
           </Text>
         </View>
       ) : (
         <FlatList
           data={results}
-          keyExtractor={(i) => i.id}
+          keyExtractor={(i) => getProductId(i)}
           numColumns={2}
           contentContainerStyle={styles.resultsContent}
           columnWrapperStyle={styles.columnWrapper}
@@ -148,7 +187,15 @@ export function SearchScreen() {
               {results.length} results found
             </Text>
           }
-          renderItem={({ item }) => <ProductCard product={item} style={styles.resultItem} />}
+          renderItem={({ item }) => (
+            <ProductCard
+              product={item}
+              style={styles.resultItem}
+              onPress={() =>
+                navigation.navigate(CustomerStackRoutes.ProductDetail, { id: getProductId(item) })
+              }
+            />
+          )}
         />
       )}
     </View>
@@ -182,6 +229,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   tagText: { fontSize: 13, fontFamily: 'Inter_400Regular' },
+  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   noResults: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   noResultsTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold' },
   noResultsSubtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },

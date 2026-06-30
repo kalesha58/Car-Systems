@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
+  Clipboard,
   Image,
   Platform,
   Pressable,
@@ -7,15 +9,19 @@ import {
   StyleSheet,
   Text,
   View,
-  Dimensions,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import type { IOrderData } from '@app-types/order';
+import { getOrderById } from '@services/order.service';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { formatCurrency, formatOrderDate, normalizeOrderDisplayStatus } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type CustomerStackParamList = {
@@ -38,27 +44,121 @@ type OrderTrackingScreenProps = NativeStackScreenProps<
   typeof CustomerStackRoutes.OrderTracking
 >;
 
+const TIMELINE_STEPS = ['Placed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'] as const;
+
+const DEFAULT_PRODUCT_IMAGE =
+  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=100&auto=format&fit=crop&q=80';
+
+function getTimelineProgress(status: string) {
+  const displayStatus = normalizeOrderDisplayStatus(status);
+  switch (displayStatus) {
+    case 'Delivered':
+      return 4;
+    case 'Out for Delivery':
+      return 3;
+    case 'Shipped':
+      return 2;
+    case 'Processing':
+    default:
+      return 1;
+  }
+}
+
 export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-
   const { id } = route.params;
 
+  const [order, setOrder] = useState<IOrderData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [itemsExpanded, setItemsExpanded] = useState(true);
 
-  const steps = [
-    { label: 'Placed', date: '10 May', completed: true },
-    { label: 'Packed', date: '11 May', completed: true },
-    { label: 'Shipped', date: '11 May', completed: true },
-    { label: 'Out for Delivery', date: '14 May', completed: true, active: true },
-    { label: 'Delivered', date: '', completed: false },
-  ];
+  const loadOrder = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOrderById(id);
+      if (data) {
+        setOrder(data);
+      } else {
+        setError('Order not found');
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to load order'));
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadOrder();
+    }, [loadOrder]),
+  );
+
+  const displayStatus = order ? normalizeOrderDisplayStatus(order.status) : 'Processing';
+  const progressIndex = order ? getTimelineProgress(order.status) : 0;
+
+  const steps = TIMELINE_STEPS.map((label, idx) => ({
+    label,
+    date:
+      idx <= progressIndex && order
+        ? formatOrderDate(order.createdAt).split(',')[0].replace(/\d{4}/, '').trim()
+        : '',
+    completed: idx <= progressIndex,
+    active: idx === progressIndex,
+  }));
+
+  const handleCopyOrderId = () => {
+    if (!order) return;
+    Clipboard.setString(order.orderNumber);
+    successHaptic();
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
+          <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
+            <Feather name="chevron-left" size={24} color="#ffffff" />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
+          <View style={styles.iconBtn} />
+        </ChromeHeader>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.link} />
+        </View>
+      </View>
+    );
+  }
+
+  if (!order || error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
+          <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
+            <Feather name="chevron-left" size={24} color="#ffffff" />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
+          <View style={styles.iconBtn} />
+        </ChromeHeader>
+        <View style={styles.centered}>
+          <Feather name="alert-circle" size={48} color={colors.textTertiary} />
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error ?? 'Order not found'}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const address = order.shippingAddress;
+  const addressLine = [address.street, address.city, address.state, address.zipCode]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Sticky Header */}
       <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color="#ffffff" />
@@ -69,34 +169,41 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
         </Pressable>
       </ChromeHeader>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 20 }]}>
-        
-        {/* Order ID & Placement details */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 20 }]}
+      >
         <View style={styles.orderIdRow}>
           <View>
             <Text style={[styles.orderLabel, { color: colors.textSecondary }]}>Order ID</Text>
-            <Text style={[styles.orderIdValue, { color: colors.textPrimary }]}>MN1234567889</Text>
-            <Text style={[styles.orderPlacedOn, { color: colors.textTertiary }]}>Placed on 10 May 2026, 09:30 AM</Text>
+            <Text style={[styles.orderIdValue, { color: colors.textPrimary }]}>{order.orderNumber}</Text>
+            <Text style={[styles.orderPlacedOn, { color: colors.textTertiary }]}>
+              Placed on {formatOrderDate(order.createdAt)}
+            </Text>
           </View>
-          <Pressable style={styles.copyBtn} onPress={() => successHaptic()}>
+          <Pressable style={styles.copyBtn} onPress={handleCopyOrderId}>
             <Text style={styles.copyBtnText}>Copy</Text>
           </Pressable>
         </View>
 
-        {/* Status Card (Out for Delivery) */}
         <View style={[styles.statusCard, { backgroundColor: '#FAF5FF', borderColor: '#F3E8FF' }]}>
           <View style={styles.statusInfo}>
-            <Text style={styles.statusTitle}>Out for Delivery</Text>
-            <Text style={styles.statusSubtitle}>Arriving today by 8 PM</Text>
+            <Text style={styles.statusTitle}>{displayStatus}</Text>
+            <Text style={styles.statusSubtitle}>
+              {order.expectedDeliveryDate
+                ? `Expected by ${new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN')}`
+                : `Payment: ${order.paymentStatus}`}
+            </Text>
           </View>
           <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=300&auto=format&fit=crop&q=80' }}
+            source={{
+              uri: 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=300&auto=format&fit=crop&q=80',
+            }}
             style={styles.scooterImg}
             resizeMode="contain"
           />
         </View>
 
-        {/* Stepper Timeline */}
         <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.timelineStepperRow}>
             {steps.map((step, idx) => {
@@ -108,7 +215,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                       style={[
                         styles.circleNode,
                         step.completed ? { backgroundColor: '#7E22CE' } : { backgroundColor: '#E2E8F0' },
-                        step.active && { borderWidth: 2, borderColor: '#C084FC' }
+                        step.active && { borderWidth: 2, borderColor: '#C084FC' },
                       ]}
                     >
                       {step.completed ? (
@@ -117,18 +224,24 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                         <View style={styles.circleInner} />
                       )}
                     </View>
-                    <Text style={[styles.stepLabel, step.completed ? { color: colors.textPrimary } : { color: colors.textSecondary }]} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        step.completed ? { color: colors.textPrimary } : { color: colors.textSecondary },
+                      ]}
+                      numberOfLines={1}
+                    >
                       {step.label}
                     </Text>
-                    {step.date ? (
-                      <Text style={styles.stepDate}>{step.date}</Text>
-                    ) : null}
+                    {step.date ? <Text style={styles.stepDate}>{step.date}</Text> : null}
                   </View>
                   {!isLast && (
                     <View
                       style={[
                         styles.stepLine,
-                        steps[idx + 1].completed ? { backgroundColor: '#7E22CE' } : { backgroundColor: '#E2E8F0' }
+                        steps[idx + 1].completed
+                          ? { backgroundColor: '#7E22CE' }
+                          : { backgroundColor: '#E2E8F0' },
                       ]}
                     />
                   )}
@@ -138,100 +251,73 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           </View>
         </View>
 
-        {/* Delivery Partner Details */}
-        <View style={[styles.partnerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Delivery Partner</Text>
-          <View style={styles.partnerRow}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80' }}
-              style={styles.partnerAvatar}
-            />
-            <View style={styles.partnerInfo}>
-              <Text style={[styles.partnerName, { color: colors.textPrimary }]}>Ravi Kumar</Text>
-              <View style={styles.partnerRatingRow}>
-                <Feather name="star" size={12} color="#FBBF24" style={{ marginRight: 2 }} />
-                <Text style={styles.partnerRatingVal}>4.8</Text>
+        {order.dealer ? (
+          <View style={[styles.partnerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Dealer</Text>
+            <View style={styles.partnerRow}>
+              <View style={[styles.partnerAvatar, { backgroundColor: colors.primarySubtle, alignItems: 'center', justifyContent: 'center' }]}>
+                <Feather name="shopping-bag" size={20} color={colors.primary} />
               </View>
-            </View>
-            <View style={styles.partnerActions}>
-              <Pressable style={styles.actionIconBtn} onPress={() => lightHaptic()}>
-                <Feather name="phone" size={16} color="#2563EB" />
-              </Pressable>
-              <Pressable style={styles.actionIconBtn} onPress={() => lightHaptic()}>
-                <Feather name="message-square" size={16} color="#2563EB" />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Courier Progress Track Illustration */}
-          <View style={styles.courierMapContainer}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=500&auto=format&fit=crop&q=80' }}
-              style={styles.mapBg}
-              resizeMode="cover"
-            />
-            <View style={styles.mapOverlay}>
-              <View style={styles.mapPin}>
-                <Feather name="briefcase" size={14} color="#fff" />
-                <Text style={styles.pinText}>Motonode Hub</Text>
+              <View style={styles.partnerInfo}>
+                <Text style={[styles.partnerName, { color: colors.textPrimary }]}>
+                  {order.dealer.businessName || order.dealer.name}
+                </Text>
+                {order.dealer.phone ? (
+                  <Text style={styles.partnerRatingVal}>{order.dealer.phone}</Text>
+                ) : null}
               </View>
-
-              <View style={styles.distanceBadge}>
-                <Text style={styles.distanceText}>3.2 km away</Text>
-              </View>
-
-              <View style={styles.mapPinDest}>
-                <Feather name="map-pin" size={14} color="#fff" />
-                <Text style={styles.pinText}>Your Location</Text>
+              <View style={styles.partnerActions}>
+                <Pressable style={styles.actionIconBtn} onPress={() => lightHaptic()}>
+                  <Feather name="phone" size={16} color="#2563EB" />
+                </Pressable>
               </View>
             </View>
           </View>
-        </View>
+        ) : null}
 
-        {/* Order Items Accordion */}
         <View style={[styles.accordionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Pressable style={styles.accordionHeader} onPress={() => setItemsExpanded(!itemsExpanded)}>
-            <Text style={[styles.accordionTitle, { color: colors.textPrimary }]}>Order Items (2)</Text>
-            <Feather name={itemsExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textSecondary} />
+            <Text style={[styles.accordionTitle, { color: colors.textPrimary }]}>
+              Order Items ({order.items.length})
+            </Text>
+            <Feather
+              name={itemsExpanded ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
+            />
           </Pressable>
 
           {itemsExpanded && (
             <View style={styles.accordionBody}>
-              <View style={styles.itemRow}>
-                <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=100&auto=format&fit=crop&q=80' }}
-                  style={styles.itemThumb}
-                />
-                <View style={styles.itemMeta}>
-                  <Text style={[styles.itemName, { color: colors.textPrimary }]}>Bosch Disc Brake Pad Set</Text>
-                  <Text style={[styles.itemQty, { color: colors.textSecondary }]}>Qty: 1</Text>
+              {order.items.map((item, index) => (
+                <View key={`${item.productId}-${index}`} style={styles.itemRow}>
+                  <Image source={{ uri: DEFAULT_PRODUCT_IMAGE }} style={styles.itemThumb} />
+                  <View style={styles.itemMeta}>
+                    <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.name}</Text>
+                    <Text style={[styles.itemQty, { color: colors.textSecondary }]}>
+                      Qty: {item.quantity}
+                    </Text>
+                  </View>
+                  <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>
+                    {formatCurrency(item.total)}
+                  </Text>
                 </View>
-                <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>₹1,499</Text>
-              </View>
-
-              <View style={styles.itemRow}>
-                <Image
-                  source={{ uri: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=100&auto=format&fit=crop&q=80' }}
-                  style={styles.itemThumb}
-                />
-                <View style={styles.itemMeta}>
-                  <Text style={[styles.itemName, { color: colors.textPrimary }]}>Motul Brake Fluid DOT 4</Text>
-                  <Text style={[styles.itemQty, { color: colors.textSecondary }]}>Qty: 1</Text>
-                </View>
-                <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>₹300</Text>
-              </View>
+              ))}
 
               <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-              
+
               <View style={styles.totalRow}>
                 <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total</Text>
-                <Text style={[styles.totalVal, { color: colors.textPrimary }]}>₹1,799</Text>
+                <Text style={[styles.totalVal, { color: colors.textPrimary }]}>
+                  {formatCurrency(order.totalAmount)}
+                </Text>
               </View>
 
-              <Pressable style={styles.billLinkBtn}>
-                <Text style={styles.billLinkText}>View Bill</Text>
-                <Feather name="chevron-right" size={12} color="#2563EB" />
-              </Pressable>
+              {addressLine ? (
+                <Text style={[styles.itemQty, { color: colors.textSecondary, marginTop: 8 }]}>
+                  Deliver to: {addressLine}
+                </Text>
+              ) : null}
             </View>
           )}
         </View>
@@ -264,6 +350,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 24,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    textAlign: 'center',
   },
   scrollContent: { padding: 16, gap: 16, paddingTop: 70 },
   orderIdRow: {
@@ -355,8 +453,7 @@ const styles = StyleSheet.create({
   },
   partnerInfo: { flex: 1 },
   partnerName: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  partnerRatingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  partnerRatingVal: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#64748B' },
+  partnerRatingVal: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#64748B', marginTop: 2 },
   partnerActions: { flexDirection: 'row', gap: 6 },
   actionIconBtn: {
     width: 32,
@@ -366,44 +463,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  courierMapContainer: {
-    height: 140,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginTop: 16,
-    position: 'relative',
-  },
-  mapBg: { width: '100%', height: '100%' },
-  mapOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-  },
-  mapPin: {
-    alignItems: 'center',
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  mapPinDest: {
-    alignItems: 'center',
-    backgroundColor: '#7E22CE',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  pinText: { color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold', marginTop: 2 },
-  distanceBadge: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  distanceText: { color: '#000', fontSize: 9, fontFamily: 'Inter_700Bold' },
   accordionCard: {
     borderRadius: 20,
     borderWidth: 1,
@@ -441,37 +500,4 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   totalVal: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  billLinkBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 4 },
-  billLinkText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#2563EB' },
-  bottomBar: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    padding: 16,
-    alignItems: 'center',
-    gap: 12,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  cancelBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#EF4444',
-  },
-  cancelText: { color: '#EF4444', fontSize: 13, fontFamily: 'Inter_700Bold' },
-  rescheduleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 12,
-  },
-  rescheduleText: { color: '#fff', fontSize: 13, fontFamily: 'Inter_700Bold' },
 });

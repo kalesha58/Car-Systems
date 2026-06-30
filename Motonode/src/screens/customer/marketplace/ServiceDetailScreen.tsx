@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -15,9 +16,12 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
-import { SERVICES } from '@data/mockData';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { getServiceById } from '@services/service.service';
+import type { IService } from '@app-types/service';
+import { getApiErrorMessage } from '@utils/apiHelpers';
+import { getServiceDurationLabel, getServiceId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 
 type ServiceDetailScreenProps = NativeStackScreenProps<
@@ -25,42 +29,72 @@ type ServiceDetailScreenProps = NativeStackScreenProps<
   typeof CustomerStackRoutes.ServiceDetail
 >;
 
-const FALLBACK_SERVICE = {
-  id: 's1',
-  name: 'Premium Oil Change Service',
-  category: 'Oil Change',
-  price: 999,
-  originalPrice: 1499,
-  duration: '30-45 mins',
-  rating: 4.7,
-  reviews: 856,
-  image: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600&auto=format&fit=crop&q=80',
-  description:
-    'Premium quality oil change using genuine oil and filter to keep your engine running smooth and efficient.',
-};
-
 export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { startBooking } = useServiceBooking();
   const { id } = route.params;
-
-  const found = SERVICES.find((s) => s.id === id);
-  const service = found ?? FALLBACK_SERVICE;
-  const originalPrice =
-    found && 'originalPrice' in found
-      ? (found as typeof FALLBACK_SERVICE).originalPrice
-      : FALLBACK_SERVICE.originalPrice;
+  const [service, setService] = useState<IService | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const serviceImages = [
-    service.image,
-    'https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?w=500&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=500&auto=format&fit=crop&q=80',
-  ];
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadService = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getServiceById(id);
+        if (cancelled) return;
+        const found = response.Response?.services?.[0] ?? null;
+        if (found) {
+          setService(found);
+        } else {
+          setError('Service not found');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, 'Failed to load service'));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadService();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!service) {
+    return (
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textPrimary }}>{error ?? 'Service not found'}</Text>
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text style={{ color: colors.primary }}>Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const serviceId = getServiceId(service);
+  const durationLabel = getServiceDurationLabel(service);
+  const serviceImages = service.images?.length
+    ? service.images
+    : ['https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80'];
 
   const serviceIncludes = [
     'Drain old engine oil',
@@ -163,7 +197,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
         </View>
 
         <View style={[styles.content, { backgroundColor: colors.background }]}>
-          <Text style={[styles.categoryText, { color: colors.link }]}>{service.category}</Text>
+          <Text style={[styles.categoryText, { color: colors.link }]}>{service.category ?? 'Service'}</Text>
           <Text style={[styles.name, { color: colors.textPrimary }]}>{service.name}</Text>
 
           <View style={styles.ratingRow}>
@@ -179,21 +213,20 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
               ))}
               <Feather name="star" size={14} color={colors.border} />
             </View>
-            <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>{service.rating}</Text>
-            <Text style={[styles.reviewsCount, { color: colors.link }]}>({service.reviews} reviews)</Text>
+            <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>4.7</Text>
+            <Text style={[styles.reviewsCount, { color: colors.link }]}>(reviews)</Text>
           </View>
 
           <View style={styles.priceRow}>
             <Text style={[styles.priceText, { color: colors.textPrimary }]}>₹{service.price}</Text>
-            {originalPrice != null && (
-              <Text style={[styles.originalPrice, { color: colors.textTertiary }]}>₹{originalPrice}</Text>
-            )}
             <View style={[styles.discountBadge, { backgroundColor: colors.primarySubtle }]}>
-              <Text style={[styles.discountText, { color: colors.success }]}>18% OFF</Text>
+              <Text style={[styles.discountText, { color: colors.success }]}>Best Price</Text>
             </View>
           </View>
 
-          <Text style={[styles.description, { color: colors.textSecondary }]}>{service.description}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {service.description ?? 'Professional service for your vehicle.'}
+          </Text>
 
           <View style={[styles.trustBadgesRow, { backgroundColor: colors.muted }]}>
             <View style={styles.trustBadge}>
@@ -212,7 +245,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
               </View>
               <View>
                 <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Quick Service</Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>{service.duration}</Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>{durationLabel}</Text>
               </View>
             </View>
 
@@ -307,9 +340,9 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
           style={[styles.bookBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
             lightHaptic();
-            startBooking(service.id);
+            startBooking(serviceId);
             navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
-              serviceId: service.id,
+              serviceId,
             });
           }}
         >
@@ -326,6 +359,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -416,7 +450,6 @@ const styles = StyleSheet.create({
   reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   priceText: { fontSize: 24, fontFamily: 'Inter_700Bold' },
-  originalPrice: { fontSize: 14, fontFamily: 'Inter_400Regular', textDecorationLine: 'line-through' },
   discountBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,

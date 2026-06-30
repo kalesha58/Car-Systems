@@ -36,6 +36,12 @@ export const businessRegistrationToInterface = (
     city: doc.city,
     phone: doc.phone,
     gst: doc.gst,
+    registrationNumber: doc.registrationNumber,
+    establishedYear: doc.establishedYear,
+    website: doc.website,
+    workingDays: doc.workingDays,
+    workingHours: doc.workingHours,
+    socialLinks: doc.socialLinks,
     location: doc.location
       ? {
           latitude: doc.location.latitude,
@@ -145,6 +151,13 @@ export const createBusinessRegistration = async (
       throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
     }
 
+    if (data.establishedYear != null) {
+      const year = Number(data.establishedYear);
+      if (!Number.isInteger(year) || year < 1900 || year > new Date().getFullYear()) {
+        throw new AppError('Established year must be a valid year', 400);
+      }
+    }
+
     // Shop photos are optional - validation removed
     /*
     if (!Array.isArray((data as any).shopPhotos) || (data as any).shopPhotos.length < 1) {
@@ -222,10 +235,43 @@ export const createBusinessRegistration = async (
       status: 'pending', // Requires admin approval
       userId,
       coverPhoto: data.coverPhoto,
-      // Validation above ensures shopPhotos exist and are non-empty
       shopPhotos: data.shopPhotos,
       documents: data.documents || [], // Documents are optional, default to empty array
     };
+
+    if (data.registrationNumber?.trim()) {
+      registrationData.registrationNumber = data.registrationNumber.trim();
+    }
+
+    if (data.establishedYear != null) {
+      registrationData.establishedYear = Number(data.establishedYear);
+    }
+
+    if (data.website?.trim()) {
+      registrationData.website = data.website.trim();
+    }
+
+    if (data.workingDays?.trim()) {
+      registrationData.workingDays = data.workingDays.trim();
+    }
+
+    if (data.workingHours?.open?.trim() && data.workingHours?.close?.trim()) {
+      registrationData.workingHours = {
+        open: data.workingHours.open.trim(),
+        close: data.workingHours.close.trim(),
+      };
+    }
+
+    if (data.socialLinks) {
+      const socialLinks = {
+        facebook: data.socialLinks.facebook?.trim() || undefined,
+        instagram: data.socialLinks.instagram?.trim() || undefined,
+        youtube: data.socialLinks.youtube?.trim() || undefined,
+      };
+      if (socialLinks.facebook || socialLinks.instagram || socialLinks.youtube) {
+        registrationData.socialLinks = socialLinks;
+      }
+    }
 
     if (data.maxDailyBookings !== undefined) {
       validateMaxDailyBookings(data.maxDailyBookings);

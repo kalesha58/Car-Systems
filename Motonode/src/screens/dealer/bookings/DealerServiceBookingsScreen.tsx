@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -14,10 +15,18 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingStatusTabs } from '@components/bookings/BookingStatusTabs';
 import { DealerStackRoutes } from '@constants/routes';
-import { useBookings } from '@context/index';
 import type { BookingFilter } from '@data/bookingsData';
 import { getStatusColor, getStatusLabel } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
+import {
+  getDealerServiceBookings,
+  updateServiceBookingStatus,
+} from '@services/serviceBooking.service';
+import type { IServiceBooking, ServiceBookingStatus } from '../../../types/serviceBooking';
+import {
+  mapServiceBookingStatus,
+  mapServiceBookingToCustomerBooking,
+} from '@utils/bookingMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -26,36 +35,68 @@ type Props = NativeStackScreenProps<
   typeof DealerStackRoutes.ServiceBookings
 >;
 
+function matchesFilter(status: ReturnType<typeof mapServiceBookingStatus>, filter: BookingFilter) {
+  const booking = { status } as { status: ReturnType<typeof mapServiceBookingStatus> };
+  if (filter === 'all') return true;
+  if (filter === 'upcoming') return status === 'pending' || status === 'confirmed';
+  if (filter === 'in_progress') return status === 'in_progress';
+  if (filter === 'completed') return status === 'completed';
+  if (filter === 'cancelled') return status === 'cancelled' || status === 'rejected';
+  return true;
+}
+
+function dealerActionStatus(
+  action: 'accept' | 'start' | 'complete' | 'reject',
+): ServiceBookingStatus {
+  if (action === 'accept') return 'scheduled';
+  if (action === 'start') return 'in_progress';
+  if (action === 'complete') return 'completed';
+  return 'cancelled';
+}
+
 export function DealerServiceBookingsScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-  const { loadBookings, getDealerBookings, updateBookingStatus } = useBookings();
   const [filter, setFilter] = useState<BookingFilter>('all');
+  const [bookings, setBookings] = useState<IServiceBooking[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const dealerId = 'd1';
+  const fetchBookings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getDealerServiceBookings({ limit: 100 });
+      setBookings(data?.bookings ?? []);
+    } catch {
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadBookings();
-    }, [loadBookings]),
+      fetchBookings();
+    }, [fetchBookings]),
   );
 
-  const bookings = getDealerBookings(dealerId, filter, 'service');
+  const filtered = bookings.filter((b) =>
+    matchesFilter(mapServiceBookingStatus(b.status), filter),
+  );
 
   const handleQuickAction = async (
     bookingId: string,
     action: 'accept' | 'start' | 'complete' | 'reject',
   ) => {
     lightHaptic();
-    if (action === 'accept') await updateBookingStatus(bookingId, 'confirmed');
-    if (action === 'start') await updateBookingStatus(bookingId, 'in_progress');
-    if (action === 'complete') {
-      await updateBookingStatus(bookingId, 'completed');
-      successHaptic();
+    try {
+      await updateServiceBookingStatus(bookingId, { status: dealerActionStatus(action) });
+      await fetchBookings();
+      if (action === 'complete') successHaptic();
+    } catch {
+      // ignore
     }
-    if (action === 'reject') await updateBookingStatus(bookingId, 'cancelled');
   };
 
   return (
@@ -72,109 +113,114 @@ export function DealerServiceBookingsScreen({ navigation }: Props) {
         <BookingStatusTabs active={filter} onChange={setFilter} />
       </View>
 
-      <FlatList
-        data={bookings}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 20 }]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="calendar" size={40} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No service bookings
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => {
-          const statusColor = getStatusColor(item.status);
-          const dateLabel = item.date
-            ? new Date(item.date).toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })
-            : '';
-
-          return (
-            <Pressable
-              style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() =>
-                navigation.navigate(DealerStackRoutes.DealerBookingDetail, {
-                  bookingId: item.id,
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color="#E60012" />
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPad + 20 }]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Feather name="calendar" size={40} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No service bookings
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const mapped = mapServiceBookingToCustomerBooking(item);
+            const statusColor = getStatusColor(mapped.status);
+            const dateLabel = item.bookingDate
+              ? new Date(item.bookingDate).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
                 })
-              }
-            >
-              <View style={styles.cardTop}>
-                <View style={[styles.badge, { backgroundColor: `${statusColor}18` }]}>
-                  <Text style={[styles.badgeText, { color: statusColor }]}>
-                    {getStatusLabel(item.status)}
-                  </Text>
+              : '';
+
+            return (
+              <Pressable
+                style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() =>
+                  navigation.navigate(DealerStackRoutes.DealerBookingDetail, {
+                    bookingId: item.id,
+                    bookingType: 'service',
+                  })
+                }
+              >
+                <View style={styles.cardTop}>
+                  <View style={[styles.badge, { backgroundColor: `${statusColor}18` }]}>
+                    <Text style={[styles.badgeText, { color: statusColor }]}>
+                      {getStatusLabel(mapped.status)}
+                    </Text>
+                  </View>
+                  <Text style={[styles.bookingId, { color: colors.textTertiary }]}>{item.id}</Text>
                 </View>
-                <Text style={[styles.bookingId, { color: colors.textTertiary }]}>
-                  {item.id}
+
+                <Text style={[styles.serviceName, { color: colors.textPrimary }]}>
+                  {item.serviceName ?? item.serviceRequest}
                 </Text>
-              </View>
+                <Text style={[styles.customer, { color: colors.textSecondary }]}>
+                  {item.customerName ?? 'Customer'}
+                </Text>
+                <Text style={[styles.meta, { color: colors.textSecondary }]}>
+                  {item.vehicleInfo?.brand} {item.vehicleInfo?.model} •{' '}
+                  {item.vehicleInfo?.registrationNumber}
+                </Text>
+                <Text style={[styles.meta, { color: colors.textSecondary }]}>
+                  {dateLabel} • {item.bookingTime}
+                </Text>
 
-              <Text style={[styles.serviceName, { color: colors.textPrimary }]}>
-                {item.serviceName}
-              </Text>
-              <Text style={[styles.customer, { color: colors.textSecondary }]}>
-                {item.customerName} • {item.customerPhone}
-              </Text>
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>
-                {item.vehicleBrand} {item.vehicleName} • {item.vehicleReg}
-              </Text>
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>
-                {dateLabel} • {item.timeSlot}
-              </Text>
-              <Text style={[styles.price, { color: colors.textPrimary }]}>
-                ₹{item.total.toLocaleString('en-IN')}
-              </Text>
-
-              <View style={styles.actions}>
-                {item.status === 'upcoming' && (
-                  <>
-                    <Pressable
-                      style={styles.rejectBtn}
-                      onPress={() => handleQuickAction(item.id, 'reject')}
-                    >
-                      <Text style={styles.rejectText}>Reject</Text>
-                    </Pressable>
+                <View style={styles.actions}>
+                  {item.status === 'new' && (
+                    <>
+                      <Pressable
+                        style={styles.rejectBtn}
+                        onPress={() => handleQuickAction(item.id, 'reject')}
+                      >
+                        <Text style={styles.rejectText}>Reject</Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.acceptBtn}
+                        onPress={() => handleQuickAction(item.id, 'accept')}
+                      >
+                        <Text style={styles.acceptText}>Accept</Text>
+                      </Pressable>
+                    </>
+                  )}
+                  {item.status === 'scheduled' && (
                     <Pressable
                       style={styles.acceptBtn}
-                      onPress={() => handleQuickAction(item.id, 'accept')}
+                      onPress={() => handleQuickAction(item.id, 'start')}
                     >
-                      <Text style={styles.acceptText}>Accept</Text>
+                      <Text style={styles.acceptText}>Start Service</Text>
                     </Pressable>
-                  </>
-                )}
-                {item.status === 'confirmed' && (
-                  <Pressable
-                    style={styles.acceptBtn}
-                    onPress={() => handleQuickAction(item.id, 'start')}
-                  >
-                    <Text style={styles.acceptText}>Start Service</Text>
-                  </Pressable>
-                )}
-                {item.status === 'in_progress' && (
-                  <Pressable
-                    style={styles.acceptBtn}
-                    onPress={() => handleQuickAction(item.id, 'complete')}
-                  >
-                    <Text style={styles.acceptText}>Mark Completed</Text>
-                  </Pressable>
-                )}
-              </View>
-            </Pressable>
-          );
-        }}
-      />
+                  )}
+                  {item.status === 'in_progress' && (
+                    <Pressable
+                      style={styles.acceptBtn}
+                      onPress={() => handleQuickAction(item.id, 'complete')}
+                    >
+                      <Text style={styles.acceptText}>Mark Completed</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </Pressable>
+            );
+          }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,7 +243,6 @@ const styles = StyleSheet.create({
   serviceName: { fontSize: 15, fontFamily: 'Inter_700Bold', marginTop: 4 },
   customer: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   meta: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  price: { fontSize: 16, fontFamily: 'Inter_700Bold', marginTop: 4 },
   actions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   rejectBtn: {
     flex: 1,

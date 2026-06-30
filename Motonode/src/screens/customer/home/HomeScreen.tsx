@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -18,9 +19,10 @@ import { ProductCard } from '@components/cards/ProductCard';
 import { VehicleCard } from '@components/cards/VehicleCard';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
-import { PRODUCTS, VEHICLES, type Vehicle } from '@data/mockData';
+import { useDealerVehiclesCatalog, useProducts } from '@hooks/useCatalogData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
+import { getProductId, getVehicleId } from '@utils/displayMappers';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
 import { spacing } from '@theme/spacing';
 
@@ -45,23 +47,22 @@ export function HomeScreen() {
   const { user } = useAuth();
 
   const tabBarPadding = useTabBarBottomPadding();
+  const { products, loading: productsLoading } = useProducts(20);
+  const { vehicles, loading: vehiclesLoading } = useDealerVehiclesCatalog(10);
 
-  // Select one product per category to display variety, showcasing different selling dealers
-  const homeProducts = React.useMemo(() => {
+  const homeProducts = useMemo(() => {
     const categoriesSeen = new Set<string>();
-    return PRODUCTS.reduce((acc, product) => {
-      if (!categoriesSeen.has(product.category)) {
-        categoriesSeen.add(product.category);
+    return products.reduce<typeof products>((acc, product) => {
+      const category = product.category ?? 'Other';
+      if (!categoriesSeen.has(category)) {
+        categoriesSeen.add(category);
         acc.push(product);
       }
       return acc;
-    }, [] as typeof PRODUCTS);
-  }, []);
+    }, []);
+  }, [products]);
 
-  const homeVehicles = [
-    VEHICLES.find((v) => v.id === 'v2'),
-    VEHICLES.find((v) => v.id === 'v3'),
-  ].filter(Boolean) as Vehicle[];
+  const homeVehicles = useMemo(() => vehicles.slice(0, 2), [vehicles]);
 
   const categories = [
     { icon: 'settings', label: 'Spare Parts' },
@@ -170,47 +171,59 @@ export function HomeScreen() {
           title="Featured Products"
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
-        <FlatList
-          data={homeProducts}
-          keyExtractor={(i) => i.id}
-          horizontal
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-          renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              variant="compact"
-              showAddToCart
-              style={styles.productCard}
-              onPress={() =>
-                navigation.navigate(CustomerStackRoutes.ProductDetail, { id: item.id })
-              }
-            />
-          )}
-        />
+        {productsLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+        ) : (
+          <FlatList
+            data={homeProducts}
+            keyExtractor={(i) => getProductId(i)}
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <ProductCard
+                product={item}
+                variant="compact"
+                showAddToCart
+                style={styles.productCard}
+                onPress={() =>
+                  navigation.navigate(CustomerStackRoutes.ProductDetail, {
+                    id: getProductId(item),
+                  })
+                }
+              />
+            )}
+          />
+        )}
 
         <SectionHeader
           title="Browse Vehicles"
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
-        <FlatList
-          data={homeVehicles}
-          keyExtractor={(i) => i.id}
-          horizontal
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-          renderItem={({ item }) => (
-            <VehicleCard
-              vehicle={item}
-              style={styles.vehicleCard}
-              onNavigate={() =>
-                navigation.navigate(CustomerStackRoutes.VehicleDetail, { id: item.id })
-              }
-            />
-          )}
-        />
+        {vehiclesLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+        ) : (
+          <FlatList
+            data={homeVehicles}
+            keyExtractor={(i) => getVehicleId(i)}
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <VehicleCard
+                vehicle={item}
+                style={styles.vehicleCard}
+                onNavigate={() =>
+                  navigation.navigate(CustomerStackRoutes.VehicleDetail, {
+                    id: getVehicleId(item),
+                  })
+                }
+              />
+            )}
+          />
+        )}
 
         <PromoBanner onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)} />
       </ScrollView>
@@ -356,6 +369,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 12,
   },
+  sectionLoader: { marginBottom: spacing.lg, alignSelf: 'center' },
   horizontalList: { paddingRight: spacing.md, gap: 12, marginBottom: spacing.lg },
   productCard: { marginBottom: 0 },
   vehicleCard: { marginBottom: 0 },
