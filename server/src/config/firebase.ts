@@ -18,20 +18,38 @@ export interface FirebaseDiagnostics {
   lastInitError: string | null;
 }
 
+function escapePrivateKeyNewlines(jsonText: string): string {
+  return jsonText.replace(
+    /"private_key"\s*:\s*"([\s\S]*?)"\s*(?=,|\})/,
+    (_match, keyBody: string) => {
+      const escaped = keyBody
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n');
+      return `"private_key":"${escaped.replace(/\\\\n/g, '\\n')}"`;
+    },
+  );
+}
+
 function parseServiceAccountJson(raw: string): admin.ServiceAccount & { project_id?: string } {
   const trimmed = raw.trim();
 
-  const attempts = [
+  const candidates = [
     trimmed,
     trimmed.startsWith("'") && trimmed.endsWith("'") ? trimmed.slice(1, -1) : null,
     trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed.slice(1, -1) : null,
+    escapePrivateKeyNewlines(trimmed),
   ].filter((value): value is string => Boolean(value));
 
+  const uniqueCandidates = [...new Set(candidates)];
+
   let lastError: unknown;
-  for (const candidate of attempts) {
+  for (const candidate of uniqueCandidates) {
     try {
-      const normalized = candidate.replace(/\\n/g, '\n');
-      const parsed = JSON.parse(normalized) as Record<string, unknown> & {
+      // Do NOT replace \\n with real newlines before JSON.parse — that injects
+      // illegal control characters into JSON string literals.
+      const parsed = JSON.parse(candidate) as Record<string, unknown> & {
         project_id?: string;
         project_info?: { project_id?: string };
         private_key?: string;
@@ -48,6 +66,10 @@ function parseServiceAccountJson(raw: string): admin.ServiceAccount & { project_
         throw new Error(
           'Service account JSON is missing project_id, private_key, or client_email',
         );
+      }
+
+      if (parsed.private_key.includes('\\n')) {
+        parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
       }
 
       return parsed as admin.ServiceAccount & { project_id?: string };
