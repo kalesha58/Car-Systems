@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
 import { createFirebaseCustomToken } from '../utils/firebaseTokens';
+import {
+  getFirebaseDiagnostics,
+  isFirebaseInitialized,
+} from '../config/firebase';
 import { ISignupRequest, ILoginRequest, IForgotPasswordRequest, IResetPasswordRequest, IGoogleAuthRequest, IPolicyAcceptanceRequest } from '../types/auth';
 import { logger } from '../utils/logger';
 import { IAuthRequest } from '../middleware/authMiddleware';
@@ -171,13 +175,49 @@ export const firebaseTokenController = async (
       return;
     }
 
-    const isAdmin = req.user?.role?.includes('admin') ?? false;
-    const token = await createFirebaseCustomToken(userId, { admin: isAdmin });
-
-    res.status(200).json({
-      success: true,
-      token,
+    const diagnostics = getFirebaseDiagnostics();
+    logger.info('firebase-token request', {
+      userId,
+      email: req.user?.email,
+      role: req.user?.role,
+      firebase: diagnostics,
     });
+
+    if (!isFirebaseInitialized()) {
+      logger.error('firebase-token rejected: Firebase Admin not initialized', diagnostics);
+      res.status(503).json({
+        success: false,
+        message: 'Firebase Admin is not configured on the server',
+        hint: 'Set FIREBASE_SERVICE_ACCOUNT_JSON on Vercel (Firebase service account for project motonode-final, not google-services.json)',
+        diagnostics,
+      });
+      return;
+    }
+
+    const isAdmin = req.user?.role?.includes('admin') ?? false;
+
+    try {
+      const token = await createFirebaseCustomToken(userId, { admin: isAdmin });
+      logger.info('firebase-token created', { userId, projectId: diagnostics.projectId });
+      res.status(200).json({
+        success: true,
+        token,
+      });
+    } catch (tokenError: unknown) {
+      const err = tokenError as Error & { code?: string };
+      logger.error('Firebase createCustomToken failed', {
+        userId,
+        message: err?.message,
+        code: err?.code,
+        stack: err?.stack,
+        projectId: diagnostics.projectId,
+      });
+      res.status(500).json({
+        success: false,
+        message: err?.message || 'Failed to create Firebase custom token',
+        code: err?.code,
+      });
+    }
   } catch (error) {
     logger.error('Firebase token controller error:', error);
     next(error);

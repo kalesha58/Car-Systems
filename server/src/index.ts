@@ -8,7 +8,7 @@ import http from 'http';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database';
-import { initializeFirebase } from './config/firebase';
+import { initializeFirebase, isFirebaseInitialized } from './config/firebase';
 import { errorHandler, IAppError } from './utils/errorHandler';
 import { swaggerSpec } from './config/swagger';
 import { initializeSocket } from './services/socket/socketService';
@@ -344,10 +344,15 @@ const initializeDatabase = async (): Promise<void> => {
 const initializeServices = (): void => {
   try {
     initializeFirebase();
-    logger.info('Firebase Admin SDK initialized');
+    if (isFirebaseInitialized()) {
+      logger.info('Firebase Admin SDK initialized');
+    } else {
+      logger.warn(
+        'Firebase Admin SDK NOT initialized — set FIREBASE_SERVICE_ACCOUNT_JSON on Vercel (project: motonode-final)',
+      );
+    }
   } catch (error) {
     logger.error('Failed to initialize Firebase', error);
-    // Don't exit - Firebase is not critical for server startup
   }
 };
 

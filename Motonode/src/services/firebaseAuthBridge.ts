@@ -1,4 +1,5 @@
 import auth from '@react-native-firebase/auth';
+import axios from 'axios';
 
 import { api } from './api';
 
@@ -8,13 +9,49 @@ const SYNC_RETRY_MS = 500;
 let syncPromise: Promise<void> | null = null;
 let expectedBackendUserId: string | null = null;
 
-async function fetchFirebaseCustomToken(): Promise<string> {
-  const response = await api.get<{ success: boolean; token: string }>('/auth/firebase-token');
-  const token = response.data?.token;
-  if (!token) {
-    throw new Error('Firebase custom token missing from server response');
+function formatBridgeError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const data = error.response?.data as
+      | { message?: string; hint?: string; code?: string }
+      | undefined;
+    const parts = [
+      status ? `HTTP ${status}` : null,
+      data?.message,
+      data?.hint,
+      data?.code ? `code: ${data.code}` : null,
+      error.message,
+    ].filter(Boolean);
+    return parts.join(' — ') || 'Firebase auth bridge request failed';
   }
-  return token;
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Firebase auth bridge sync failed';
+}
+
+async function fetchFirebaseCustomToken(): Promise<string> {
+  try {
+    const response = await api.get<{
+      success: boolean;
+      token: string;
+      message?: string;
+      hint?: string;
+    }>('/auth/firebase-token');
+    const token = response.data?.token;
+    if (!token) {
+      throw new Error(
+        response.data?.message ||
+          response.data?.hint ||
+          'Firebase custom token missing from server response',
+      );
+    }
+    return token;
+  } catch (error) {
+    throw new Error(formatBridgeError(error));
+  }
 }
 
 async function signInWithBackendToken(backendUserId: string): Promise<void> {
@@ -42,8 +79,9 @@ export async function syncFirebaseAuthWithBackend(backendUserId: string): Promis
   expectedBackendUserId = backendUserId;
   syncPromise = signInWithBackendToken(backendUserId)
     .catch((error) => {
-      console.error('Firebase auth bridge sync failed:', error);
-      throw error;
+      const message = error instanceof Error ? error.message : formatBridgeError(error);
+      console.error('Firebase auth bridge sync failed:', message);
+      throw error instanceof Error ? error : new Error(message);
     })
     .finally(() => {
       syncPromise = null;
