@@ -6,6 +6,7 @@ import {
   resetPasswordController,
   googleAuthController,
   acceptPolicyController,
+  firebaseTokenController,
 } from '../controllers/authController';
 import {
   validateSignup,
@@ -232,6 +233,7 @@ router.post('/reset-password', validateResetPassword, resetPasswordController);
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/google', validateGoogleAuth, googleAuthController);
+router.get('/firebase-token', authMiddleware, firebaseTokenController);
 router.post('/policy-acceptance', authMiddleware, acceptPolicyController);
 
 /**

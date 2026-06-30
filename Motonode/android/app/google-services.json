@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1076909846470",
+    "project_id": "motonode-final",
+    "storage_bucket": "motonode-final.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1076909846470:android:777fad4dd7b7d8ced68cc7",
+        "android_client_info": {
+          "package_name": "com.motonode"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVD8GPmOshI11_urVBl87v3pWYx4hIDh4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

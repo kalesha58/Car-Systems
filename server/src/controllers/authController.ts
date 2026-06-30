@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
+import { createFirebaseCustomToken } from '../utils/firebaseTokens';
 import { ISignupRequest, ILoginRequest, IForgotPasswordRequest, IResetPasswordRequest, IGoogleAuthRequest, IPolicyAcceptanceRequest } from '../types/auth';
 import { logger } from '../utils/logger';
 import { IAuthRequest } from '../middleware/authMiddleware';
@@ -150,6 +151,35 @@ export const refreshTokenController = async (
     res.status(200).json(result);
   } catch (error) {
     logger.error('Refresh token controller error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Mint Firebase custom token for chat (uid = MongoDB user ID)
+ * GET /api/auth/firebase-token
+ */
+export const firebaseTokenController = async (
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    const isAdmin = req.user?.role?.includes('admin') ?? false;
+    const token = await createFirebaseCustomToken(userId, { admin: isAdmin });
+
+    res.status(200).json({
+      success: true,
+      token,
+    });
+  } catch (error) {
+    logger.error('Firebase token controller error:', error);
     next(error);
   }
 };

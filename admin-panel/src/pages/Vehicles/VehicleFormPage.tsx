@@ -4,7 +4,7 @@ import { Card } from '@components/Card/Card';
 import { Input } from '@components/Input/Input';
 import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
-import { getUsers } from '@services/userService';
+import { getDealers } from '@services/dealerService';
 import { getVehicleBrands, getVehicleModels } from '@services/vehicleBrandService';
 import { createVehicle, getVehicleById, type ICreateVehiclePayload,updateVehicle } from '@services/vehicleService';
 import { useToastStore } from '@store/toastStore';
@@ -75,20 +75,20 @@ export const VehicleFormPage = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch dealers using users API with role=dealer
-        const dealersResponse = await getUsers({ limit: 100, role: 'dealer', status: 'active' });
-        // Map users to dealer format
-        const mappedDealers: IDealerListItem[] = dealersResponse.users.map((user) => ({
-          id: user.id,
-          name: user.name,
-          businessName: user.name,
-          phone: user.phone,
-          email: user.email,
+        // Fetch dealers using dealers API
+        const dealersResponse = await getDealers({ limit: 100, status: 'approved' });
+        // Map dealers to dropdown format
+        const mappedDealers: IDealerListItem[] = dealersResponse.dealers.map((dealer) => ({
+          id: dealer.id,
+          name: dealer.name,
+          businessName: dealer.businessName,
+          phone: dealer.phone,
+          email: dealer.email,
           status: 'approved' as const,
-          location: '',
-          rating: 0,
-          totalOrders: user.ordersCount || 0,
-          createdDate: user.createdDate,
+          location: dealer.location,
+          rating: dealer.rating || 0,
+          totalOrders: dealer.totalOrders || 0,
+          createdDate: dealer.registrationDate || '',
         }));
         setDealers(mappedDealers);
 

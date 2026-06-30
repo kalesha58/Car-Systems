@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { getDealerOnboardingDestination } from '../auth/dealerOnboarding';
-import { DealerStackRoutes } from '@constants/routes';
+import { DealerStackRoutes, CustomerStackRoutes } from '@constants/routes';
 import type { DealerOnboardingDestination } from '../types/api';
 import { ProductFormScreen } from '@screens/dealer/inventory/ProductFormScreen';
 import { ServiceFormScreen } from '@screens/dealer/inventory/ServiceFormScreen';
@@ -18,6 +18,15 @@ import { DealerServiceBookingsScreen } from '@screens/dealer/bookings/DealerServ
 import { StoreSettingsScreen } from '@screens/dealer/settings/StoreSettingsScreen';
 import { UPIAccountsScreen } from '@screens/dealer/settings/UPIAccountsScreen';
 import { BusinessDetailsScreen } from '@screens/dealer/profile/BusinessDetailsScreen';
+import {
+  ChatListScreen,
+  ChatScreen,
+  CreateChatScreen,
+  CreateGroupScreen,
+  GroupInfoScreen,
+  DealerChatScreen,
+  AIChatScreen,
+} from '@screens/shared/chat';
 import { DealerTabsNavigator } from './DealerTabsNavigator';
 
 export type DealerStackParamList = {
@@ -38,6 +47,13 @@ export type DealerStackParamList = {
     bookingType?: 'service' | 'test_drive';
   };
   [DealerStackRoutes.BusinessDetails]: undefined;
+  [CustomerStackRoutes.ChatList]: undefined;
+  [CustomerStackRoutes.Chat]: undefined;
+  [CustomerStackRoutes.CreateChat]: undefined;
+  [CustomerStackRoutes.CreateGroup]: undefined;
+  [CustomerStackRoutes.GroupInfo]: undefined;
+  [CustomerStackRoutes.DealerChat]: undefined;
+  [CustomerStackRoutes.AIChat]: undefined;
 };
 
 const Stack = createNativeStackNavigator<DealerStackParamList>();
@@ -98,6 +114,13 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.ServiceBookings} component={DealerServiceBookingsScreen} />
       <Stack.Screen name={DealerStackRoutes.DealerBookingDetail} component={DealerBookingDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
+      <Stack.Screen name={CustomerStackRoutes.ChatList} component={ChatListScreen} />
+      <Stack.Screen name={CustomerStackRoutes.Chat} component={ChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.CreateChat} component={CreateChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.CreateGroup} component={CreateGroupScreen} />
+      <Stack.Screen name={CustomerStackRoutes.GroupInfo} component={GroupInfoScreen} />
+      <Stack.Screen name={CustomerStackRoutes.DealerChat} component={DealerChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.AIChat} component={AIChatScreen} />
     </Stack.Navigator>
   );
 }

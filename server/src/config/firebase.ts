@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { logger } from '../utils/logger';
 
 let messaging: admin.messaging.Messaging | null = null;
+let firebaseInitialized = false;
 
 /**
  * Initialize Firebase Admin SDK
@@ -14,6 +15,7 @@ export const initializeFirebase = (): void => {
     if (admin.apps.length > 0) {
       logger.info('Firebase Admin SDK already initialized');
       messaging = admin.messaging();
+      firebaseInitialized = true;
       return;
     }
 
@@ -66,6 +68,7 @@ export const initializeFirebase = (): void => {
     });
 
     messaging = admin.messaging();
+    firebaseInitialized = true;
     logger.info('Firebase Admin SDK initialized successfully');
   } catch (error) {
     logger.error('Error initializing Firebase Admin SDK:', error);
@@ -86,6 +89,21 @@ export const getMessaging = (): admin.messaging.Messaging => {
   }
   return messaging;
 };
+
+/**
+ * Get Firebase Auth instance for custom token minting
+ */
+export const getAuth = (): admin.auth.Auth => {
+  if (!firebaseInitialized) {
+    initializeFirebase();
+  }
+  if (!firebaseInitialized || admin.apps.length === 0) {
+    throw new Error('Firebase Auth not initialized. Check Firebase configuration.');
+  }
+  return admin.auth();
+};
+
+export const isFirebaseInitialized = (): boolean => firebaseInitialized;
 
 
 

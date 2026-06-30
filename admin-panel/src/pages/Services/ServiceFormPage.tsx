@@ -7,7 +7,7 @@ import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getUsers } from '@services/userService';
+import { getDealers } from '@services/dealerService';
 import {
   getServiceCategories,
   getAdminServiceById,
@@ -79,16 +79,16 @@ export const ServiceFormPage = () => {
     const init = async () => {
       try {
         // Load sections config + dealers in parallel
-        const [catData, usersData] = await Promise.all([
+        const [catData, dealersData] = await Promise.all([
           getServiceCategories(),
-          getUsers({ limit: 200, role: 'dealer', status: 'active' }),
+          getDealers({ limit: 100, status: 'approved' }),
         ]);
         setSections(catData.sections);
         setDealers(
-          (usersData.users || []).map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            businessName: u.businessName || u.name,
+          (dealersData.dealers || []).map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            businessName: d.businessName,
           })),
         );
 

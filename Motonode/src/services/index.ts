@@ -16,3 +16,7 @@ export * from './ai.service';
 export * from './post.service';
 export * from './story.service';
 export * from './upload.service';
+export * from './chat.service';
+export * from './chatGate.service';
+export * from './firebaseAuthBridge';
+export * from './fcmTokenService';

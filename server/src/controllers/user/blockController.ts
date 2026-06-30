@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { IAuthRequest } from '../../middleware/authMiddleware';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
-import { blockUser, listBlockedUsers, unblockUser } from '../../services/user/blockService';
+import { blockUser, isBlockedEitherDirection, listBlockedUsers, unblockUser } from '../../services/user/blockService';
 
 export const blockUserController = async (req: IAuthRequest, res: Response): Promise<void> => {
   try {
@@ -32,6 +32,38 @@ export const unblockUserController = async (req: IAuthRequest, res: Response): P
 
     await unblockUser(blockerId, blockedId);
     res.status(200).json({ success: true, message: 'User unblocked successfully' });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const checkBlockController = async (req: IAuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const targetUserId = req.params.targetUserId;
+
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    if (!targetUserId) {
+      res.status(400).json({ success: false, message: 'Target user ID is required' });
+      return;
+    }
+
+    const blocked = await isBlockedEitherDirection(userId, targetUserId);
+
+    if (blocked) {
+      res.status(403).json({
+        success: false,
+        blocked: true,
+        message: 'You cannot message this user',
+      });
+      return;
+    }
+
+    res.status(200).json({ success: true, blocked: false });
   } catch (error) {
     errorHandler(error as IAppError, res);
   }

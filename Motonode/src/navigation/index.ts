@@ -5,6 +5,7 @@ export { DealerNavigator } from './DealerNavigator';
 export { CustomerTabsNavigator } from './CustomerTabsNavigator';
 export { DealerTabsNavigator } from './DealerTabsNavigator';
 export { linking } from './linking';
+export { navigationRef } from './navigationRef';
 
 export type { RootStackParamList } from './RootNavigator';
 export type { AuthStackParamList } from './AuthNavigator';

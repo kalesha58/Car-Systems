@@ -4,6 +4,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { useCart } from '@context/CartContext';
 import { useWishlist } from '@context/WishlistContext';
+import { useToast } from '@context/ToastContext';
 import { useColors } from '@hooks/useColors';
 import { cardShadow } from '@utils/shadows';
 import { lightHaptic } from '@utils/haptics';
@@ -30,6 +31,7 @@ export function ProductCard({
   const colors = useColors();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { addItem } = useCart();
+  const { showToast } = useToast();
   const productId = getProductId(product);
   const liked = isWishlisted(productId);
   const imageUri = product.images?.[0] || '';
@@ -50,6 +52,7 @@ export function ProductCard({
   const handleAddToCart = () => {
     lightHaptic();
     addItem(product);
+    showToast(`${product.name} added to cart!`, 'success');
   };
 
   return (

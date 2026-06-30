@@ -40,6 +40,13 @@ export const CustomerStackRoutes = {
   CreateCommunityPost: 'CreateCommunityPost',
   AddVehicle: 'AddVehicle',
   GarageVehicleDetail: 'GarageVehicleDetail',
+  ChatList: 'ChatList',
+  Chat: 'Chat',
+  CreateChat: 'CreateChat',
+  CreateGroup: 'CreateGroup',
+  GroupInfo: 'GroupInfo',
+  DealerChat: 'DealerChat',
+  AIChat: 'AIChat',
 } as const;
 
 export const DealerTabRoutes = {

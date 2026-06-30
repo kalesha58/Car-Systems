@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
+import { ProductsGridSkeleton, VehiclesListSkeleton, ServicesListSkeleton } from '@components/loaders';
 
 import { ProductCard } from '@components/cards/ProductCard';
 import { ServiceCard } from '@components/cards/ServiceCard';
@@ -218,9 +219,7 @@ export function MarketplaceScreen() {
 
         {activeTab === 0 && (
           productsLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <ProductsGridSkeleton />
           ) : (
           <FlatList
             style={styles.listFlex}
@@ -255,9 +254,7 @@ export function MarketplaceScreen() {
 
         {activeTab === 1 && (
           vehiclesLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <VehiclesListSkeleton />
           ) : (
           <FlatList
             style={styles.listFlex}
@@ -288,9 +285,7 @@ export function MarketplaceScreen() {
 
         {activeTab === 2 && (
           servicesLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <ServicesListSkeleton />
           ) : (
           <ScrollView
             style={styles.listFlex}

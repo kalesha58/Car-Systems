@@ -1,7 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { CustomerStackRoutes } from '@constants/routes';
-import { AiScreen } from '@screens/customer/ai/AiScreen';
 import { CartScreen } from '@screens/customer/marketplace/CartScreen';
 import { CheckoutScreen } from '@screens/customer/marketplace/CheckoutScreen';
 import { PaymentScreen } from '@screens/customer/marketplace/PaymentScreen';
@@ -26,6 +25,15 @@ import { AddVehicleScreen } from '@screens/customer/garage/AddVehicleScreen';
 import { GarageVehicleDetailScreen } from '@screens/customer/garage/GarageVehicleDetailScreen';
 import { NotificationsScreen } from '@screens/shared/NotificationsScreen';
 import { SearchScreen } from '@screens/shared/SearchScreen';
+import {
+  ChatListScreen,
+  ChatScreen,
+  CreateChatScreen,
+  CreateGroupScreen,
+  GroupInfoScreen,
+  DealerChatScreen,
+  AIChatScreen,
+} from '@screens/shared/chat';
 import { CustomerTabsNavigator } from './CustomerTabsNavigator';
 
 export type CustomerStackParamList = {
@@ -58,6 +66,13 @@ export type CustomerStackParamList = {
     vehicleId: string;
     focusSection?: 'documents';
   };
+  [CustomerStackRoutes.ChatList]: undefined;
+  [CustomerStackRoutes.Chat]: undefined;
+  [CustomerStackRoutes.CreateChat]: undefined;
+  [CustomerStackRoutes.CreateGroup]: undefined;
+  [CustomerStackRoutes.GroupInfo]: undefined;
+  [CustomerStackRoutes.DealerChat]: undefined;
+  [CustomerStackRoutes.AIChat]: undefined;
 };
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -128,9 +143,16 @@ export function CustomerNavigator() {
       />
       <Stack.Screen
         name={CustomerStackRoutes.AiAssistant}
-        component={AiScreen}
+        component={AIChatScreen}
         options={{ presentation: 'modal' }}
       />
+      <Stack.Screen name={CustomerStackRoutes.ChatList} component={ChatListScreen} />
+      <Stack.Screen name={CustomerStackRoutes.Chat} component={ChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.CreateChat} component={CreateChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.CreateGroup} component={CreateGroupScreen} />
+      <Stack.Screen name={CustomerStackRoutes.GroupInfo} component={GroupInfoScreen} />
+      <Stack.Screen name={CustomerStackRoutes.DealerChat} component={DealerChatScreen} />
+      <Stack.Screen name={CustomerStackRoutes.AIChat} component={AIChatScreen} />
     </Stack.Navigator>
   );
 }

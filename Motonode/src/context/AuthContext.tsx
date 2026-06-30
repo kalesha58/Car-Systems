@@ -9,8 +9,14 @@ import React, {
 } from 'react';
 
 import { login as loginApi, logout as logoutApi, signup as signupApi } from '@services/auth.service';
+import {
+  clearFirebaseAuthBridgeState,
+  syncFirebaseAuthWithBackend,
+} from '@services/firebaseAuthBridge';
+import { registerFcmToken, unregisterFcmToken } from '@services/fcmTokenService';
 import { getString, getJSON, remove, setJSON, setString, StorageKeys } from '@storage/index';
 import { mapServerUserToAuthUser } from '@utils/mapAuthUser';
+import auth from '@react-native-firebase/auth';
 import type { LoginResult } from '../types/api';
 import type { AuthUser, UserRole } from '../types/auth';
 
@@ -81,6 +87,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!user || user.isGuest) {
+      clearFirebaseAuthBridgeState();
+      auth().signOut().catch(() => {});
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await syncFirebaseAuthWithBackend(user.id);
+        if (!cancelled) {
+          await registerFcmToken(user.id);
+        }
+      } catch (err) {
+        console.error('Firebase auth bridge failed:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const login = useCallback(async (email: string, password: string): Promise<LoginResult | null> => {
     const result = await loginApi(email, password);
     const authUser = mapServerUserToAuthUser(result.user);
@@ -122,10 +153,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    if (user?.id) {
+      await unregisterFcmToken(user.id).catch(() => {});
+    }
+
+    clearFirebaseAuthBridgeState();
+    await auth().signOut().catch(() => {});
     await logoutApi();
     setUser(null);
     await remove(StorageKeys.USER);
-  }, [user?.isGuest]);
+  }, [user?.isGuest, user?.id]);
 
   const completeOnboarding = useCallback(async () => {
     setIsOnboarded(true);

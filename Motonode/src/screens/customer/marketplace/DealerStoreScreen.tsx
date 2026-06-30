@@ -17,7 +17,9 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart } from '@context/CartContext';
+import { useToast } from '@context/ToastContext';
 import { useColors } from '@hooks/useColors';
+import { DealerStoreSkeleton } from '@components/loaders';
 import { getDealerById } from '@services/dealer.service';
 import { getProducts } from '@services/product.service';
 import { getServicesByDealerId } from '@services/service.service';
@@ -51,7 +53,8 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { id } = route.params;
-  const { items, total } = useCart();
+  const { items, total, addItem } = useCart();
+  const { showToast } = useToast();
 
   const [dealer, setDealer] = useState<IDealer | null>(null);
   const [products, setProducts] = useState<IProduct[]>([]);
@@ -114,11 +117,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   };
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <DealerStoreSkeleton />;
   }
 
   return (
@@ -171,7 +170,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                 ]}
                 onPress={handleFollowToggle}
               >
-                <Text style={[styles.followText, isFollowed ? { color: '#fff' } : { color: '#2563EB' }]}>
+                <Text style={[styles.followText, isFollowed ? { color: '#fff' } : { color: colors.primary }]}>
                   {isFollowed ? 'Following' : 'Follow'}
                 </Text>
               </Pressable>
@@ -190,7 +189,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
         <View style={styles.statsRow}>
           <View style={styles.statBadge}>
             <View style={[styles.statIconWrapper, { backgroundColor: '#EEF2F6' }]}>
-              <Feather name="shield" size={18} color="#2563EB" />
+              <Feather name="shield" size={18} color={colors.primary} />
             </View>
             <Text style={[styles.statTitle, { color: colors.textPrimary }]}>100% Genuine</Text>
             <Text style={[styles.statSub, { color: colors.textSecondary }]}>Products</Text>
@@ -198,7 +197,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
 
           <View style={styles.statBadge}>
             <View style={[styles.statIconWrapper, { backgroundColor: '#EEF2F6' }]}>
-              <Feather name="refresh-cw" size={18} color="#2563EB" />
+              <Feather name="refresh-cw" size={18} color={colors.primary} />
             </View>
             <Text style={[styles.statTitle, { color: colors.textPrimary }]}>7 Days</Text>
             <Text style={[styles.statSub, { color: colors.textSecondary }]}>Easy Returns</Text>
@@ -206,7 +205,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
 
           <View style={styles.statBadge}>
             <View style={[styles.statIconWrapper, { backgroundColor: '#EEF2F6' }]}>
-              <Feather name="truck" size={18} color="#2563EB" />
+              <Feather name="truck" size={18} color={colors.primary} />
             </View>
             <Text style={[styles.statTitle, { color: colors.textPrimary }]}>Fast</Text>
             <Text style={[styles.statSub, { color: colors.textSecondary }]}>Delivery</Text>
@@ -214,7 +213,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
 
           <View style={styles.statBadge}>
             <View style={[styles.statIconWrapper, { backgroundColor: '#EEF2F6' }]}>
-              <Feather name="headphones" size={18} color="#2563EB" />
+              <Feather name="headphones" size={18} color={colors.primary} />
             </View>
             <Text style={[styles.statTitle, { color: colors.textPrimary }]}>Expert</Text>
             <Text style={[styles.statSub, { color: colors.textSecondary }]}>Support</Text>
@@ -226,13 +225,13 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
           {(['shop', 'services', 'about', 'reviews'] as const).map((tab) => (
             <Pressable
               key={tab}
-              style={[styles.tabButton, activeTab === tab && { borderBottomColor: '#2563EB', borderBottomWidth: 2 }]}
+              style={[styles.tabButton, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
               onPress={() => setActiveTab(tab)}
             >
               <Text
                 style={[
                   styles.tabText,
-                  { color: activeTab === tab ? '#2563EB' : colors.textSecondary },
+                  { color: activeTab === tab ? colors.primary : colors.textSecondary },
                   activeTab === tab && { fontFamily: 'Inter_700Bold' },
                 ]}
               >
@@ -289,8 +288,15 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                   ) : null}
                   <View style={styles.productPriceRow}>
                     <Text style={[styles.productPrice, { color: colors.textPrimary }]}>₹{product.price}</Text>
-                    <Pressable style={styles.addBtn} onPress={() => successHaptic()}>
-                      <Feather name="plus" size={12} color="#2563EB" />
+                    <Pressable
+                      style={styles.addBtn}
+                      onPress={() => {
+                        lightHaptic();
+                        addItem(product);
+                        showToast(`${product.name} added to cart!`, 'success');
+                      }}
+                    >
+                      <Feather name="plus" size={12} color={colors.primary} />
                       <Text style={styles.addBtnText}>Add</Text>
                     </Pressable>
                   </View>
@@ -379,14 +385,14 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
         <View style={styles.cartIndicator}>
           <View style={styles.cartBadgeWrapper}>
-            <Feather name="shopping-cart" size={20} color="#2563EB" />
+            <Feather name="shopping-cart" size={20} color={colors.primary} />
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{items.length}</Text>
             </View>
           </View>
         </View>
         <Pressable
-          style={[styles.checkoutBtn, { backgroundColor: '#2563EB' }]}
+          style={[styles.checkoutBtn, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate(CustomerStackRoutes.Cart)}
         >
           <Text style={styles.checkoutText}>View Cart • ₹{total.toLocaleString('en-IN')}</Text>

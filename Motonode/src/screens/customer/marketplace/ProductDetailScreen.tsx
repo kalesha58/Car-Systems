@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { CustomerStackRoutes } from '@constants/routes';
-import { useCart, useWishlist } from '@context/index';
+import { useCart, useWishlist, useToast } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { getProductById } from '@services/product.service';
 import type { IProduct } from '@app-types/product';
@@ -22,6 +22,7 @@ import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { ProductDetailSkeleton } from '@components/loaders';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -48,6 +49,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const [error, setError] = useState<string | null>(null);
   const { addItem, items, updateQuantity } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const { showToast } = useToast();
   
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -61,7 +63,15 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
         setError(null);
         const response = await getProductById(id);
         if (cancelled) return;
-        const found = response.Response?.products?.[0] ?? null;
+        const data = response.Response as any;
+        let found = null;
+        if (data) {
+          if (Array.isArray(data.products)) {
+            found = data.products[0];
+          } else if (data.id || data._id) {
+            found = data;
+          }
+        }
         if (found) {
           setProduct(found);
         } else {
@@ -99,11 +109,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
       : [];
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (!product) {
@@ -156,6 +162,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     if (localQty > 1) {
       updateQuantity(productId, localQty);
     }
+    showToast(`${product.name} added to cart!`, 'success');
   };
 
   const benefits = [

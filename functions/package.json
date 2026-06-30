@@ -1,0 +1,13 @@
+{
+  "name": "motonode-functions",
+  "description": "Cloud Functions for Motonode chat push notifications",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.0"
+  },
+  "private": true
+}

@@ -8,9 +8,8 @@ import { getCategories } from '@services/categoryService';
 import { getBatteryTypes } from '@services/batteryTypeService';
 import { getProductBrands } from '@services/productBrandService';
 import { getVehicleBrands, getVehicleModels } from '@services/vehicleBrandService';
-import { getBusinessRegistration } from '@services/dealerService';
+import { getBusinessRegistration, getDealers } from '@services/dealerService';
 import { createProduct, getProductById, type ICreateProductPayload,updateProduct } from '@services/productService';
-import { getUsers } from '@services/userService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -104,20 +103,20 @@ export const ProductFormPage = () => {
           (productBrandsResponse.productBrands || []).map((brand) => ({ name: brand.name })),
         );
 
-        // Fetch dealers using users API with role=dealer
-        const dealersResponse = await getUsers({ limit: 100, role: 'dealer', status: 'active' });
-        // Map users to dealer format
-        const mappedDealers: IDealerListItem[] = dealersResponse.users.map((user: { id: string; name: string; phone: string; email: string; ordersCount?: number; createdDate: string }) => ({
-          id: user.id,
-          name: user.name,
-          businessName: user.name,
-          phone: user.phone,
-          email: user.email,
+        // Fetch dealers using dealers API
+        const dealersResponse = await getDealers({ limit: 100, status: 'approved' });
+        // Map dealers to dropdown format
+        const mappedDealers: IDealerListItem[] = dealersResponse.dealers.map((dealer) => ({
+          id: dealer.id,
+          name: dealer.name,
+          businessName: dealer.businessName,
+          phone: dealer.phone,
+          email: dealer.email,
           status: 'approved' as const,
-          location: '',
-          rating: 0,
-          totalOrders: user.ordersCount || 0,
-          createdDate: user.createdDate,
+          location: dealer.location,
+          rating: dealer.rating || 0,
+          totalOrders: dealer.totalOrders || 0,
+          createdDate: dealer.registrationDate || '',
         }));
         setDealers(mappedDealers);
 

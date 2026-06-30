@@ -17,14 +17,16 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BannerCarousel, SectionHeader, PromoBanner, ChromeHeader, SubtlePatternBackground } from '@components/common';
 import { ProductCard } from '@components/cards/ProductCard';
 import { VehicleCard } from '@components/cards/VehicleCard';
+import { ServiceCard } from '@components/cards/ServiceCard';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
-import { useDealerVehiclesCatalog, useProducts } from '@hooks/useCatalogData';
+import { useDealerVehiclesCatalog, useProducts, useServicesCatalog } from '@hooks/useCatalogData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
-import { getProductId, getVehicleId } from '@utils/displayMappers';
-import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
+import { getProductId, getVehicleId, getServiceId } from '@utils/displayMappers';
+import type { CustomerTabParamList as NavigationParamList } from '@navigation/CustomerTabsNavigator';
 import { spacing } from '@theme/spacing';
+import { HorizontalProductsSkeleton, HorizontalVehiclesSkeleton, HorizontalServicesSkeleton } from '@components/loaders';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -33,6 +35,7 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.Notifications]: undefined;
   [CustomerStackRoutes.ProductDetail]: { id: string };
   [CustomerStackRoutes.VehicleDetail]: { id: string };
+  [CustomerStackRoutes.ServiceDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
 };
 
@@ -49,6 +52,7 @@ export function HomeScreen() {
   const tabBarPadding = useTabBarBottomPadding();
   const { products, loading: productsLoading } = useProducts(20);
   const { vehicles, loading: vehiclesLoading } = useDealerVehiclesCatalog(10);
+  const { services, loading: servicesLoading } = useServicesCatalog(10);
 
   const homeProducts = useMemo(() => {
     const categoriesSeen = new Set<string>();
@@ -172,7 +176,7 @@ export function HomeScreen() {
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
         {productsLoading ? (
-          <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+          <HorizontalProductsSkeleton />
         ) : (
           <FlatList
             data={homeProducts}
@@ -202,7 +206,7 @@ export function HomeScreen() {
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
         {vehiclesLoading ? (
-          <ActivityIndicator size="small" color={colors.primary} style={styles.sectionLoader} />
+          <HorizontalVehiclesSkeleton />
         ) : (
           <FlatList
             data={homeVehicles}
@@ -218,6 +222,34 @@ export function HomeScreen() {
                 onNavigate={() =>
                   navigation.navigate(CustomerStackRoutes.VehicleDetail, {
                     id: getVehicleId(item),
+                  })
+                }
+              />
+            )}
+          />
+        )}
+
+        <SectionHeader
+          title="New Services"
+          onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
+        />
+        {servicesLoading ? (
+          <HorizontalServicesSkeleton />
+        ) : (
+          <FlatList
+            data={services}
+            keyExtractor={(i) => getServiceId(i)}
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <ServiceCard
+                service={item}
+                style={styles.serviceCard}
+                onPress={() =>
+                  navigation.navigate(CustomerStackRoutes.ServiceDetail, {
+                    id: getServiceId(item),
                   })
                 }
               />
@@ -373,4 +405,5 @@ const styles = StyleSheet.create({
   horizontalList: { paddingRight: spacing.md, gap: 12, marginBottom: spacing.lg },
   productCard: { marginBottom: 0 },
   vehicleCard: { marginBottom: 0 },
+  serviceCard: { marginBottom: 0 },
 });

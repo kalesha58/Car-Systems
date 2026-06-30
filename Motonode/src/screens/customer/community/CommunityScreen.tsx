@@ -134,9 +134,15 @@ export function CommunityScreen() {
             <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
               <Feather name="send" size={20} color={colors.headerForeground} />
             </Pressable>
-            <Pressable style={styles.createBtn} onPress={handleCreate} hitSlop={6}>
-              <Feather name="plus" size={16} color={colors.primary} />
-              <Text style={[styles.createText, { color: colors.primary }]}>Create</Text>
+            <Pressable
+              style={styles.iconBtn}
+              onPress={() => {
+                lightHaptic();
+                navigation.navigate(CustomerStackRoutes.ChatList);
+              }}
+              hitSlop={6}
+            >
+              <Feather name="message-square" size={22} color={colors.headerForeground} />
             </Pressable>
           </View>
         </View>
@@ -151,7 +157,7 @@ export function CommunityScreen() {
           data={posts}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: tabBarPadding, flexGrow: 1 }}
+          contentContainerStyle={{ paddingBottom: tabBarPadding + 80, flexGrow: 1 }}
           ListHeaderComponent={listHeader}
           refreshControl={
             <RefreshControl
@@ -174,6 +180,20 @@ export function CommunityScreen() {
           }
         />
       )}
+
+      {/* Floating Action Button (FAB) for Create Post */}
+      <Pressable
+        style={[
+          styles.fabBtn,
+          {
+            backgroundColor: colors.primary,
+            bottom: tabBarPadding + 16,
+          },
+        ]}
+        onPress={handleCreate}
+      >
+        <Feather name="plus" size={24} color={colors.white} />
+      </Pressable>
     </View>
   );
 }
@@ -203,18 +223,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createBtn: {
-    flexDirection: 'row',
+  fabBtn: {
+    position: 'absolute',
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-  createText: {
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   centered: {
     flex: 1,

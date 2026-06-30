@@ -24,6 +24,7 @@ import type { IDealerVehicle } from '@app-types/vehicle';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getVehicleDisplayName, getVehicleId } from '@utils/displayMappers';
 import { successHaptic, lightHaptic } from '@utils/haptics';
+import { VehicleDetailSkeleton } from '@components/loaders';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -69,7 +70,15 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
         setError(null);
         const response = await getVehicleById(id);
         if (cancelled) return;
-        const found = response.Response?.vehicles?.[0] ?? null;
+        const data = response.Response as any;
+        let found = null;
+        if (data) {
+          if (Array.isArray(data.vehicles)) {
+            found = data.vehicles[0];
+          } else if (data.id || data._id) {
+            found = data;
+          }
+        }
         if (found) {
           setVehicle(found);
         } else {
@@ -114,11 +123,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
   const dealerId = vehicle?.dealerId || vehicle?.dealer?.id || '';
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <VehicleDetailSkeleton />;
   }
 
   if (!vehicle) {

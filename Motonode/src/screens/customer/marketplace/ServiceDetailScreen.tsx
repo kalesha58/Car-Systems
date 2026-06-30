@@ -23,6 +23,7 @@ import type { IService } from '@app-types/service';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getServiceDurationLabel, getServiceId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { ServiceDetailSkeleton } from '@components/loaders';
 
 type ServiceDetailScreenProps = NativeStackScreenProps<
   CustomerStackParamList,
@@ -50,7 +51,15 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
         setError(null);
         const response = await getServiceById(id);
         if (cancelled) return;
-        const found = response.Response?.services?.[0] ?? null;
+        const data = response.Response as any;
+        let found = null;
+        if (data) {
+          if (Array.isArray(data.services)) {
+            found = data.services[0];
+          } else if (data.id || data._id) {
+            found = data;
+          }
+        }
         if (found) {
           setService(found);
         } else {
@@ -72,11 +81,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
   }, [id]);
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <ServiceDetailSkeleton />;
   }
 
   if (!service) {
