@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { SignUp } from '../models/SignUp';
 import { IJwtPayload } from '../types/auth';
 import { UnauthorizedError } from '../utils/errorHandler';
+import { ensureDatabaseConnection } from '../config/database';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -44,6 +45,8 @@ export const authMiddleware = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    await ensureDatabaseConnection();
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -9,19 +9,40 @@ const SYNC_RETRY_MS = 500;
 let syncPromise: Promise<void> | null = null;
 let expectedBackendUserId: string | null = null;
 
+type ApiErrorBody = {
+  message?: string;
+  hint?: string;
+  code?: string;
+  Response?: { ReturnMessage?: string };
+};
+
+function extractApiErrorMessage(data: unknown): string | null {
+  if (!data) return null;
+  if (typeof data === 'string') return data;
+  if (typeof data !== 'object') return null;
+
+  const body = data as ApiErrorBody;
+  return body.message || body.Response?.ReturnMessage || body.hint || null;
+}
+
 function formatBridgeError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
-    const data = error.response?.data as
-      | { message?: string; hint?: string; code?: string }
-      | undefined;
+    const apiMessage = extractApiErrorMessage(error.response?.data);
+
+    if (__DEV__ && error.response?.data) {
+      console.error(
+        'firebase-token API error body:',
+        JSON.stringify(error.response.data, null, 2),
+      );
+    }
+
     const parts = [
       status ? `HTTP ${status}` : null,
-      data?.message,
-      data?.hint,
-      data?.code ? `code: ${data.code}` : null,
+      apiMessage,
       error.message,
     ].filter(Boolean);
+
     return parts.join(' — ') || 'Firebase auth bridge request failed';
   }
 

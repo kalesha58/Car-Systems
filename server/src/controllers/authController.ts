@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
 import { createFirebaseCustomToken } from '../utils/firebaseTokens';
 import {
+  ensureFirebaseReady,
   getFirebaseDiagnostics,
   isFirebaseInitialized,
 } from '../config/firebase';
@@ -175,6 +176,8 @@ export const firebaseTokenController = async (
       return;
     }
 
+    ensureFirebaseReady();
+
     const diagnostics = getFirebaseDiagnostics();
     logger.info('firebase-token request', {
       userId,
@@ -187,7 +190,7 @@ export const firebaseTokenController = async (
       logger.error('firebase-token rejected: Firebase Admin not initialized', diagnostics);
       res.status(503).json({
         success: false,
-        message: 'Firebase Admin is not configured on the server',
+        message: diagnostics.lastInitError || 'Firebase Admin is not configured on the server',
         hint: 'Set FIREBASE_SERVICE_ACCOUNT_JSON on Vercel (Firebase service account for project motonode-final, not google-services.json)',
         diagnostics,
       });
@@ -195,9 +198,10 @@ export const firebaseTokenController = async (
     }
 
     const isAdmin = req.user?.role?.includes('admin') ?? false;
+    const uid = String(userId);
 
     try {
-      const token = await createFirebaseCustomToken(userId, { admin: isAdmin });
+      const token = await createFirebaseCustomToken(uid, { admin: isAdmin });
       logger.info('firebase-token created', { userId, projectId: diagnostics.projectId });
       res.status(200).json({
         success: true,

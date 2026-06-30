@@ -8,7 +8,7 @@ import http from 'http';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database';
-import { initializeFirebase, isFirebaseInitialized } from './config/firebase';
+import { initializeFirebase, isFirebaseInitialized, getFirebaseDiagnostics, ensureFirebaseReady } from './config/firebase';
 import { errorHandler, IAppError } from './utils/errorHandler';
 import { swaggerSpec } from './config/swagger';
 import { initializeSocket } from './services/socket/socketService';
@@ -111,10 +111,14 @@ app.get('/', (req: Request, res: Response) => {
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
+  ensureFirebaseReady();
+  const firebase = getFirebaseDiagnostics();
+
   res.status(200).json({
     status: 'OK',
     message: 'Server is running',
     timestamp: new Date().toISOString(),
+    firebase,
   });
 });
 
