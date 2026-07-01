@@ -73,6 +73,8 @@ export interface IOrderData {
   cancellationReason?: string;
   expectedDeliveryDate?: string;
   deliveryLocation?: ILocation;
+  pickupLocation?: ILocation;
+  deliveryPersonLocation?: ILocation;
   createdAt: string;
   updatedAt: string;
   dealer?: {

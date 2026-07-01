@@ -399,6 +399,67 @@ export function UserSearchListSkeleton() {
   );
 }
 
+export function OrderTrackingSkeleton() {
+  const colors = useColors();
+
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.orderTrackingScroll}
+    >
+      <View style={styles.orderIdRowSkeleton}>
+        <View style={styles.orderIdTextSkeleton}>
+          <Skeleton style={styles.orderLabelLine} />
+          <Skeleton style={styles.orderIdLine} />
+          <Skeleton style={styles.orderDateLine} />
+        </View>
+        <Skeleton style={styles.copyBtnSkeleton} />
+      </View>
+
+      <View style={[styles.statusCardSkeleton, { borderColor: colors.border }]}>
+        <View style={styles.statusInfoSkeleton}>
+          <Skeleton style={styles.statusTitleLine} />
+          <Skeleton style={styles.statusSubtitleLine} />
+        </View>
+        <Skeleton style={styles.statusIconSkeleton} />
+      </View>
+
+      <Skeleton style={styles.mapSkeleton} />
+
+      <View style={[styles.timelineCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.timelineRowSkeleton}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <React.Fragment key={i}>
+              <View style={styles.timelineStepSkeleton}>
+                <Skeleton style={styles.timelineCircleSkeleton} />
+                <Skeleton style={styles.timelineLabelSkeleton} />
+              </View>
+              {i < 5 && <Skeleton style={styles.timelineLineSkeleton} />}
+            </React.Fragment>
+          ))}
+        </View>
+      </View>
+
+      <View style={[styles.accordionCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.accordionTitleSkeleton} />
+        <View style={styles.accordionBodySkeleton}>
+          {[1, 2].map((i) => (
+            <View key={i} style={styles.orderItemRowSkeleton}>
+              <Skeleton style={styles.orderItemThumbSkeleton} />
+              <View style={styles.orderItemMetaSkeleton}>
+                <Skeleton style={styles.orderItemNameSkeleton} />
+                <Skeleton style={styles.orderItemQtySkeleton} />
+              </View>
+              <Skeleton style={styles.orderItemPriceSkeleton} />
+            </View>
+          ))}
+          <Skeleton style={styles.orderTotalLineSkeleton} />
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
@@ -657,5 +718,168 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     backgroundColor: '#E2E8F0',
+  },
+  orderTrackingScroll: {
+    padding: 16,
+    gap: 16,
+    paddingTop: 70,
+    paddingBottom: 24,
+  },
+  orderIdRowSkeleton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  orderIdTextSkeleton: {
+    flex: 1,
+    gap: 6,
+  },
+  orderLabelLine: {
+    height: 10,
+    width: 56,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  orderIdLine: {
+    height: 16,
+    width: '55%',
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  orderDateLine: {
+    height: 10,
+    width: '40%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  copyBtnSkeleton: {
+    width: 52,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  statusCardSkeleton: {
+    flexDirection: 'row',
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statusInfoSkeleton: {
+    flex: 1,
+    gap: 8,
+  },
+  statusTitleLine: {
+    height: 18,
+    width: '45%',
+    borderRadius: 9,
+    backgroundColor: '#E2E8F0',
+  },
+  statusSubtitleLine: {
+    height: 12,
+    width: '60%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  statusIconSkeleton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E2E8F0',
+  },
+  mapSkeleton: {
+    height: 220,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+  },
+  timelineCardSkeleton: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+  },
+  timelineRowSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  timelineStepSkeleton: {
+    alignItems: 'center',
+    width: 60,
+    gap: 6,
+  },
+  timelineCircleSkeleton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#E2E8F0',
+  },
+  timelineLabelSkeleton: {
+    height: 8,
+    width: 44,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  timelineLineSkeleton: {
+    flex: 1,
+    height: 2,
+    marginTop: 10,
+    borderRadius: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  accordionCardSkeleton: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    gap: 16,
+  },
+  accordionTitleSkeleton: {
+    height: 14,
+    width: '40%',
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+  },
+  accordionBodySkeleton: {
+    gap: 12,
+  },
+  orderItemRowSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  orderItemThumbSkeleton: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  orderItemMetaSkeleton: {
+    flex: 1,
+    gap: 6,
+  },
+  orderItemNameSkeleton: {
+    height: 12,
+    width: '70%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  orderItemQtySkeleton: {
+    height: 10,
+    width: '30%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  orderItemPriceSkeleton: {
+    height: 12,
+    width: 48,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  orderTotalLineSkeleton: {
+    height: 14,
+    width: '100%',
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+    marginTop: 4,
   },
 });

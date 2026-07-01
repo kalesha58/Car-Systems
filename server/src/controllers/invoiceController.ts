@@ -39,8 +39,8 @@ const getInvoiceStyles = () => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
   
   :root {
-    --primary-color: #0d8320;
-    --primary-hover: #0a6418;
+    --primary-color: #E60012;
+    --primary-hover: #b3000e;
     --text-main: #1e293b;
     --text-muted: #64748b;
     --bg-light: #f8fafc;
@@ -263,6 +263,123 @@ const getInvoiceStyles = () => `
     color: var(--text-muted);
   }
 
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .meta-card {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .meta-card h5 {
+    margin: 0 0 6px 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .meta-card p {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .lifecycle {
+    margin-bottom: 32px;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+  }
+
+  .lifecycle h4 {
+    margin: 0 0 16px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .lifecycle-steps {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .lifecycle-step {
+    flex: 1;
+    min-width: 90px;
+    text-align: center;
+    position: relative;
+  }
+
+  .lifecycle-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin: 0 auto 8px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+  }
+
+  .lifecycle-dot.done {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+
+  .lifecycle-dot.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+
+  .lifecycle-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+    line-height: 1.3;
+  }
+
+  .timeline-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+  }
+
+  .timeline-table th,
+  .timeline-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .timeline-table th {
+    background: var(--bg-light);
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
   @media print {
     body {
       background-color: #ffffff;
@@ -278,6 +395,103 @@ const getInvoiceStyles = () => `
     }
   }
 `;
+
+const DEALER_ORDER_STEPS = [
+  'Order Placed',
+  'Accepted',
+  'Packed',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+];
+
+function getDealerOrderStepIndex(status: string): number {
+  const key = (status || '').toLowerCase();
+  switch (key) {
+    case 'order_placed':
+    case 'payment_confirmed':
+    case 'pending_cod':
+    case 'pending_payment':
+      return 0;
+    case 'order_confirmed':
+      return 1;
+    case 'packed':
+      return 2;
+    case 'shipped':
+      return 3;
+    case 'out_for_delivery':
+      return 4;
+    case 'delivered':
+      return 5;
+    default:
+      return -1;
+  }
+}
+
+function renderLifecycleHtml(status: string): string {
+  const activeIdx = getDealerOrderStepIndex(status);
+  const steps = DEALER_ORDER_STEPS.map((label, idx) => {
+    const done = activeIdx > idx;
+    const active = activeIdx === idx;
+    const dotClass = done ? 'done' : active ? 'active' : '';
+    const marker = done ? '✓' : String(idx + 1);
+    return `
+      <div class="lifecycle-step">
+        <div class="lifecycle-dot ${dotClass}">${marker}</div>
+        <div class="lifecycle-label">${label}</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="lifecycle">
+      <h4>Order Fulfillment Progress</h4>
+      <div class="lifecycle-steps">${steps}</div>
+    </div>
+  `;
+}
+
+function renderTimelineHtml(timeline: Array<{ status: string; timestamp: Date | string; notes?: string; actor?: string }> = []): string {
+  if (!timeline.length) return '';
+
+  const rows = [...timeline]
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .map((event) => {
+      const when = new Date(event.timestamp).toLocaleString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      return `
+        <tr>
+          <td>${event.status.replace(/_/g, ' ')}</td>
+          <td>${when}</td>
+          <td>${event.actor || 'system'}</td>
+          <td>${event.notes || '—'}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  return `
+    <div style="margin-bottom: 30px;">
+      <h4 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin: 0 0 12px 0;">Status History</h4>
+      <table class="timeline-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date & Time</th>
+            <th>Updated By</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
 
 // GET /api/invoices/order/:id
 export const getOrderInvoice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -313,9 +527,17 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
     const customerUser = await SignUp.findById(order.userId).select('name email phone').lean();
 
     // Fetch dealer details
-    let dealerInfo = null;
+    let dealerInfo: {
+      name?: string;
+      businessName?: string;
+      phone?: string;
+      email?: string;
+      address?: string;
+      gst?: string;
+    } | null = null;
     if (order.dealerId) {
       const dealerUser = await SignUp.findById(order.dealerId).select('email').lean();
+      const businessReg = await BusinessRegistration.findOne({ userId: order.dealerId }).lean();
       if (dealerUser) {
         const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
         if (dealerDoc) {
@@ -325,23 +547,39 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
             phone: dealerDoc.phone,
             email: dealerDoc.email,
             address: dealerDoc.address,
+            gst: businessReg?.gst,
           };
         }
       }
     }
 
-    const itemsRows = order.items
-      .map(
-        (item) => `
-      <tr>
-        <td class="item-details">${item.name}</td>
-        <td>${item.quantity}</td>
-        <td>₹${item.price.toFixed(2)}</td>
-        <td>₹${item.total.toFixed(2)}</td>
-      </tr>
-    `,
-      )
-      .join('');
+    const expectedDelivery = order.expectedDeliveryDate
+      ? new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : order.tracking?.estimatedDelivery
+        ? new Date(order.tracking.estimatedDelivery).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : 'Not scheduled';
+
+    const trackingBlock = order.tracking
+      ? `
+        <div class="meta-card">
+          <h5>Tracking</h5>
+          <p>${order.tracking.carrier} · ${order.tracking.trackingNumber}</p>
+        </div>
+      `
+      : `
+        <div class="meta-card">
+          <h5>Tracking</h5>
+          <p>Not assigned yet</p>
+        </div>
+      `;
 
     const formattedDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
       day: 'numeric',
@@ -388,6 +626,20 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
               <svg id="barcode" style="background: transparent;"></svg>
             </div>
 
+            <div class="meta-grid">
+              <div class="meta-card">
+                <h5>Order Reference</h5>
+                <p>#${order.orderNumber}</p>
+              </div>
+              <div class="meta-card">
+                <h5>Expected Delivery</h5>
+                <p>${expectedDelivery}</p>
+              </div>
+              ${trackingBlock}
+            </div>
+
+            ${renderLifecycleHtml(order.status)}
+
             <div class="details-grid">
               <div class="details-block">
                 <h4>Bill To (Customer)</h4>
@@ -396,6 +648,8 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
                 <p>Email: ${customerUser?.email || 'N/A'}</p>
                 <p style="margin-top: 8px; font-weight: 500;">Shipping Address:</p>
                 <p>${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} - ${order.shippingAddress?.zipCode || ''}</p>
+                <p style="margin-top: 8px; font-weight: 500;">Billing Address:</p>
+                <p>${order.billingAddress?.street || order.shippingAddress?.street || ''}, ${order.billingAddress?.city || order.shippingAddress?.city || ''}, ${order.billingAddress?.state || order.shippingAddress?.state || ''} - ${order.billingAddress?.zipCode || order.shippingAddress?.zipCode || ''}</p>
               </div>
               <div class="details-block">
                 <h4>Bill From (Dealer)</h4>
@@ -406,25 +660,42 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
                   <p>Phone: ${dealerInfo.phone || 'N/A'}</p>
                   <p>Email: ${dealerInfo.email || 'N/A'}</p>
                   <p>${dealerInfo.address || ''}</p>
+                  ${dealerInfo.gst ? `<p style="margin-top: 8px;">GSTIN: <strong>${dealerInfo.gst}</strong></p>` : ''}
                 `
                     : '<p class="name">Direct Car Connect Fullfilment</p>'
                 }
                 <p style="margin-top: 12px; color: var(--text-muted)">Invoice Date: <strong>${formattedDate}</strong></p>
                 <p style="color: var(--text-muted)">Payment: <strong style="text-transform: uppercase;">${order.paymentMethod.replace(/_/g, ' ')} (${order.paymentStatus})</strong></p>
+                <p style="color: var(--text-muted)">Order ID: <strong>${String(order._id)}</strong></p>
               </div>
             </div>
+
+            ${renderTimelineHtml(order.timeline as any)}
 
             <table class="items-table">
               <thead>
                 <tr>
                   <th>Product Details</th>
+                  <th>SKU / ID</th>
                   <th>Qty</th>
-                  <th>Price</th>
+                  <th>Unit Price</th>
                   <th>Total</th>
                 </tr>
               </thead>
               <tbody>
-                ${itemsRows}
+                ${order.items
+                  .map(
+                    (item) => `
+      <tr>
+        <td class="item-details">${item.name}</td>
+        <td style="font-size: 12px; color: var(--text-muted);">${item.productId}</td>
+        <td>${item.quantity}</td>
+        <td>₹${item.price.toFixed(2)}</td>
+        <td>₹${item.total.toFixed(2)}</td>
+      </tr>
+    `,
+                  )
+                  .join('')}
               </tbody>
             </table>
 
@@ -460,7 +731,7 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
             </div>
 
             <div class="footer-notes">
-              <p>Thank you for purchasing through Car Connect Network.</p>
+              <p>Thank you for purchasing through Motonode.</p>
               <p style="margin-top: 8px; font-size: 10px; opacity: 0.7;">This is a computer-generated invoice and does not require a physical signature.</p>
             </div>
           </div>
@@ -469,7 +740,7 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
             window.onload = function() {
               JsBarcode("#barcode", "${order.orderNumber}", {
                 format: "CODE128",
-                lineColor: "#0d8320",
+                lineColor: "#E60012",
                 width: 1.5,
                 height: 40,
                 displayValue: true
@@ -655,7 +926,7 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
 
             <div class="footer-notes">
               <p>Receipt created on ${formattedCreatedDate}</p>
-              <p>Thank you for using Car Connect Service Network.</p>
+              <p>Thank you for purchasing through Motonode.</p>
               <p style="margin-top: 8px; font-size: 10px; opacity: 0.7;">This is a computer-generated receipt and does not require a physical signature.</p>
             </div>
           </div>
@@ -664,7 +935,7 @@ export const getServiceInvoice = async (req: Request, res: Response, next: NextF
             window.onload = function() {
               JsBarcode("#barcode", "${bookingId.slice(-8).toUpperCase()}", {
                 format: "CODE128",
-                lineColor: "#0d8320",
+                lineColor: "#E60012",
                 width: 1.5,
                 height: 40,
                 displayValue: true

@@ -87,24 +87,53 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, [conversations, activeConversationId]);
 
   useEffect(() => {
-    if (!user || user.isGuest || !firebaseUid) return;
+    if (!user || user.isGuest || !firebaseUid || firebaseUid !== user.id) return;
 
-    void chatService.syncUserProfile(user.id, user.name, user.email, user.role, user.avatar);
-    void chatService.updateOnlineStatus(firebaseUid, true);
+    let cancelled = false;
+
+    const setOnline = async (online: boolean) => {
+      if (cancelled) return;
+
+      try {
+        if (online) {
+          await ensureFirebaseReady(user.id);
+        }
+        if (cancelled || auth().currentUser?.uid !== user.id) return;
+        await chatService.updateOnlineStatus(user.id, online);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Presence update skipped:', error);
+        }
+      }
+    };
+
+    void (async () => {
+      try {
+        await ensureFirebaseReady(user.id);
+        if (cancelled) return;
+        await chatService.syncUserProfile(user.id, user.name, user.email, user.role, user.avatar);
+        await setOnline(true);
+      } catch (error) {
+        if (__DEV__) {
+          console.warn('Chat presence bootstrap failed:', error);
+        }
+      }
+    })();
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        void chatService.updateOnlineStatus(firebaseUid, true);
+        void setOnline(true);
       } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-        void chatService.updateOnlineStatus(firebaseUid, false);
+        void setOnline(false);
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
+      cancelled = true;
       subscription.remove();
-      void chatService.updateOnlineStatus(firebaseUid, false);
+      void setOnline(false);
     };
   }, [user, firebaseUid]);
 

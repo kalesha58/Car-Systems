@@ -210,6 +210,73 @@ export function canCancelDealerOrder(status: string): boolean {
   return !['delivered', 'cancelled_by_user', 'cancelled_by_dealer'].includes(key);
 }
 
+export const DEALER_ORDER_LIFECYCLE_STEPS = [
+  {
+    key: 'placed',
+    label: 'Order Placed',
+    description: 'Customer placed the order',
+    icon: 'shopping-bag' as const,
+  },
+  {
+    key: 'accepted',
+    label: 'Accepted',
+    description: 'You confirmed the order',
+    icon: 'check-circle' as const,
+  },
+  {
+    key: 'packed',
+    label: 'Packed',
+    description: 'Items packed and ready',
+    icon: 'package' as const,
+  },
+  {
+    key: 'shipped',
+    label: 'Shipped',
+    description: 'Handed to delivery partner',
+    icon: 'truck' as const,
+  },
+  {
+    key: 'out_for_delivery',
+    label: 'Out for Delivery',
+    description: 'On the way to customer',
+    icon: 'navigation' as const,
+  },
+  {
+    key: 'delivered',
+    label: 'Delivered',
+    description: 'Order completed',
+    icon: 'flag' as const,
+  },
+] as const;
+
+export function getDealerOrderStepIndex(status: string): number {
+  const key = normalizeOrderStatus(status);
+  switch (key) {
+    case 'order_placed':
+    case 'payment_confirmed':
+    case 'pending_cod':
+    case 'pending_payment':
+      return 0;
+    case 'order_confirmed':
+      return 1;
+    case 'packed':
+      return 2;
+    case 'shipped':
+      return 3;
+    case 'out_for_delivery':
+      return 4;
+    case 'delivered':
+      return 5;
+    default:
+      return -1;
+  }
+}
+
+export function isDealerOrderCancelled(status: string): boolean {
+  const key = normalizeOrderStatus(status);
+  return ['cancelled_by_user', 'cancelled_by_dealer'].includes(key);
+}
+
 export type OrderDisplayStatus =
   | 'Processing'
   | 'Shipped'

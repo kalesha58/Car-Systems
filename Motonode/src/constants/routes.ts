@@ -75,6 +75,7 @@ export const DealerStackRoutes = {
   NotificationSettings: 'NotificationSettings',
   ServiceBookings: 'ServiceBookings',
   DealerBookingDetail: 'DealerBookingDetail',
+  DealerOrderDetail: 'DealerOrderDetail',
   BusinessDetails: 'BusinessDetails',
 } as const;
 

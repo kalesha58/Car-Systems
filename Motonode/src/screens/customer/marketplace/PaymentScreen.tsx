@@ -157,11 +157,20 @@ export function PaymentScreen({ navigation, route }: Props) {
           }
         : DEFAULT_SHIPPING_ADDRESS;
 
+      const deliveryLocation = route.params?.address?.coordinates
+        ? {
+            latitude: route.params.address.coordinates.latitude,
+            longitude: route.params.address.coordinates.longitude,
+            address: route.params.address.fullAddress,
+          }
+        : undefined;
+
       const order = await createOrder({
         items: orderItems,
         shippingAddress,
         paymentMethod: mapPaymentMethod(selectedMethod),
         dealerId,
+        deliveryLocation,
       });
 
       if (!order) {

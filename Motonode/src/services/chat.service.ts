@@ -534,6 +534,11 @@ export async function updateTypingStatus(
   userId: string,
   isTyping: boolean
 ): Promise<void> {
+  const currentUid = auth().currentUser?.uid;
+  if (!currentUid || currentUid !== userId) {
+    return;
+  }
+
   try {
     await presenceCol()
       .doc(userId)
@@ -549,7 +554,17 @@ export async function updateTypingStatus(
   }
 }
 
+function isFirestorePermissionDenied(err: unknown): boolean {
+  const code = (err as { code?: string })?.code;
+  return code === 'firestore/permission-denied' || code === 'permission-denied';
+}
+
 export async function updateOnlineStatus(userId: string, online: boolean): Promise<void> {
+  const currentUid = auth().currentUser?.uid;
+  if (!currentUid || currentUid !== userId) {
+    return;
+  }
+
   try {
     await presenceCol()
       .doc(userId)
@@ -561,6 +576,9 @@ export async function updateOnlineStatus(userId: string, online: boolean): Promi
         { merge: true }
       );
   } catch (err) {
+    if (!online && isFirestorePermissionDenied(err)) {
+      return;
+    }
     logFirestoreError('updateOnlineStatus', 'presence', userId, { userId, online }, err);
     throw err;
   }

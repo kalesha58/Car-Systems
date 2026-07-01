@@ -15,6 +15,7 @@ import { GSTInfoScreen } from '@screens/dealer/settings/GSTInfoScreen';
 import { NotificationSettingsScreen } from '@screens/dealer/settings/NotificationSettingsScreen';
 import { DealerBookingDetailScreen } from '@screens/dealer/bookings/DealerBookingDetailScreen';
 import { DealerServiceBookingsScreen } from '@screens/dealer/bookings/DealerServiceBookingsScreen';
+import { DealerOrderDetailScreen } from '@screens/dealer/orders/DealerOrderDetailScreen';
 import { StoreSettingsScreen } from '@screens/dealer/settings/StoreSettingsScreen';
 import { UPIAccountsScreen } from '@screens/dealer/settings/UPIAccountsScreen';
 import { BusinessDetailsScreen } from '@screens/dealer/profile/BusinessDetailsScreen';
@@ -46,6 +47,7 @@ export type DealerStackParamList = {
     bookingId: string;
     bookingType?: 'service' | 'test_drive';
   };
+  [DealerStackRoutes.DealerOrderDetail]: { orderId: string };
   [DealerStackRoutes.BusinessDetails]: undefined;
   [CustomerStackRoutes.ChatList]: undefined;
   [CustomerStackRoutes.Chat]: undefined;
@@ -113,6 +115,7 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.NotificationSettings} component={NotificationSettingsScreen} />
       <Stack.Screen name={DealerStackRoutes.ServiceBookings} component={DealerServiceBookingsScreen} />
       <Stack.Screen name={DealerStackRoutes.DealerBookingDetail} component={DealerBookingDetailScreen} />
+      <Stack.Screen name={DealerStackRoutes.DealerOrderDetail} component={DealerOrderDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
       <Stack.Screen name={CustomerStackRoutes.ChatList} component={ChatListScreen} />
       <Stack.Screen name={CustomerStackRoutes.Chat} component={ChatScreen} />

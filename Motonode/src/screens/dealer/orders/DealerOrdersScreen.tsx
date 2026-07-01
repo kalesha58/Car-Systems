@@ -81,6 +81,11 @@ export function DealerOrdersScreen() {
       ? orders
       : orders.filter((o) => matchesOrderFilter(o.status, FILTERS[activeFilter]));
 
+  const openOrderDetail = (order: IOrderData) => {
+    lightHaptic();
+    navigation.navigate(DealerStackRoutes.DealerOrderDetail, { orderId: getOrderId(order) });
+  };
+
   const handleStatusChange = (order: IOrderData) => {
     const next = getNextDealerOrderStatus(order.status);
     const label = getNextDealerOrderLabel(order.status);
@@ -242,6 +247,7 @@ export function DealerOrdersScreen() {
           const statusLabel = getOrderStatusLabel(item.status);
 
           return (
+            <Pressable onPress={() => openOrderDetail(item)}>
             <View style={[styles.orderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardHeaderLeft}>
@@ -331,12 +337,17 @@ export function DealerOrdersScreen() {
                     </>
                   )
                 ) : (
-                  <Pressable style={[styles.fullWidthActionBtn, { backgroundColor: '#F1F5F9' }]}>
+                  <Pressable
+                    style={[styles.fullWidthActionBtn, { backgroundColor: '#F1F5F9' }]}
+                    onPress={() => openOrderDetail(item)}
+                  >
+                    <Feather name="eye" size={15} color={colors.textPrimary} />
                     <Text style={[styles.fullWidthActionText, { color: colors.textPrimary }]}>View Order Details</Text>
                   </Pressable>
                 )}
               </View>
             </View>
+            </Pressable>
           );
         }}
         ListEmptyComponent={

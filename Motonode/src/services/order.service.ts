@@ -95,3 +95,13 @@ export async function updateDealerOrderStatus(
   }
   return null;
 }
+
+export async function getDealerOrderById(orderId: string): Promise<IOrderData | null> {
+  const response = await api.get<{ success: boolean; Response: IOrderData }>(
+    `/dealer/orders/${orderId}`,
+  );
+  if (response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  return null;
+}

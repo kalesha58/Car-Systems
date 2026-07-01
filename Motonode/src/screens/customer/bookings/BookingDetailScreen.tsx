@@ -48,8 +48,7 @@ export function BookingDetailScreen({ route, navigation }: Props) {
     lightHaptic();
     try {
       const token = await getString(StorageKeys.ACCESS_TOKEN);
-      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
-      const url = `${base}/invoices/service/${booking.id}?token=${token}`;
+      const url = `${API_BASE_URL}/invoices/service/${booking.id}?token=${token}`;
       
       await Share.share({
         message: `Service Invoice link: ${url}`,
@@ -66,8 +65,7 @@ export function BookingDetailScreen({ route, navigation }: Props) {
     lightHaptic();
     try {
       const token = await getString(StorageKeys.ACCESS_TOKEN);
-      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
-      const url = `${base}/invoices/service/${booking.id}?token=${token}`;
+      const url = `${API_BASE_URL}/invoices/service/${booking.id}?token=${token}`;
       setInvoiceUrl(url);
       setInvoiceModalVisible(true);
     } catch (error) {

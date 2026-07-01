@@ -1,6 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
-  ActivityIndicator,
   Clipboard,
   Image,
   Platform,
@@ -17,17 +16,20 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
+import { OrderTrackingSkeleton } from '@components/loaders';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
 import type { IOrderData } from '@app-types/order';
 import { getOrderById } from '@services/order.service';
+import { getProductById } from '@services/product.service';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { formatCurrency, formatOrderDate, normalizeOrderDisplayStatus } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import { InAppBrowserModal } from '@components/common/InAppBrowserModal';
 import { getString, StorageKeys } from '@storage/index';
 import { API_BASE_URL } from '@config/env';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -81,14 +83,83 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
   const [itemsExpanded, setItemsExpanded] = useState(true);
   const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState('');
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
+  
+  const mapRef = useRef<MapView | null>(null);
+
+  // Default coordinate structures
+  const destCoords = {
+    latitude: order?.deliveryLocation?.latitude ?? 12.9348,
+    longitude: order?.deliveryLocation?.longitude ?? 77.6189,
+  };
+
+  const startCoords = {
+    latitude: order?.pickupLocation?.latitude ?? 12.9312,
+    longitude: order?.pickupLocation?.longitude ?? 77.6212,
+  };
+
+  const [driverCoords, setDriverCoords] = useState({
+    latitude: startCoords.latitude,
+    longitude: startCoords.longitude,
+  });
+
+  // Animate/Simulate live movement of driver if status is OUT_FOR_DELIVERY
+  useEffect(() => {
+    if (!order) return;
+    
+    if (order.status !== 'OUT_FOR_DELIVERY') {
+      // Driver at store if placed/packed/shipped
+      setDriverCoords({
+        latitude: order.deliveryPersonLocation?.latitude ?? startCoords.latitude,
+        longitude: order.deliveryPersonLocation?.longitude ?? startCoords.longitude,
+      });
+      return;
+    }
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 0.02;
+      if (progress > 1) {
+        progress = 0; // Loop tracking
+      }
+
+      setDriverCoords({
+        latitude: startCoords.latitude + (destCoords.latitude - startCoords.latitude) * progress,
+        longitude: startCoords.longitude + (destCoords.longitude - startCoords.longitude) * progress,
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [order?.status, order?.deliveryPersonLocation, startCoords.latitude, startCoords.longitude, destCoords.latitude, destCoords.longitude]);
+
+  // Load product images dynamically
+  useEffect(() => {
+    if (!order) return;
+    const fetchImages = async () => {
+      const imagesMap: Record<string, string> = {};
+      await Promise.all(
+        order.items.map(async (item) => {
+          try {
+            const res = await getProductById(item.productId);
+            if (res.success && res.Response?.products?.[0]?.images?.[0]) {
+              imagesMap[item.productId] = res.Response.products[0].images[0];
+            }
+          } catch (err) {
+            console.log('Failed to fetch product image in tracker:', err);
+          }
+        })
+      );
+      setProductImages((prev) => ({ ...prev, ...imagesMap }));
+    };
+    void fetchImages();
+  }, [order]);
 
   const handleShareInvoice = async () => {
     if (!order) return;
     lightHaptic();
     try {
       const token = await getString(StorageKeys.ACCESS_TOKEN);
-      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
-      const url = `${base}/invoices/order/${order.id}?token=${token}`;
+      const url = `${API_BASE_URL}/invoices/order/${order.id}?token=${token}`;
       
       await Share.share({
         message: `Order Invoice link: ${url}`,
@@ -105,8 +176,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
     lightHaptic();
     try {
       const token = await getString(StorageKeys.ACCESS_TOKEN);
-      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
-      const url = `${base}/invoices/order/${order.id}?token=${token}`;
+      const url = `${API_BASE_URL}/invoices/order/${order.id}?token=${token}`;
       setInvoiceUrl(url);
       setInvoiceModalVisible(true);
     } catch (error) {
@@ -166,9 +236,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
           <View style={styles.iconBtn} />
         </ChromeHeader>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.link} />
-        </View>
+        <OrderTrackingSkeleton />
       </View>
     );
   }
@@ -225,7 +293,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           </Pressable>
         </View>
 
-        <View style={[styles.statusCard, { backgroundColor: '#FAF5FF', borderColor: '#F3E8FF' }]}>
+        <View style={[styles.statusCard, { backgroundColor: 'rgba(230,0,18,0.04)', borderColor: 'rgba(230,0,18,0.1)' }]}>
           <View style={styles.statusInfo}>
             <Text style={styles.statusTitle}>{displayStatus}</Text>
             <Text style={styles.statusSubtitle}>
@@ -234,13 +302,9 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                 : `Payment: ${order.paymentStatus}`}
             </Text>
           </View>
-          <Image
-            source={{
-              uri: 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=300&auto=format&fit=crop&q=80',
-            }}
-            style={styles.scooterImg}
-            resizeMode="contain"
-          />
+          <View style={[styles.scooterIconContainer, { backgroundColor: 'rgba(230,0,18,0.08)' }]}>
+            <Feather name="truck" size={28} color="#E60012" />
+          </View>
         </View>
 
         {order.paymentStatus === 'paid' && (
@@ -270,6 +334,54 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
             </View>
           </View>
         )}
+
+        {/* Live Map Tracking Panel */}
+        <View style={[styles.mapContainer, { borderColor: colors.border }]}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={Platform.OS === 'android' ? 'google' : undefined}
+            initialRegion={{
+              latitude: (destCoords.latitude + startCoords.latitude) / 2,
+              longitude: (destCoords.longitude + startCoords.longitude) / 2,
+              latitudeDelta: Math.abs(destCoords.latitude - startCoords.latitude) * 2.2 || 0.02,
+              longitudeDelta: Math.abs(destCoords.longitude - startCoords.longitude) * 2.2 || 0.02,
+            }}
+            scrollEnabled={true}
+            zoomEnabled={true}
+            pitchEnabled={false}
+            rotateEnabled={false}
+          >
+            {/* Start Marker (Store) */}
+            <Marker coordinate={startCoords} title="Store" description="Motonode Auto Hub">
+              <View style={[styles.markerIconBg, { backgroundColor: '#F3E8FF' }]}>
+                <Feather name="home" size={16} color="#7E22CE" />
+              </View>
+            </Marker>
+
+            {/* Destination Marker (User) */}
+            <Marker coordinate={destCoords} title="Delivery Address" description={order.shippingAddress.street}>
+              <View style={[styles.markerIconBg, { backgroundColor: '#DCFCE7' }]}>
+                <Feather name="map-pin" size={16} color="#15803D" />
+              </View>
+            </Marker>
+
+            {/* Live Driver Marker (Scooter) */}
+            <Marker coordinate={driverCoords} title="Delivery Partner" description="On the way to your location">
+              <View style={[styles.markerIconBg, { backgroundColor: '#EFF6FF', borderColor: '#E60012', borderWidth: 1 }]}>
+                <Feather name="truck" size={16} color="#E60012" />
+              </View>
+            </Marker>
+
+            {/* Path Connection */}
+            <Polyline
+              coordinates={[startCoords, driverCoords, destCoords]}
+              strokeColor="#E60012"
+              strokeWidth={3}
+              lineDashPattern={[6, 4]}
+            />
+          </MapView>
+        </View>
 
         <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.timelineStepperRow}>
@@ -302,13 +414,16 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                     </Text>
                     {step.date ? <Text style={styles.stepDate}>{step.date}</Text> : null}
                   </View>
-                  {!isLast && (
+                  {idx < steps.length - 1 && (
                     <View
                       style={[
                         styles.stepLine,
-                        steps[idx + 1].completed
-                          ? { backgroundColor: '#7E22CE' }
-                          : { backgroundColor: '#E2E8F0' },
+                        {
+                          backgroundColor:
+                            steps[idx + 1].completed
+                              ? '#E60012'
+                              : '#E2E8F0',
+                        },
                       ]}
                     />
                   )}
@@ -335,7 +450,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
               </View>
               <View style={styles.partnerActions}>
                 <Pressable style={styles.actionIconBtn} onPress={() => lightHaptic()}>
-                  <Feather name="phone" size={16} color="#2563EB" />
+                  <Feather name="phone" size={16} color="#E60012" />
                 </Pressable>
               </View>
             </View>
@@ -358,7 +473,10 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
             <View style={styles.accordionBody}>
               {order.items.map((item, index) => (
                 <View key={`${item.productId}-${index}`} style={styles.itemRow}>
-                  <Image source={{ uri: DEFAULT_PRODUCT_IMAGE }} style={styles.itemThumb} />
+                  <Image
+                    source={{ uri: productImages[item.productId] || DEFAULT_PRODUCT_IMAGE }}
+                    style={styles.itemThumb}
+                  />
                   <View style={styles.itemMeta}>
                     <Text style={[styles.itemName, { color: colors.textPrimary }]}>{item.name}</Text>
                     <Text style={[styles.itemQty, { color: colors.textSecondary }]}>
@@ -409,9 +527,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#E60012',
   },
   headerTitle: {
     fontSize: 16,
@@ -424,7 +540,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   centered: {
     flex: 1,
@@ -463,9 +579,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusInfo: { flex: 1 },
-  statusTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#7E22CE' },
-  statusSubtitle: { fontSize: 12, color: '#6B21A8', marginTop: 4 },
-  scooterImg: { width: 90, height: 70 },
+  statusTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#E60012' },
+  statusSubtitle: { fontSize: 12, color: '#E60012', opacity: 0.8, marginTop: 4 },
+  scooterIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   timelineCard: {
     borderRadius: 20,
     borderWidth: 1,
@@ -493,11 +615,24 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: '#fff',
   },
+  circleActive: {
+    borderColor: '#E60012',
+    backgroundColor: '#E60012',
+  },
+  circleDone: {
+    borderColor: '#E60012',
+    backgroundColor: '#E60012',
+  },
   stepLabel: {
     fontSize: 8,
     fontFamily: 'Inter_700Bold',
     textAlign: 'center',
     marginTop: 6,
+    color: '#94A3B8',
+  },
+  stepLabelActive: {
+    color: '#E60012',
+    fontFamily: 'Inter_700Bold',
   },
   stepDate: {
     fontSize: 7,
@@ -613,5 +748,27 @@ const styles = StyleSheet.create({
   invoiceBtnText: {
     fontSize: 12,
     fontFamily: 'Inter_700Bold',
+  },
+  mapContainer: {
+    height: 220,
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  map: {
+    ...StyleSheet.absoluteFill,
+  },
+  markerIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
 });
