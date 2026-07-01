@@ -34,6 +34,56 @@ const authenticateInvoiceRequest = async (req: Request) => {
   return { userId: String(user._id), email: user.email, role: decoded.role || [] };
 };
 
+/** Resolve dealer business ID (BusinessRegistration._id) from authenticated user */
+async function getDealerBusinessIdForUser(userId: string, role: string[]): Promise<string | null> {
+  if (!role.includes('dealer')) return null;
+  const businessRegistration = await BusinessRegistration.findOne({ userId }).select('_id').lean();
+  return businessRegistration ? String(businessRegistration._id) : null;
+}
+
+/** Match dealer order access rules used by dealer order APIs */
+async function checkDealerInvoiceAccess(
+  userId: string,
+  role: string[],
+  order: { dealerId?: string; items: Array<{ productId: string }> },
+): Promise<boolean> {
+  const dealerBusinessId = await getDealerBusinessIdForUser(userId, role);
+  if (!dealerBusinessId) return false;
+
+  if (order.dealerId === dealerBusinessId) return true;
+
+  const dealerProducts = await Product.find({ userId: dealerBusinessId }).select('_id').lean();
+  const dealerProductIds = dealerProducts.map((p) => String(p._id));
+  if (dealerProductIds.length === 0) return false;
+
+  return order.items.some((item) => dealerProductIds.includes(item.productId));
+}
+
+async function resolveDealerInfoForInvoice(dealerId?: string) {
+  if (!dealerId) return null;
+
+  let businessReg = await BusinessRegistration.findById(dealerId).lean();
+  if (!businessReg) {
+    businessReg = await BusinessRegistration.findOne({ userId: dealerId }).lean();
+  }
+  if (!businessReg) return null;
+
+  const dealerUser = await SignUp.findById(businessReg.userId).select('email').lean();
+  if (!dealerUser) return null;
+
+  const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
+  if (!dealerDoc) return null;
+
+  return {
+    name: dealerDoc.name,
+    businessName: dealerDoc.businessName,
+    phone: dealerDoc.phone,
+    email: dealerDoc.email,
+    address: dealerDoc.address,
+    gst: businessReg.gst,
+  };
+};
+
 // CSS styles for invoice template
 const getInvoiceStyles = () => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -507,18 +557,10 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
 
     // Check authorization
     const isOwner = order.userId === user.userId;
-    const isAssignedDealer = order.dealerId === user.userId;
+    const isDealerWithAccess = await checkDealerInvoiceAccess(user.userId, user.role, order);
     const isAdmin = user.role.includes('admin');
 
-    // Check if dealer has products in the order
-    let hasDealerProducts = false;
-    const dealerProducts = await Product.find({ userId: user.userId });
-    const dealerProductIds = dealerProducts.map((p) => (p._id as any).toString());
-    if (dealerProductIds.length > 0) {
-      hasDealerProducts = order.items.some((item) => dealerProductIds.includes(item.productId));
-    }
-
-    if (!isOwner && !isAssignedDealer && !hasDealerProducts && !isAdmin) {
+    if (!isOwner && !isDealerWithAccess && !isAdmin) {
       res.status(403).send('<h1>Forbidden: You do not have access to this invoice</h1>');
       return;
     }
@@ -527,31 +569,7 @@ export const getOrderInvoice = async (req: Request, res: Response, next: NextFun
     const customerUser = await SignUp.findById(order.userId).select('name email phone').lean();
 
     // Fetch dealer details
-    let dealerInfo: {
-      name?: string;
-      businessName?: string;
-      phone?: string;
-      email?: string;
-      address?: string;
-      gst?: string;
-    } | null = null;
-    if (order.dealerId) {
-      const dealerUser = await SignUp.findById(order.dealerId).select('email').lean();
-      const businessReg = await BusinessRegistration.findOne({ userId: order.dealerId }).lean();
-      if (dealerUser) {
-        const dealerDoc = await Dealer.findOne({ email: dealerUser.email }).lean();
-        if (dealerDoc) {
-          dealerInfo = {
-            name: dealerDoc.name,
-            businessName: dealerDoc.businessName,
-            phone: dealerDoc.phone,
-            email: dealerDoc.email,
-            address: dealerDoc.address,
-            gst: businessReg?.gst,
-          };
-        }
-      }
-    }
+    const dealerInfo = await resolveDealerInfoForInvoice(order.dealerId);
 
     const expectedDelivery = order.expectedDeliveryDate
       ? new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
