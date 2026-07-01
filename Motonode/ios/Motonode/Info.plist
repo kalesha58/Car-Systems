@@ -35,7 +35,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Motonode uses your location when you add it to a community post.</string>
+	<string>Motonode uses your location to save delivery addresses, confirm your address on a map, and when you add location to a community post.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Motonode needs access to your photos so you can share images in community posts.</string>
 	<key>NSCameraUsageDescription</key>

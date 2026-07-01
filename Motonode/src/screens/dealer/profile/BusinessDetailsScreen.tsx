@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
   },
   coverBadgeText: { color: '#ffffff', fontSize: 8, fontFamily: 'Inter_700Bold' },
   moreOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center',
     justifyContent: 'center',

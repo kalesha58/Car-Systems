@@ -22,6 +22,8 @@ import type { ICreateOrderRequest } from '@app-types/order';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { formatCurrency, getOrderId, getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import RazorpayService from '@services/payment/RazorpayService';
+import { verifyRazorpayPayment } from '@services/payment.service';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { DEFAULT_SHIPPING_ADDRESS } from './CheckoutScreen';
 
@@ -72,14 +74,14 @@ const stepStyles = StyleSheet.create({
     borderColor: '#CBD5E1', backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center',
   },
-  circleDone: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  circleActive: { borderColor: '#2563EB' },
+  circleDone: { backgroundColor: '#E60012', borderColor: '#E60012' },
+  circleActive: { borderColor: '#E60012' },
   num: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
-  numActive: { color: '#2563EB' },
+  numActive: { color: '#E60012' },
   label: { fontSize: 10, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
-  labelActive: { color: '#2563EB', fontFamily: 'Inter_700Bold' },
+  labelActive: { color: '#E60012', fontFamily: 'Inter_700Bold' },
   line: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginBottom: 14, marginHorizontal: 4 },
-  lineDone: { backgroundColor: '#2563EB' },
+  lineDone: { backgroundColor: '#E60012' },
 });
 
 // ── Payment Method Options ────────────────────────────────────────────────────
@@ -93,15 +95,15 @@ const PAYMENT_METHODS: {
   iconColor: string;
   iconBg: string;
 }[] = [
-  { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#F59E0B', iconBg: '#FEF3C7' },
-  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#2563EB', iconBg: '#DBEAFE' },
+  { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#E60012', iconBg: 'rgba(230,0,18,0.08)' },
+  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#E60012', iconBg: 'rgba(230,0,18,0.08)' },
   { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#1E293B', iconBg: '#F1F5F9' },
   { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED', iconBg: '#EDE9FE' },
   { id: 'paylater', label: 'Pay Later', subtitle: 'Simpl, LazyPay & more', icon: 'clock', iconColor: '#64748B', iconBg: '#F1F5F9' },
 ];
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
-export function PaymentScreen({ navigation }: Props) {
+export function PaymentScreen({ navigation, route }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -145,9 +147,19 @@ export function PaymentScreen({ navigation }: Props) {
 
       const dealerId = items[0]?.product.dealerId;
 
+      const shippingAddress = route.params?.address
+        ? {
+            street: route.params.address.fullAddress,
+            city: route.params.address.townOrCity || 'Bengaluru',
+            state: route.params.address.state || 'Karnataka',
+            zipCode: route.params.address.pincode || '560034',
+            country: 'India',
+          }
+        : DEFAULT_SHIPPING_ADDRESS;
+
       const order = await createOrder({
         items: orderItems,
-        shippingAddress: DEFAULT_SHIPPING_ADDRESS,
+        shippingAddress,
         paymentMethod: mapPaymentMethod(selectedMethod),
         dealerId,
       });
@@ -156,9 +168,25 @@ export function PaymentScreen({ navigation }: Props) {
         throw new Error('Failed to place order');
       }
 
+      const orderId = getOrderId(order);
+
+      // Trigger Razorpay payment if paymentAction is returned by the server
+      const paymentAction = (order as any).paymentAction;
+      if (paymentAction && paymentAction.type === 'RAZORPAY_CHECKOUT') {
+        try {
+          const paymentResult = await RazorpayService.openCheckout(paymentAction);
+          const verification = await verifyRazorpayPayment(orderId, paymentResult);
+          
+          if (!verification.success) {
+            throw new Error(verification.error || 'Payment verification failed');
+          }
+        } catch (paymentErr: any) {
+          throw new Error(paymentErr?.description || paymentErr?.message || 'Payment checkout was cancelled or failed.');
+        }
+      }
+
       clearCart();
       successHaptic();
-      const orderId = getOrderId(order);
       Alert.alert(
         'Payment Successful!',
         `Your order ${order.orderNumber} has been placed.`,
@@ -204,7 +232,7 @@ export function PaymentScreen({ navigation }: Props) {
         {/* Secure Payments Banner */}
         <View style={styles.secureBanner}>
           <View style={styles.secureIconBox}>
-            <Feather name="shield" size={16} color="#2563EB" />
+            <Feather name="shield" size={16} color={colors.primary} />
           </View>
           <View>
             <Text style={styles.secureTitle}>100% Secure Payments</Text>
@@ -301,11 +329,11 @@ export function PaymentScreen({ navigation }: Props) {
           <Text style={styles.amountPayValue}>{formatCurrency(totalAmount)}</Text>
           <Pressable onPress={() => lightHaptic()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
             <Text style={styles.viewDetails}>View Price Details</Text>
-            <Feather name="chevron-right" size={12} color="#2563EB" />
+            <Feather name="chevron-right" size={12} color="#E60012" />
           </Pressable>
         </View>
         <Pressable
-          style={[styles.payBtn, { backgroundColor: paying ? '#93C5FD' : '#2563EB' }]}
+          style={[styles.payBtn, { backgroundColor: paying ? 'rgba(230,0,18,0.4)' : '#E60012' }]}
           onPress={handlePay}
           disabled={paying}
         >
@@ -321,22 +349,22 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, borderBottomWidth: 1, backgroundColor: '#ffffff',
+    paddingBottom: 14, backgroundColor: '#E60012',
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   content: { padding: 16, gap: 12 },
   secureBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#EFF6FF', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#BFDBFE',
+    backgroundColor: 'rgba(230,0,18,0.05)', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: 'rgba(230,0,18,0.15)',
   },
-  secureIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  secureTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E3A8A' },
-  secureSubtitle: { fontSize: 10, color: '#3B82F6', marginTop: 1 },
+  secureIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(230,0,18,0.08)', alignItems: 'center', justifyContent: 'center' },
+  secureTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#E60012' },
+  secureSubtitle: { fontSize: 10, color: '#E60012', opacity: 0.8, marginTop: 1 },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionLabel: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
-  editLink: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#2563EB' },
+  editLink: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#E60012' },
   summaryCard: {
     backgroundColor: '#ffffff', borderRadius: 14, borderWidth: 1,
     borderColor: '#E2E8F0', padding: 14, gap: 10,
@@ -367,8 +395,8 @@ const styles = StyleSheet.create({
     width: 20, height: 20, borderRadius: 10, borderWidth: 2,
     borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center',
   },
-  radioOuterSelected: { borderColor: '#2563EB' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2563EB' },
+  radioOuterSelected: { borderColor: '#E60012' },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
   bottomBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 14, backgroundColor: '#ffffff',
@@ -376,7 +404,7 @@ const styles = StyleSheet.create({
   },
   amountPayLabel: { fontSize: 10, color: '#64748B', fontFamily: 'Inter_400Regular' },
   amountPayValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#1E293B' },
-  viewDetails: { fontSize: 11, color: '#2563EB', fontFamily: 'Inter_600SemiBold' },
+  viewDetails: { fontSize: 11, color: '#E60012', fontFamily: 'Inter_600SemiBold' },
   payBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     borderRadius: 14, paddingHorizontal: 24, paddingVertical: 16,

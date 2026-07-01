@@ -19,10 +19,10 @@ import { ProductCard } from '@components/cards/ProductCard';
 import { VehicleCard } from '@components/cards/VehicleCard';
 import { ServiceCard } from '@components/cards/ServiceCard';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
-import { useAuth } from '@context/index';
 import { useDealerVehiclesCatalog, useProducts, useServicesCatalog } from '@hooks/useCatalogData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
+import { useDeliveryAddress } from '@hooks/useDeliveryAddress';
 import { getProductId, getVehicleId, getServiceId } from '@utils/displayMappers';
 import type { CustomerTabParamList as NavigationParamList } from '@navigation/CustomerTabsNavigator';
 import { spacing } from '@theme/spacing';
@@ -37,19 +37,20 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.VehicleDetail]: { id: string };
   [CustomerStackRoutes.ServiceDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
+  [CustomerStackRoutes.SavedAddresses]: { selectMode?: boolean } | undefined;
 };
 
 type HomeScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<CustomerTabParamList, typeof CustomerTabRoutes.Home>,
+  BottomTabNavigationProp<NavigationParamList, typeof CustomerTabRoutes.Home>,
   NativeStackNavigationProp<CustomerStackParamList>
 >;
 
 export function HomeScreen() {
   const colors = useColors();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { user } = useAuth();
 
   const tabBarPadding = useTabBarBottomPadding();
+  const { displayLabel: deliveryLabel } = useDeliveryAddress();
   const { products, loading: productsLoading } = useProducts(20);
   const { vehicles, loading: vehiclesLoading } = useDealerVehiclesCatalog(10);
   const { services, loading: servicesLoading } = useServicesCatalog(10);
@@ -82,19 +83,22 @@ export function HomeScreen() {
       {/* Location header — solid black chrome from theme */}
       <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerTop}>
-          <Pressable style={styles.locationBtn}>
+          <Pressable
+            style={styles.locationBtn}
+            onPress={() =>
+              navigation.navigate(CustomerStackRoutes.SavedAddresses, { selectMode: true })
+            }
+          >
             <View style={styles.locationIconWrapper}>
               <View style={styles.whiteLocationDot}>
                 <Feather name="map-pin" size={12} color={colors.link} />
               </View>
             </View>
-            <View>
-              <Text style={styles.locationLabelSwiggy}>
-                Deliver to
-              </Text>
+            <View style={styles.locationTextWrap}>
+              <Text style={styles.locationLabelSwiggy}>Deliver to</Text>
               <View style={styles.locationRow}>
-                <Text style={styles.locationNameSwiggy}>
-                  {user?.location ?? 'Koramangala, Bengaluru'}
+                <Text style={styles.locationNameSwiggy} numberOfLines={1}>
+                  {deliveryLabel}
                 </Text>
                 <Feather name="chevron-down" size={14} color="#ffffff" style={{ marginTop: 2 }} />
               </View>
@@ -244,15 +248,16 @@ export function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
             renderItem={({ item }) => (
-              <ServiceCard
-                service={item}
-                style={styles.serviceCard}
-                onPress={() =>
-                  navigation.navigate(CustomerStackRoutes.ServiceDetail, {
-                    id: getServiceId(item),
-                  })
-                }
-              />
+              <View style={styles.serviceCard}>
+                <ServiceCard
+                  service={item}
+                  onNavigate={() =>
+                    navigation.navigate(CustomerStackRoutes.ServiceDetail, {
+                      id: getServiceId(item),
+                    })
+                  }
+                />
+              </View>
             )}
           />
         )}
@@ -277,7 +282,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 14,
   },
-  locationBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+  locationBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 },
+  locationTextWrap: { flex: 1, minWidth: 0 },
   locationIconWrapper: {
     width: 28,
     height: 28,
@@ -335,6 +341,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Inter_700Bold',
     color: '#ffffff',
+    flexShrink: 1,
   },
   iconBtnSwiggy: {
     width: 40,

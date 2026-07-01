@@ -290,6 +290,115 @@ export function HorizontalServicesSkeleton() {
   );
 }
 
+export function AddressListItemSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.addressCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Skeleton style={styles.addressIconPlaceholder} />
+      <View style={styles.addressContentSkeleton}>
+        <Skeleton style={styles.addressTitleLine} />
+        <Skeleton style={styles.addressTextLine} />
+        <Skeleton style={[styles.addressTextLine, { width: '80%' }]} />
+      </View>
+    </View>
+  );
+}
+
+export function AddressListSkeleton() {
+  return (
+    <View style={{ gap: 12 }}>
+      {[1, 2, 3].map((i) => (
+        <AddressListItemSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function ConversationCardSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.chatCardSkeleton, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <Skeleton style={styles.chatAvatarPlaceholder} />
+      <View style={styles.chatContentSkeleton}>
+        <View style={styles.chatHeaderRowSkeleton}>
+          <Skeleton style={styles.chatNameLine} />
+          <Skeleton style={styles.chatTimeLine} />
+        </View>
+        <Skeleton style={styles.chatMessageLine} />
+      </View>
+    </View>
+  );
+}
+
+export function ConversationListSkeleton() {
+  return (
+    <View style={{ flex: 1 }}>
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <ConversationCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function CommunityPostCardSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.communityCardSkeleton, { borderBottomColor: colors.border }]}>
+      <View style={styles.communityHeaderSkeleton}>
+        <Skeleton style={styles.communityAvatarPlaceholder} />
+        <View style={styles.communityUserInfoSkeleton}>
+          <Skeleton style={styles.communityNameLine} />
+          <Skeleton style={styles.communitySubLine} />
+        </View>
+      </View>
+      <Skeleton style={styles.communityImagePlaceholder} />
+      <View style={styles.communityFooterSkeleton}>
+        <View style={styles.row}>
+          <Skeleton style={[styles.circleBtn, { width: 24, height: 24, marginRight: 12 }]} />
+          <Skeleton style={[styles.circleBtn, { width: 24, height: 24, marginRight: 12 }]} />
+          <Skeleton style={[styles.circleBtn, { width: 24, height: 24 }]} />
+        </View>
+        <Skeleton style={[styles.textLineShort, { width: '25%', marginTop: 12 }]} />
+        <Skeleton style={[styles.textLineLong, { width: '85%', marginTop: 8 }]} />
+      </View>
+    </View>
+  );
+}
+
+export function CommunityFeedSkeleton() {
+  return (
+    <View style={{ flex: 1 }}>
+      {[1, 2].map((i) => (
+        <CommunityPostCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function UserSearchResultSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.userSearchRowSkeleton, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <Skeleton style={styles.userSearchAvatarPlaceholder} />
+      <View style={styles.userSearchDetailsSkeleton}>
+        <Skeleton style={styles.userSearchNameLine} />
+        <Skeleton style={styles.userSearchSubLine} />
+      </View>
+      <Skeleton style={styles.userSearchIconPlaceholder} />
+    </View>
+  );
+}
+
+export function UserSearchListSkeleton() {
+  return (
+    <View style={{ flex: 1 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <UserSearchResultSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
@@ -393,6 +502,160 @@ const styles = StyleSheet.create({
     width: '47%',
     height: 60,
     borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  addressCardSkeleton: {
+    flexDirection: 'row',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  addressIconPlaceholder: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E2E8F0',
+  },
+  addressContentSkeleton: {
+    flex: 1,
+    gap: 8,
+    paddingTop: 4,
+  },
+  addressTitleLine: {
+    height: 14,
+    width: '35%',
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+  },
+  addressTextLine: {
+    height: 12,
+    width: '90%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  chatCardSkeleton: {
+    flexDirection: 'row',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    width: '100%',
+  },
+  chatAvatarPlaceholder: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E2E8F0',
+  },
+  chatContentSkeleton: {
+    flex: 1,
+    marginLeft: 12,
+    gap: 8,
+  },
+  chatHeaderRowSkeleton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chatNameLine: {
+    height: 14,
+    width: '40%',
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+  },
+  chatTimeLine: {
+    height: 10,
+    width: '15%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  chatMessageLine: {
+    height: 12,
+    width: '75%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  communityCardSkeleton: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 16,
+    width: '100%',
+  },
+  communityHeaderSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  communityAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  communityUserInfoSkeleton: {
+    flex: 1,
+    gap: 4,
+  },
+  communityNameLine: {
+    height: 12,
+    width: '30%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  communitySubLine: {
+    height: 10,
+    width: '20%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  communityImagePlaceholder: {
+    width: '100%',
+    height: 260,
+    backgroundColor: '#E2E8F0',
+  },
+  communityFooterSkeleton: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+  },
+  userSearchRowSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    width: '100%',
+  },
+  userSearchAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+  },
+  userSearchDetailsSkeleton: {
+    flex: 1,
+    marginLeft: 12,
+    gap: 6,
+  },
+  userSearchNameLine: {
+    height: 12,
+    width: '45%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  userSearchSubLine: {
+    height: 10,
+    width: '60%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  userSearchIconPlaceholder: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
     backgroundColor: '#E2E8F0',
   },
 });

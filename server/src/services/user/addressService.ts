@@ -29,6 +29,8 @@ export const createAddress = async (
     flatNumber,
     buildingName,
     townOrCity,
+    pincode,
+    state,
     isDefault,
   } = data;
 
@@ -91,6 +93,8 @@ export const createAddress = async (
     flatNumber: flatNumber?.trim(),
     buildingName: buildingName?.trim(),
     townOrCity: townOrCity?.trim(),
+    pincode: pincode?.trim(),
+    state: state?.trim(),
     isDefault: isDefault || false,
   });
 
@@ -260,6 +264,14 @@ export const updateAddress = async (
 
   if (data.townOrCity !== undefined) {
     address.townOrCity = data.townOrCity?.trim();
+  }
+
+  if (data.pincode !== undefined) {
+    address.pincode = data.pincode?.trim();
+  }
+
+  if (data.state !== undefined) {
+    address.state = data.state?.trim();
   }
 
   if (data.isDefault !== undefined) {

@@ -9,6 +9,8 @@ import {
   StyleSheet,
   Text,
   View,
+  Share,
+  Alert,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,6 +25,9 @@ import { getOrderById } from '@services/order.service';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { formatCurrency, formatOrderDate, normalizeOrderDisplayStatus } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { InAppBrowserModal } from '@components/common/InAppBrowserModal';
+import { getString, StorageKeys } from '@storage/index';
+import { API_BASE_URL } from '@config/env';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -74,6 +79,40 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemsExpanded, setItemsExpanded] = useState(true);
+  const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
+
+  const handleShareInvoice = async () => {
+    if (!order) return;
+    lightHaptic();
+    try {
+      const token = await getString(StorageKeys.ACCESS_TOKEN);
+      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const url = `${base}/invoices/order/${order.id}?token=${token}`;
+      
+      await Share.share({
+        message: `Order Invoice link: ${url}`,
+        title: `Invoice - ${order.orderNumber}`,
+      });
+    } catch (error) {
+      console.log('Share error:', error);
+      Alert.alert('Share Failed', 'Unable to share invoice link.');
+    }
+  };
+
+  const handleViewInvoice = async () => {
+    if (!order) return;
+    lightHaptic();
+    try {
+      const token = await getString(StorageKeys.ACCESS_TOKEN);
+      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const url = `${base}/invoices/order/${order.id}?token=${token}`;
+      setInvoiceUrl(url);
+      setInvoiceModalVisible(true);
+    } catch (error) {
+      Alert.alert('Error', 'Unable to retrieve access token.');
+    }
+  };
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -204,6 +243,34 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           />
         </View>
 
+        {order.paymentStatus === 'paid' && (
+          <View style={[styles.invoiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.invoiceHeader}>
+              <Feather name="file-text" size={20} color={colors.primary} />
+              <View style={styles.invoiceInfo}>
+                <Text style={[styles.invoiceTitle, { color: colors.textPrimary }]}>Order Invoice</Text>
+                <Text style={[styles.invoiceSubtitle, { color: colors.textSecondary }]}>Download or share order invoice</Text>
+              </View>
+            </View>
+            <View style={styles.invoiceActions}>
+              <Pressable
+                style={[styles.invoiceBtn, { backgroundColor: colors.muted }]}
+                onPress={handleShareInvoice}
+              >
+                <Feather name="share-2" size={16} color={colors.textPrimary} />
+                <Text style={[styles.invoiceBtnText, { color: colors.textPrimary }]}>Share</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.invoiceBtn, { backgroundColor: colors.primary }]}
+                onPress={handleViewInvoice}
+              >
+                <Feather name="download" size={16} color="#ffffff" />
+                <Text style={[styles.invoiceBtnText, { color: '#ffffff' }]}>Download</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.timelineStepperRow}>
             {steps.map((step, idx) => {
@@ -322,6 +389,14 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           )}
         </View>
       </ScrollView>
+
+      <InAppBrowserModal
+        visible={invoiceModalVisible}
+        url={invoiceUrl}
+        onClose={() => setInvoiceModalVisible(false)}
+        title="Order Invoice"
+        orderId={order ? String(order.id) : 'invoice'}
+      />
     </View>
   );
 }
@@ -500,4 +575,43 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   totalVal: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  invoiceCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  invoiceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  invoiceInfo: {
+    flex: 1,
+  },
+  invoiceTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+  },
+  invoiceSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  invoiceActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  invoiceBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  invoiceBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+  },
 });

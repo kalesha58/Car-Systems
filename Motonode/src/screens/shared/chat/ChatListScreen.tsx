@@ -7,6 +7,7 @@ import {
   Pressable,
   FlatList,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +17,9 @@ import { useChat } from '@context/ChatContext';
 import { ChromeHeader } from '@components/common';
 import { ConversationCard } from '@components/chat/ConversationCard';
 import { CustomerStackRoutes } from '@constants/routes';
+import { ensureFirebaseReady } from '@services/firebaseAuthBridge';
+import { useAuth } from '@context/AuthContext';
+import { ConversationListSkeleton } from '@components/loaders';
 import { lightHaptic } from '@utils/haptics';
 import auth from '@react-native-firebase/auth';
 
@@ -138,9 +142,9 @@ export function ChatListScreen() {
       </View>
 
       {loadingConversations ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <ScrollView style={{ flex: 1 }}>
+          <ConversationListSkeleton />
+        </ScrollView>
       ) : (
         <FlatList
           data={filteredConversations}

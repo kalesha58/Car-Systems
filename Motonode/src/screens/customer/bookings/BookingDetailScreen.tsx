@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Share,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,6 +23,9 @@ import { useBookings } from '@context/index';
 import { getStatusColor, getStatusLabel } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
+import { InAppBrowserModal } from '@components/common/InAppBrowserModal';
+import { getString, StorageKeys } from '@storage/index';
+import { API_BASE_URL } from '@config/env';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
 type Props = NativeStackScreenProps<
@@ -36,6 +40,40 @@ export function BookingDetailScreen({ route, navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { bookingId } = route.params;
   const { getBookingById, loadBookings, cancelBooking } = useBookings();
+  const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState('');
+
+  const handleShareInvoice = async () => {
+    if (!booking) return;
+    lightHaptic();
+    try {
+      const token = await getString(StorageKeys.ACCESS_TOKEN);
+      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const url = `${base}/invoices/service/${booking.id}?token=${token}`;
+      
+      await Share.share({
+        message: `Service Invoice link: ${url}`,
+        title: `Invoice - ${booking.id}`,
+      });
+    } catch (error) {
+      console.log('Share error:', error);
+      Alert.alert('Share Failed', 'Unable to share invoice link.');
+    }
+  };
+
+  const handleViewInvoice = async () => {
+    if (!booking) return;
+    lightHaptic();
+    try {
+      const token = await getString(StorageKeys.ACCESS_TOKEN);
+      const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL.slice(0, -4) : API_BASE_URL;
+      const url = `${base}/invoices/service/${booking.id}?token=${token}`;
+      setInvoiceUrl(url);
+      setInvoiceModalVisible(true);
+    } catch (error) {
+      Alert.alert('Error', 'Unable to retrieve access token.');
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -146,6 +184,34 @@ export function BookingDetailScreen({ route, navigation }: Props) {
           </View>
         </View>
 
+        {booking.type === 'service' && (booking.paymentStatus === 'paid' || booking.status === 'completed') && (
+          <View style={[styles.invoiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.invoiceHeader}>
+              <Feather name="file-text" size={20} color={colors.primary} />
+              <View style={styles.invoiceInfo}>
+                <Text style={[styles.invoiceTitle, { color: colors.textPrimary }]}>Service Invoice</Text>
+                <Text style={[styles.invoiceSubtitle, { color: colors.textSecondary }]}>Download or share service booking invoice</Text>
+              </View>
+            </View>
+            <View style={styles.invoiceActions}>
+              <Pressable
+                style={[styles.invoiceBtn, { backgroundColor: colors.muted }]}
+                onPress={handleShareInvoice}
+              >
+                <Feather name="share-2" size={16} color={colors.textPrimary} />
+                <Text style={[styles.invoiceBtnText, { color: colors.textPrimary }]}>Share</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.invoiceBtn, { backgroundColor: colors.primary }]}
+                onPress={handleViewInvoice}
+              >
+                <Feather name="download" size={16} color="#ffffff" />
+                <Text style={[styles.invoiceBtnText, { color: '#ffffff' }]}>Download</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Booking Status</Text>
         <View style={[styles.timelineCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <BookingProgressStepper steps={booking.timeline} />
@@ -180,6 +246,14 @@ export function BookingDetailScreen({ route, navigation }: Props) {
           </Pressable>
         )}
       </ScrollView>
+
+      <InAppBrowserModal
+        visible={invoiceModalVisible}
+        url={invoiceUrl}
+        onClose={() => setInvoiceModalVisible(false)}
+        title="Service Invoice"
+        orderId={booking ? String(booking.id) : 'invoice'}
+      />
     </View>
   );
 }
@@ -221,4 +295,43 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   cancelText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#EF4444' },
+  invoiceCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  invoiceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  invoiceInfo: {
+    flex: 1,
+  },
+  invoiceTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+  },
+  invoiceSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  invoiceActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  invoiceBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  invoiceBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+  },
 });

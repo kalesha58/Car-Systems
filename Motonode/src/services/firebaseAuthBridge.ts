@@ -126,7 +126,7 @@ export async function ensureFirebaseReady(backendUserId: string): Promise<void> 
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, SYNC_RETRY_MS));
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), SYNC_RETRY_MS));
   }
 
   throw new Error('Firebase is not ready. Please try again.');

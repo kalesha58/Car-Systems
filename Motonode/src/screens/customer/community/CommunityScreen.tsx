@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -18,6 +19,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { CommunityPostCard } from '@components/cards/CommunityPostCard';
 import { CommunityStoriesRow } from '@components/community/CommunityStoriesRow';
 import { ChromeHeader } from '@components/common';
+import { CommunityFeedSkeleton } from '@components/loaders';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
@@ -149,9 +151,10 @@ export function CommunityScreen() {
       </ChromeHeader>
 
       {loading && posts.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.link} />
-        </View>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 12 }}>
+          {listHeader}
+          <CommunityFeedSkeleton />
+        </ScrollView>
       ) : (
         <FlatList
           data={posts}

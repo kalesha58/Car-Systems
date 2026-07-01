@@ -18,5 +18,6 @@ export * from './story.service';
 export * from './upload.service';
 export * from './chat.service';
 export * from './chatGate.service';
+export * from './address.service';
 export * from './firebaseAuthBridge';
 export * from './fcmTokenService';

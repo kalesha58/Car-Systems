@@ -47,6 +47,10 @@ export const CustomerStackRoutes = {
   GroupInfo: 'GroupInfo',
   DealerChat: 'DealerChat',
   AIChat: 'AIChat',
+  SavedAddresses: 'SavedAddresses',
+  AddAddressMethod: 'AddAddressMethod',
+  AddLiveLocation: 'AddLiveLocation',
+  ManualAddress: 'ManualAddress',
 } as const;
 
 export const DealerTabRoutes = {

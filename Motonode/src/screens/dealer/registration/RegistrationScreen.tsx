@@ -815,7 +815,7 @@ export function RegistrationScreen({ navigation }: Props) {
                     style={[
                       styles.inputWrapper,
                       {
-                        borderColor: gstError ? colors.error : gstVerified ? '#10B981' : colors.border,
+                        borderColor: gstError ? colors.destructive : gstVerified ? '#10B981' : colors.border,
                         marginBottom: 0,
                       },
                     ]}
@@ -846,7 +846,7 @@ export function RegistrationScreen({ navigation }: Props) {
                     )}
                   </View>
                   {gstError ? (
-                    <Text style={{ color: colors.error, fontSize: 10, marginTop: 4, marginLeft: 12 }}>
+                    <Text style={{ color: colors.destructive, fontSize: 10, marginTop: 4, marginLeft: 12 }}>
                       {gstError}
                     </Text>
                   ) : gstVerified ? (

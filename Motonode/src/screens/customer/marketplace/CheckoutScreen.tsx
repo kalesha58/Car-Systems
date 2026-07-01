@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Alert,
   Image,
@@ -10,6 +10,8 @@ import {
   Text,
   TextInput,
   View,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +24,9 @@ import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { formatCurrency, getProductId } from '@utils/displayMappers';
+import { useFocusEffect } from '@react-navigation/native';
+import { getSavedAddresses } from '@services/address.service';
+import type { IAddress } from '@app-types/address';
 
 export const DEFAULT_SHIPPING_ADDRESS = {
   street: '45, 2nd Cross, Koramangala 3 Block',
@@ -78,14 +83,14 @@ const stepStyles = StyleSheet.create({
     borderColor: '#CBD5E1', backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center',
   },
-  circleDone: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  circleActive: { borderColor: '#2563EB' },
+  circleDone: { backgroundColor: '#E60012', borderColor: '#E60012' },
+  circleActive: { borderColor: '#E60012' },
   num: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
-  numActive: { color: '#2563EB' },
+  numActive: { color: '#E60012' },
   label: { fontSize: 10, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
-  labelActive: { color: '#2563EB', fontFamily: 'Inter_700Bold' },
+  labelActive: { color: '#E60012', fontFamily: 'Inter_700Bold' },
   line: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginBottom: 14, marginHorizontal: 4 },
-  lineDone: { backgroundColor: '#2563EB' },
+  lineDone: { backgroundColor: '#E60012' },
 });
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
@@ -96,9 +101,32 @@ export function CheckoutScreen({ navigation }: Props) {
   const { items, total } = useCart();
   const [couponCode, setCouponCode] = useState('HUB10');
   const [couponApplied, setCouponApplied] = useState(false);
+  const [addresses, setAddresses] = useState<IAddress[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
+  const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
 
   const discount = couponApplied ? Math.min(100, Math.round(total * 0.1)) : 0;
   const orderTotal = Math.max(0, total - discount);
+
+  const loadAddresses = useCallback(async () => {
+    try {
+      const list = await getSavedAddresses();
+      setAddresses(list);
+      if (list.length > 0) {
+        // Prefer default address, else first in list
+        const def = list.find(a => a.isDefault) || list[0];
+        setSelectedAddress(def);
+      }
+    } catch (err) {
+      console.log('Failed to fetch addresses in checkout:', err);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadAddresses();
+    }, [loadAddresses])
+  );
 
   const handleApplyCoupon = () => {
     lightHaptic();
@@ -116,10 +144,8 @@ export function CheckoutScreen({ navigation }: Props) {
       return;
     }
     lightHaptic();
-    navigation.navigate(CustomerStackRoutes.Payment);
+    navigation.navigate(CustomerStackRoutes.Payment, { address: selectedAddress || undefined });
   };
-
-  const address = DEFAULT_SHIPPING_ADDRESS;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#F8FAFC' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -144,20 +170,36 @@ export function CheckoutScreen({ navigation }: Props) {
       >
         {/* Deliver To */}
         <Text style={styles.sectionLabel}>Deliver To</Text>
-        <Pressable style={styles.card} onPress={() => lightHaptic()}>
+        <Pressable style={styles.card} onPress={() => { lightHaptic(); setIsAddressModalVisible(true); }}>
           <View style={styles.addressIconBox}>
-            <Feather name="map-pin" size={18} color="#2563EB" />
+            <Feather name={selectedAddress?.addressType === 'home' ? 'home' : selectedAddress?.addressType === 'office' ? 'briefcase' : 'map-pin'} size={18} color="#E60012" />
           </View>
           <View style={{ flex: 1 }}>
-            <View style={styles.addressNameRow}>
-              <Text style={styles.addressName}>Arjun Sharma</Text>
-              <View style={styles.homeBadge}><Text style={styles.homeBadgeText}>HOME</Text></View>
-            </View>
-            <Text style={styles.addressPhone}>+91 98765 43210</Text>
-            <Text style={styles.addressLine}>
-              {address.street},{'\n'}
-              {address.city}, {address.state} {address.zipCode}
-            </Text>
+            {selectedAddress ? (
+              <>
+                <View style={styles.addressNameRow}>
+                  <Text style={styles.addressName}>{selectedAddress.name}</Text>
+                  <View style={styles.homeBadge}>
+                    <Text style={styles.homeBadgeText}>{selectedAddress.addressType.toUpperCase()}</Text>
+                  </View>
+                  {selectedAddress.isDefault && (
+                    <View style={[styles.homeBadge, { backgroundColor: '#DCFCE7' }]}>
+                      <Text style={[styles.homeBadgeText, { color: '#15803D' }]}>DEFAULT</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.addressPhone}>{selectedAddress.phone}</Text>
+                <Text style={styles.addressLine}>{selectedAddress.fullAddress}</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.addressNameRow}>
+                  <Text style={styles.addressName}>Add Delivery Address</Text>
+                </View>
+                <Text style={styles.addressPhone}>No address selected</Text>
+                <Text style={styles.addressLine}>Tap here to select or add an address</Text>
+              </>
+            )}
           </View>
           <Feather name="chevron-right" size={18} color="#CBD5E1" />
         </Pressable>
@@ -197,8 +239,8 @@ export function CheckoutScreen({ navigation }: Props) {
         {/* Delivery / Service Location */}
         <Text style={styles.sectionLabel}>Delivery / Service Location</Text>
         <Pressable style={styles.card} onPress={() => lightHaptic()}>
-          <View style={[styles.dateIconBox, { backgroundColor: '#EFF6FF' }]}>
-            <Feather name="home" size={18} color="#2563EB" />
+          <View style={[styles.dateIconBox, { backgroundColor: 'rgba(230,0,18,0.08)' }]}>
+            <Feather name="home" size={18} color="#E60012" />
           </View>
           <View style={{ flex: 1 }}>
             <View style={styles.addressNameRow}>
@@ -212,7 +254,7 @@ export function CheckoutScreen({ navigation }: Props) {
 
         {/* Coupon */}
         <Pressable style={styles.couponRow} onPress={() => lightHaptic()}>
-          <Feather name="tag" size={15} color="#2563EB" />
+          <Feather name="tag" size={15} color="#E60012" />
           <Text style={styles.couponLabel}>Apply Coupon</Text>
           <View style={{ flex: 1 }} />
           <View style={styles.couponCodeBox}>
@@ -241,6 +283,87 @@ export function CheckoutScreen({ navigation }: Props) {
           <Text style={styles.ctaBtnText}>Continue to Payment</Text>
         </Pressable>
       </View>
+
+      {/* Address Selection Modal Sheet */}
+      <Modal
+        visible={isAddressModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsAddressModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBgPressable} onPress={() => setIsAddressModalVisible(false)} />
+          
+          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Choose Delivery Address</Text>
+              <Pressable style={styles.closeBtn} onPress={() => setIsAddressModalVisible(false)}>
+                <Feather name="x" size={20} color={colors.textPrimary} />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalBody}>
+              {addresses.map((item) => {
+                const isSelected = selectedAddress?._id === item._id;
+                const iconName = item.addressType === 'home' ? 'home' : item.addressType === 'office' ? 'briefcase' : 'map-pin';
+                
+                return (
+                  <Pressable
+                    key={item._id}
+                    style={[
+                      styles.addressCard,
+                      { borderColor: isSelected ? colors.primary : colors.border }
+                    ]}
+                    onPress={() => {
+                      lightHaptic();
+                      setSelectedAddress(item);
+                      setIsAddressModalVisible(false);
+                    }}
+                  >
+                    <View style={[styles.addressIconContainer, { backgroundColor: isSelected ? 'rgba(230,0,18,0.08)' : '#F2F2F2' }]}>
+                      <Feather name={iconName} size={16} color={isSelected ? colors.primary : colors.textSecondary} />
+                    </View>
+                    
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={[styles.addressNameText, { color: colors.textPrimary }]}>{item.name}</Text>
+                        <View style={styles.addressTypeBadge}>
+                          <Text style={styles.addressTypeBadgeText}>{item.addressType.toUpperCase()}</Text>
+                        </View>
+                        {item.isDefault && (
+                          <View style={styles.defaultBadge}>
+                            <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.addressPhoneText, { color: colors.textSecondary }]}>{item.phone}</Text>
+                      <Text style={[styles.addressFullText, { color: colors.textSecondary }]} numberOfLines={2}>
+                        {item.fullAddress}
+                      </Text>
+                    </View>
+                    
+                    <View style={[styles.selectCircle, isSelected && styles.selectCircleSelected]}>
+                      {isSelected && <View style={styles.selectCircleInner} />}
+                    </View>
+                  </Pressable>
+                );
+              })}
+              
+              <Pressable
+                style={[styles.addAddressBtn, { borderColor: colors.primary }]}
+                onPress={() => {
+                  lightHaptic();
+                  setIsAddressModalVisible(false);
+                  navigation.navigate(CustomerStackRoutes.AddAddressMethod);
+                }}
+              >
+                <Feather name="plus" size={16} color={colors.primary} />
+                <Text style={[styles.addAddressBtnText, { color: colors.primary }]}>Add New Address</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -248,7 +371,7 @@ export function CheckoutScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, borderBottomWidth: 1, backgroundColor: '#ffffff',
+    paddingBottom: 14, backgroundColor: '#E60012',
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
@@ -260,19 +383,19 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0', padding: 14,
   },
   addressIconBox: {
-    width: 36, height: 36, borderRadius: 18, backgroundColor: '#EFF6FF',
+    width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(230,0,18,0.08)',
     alignItems: 'center', justifyContent: 'center',
   },
   addressNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 },
   addressName: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#1E293B' },
-  homeBadge: { backgroundColor: '#DBEAFE', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
-  homeBadgeText: { color: '#2563EB', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  homeBadge: { backgroundColor: 'rgba(230,0,18,0.08)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
+  homeBadgeText: { color: '#E60012', fontSize: 9, fontFamily: 'Inter_700Bold' },
   addressPhone: { fontSize: 12, color: '#64748B', marginBottom: 4 },
   addressLine: { fontSize: 12, color: '#475569', lineHeight: 18 },
   serviceThumb: { width: 64, height: 64, borderRadius: 10, backgroundColor: '#E2E8F0' },
   serviceName: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B', marginBottom: 3 },
   serviceIncludes: { fontSize: 11, color: '#64748B', marginBottom: 4 },
-  serviceQty: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  serviceQty: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#E60012' },
   servicePrice: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   dateIconBox: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   dateText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
@@ -284,9 +407,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff', borderRadius: 14, borderWidth: 1,
     borderColor: '#E2E8F0', paddingHorizontal: 14, paddingVertical: 14,
   },
-  couponLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
-  couponCodeBox: { backgroundColor: '#EFF6FF', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
-  couponCodeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#1E40AF' },
+  couponLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#E60012' },
+  couponCodeBox: { backgroundColor: 'rgba(230,0,18,0.08)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
+  couponCodeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#E60012' },
   couponSaving: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#10B981' },
   bottomBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -298,8 +421,124 @@ const styles = StyleSheet.create({
   totalOriginal: { fontSize: 14, color: '#94A3B8', textDecorationLine: 'line-through' },
   savingLabel: { fontSize: 11, color: '#10B981', fontFamily: 'Inter_700Bold', marginTop: 1 },
   ctaBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#E60012', borderRadius: 14,
     paddingHorizontal: 24, paddingVertical: 16,
   },
   ctaBtnText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  
+  // Modal Sheet Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBgPressable: {
+    ...StyleSheet.absoluteFill,
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: Dimensions.get('window').height * 0.6,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  modalBody: {
+    gap: 12,
+  },
+  addressCard: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#ffffff',
+  },
+  addressIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addressNameText: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
+  addressTypeBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  addressTypeBadgeText: {
+    fontSize: 8,
+    fontFamily: 'Inter_700Bold',
+    color: '#64748B',
+  },
+  defaultBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  defaultBadgeText: {
+    fontSize: 8,
+    fontFamily: 'Inter_700Bold',
+    color: '#15803D',
+  },
+  addressPhoneText: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+  },
+  addressFullText: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  selectCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectCircleSelected: {
+    borderColor: '#E60012',
+  },
+  selectCircleInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E60012',
+  },
+  addAddressBtn: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  addAddressBtnText: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
 });

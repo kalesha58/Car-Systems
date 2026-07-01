@@ -41,6 +41,7 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.AiAssistant]: undefined;
   [CustomerStackRoutes.MyOrders]: undefined;
   [CustomerStackRoutes.OrderTracking]: { id: string };
+  [CustomerStackRoutes.SavedAddresses]: undefined;
 };
 
 type CustomerProfileScreenNavigationProp = CompositeNavigationProp<
@@ -73,7 +74,7 @@ export function CustomerProfileScreen() {
       title: 'Account',
       items: [
         { icon: 'user', label: 'Personal Information', sublabel: 'Manage your personal details', action: () => {} },
-        { icon: 'map-pin', label: 'Saved Addresses', sublabel: 'View and manage your addresses', action: () => {} },
+        { icon: 'map-pin', label: 'Saved Addresses', sublabel: 'View and manage your addresses', action: () => navigation.navigate(CustomerStackRoutes.SavedAddresses as any) },
         { icon: 'credit-card', label: 'Payment Methods', sublabel: 'Manage cards and wallets', action: () => {} },
         { icon: 'heart', label: 'Wishlist', sublabel: "Items you've saved", action: () => {} },
       ],

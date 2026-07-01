@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,6 +23,7 @@ import { searchUsers, searchDealers } from '@services/chat.service';
 import { verifyDealerForChat } from '@services/chatGate.service';
 import { ensureFirebaseReady } from '@services/firebaseAuthBridge';
 import { useAuth } from '@context/AuthContext';
+import { UserSearchListSkeleton } from '@components/loaders';
 
 export function CreateChatScreen() {
   const colors = useColors();
@@ -149,7 +151,7 @@ export function CreateChatScreen() {
         <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="search" size={18} color={colors.textTertiary} style={styles.searchIcon} />
           <TextInput
-            placeholder={`Search ${searchMode}...`}
+            placeholder={searchMode === 'users' ? "Search users by name, email, plate..." : "Search dealers..."}
             placeholderTextColor={colors.textTertiary}
             value={query}
             onChangeText={setQuery}
@@ -165,9 +167,9 @@ export function CreateChatScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <ScrollView style={{ flex: 1 }}>
+          <UserSearchListSkeleton />
+        </ScrollView>
       ) : (
         <FlatList
           data={results}
@@ -190,7 +192,14 @@ export function CreateChatScreen() {
               )}
               <View style={styles.resultDetails}>
                 <Text style={[styles.resultName, { color: colors.textPrimary }]}>{item.name}</Text>
-                <Text style={[styles.resultSub, { color: colors.textSecondary }]}>{item.email || item.phone || 'No contact details'}</Text>
+                {item.matchedPlate ? (
+                  <View style={styles.plateRow}>
+                    <Text style={[styles.plateLabel, { color: colors.primary }]}>{item.matchedPlate}</Text>
+                    <Text style={[styles.resultSub, { color: colors.textSecondary }]}> • {item.email || item.phone || 'No contact'}</Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.resultSub, { color: colors.textSecondary }]}>{item.email || item.phone || 'No contact details'}</Text>
+                )}
               </View>
               <Feather name="message-square" size={18} color={colors.primary} />
             </Pressable>
@@ -295,6 +304,15 @@ const styles = StyleSheet.create({
   resultSub: {
     fontSize: 12,
     marginTop: 2,
+  },
+  plateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  plateLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
   },
   centered: {
     flex: 1,

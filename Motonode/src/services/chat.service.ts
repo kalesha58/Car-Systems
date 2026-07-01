@@ -15,6 +15,39 @@ function logFirestoreError(fnName: string, collection: string, docPath: string |
   });
 }
 
+function safeToDate(val: any): Date {
+  if (!val) return new Date();
+  if (typeof val.toDate === 'function') {
+    return val.toDate();
+  }
+  if (val.seconds !== undefined) {
+    return new Date(val.seconds * 1000 + (val.nanoseconds || 0) / 1000000);
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
+function safeToDateOrUndefined(val: any): Date | undefined {
+  if (!val) return undefined;
+  if (typeof val.toDate === 'function') {
+    return val.toDate();
+  }
+  if (val.seconds !== undefined) {
+    return new Date(val.seconds * 1000 + (val.nanoseconds || 0) / 1000000);
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? undefined : d;
+}
+
+function normalizeFilePath(uri: string): string {
+  if (!uri) return '';
+  try {
+    return decodeURIComponent(uri);
+  } catch (e) {
+    return uri;
+  }
+}
+
 export function sanitizeFirestoreData(data: any): any {
   const sanitize = (val: any): any => {
     if (val === undefined) return null;
@@ -201,11 +234,11 @@ export function listenConversations(
             lastMessage: data.lastMessage
               ? {
                   ...data.lastMessage,
-                  createdAt: data.lastMessage.createdAt?.toDate() || new Date(),
+                  createdAt: safeToDate(data.lastMessage.createdAt),
                 }
               : undefined,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
+            createdAt: safeToDate(data.createdAt),
+            updatedAt: safeToDate(data.updatedAt),
             unreadCounts: data.unreadCounts || {},
             pinned: data.pinned || {},
             muted: data.muted || {},
@@ -258,8 +291,8 @@ export function listenMessages(
             voice: data.voice,
             pdf: data.pdf,
             location: data.location,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            editedAt: data.editedAt?.toDate(),
+            createdAt: safeToDate(data.createdAt),
+            editedAt: safeToDateOrUndefined(data.editedAt),
             status: data.status || 'sent',
             replyTo: data.replyTo,
             attachments: data.attachments,
@@ -326,9 +359,10 @@ export async function sendMessage(
 }
 
 export async function uploadMedia(conversationId: string, uri: string, pathPrefix: string): Promise<string> {
-  const filename = uri.substring(uri.lastIndexOf('/') + 1) || `file_${Date.now()}`;
+  const normalized = normalizeFilePath(uri);
+  const filename = normalized.substring(normalized.lastIndexOf('/') + 1) || `file_${Date.now()}`;
   const storageRef = storage().ref(`chats/${conversationId}/${pathPrefix}/${filename}`);
-  await storageRef.putFile(uri);
+  await storageRef.putFile(normalized);
   return await storageRef.getDownloadURL();
 }
 
@@ -375,9 +409,10 @@ export async function createGroup(name: string, members: string[], imageUri?: st
 
     let groupImage = imageUri || '';
     if (imageUri && !imageUri.startsWith('http')) {
+      const normalized = normalizeFilePath(imageUri);
       const tempId = `group_${Date.now()}`;
       const storageRef = storage().ref(`groups/${tempId}/${tempId}.jpg`);
-      await storageRef.putFile(imageUri);
+      await storageRef.putFile(normalized);
       groupImage = await storageRef.getDownloadURL();
     }
 
@@ -578,6 +613,8 @@ export async function searchUsers(query: string): Promise<any[]> {
       let list: any[] = [];
       if (Array.isArray(data)) {
         list = data;
+      } else if (data.success && Array.isArray((data as any).users)) {
+        list = (data as any).users;
       } else if (data.success && Array.isArray(data.Response)) {
         list = data.Response;
       } else if (data.success && data.Response && Array.isArray((data.Response as any).users)) {
@@ -588,7 +625,8 @@ export async function searchUsers(query: string): Promise<any[]> {
         name: u.name,
         email: u.email,
         avatar: u.avatar || null,
-        role: u.role || 'customer'
+        role: u.role || 'customer',
+        matchedPlate: u.matchedPlate || null
       }));
     }
   } catch (err) {
@@ -669,7 +707,7 @@ export function listenPresence(userId: string, onUpdate: (presence: Presence | n
         onUpdate({
           userId: doc.id,
           online: Boolean(data?.online),
-          lastSeen: data?.lastSeen?.toDate() || new Date(),
+          lastSeen: safeToDate(data?.lastSeen),
           typing: data?.typing || {},
         });
       } else {

@@ -18,6 +18,7 @@ export const StorageKeys = {
   CUSTOMER_BOOKINGS: '@motonode_customer_bookings',
   PHOTO_PERMISSION_RATIONALE: '@motonode_photo_permission_rationale',
   DEVICE_ID: '@motonode_device_id',
+  SELECTED_DELIVERY_ADDRESS_ID: '@motonode_selected_delivery_address_id',
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

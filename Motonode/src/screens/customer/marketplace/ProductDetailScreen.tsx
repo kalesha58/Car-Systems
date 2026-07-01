@@ -349,16 +349,32 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           </Pressable>
         </View>
 
-        <Pressable
-          style={[
-            styles.cartBtn,
-            { backgroundColor: '#E60012' }
-          ]}
-          onPress={handleAddToCart}
-        >
-          <Feather name="shopping-cart" size={18} color="#fff" />
-          <Text style={styles.cartBtnText}>Add to Cart</Text>
-        </Pressable>
+        {inCart ? (
+          <Pressable
+            style={[
+              styles.cartBtn,
+              { backgroundColor: colors.primary }
+            ]}
+            onPress={() => {
+              lightHaptic();
+              navigation.navigate(CustomerStackRoutes.Cart);
+            }}
+          >
+            <Feather name="arrow-right" size={18} color="#fff" />
+            <Text style={styles.cartBtnText}>Go to Cart</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={[
+              styles.cartBtn,
+              { backgroundColor: '#E60012' }
+            ]}
+            onPress={handleAddToCart}
+          >
+            <Feather name="shopping-cart" size={18} color="#fff" />
+            <Text style={styles.cartBtnText}>Add to Cart</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

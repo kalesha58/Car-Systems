@@ -134,7 +134,7 @@ export function CartScreen() {
           <Text style={[styles.successSubtitle, { color: colors.textSecondary }]}>Your order has been placed successfully. Track its status in My Orders.</Text>
           
           <Pressable
-            style={[styles.trackBtn, { backgroundColor: '#2563EB' }]}
+            style={[styles.trackBtn, { backgroundColor: colors.primary }]}
             onPress={() =>
               navigation.navigate(CustomerStackRoutes.MyOrders as any)
             }
@@ -150,7 +150,7 @@ export function CartScreen() {
               })
             }
           >
-            <Text style={[styles.continueBtnText, { color: '#2563EB' }]}>Continue Shopping</Text>
+            <Text style={[styles.continueBtnText, { color: colors.primary }]}>Continue Shopping</Text>
           </Pressable>
         </View>
       </View>
@@ -179,16 +179,16 @@ export function CartScreen() {
           <Feather name="shopping-cart" size={64} color={colors.textTertiary} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Your cart is empty</Text>
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Add products to your cart to continue shopping</Text>
-          <Pressable
-            style={[styles.shopBtn, { backgroundColor: '#2563EB' }]}
-            onPress={() =>
-              navigation.navigate(CustomerStackRoutes.CustomerTabs, {
-                screen: CustomerTabRoutes.Marketplace,
-              })
-            }
-          >
-            <Text style={styles.shopBtnText}>Browse Marketplace</Text>
-          </Pressable>
+            <Pressable
+              style={[styles.shopBtn, { backgroundColor: colors.primary }]}
+              onPress={() =>
+                navigation.navigate(CustomerStackRoutes.CustomerTabs, {
+                  screen: CustomerTabRoutes.Marketplace,
+                })
+              }
+            >
+              <Text style={styles.shopBtnText}>Browse Marketplace</Text>
+            </Pressable>
         </View>
       ) : (
         <>
@@ -259,9 +259,9 @@ export function CartScreen() {
               </View>
             ) : (
               <Pressable style={styles.couponRow} onPress={() => setIsCouponModalVisible(true)}>
-                <Feather name="tag" size={18} color="#2563EB" />
-                <Text style={styles.couponText}>Apply Coupon</Text>
-                <Feather name="chevron-right" size={18} color="#2563EB" />
+                <Feather name="tag" size={18} color={colors.primary} />
+                <Text style={[styles.couponText, { color: colors.primary }]}>Apply Coupon</Text>
+                <Feather name="chevron-right" size={18} color={colors.primary} />
               </Pressable>
             )}
 
@@ -294,7 +294,7 @@ export function CartScreen() {
                 <Text style={[styles.total, { color: colors.textPrimary }]}>₹{grandTotal.toLocaleString('en-IN')}</Text>
               </View>
               <Pressable
-                style={({ pressed }) => [styles.checkoutBtn, { backgroundColor: '#2563EB', opacity: pressed ? 0.9 : 1 }]}
+                style={({ pressed }) => [styles.checkoutBtn, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
                 onPress={handleCheckout}
               >
                 <Text style={styles.checkoutBtnText}>Place Order</Text>
@@ -337,7 +337,7 @@ export function CartScreen() {
                     setCouponError('');
                   }}
                 />
-                <Pressable style={[styles.customApplyBtn, { backgroundColor: '#2563EB' }]} onPress={handleApplyCustomCode}>
+                <Pressable style={[styles.customApplyBtn, { backgroundColor: colors.primary }]} onPress={handleApplyCustomCode}>
                   <Text style={styles.customApplyText}>Apply</Text>
                 </Pressable>
               </View>
@@ -378,9 +378,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#E60012',
   },
   circularBackBtn: {
     width: 36,
@@ -389,7 +387,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   clearBtn: { padding: 4 },
@@ -398,7 +396,7 @@ const styles = StyleSheet.create({
   cartItem: { flexDirection: 'row', borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   itemImage: { width: 90, height: 100 },
   itemInfo: { flex: 1, padding: 10 },
-  itemBrand: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#2563EB', marginBottom: 2 },
+  itemBrand: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#E60012', marginBottom: 2 },
   itemName: { fontSize: 12, fontFamily: 'Inter_500Medium', lineHeight: 16, marginBottom: 4 },
   itemPrice: { fontSize: 14, fontFamily: 'Inter_700Bold', marginBottom: 6 },
   quantityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -420,7 +418,7 @@ const styles = StyleSheet.create({
   shopBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
   checkout: { borderTopWidth: 1, padding: 16 },
   couponRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 12 },
-  couponText: { flex: 1, fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  couponText: { flex: 1, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   appliedCouponRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -564,7 +562,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   couponSelectText: {
-    color: '#2563EB',
+    color: '#E60012',
     fontSize: 11,
     fontFamily: 'Inter_700Bold',
   },
