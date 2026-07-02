@@ -23,12 +23,14 @@ import { searchUsers, searchDealers } from '@services/chat.service';
 import { verifyDealerForChat } from '@services/chatGate.service';
 import { ensureFirebaseReady } from '@services/firebaseAuthBridge';
 import { useAuth } from '@context/AuthContext';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { UserSearchListSkeleton } from '@components/loaders';
 
 export function CreateChatScreen() {
   const colors = useColors();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const { user } = useAuth();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const { createConversation, setActiveConversationId } = useChat();
 
   const [query, setQuery] = useState('');
@@ -65,12 +67,24 @@ export function CreateChatScreen() {
       return;
     }
 
+    const isDealerChat = role === 'dealer' || searchMode === 'dealers';
+    if (!isDealerChat) {
+      await proceedWithChat(participantId, role);
+      return;
+    }
+
+    await runWithMobileCheck(async () => {
+      await proceedWithChat(participantId, role);
+    });
+  };
+
+  const proceedWithChat = async (participantId: string, role: string) => {
     setLoading(true);
     try {
       const selectedUser = results.find((r) => r.id === participantId);
       if (!selectedUser) return;
 
-      await ensureFirebaseReady(user.id);
+      await ensureFirebaseReady(user!.id);
 
       const isDealer = role === 'dealer' || searchMode === 'dealers';
       let targetUserId = participantId;
@@ -88,7 +102,7 @@ export function CreateChatScreen() {
       const convId = await createConversation(targetUserId, type, {
         dealerId,
         participantNames: {
-          [user.id]: user.name,
+          [user!.id]: user!.name,
           [targetUserId]: dealerName,
         },
       });
@@ -99,9 +113,10 @@ export function CreateChatScreen() {
       } else {
         navigation.replace(CustomerStackRoutes.Chat);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to start chat:', err);
-      Alert.alert('Unable to start chat', err?.message || 'Please try again.');
+      const message = err instanceof Error ? err.message : 'Please try again.';
+      Alert.alert('Unable to start chat', message);
     } finally {
       setLoading(false);
     }

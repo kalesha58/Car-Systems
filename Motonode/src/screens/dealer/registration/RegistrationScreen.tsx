@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -35,18 +35,11 @@ import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import { createBusinessRegistrationApi } from '@services/dealer.service';
-
-type DealerStackParamList = {
-  [DealerStackRoutes.DealerTabs]: undefined;
-  [DealerStackRoutes.DealerType]: undefined;
-  [DealerStackRoutes.BusinessRegistration]: undefined;
-  [DealerStackRoutes.ProductForm]: { id?: string };
-  [DealerStackRoutes.VehicleForm]: { id?: string };
-  [DealerStackRoutes.ServiceForm]: { id?: string };
-};
+import { validateUpiFormat } from '@services/upi.service';
+import type { DealerStackParamList as DealerNavParamList } from '@navigation/DealerNavigator';
 
 type Props = NativeStackScreenProps<
-  DealerStackParamList,
+  DealerNavParamList,
   typeof DealerStackRoutes.BusinessRegistration
 >;
 
@@ -163,7 +156,7 @@ const INDIAN_BANKS = [
   'Bandhan Bank',
 ];
 
-export function RegistrationScreen({ navigation }: Props) {
+export function RegistrationScreen({ navigation, route }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { saveBusinessProfile, completeRegistration, dealerType } = useDealer();
@@ -185,6 +178,10 @@ export function RegistrationScreen({ navigation }: Props) {
   const [gstVerifying, setGstVerifying] = useState(false);
   const [gstError, setGstError] = useState<string | null>(null);
 
+  const [upiVerified, setUpiVerified] = useState(false);
+  const [upiAccountHolderName, setUpiAccountHolderName] = useState('');
+  const [upiError, setUpiError] = useState<string | null>(null);
+
   const [pickerVisible, setPickerVisible] = useState(false);
   const [permissionVisible, setPermissionVisible] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -200,6 +197,42 @@ export function RegistrationScreen({ navigation }: Props) {
     setGstVerified(false);
     setGstError(null);
   };
+
+  const handleUpiChange = (val: string) => {
+    setForm(prev => ({ ...prev, upiId: val.toLowerCase() }));
+    setUpiVerified(false);
+    setUpiAccountHolderName('');
+    setUpiError(null);
+  };
+
+  const handleChangeUpi = () => {
+    lightHaptic();
+    setUpiVerified(false);
+    setUpiAccountHolderName('');
+    setUpiError(null);
+  };
+
+  const handleVerifyUpi = () => {
+    const trimmed = form.upiId.trim();
+    if (!validateUpiFormat(trimmed)) {
+      setUpiError('Invalid UPI ID format. Example: store@upi');
+      return;
+    }
+    lightHaptic();
+    navigation.navigate(DealerStackRoutes.UPIVerification, { upiId: trimmed });
+  };
+
+  useEffect(() => {
+    const result = route.params?.upiVerificationResult;
+    if (!result?.verified) {
+      return;
+    }
+    setForm(prev => ({ ...prev, upiId: result.upiId }));
+    setUpiVerified(true);
+    setUpiAccountHolderName(result.accountHolderName);
+    setUpiError(null);
+    navigation.setParams({ upiVerificationResult: undefined });
+  }, [route.params?.upiVerificationResult, navigation]);
 
   const verifyGst = () => {
     const gstVal = form.gst.trim().toUpperCase();
@@ -405,6 +438,7 @@ export function RegistrationScreen({ navigation }: Props) {
     } else if (currentStep === 2) {
       const missing: string[] = [];
       if (!form.upiId) missing.push('UPI ID');
+      if (!upiVerified) missing.push('UPI Verification');
       if (!form.bankName) missing.push('Bank Name');
       if (!form.accountNumber) missing.push('Account Number');
       if (!form.ifsc) missing.push('IFSC Code');
@@ -414,6 +448,10 @@ export function RegistrationScreen({ navigation }: Props) {
 
       if (missing.length > 0) {
         Alert.alert('Missing Fields', `Please fill in: ${missing.join(', ')}`);
+        return;
+      }
+      if (!upiVerified) {
+        Alert.alert('UPI Unverified', 'Please verify your UPI ID before proceeding.');
         return;
       }
       setCurrentStep(3);
@@ -1039,22 +1077,57 @@ export function RegistrationScreen({ navigation }: Props) {
                 </View>
 
                 {/* UPI ID Input */}
-                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                <View style={[styles.inputWrapper, styles.upiInputWrapper, { borderColor: upiVerified ? '#28A745' : colors.border }]}>
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
                     <Feather name="link" size={14} color={colors.icon} />
                   </View>
                   <View style={styles.inputTextContainer}>
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>UPI ID *</Text>
+                    <View style={styles.upiLabelRow}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>UPI ID *</Text>
+                      {upiVerified ? (
+                        <View style={styles.verifiedChip}>
+                          <Feather name="check-circle" size={12} color="#28A745" />
+                          <Text style={styles.verifiedChipText}>Verified</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <TextInput
                       style={[styles.textInputStyle, { color: colors.textPrimary }]}
                       value={form.upiId}
-                      onChangeText={(v) => set('upiId', v)}
+                      onChangeText={handleUpiChange}
                       autoCapitalize="none"
                       placeholder="store@upi"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!upiVerified}
                     />
+                    {upiVerified && upiAccountHolderName ? (
+                      <Text style={[styles.upiHolderName, { color: colors.textSecondary }]}>
+                        {upiAccountHolderName}
+                      </Text>
+                    ) : null}
+                    {upiError ? (
+                      <Text style={styles.upiErrorText}>{upiError}</Text>
+                    ) : null}
                   </View>
                 </View>
+
+                {upiVerified ? (
+                  <Pressable onPress={handleChangeUpi} style={styles.changeUpiBtn}>
+                    <Text style={styles.changeUpiText}>Change UPI</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={handleVerifyUpi}
+                    disabled={!form.upiId.trim()}
+                    style={[
+                      styles.verifyUpiBtn,
+                      { opacity: form.upiId.trim() ? 1 : 0.5 },
+                    ]}
+                  >
+                    <Feather name="shield" size={16} color="#FFFFFF" />
+                    <Text style={styles.verifyUpiText}>Verify UPI</Text>
+                  </Pressable>
+                )}
 
                 {/* Bank Name Input */}
                 <Pressable
@@ -1665,6 +1738,67 @@ const styles = StyleSheet.create({
   verifyBtnText: {
     color: '#ffffff',
     fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  upiInputWrapper: {
+    height: undefined,
+    minHeight: 52,
+    paddingVertical: 10,
+    alignItems: 'flex-start',
+  },
+  upiLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  verifiedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#28A74518',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  verifiedChipText: {
+    color: '#28A745',
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  upiHolderName: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    marginTop: 2,
+  },
+  upiErrorText: {
+    color: '#E60012',
+    fontSize: 10,
+    fontFamily: 'Inter_500Medium',
+    marginTop: 4,
+  },
+  verifyUpiBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#E60012',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  verifyUpiText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  changeUpiBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 4,
+    paddingVertical: 4,
+  },
+  changeUpiText: {
+    color: '#E60012',
+    fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
   },
 });

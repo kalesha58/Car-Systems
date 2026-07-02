@@ -460,6 +460,153 @@ export function OrderTrackingSkeleton() {
   );
 }
 
+export function DealerDashboardSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={styles.dealerDashboardSkeleton}>
+      <Skeleton style={styles.dealerBannerSkeleton} />
+
+      <View style={[styles.dealerHeroSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.dealerHeroTopSkeleton}>
+          <View style={styles.dealerHeroLeftSkeleton}>
+            <Skeleton style={styles.dealerEyebrowSkeleton} />
+            <Skeleton style={styles.dealerRevenueSkeleton} />
+            <Skeleton style={styles.dealerTrendSkeleton} />
+          </View>
+          <Skeleton style={styles.dealerIllustrationSkeleton} />
+        </View>
+        <View style={[styles.dealerHeroStatsSkeleton, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={styles.dealerHeroStatItemSkeleton}>
+              <Skeleton style={styles.dealerHeroStatValueSkeleton} />
+              <Skeleton style={styles.dealerHeroStatLabelSkeleton} />
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealerChipRowSkeleton}>
+        {[1, 2, 3, 4].map((i) => (
+          <View key={i} style={[styles.dealerChipSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Skeleton style={styles.dealerChipIconSkeleton} />
+            <View style={styles.dealerChipTextSkeleton}>
+              <Skeleton style={styles.dealerChipValueSkeleton} />
+              <Skeleton style={styles.dealerChipLabelSkeleton} />
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={[styles.dealerPanelSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.dealerSectionTitleSkeleton} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealerActionsSkeleton}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={styles.dealerActionCellSkeleton}>
+              <Skeleton style={styles.dealerActionIconSkeleton} />
+              <Skeleton style={styles.dealerActionLabelSkeleton} />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      <Skeleton style={styles.dealerSectionTitleSkeleton} />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealerStatsRowSkeleton}>
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <View key={i} style={[styles.dealerStatCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Skeleton style={styles.dealerStatIconSkeleton} />
+            <Skeleton style={styles.dealerStatValueSkeleton} />
+            <Skeleton style={styles.dealerStatLabelSkeleton} />
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={[styles.dealerAlertSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.dealerAlertLeftSkeleton}>
+          <Skeleton style={styles.dealerAlertIconSkeleton} />
+          <View style={styles.dealerAlertTextSkeleton}>
+            <Skeleton style={styles.dealerAlertTitleSkeleton} />
+            <Skeleton style={styles.dealerAlertSubtitleSkeleton} />
+          </View>
+        </View>
+        <Skeleton style={styles.dealerAlertBtnSkeleton} />
+      </View>
+    </View>
+  );
+}
+
+export function DealerOrderDetailSkeleton() {
+  const colors = useColors();
+
+  return (
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.dealerOrderDetailScroll}
+    >
+      <View style={[styles.dealerDetailStatusHero, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.dealerDetailStatusIcon} />
+        <View style={styles.dealerDetailStatusTexts}>
+          <Skeleton style={styles.dealerDetailStatusLabel} />
+          <Skeleton style={styles.dealerDetailStatusValue} />
+        </View>
+        <Skeleton style={styles.dealerDetailPaymentPill} />
+      </View>
+
+      <View style={[styles.timelineCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.dealerDetailPlacedLine} />
+        <View style={styles.timelineRowSkeleton}>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <React.Fragment key={i}>
+              <View style={styles.timelineStepSkeleton}>
+                <Skeleton style={styles.timelineCircleSkeleton} />
+                <Skeleton style={styles.timelineLabelSkeleton} />
+              </View>
+              {i < 5 && <Skeleton style={styles.timelineLineSkeleton} />}
+            </React.Fragment>
+          ))}
+        </View>
+      </View>
+
+      <View style={[styles.dealerDetailCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.accordionTitleSkeleton} />
+        <View style={styles.dealerDetailInvoiceActions}>
+          <Skeleton style={styles.dealerDetailInvoiceBtn} />
+          <Skeleton style={styles.dealerDetailInvoiceBtn} />
+        </View>
+      </View>
+
+      <View style={[styles.dealerDetailCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.accordionTitleSkeleton} />
+        {[1, 2, 3].map((i) => (
+          <View key={i} style={styles.dealerDetailInfoRow}>
+            <Skeleton style={styles.dealerDetailInfoIcon} />
+            <View style={styles.dealerDetailInfoTexts}>
+              <Skeleton style={styles.dealerDetailInfoLabel} />
+              <Skeleton style={styles.dealerDetailInfoValue} />
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={[styles.dealerDetailCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.accordionTitleSkeleton} />
+        {[1, 2].map((i) => (
+          <View key={i} style={styles.orderItemRowSkeleton}>
+            <Skeleton style={styles.orderItemThumbSkeleton} />
+            <View style={styles.orderItemMetaSkeleton}>
+              <Skeleton style={styles.orderItemNameSkeleton} />
+              <Skeleton style={styles.orderItemQtySkeleton} />
+            </View>
+            <Skeleton style={styles.orderItemPriceSkeleton} />
+          </View>
+        ))}
+        <Skeleton style={styles.orderTotalLineSkeleton} />
+      </View>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
@@ -881,5 +1028,307 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: '#E2E8F0',
     marginTop: 4,
+  },
+  dealerDashboardSkeleton: {
+    gap: 14,
+  },
+  dealerBannerSkeleton: {
+    height: 132,
+    borderRadius: 18,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerHeroSkeleton: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    gap: 14,
+  },
+  dealerHeroTopSkeleton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  dealerHeroLeftSkeleton: {
+    flex: 1,
+    gap: 8,
+  },
+  dealerEyebrowSkeleton: {
+    height: 12,
+    width: '40%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerRevenueSkeleton: {
+    height: 32,
+    width: '55%',
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerTrendSkeleton: {
+    height: 28,
+    width: '85%',
+    borderRadius: 14,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerIllustrationSkeleton: {
+    width: 72,
+    height: 72,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerHeroStatsSkeleton: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 12,
+    justifyContent: 'space-around',
+  },
+  dealerHeroStatItemSkeleton: {
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  dealerHeroStatValueSkeleton: {
+    height: 18,
+    width: 28,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerHeroStatLabelSkeleton: {
+    height: 10,
+    width: 48,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerChipRowSkeleton: {
+    gap: 10,
+    paddingRight: 4,
+  },
+  dealerChipSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minWidth: 130,
+  },
+  dealerChipIconSkeleton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerChipTextSkeleton: {
+    gap: 6,
+  },
+  dealerChipValueSkeleton: {
+    height: 14,
+    width: 36,
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerChipLabelSkeleton: {
+    height: 10,
+    width: 64,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerPanelSkeleton: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  dealerSectionTitleSkeleton: {
+    height: 14,
+    width: 120,
+    borderRadius: 7,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerActionsSkeleton: {
+    gap: 14,
+    paddingTop: 4,
+  },
+  dealerActionCellSkeleton: {
+    alignItems: 'center',
+    width: 72,
+    gap: 8,
+  },
+  dealerActionIconSkeleton: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerActionLabelSkeleton: {
+    height: 10,
+    width: 56,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerStatsRowSkeleton: {
+    gap: 10,
+    paddingRight: 4,
+  },
+  dealerStatCardSkeleton: {
+    width: 108,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    gap: 8,
+  },
+  dealerStatIconSkeleton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerStatValueSkeleton: {
+    height: 16,
+    width: 40,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerStatLabelSkeleton: {
+    height: 10,
+    width: 56,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerAlertSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  dealerAlertLeftSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  dealerAlertIconSkeleton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerAlertTextSkeleton: {
+    flex: 1,
+    gap: 6,
+  },
+  dealerAlertTitleSkeleton: {
+    height: 12,
+    width: '75%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerAlertSubtitleSkeleton: {
+    height: 10,
+    width: '90%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerAlertBtnSkeleton: {
+    width: 96,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerOrderDetailScroll: {
+    padding: 16,
+    gap: 14,
+    paddingBottom: 120,
+  },
+  dealerDetailStatusHero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  dealerDetailStatusIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailStatusTexts: {
+    flex: 1,
+    gap: 6,
+  },
+  dealerDetailStatusLabel: {
+    height: 10,
+    width: 72,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailStatusValue: {
+    height: 18,
+    width: '50%',
+    borderRadius: 9,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailPaymentPill: {
+    width: 72,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailPlacedLine: {
+    height: 10,
+    width: '45%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 12,
+  },
+  dealerDetailCardSkeleton: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  dealerDetailInvoiceActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dealerDetailInvoiceBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dealerDetailInfoIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailInfoTexts: {
+    flex: 1,
+    gap: 5,
+  },
+  dealerDetailInfoLabel: {
+    height: 9,
+    width: 48,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerDetailInfoValue: {
+    height: 12,
+    width: '70%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
   },
 });

@@ -1,4 +1,5 @@
 export { AuthProvider, useAuth } from './AuthContext';
+export { MobileVerificationProvider, useMobileVerificationGate } from './MobileVerificationContext';
 export { CartProvider, useCart } from './CartContext';
 export { WishlistProvider, useWishlist } from './WishlistContext';
 export { DealerProvider, useDealer } from './DealerContext';

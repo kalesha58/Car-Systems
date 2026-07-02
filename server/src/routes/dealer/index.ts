@@ -11,6 +11,7 @@ import preBookingRoutes from './preBookingRoutes';
 import customerEnquiryRoutes from './customerEnquiryRoutes';
 import serviceBookingRoutes from './serviceBookingRoutes';
 import serviceSlotRoutes from './serviceSlotRoutes';
+import upiVerificationRoutes from './upiVerificationRoutes';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/products', productRoutes);
 router.use('/services', serviceRoutes);
 router.use('/services/:serviceId/slots', serviceSlotRoutes);
 router.use('/payout', payoutRoutes);
+router.use('/verify-upi', upiVerificationRoutes);
 router.use('/test-drives', testDriveRoutes);
 router.use('/pre-bookings', preBookingRoutes);
 router.use('/customer-enquiries', customerEnquiryRoutes);

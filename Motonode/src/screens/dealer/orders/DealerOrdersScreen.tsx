@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   ScrollView,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -19,7 +18,9 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 import { useColors } from '@hooks/useColors';
+import { getOrderItemImageUri, useOrderItemImages } from '@hooks/useOrderItemImages';
 import { getDealerOrders, updateDealerOrderStatus } from '@services/order.service';
 import type { IOrderData } from '@app-types/order';
 import { themeLight } from '@theme/colors';
@@ -42,9 +43,6 @@ import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
 const FILTERS = ['All', 'Pending', 'Accepted', 'Packed', 'Ready', 'Delivered', 'Cancelled'];
 
-const FALLBACK_ORDER_IMAGE =
-  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
-
 export function DealerOrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -55,6 +53,7 @@ export function DealerOrdersScreen() {
   const [activeFilter, setActiveFilter] = useState(0);
   const [orderView, setOrderView] = useState<'products' | 'services'>('products');
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+  const orderItemImages = useOrderItemImages(orders);
 
   const fetchOrders = useCallback(async (isRefresh = false) => {
     try {
@@ -292,7 +291,11 @@ export function DealerOrdersScreen() {
                 </View>
 
                 <View style={styles.productCol}>
-                  <Image source={{ uri: FALLBACK_ORDER_IMAGE }} style={styles.productThumbnail} />
+                  <OrderItemThumbnail
+                    uri={getOrderItemImageUri(orderItemImages, item)}
+                    style={styles.productThumbnail}
+                    iconSize={18}
+                  />
                   <View style={styles.productMeta}>
                     <Text style={[styles.productTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                       {getOrderPrimaryItemName(item)}

@@ -1,9 +1,10 @@
 import firestore from '@react-native-firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
-import { PermissionsAndroid, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 import { getString, setString, StorageKeys } from '@storage/index';
 import { api } from './api';
+import { handleGreetingAfterRegister, requestNotificationPermission } from './pushNotificationService';
 
 async function getDeviceId(): Promise<string> {
   const existing = await getString(StorageKeys.DEVICE_ID);
@@ -16,27 +17,19 @@ async function getDeviceId(): Promise<string> {
   return deviceId;
 }
 
-async function requestNotificationPermission(): Promise<boolean> {
-  if (Platform.OS === 'android' && Platform.Version >= 33) {
-    const result = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-    );
-    if (result !== PermissionsAndroid.RESULTS.GRANTED) {
-      return false;
-    }
-  }
-
-  const authStatus = await messaging().requestPermission();
-  return (
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL
-  );
-}
+export type RegisterFcmTokenOptions = {
+  afterLogin?: boolean;
+  displayName?: string;
+};
 
 /**
- * Register FCM token in Firestore for Cloud Function chat push delivery.
+ * Register FCM token in Firestore for Cloud Function chat push delivery
+ * and on the server for order/booking notifications.
  */
-export async function registerFcmToken(userId: string): Promise<void> {
+export async function registerFcmToken(
+  userId: string,
+  options?: RegisterFcmTokenOptions,
+): Promise<void> {
   const granted = await requestNotificationPermission();
   if (!granted) {
     return;
@@ -64,11 +57,23 @@ export async function registerFcmToken(userId: string): Promise<void> {
       updatedAt: Date.now(),
     });
 
-  // Keep server Mongo token for order/booking notifications
   try {
-    await api.post('/user/fcm-token', { fcmToken: token });
+    const response = await api.post('/user/fcm-token', {
+      fcmToken: token,
+      ...(options?.afterLogin ? { afterLogin: true } : {}),
+    });
+
+    if (options?.afterLogin) {
+      const greetingSent = Boolean(response.data?.Response?.greetingSent);
+      const displayName = options.displayName?.trim() || 'there';
+      await handleGreetingAfterRegister(greetingSent, displayName);
+    }
   } catch (error) {
     console.warn('Server FCM token registration failed:', error);
+    if (options?.afterLogin) {
+      const displayName = options.displayName?.trim() || 'there';
+      await handleGreetingAfterRegister(false, displayName);
+    }
   }
 }
 
@@ -90,5 +95,11 @@ export async function unregisterFcmToken(userId: string): Promise<void> {
     await api.delete('/user/fcm-token');
   } catch (error) {
     console.warn('Server FCM token cleanup failed:', error);
+  }
+
+  try {
+    await messaging().deleteToken();
+  } catch (error) {
+    console.warn('FCM token delete failed:', error);
   }
 }

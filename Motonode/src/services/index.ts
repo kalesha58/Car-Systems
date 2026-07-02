@@ -21,3 +21,7 @@ export * from './chatGate.service';
 export * from './address.service';
 export * from './firebaseAuthBridge';
 export * from './fcmTokenService';
+export * from './pushNotificationService';
+export * from './pushMessagingService';
+export * from './otp.service';
+export * from './upi.service';

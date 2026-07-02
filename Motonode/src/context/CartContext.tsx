@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 
 import type { IProduct } from '@app-types/product';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { getProductId } from '@utils/displayMappers';
 import { getJSON, setJSON, StorageKeys } from '@storage/index';
 
@@ -32,6 +33,7 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const { runWithMobileCheck } = useMobileVerificationGate();
 
   useEffect(() => {
     getJSON<CartItem[]>(StorageKeys.CART).then(data => {
@@ -48,19 +50,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (product: IProduct) => {
-      const productId = getProductId(product);
-      setItems(prev => {
-        const existing = prev.find(i => getProductId(i.product) === productId);
-        const updated = existing
-          ? prev.map(i =>
-              getProductId(i.product) === productId ? { ...i, quantity: i.quantity + 1 } : i,
-            )
-          : [...prev, { product, quantity: 1 }];
-        void setJSON(StorageKeys.CART, updated);
-        return updated;
+      void runWithMobileCheck(() => {
+        const productId = getProductId(product);
+        setItems(prev => {
+          const existing = prev.find(i => getProductId(i.product) === productId);
+          const updated = existing
+            ? prev.map(i =>
+                getProductId(i.product) === productId ? { ...i, quantity: i.quantity + 1 } : i,
+              )
+            : [...prev, { product, quantity: 1 }];
+          void setJSON(StorageKeys.CART, updated);
+          return updated;
+        });
       });
     },
-    [],
+    [runWithMobileCheck],
   );
 
   const removeItem = useCallback((productId: string) => {

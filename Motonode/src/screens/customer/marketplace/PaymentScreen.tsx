@@ -16,6 +16,7 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart } from '@context/index';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import { createOrder } from '@services/order.service';
 import type { ICreateOrderRequest } from '@app-types/order';
@@ -108,6 +109,7 @@ export function PaymentScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { items, total, clearCart } = useCart();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('upi');
   const [paying, setPaying] = useState(false);
 
@@ -133,10 +135,11 @@ export function PaymentScreen({ navigation, route }: Props) {
       return;
     }
 
-    lightHaptic();
-    setPaying(true);
+    await runWithMobileCheck(async () => {
+      lightHaptic();
+      setPaying(true);
 
-    try {
+      try {
       const orderItems = items.map((item) => ({
         productId: getProductId(item.product),
         name: item.product.name,
@@ -216,6 +219,7 @@ export function PaymentScreen({ navigation, route }: Props) {
     } finally {
       setPaying(false);
     }
+    });
   };
 
   return (

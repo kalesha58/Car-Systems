@@ -51,6 +51,9 @@ export const CustomerStackRoutes = {
   AddAddressMethod: 'AddAddressMethod',
   AddLiveLocation: 'AddLiveLocation',
   ManualAddress: 'ManualAddress',
+  OtpVerification: 'OtpVerification',
+  OtpLoading: 'OtpLoading',
+  OtpSuccess: 'OtpSuccess',
 } as const;
 
 export const DealerTabRoutes = {
@@ -59,6 +62,7 @@ export const DealerTabRoutes = {
   Orders: 'Orders',
   Drive: 'Drive',
   Profile: 'DealerProfile',
+  Bank: 'DealerBank',
 } as const;
 
 export const DealerStackRoutes = {
@@ -77,6 +81,8 @@ export const DealerStackRoutes = {
   DealerBookingDetail: 'DealerBookingDetail',
   DealerOrderDetail: 'DealerOrderDetail',
   BusinessDetails: 'BusinessDetails',
+  UPIVerification: 'UPIVerification',
+  UPIVerificationSuccess: 'UPIVerificationSuccess',
 } as const;
 
 export const RootRoutes = {

@@ -14,6 +14,7 @@ import {
   syncFirebaseAuthWithBackend,
 } from '@services/firebaseAuthBridge';
 import { registerFcmToken, unregisterFcmToken } from '@services/fcmTokenService';
+import { markPendingLoginGreeting } from '@services/pushMessagingService';
 import { getString, getJSON, remove, setJSON, setString, StorageKeys } from '@storage/index';
 import { mapServerUserToAuthUser } from '@utils/mapAuthUser';
 import auth from '@react-native-firebase/auth';
@@ -36,6 +37,8 @@ interface AuthContextValue {
   loginAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
+  updateUser: (partial: Partial<AuthUser>) => Promise<void>;
+  markMobileVerified: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -118,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setUser(authUser);
     await setJSON(StorageKeys.USER, authUser);
+    markPendingLoginGreeting();
 
     return result;
   }, []);
@@ -169,6 +173,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await setString(StorageKeys.ONBOARDED, 'true');
   }, []);
 
+  const updateUser = useCallback(async (partial: Partial<AuthUser>) => {
+    setUser(current => {
+      if (!current) {
+        return current;
+      }
+      const next = { ...current, ...partial };
+      void setJSON(StorageKeys.USER, next);
+      return next;
+    });
+  }, []);
+
+  const markMobileVerified = useCallback(async () => {
+    await updateUser({ mobileVerified: true });
+  }, [updateUser]);
+
   const value = useMemo(
     () => ({
       user,
@@ -180,8 +199,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       loginAsGuest,
       logout,
       completeOnboarding,
+      updateUser,
+      markMobileVerified,
     }),
-    [user, isLoading, isOnboarded, login, register, loginAsGuest, logout, completeOnboarding],
+    [
+      user,
+      isLoading,
+      isOnboarded,
+      login,
+      register,
+      loginAsGuest,
+      logout,
+      completeOnboarding,
+      updateUser,
+      markMobileVerified,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

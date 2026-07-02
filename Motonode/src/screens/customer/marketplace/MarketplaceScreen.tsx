@@ -38,6 +38,7 @@ import {
 import { MarketplaceTabs } from '@components/marketplace/MarketplaceTabs';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useDealerVehiclesCatalog, useProducts, useServicesCatalog } from '@hooks/useCatalogData';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
@@ -71,6 +72,7 @@ export function MarketplaceScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<MarketplaceScreenNavigationProp>();
   const { startBooking } = useServiceBooking();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const { products, loading: productsLoading } = useProducts(50);
   const { vehicles, loading: vehiclesLoading } = useDealerVehiclesCatalog(50);
   const { services, loading: servicesLoading } = useServicesCatalog(50);
@@ -308,9 +310,11 @@ export function MarketplaceScreen() {
                   navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: getServiceId(service) })
                 }
                 onBookPress={() => {
-                  startBooking(getServiceId(service));
-                  navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
-                    serviceId: getServiceId(service),
+                  void runWithMobileCheck(() => {
+                    startBooking(getServiceId(service));
+                    navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
+                      serviceId: getServiceId(service),
+                    });
                   });
                 }}
               />

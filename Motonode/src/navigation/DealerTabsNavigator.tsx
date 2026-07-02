@@ -8,6 +8,7 @@ import { DealerTabRoutes } from '@constants/routes';
 import { useDealer } from '@context/DealerContext';
 import { useColors } from '@hooks/useColors';
 import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
+import { DealerBankScreen } from '@screens/dealer/bank/DealerBankScreen';
 import { DealerDashboardScreen } from '@screens/dealer/dashboard/DealerDashboardScreen';
 import { DriveScreen } from '@screens/dealer/drive/DriveScreen';
 import { InventoryScreen } from '@screens/dealer/inventory/InventoryScreen';
@@ -22,6 +23,7 @@ export type DealerTabParamList = {
   [DealerTabRoutes.Orders]: undefined;
   [DealerTabRoutes.Drive]: undefined;
   [DealerTabRoutes.Profile]: undefined;
+  [DealerTabRoutes.Bank]: undefined;
 };
 
 const Tab = createBottomTabNavigator<DealerTabParamList>();
@@ -32,7 +34,8 @@ const ICON_MAP: Record<string, string> = {
   [DealerTabRoutes.Inventory]: 'package',
   [DealerTabRoutes.Orders]: 'shopping-cart',
   [DealerTabRoutes.Drive]: 'navigation',
-  [DealerTabRoutes.Profile]: 'more-horizontal',
+  [DealerTabRoutes.Bank]: 'credit-card',
+  [DealerTabRoutes.Profile]: 'user',
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -40,7 +43,8 @@ const LABEL_MAP: Record<string, string> = {
   [DealerTabRoutes.Inventory]: 'Inventory',
   [DealerTabRoutes.Orders]: 'Orders',
   [DealerTabRoutes.Drive]: 'Drive',
-  [DealerTabRoutes.Profile]: 'More',
+  [DealerTabRoutes.Bank]: 'Bank',
+  [DealerTabRoutes.Profile]: 'Profile',
 };
 
 // The middle raised button route — Orders sits at index 2
@@ -175,6 +179,7 @@ export function DealerTabsNavigator() {
       {capabilities.hasDrive ? (
         <Tab.Screen name={DealerTabRoutes.Drive} component={DriveScreen} />
       ) : null}
+      <Tab.Screen name={DealerTabRoutes.Bank} component={DealerBankScreen} />
       <Tab.Screen name={DealerTabRoutes.Profile} component={DealerProfileScreen} />
     </Tab.Navigator>
   );

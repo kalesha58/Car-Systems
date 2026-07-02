@@ -16,6 +16,7 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { getServiceById } from '@services/service.service';
@@ -34,6 +35,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { startBooking } = useServiceBooking();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const { id } = route.params;
   const [service, setService] = useState<IService | null>(null);
   const [loading, setLoading] = useState(true);
@@ -344,10 +346,12 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
         <Pressable
           style={[styles.bookBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
-            lightHaptic();
-            startBooking(serviceId);
-            navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
-              serviceId,
+            void runWithMobileCheck(() => {
+              lightHaptic();
+              startBooking(serviceId);
+              navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
+                serviceId,
+              });
             });
           }}
         >

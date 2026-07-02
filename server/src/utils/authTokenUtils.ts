@@ -48,6 +48,7 @@ export const userDocToIUser = (userDoc: ISignUpDocument): IUser => {
     email: userDoc.email,
     phone: userDoc.phone,
     role: userDoc.role,
+    phoneVerified: Boolean(userDoc.phoneVerified),
     profileImage: userDoc.profileImage,
     privacySettings: userDoc.privacySettings || {
       isPrivate: false,

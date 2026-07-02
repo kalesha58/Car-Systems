@@ -33,6 +33,7 @@ type DealerTabParamList = {
   [DealerTabRoutes.Orders]: undefined;
   [DealerTabRoutes.Drive]: undefined;
   [DealerTabRoutes.Profile]: undefined;
+  [DealerTabRoutes.Bank]: undefined;
 };
 
 type DealerStackParamList = {
@@ -144,9 +145,7 @@ export function DealerProfileScreen() {
   const menuItems = [
     { icon: 'file-text', label: 'Business Details', sublabel: 'View your submitted registration info', color: '#E60012', bg: '#FEF2F2', route: DealerStackRoutes.BusinessDetails },
     { icon: 'calendar', label: 'Test Drive Settings', sublabel: 'Manage vehicles, slots & availability', color: '#8B5CF6', bg: '#F3E8FF', route: null },
-    { icon: 'credit-card', label: 'Bank & Payments', sublabel: 'Manage payout accounts & UPI', color: '#F59E0B', bg: '#FFFBEB', route: DealerStackRoutes.BankDetails },
     { icon: 'file-text', label: 'GST Information', sublabel: 'View and manage GST details', color: '#7C3AED', bg: '#F5F3FF', route: DealerStackRoutes.GSTInfo },
-    { icon: 'smartphone', label: 'UPI Accounts', sublabel: 'Manage UPI payment accounts', color: '#059669', bg: '#ECFDF5', route: DealerStackRoutes.UPIAccounts },
     { icon: 'bell', label: 'Notification Settings', sublabel: 'Manage order & booking alerts', color: '#EF4444', bg: '#FEF2F2', route: DealerStackRoutes.NotificationSettings },
     { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#FF1A1A', bg: '#F2F2F2', route: null },
     { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, help center & contact support', color: '#64748B', bg: '#F1F5F9', route: null },

@@ -20,5 +20,6 @@ export function mapServerUserToAuthUser(serverUser: ServerUser): AuthUser {
     role: resolveAppRole(serverUser.role),
     avatar: serverUser.profileImage,
     location: serverUser.address ?? '',
+    mobileVerified: Boolean(serverUser.phoneVerified),
   };
 }

@@ -40,6 +40,9 @@ import {
   AddLiveLocationScreen,
   ManualAddressScreen,
 } from '@screens/customer/address';
+import { OtpVerificationScreen } from '@screens/customer/verification/OtpVerificationScreen';
+import { OtpLoadingScreen } from '@screens/customer/verification/OtpLoadingScreen';
+import { OtpSuccessScreen } from '@screens/customer/verification/OtpSuccessScreen';
 import { CustomerTabsNavigator } from './CustomerTabsNavigator';
 import type { IAddress } from '@app-types/address';
 
@@ -84,6 +87,9 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.AddAddressMethod]: undefined;
   [CustomerStackRoutes.AddLiveLocation]: { address?: IAddress; isEdit?: boolean } | undefined;
   [CustomerStackRoutes.ManualAddress]: { address?: IAddress; isEdit?: boolean } | undefined;
+  [CustomerStackRoutes.OtpVerification]: { phone?: string } | undefined;
+  [CustomerStackRoutes.OtpLoading]: { phone: string; otp: string };
+  [CustomerStackRoutes.OtpSuccess]: undefined;
 };
 
 const Stack = createNativeStackNavigator<CustomerStackParamList>();
@@ -168,6 +174,12 @@ export function CustomerNavigator() {
       <Stack.Screen name={CustomerStackRoutes.AddAddressMethod} component={AddAddressMethodScreen} />
       <Stack.Screen name={CustomerStackRoutes.AddLiveLocation} component={AddLiveLocationScreen} />
       <Stack.Screen name={CustomerStackRoutes.ManualAddress} component={ManualAddressScreen} />
+      <Stack.Screen
+        name={CustomerStackRoutes.OtpVerification}
+        component={OtpVerificationScreen}
+      />
+      <Stack.Screen name={CustomerStackRoutes.OtpLoading} component={OtpLoadingScreen} />
+      <Stack.Screen name={CustomerStackRoutes.OtpSuccess} component={OtpSuccessScreen} />
     </Stack.Navigator>
   );
 }

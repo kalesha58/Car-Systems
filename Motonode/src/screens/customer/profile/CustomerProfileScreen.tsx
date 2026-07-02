@@ -39,9 +39,8 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.ProductDetail]: { id: string };
   [CustomerStackRoutes.VehicleDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
-  [CustomerStackRoutes.MyOrders]: undefined;
-  [CustomerStackRoutes.OrderTracking]: { id: string };
   [CustomerStackRoutes.SavedAddresses]: undefined;
+  [CustomerStackRoutes.OtpVerification]: { phone?: string } | undefined;
 };
 
 type CustomerProfileScreenNavigationProp = CompositeNavigationProp<
@@ -74,15 +73,28 @@ export function CustomerProfileScreen() {
       title: 'Account',
       items: [
         { icon: 'user', label: 'Personal Information', sublabel: 'Manage your personal details', action: () => {} },
+        ...(!user?.mobileVerified
+          ? [
+              {
+                icon: 'smartphone',
+                label: 'Verify Mobile',
+                sublabel: 'Secure your account with OTP verification',
+                action: () =>
+                  navigation.navigate(CustomerStackRoutes.OtpVerification, {
+                    phone: user?.phone,
+                  }),
+                color: '#E60012',
+              } satisfies MenuItem,
+            ]
+          : []),
         { icon: 'map-pin', label: 'Saved Addresses', sublabel: 'View and manage your addresses', action: () => navigation.navigate(CustomerStackRoutes.SavedAddresses as any) },
         { icon: 'credit-card', label: 'Payment Methods', sublabel: 'Manage cards and wallets', action: () => {} },
         { icon: 'heart', label: 'Wishlist', sublabel: "Items you've saved", action: () => {} },
       ],
     },
     {
-      title: 'Orders & Services',
+      title: 'Services',
       items: [
-        { icon: 'package', label: 'My Orders', sublabel: 'Track and manage orders', action: () => navigation.navigate(CustomerStackRoutes.MyOrders as any) },
         { icon: 'tool', label: 'My Services', sublabel: 'View and manage service bookings', action: () => navigation.navigate(CustomerTabRoutes.Garage, { initialTab: 'bookings' }) },
       ],
     },

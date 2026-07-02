@@ -7,7 +7,6 @@ import type {
   IDealersResponse,
   IGetDealersRequest,
 } from '../types/dealer';
-import type { IOrderData } from '../types/order';
 import type { IProduct, IProductsResponse } from '../types/product';
 import type { IService, IServicesResponse } from '../types/service';
 import type { IDealerVehicle, IVehiclesResponse } from '../types/vehicle';
@@ -375,12 +374,4 @@ export async function updateDealerService(
 
 export async function deleteDealerService(serviceId: string): Promise<void> {
   await api.delete(`/dealer/services/${serviceId}`);
-}
-
-export async function getDealerOrderById(orderId: string): Promise<IOrderData | null> {
-  const response = await api.get<{ success: boolean; Response: IOrderData }>(
-    `/dealer/orders/${orderId}`,
-  );
-  if (response.data.success && response.data.Response) return response.data.Response;
-  return null;
 }

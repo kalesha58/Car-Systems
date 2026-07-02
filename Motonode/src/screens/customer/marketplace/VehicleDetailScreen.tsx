@@ -18,6 +18,7 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { createTestDrive } from '@services/testDrive.service';
 import { getVehicleById } from '@services/vehicle.service';
 import type { IDealerVehicle } from '@app-types/vehicle';
@@ -47,6 +48,7 @@ type VehicleDetailScreenProps = NativeStackScreenProps<
 export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const { id } = route.params;
   const [vehicle, setVehicle] = useState<IDealerVehicle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,28 +145,30 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
   };
 
   const handleConfirmBooking = async () => {
-    successHaptic();
-    setIsBookingSubmitting(true);
-    setBookingError(null);
+    await runWithMobileCheck(async () => {
+      successHaptic();
+      setIsBookingSubmitting(true);
+      setBookingError(null);
 
-    const dateMap: Record<string, string> = {
-      Today: new Date().toISOString().slice(0, 10),
-      Tomorrow: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
-    };
+      const dateMap: Record<string, string> = {
+        Today: new Date().toISOString().slice(0, 10),
+        Tomorrow: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      };
 
-    try {
-      await createTestDrive({
-        vehicleId: getVehicleId(vehicle),
-        preferredDate: dateMap[bookingDate] ?? new Date().toISOString().slice(0, 10),
-        preferredTime: bookingSlot.split(' - ')[0] ?? bookingSlot,
-        notes: `Test drive for ${displayName}`,
-      });
-      setIsBookingSuccess(true);
-    } catch (err) {
-      setBookingError(getApiErrorMessage(err, 'Failed to book test drive'));
-    } finally {
-      setIsBookingSubmitting(false);
-    }
+      try {
+        await createTestDrive({
+          vehicleId: getVehicleId(vehicle),
+          preferredDate: dateMap[bookingDate] ?? new Date().toISOString().slice(0, 10),
+          preferredTime: bookingSlot.split(' - ')[0] ?? bookingSlot,
+          notes: `Test drive for ${displayName}`,
+        });
+        setIsBookingSuccess(true);
+      } catch (err) {
+        setBookingError(getApiErrorMessage(err, 'Failed to book test drive'));
+      } finally {
+        setIsBookingSubmitting(false);
+      }
+    });
   };
 
   const handleCloseBookingModal = () => {

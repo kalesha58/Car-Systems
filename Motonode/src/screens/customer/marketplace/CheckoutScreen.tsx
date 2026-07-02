@@ -20,6 +20,7 @@ import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart } from '@context/index';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
@@ -99,6 +100,7 @@ export function CheckoutScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { items, total } = useCart();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const [couponCode, setCouponCode] = useState('HUB10');
   const [couponApplied, setCouponApplied] = useState(false);
   const [addresses, setAddresses] = useState<IAddress[]>([]);
@@ -143,8 +145,10 @@ export function CheckoutScreen({ navigation }: Props) {
       Alert.alert('Empty Cart', 'Add items to your cart before checking out.');
       return;
     }
-    lightHaptic();
-    navigation.navigate(CustomerStackRoutes.Payment, { address: selectedAddress || undefined });
+    void runWithMobileCheck(() => {
+      lightHaptic();
+      navigation.navigate(CustomerStackRoutes.Payment, { address: selectedAddress || undefined });
+    });
   };
 
   return (

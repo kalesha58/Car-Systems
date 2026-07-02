@@ -11,6 +11,7 @@ export interface ServerUser {
   role: ServerRole | ServerRole[];
   profileImage?: string;
   address?: string;
+  phoneVerified?: boolean;
 }
 
 export interface LoginResult {

@@ -10,4 +10,5 @@ export interface AuthUser {
   dealerType?: string;
   location: string;
   isGuest?: boolean;
+  mobileVerified?: boolean;
 }

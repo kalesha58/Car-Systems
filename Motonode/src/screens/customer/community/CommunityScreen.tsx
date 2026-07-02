@@ -22,6 +22,7 @@ import { ChromeHeader } from '@components/common';
 import { CommunityFeedSkeleton } from '@components/loaders';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
@@ -42,6 +43,7 @@ export function CommunityScreen() {
   const colors = useColors();
   const navigation = useNavigation<CommunityNavigationProp>();
   const { user } = useAuth();
+  const { runWithMobileCheck } = useMobileVerificationGate();
   const tabBarPadding = useTabBarBottomPadding();
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -112,7 +114,9 @@ export function CommunityScreen() {
       Alert.alert('Sign in required', 'Please sign in to create a community post.');
       return;
     }
-    navigation.navigate(CustomerStackRoutes.CreateCommunityPost);
+    void runWithMobileCheck(() => {
+      navigation.navigate(CustomerStackRoutes.CreateCommunityPost);
+    });
   };
 
   const listHeader = (

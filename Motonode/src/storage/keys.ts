@@ -18,6 +18,8 @@ export const StorageKeys = {
   CUSTOMER_BOOKINGS: '@motonode_customer_bookings',
   PHOTO_PERMISSION_RATIONALE: '@motonode_photo_permission_rationale',
   DEVICE_ID: '@motonode_device_id',
+  PENDING_LOGIN_GREETING: '@motonode_pending_login_greeting',
+  LAST_GREETING_SHOWN_AT: '@motonode_last_greeting_shown_at',
   SELECTED_DELIVERY_ADDRESS_ID: '@motonode_selected_delivery_address_id',
 } as const;
 

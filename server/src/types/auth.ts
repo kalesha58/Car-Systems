@@ -7,6 +7,7 @@ export interface IUser {
   phone: string;
   role: UserRole[];
   profileImage?: string;
+  phoneVerified?: boolean;
   privacySettings?: IPrivacySettings;
 }
 

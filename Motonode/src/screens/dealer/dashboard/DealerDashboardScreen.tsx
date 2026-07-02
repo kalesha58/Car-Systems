@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -16,13 +15,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
-import { ChromeHeader } from '@components/common';
+import { ChromeHeader, SubtlePatternBackground } from '@components/common';
+import { DealerBannerCarousel, type DealerBannerAction } from '@components/dealer/DealerBannerCarousel';
+import { DealerDashboardSkeleton } from '@components/loaders';
 import { useAuth, useBookings, useDealer } from '@context/index';
 import {
   DEALER_TYPE_ILLUSTRATIONS,
-  DEALER_TYPE_LIST,
   type DealerType,
 } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
@@ -32,21 +31,14 @@ import {
   getDealerProducts,
   getDealerServices,
 } from '@services/dealer.service';
-import { getDealerOrderStats, getDealerOrders } from '@services/order.service';
+import { getDealerOrderStats } from '@services/order.service';
 import { getDealerTestDrives } from '@services/testDrive.service';
-import type { IOrderData } from '@app-types/order';
-import { themeLight } from '@theme/colors';
-import { elevatedCardShadow } from '@utils/shadows';
 import {
   formatCurrency,
-  formatOrderDateParts,
-  getOrderId,
-  getOrderPrimaryItemName,
-  getOrderStatusColor,
-  getOrderStatusLabel,
   getProductStockStatus,
 } from '@utils/displayMappers';
 import { lightHaptic } from '@utils/haptics';
+import { cardShadow, elevatedCardShadow } from '@utils/shadows';
 
 type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -54,6 +46,7 @@ type DealerTabParamList = {
   [DealerTabRoutes.Orders]: undefined;
   [DealerTabRoutes.Drive]: undefined;
   [DealerTabRoutes.Profile]: undefined;
+  [DealerTabRoutes.Bank]: undefined;
 };
 
 type DealerStackParamList = {
@@ -64,16 +57,13 @@ type DealerStackParamList = {
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
   [DealerStackRoutes.ServiceBookings]: undefined;
+  [DealerStackRoutes.DealerOrderDetail]: { orderId: string };
 };
 
 type DealerDashboardNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<DealerTabParamList, typeof DealerTabRoutes.Dashboard>,
   NativeStackNavigationProp<DealerStackParamList>
 >;
-
-const ORDER_IMAGES: Record<string, string> = {
-  default: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80',
-};
 
 function formatRevenue(amount: number): string {
   if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
@@ -98,15 +88,12 @@ export function DealerDashboardScreen() {
   const [testDriveCount, setTestDriveCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
   const [revenueMtd, setRevenueMtd] = useState(0);
-  const [recentOrders, setRecentOrders] = useState<IOrderData[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
 
   const resolvedDealerType = (dealerType ?? 'Automobile Showroom') as DealerType;
-  const dealerTypeMeta = DEALER_TYPE_LIST.find((d) => d.type === resolvedDealerType);
   const revenueIllustration =
     DEALER_TYPE_ILLUSTRATIONS[resolvedDealerType] ??
     DEALER_TYPE_ILLUSTRATIONS['Automobile Showroom'];
-  const illustrationTint = dealerTypeMeta?.color ?? '#E60012';
 
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
@@ -118,7 +105,6 @@ export function DealerDashboardScreen() {
       setTestDriveCount(0);
       setOrderCount(0);
       setRevenueMtd(0);
-      setRecentOrders([]);
       setLowStockCount(0);
       setLoading(false);
       return;
@@ -126,13 +112,12 @@ export function DealerDashboardScreen() {
 
     try {
       setLoading(true);
-      const [productsRes, vehiclesRes, servicesRes, orderStats, orders, testDrivesRes] =
+      const [productsRes, vehiclesRes, servicesRes, orderStats, testDrivesRes] =
         await Promise.all([
           capabilities.hasProducts ? getDealerProducts({ limit: 1000 }) : Promise.resolve(null),
           capabilities.hasVehicles ? getDealerInventoryVehicles({ limit: 1000 }) : Promise.resolve(null),
           capabilities.hasServices ? getDealerServices({ limit: 1000 }) : Promise.resolve(null),
           getDealerOrderStats(),
-          getDealerOrders({ limit: 5 }),
           capabilities.hasDrive ? getDealerTestDrives({ limit: 100 }) : Promise.resolve(null),
         ]);
 
@@ -145,9 +130,8 @@ export function DealerDashboardScreen() {
       setVehicleCount(vehicles.length);
       setServiceCount(services.length);
       setTestDriveCount(testDrives.length);
-      setOrderCount(orderStats.total ?? orders.length);
+      setOrderCount(orderStats.total ?? 0);
       setRevenueMtd(orderStats.totalRevenue ?? 0);
-      setRecentOrders(orders);
       setLowStockCount(
         products.filter((p) => {
           const status = getProductStockStatus(p.stock);
@@ -161,7 +145,6 @@ export function DealerDashboardScreen() {
       setTestDriveCount(0);
       setOrderCount(0);
       setRevenueMtd(0);
-      setRecentOrders([]);
       setLowStockCount(0);
     } finally {
       setLoading(false);
@@ -184,20 +167,28 @@ export function DealerDashboardScreen() {
   );
 
   const stats = [
-    { label: 'Products', value: String(productCount), icon: 'box', color: '#8B5CF6', bg: '#F3E8FF', trend: '0%' },
-    { label: 'Vehicles', value: String(vehicleCount), icon: 'truck', color: themeLight.textSecondary, bg: '#F2F2F2', trend: '0%' },
-    { label: 'Services', value: String(serviceCount), icon: 'tool', color: '#10B981', bg: '#ECFDF5', trend: '0%' },
-    { label: 'Test Drives', value: String(testDriveCount), icon: 'calendar', color: '#F59E0B', bg: '#FFFBEB', trend: '0%' },
-    { label: 'Orders', value: String(orderCount), icon: 'shopping-bag', color: '#EF4444', bg: '#FEF2F2', trend: '0%' },
-    { label: 'Revenue (MTD)', value: formatRevenue(revenueMtd), icon: 'dollar-sign', color: '#F59E0B', bg: '#FFFBEB', trend: '0%' },
+    { label: 'Products', value: String(productCount), icon: 'box' },
+    { label: 'Vehicles', value: String(vehicleCount), icon: 'truck' },
+    { label: 'Services', value: String(serviceCount), icon: 'tool' },
+    { label: 'Test Drives', value: String(testDriveCount), icon: 'navigation' },
+    { label: 'Orders', value: String(orderCount), icon: 'shopping-bag' },
+    { label: 'Revenue', value: formatRevenue(revenueMtd), icon: 'trending-up' },
+  ];
+
+  const insightChips = [
+    { label: 'Live Orders', value: String(orderCount), icon: 'shopping-bag' },
+    { label: 'Pending Services', value: String(pendingServiceBookings), icon: 'clock' },
+    { label: 'Low Stock', value: String(lowStockCount), icon: 'alert-circle' },
+    { label: 'Store Status', value: storeOpen ? 'Open' : 'Closed', icon: 'zap' },
   ];
 
   const quickActions = [
-    { label: 'Add Product', icon: 'plus', color: '#8B5CF6', bg: '#F3E8FF', route: DealerStackRoutes.ProductForm },
-    { label: 'Add Service', icon: 'tool', color: '#10B981', bg: '#ECFDF5', route: DealerStackRoutes.ServiceForm },
-    { label: 'Service Bookings', icon: 'calendar', color: themeLight.textSecondary, bg: '#F2F2F2', route: DealerStackRoutes.ServiceBookings, badge: pendingServiceBookings },
-    { label: 'New Order', icon: 'shopping-bag', color: '#F59E0B', bg: '#FFFBEB', route: DealerTabRoutes.Orders },
-    { label: 'Test Drive', icon: 'wind', color: '#6366F1', bg: '#EEF2FF', route: DealerTabRoutes.Drive },
+    { label: 'Add Product', icon: 'plus-circle', route: DealerStackRoutes.ProductForm },
+    { label: 'Add Service', icon: 'tool', route: DealerStackRoutes.ServiceForm },
+    { label: 'Bookings', icon: 'calendar', route: DealerStackRoutes.ServiceBookings, badge: pendingServiceBookings },
+    { label: 'Orders', icon: 'package', route: DealerTabRoutes.Orders },
+    { label: 'Test Drive', icon: 'navigation', route: DealerTabRoutes.Drive },
+    { label: 'Bank', icon: 'credit-card', route: DealerTabRoutes.Bank },
   ];
 
   const handleQuickAction = (route: string) => {
@@ -221,25 +212,57 @@ export function DealerDashboardScreen() {
     }
     if (route === DealerStackRoutes.ServiceBookings) {
       navigation.navigate(DealerStackRoutes.ServiceBookings);
+      return;
+    }
+    if (route === DealerTabRoutes.Bank) {
+      navigation.navigate(DealerTabRoutes.Bank);
+    }
+  };
+
+  const handleBannerAction = (action: DealerBannerAction) => {
+    switch (action) {
+      case 'orders':
+        navigation.navigate(DealerTabRoutes.Orders);
+        break;
+      case 'inventory':
+        navigation.navigate(DealerTabRoutes.Inventory);
+        break;
+      case 'add_product':
+        navigation.navigate(DealerStackRoutes.ProductForm, {});
+        break;
+      case 'service_bookings':
+        navigation.navigate(DealerStackRoutes.ServiceBookings);
+        break;
+      case 'bank':
+        navigation.navigate(DealerTabRoutes.Bank);
+        break;
+      case 'drive':
+        navigation.navigate(DealerTabRoutes.Drive);
+        break;
+      default:
+        break;
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      
-      <ChromeHeader style={styles.header} contentPad={12}>
+      <SubtlePatternBackground />
+      <ChromeHeader style={styles.header} contentPad={14}>
         <View style={styles.headerRow}>
-          <View>
-            <Text style={[styles.greeting, { color: 'rgba(255,255,255,0.72)' }]}>
-              {dealerType ?? 'Automobile Showroom'}
-            </Text>
-            <Text style={[styles.storeName, { color: colors.headerForeground }]}>
-              {user?.name ?? 'Speed Auto Parts'}
-            </Text>
+          <View style={styles.headerLeft}>
+            <View style={styles.storeAvatar}>
+              <Text style={styles.storeAvatarText}>{(user?.name?.[0] ?? 'M').toUpperCase()}</Text>
+            </View>
+            <View style={styles.headerTextBlock}>
+              <Text style={styles.greeting}>{dealerType ?? 'Automobile Showroom'}</Text>
+              <Text style={[styles.storeName, { color: colors.headerForeground }]}>
+                {user?.name ?? 'Your Store'}
+              </Text>
+            </View>
           </View>
           <View style={styles.headerRight}>
-            <Pressable style={styles.notificationBtn} onPress={() => lightHaptic()}>
-              <Feather name="bell" size={20} color={colors.headerForeground} />
+            <Pressable style={styles.headerIconBtn} onPress={() => lightHaptic()}>
+              <Feather name="bell" size={19} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>
               </View>
@@ -251,192 +274,198 @@ export function DealerDashboardScreen() {
                 setStoreOpen(!storeOpen);
               }}
             >
-              <View style={[styles.statusDot, { backgroundColor: storeOpen ? '#10B981' : '#EF4444' }]} />
-              <Text style={[styles.statusText, { color: storeOpen ? '#10B981' : '#EF4444' }]}>
+              <View style={[styles.statusDot, { backgroundColor: storeOpen ? colors.success : colors.primary }]} />
+              <Text style={[styles.statusText, { color: storeOpen ? colors.success : colors.primary }]}>
                 {storeOpen ? 'Open' : 'Closed'}
               </Text>
-              <Feather name="chevron-down" size={12} color="rgba(255,255,255,0.72)" />
             </Pressable>
           </View>
         </View>
       </ChromeHeader>
 
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
-        
-        {/* Today's Revenue Widget Card */}
-        <View
-          style={[
-            styles.revenueCard,
-            elevatedCardShadow,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
-          <View style={styles.revenueLeft}>
-            <Text style={[styles.revenueLabel, { color: colors.textSecondary }]}>Today's Revenue</Text>
-            <Text style={[styles.revenueValue, { color: colors.textPrimary }]}>
-              {formatRevenue(revenueMtd)}
-            </Text>
+        {loading ? (
+          <DealerDashboardSkeleton />
+        ) : (
+          <>
+            <DealerBannerCarousel onAction={handleBannerAction} />
 
-            <View style={styles.revenueTrendRow}>
-              <View style={styles.trendPill}>
-                <Feather name="trending-up" size={10} color="#10B981" style={{ marginRight: 3 }} />
-                <Text style={styles.trendPillText}>+8.4% today</Text>
-              </View>
-              <Text style={[styles.vsYesterdayText, { color: colors.textSecondary }]}>vs yesterday</Text>
-            </View>
-          </View>
-
-          <View style={[styles.revenueIllustrationWrap, { backgroundColor: `${illustrationTint}14` }]}>
-            <Image
-              source={{ uri: revenueIllustration }}
-              style={styles.revenueIllustration}
-              resizeMode="cover"
-            />
-          </View>
-        </View>
-
-        {/* 6 Statistics grid (2 columns, 3 rows) */}
-        <View style={styles.statsGrid}>
-          {stats.map((s) => (
-            <View key={s.label} style={[styles.statCell, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.statCellHeader}>
-                <View style={[styles.statIconBox, { backgroundColor: s.bg }]}>
-                  <Feather name={s.icon as any} size={14} color={s.color} />
-                </View>
-                <View style={styles.statTrendPill}>
-                  <Feather name="trending-up" size={10} color="#10B981" style={{ marginRight: 2 }} />
-                  <Text style={styles.statTrendText}>{s.trend}</Text>
-                </View>
-              </View>
-              <Text style={[styles.statValueText, { color: colors.textPrimary }]}>{s.value}</Text>
-              <Text style={[styles.statLabelText, { color: colors.textSecondary }]}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Quick Actions horizontal scroll list */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Actions</Text>
-          <Pressable>
-            <Text style={styles.viewAllLink}>View All</Text>
-          </Pressable>
-        </View>
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollRow}>
-          {quickActions.map((action) => (
-            <Pressable
-              key={action.label}
-              style={styles.actionBtnCell}
-              onPress={() => handleQuickAction(action.route)}
+            <View
+              style={[
+                styles.heroCard,
+                elevatedCardShadow,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
             >
-              <View style={[styles.actionIconBox, { backgroundColor: action.bg }]}>
-                <Feather name={action.icon as any} size={16} color={action.color} />
-                {'badge' in action && (action.badge ?? 0) > 0 && (
-                  <View style={styles.actionBadge}>
-                    <Text style={styles.actionBadgeText}>{action.badge}</Text>
-                  </View>
-                )}
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroLeft}>
+              <Text style={[styles.heroEyebrow, { color: colors.primary }]}>Monthly revenue</Text>
+              <Text style={[styles.heroRevenue, { color: colors.textPrimary }]}>{formatRevenue(revenueMtd)}</Text>
+              <View style={[styles.heroTrendPill, { backgroundColor: colors.primarySubtle }]}>
+                <Feather name="trending-up" size={12} color={colors.primary} />
+                <Text style={[styles.heroTrendText, { color: colors.primary }]}>Store performance is trending up</Text>
               </View>
-              <Text style={[styles.actionLabelText, { color: colors.textPrimary }]}>{action.label}</Text>
-            </Pressable>
+            </View>
+            <View style={[styles.heroIllustrationWrap, { backgroundColor: colors.primarySubtle, borderColor: colors.border }]}>
+              <Image source={{ uri: revenueIllustration }} style={styles.heroIllustration} resizeMode="cover" />
+            </View>
+          </View>
+          <View style={[styles.heroStatsRow, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+            <View style={styles.heroStatItem}>
+              <Text style={[styles.heroStatValue, { color: colors.textPrimary }]}>{orderCount}</Text>
+              <Text style={[styles.heroStatLabel, { color: colors.textSecondary }]}>Orders</Text>
+            </View>
+            <View style={[styles.heroStatDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.heroStatItem}>
+              <Text style={[styles.heroStatValue, { color: colors.textPrimary }]}>{productCount}</Text>
+              <Text style={[styles.heroStatLabel, { color: colors.textSecondary }]}>Products</Text>
+            </View>
+            <View style={[styles.heroStatDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.heroStatItem}>
+              <Text style={[styles.heroStatValue, { color: colors.textPrimary }]}>{pendingServiceBookings}</Text>
+              <Text style={[styles.heroStatLabel, { color: colors.textSecondary }]}>Pending</Text>
+            </View>
+          </View>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.insightRow}
+          nestedScrollEnabled
+        >
+          {insightChips.map((chip) => (
+            <View
+              key={chip.label}
+              style={[styles.insightChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <View style={[styles.insightIcon, { backgroundColor: colors.primarySubtle }]}>
+                <Feather name={chip.icon as 'clock'} size={14} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={[styles.insightValue, { color: colors.textPrimary }]}>{chip.value}</Text>
+                <Text style={[styles.insightLabel, { color: colors.textSecondary }]}>{chip.label}</Text>
+              </View>
+            </View>
           ))}
         </ScrollView>
 
-        {/* Recent Orders segment */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Orders</Text>
-          <Pressable onPress={() => navigation.navigate(DealerTabRoutes.Orders)}>
-            <Text style={styles.viewAllLink}>View All</Text>
-          </Pressable>
-        </View>
-
-        <View style={[styles.ordersContainerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {loading ? (
-            <View style={{ padding: 24, alignItems: 'center' }}>
-              <ActivityIndicator color="#E60012" />
-            </View>
-          ) : recentOrders.length === 0 ? (
-            <View style={{ padding: 24, alignItems: 'center' }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>No recent orders</Text>
-            </View>
-          ) : (
-            recentOrders.map((order, i) => {
-              const stColor = getOrderStatusColor(order.status);
-              const { time } = formatOrderDateParts(order.createdAt);
-              const customerName = order.customer?.name || 'Customer';
-              return (
-                <Pressable
-                  key={getOrderId(order)}
-                  style={[
-                    styles.orderRowItem,
-                    i < recentOrders.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
-                  ]}
-                  onPress={() => {
-                    lightHaptic();
-                    navigation.navigate(DealerTabRoutes.Orders);
-                  }}
-                >
-                  <Image
-                    source={{ uri: ORDER_IMAGES.default }}
-                    style={styles.orderProductThumb}
-                  />
-
-                  <View style={styles.orderMidCol}>
-                    <Text style={[styles.orderCustomerName, { color: colors.textPrimary }]}>{customerName}</Text>
-                    <Text style={[styles.orderItemName, { color: colors.textSecondary }]} numberOfLines={1}>
-                      {getOrderPrimaryItemName(order)}
-                    </Text>
-                    <Text style={[styles.orderCodeText, { color: colors.textTertiary }]}>#{order.orderNumber}</Text>
-                  </View>
-
-                  <View style={styles.orderRightCol}>
-                    <Text style={[styles.orderPriceTag, { color: colors.textPrimary }]}>
-                      ₹{order.totalAmount.toLocaleString('en-IN')}
-                    </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: stColor + '15' }]}>
-                      <Text style={[styles.statusBadgeText, { color: stColor }]}>
-                        {getOrderStatusLabel(order.status)}
-                      </Text>
+        <View style={[styles.panelCard, elevatedCardShadow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Actions</Text>
+            <Text style={[styles.sectionHint, { color: colors.textTertiary }]}>Tap to manage</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollRow}>
+            {quickActions.map((action) => (
+              <Pressable
+                key={action.label}
+                style={styles.actionBtnCell}
+                onPress={() => handleQuickAction(action.route)}
+              >
+                <View style={[styles.actionIconBox, { backgroundColor: colors.primarySubtle }]}>
+                  <Feather name={action.icon as 'plus'} size={20} color={colors.primary} />
+                  {'badge' in action && (action.badge ?? 0) > 0 ? (
+                    <View style={[styles.actionBadge, { borderColor: colors.card }]}>
+                      <Text style={styles.actionBadgeText}>{action.badge}</Text>
                     </View>
-                    <Text style={[styles.orderTimeText, { color: colors.textTertiary }]}>{time}</Text>
-                  </View>
-
-                  <Feather name="chevron-right" size={16} color={colors.textTertiary} style={{ marginLeft: 4 }} />
-                </Pressable>
-              );
-            })
-          )}
+                  ) : null}
+                </View>
+                <Text style={[styles.actionLabelText, { color: colors.textPrimary }]} numberOfLines={2}>
+                  {action.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Low Stock Alert soft banner */}
-        <View style={styles.lowStockAlertCard}>
-          <View style={styles.alertLeft}>
-            <View style={styles.alertIconBox}>
-              <Feather name="alert-triangle" size={16} color="#D97706" />
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Store Snapshot</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScrollRow}>
+          {stats.map((s) => (
+            <View
+              key={s.label}
+              style={[
+                styles.statCard,
+                elevatedCardShadow,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <View style={[styles.statIconBox, { backgroundColor: colors.primarySubtle }]}>
+                <Feather name={s.icon as 'box'} size={16} color={colors.primary} />
+              </View>
+              <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>{s.value}</Text>
+              <Text style={[styles.statCardLabel, { color: colors.textSecondary }]}>{s.label}</Text>
             </View>
-            <View>
-              <Text style={styles.alertTitle}>Low Stock Alert</Text>
-              <Text style={styles.alertSubtitle}>
+          ))}
+        </ScrollView>
+
+        <View
+          style={[
+            styles.lowStockAlertCard,
+            cardShadow,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          {lowStockCount > 0 ? (
+            <View style={[styles.alertAccent, { backgroundColor: colors.primary }]} />
+          ) : null}
+          <View style={styles.alertLeft}>
+            <View
+              style={[
+                styles.alertIconBox,
+                { backgroundColor: colors.muted },
+              ]}
+            >
+              <Feather
+                name={lowStockCount > 0 ? 'alert-triangle' : 'check-circle'}
+                size={18}
+                color={lowStockCount > 0 ? colors.primary : colors.success}
+              />
+            </View>
+            <View style={styles.alertTextBlock}>
+              <Text style={[styles.alertTitle, { color: colors.textPrimary }]}>
+                {lowStockCount > 0 ? 'Restock recommended' : 'Inventory looks healthy'}
+              </Text>
+              <Text style={[styles.alertSubtitle, { color: colors.textSecondary }]}>
                 {lowStockCount > 0
-                  ? `${lowStockCount} products are running low`
-                  : 'Inventory levels look healthy'}
+                  ? `${lowStockCount} products need attention`
+                  : 'All products are above low-stock threshold'}
               </Text>
             </View>
           </View>
           <Pressable
-            style={styles.alertBtn}
+            style={[
+              styles.alertBtn,
+              lowStockCount > 0
+                ? { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 1 }
+                : { backgroundColor: colors.muted, borderColor: colors.border, borderWidth: 1 },
+            ]}
             onPress={() => {
               lightHaptic();
               navigation.navigate(DealerTabRoutes.Inventory);
             }}
           >
-            <Text style={styles.alertBtnText}>View Items</Text>
+            <Text
+              style={[
+                styles.alertBtnText,
+                { color: lowStockCount > 0 ? colors.primary : colors.textPrimary },
+              ]}
+            >
+              Open Inventory
+            </Text>
           </Pressable>
         </View>
-
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -444,242 +473,228 @@ export function DealerDashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scroll: { flex: 1 },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  greeting: { fontSize: 11, fontFamily: 'Inter_500Medium' },
-  storeName: { fontSize: 20, fontFamily: 'Inter_700Bold', marginTop: 1 },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  notificationBtn: {
-    position: 'relative',
-    padding: 4,
-  },
-  redBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#EF4444',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  storeAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
   },
-  redBadgeText: { color: '#ffffff', fontSize: 8, fontFamily: 'Inter_700Bold' },
+  storeAvatarText: { color: '#fff', fontSize: 18, fontFamily: 'Inter_700Bold' },
+  headerTextBlock: { flex: 1 },
+  greeting: { fontSize: 11, fontFamily: 'Inter_500Medium', color: 'rgba(255,255,255,0.75)' },
+  storeName: { fontSize: 18, fontFamily: 'Inter_700Bold', marginTop: 2 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerIconBtn: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  redBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#EF4444',
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  redBadgeText: { color: '#ffffff', fontSize: 9, fontFamily: 'Inter_700Bold' },
   openStatusBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
     gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
   statusText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
-  
-  content: { padding: 16, gap: 16 },
-  revenueCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+
+  content: { paddingHorizontal: 16, paddingTop: 14, gap: 14 },
+
+  heroCard: {
+    borderRadius: 20,
     padding: 16,
-    borderRadius: 24,
     borderWidth: 1,
   },
-  revenueLeft: {
-    gap: 4,
-    flex: 1,
-    paddingRight: 12,
-  },
-  revenueLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
-  revenueValue: { fontSize: 24, fontFamily: 'Inter_700Bold' },
-  revenueTrendRow: {
+  heroTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  trendPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  trendPillText: { color: '#10B981', fontSize: 9, fontFamily: 'Inter_700Bold' },
-  vsYesterdayText: { fontSize: 10 },
-  revenueIllustrationWrap: {
-    width: 96,
+  heroLeft: { flex: 1, gap: 6 },
+  heroEyebrow: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  heroRevenue: { fontSize: 30, fontFamily: 'Inter_700Bold' },
+  heroIllustrationWrap: {
+    width: 72,
     height: 72,
     borderRadius: 16,
     overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  revenueIllustration: {
-    width: '100%',
-    height: '100%',
-  },
-
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCell: {
-    width: '48%',
-    borderRadius: 20,
     borderWidth: 1,
-    padding: 12,
-    gap: 6,
   },
-  statCellHeader: {
+  heroIllustration: { width: '100%', height: '100%' },
+  heroStatsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  statIconBox: {
-    width: 28,
-    height: 28,
+    marginTop: 14,
     borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+  },
+  heroStatItem: { flex: 1, alignItems: 'center' },
+  heroStatDivider: { width: 1, height: 28 },
+  heroStatValue: { fontSize: 17, fontFamily: 'Inter_700Bold' },
+  heroStatLabel: { fontSize: 10, fontFamily: 'Inter_500Medium', marginTop: 2 },
+  heroTrendPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  heroTrendText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+
+  insightRow: { gap: 10, paddingRight: 4 },
+  insightChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 14,
+    minWidth: 132,
+    borderWidth: 1,
+  },
+  insightIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statTrendPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  statTrendText: { color: '#10B981', fontSize: 9, fontFamily: 'Inter_700Bold' },
-  statValueText: { fontSize: 16, fontFamily: 'Inter_700Bold' },
-  statLabelText: { fontSize: 10, fontFamily: 'Inter_500Medium' },
+  insightValue: { fontSize: 15, fontFamily: 'Inter_700Bold' },
+  insightLabel: { fontSize: 10, fontFamily: 'Inter_500Medium', marginTop: 1 },
 
+  panelCard: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
+    marginBottom: 12,
   },
-  sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  viewAllLink: { color: themeLight.textSecondary, fontSize: 11, fontFamily: 'Inter_700Bold' },
+  sectionTitle: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  sectionHint: { fontSize: 11, fontFamily: 'Inter_500Medium' },
 
-  actionsScrollRow: {
-    gap: 12,
-    paddingRight: 16,
-  },
-  actionBtnCell: {
-    alignItems: 'center',
-    gap: 6,
-    width: 72,
-  },
+  actionsScrollRow: { gap: 14, paddingRight: 8 },
+  actionBtnCell: { alignItems: 'center', width: 76, gap: 8 },
   actionIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   actionBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#EF4444',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
   },
   actionBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold', color: '#fff' },
-  actionLabelText: { fontSize: 10, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  actionLabelText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 14 },
 
-  ordersContainerCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  orderRowItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statsScrollRow: { gap: 10, paddingRight: 8, paddingBottom: 2 },
+  statCard: {
+    width: 110,
+    borderRadius: 16,
     padding: 12,
-    gap: 10,
+    minHeight: 100,
+    borderWidth: 1,
+    gap: 8,
   },
-  orderProductThumb: {
-    width: 48,
-    height: 48,
+  statIconBox: {
+    width: 32,
+    height: 32,
     borderRadius: 10,
-    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  orderMidCol: {
-    flex: 1.2,
-    gap: 2,
-  },
-  orderCustomerName: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-  orderItemName: { fontSize: 10 },
-  orderCodeText: { fontSize: 9 },
-  orderRightCol: {
-    alignItems: 'flex-end',
-    gap: 3,
-    flex: 0.8,
-  },
-  orderPriceTag: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  statusBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
-  orderTimeText: { fontSize: 9 },
+  statCardValue: { fontSize: 18, fontFamily: 'Inter_700Bold' },
+  statCardLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
 
   lowStockAlertCard: {
     flexDirection: 'row',
     padding: 14,
     borderRadius: 16,
-    backgroundColor: '#FFFDF5',
-    borderWidth: 1,
-    borderColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+    marginTop: 4,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  alertLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
+  alertAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
+  alertLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   alertIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FEF3C7',
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  alertTitle: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#B45309' },
-  alertSubtitle: { fontSize: 10, color: '#B45309', marginTop: 1 },
+  alertTextBlock: { flex: 1 },
+  alertTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  alertSubtitle: { fontSize: 11, fontFamily: 'Inter_500Medium', marginTop: 2, lineHeight: 16 },
   alertBtn: {
-    backgroundColor: '#D97706',
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 9,
+    borderRadius: 10,
   },
-  alertBtnText: { color: '#ffffff', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  alertBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
 });

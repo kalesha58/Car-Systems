@@ -1,16 +1,17 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NavigatorScreenParams } from '@react-navigation/native';
 
 import { Loading } from '@components/loaders/Loading';
 import { useAuth } from '@context/AuthContext';
 import { RootRoutes } from '@constants/routes';
 import { AuthNavigator } from './AuthNavigator';
-import { CustomerNavigator } from './CustomerNavigator';
-import { DealerNavigator } from './DealerNavigator';
+import { CustomerNavigator, type CustomerStackParamList } from './CustomerNavigator';
+import { DealerNavigator, type DealerStackParamList } from './DealerNavigator';
 
 export type RootStackParamList = {
   [RootRoutes.Auth]: undefined;
-  [RootRoutes.Customer]: undefined;
-  [RootRoutes.Dealer]: undefined;
+  [RootRoutes.Customer]: NavigatorScreenParams<CustomerStackParamList> | undefined;
+  [RootRoutes.Dealer]: NavigatorScreenParams<DealerStackParamList> | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Platform,
   Pressable,
@@ -20,9 +19,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 import { InAppBrowserModal } from '@components/common/InAppBrowserModal';
 import { DealerOrderLifecycleStepper } from '@components/orders/DealerOrderLifecycleStepper';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
+import { DealerOrderDetailSkeleton } from '@components/loaders';
 import { API_BASE_URL } from '@config/env';
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
+import { useOrderItemImages } from '@hooks/useOrderItemImages';
 import type { IOrderData } from '@app-types/order';
 import {
   getDealerOrderById,
@@ -50,9 +52,6 @@ type Props = NativeStackScreenProps<
   DealerStackParamList,
   typeof DealerStackRoutes.DealerOrderDetail
 >;
-
-const FALLBACK_ITEM_IMAGE =
-  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
 
 function SectionCard({
   title,
@@ -99,6 +98,7 @@ export function DealerOrderDetailScreen({ route, navigation }: Props) {
   const [updating, setUpdating] = useState(false);
   const [invoiceModalVisible, setInvoiceModalVisible] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState('');
+  const orderItemImages = useOrderItemImages(order ? [order] : []);
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -230,9 +230,7 @@ export function DealerOrderDetailScreen({ route, navigation }: Props) {
             <View style={styles.headerBtn} />
           </View>
         </ChromeHeader>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#E60012" />
-        </View>
+        <DealerOrderDetailSkeleton />
       </View>
     );
   }
@@ -351,7 +349,11 @@ export function DealerOrderDetailScreen({ route, navigation }: Props) {
                 index < order.items.length - 1 && { borderBottomColor: colors.divider, borderBottomWidth: 1 },
               ]}
             >
-              <Image source={{ uri: FALLBACK_ITEM_IMAGE }} style={styles.itemThumb} />
+              <OrderItemThumbnail
+                uri={orderItemImages[item.productId]}
+                style={styles.itemThumb}
+                iconSize={18}
+              />
               <View style={styles.itemMeta}>
                 <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>
                   {item.name}

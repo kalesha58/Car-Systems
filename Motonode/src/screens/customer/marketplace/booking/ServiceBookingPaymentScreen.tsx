@@ -9,6 +9,7 @@ import { BookingTrustFooter } from '@components/booking/sections/BookingTrustFoo
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking, type BookingPaymentMethod } from '@context/ServiceBookingContext';
 import { useBookings } from '@context/index';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
@@ -39,21 +40,25 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
   const service = getService();
   const totals = getTotals();
   const [paying, setPaying] = useState(false);
+  const { runWithMobileCheck } = useMobileVerificationGate();
 
   const handlePay = async () => {
     if (paying) return;
-    lightHaptic();
-    setPaying(true);
-    try {
-      const bookingId = await confirmBooking();
-      await loadBookings();
-      successHaptic();
-      navigation.replace(CustomerStackRoutes.ServiceBookingConfirmed, { bookingId });
-    } catch {
-      // payment/booking failed
-    } finally {
-      setPaying(false);
-    }
+
+    await runWithMobileCheck(async () => {
+      lightHaptic();
+      setPaying(true);
+      try {
+        const bookingId = await confirmBooking();
+        await loadBookings();
+        successHaptic();
+        navigation.replace(CustomerStackRoutes.ServiceBookingConfirmed, { bookingId });
+      } catch {
+        // payment/booking failed
+      } finally {
+        setPaying(false);
+      }
+    });
   };
 
   return (

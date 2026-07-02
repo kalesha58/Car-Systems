@@ -24,6 +24,7 @@ import { ChromeHeader } from '@components/common';
 import { PhotoPermissionModal, PhotoPickerSheet, type PhotoPickerOption } from '@components/modals';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
+import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { createPost } from '@services/post.service';
@@ -78,6 +79,7 @@ const CATEGORIES: { id: string; label: string; icon: string }[] = [
 export function CreateCommunityPostScreen({ navigation }: Props) {
   const colors = useColors();
   const { user } = useAuth();
+  const { runWithMobileCheck } = useMobileVerificationGate();
 
   const [text, setText] = useState('');
   const [postType, setPostType] = useState<PostType>('text');
@@ -230,32 +232,34 @@ export function CreateCommunityPostScreen({ navigation }: Props) {
       return;
     }
 
-    lightHaptic();
-    setSubmitting(true);
-    setError(null);
+    await runWithMobileCheck(async () => {
+      lightHaptic();
+      setSubmitting(true);
+      setError(null);
 
-    try {
-      let uploadedUrls: string[] = [];
-      if (imageUris.length > 0) {
-        setUploading(true);
-        uploadedUrls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+      try {
+        let uploadedUrls: string[] = [];
+        if (imageUris.length > 0) {
+          setUploading(true);
+          uploadedUrls = await uploadImagesBatch(imageUris.map((uri) => ({ uri })));
+          setUploading(false);
+        }
+
+        const postData: CreatePostRequest = {
+          text: text.trim(),
+          images: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+        };
+
+        await createPost(postData);
+        successHaptic();
+        navigation.goBack();
+      } catch (err) {
+        setError(extractAuthErrorMessage(err));
+      } finally {
+        setSubmitting(false);
         setUploading(false);
       }
-
-      const postData: CreatePostRequest = {
-        text: text.trim(),
-        images: uploadedUrls.length > 0 ? uploadedUrls : undefined,
-      };
-
-      await createPost(postData);
-      successHaptic();
-      navigation.goBack();
-    } catch (err) {
-      setError(extractAuthErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-      setUploading(false);
-    }
+    });
   };
 
   return (

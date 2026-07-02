@@ -11,6 +11,7 @@ import React, {
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useAuth } from './AuthContext';
+import { useMobileVerificationGate } from './MobileVerificationContext';
 import type { Conversation, Message, ConversationType } from '../types/chat';
 import * as chatService from '../services/chat.service';
 import { ensureFirebaseReady } from '../services/firebaseAuthBridge';
@@ -52,6 +53,7 @@ interface ChatProviderProps {
 
 export function ChatProvider({ children }: ChatProviderProps) {
   const { user } = useAuth();
+  const { runWithMobileCheck } = useMobileVerificationGate();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
@@ -199,23 +201,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
   }, [activeConversation, firebaseUid]);
 
   const runPreSendGates = useCallback(async () => {
-    if (!user || user.isGuest) {
-      throw new ChatGateError('Authentication required');
-    }
+    await runWithMobileCheck(async () => {
+      if (!user || user.isGuest) {
+        throw new ChatGateError('Authentication required');
+      }
 
-    await ensureFirebaseReady(user.id);
+      await ensureFirebaseReady(user.id);
 
-    const otherParticipantId = getOtherParticipantId();
-    if (!otherParticipantId) {
-      throw new ChatGateError('Conversation participant not found');
-    }
+      const otherParticipantId = getOtherParticipantId();
+      if (!otherParticipantId) {
+        throw new ChatGateError('Conversation participant not found');
+      }
 
-    await checkBlockBeforeSend(otherParticipantId);
+      await checkBlockBeforeSend(otherParticipantId);
 
-    if (activeConversation?.type === 'dealer' && activeConversation.dealerId) {
-      await verifyDealerForChat(activeConversation.dealerId);
-    }
-  }, [user, getOtherParticipantId, activeConversation]);
+      if (activeConversation?.type === 'dealer' && activeConversation.dealerId) {
+        await verifyDealerForChat(activeConversation.dealerId);
+      }
+    });
+  }, [runWithMobileCheck, user, getOtherParticipantId, activeConversation]);
 
   const showGateError = useCallback((error: unknown) => {
     const message =
