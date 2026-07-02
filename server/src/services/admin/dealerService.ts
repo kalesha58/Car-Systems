@@ -883,10 +883,7 @@ export const updateBusinessRegistrationForDealer = async (
     }
 
     if (data.city !== undefined) {
-      if (!data.city.trim()) {
-        throw new NotFoundError('City cannot be empty');
-      }
-      registration.city = data.city.trim();
+      registration.city = data.city.trim() || undefined;
     }
 
     if (data.phone !== undefined) {

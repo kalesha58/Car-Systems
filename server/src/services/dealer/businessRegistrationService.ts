@@ -137,10 +137,6 @@ export const createBusinessRegistration = async (
       throw new AppError('Address is required', 400);
     }
 
-    if (!data.city?.trim()) {
-      throw new AppError('City is required', 400);
-    }
-
     if (!data.phone?.trim()) {
       throw new AppError('Phone number is required', 400);
     }
@@ -415,10 +411,7 @@ export const updateBusinessRegistration = async (
     }
 
     if (data.city !== undefined) {
-      if (!data.city.trim()) {
-        throw new AppError('City cannot be empty', 400);
-      }
-      registration.city = data.city.trim();
+      registration.city = data.city.trim() || undefined;
     }
 
     if (data.phone !== undefined) {
