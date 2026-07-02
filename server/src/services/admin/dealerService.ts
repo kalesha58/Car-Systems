@@ -28,7 +28,7 @@ import { createDealerProduct, updateDealerProduct } from '../dealer/productServi
 import { createDealerVehicle, updateDealerVehicle } from '../dealer/vehicleService';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import { createBusinessRegistration, businessRegistrationToInterface } from '../dealer/businessRegistrationService';
-import { NotFoundError, ConflictError } from '../../utils/errorHandler';
+import { NotFoundError, ConflictError, AppError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 
 /**
@@ -110,6 +110,17 @@ const mapBusinessRegistrationToDealer = (
     createdAt: reg.createdAt?.toISOString() || new Date().toISOString(),
     storeOpen: reg.storeOpen !== undefined ? reg.storeOpen : true,
     shopPhotos: (reg.shopPhotos || []).map((photo) => ({ url: photo.url })),
+    payout: reg.payout,
+    upiVerification: reg.upiVerification
+      ? {
+          status: reg.upiVerification.status,
+          accountHolderName: reg.upiVerification.accountHolderName,
+          verifiedAt: reg.upiVerification.verifiedAt?.toISOString(),
+          verifiedBy: reg.upiVerification.verifiedBy,
+        }
+      : reg.payout?.upiId
+        ? { status: 'pending' as const }
+        : undefined,
   };
 };
 
@@ -394,6 +405,79 @@ export const approveDealer = async (dealerId: string): Promise<IDealer> => {
     throw new NotFoundError('Dealer not found');
   } catch (error) {
     logger.error('Error approving dealer:', error);
+    throw error;
+  }
+};
+
+/**
+ * Manually verify dealer UPI (admin). Future: plug Razorpay validation here.
+ */
+export const verifyDealerUpi = async (
+  dealerId: string,
+  adminUserId: string,
+  accountHolderName?: string,
+): Promise<IDealer> => {
+  try {
+    let reg = await BusinessRegistration.findOne({ userId: dealerId });
+    if (!reg) {
+      reg = await BusinessRegistration.findById(dealerId);
+    }
+    if (!reg) {
+      throw new NotFoundError('Dealer not found');
+    }
+    if (!reg.payout?.upiId?.trim()) {
+      throw new AppError('No UPI ID on file for this dealer', 400);
+    }
+
+    reg.upiVerification = {
+      status: 'verified',
+      accountHolderName: accountHolderName?.trim() || reg.upiVerification?.accountHolderName,
+      verifiedAt: new Date(),
+      verifiedBy: adminUserId,
+    };
+    await reg.save();
+
+    const user = await SignUp.findById(reg.userId);
+    logger.info(`UPI verified for dealer userId: ${reg.userId}`);
+    return mapBusinessRegistrationToDealer(reg, user || undefined);
+  } catch (error) {
+    logger.error('Error verifying dealer UPI:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reject dealer UPI verification (admin).
+ */
+export const rejectDealerUpi = async (
+  dealerId: string,
+  adminUserId: string,
+): Promise<IDealer> => {
+  try {
+    let reg = await BusinessRegistration.findOne({ userId: dealerId });
+    if (!reg) {
+      reg = await BusinessRegistration.findById(dealerId);
+    }
+    if (!reg) {
+      throw new NotFoundError('Dealer not found');
+    }
+    if (!reg.payout?.upiId?.trim()) {
+      throw new AppError('No UPI ID on file for this dealer', 400);
+    }
+
+    reg.upiVerification = {
+      status: 'rejected',
+      accountHolderName: reg.upiVerification?.accountHolderName,
+      verifiedAt: new Date(),
+      verifiedBy: adminUserId,
+    };
+    await reg.save();
+
+    const user = await SignUp.findById(reg.userId);
+    logger.info(`UPI rejected for dealer userId: ${reg.userId}`);
+    return mapBusinessRegistrationToDealer(reg, user || undefined);
+  } catch (error) {
+    logger.error('Error rejecting dealer UPI:', error);
     throw error;
   }
 };
@@ -795,10 +879,7 @@ export const updateBusinessRegistrationForDealer = async (
     }
 
     if (data.state !== undefined) {
-      if (!data.state.trim()) {
-        throw new NotFoundError('State cannot be empty');
-      }
-      registration.state = data.state.trim();
+      registration.state = data.state.trim() || undefined;
     }
 
     if (data.city !== undefined) {

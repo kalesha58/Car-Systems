@@ -49,6 +49,14 @@ export const businessRegistrationToInterface = (
         }
       : undefined,
     payout: doc.payout,
+    upiVerification: doc.upiVerification
+      ? {
+          status: doc.upiVerification.status,
+          accountHolderName: doc.upiVerification.accountHolderName,
+          verifiedAt: doc.upiVerification.verifiedAt?.toISOString(),
+          verifiedBy: doc.upiVerification.verifiedBy,
+        }
+      : undefined,
     coverPhoto: doc.coverPhoto,
     shopPhotos: doc.shopPhotos || [],
     documents: doc.documents || [],
@@ -127,10 +135,6 @@ export const createBusinessRegistration = async (
 
     if (!data.address?.trim()) {
       throw new AppError('Address is required', 400);
-    }
-
-    if (!data.state?.trim()) {
-      throw new AppError('State is required', 400);
     }
 
     if (!data.city?.trim()) {
@@ -280,6 +284,12 @@ export const createBusinessRegistration = async (
       }
     }
 
+    if (payoutData?.type === 'UPI' && payoutData.upiId) {
+      registrationData.upiVerification = {
+        status: 'pending',
+      };
+    }
+
     logger.info('Creating business registration with data:', {
       userId,
       hasShopPhotos: !!(registrationData.shopPhotos && registrationData.shopPhotos.length > 0),
@@ -401,10 +411,7 @@ export const updateBusinessRegistration = async (
     }
 
     if (data.state !== undefined) {
-      if (!data.state.trim()) {
-        throw new AppError('State cannot be empty', 400);
-      }
-      registration.state = data.state.trim();
+      registration.state = data.state.trim() || undefined;
     }
 
     if (data.city !== undefined) {

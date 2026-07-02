@@ -150,6 +150,25 @@ export const suspendDealer = async (id: string, payload: ISuspendDealerPayload):
 };
 
 /**
+ * Manually verify dealer UPI (admin). Future: Razorpay integration.
+ */
+export const verifyDealerUpi = async (
+  id: string,
+  payload?: { accountHolderName?: string },
+): Promise<IDealerDetails> => {
+  const response = await apiClient.post<IDealerDetails>(`/admin/dealers/${id}/verify-upi`, payload ?? {});
+  return response.data;
+};
+
+/**
+ * Reject dealer UPI verification (admin).
+ */
+export const rejectDealerUpi = async (id: string): Promise<IDealerDetails> => {
+  const response = await apiClient.post<IDealerDetails>(`/admin/dealers/${id}/reject-upi`, {});
+  return response.data;
+};
+
+/**
  * Get dealer orders
  */
 export const getDealerOrders = async (id: string, params?: { page?: number; limit?: number }): Promise<IDealerOrdersResponse> => {

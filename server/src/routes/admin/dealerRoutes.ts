@@ -9,6 +9,8 @@ import {
   updateDealerController,
   deleteDealerController,
   approveDealerController,
+  verifyDealerUpiController,
+  rejectDealerUpiController,
   rejectDealerController,
   suspendDealerController,
   getDealerOrdersController,
@@ -328,6 +330,8 @@ router.delete('/:id', deleteDealerController);
  *         description: Forbidden - Admin access required
  */
 router.post('/:id/approve', approveDealerController);
+router.post('/:id/verify-upi', verifyDealerUpiController);
+router.post('/:id/reject-upi', rejectDealerUpiController);
 
 /**
  * @swagger

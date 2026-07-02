@@ -40,6 +40,12 @@ export interface IBusinessRegistration {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  upiVerification?: {
+    status: 'pending' | 'verified' | 'rejected';
+    accountHolderName?: string;
+    verifiedAt?: string;
+    verifiedBy?: string;
+  };
   coverPhoto?: string;
   shopPhotos?: IBusinessRegistrationPhoto[];
   documents?: IBusinessRegistrationDocumentFile[];

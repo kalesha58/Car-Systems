@@ -21,6 +21,15 @@ export interface IPayoutCredentials {
   };
 }
 
+export type UpiVerificationStatus = 'pending' | 'verified' | 'rejected';
+
+export interface IUpiVerification {
+  status: UpiVerificationStatus;
+  accountHolderName?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string;
+}
+
 export interface IBusinessRegistrationDocument extends Document {
   businessName: string;
   type: DealerType;
@@ -47,6 +56,7 @@ export interface IBusinessRegistrationDocument extends Document {
     longitude: number;
   };
   payout?: IPayoutCredentials;
+  upiVerification?: IUpiVerification;
   coverPhoto?: string;
   shopPhotos?: {
     url: string;
@@ -183,6 +193,16 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
         },
         accountName: { type: String, trim: true },
       },
+    },
+    upiVerification: {
+      status: {
+        type: String,
+        enum: ['pending', 'verified', 'rejected'],
+        default: 'pending',
+      },
+      accountHolderName: { type: String, trim: true },
+      verifiedAt: { type: Date },
+      verifiedBy: { type: String, trim: true },
     },
     coverPhoto: {
       type: String,

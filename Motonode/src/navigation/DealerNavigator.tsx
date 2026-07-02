@@ -19,8 +19,6 @@ import { DealerOrderDetailScreen } from '@screens/dealer/orders/DealerOrderDetai
 import { StoreSettingsScreen } from '@screens/dealer/settings/StoreSettingsScreen';
 import { UPIAccountsScreen } from '@screens/dealer/settings/UPIAccountsScreen';
 import { BusinessDetailsScreen } from '@screens/dealer/profile/BusinessDetailsScreen';
-import { UPIVerificationScreen } from '@screens/dealer/verification/UPIVerificationScreen';
-import { UPIVerificationSuccessScreen } from '@screens/dealer/verification/UPIVerificationSuccessScreen';
 import {
   ChatListScreen,
   ChatScreen,
@@ -35,15 +33,7 @@ import { DealerTabsNavigator } from './DealerTabsNavigator';
 export type DealerStackParamList = {
   [DealerStackRoutes.DealerTabs]: undefined;
   [DealerStackRoutes.DealerType]: undefined;
-  [DealerStackRoutes.BusinessRegistration]:
-    | {
-        upiVerificationResult?: {
-          upiId: string;
-          accountHolderName: string;
-          verified: boolean;
-        };
-      }
-    | undefined;
+  [DealerStackRoutes.BusinessRegistration]: undefined;
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
@@ -59,11 +49,6 @@ export type DealerStackParamList = {
   };
   [DealerStackRoutes.DealerOrderDetail]: { orderId: string };
   [DealerStackRoutes.BusinessDetails]: undefined;
-  [DealerStackRoutes.UPIVerification]: { upiId?: string } | undefined;
-  [DealerStackRoutes.UPIVerificationSuccess]: {
-    upiId: string;
-    accountHolderName: string;
-  };
   [CustomerStackRoutes.ChatList]: undefined;
   [CustomerStackRoutes.Chat]: undefined;
   [CustomerStackRoutes.CreateChat]: undefined;
@@ -132,11 +117,6 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.DealerBookingDetail} component={DealerBookingDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.DealerOrderDetail} component={DealerOrderDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
-      <Stack.Screen name={DealerStackRoutes.UPIVerification} component={UPIVerificationScreen} />
-      <Stack.Screen
-        name={DealerStackRoutes.UPIVerificationSuccess}
-        component={UPIVerificationSuccessScreen}
-      />
       <Stack.Screen name={CustomerStackRoutes.ChatList} component={ChatListScreen} />
       <Stack.Screen name={CustomerStackRoutes.Chat} component={ChatScreen} />
       <Stack.Screen name={CustomerStackRoutes.CreateChat} component={CreateChatScreen} />

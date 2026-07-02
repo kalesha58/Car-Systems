@@ -47,5 +47,15 @@ export interface IDealerDetails extends Omit<IDealerListItem, 'documents'> {
     comment: string;
     date: string;
   }>;
+  payout?: {
+    type?: 'UPI' | 'BANK';
+    upiId?: string;
+  };
+  upiVerification?: {
+    status: 'pending' | 'verified' | 'rejected';
+    accountHolderName?: string;
+    verifiedAt?: string;
+    verifiedBy?: string;
+  };
 }
 

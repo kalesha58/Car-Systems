@@ -81,8 +81,6 @@ export const DealerStackRoutes = {
   DealerBookingDetail: 'DealerBookingDetail',
   DealerOrderDetail: 'DealerOrderDetail',
   BusinessDetails: 'BusinessDetails',
-  UPIVerification: 'UPIVerification',
-  UPIVerificationSuccess: 'UPIVerificationSuccess',
 } as const;
 
 export const RootRoutes = {

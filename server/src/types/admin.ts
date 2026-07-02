@@ -112,6 +112,21 @@ export interface IDealer {
   approvalDate?: string;
   storeOpen?: boolean;
   shopPhotos?: { url: string }[];
+  payout?: {
+    type?: 'UPI' | 'BANK';
+    upiId?: string;
+    bank?: {
+      accountNumber?: string;
+      ifsc?: string;
+      accountName?: string;
+    };
+  };
+  upiVerification?: {
+    status: 'pending' | 'verified' | 'rejected';
+    accountHolderName?: string;
+    verifiedAt?: string;
+    verifiedBy?: string;
+  };
 }
 
 export interface IGetDealersRequest {

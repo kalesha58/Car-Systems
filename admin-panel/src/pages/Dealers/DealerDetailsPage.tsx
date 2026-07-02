@@ -6,7 +6,7 @@ import { Modal } from '@components/Modal/Modal';
 import { Select } from '@components/Select';
 import { SkeletonCard } from '@components/Skeleton';
 import { Table } from '@components/Table/Table';
-import { approveDealer, getDealerById, getDealerOrders, suspendDealer } from '@services/dealerService';
+import { approveDealer, getDealerById, getDealerOrders, rejectDealerUpi, suspendDealer, verifyDealerUpi } from '@services/dealerService';
 import { cancelOrder, updateOrderStatus } from '@services/orderService';
 import { useToastStore } from '@store/toastStore';
 import { useTheme } from '@theme/ThemeContext';
@@ -34,6 +34,8 @@ export const DealerDetailsPage = () => {
   const [showCancelOrderModal, setShowCancelOrderModal] = useState(false);
   const [cancelOrderReason, setCancelOrderReason] = useState<string>('');
   const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [verifyingUpi, setVerifyingUpi] = useState(false);
+  const [upiHolderName, setUpiHolderName] = useState('');
 
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -65,6 +67,8 @@ export const DealerDetailsPage = () => {
           getDealerById(id),
           getDealerOrders(id),
         ]);
+
+        setUpiHolderName(dealerData.upiVerification?.accountHolderName ?? '');
 
         setDealer({
           ...dealerData,
@@ -396,6 +400,66 @@ export const DealerDetailsPage = () => {
     }
   };
 
+  const getUpiStatusColor = (status: string) => {
+    switch (status) {
+      case 'verified':
+        return theme.colors.success;
+      case 'pending':
+        return theme.colors.warning;
+      case 'rejected':
+        return theme.colors.error;
+      default:
+        return theme.colors.secondary;
+    }
+  };
+
+  const formatUpiStatusLabel = (status?: string) => {
+    switch (status) {
+      case 'verified':
+        return 'Verified';
+      case 'rejected':
+        return 'Rejected';
+      case 'pending':
+      default:
+        return 'Pending Verification';
+    }
+  };
+
+  const handleVerifyUpi = async () => {
+    if (!dealer || !id) return;
+    try {
+      setVerifyingUpi(true);
+      const updated = await verifyDealerUpi(id, {
+        accountHolderName: upiHolderName.trim() || undefined,
+      });
+      setDealer({ ...dealer, ...updated });
+      showToast('UPI verified successfully', 'success');
+    } catch (error) {
+      console.error('Error verifying UPI:', error);
+      showToast('Failed to verify UPI', 'error');
+    } finally {
+      setVerifyingUpi(false);
+    }
+  };
+
+  const handleRejectUpi = async () => {
+    if (!dealer || !id) return;
+    try {
+      setVerifyingUpi(true);
+      const updated = await rejectDealerUpi(id);
+      setDealer({ ...dealer, ...updated });
+      showToast('UPI verification rejected', 'success');
+    } catch (error) {
+      console.error('Error rejecting UPI:', error);
+      showToast('Failed to reject UPI', 'error');
+    } finally {
+      setVerifyingUpi(false);
+    }
+  };
+
+  const upiId = dealer?.payout?.upiId;
+  const upiStatus = dealer?.upiVerification?.status ?? (upiId ? 'pending' : undefined);
+
 
 
 
@@ -547,6 +611,112 @@ export const DealerDetailsPage = () => {
           </div>
         </Card>
       </div>
+
+      {upiId ? (
+        <Card title="UPI Verification" style={{ marginBottom: theme.spacing.xl }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div>
+              <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                UPI ID
+              </strong>
+              <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
+                {upiId}
+              </p>
+            </div>
+            <div>
+              <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                Verification Status
+              </strong>
+              <p className="m-0">
+                <span
+                  style={{
+                    padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
+                    borderRadius: '9999px',
+                    backgroundColor: getUpiStatusColor(upiStatus ?? 'pending'),
+                    color: '#ffffff',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    display: 'inline-block',
+                  }}
+                >
+                  {formatUpiStatusLabel(upiStatus)}
+                </span>
+              </p>
+            </div>
+            <div>
+              <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                Verified Account Name
+              </strong>
+              <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
+                {dealer.upiVerification?.accountHolderName || '—'}
+              </p>
+            </div>
+            <div>
+              <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                Verification Date
+              </strong>
+              <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
+                {dealer.upiVerification?.verifiedAt
+                  ? new Date(dealer.upiVerification.verifiedAt).toLocaleString()
+                  : '—'}
+              </p>
+            </div>
+            <div>
+              <strong className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                Verified By
+              </strong>
+              <p className="m-0 text-sm md:text-base text-slate-800 dark:text-slate-200 font-medium">
+                {dealer.upiVerification?.verifiedBy || '—'}
+              </p>
+            </div>
+          </div>
+
+          {upiStatus !== 'verified' && (
+            <div style={{ marginTop: theme.spacing.lg, display: 'flex', flexDirection: 'column', gap: theme.spacing.md }}>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: theme.spacing.xs,
+                    color: theme.colors.text,
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Account Holder Name (optional)
+                </label>
+                <input
+                  type="text"
+                  value={upiHolderName}
+                  onChange={(e) => setUpiHolderName(e.target.value)}
+                  placeholder="Enter verified account name"
+                  disabled={verifyingUpi}
+                  style={{
+                    width: '100%',
+                    maxWidth: 400,
+                    padding: theme.spacing.sm,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius.md,
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.text,
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: theme.spacing.md, flexWrap: 'wrap' }}>
+                <Button onClick={handleVerifyUpi} loading={verifyingUpi} disabled={verifyingUpi}>
+                  Verify UPI
+                </Button>
+                {upiStatus !== 'rejected' && (
+                  <Button variant="danger" onClick={handleRejectUpi} loading={verifyingUpi} disabled={verifyingUpi}>
+                    Reject UPI
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </Card>
+      ) : null}
 
       {dealer.documents && dealer.documents.length > 0 && (
         <Card title="Documents" style={{ marginBottom: theme.spacing.xl }}>

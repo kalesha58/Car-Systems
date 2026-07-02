@@ -18,7 +18,9 @@ import {
   getDealerVehicleByIdForAdmin,
   deleteDealerVehicleForAdmin,
   updateDealerVehicleForAdmin,
-  updateBusinessRegistrationForDealer
+  updateBusinessRegistrationForDealer,
+  verifyDealerUpi,
+  rejectDealerUpi,
 } from '../../services/admin/dealerService';
 import { getDealerVehicles, getAllDealerVehicles } from '../../services/dealer/vehicleService';
 import { getBusinessRegistrationByUserId } from '../../services/dealer/businessRegistrationService';
@@ -76,6 +78,43 @@ export const deleteDealerController = async (req: IAuthRequest, res: Response, n
 export const approveDealerController = async (req: IAuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const dealer = await approveDealer(req.params.id);
+    res.status(200).json(dealer);
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const verifyDealerUpiController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    const adminUserId = req.user?.userId;
+    if (!adminUserId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const { accountHolderName } = req.body as { accountHolderName?: string };
+    const dealer = await verifyDealerUpi(req.params.id, adminUserId, accountHolderName);
+    res.status(200).json(dealer);
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+export const rejectDealerUpiController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    const adminUserId = req.user?.userId;
+    if (!adminUserId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const dealer = await rejectDealerUpi(req.params.id, adminUserId);
     res.status(200).json(dealer);
   } catch (error) {
     errorHandler(error as IAppError, res);
