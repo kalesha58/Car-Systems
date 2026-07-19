@@ -14,3 +14,21 @@ export async function getProfile(): Promise<ServerUser> {
 
   throw new Error('Invalid profile response');
 }
+
+export async function updateProfile(data: {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+}): Promise<ServerUser> {
+  const response = await api.put<{
+    success: boolean;
+    Response: ServerUser;
+    message?: string;
+  }>('/profile', data);
+
+  if (response.data?.success && response.data.Response) {
+    return response.data.Response;
+  }
+
+  throw new Error(response.data?.message || 'Failed to update profile');
+}

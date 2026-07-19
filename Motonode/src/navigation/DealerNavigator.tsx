@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { getDealerOnboardingDestination } from '../auth/dealerOnboarding';
 import { DealerStackRoutes, CustomerStackRoutes } from '@constants/routes';
+import { useDealer } from '@context/index';
 import type { DealerOnboardingDestination } from '../types/api';
 import { ProductFormScreen } from '@screens/dealer/inventory/ProductFormScreen';
 import { ServiceFormScreen } from '@screens/dealer/inventory/ServiceFormScreen';
@@ -73,24 +74,27 @@ function mapDestinationToRoute(destination: DealerOnboardingDestination) {
 }
 
 export function DealerNavigator() {
+  const { hydrateDealerTypeFromServer } = useDealer();
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function resolveInitialRoute() {
+      // Sync inventory capabilities from server registration before tabs mount
+      await hydrateDealerTypeFromServer();
       const destination = await getDealerOnboardingDestination();
       if (mounted) {
         setInitialRoute(mapDestinationToRoute(destination));
       }
     }
 
-    resolveInitialRoute();
+    void resolveInitialRoute();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [hydrateDealerTypeFromServer]);
 
   if (!initialRoute) {
     return (

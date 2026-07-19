@@ -18,7 +18,7 @@ import { useColors } from '@hooks/useColors';
 import { useAuth } from '@context/AuthContext';
 import { ChatBubble, MessageInput, TypingIndicator, AIHeader } from '@components/chat/index';
 import { sendAiMessage } from '@services/ai.service';
-import { listenMessages, sendMessage, sanitizeFirestoreData } from '@services/chat.service';
+import { listenMessages, sendMessage, sanitizeFirestoreData, clearConversationMessages } from '@services/chat.service';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { lightHaptic } from '@utils/haptics';
 import type { Message } from '../../../types/chat';
@@ -168,6 +168,43 @@ export function AIChatScreen() {
     }
   };
 
+  const handleClearChat = () => {
+    const firebaseUid = auth().currentUser?.uid;
+    if (!conversationId || !firebaseUid) return;
+
+    Alert.alert('Clear chat', 'Delete all messages in this conversation?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              setIsTyping(false);
+              await clearConversationMessages(conversationId, {
+                welcomeMessage: {
+                  senderId: 'moto_ai',
+                  receiverId: firebaseUid,
+                  text: "Hi! I'm Moto AI, your automotive companion. I can help you diagnose vehicle issues, find compatible parts, recommend services, and locate dealers near you. How can I help you today?",
+                },
+              });
+              lightHaptic();
+            } catch (err) {
+              Alert.alert('Error', getApiErrorMessage(err, 'Failed to clear chat. Please try again.'));
+            }
+          })();
+        },
+      },
+    ]);
+  };
+
+  const handleMenu = () => {
+    Alert.alert('Moto AI', undefined, [
+      { text: 'Clear chat', style: 'destructive', onPress: handleClearChat },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
@@ -178,7 +215,7 @@ export function AIChatScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <AIHeader onBack={() => navigation.goBack()} />
+      <AIHeader onBack={() => navigation.goBack()} onMenu={handleMenu} />
 
       <FlatList
         ref={flatListRef}

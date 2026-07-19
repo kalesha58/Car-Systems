@@ -141,6 +141,9 @@ export function HomeScreen() {
         <BannerCarousel
           onAiPress={() => navigation.navigate(CustomerStackRoutes.AiAssistant)}
           onPromoPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
+          onTestDrivePress={() =>
+            navigation.navigate(CustomerTabRoutes.Marketplace, { initialTab: 3 })
+          }
         />
 
         <SectionHeader
@@ -248,16 +251,14 @@ export function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
             renderItem={({ item }) => (
-              <View style={styles.serviceCard}>
-                <ServiceCard
-                  service={item}
-                  onNavigate={() =>
-                    navigation.navigate(CustomerStackRoutes.ServiceDetail, {
-                      id: getServiceId(item),
-                    })
-                  }
-                />
-              </View>
+              <ServiceCard
+                service={item}
+                onNavigate={() =>
+                  navigation.navigate(CustomerStackRoutes.ServiceDetail, {
+                    id: getServiceId(item),
+                  })
+                }
+              />
             )}
           />
         )}
@@ -412,5 +413,4 @@ const styles = StyleSheet.create({
   horizontalList: { paddingRight: spacing.md, gap: 12, marginBottom: spacing.lg },
   productCard: { marginBottom: 0 },
   vehicleCard: { marginBottom: 0 },
-  serviceCard: { marginBottom: 0 },
 });

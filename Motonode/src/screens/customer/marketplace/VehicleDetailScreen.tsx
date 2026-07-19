@@ -23,6 +23,7 @@ import { createTestDrive } from '@services/testDrive.service';
 import { getVehicleById } from '@services/vehicle.service';
 import type { IDealerVehicle } from '@app-types/vehicle';
 import { getApiErrorMessage } from '@utils/apiHelpers';
+import { toApiTimeHHmm } from '@utils/bookingMappers';
 import { getVehicleDisplayName, getVehicleId } from '@utils/displayMappers';
 import { successHaptic, lightHaptic } from '@utils/haptics';
 import { VehicleDetailSkeleton } from '@components/loaders';
@@ -159,7 +160,7 @@ export function VehicleDetailScreen({ route, navigation }: VehicleDetailScreenPr
         await createTestDrive({
           vehicleId: getVehicleId(vehicle),
           preferredDate: dateMap[bookingDate] ?? new Date().toISOString().slice(0, 10),
-          preferredTime: bookingSlot.split(' - ')[0] ?? bookingSlot,
+          preferredTime: toApiTimeHHmm(bookingSlot),
           notes: `Test drive for ${displayName}`,
         });
         setIsBookingSuccess(true);

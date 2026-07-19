@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -20,6 +19,7 @@ import { ChromeHeader } from '@components/common';
 import { OrderCard } from '@components/cards/OrderCard';
 import { GarageBookingsPanel } from '@components/garage/GarageBookingsPanel';
 import { SegmentedTabs } from '@components/common/SegmentedTabs';
+import { GarageOrdersListSkeleton, GarageVehiclesListSkeleton } from '@components/loaders';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth, useBookings } from '@context/index';
 import { useServiceBooking } from '@context/ServiceBookingContext';
@@ -325,9 +325,7 @@ export function GarageScreen() {
         {activeTab === 0 && (
           <View style={styles.vehiclesListContainer}>
             {loadingVehicles && vehicles.length === 0 ? (
-              <View style={styles.centered}>
-                <ActivityIndicator size="large" color={colors.link} />
-              </View>
+              <GarageVehiclesListSkeleton />
             ) : (
               <>
                 {vehicles.map(renderVehicleCard)}
@@ -365,10 +363,14 @@ export function GarageScreen() {
 
         {activeTab === ORDERS_TAB_INDEX && (
           <View style={styles.ordersContainer}>
+            <View style={styles.ordersHeader}>
+              <Text style={[styles.ordersTitle, { color: colors.textPrimary }]}>My Orders</Text>
+              <Text style={[styles.ordersSubtitle, { color: colors.textSecondary }]}>
+                Track and manage your purchases
+              </Text>
+            </View>
             {loadingOrders && orders.length === 0 ? (
-              <View style={styles.centered}>
-                <ActivityIndicator size="large" color={colors.link} />
-              </View>
+              <GarageOrdersListSkeleton />
             ) : (
               <>
                 {orders.map((order) => (
@@ -384,9 +386,14 @@ export function GarageScreen() {
                 ))}
                 {orders.length === 0 && !loadingOrders && (
                   <View style={styles.empty}>
-                    <Feather name="package" size={48} color={colors.textTertiary} />
+                    <View style={[styles.emptyIconWrap, { backgroundColor: colors.primarySubtle }]}>
+                      <Feather name="package" size={28} color={colors.primary} />
+                    </View>
+                    <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                      No orders yet
+                    </Text>
                     <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                      {ordersError ?? 'No orders yet'}
+                      {ordersError ?? 'Your product orders will show up here once you place one.'}
                     </Text>
                   </View>
                 )}
@@ -438,11 +445,6 @@ const styles = StyleSheet.create({
   content: { paddingTop: 4 },
   vehiclesListContainer: {
     gap: 16,
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
   },
   vehicleCard: {
     borderRadius: 20,
@@ -528,6 +530,18 @@ const styles = StyleSheet.create({
   dottedTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   dottedSub: { fontSize: 10, marginTop: 2, flexWrap: 'wrap', flex: 1 },
   ordersContainer: { gap: 12 },
+  ordersHeader: { marginBottom: 4, gap: 2 },
+  ordersTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
+  ordersSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 10 },
-  emptyText: { fontSize: 14, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 24 },
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  emptyTitle: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  emptyText: { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 24, lineHeight: 18 },
 });

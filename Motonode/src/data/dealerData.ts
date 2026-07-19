@@ -24,6 +24,26 @@ export const DEALER_TYPE_CAPABILITIES: Record<DealerType, DealerCapabilities> = 
   "Riding Gear Store":    { hasProducts: true,  hasVehicles: false, hasServices: true,  hasDrive: false },
 };
 
+export const DEFAULT_DEALER_CAPABILITIES: DealerCapabilities = {
+  hasProducts: true,
+  hasVehicles: false,
+  hasServices: false,
+  hasDrive: false,
+};
+
+export function isKnownDealerType(value: string | null | undefined): value is DealerType {
+  return Boolean(value && value in DEALER_TYPE_CAPABILITIES);
+}
+
+export function getCapabilitiesForDealerType(
+  dealerType: string | null | undefined,
+): DealerCapabilities {
+  if (isKnownDealerType(dealerType)) {
+    return DEALER_TYPE_CAPABILITIES[dealerType];
+  }
+  return DEFAULT_DEALER_CAPABILITIES;
+}
+
 export interface DealerTypeInfo {
   type: DealerType;
   icon: string;

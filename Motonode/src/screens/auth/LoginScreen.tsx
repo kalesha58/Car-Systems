@@ -19,7 +19,6 @@ import {
   AuthLabeledInput,
   AuthMessageBox,
   AuthPrimaryButton,
-  AuthRoleTab,
   AuthSocialSection,
   authScreenStyles,
 } from '@components/auth';
@@ -44,8 +43,6 @@ type LoginNavigationProp = NativeStackNavigationProp<
 
 type LoginRouteProp = RouteProp<AuthScreenParamList, typeof AuthRoutes.Login>;
 
-type UserTab = 'customer' | 'dealer';
-
 export function LoginScreen() {
   const colors = useColors();
   const { login } = useAuth();
@@ -54,7 +51,6 @@ export function LoginScreen() {
   const [email, setEmail] = useState(route.params?.prefillEmail ?? '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<UserTab>('customer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -111,21 +107,6 @@ export function LoginScreen() {
               <Text style={authScreenStyles.titleAccent}>Back!</Text>
             </View>
             <Text style={authScreenStyles.subtitle}>Login to continue to your account</Text>
-
-            <View style={authScreenStyles.roleRow}>
-              <AuthRoleTab
-                label="Customer"
-                icon="user"
-                active={activeTab === 'customer'}
-                onPress={() => setActiveTab('customer')}
-              />
-              <AuthRoleTab
-                label="Dealer / Workshop"
-                icon="home"
-                active={activeTab === 'dealer'}
-                onPress={() => setActiveTab('dealer')}
-              />
-            </View>
 
             {success ? <AuthMessageBox message={success} type="success" /> : null}
             {error ? <AuthMessageBox message={error} type="error" /> : null}

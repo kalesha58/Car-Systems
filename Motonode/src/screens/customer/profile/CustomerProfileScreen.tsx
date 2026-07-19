@@ -40,6 +40,10 @@ type CustomerStackParamList = {
   [CustomerStackRoutes.VehicleDetail]: { id: string };
   [CustomerStackRoutes.AiAssistant]: undefined;
   [CustomerStackRoutes.SavedAddresses]: undefined;
+  [CustomerStackRoutes.Wishlist]: undefined;
+  [CustomerStackRoutes.PaymentMethods]: undefined;
+  [CustomerStackRoutes.PersonalInformation]: undefined;
+  [CustomerStackRoutes.Settings]: undefined;
   [CustomerStackRoutes.OtpVerification]: { phone?: string } | undefined;
 };
 
@@ -72,7 +76,12 @@ export function CustomerProfileScreen() {
     {
       title: 'Account',
       items: [
-        { icon: 'user', label: 'Personal Information', sublabel: 'Manage your personal details', action: () => {} },
+        {
+          icon: 'user',
+          label: 'Personal Information',
+          sublabel: 'Manage your personal details',
+          action: () => navigation.navigate(CustomerStackRoutes.PersonalInformation),
+        },
         ...(!user?.mobileVerified
           ? [
               {
@@ -88,8 +97,8 @@ export function CustomerProfileScreen() {
             ]
           : []),
         { icon: 'map-pin', label: 'Saved Addresses', sublabel: 'View and manage your addresses', action: () => navigation.navigate(CustomerStackRoutes.SavedAddresses as any) },
-        { icon: 'credit-card', label: 'Payment Methods', sublabel: 'Manage cards and wallets', action: () => {} },
-        { icon: 'heart', label: 'Wishlist', sublabel: "Items you've saved", action: () => {} },
+        { icon: 'credit-card', label: 'Payment Methods', sublabel: 'Manage cards and wallets', action: () => navigation.navigate(CustomerStackRoutes.PaymentMethods) },
+        { icon: 'heart', label: 'Wishlist', sublabel: "Items you've saved", action: () => navigation.navigate(CustomerStackRoutes.Wishlist) },
       ],
     },
     {
@@ -113,7 +122,14 @@ export function CustomerProfileScreen() {
       <ChromeHeader style={styles.header} contentPad={12}>
         <View style={styles.headerRow}>
           <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Profile</Text>
-          <Pressable style={styles.settingsBtn}>
+          <Pressable
+            style={styles.settingsBtn}
+            onPress={() => {
+              lightHaptic();
+              navigation.navigate(CustomerStackRoutes.Settings);
+            }}
+            hitSlop={8}
+          >
             <Feather name="settings" size={22} color={colors.headerForeground} />
           </Pressable>
         </View>
@@ -155,7 +171,14 @@ export function CustomerProfileScreen() {
               </View>
             </View>
 
-            <Pressable style={[styles.editBtn, { backgroundColor: colors.muted }]}>
+            <Pressable
+              style={[styles.editBtn, { backgroundColor: colors.muted }]}
+              onPress={() => {
+                lightHaptic();
+                navigation.navigate(CustomerStackRoutes.PersonalInformation);
+              }}
+              hitSlop={8}
+            >
               <Feather name="edit-2" size={15} color={colors.icon} />
             </Pressable>
           </View>

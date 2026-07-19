@@ -40,6 +40,10 @@ import {
   AddLiveLocationScreen,
   ManualAddressScreen,
 } from '@screens/customer/address';
+import { WishlistScreen } from '@screens/customer/profile/WishlistScreen';
+import { PaymentMethodsScreen } from '@screens/customer/profile/PaymentMethodsScreen';
+import { PersonalInformationScreen } from '@screens/customer/profile/PersonalInformationScreen';
+import { SettingsScreen } from '@screens/customer/profile/SettingsScreen';
 import { OtpVerificationScreen } from '@screens/customer/verification/OtpVerificationScreen';
 import { OtpLoadingScreen } from '@screens/customer/verification/OtpLoadingScreen';
 import { OtpSuccessScreen } from '@screens/customer/verification/OtpSuccessScreen';
@@ -84,6 +88,10 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.DealerChat]: undefined;
   [CustomerStackRoutes.AIChat]: undefined;
   [CustomerStackRoutes.SavedAddresses]: { selectMode?: boolean } | undefined;
+  [CustomerStackRoutes.Wishlist]: undefined;
+  [CustomerStackRoutes.PaymentMethods]: undefined;
+  [CustomerStackRoutes.PersonalInformation]: undefined;
+  [CustomerStackRoutes.Settings]: undefined;
   [CustomerStackRoutes.AddAddressMethod]: undefined;
   [CustomerStackRoutes.AddLiveLocation]: { address?: IAddress; isEdit?: boolean } | undefined;
   [CustomerStackRoutes.ManualAddress]: { address?: IAddress; isEdit?: boolean } | undefined;
@@ -171,6 +179,13 @@ export function CustomerNavigator() {
       <Stack.Screen name={CustomerStackRoutes.DealerChat} component={DealerChatScreen} />
       <Stack.Screen name={CustomerStackRoutes.AIChat} component={AIChatScreen} />
       <Stack.Screen name={CustomerStackRoutes.SavedAddresses} component={SavedAddressesScreen} />
+      <Stack.Screen name={CustomerStackRoutes.Wishlist} component={WishlistScreen} />
+      <Stack.Screen name={CustomerStackRoutes.PaymentMethods} component={PaymentMethodsScreen} />
+      <Stack.Screen
+        name={CustomerStackRoutes.PersonalInformation}
+        component={PersonalInformationScreen}
+      />
+      <Stack.Screen name={CustomerStackRoutes.Settings} component={SettingsScreen} />
       <Stack.Screen name={CustomerStackRoutes.AddAddressMethod} component={AddAddressMethodScreen} />
       <Stack.Screen name={CustomerStackRoutes.AddLiveLocation} component={AddLiveLocationScreen} />
       <Stack.Screen name={CustomerStackRoutes.ManualAddress} component={ManualAddressScreen} />

@@ -1,7 +1,6 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -23,6 +22,11 @@ import Feather from 'react-native-vector-icons/Feather';
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
 import { RegistrationStatusBanner } from '@components/dealer/RegistrationStatusBanner';
+import {
+  ProductsGridSkeleton,
+  ServicesListSkeleton,
+  VehiclesListSkeleton,
+} from '@components/loaders';
 import { useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
@@ -102,6 +106,16 @@ export function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>(
     capabilities.hasProducts ? 'products' : capabilities.hasServices ? 'services' : 'products',
   );
+
+  useEffect(() => {
+    const allowed: Array<'products' | 'vehicles' | 'services'> = [];
+    if (capabilities.hasProducts) allowed.push('products');
+    if (capabilities.hasVehicles) allowed.push('vehicles');
+    if (capabilities.hasServices) allowed.push('services');
+    if (allowed.length > 0 && !allowed.includes(activeTab)) {
+      setActiveTab(allowed[0]);
+    }
+  }, [capabilities.hasProducts, capabilities.hasVehicles, capabilities.hasServices, activeTab]);
 
   const fetchInventory = useCallback(async (isRefresh = false) => {
     if (!canAccessDealerApis) {
@@ -627,9 +641,13 @@ export function InventoryScreen() {
         }}
         ListEmptyComponent={
           loading ? (
-            <View style={styles.empty}>
-              <ActivityIndicator color="#E60012" />
-            </View>
+            activeTab === 'products' ? (
+              <ProductsGridSkeleton />
+            ) : activeTab === 'vehicles' ? (
+              <VehiclesListSkeleton />
+            ) : (
+              <ServicesListSkeleton />
+            )
           ) : !canAccessDealerApis ? (
             <View style={styles.empty}>
               <Feather name="clock" size={48} color="#F59E0B" />

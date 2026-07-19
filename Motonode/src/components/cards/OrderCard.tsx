@@ -1,21 +1,29 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
+import { cardShadow } from '@utils/shadows';
 import type { IOrderData } from '@app-types/order';
+import {
+  formatCurrency,
+  formatOrderDate,
+  normalizeOrderDisplayStatus,
+  type OrderDisplayStatus,
+} from '@utils/displayMappers';
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  ORDER_PLACED: { label: 'Placed', color: '#F59E0B', icon: 'clock' },
-  ORDER_CONFIRMED: { label: 'Confirmed', color: '#FF1A1A', icon: 'check-circle' },
-  SHIPPED: { label: 'Out for Delivery', color: '#8B5CF6', icon: 'truck' },
-  DELIVERED: { label: 'Delivered', color: '#10B981', icon: 'check-circle' },
-  CANCELLED: { label: 'Cancelled', color: '#EF4444', icon: 'x-circle' },
-  pending: { label: 'Pending', color: '#F59E0B', icon: 'clock' },
-  confirmed: { label: 'Confirmed', color: '#FF1A1A', icon: 'check-circle' },
-  shipped: { label: 'Out for Delivery', color: '#8B5CF6', icon: 'truck' },
-  delivered: { label: 'Delivered', color: '#10B981', icon: 'check-circle' },
-  cancelled: { label: 'Cancelled', color: '#EF4444', icon: 'x-circle' },
+const DEFAULT_PRODUCT_IMAGE =
+  'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
+
+const STATUS_STYLE: Record<
+  OrderDisplayStatus,
+  { bg: string; text: string; accent: string; icon: React.ComponentProps<typeof Feather>['name'] }
+> = {
+  Processing: { bg: '#FFEDD5', text: '#C2410C', accent: '#F97316', icon: 'clock' },
+  Shipped: { bg: '#DBEAFE', text: '#1D4ED8', accent: '#3B82F6', icon: 'package' },
+  'Out for Delivery': { bg: '#F3E8FF', text: '#7E22CE', accent: '#8B5CF6', icon: 'truck' },
+  Delivered: { bg: '#DCFCE7', text: '#15803D', accent: '#10B981', icon: 'check-circle' },
+  Cancelled: { bg: '#FEE2E2', text: '#B91C1C', accent: '#EF4444', icon: 'x-circle' },
 };
 
 interface OrderCardProps {
@@ -23,14 +31,32 @@ interface OrderCardProps {
   onPress?: () => void;
 }
 
+function getStatusMessage(order: IOrderData, displayStatus: OrderDisplayStatus): string {
+  if (order.expectedDeliveryDate && (displayStatus === 'Out for Delivery' || displayStatus === 'Shipped')) {
+    const eta = new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+    });
+    return `Arriving by ${eta}`;
+  }
+  if (displayStatus === 'Delivered') {
+    return `Delivered on ${formatOrderDate(order.updatedAt).split(',')[0]}`;
+  }
+  if (displayStatus === 'Cancelled') {
+    return order.cancellationReason || 'Order was cancelled';
+  }
+  if (displayStatus === 'Shipped') {
+    return `Shipped on ${formatOrderDate(order.updatedAt).split(',')[0]}`;
+  }
+  return 'Will be shipped soon';
+}
+
 export function OrderCard({ order, onPress }: OrderCardProps) {
   const colors = useColors();
-  const statusKey = order.status?.toUpperCase?.() || order.status;
-  const status = STATUS_CONFIG[statusKey] || STATUS_CONFIG[order.status] || {
-    label: order.status,
-    color: '#6B7280',
-    icon: 'package',
-  };
+  const displayStatus = normalizeOrderDisplayStatus(order.status);
+  const status = STATUS_STYLE[displayStatus];
+  const firstItem = order.items[0];
+  const extraCount = Math.max(order.items.length - 1, 0);
   const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
@@ -41,90 +67,205 @@ export function OrderCard({ order, onPress }: OrderCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.95 : 1 },
+        cardShadow,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: pressed ? 0.97 : 1,
+        },
       ]}
       onPress={onPress}
     >
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.orderId, { color: colors.textPrimary }]}>
-            Order #{order.orderNumber || order.id}
-          </Text>
-          <Text style={[styles.date, { color: colors.textSecondary }]}>{orderDate}</Text>
+      <View style={[styles.accentBar, { backgroundColor: status.accent }]} />
+
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.orderId, { color: colors.textPrimary }]} numberOfLines={1}>
+              #{order.orderNumber || order.id}
+            </Text>
+            <View style={styles.dateRow}>
+              <Feather name="calendar" size={11} color={colors.textTertiary} />
+              <Text style={[styles.date, { color: colors.textTertiary }]}>{orderDate}</Text>
+            </View>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+            <Feather name={status.icon} size={11} color={status.text} />
+            <Text style={[styles.statusText, { color: status.text }]}>{displayStatus}</Text>
+          </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: status.color + '20' }]}>
-          <Feather
-            name={status.icon as React.ComponentProps<typeof Feather>['name']}
-            size={12}
-            color={status.color}
-          />
-          <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+
+        <View style={[styles.body, { backgroundColor: colors.surfaceSecondary }]}>
+          <Image source={{ uri: DEFAULT_PRODUCT_IMAGE }} style={styles.productImg} />
+          <View style={styles.productInfo}>
+            <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>
+              {firstItem?.name ?? 'Order items'}
+            </Text>
+            {extraCount > 0 ? (
+              <Text style={[styles.extraItems, { color: colors.textSecondary }]}>
+                +{extraCount} more {extraCount === 1 ? 'item' : 'items'}
+              </Text>
+            ) : (
+              <Text style={[styles.extraItems, { color: colors.textSecondary }]}>
+                Qty {firstItem?.quantity ?? 1}
+              </Text>
+            )}
+            <Text style={[styles.price, { color: colors.textPrimary }]}>
+              {formatCurrency(order.totalAmount)}
+            </Text>
+          </View>
         </View>
-      </View>
-      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-      {order.items.map((item, i) => (
-        <View key={i} style={styles.item}>
-          <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-            Qty: {item.quantity} · ₹{item.price.toLocaleString('en-IN')}
+
+        <View style={styles.statusMessageRow}>
+          <View style={[styles.statusDot, { backgroundColor: status.accent }]} />
+          <Text style={[styles.statusMessage, { color: status.text }]} numberOfLines={1}>
+            {getStatusMessage(order, displayStatus)}
           </Text>
         </View>
-      ))}
-      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
-      <View style={styles.footer}>
-        <View>
-          <Text style={[styles.totalLabel, { color: colors.textSecondary }]}>Total</Text>
-          <Text style={[styles.total, { color: colors.textPrimary }]}>
-            ₹{order.totalAmount.toLocaleString('en-IN')}
-          </Text>
+
+        <View style={styles.actions}>
+          <Pressable
+            style={[styles.secondaryBtn, { borderColor: colors.border }]}
+            onPress={onPress}
+          >
+            <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>Details</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+            onPress={onPress}
+          >
+            <Feather name="map-pin" size={13} color="#fff" />
+            <Text style={styles.primaryBtnText}>Track Order</Text>
+          </Pressable>
         </View>
-        {order.expectedDeliveryDate ? (
-          <Text style={[styles.delivery, { color: colors.primary }]}>
-            Est. {new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN')}
-          </Text>
-        ) : null}
-        <Pressable style={[styles.trackBtn, { borderColor: colors.primary }]} onPress={onPress}>
-          <Text style={[styles.trackBtnText, { color: colors.primary }]}>Track Order</Text>
-        </Pressable>
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 12 },
+  card: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  accentBar: {
+    width: 2,
+  },
+  content: {
+    flex: 1,
+    padding: 14,
+    gap: 12,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    gap: 10,
   },
-  orderId: { fontSize: 15, fontFamily: 'Inter_700Bold' },
-  date: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  headerLeft: {
+    flex: 1,
+    gap: 4,
+  },
+  orderId: {
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  date: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 20,
     gap: 4,
   },
-  statusText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-  divider: { height: 1, marginVertical: 10 },
-  item: { marginBottom: 4 },
-  itemName: { fontSize: 13, fontFamily: 'Inter_500Medium' },
-  itemMeta: { fontSize: 12, fontFamily: 'Inter_400Regular' },
-  footer: {
+  statusText: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+  },
+  body: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 4,
+    gap: 12,
+    borderRadius: 14,
+    padding: 10,
   },
-  totalLabel: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  total: { fontSize: 16, fontFamily: 'Inter_700Bold' },
-  delivery: { fontSize: 11, fontFamily: 'Inter_500Medium', flex: 1, textAlign: 'center' },
-  trackBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
-  trackBtnText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  productImg: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+  },
+  productInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  productName: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    lineHeight: 18,
+  },
+  extraItems: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+  },
+  price: {
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
+    marginTop: 2,
+  },
+  statusMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  statusMessage: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  secondaryBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryBtnText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  primaryBtn: {
+    flex: 1.2,
+    height: 40,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  primaryBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
 });

@@ -15,7 +15,7 @@ import { lightHaptic } from '@utils/haptics';
 
 export type CustomerTabParamList = {
   [CustomerTabRoutes.Home]: undefined;
-  [CustomerTabRoutes.Marketplace]: undefined;
+  [CustomerTabRoutes.Marketplace]: { initialTab?: number } | undefined;
   [CustomerTabRoutes.Community]: undefined;
   [CustomerTabRoutes.Garage]: { initialTab?: string } | undefined;
   [CustomerTabRoutes.Profile]: undefined;

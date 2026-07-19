@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
-  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { ChromeHeader } from '@components/common';
+import { DealerBankSkeleton } from '@components/loaders';
 import { useAuth, useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { getBusinessRegistrationByUserId } from '@services/dealer.service';
@@ -193,12 +193,7 @@ export function DealerBankScreen() {
       </ChromeHeader>
 
       {loading ? (
-        <View style={styles.loadingBlock}>
-          <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Loading payout details…
-          </Text>
-        </View>
+        <DealerBankSkeleton />
       ) : (
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 100 }]}
@@ -412,8 +407,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: { padding: 16, gap: 14 },
-  loadingBlock: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -607,6 +607,228 @@ export function DealerOrderDetailSkeleton() {
   );
 }
 
+export function DealerBankSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={styles.dealerBankSkeleton}>
+      <Skeleton style={styles.dealerBankBannerSkeleton} />
+
+      <View style={[styles.dealerBankCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.dealerBankCardHeaderSkeleton}>
+          <Skeleton style={styles.dealerBankCardTitleSkeleton} />
+          <Skeleton style={styles.dealerBankActionSkeleton} />
+        </View>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <View key={i} style={styles.dealerBankFieldRowSkeleton}>
+            <Skeleton style={styles.dealerBankFieldLabelSkeleton} />
+            <Skeleton style={styles.dealerBankFieldValueSkeleton} />
+          </View>
+        ))}
+      </View>
+
+      <View style={[styles.dealerBankCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.dealerBankCardHeaderSkeleton}>
+          <Skeleton style={styles.dealerBankCardTitleSkeleton} />
+          <Skeleton style={styles.dealerBankActionSkeleton} />
+        </View>
+        {[1, 2].map((i) => (
+          <View key={i} style={styles.dealerBankUpiRowSkeleton}>
+            <Skeleton style={styles.dealerBankUpiAvatarSkeleton} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton style={styles.dealerBankUpiIdSkeleton} />
+              <Skeleton style={styles.dealerBankUpiMetaSkeleton} />
+            </View>
+            <Skeleton style={styles.dealerBankUpiBadgeSkeleton} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function DriveListSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={styles.driveListSkeleton}>
+      <View style={[styles.driveHintSkeleton, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+        <Skeleton style={styles.driveHintIconSkeleton} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <Skeleton style={styles.driveHintTitleSkeleton} />
+          <Skeleton style={styles.driveHintSubSkeleton} />
+        </View>
+      </View>
+      <GarageBookingsListSkeleton />
+    </View>
+  );
+}
+
+export function DealerBusinessDetailsSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={styles.dealerBusinessSkeleton}>
+      {[1, 2, 3].map((section) => (
+        <View
+          key={section}
+          style={[styles.dealerBusinessCardSkeleton, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <Skeleton style={styles.dealerBusinessSectionTitleSkeleton} />
+          {[1, 2, 3, 4].map((row) => (
+            <View key={row} style={styles.dealerBusinessFieldRowSkeleton}>
+              <Skeleton style={styles.dealerBusinessFieldLabelSkeleton} />
+              <Skeleton style={styles.dealerBusinessFieldValueSkeleton} />
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function GarageVehicleCardSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.garageVehicleCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Skeleton style={styles.garageVehicleImage} />
+      <View style={styles.garageVehicleInfo}>
+        <View style={styles.garageVehicleHeaderRow}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton style={styles.garageVehicleTitle} />
+            <Skeleton style={styles.garageVehiclePlate} />
+          </View>
+          <Skeleton style={styles.garageYearBadge} />
+        </View>
+        <Skeleton style={styles.garageDivider} />
+        <Skeleton style={styles.garageStatLine} />
+        <Skeleton style={[styles.garageStatLine, { width: '55%', marginTop: 8 }]} />
+        <View style={styles.garageActionsRow}>
+          <Skeleton style={styles.garageActionBtnPrimary} />
+          <Skeleton style={styles.garageActionBtn} />
+          <Skeleton style={styles.garageActionBtn} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function GarageVehiclesListSkeleton() {
+  return (
+    <View style={{ gap: 16 }}>
+      {[1, 2].map((i) => (
+        <GarageVehicleCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function GarageBookingCardSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.garageBookingCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={styles.garageBookingTopRow}>
+        <Skeleton style={styles.garageBookingBadge} />
+        <Skeleton style={styles.garageBookingId} />
+      </View>
+      <View style={styles.garageBookingBody}>
+        <Skeleton style={styles.garageBookingThumb} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <Skeleton style={styles.garageBookingTitle} />
+          <Skeleton style={styles.garageBookingMeta} />
+          <Skeleton style={[styles.garageBookingMeta, { width: '70%' }]} />
+          <Skeleton style={[styles.garageBookingMeta, { width: '85%' }]} />
+        </View>
+        <View style={{ alignItems: 'flex-end', gap: 6 }}>
+          <Skeleton style={styles.garageBookingPrice} />
+          <Skeleton style={styles.garageBookingView} />
+        </View>
+      </View>
+      <Skeleton style={styles.garageBookingStepper} />
+      <Skeleton style={styles.garageBookingFooter} />
+    </View>
+  );
+}
+
+export function GarageBookingsListSkeleton() {
+  return (
+    <View style={{ gap: 14, paddingTop: 4 }}>
+      {[1, 2, 3].map((i) => (
+        <GarageBookingCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function GarageOrderCardSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={[styles.garageOrderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Skeleton style={styles.garageOrderAccent} />
+      <View style={styles.garageOrderContent}>
+        <View style={styles.garageOrderHeader}>
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton style={styles.garageOrderId} />
+            <Skeleton style={styles.garageOrderDate} />
+          </View>
+          <Skeleton style={styles.garageOrderBadge} />
+        </View>
+        <View style={[styles.garageOrderBody, { backgroundColor: colors.surfaceSecondary }]}>
+          <Skeleton style={styles.garageOrderThumb} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton style={styles.garageOrderItem} />
+            <Skeleton style={[styles.garageOrderItem, { width: '45%' }]} />
+            <Skeleton style={styles.garageOrderTotal} />
+          </View>
+        </View>
+        <Skeleton style={styles.garageOrderStatusLine} />
+        <View style={styles.garageOrderFooter}>
+          <Skeleton style={styles.garageOrderTrackBtn} />
+          <Skeleton style={[styles.garageOrderTrackBtn, { flex: 1.2 }]} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function GarageOrdersListSkeleton() {
+  return (
+    <View style={{ gap: 12 }}>
+      {[1, 2, 3].map((i) => (
+        <GarageOrderCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
+export function GarageVehicleDetailSkeleton() {
+  const colors = useColors();
+  return (
+    <View style={{ flex: 1, padding: 16, gap: 16 }}>
+      <Skeleton style={styles.garageDetailHero} />
+      <View style={[styles.garageDetailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Skeleton style={styles.garageVehicleTitle} />
+        <Skeleton style={[styles.garageVehiclePlate, { marginTop: 8 }]} />
+        <View style={[styles.garageActionsRow, { marginTop: 16 }]}>
+          <Skeleton style={styles.garageActionBtnPrimary} />
+          <Skeleton style={styles.garageActionBtn} />
+        </View>
+      </View>
+      <View style={[styles.garageDetailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {[1, 2, 3, 4].map((i) => (
+          <View key={i} style={styles.garageDetailRow}>
+            <Skeleton style={styles.garageDetailIcon} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton style={styles.garageStatLine} />
+              <Skeleton style={[styles.garageStatLine, { width: '45%' }]} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
@@ -1328,6 +1550,388 @@ const styles = StyleSheet.create({
   dealerDetailInfoValue: {
     height: 12,
     width: '70%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageVehicleCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  garageVehicleImage: {
+    width: '100%',
+    height: 160,
+    backgroundColor: '#E2E8F0',
+  },
+  garageVehicleInfo: {
+    padding: 16,
+  },
+  garageVehicleHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  garageVehicleTitle: {
+    height: 16,
+    width: '55%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageVehiclePlate: {
+    height: 12,
+    width: '35%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageYearBadge: {
+    height: 24,
+    width: 48,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  garageDivider: {
+    height: 1,
+    width: '100%',
+    marginVertical: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  garageStatLine: {
+    height: 12,
+    width: '70%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+  },
+  garageActionBtnPrimary: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  garageActionBtn: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 12,
+  },
+  garageBookingTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  garageBookingBadge: {
+    height: 22,
+    width: 80,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingId: {
+    height: 10,
+    width: 110,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingBody: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  garageBookingThumb: {
+    width: 72,
+    height: 56,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingTitle: {
+    height: 14,
+    width: '90%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingMeta: {
+    height: 11,
+    width: '100%',
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingPrice: {
+    height: 14,
+    width: 52,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingView: {
+    height: 11,
+    width: 70,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingStepper: {
+    height: 36,
+    width: '100%',
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  garageBookingFooter: {
+    height: 40,
+    width: '100%',
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    flexDirection: 'row',
+  },
+  garageOrderAccent: {
+    width: 2,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderContent: {
+    flex: 1,
+    padding: 14,
+    gap: 12,
+  },
+  garageOrderHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 0,
+  },
+  garageOrderId: {
+    height: 15,
+    width: '55%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderDate: {
+    height: 12,
+    width: '40%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderBadge: {
+    height: 24,
+    width: 88,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    padding: 10,
+  },
+  garageOrderThumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderItem: {
+    height: 13,
+    width: '75%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderStatusLine: {
+    height: 12,
+    width: '65%',
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 0,
+    gap: 8,
+  },
+  garageOrderTotal: {
+    height: 16,
+    width: 72,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  garageOrderTrackBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  garageDetailHero: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  garageDetailCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  garageDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  garageDetailIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankSkeleton: {
+    padding: 16,
+    gap: 14,
+  },
+  dealerBankBannerSkeleton: {
+    width: '100%',
+    height: 84,
+    borderRadius: 16,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankCardSkeleton: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  dealerBankCardHeaderSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  dealerBankCardTitleSkeleton: {
+    width: 140,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankActionSkeleton: {
+    width: 64,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankFieldRowSkeleton: {
+    gap: 6,
+  },
+  dealerBankFieldLabelSkeleton: {
+    width: 88,
+    height: 11,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankFieldValueSkeleton: {
+    width: '70%',
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankUpiRowSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 4,
+  },
+  dealerBankUpiAvatarSkeleton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankUpiIdSkeleton: {
+    width: '75%',
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankUpiMetaSkeleton: {
+    width: '45%',
+    height: 11,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBankUpiBadgeSkeleton: {
+    width: 56,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#E2E8F0',
+  },
+  driveListSkeleton: {
+    padding: 16,
+    gap: 14,
+  },
+  driveHintSkeleton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+  },
+  driveHintIconSkeleton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  driveHintTitleSkeleton: {
+    width: '80%',
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  driveHintSubSkeleton: {
+    width: '65%',
+    height: 11,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBusinessSkeleton: {
+    padding: 16,
+    gap: 14,
+  },
+  dealerBusinessCardSkeleton: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 14,
+  },
+  dealerBusinessSectionTitleSkeleton: {
+    width: 160,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 4,
+  },
+  dealerBusinessFieldRowSkeleton: {
+    gap: 6,
+  },
+  dealerBusinessFieldLabelSkeleton: {
+    width: 100,
+    height: 11,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  dealerBusinessFieldValueSkeleton: {
+    width: '85%',
+    height: 14,
     borderRadius: 6,
     backgroundColor: '#E2E8F0',
   },

@@ -183,13 +183,40 @@ export function DealerDashboardScreen() {
   ];
 
   const quickActions = [
-    { label: 'Add Product', icon: 'plus-circle', route: DealerStackRoutes.ProductForm },
-    { label: 'Add Service', icon: 'tool', route: DealerStackRoutes.ServiceForm },
-    { label: 'Bookings', icon: 'calendar', route: DealerStackRoutes.ServiceBookings, badge: pendingServiceBookings },
+    capabilities.hasProducts && {
+      label: 'Add Product',
+      icon: 'plus-circle',
+      route: DealerStackRoutes.ProductForm,
+    },
+    capabilities.hasVehicles && {
+      label: 'Add Vehicle',
+      icon: 'truck',
+      route: DealerStackRoutes.VehicleForm,
+    },
+    capabilities.hasServices && {
+      label: 'Add Service',
+      icon: 'tool',
+      route: DealerStackRoutes.ServiceForm,
+    },
+    capabilities.hasServices && {
+      label: 'Bookings',
+      icon: 'calendar',
+      route: DealerStackRoutes.ServiceBookings,
+      badge: pendingServiceBookings,
+    },
     { label: 'Orders', icon: 'package', route: DealerTabRoutes.Orders },
-    { label: 'Test Drive', icon: 'navigation', route: DealerTabRoutes.Drive },
+    capabilities.hasDrive && {
+      label: 'Test Drive',
+      icon: 'navigation',
+      route: DealerTabRoutes.Drive,
+    },
     { label: 'Bank', icon: 'credit-card', route: DealerTabRoutes.Bank },
-  ];
+  ].filter(Boolean) as Array<{
+    label: string;
+    icon: string;
+    route: string;
+    badge?: number;
+  }>;
 
   const handleQuickAction = (route: string) => {
     lightHaptic();
@@ -204,6 +231,10 @@ export function DealerDashboardScreen() {
     }
     if (route === DealerStackRoutes.ProductForm) {
       navigation.navigate(DealerStackRoutes.ProductForm, {});
+      return;
+    }
+    if (route === DealerStackRoutes.VehicleForm) {
+      navigation.navigate(DealerStackRoutes.VehicleForm, {});
       return;
     }
     if (route === DealerStackRoutes.ServiceForm) {

@@ -10,8 +10,8 @@ import {
   View,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { CompositeNavigationProp, RouteProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,10 +44,21 @@ import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
 import { getUserTestDrives, type ITestDrive } from '@services/testDrive.service';
+import type { IService } from '@app-types/service';
 import { spacing } from '@theme/spacing';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getProductId, getServiceId, getVehicleId } from '@utils/displayMappers';
 import { filterProducts, filterServices, filterVehicles } from '@utils/marketplaceFilters';
+
+function formatServiceCategory(category?: string): string {
+  const raw = category?.trim();
+  if (!raw) return 'Other';
+  return raw
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -71,6 +82,7 @@ export function MarketplaceScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<MarketplaceScreenNavigationProp>();
+  const route = useRoute<RouteProp<CustomerTabParamList, typeof CustomerTabRoutes.Marketplace>>();
   const { startBooking } = useServiceBooking();
   const { runWithMobileCheck } = useMobileVerificationGate();
   const { products, loading: productsLoading } = useProducts(50);
@@ -78,7 +90,10 @@ export function MarketplaceScreen() {
   const { services, loading: servicesLoading } = useServicesCatalog(50);
   const [testDrives, setTestDrives] = useState<ITestDrive[]>([]);
   const [testDrivesLoading, setTestDrivesLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = route.params?.initialTab;
+    return typeof tab === 'number' && tab >= 0 && tab <= 3 ? tab : 0;
+  });
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [productFilters, setProductFilters] = useState<ProductFilters>(DEFAULT_PRODUCT_FILTERS);
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilters>(DEFAULT_VEHICLE_FILTERS);
@@ -86,6 +101,13 @@ export function MarketplaceScreen() {
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const tabBarPadding = useTabBarBottomPadding();
+
+  useEffect(() => {
+    const tab = route.params?.initialTab;
+    if (typeof tab === 'number' && tab >= 0 && tab <= 3) {
+      setActiveTab(tab);
+    }
+  }, [route.params?.initialTab]);
 
   const filterTab: MarketplaceFilterTab | null =
     activeTab === 0 ? 'products' : activeTab === 1 ? 'vehicles' : activeTab === 2 ? 'services' : null;
@@ -106,6 +128,24 @@ export function MarketplaceScreen() {
     () => filterServices(services, serviceFilters),
     [services, serviceFilters],
   );
+
+  const servicesByCategory = useMemo(() => {
+    const groups = new Map<string, IService[]>();
+    for (const service of filteredServices) {
+      const label = formatServiceCategory(service.category);
+      const existing = groups.get(label);
+      if (existing) {
+        existing.push(service);
+      } else {
+        groups.set(label, [service]);
+      }
+    }
+    return Array.from(groups.entries()).sort(([a], [b]) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return a.localeCompare(b);
+    });
+  }, [filteredServices]);
 
   useEffect(() => {
     if (activeTab !== 3) return;
@@ -302,22 +342,30 @@ export function MarketplaceScreen() {
               </Text>
             </View>
           ) : (
-            filteredServices.map((service) => (
-              <ServiceCard
-                key={getServiceId(service)}
-                service={service}
-                onNavigate={() =>
-                  navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: getServiceId(service) })
-                }
-                onBookPress={() => {
-                  void runWithMobileCheck(() => {
-                    startBooking(getServiceId(service));
-                    navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
-                      serviceId: getServiceId(service),
-                    });
-                  });
-                }}
-              />
+            servicesByCategory.map(([category, categoryServices]) => (
+              <View key={category} style={styles.serviceCategorySection}>
+                <Text style={[styles.serviceCategoryTitle, { color: colors.textPrimary }]}>
+                  {category}
+                </Text>
+                {categoryServices.map((service) => (
+                  <ServiceCard
+                    key={getServiceId(service)}
+                    service={service}
+                    variant="list"
+                    onNavigate={() =>
+                      navigation.navigate(CustomerStackRoutes.ServiceDetail, { id: getServiceId(service) })
+                    }
+                    onBookPress={() => {
+                      void runWithMobileCheck(() => {
+                        startBooking(getServiceId(service));
+                        navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
+                          serviceId: getServiceId(service),
+                        });
+                      });
+                    }}
+                  />
+                ))}
+              </View>
             ))
           )}
         </ScrollView>
@@ -466,6 +514,13 @@ const styles = StyleSheet.create({
   columnWrapper: { gap: 12, marginBottom: 12 },
   gridItem: { flex: 1, maxWidth: '48%' },
   listContent: { paddingTop: 4, paddingBottom: spacing.md },
+  serviceCategorySection: { marginBottom: 16 },
+  serviceCategoryTitle: {
+    fontSize: 15,
+    fontFamily: 'Inter_700Bold',
+    marginBottom: 10,
+    marginTop: 4,
+  },
   vehicleItem: { width: '100%', marginBottom: 12 },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 60 },

@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -18,27 +19,42 @@ import { themeLight } from '@theme/colors';
 import { successHaptic } from '@utils/haptics';
 
 interface InventoryImageUploadSectionProps {
+  /** Single-image mode (legacy). Ignored when `imageUris` is provided. */
   imageUri?: string;
+  /** Multi-image mode. */
+  imageUris?: string[];
+  maxImages?: number;
   title?: string;
   subtitle?: string;
-  onImageChange: (url: string) => void;
+  onImageChange?: (url: string) => void;
+  onImagesChange?: (urls: string[]) => void;
 }
 
 export function InventoryImageUploadSection({
   imageUri,
+  imageUris,
+  maxImages = 1,
   title = 'Upload clear images',
   subtitle = 'JPG, PNG up to 5MB',
   onImageChange,
+  onImagesChange,
 }: InventoryImageUploadSectionProps) {
   const colors = useColors();
   const [uploading, setUploading] = useState(false);
+  const multi = Array.isArray(imageUris);
+  const uris = multi ? imageUris : imageUri ? [imageUri] : [];
+  const canAddMore = uris.length < maxImages;
 
   const handlePicked = useCallback(
     async (uri: string) => {
       setUploading(true);
       try {
         const uploadedUrl = await uploadImage(uri);
-        onImageChange(uploadedUrl);
+        if (multi && onImagesChange) {
+          onImagesChange([...uris, uploadedUrl].slice(0, maxImages));
+        } else {
+          onImageChange?.(uploadedUrl);
+        }
         successHaptic();
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to upload photo. Please try again.';
@@ -47,8 +63,13 @@ export function InventoryImageUploadSection({
         setUploading(false);
       }
     },
-    [onImageChange],
+    [multi, onImageChange, onImagesChange, uris, maxImages],
   );
+
+  const removeAt = (index: number) => {
+    if (!multi || !onImagesChange) return;
+    onImagesChange(uris.filter((_, i) => i !== index));
+  };
 
   const {
     pickerVisible,
@@ -80,14 +101,30 @@ export function InventoryImageUploadSection({
         onDeny={handlePermissionDeny}
       />
 
+      {multi && uris.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbRow}>
+          {uris.map((uri, index) => (
+            <View key={`${uri}-${index}`} style={styles.thumbWrap}>
+              <Image source={{ uri }} style={styles.thumb} resizeMode="cover" />
+              <Pressable style={styles.removeBtn} onPress={() => removeAt(index)} hitSlop={6}>
+                <Feather name="x" size={12} color="#fff" />
+              </Pressable>
+            </View>
+          ))}
+        </ScrollView>
+      ) : null}
+
       <View style={styles.imageUploadArea}>
         <Pressable
-          style={[styles.uploadDropZone, { borderColor: imageUri ? '#10B981' : '#D9D9D9' }]}
-          onPress={() => !uploading && openPicker()}
-          disabled={uploading}
+          style={[
+            styles.uploadDropZone,
+            { borderColor: uris.length > 0 ? '#10B981' : '#D9D9D9' },
+          ]}
+          onPress={() => !uploading && canAddMore && openPicker()}
+          disabled={uploading || !canAddMore}
         >
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
+          {!multi && uris[0] ? (
+            <Image source={{ uri: uris[0] }} style={styles.previewImage} resizeMode="cover" />
           ) : (
             <View style={[styles.uploadIcon, { backgroundColor: '#F2F2F2' }]}>
               <Feather name="upload-cloud" size={22} color={colors.icon} />
@@ -102,17 +139,30 @@ export function InventoryImageUploadSection({
           ) : (
             <>
               <Text style={[styles.uploadText, { color: colors.textSecondary }]}>
-                {imageUri ? 'Tap to change image' : title}
+                {!canAddMore
+                  ? `Maximum ${maxImages} images`
+                  : multi
+                    ? uris.length > 0
+                      ? `Add another image (${uris.length}/${maxImages})`
+                      : title
+                    : uris[0]
+                      ? 'Tap to change image'
+                      : title}
               </Text>
-              {!imageUri ? (
-                <Text style={[styles.uploadOr, { color: colors.textTertiary }]}>or</Text>
+              {canAddMore ? (
+                <Pressable style={styles.galleryBtn} onPress={openPicker} disabled={uploading}>
+                  <Feather name="image" size={13} color={colors.icon} style={{ marginRight: 5 }} />
+                  <Text style={styles.galleryBtnText}>
+                    {multi
+                      ? uris.length > 0
+                        ? 'Add Photo'
+                        : 'Upload from Gallery'
+                      : uris[0]
+                        ? 'Change Photo'
+                        : 'Upload from Gallery'}
+                  </Text>
+                </Pressable>
               ) : null}
-              <Pressable style={styles.galleryBtn} onPress={openPicker} disabled={uploading}>
-                <Feather name="image" size={13} color={colors.icon} style={{ marginRight: 5 }} />
-                <Text style={styles.galleryBtnText}>
-                  {imageUri ? 'Change Photo' : 'Upload from Gallery'}
-                </Text>
-              </Pressable>
               <Text style={[styles.uploadHint, { color: colors.textTertiary }]}>{subtitle}</Text>
             </>
           )}
@@ -123,6 +173,20 @@ export function InventoryImageUploadSection({
 }
 
 const styles = StyleSheet.create({
+  thumbRow: { gap: 8, marginBottom: 10 },
+  thumbWrap: { position: 'relative' },
+  thumb: { width: 72, height: 72, borderRadius: 10 },
+  removeBtn: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   imageUploadArea: { gap: 10 },
   uploadDropZone: {
     borderWidth: 1.5,
@@ -148,7 +212,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   uploadText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
-  uploadOr: { fontSize: 10 },
   galleryBtn: {
     flexDirection: 'row',
     alignItems: 'center',

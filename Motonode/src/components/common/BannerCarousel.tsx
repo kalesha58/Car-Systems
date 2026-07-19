@@ -21,11 +21,12 @@ import { lightHaptic } from '@utils/haptics';
 interface BannerCarouselProps {
   onAiPress?: () => void;
   onPromoPress?: () => void;
+  onTestDrivePress?: () => void;
 }
 
 interface BannerItem {
   id: string;
-  type: 'ai' | 'promo' | 'custom';
+  type: 'ai' | 'promo' | 'testDrive' | 'custom';
   title: string;
   subtitle: string;
   description: string;
@@ -34,7 +35,7 @@ interface BannerItem {
   customImage?: string | null;
 }
 
-export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps) {
+export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: BannerCarouselProps) {
   const colors = useColors();
   const { businessProfile } = useDealer();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -65,7 +66,7 @@ export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps)
     },
     {
       id: 'b3',
-      type: 'promo',
+      type: 'testDrive',
       title: 'Book Test Drives',
       subtitle: 'Try Electric Vehicles today!',
       description: 'Zero cost test ride for Nexon EV Max & Duke 390',
@@ -119,6 +120,8 @@ export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps)
     lightHaptic();
     if (item.type === 'ai') {
       onAiPress?.();
+    } else if (item.type === 'testDrive') {
+      onTestDrivePress?.();
     } else {
       onPromoPress?.();
     }
@@ -169,7 +172,7 @@ export function BannerCarousel({ onAiPress, onPromoPress }: BannerCarouselProps)
                   </View>
                   <View style={styles.actionBtn}>
                     <Text style={[styles.actionBtnText, { color: item.colors[0] }]}>
-                      {item.type === 'ai' ? 'Chat' : 'View'}
+                      {item.type === 'ai' ? 'Chat' : item.type === 'testDrive' ? 'Book' : 'View'}
                     </Text>
                     <Feather name="chevron-right" size={14} color={item.colors[0]} />
                   </View>

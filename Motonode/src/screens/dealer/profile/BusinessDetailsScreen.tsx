@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -17,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { ChromeHeader } from '@components/common';
+import { DealerBusinessDetailsSkeleton } from '@components/loaders';
 import { DealerStackRoutes } from '@constants/routes';
 import { useAuth, useDealer } from '@context/index';
 import { useColors } from '@hooks/useColors';
@@ -214,9 +214,7 @@ export function BusinessDetailsScreen({ navigation }: Props) {
             <View style={styles.headerBtn} />
           </View>
         </ChromeHeader>
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color="#E60012" />
-        </View>
+        <DealerBusinessDetailsSkeleton />
       </View>
     );
   }
@@ -497,7 +495,6 @@ const styles = StyleSheet.create({
   },
   headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10 },
   emptyTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginTop: 8 },
   emptySub: { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },

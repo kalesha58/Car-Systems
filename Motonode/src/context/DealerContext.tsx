@@ -12,11 +12,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   BusinessProfile,
-  DEALER_TYPE_CAPABILITIES,
+  DEFAULT_DEALER_CAPABILITIES,
   DealerCapabilities,
   DealerType,
+  getCapabilitiesForDealerType,
+  isKnownDealerType,
 } from '@data/dealerData';
 import { StorageKeys } from '@storage/index';
+import { fetchDealerOnboarding } from '@services/dealer.service';
 
 interface DealerContextValue {
   dealerType: DealerType | null;
@@ -28,14 +31,9 @@ interface DealerContextValue {
   saveBusinessProfile: (profile: BusinessProfile) => Promise<void>;
   completeRegistration: () => Promise<void>;
   resetRegistration: () => Promise<void>;
+  /** Sync dealerType from server onboarding businessType (prefer server when valid). */
+  hydrateDealerTypeFromServer: () => Promise<DealerType | null>;
 }
-
-const DEFAULT_CAPABILITIES: DealerCapabilities = {
-  hasProducts: true,
-  hasVehicles: false,
-  hasServices: false,
-  hasDrive: false,
-};
 
 const DealerContext = createContext<DealerContextValue | undefined>(undefined);
 
@@ -45,12 +43,13 @@ export function DealerProvider({ children }: { children: ReactNode }) {
   const [registrationCompleted, setRegistrationCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const capabilities = dealerType
-    ? DEALER_TYPE_CAPABILITIES[dealerType]
-    : DEFAULT_CAPABILITIES;
+  const capabilities = useMemo(
+    () => getCapabilitiesForDealerType(dealerType),
+    [dealerType],
+  );
 
   useEffect(() => {
-    loadDealerData();
+    void loadDealerData();
   }, []);
 
   async function loadDealerData() {
@@ -61,8 +60,11 @@ export function DealerProvider({ children }: { children: ReactNode }) {
         AsyncStorage.getItem(StorageKeys.REGISTRATION_COMPLETED),
       ]);
 
-      if (typeStr) {
-        setDealerType(typeStr as DealerType);
+      if (isKnownDealerType(typeStr)) {
+        setDealerType(typeStr);
+      } else if (typeStr) {
+        // Stale/unknown local value — clear so we can hydrate from server
+        await AsyncStorage.removeItem(StorageKeys.DEALER_TYPE);
       }
       if (profileStr) {
         setBusinessProfile(JSON.parse(profileStr));
@@ -101,17 +103,35 @@ export function DealerProvider({ children }: { children: ReactNode }) {
     setRegistrationCompleted(false);
   }, []);
 
+  const hydrateDealerTypeFromServer = useCallback(async (): Promise<DealerType | null> => {
+    try {
+      const snapshot = await fetchDealerOnboarding();
+      const serverType = snapshot.businessType;
+      if (!isKnownDealerType(serverType)) {
+        return null;
+      }
+
+      // Prefer server registration type over stale local storage
+      await AsyncStorage.setItem(StorageKeys.DEALER_TYPE, serverType);
+      setDealerType(serverType);
+      return serverType;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       dealerType,
       businessProfile,
       registrationCompleted,
-      capabilities,
+      capabilities: capabilities ?? DEFAULT_DEALER_CAPABILITIES,
       isLoading,
       saveDealerType,
       saveBusinessProfile,
       completeRegistration,
       resetRegistration,
+      hydrateDealerTypeFromServer,
     }),
     [
       dealerType,
@@ -123,6 +143,7 @@ export function DealerProvider({ children }: { children: ReactNode }) {
       saveBusinessProfile,
       completeRegistration,
       resetRegistration,
+      hydrateDealerTypeFromServer,
     ],
   );
 

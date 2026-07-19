@@ -10,6 +10,7 @@ import { logger } from '../../utils/logger';
 import { IPaginationResponse } from '../../types/admin';
 import {
   enrichTestDriveLight,
+  enrichTestDriveDetail,
   testDriveToInterface,
   ITestDriveListEnrichment,
 } from '../testDrive/testDriveEnrichment';
@@ -155,7 +156,7 @@ export const getUserTestDriveById = async (
       throw new AppError('Unauthorized access to test drive', 403);
     }
 
-    return enrichTestDriveLight(testDrive);
+    return enrichTestDriveDetail(testDrive);
   } catch (error) {
     logger.error('Error getting test drive by ID:', error);
     throw error;

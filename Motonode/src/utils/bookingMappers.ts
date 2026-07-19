@@ -105,3 +105,25 @@ export function formatSlotTime(startTime: string): string {
   const m = minutes ? `:${String(minutes).padStart(2, '0')}` : '';
   return `${h}${m} ${period}`;
 }
+
+/** Convert display times like "10:00 AM" or "1:00 PM - 3:00 PM" to API HH:mm. */
+export function toApiTimeHHmm(timeLabel: string): string {
+  const start = (timeLabel.split(' - ')[0] ?? timeLabel).trim();
+  if (/^([01]\d|2[0-3]):[0-5]\d$/.test(start)) {
+    return start;
+  }
+
+  const match = start.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) {
+    return start;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+
+  return `${String(hours).padStart(2, '0')}:${minutes}`;
+}

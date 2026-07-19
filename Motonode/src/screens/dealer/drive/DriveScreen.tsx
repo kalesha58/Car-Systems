@@ -9,7 +9,6 @@ import {
   Text,
   View,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
+import { DriveListSkeleton } from '@components/loaders';
 import { useColors } from '@hooks/useColors';
 import { getDealerTestDrives, updateTestDriveStatus } from '@services/testDrive.service';
 import type { ITestDrive, TestDriveStatus } from '../../../types/testDrive';
@@ -157,9 +157,7 @@ export function DriveScreen() {
       </ChromeHeader>
 
       {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="#E60012" />
-        </View>
+        <DriveListSkeleton />
       ) : (
         <FlatList<ITestDrive>
           data={filtered}
@@ -322,7 +320,6 @@ export function DriveScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 4,

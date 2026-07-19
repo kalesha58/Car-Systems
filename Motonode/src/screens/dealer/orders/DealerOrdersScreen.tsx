@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   Alert,
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
+import { GarageOrdersListSkeleton } from '@components/loaders';
 import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 import { useColors } from '@hooks/useColors';
 import { getOrderItemImageUri, useOrderItemImages } from '@hooks/useOrderItemImages';
@@ -355,9 +355,7 @@ export function DealerOrdersScreen() {
         }}
         ListEmptyComponent={
           loading ? (
-            <View style={styles.empty}>
-              <ActivityIndicator color="#E60012" />
-            </View>
+            <GarageOrdersListSkeleton />
           ) : (
             <View style={styles.empty}>
               <Feather name="clipboard" size={48} color={colors.textTertiary} />

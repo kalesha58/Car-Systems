@@ -65,8 +65,8 @@ const EMPTY: BusinessProfile = {
   state: '',
   pincode: '',
   workingDays: 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
-  workingHoursOpen: '9:00 AM',
-  workingHoursClose: '8:00 PM',
+  workingHoursOpen: '',
+  workingHoursClose: '',
   facebook: '',
   instagram: '',
   youtube: '',
@@ -764,7 +764,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           style={[styles.textInputStyle, { color: colors.textPrimary }]}
                           value={form.businessName}
                           onChangeText={(v) => set('businessName', v)}
-                          placeholder="Speed Auto Parts"
+                          placeholder="Enter business name"
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -782,7 +782,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           style={[styles.textInputStyle, { color: colors.textPrimary }]}
                           value={form.ownerName}
                           onChangeText={(v) => set('ownerName', v)}
-                          placeholder="Rajesh Kumar"
+                          placeholder="Enter owner name"
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -802,7 +802,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.mobile}
                       onChangeText={(v) => set('mobile', v)}
                       keyboardType="phone-pad"
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter mobile number"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -824,7 +824,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('email', v)}
                       keyboardType="email-address"
                       autoCapitalize="none"
-                      placeholder="store@example.com"
+                      placeholder="Enter email address"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -855,7 +855,7 @@ export function RegistrationScreen({ navigation }: Props) {
                         onChangeText={handleGstChange}
                         onBlur={verifyGst}
                         autoCapitalize="characters"
-                        placeholder="22AAAAA0000A1Z5"
+                        placeholder="Enter GST number"
                         placeholderTextColor={colors.textTertiary}
                       />
                     </View>
@@ -892,7 +892,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           style={[styles.textInputStyle, { color: colors.textPrimary }]}
                           value={form.registrationNumber}
                           onChangeText={(v) => set('registrationNumber', v)}
-                          placeholder="BRN-2024-001"
+                          placeholder="Enter registration no."
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -911,7 +911,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           value={form.establishedYear}
                           onChangeText={(v) => set('establishedYear', v.replace(/[^0-9]/g, '').slice(0, 4))}
                           keyboardType="numeric"
-                          placeholder="2018"
+                          placeholder="Enter year"
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -930,7 +930,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.website}
                       onChangeText={(v) => set('website', v)}
                       autoCapitalize="none"
-                      placeholder="https://yourbusiness.com"
+                      placeholder="Enter website URL"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -960,7 +960,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       style={[styles.textInputStyle, { color: colors.textPrimary }]}
                       value={form.address}
                       onChangeText={(v) => set('address', v)}
-                      placeholder="Shop No, Street, Area"
+                      placeholder="Enter address"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1038,7 +1038,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.pincode}
                       onChangeText={(v) => set('pincode', v)}
                       keyboardType="numeric"
-                      placeholder="560001"
+                      placeholder="Enter pincode"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1094,7 +1094,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.upiId}
                       onChangeText={handleUpiChange}
                       autoCapitalize="none"
-                      placeholder="example@upi"
+                      placeholder="Enter UPI ID"
                       placeholderTextColor={colors.textTertiary}
                     />
                     {upiError ? (
@@ -1143,7 +1143,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.accountNumber}
                       onChangeText={(v) => set('accountNumber', v)}
                       keyboardType="numeric"
-                      placeholder="XXXX XXXX XXXX"
+                      placeholder="Enter account number"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1161,7 +1161,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.ifsc}
                       onChangeText={(v) => set('ifsc', v)}
                       autoCapitalize="characters"
-                      placeholder="SBIN0001234"
+                      placeholder="Enter IFSC code"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1216,7 +1216,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           style={[styles.textInputStyle, { color: colors.textPrimary }]}
                           value={form.workingHoursOpen}
                           onChangeText={(v) => set('workingHoursOpen', v)}
-                          placeholder="9:00 AM"
+                          placeholder="Enter opening time"
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -1233,7 +1233,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           style={[styles.textInputStyle, { color: colors.textPrimary }]}
                           value={form.workingHoursClose}
                           onChangeText={(v) => set('workingHoursClose', v)}
-                          placeholder="8:00 PM"
+                          placeholder="Enter closing time"
                           placeholderTextColor={colors.textTertiary}
                         />
                       </View>
@@ -1265,7 +1265,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.facebook}
                       onChangeText={(v) => set('facebook', v)}
                       autoCapitalize="none"
-                      placeholder="facebook.com/yourpage"
+                      placeholder="Enter Facebook link"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1282,7 +1282,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.instagram}
                       onChangeText={(v) => set('instagram', v)}
                       autoCapitalize="none"
-                      placeholder="instagram.com/yourpage"
+                      placeholder="Enter Instagram link"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1299,7 +1299,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       value={form.youtube}
                       onChangeText={(v) => set('youtube', v)}
                       autoCapitalize="none"
-                      placeholder="youtube.com/@yourchannel"
+                      placeholder="Enter YouTube link"
                       placeholderTextColor={colors.textTertiary}
                     />
                   </View>
@@ -1399,7 +1399,7 @@ export function RegistrationScreen({ navigation }: Props) {
         </ScrollView>
 
         {/* Sticky Bottom Actions Navigation Bar */}
-        <View style={[styles.stickyBottomBar, { borderTopColor: colors.border, backgroundColor: colors.card }]}>
+        <View style={[styles.stickyBottomBar, { borderTopColor: colors.border, backgroundColor: colors.card, paddingBottom: bottomPad + 12 }]}>
           {currentStep < 3 ? (
             <Pressable
               style={[styles.saveBtn, { backgroundColor: '#E60012' }]}

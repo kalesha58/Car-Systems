@@ -358,6 +358,72 @@ export async function sendMessage(
   }
 }
 
+export async function clearConversationMessages(
+  conversationId: string,
+  options?: { welcomeMessage?: { senderId: string; receiverId: string; text: string } },
+): Promise<void> {
+  try {
+    const messagesRef = conversationsCol().doc(conversationId).collection('messages');
+    const snapshot = await messagesRef.get();
+    const batchSize = 400;
+    let batch = firestore().batch();
+    let ops = 0;
+
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+      ops += 1;
+      if (ops >= batchSize) {
+        await batch.commit();
+        batch = firestore().batch();
+        ops = 0;
+      }
+    }
+
+    if (options?.welcomeMessage) {
+      const welcomeRef = messagesRef.doc();
+      batch.set(
+        welcomeRef,
+        sanitizeFirestoreData({
+          senderId: options.welcomeMessage.senderId,
+          receiverId: options.welcomeMessage.receiverId,
+          messageType: 'text',
+          text: options.welcomeMessage.text,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          status: 'seen',
+        }),
+      );
+      ops += 1;
+    }
+
+    if (ops > 0) {
+      await batch.commit();
+    }
+
+    await conversationsCol().doc(conversationId).update(
+      sanitizeFirestoreData({
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+        lastMessage: options?.welcomeMessage
+          ? {
+              text: options.welcomeMessage.text,
+              senderId: options.welcomeMessage.senderId,
+              createdAt: firestore.FieldValue.serverTimestamp(),
+              messageType: 'text',
+            }
+          : firestore.FieldValue.delete(),
+      }),
+    );
+  } catch (err) {
+    logFirestoreError(
+      'clearConversationMessages',
+      'messages',
+      `conversations/${conversationId}/messages`,
+      { conversationId },
+      err,
+    );
+    throw err;
+  }
+}
+
 export async function uploadMedia(conversationId: string, uri: string, pathPrefix: string): Promise<string> {
   const normalized = normalizeFilePath(uri);
   const filename = normalized.substring(normalized.lastIndexOf('/') + 1) || `file_${Date.now()}`;

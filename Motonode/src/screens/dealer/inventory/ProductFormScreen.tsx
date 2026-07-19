@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,9 +15,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { BookingPickerSheet } from '@components/booking/pickers/BookingPickerSheet';
 import { DealerStackRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
 import { InventoryImageUploadSection } from '@components/dealer/InventoryImageUploadSection';
+import { ProductDetailSkeleton } from '@components/loaders';
 import { useColors } from '@hooks/useColors';
 import {
   createDealerProduct,
@@ -25,15 +27,43 @@ import {
   getDealerProducts,
   updateDealerProduct,
 } from '@services/dealer.service';
+import { getDropdownOptions } from '@services/dropdown.service';
 import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
+import type { DropdownOption } from '../../../types/dropdown';
 
 type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRoutes.ProductForm>;
 
-const CATEGORIES = ['Filters', 'Lubricants', 'Tyres', 'Batteries', 'Wipers', 'Ignition', 'Brakes', 'Accessories', 'Riding Gear', 'Other'];
+type DropdownField =
+  | 'brand'
+  | 'category'
+  | 'batteryType'
+  | 'vehicleBrand'
+  | 'vehicleModel';
+
+const FALLBACK_CATEGORIES: DropdownOption[] = [
+  'Filters',
+  'Lubricants',
+  'Tyres',
+  'Batteries',
+  'Batteries & Chargers',
+  'Wipers',
+  'Ignition',
+  'Brakes',
+  'Accessories',
+  'Riding Gear',
+  'Other',
+].map((name) => ({ label: name, value: name }));
+
+const MAX_IMAGES = 3;
+
+function isBatteryCategoryLabel(label: string): boolean {
+  const lower = label.trim().toLowerCase();
+  return lower.includes('batter');
+}
 
 export function ProductFormScreen({ route, navigation }: Props) {
   const colors = useColors();
@@ -43,21 +73,114 @@ export function ProductFormScreen({ route, navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [loadingProduct, setLoadingProduct] = useState(!!editId);
-  const [form, setForm] = useState({
-    name: '',
-    brand: '',
-    category: 'Lubricants',
-    price: '',
-    mrp: '',
-    sku: '',
-    stock: '',
-    description: '',
-    image: '',
-    hsnCode: '',
-    weight: '',
-    lowStockAlert: true,
-  });
   const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [categoryValue, setCategoryValue] = useState('');
+  const [categoryLabel, setCategoryLabel] = useState('');
+  const [price, setPrice] = useState('');
+  const [mrp, setMrp] = useState('');
+  const [sku, setSku] = useState('');
+  const [stock, setStock] = useState('');
+  const [description, setDescription] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | ''>('');
+  const [isSparePart, setIsSparePart] = useState(false);
+  const [vehicleBrandId, setVehicleBrandId] = useState('');
+  const [vehicleBrandLabel, setVehicleBrandLabel] = useState('');
+  const [vehicleModelId, setVehicleModelId] = useState('');
+  const [vehicleModelLabel, setVehicleModelLabel] = useState('');
+  const [batteryTypeId, setBatteryTypeId] = useState('');
+  const [batteryTypeLabel, setBatteryTypeLabel] = useState('');
+  const [voltageV, setVoltageV] = useState('');
+  const [returnPolicy, setReturnPolicy] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [specKey, setSpecKey] = useState('');
+  const [specValue, setSpecValue] = useState('');
+  const [specifications, setSpecifications] = useState<Record<string, string>>({});
+
+  const [productBrands, setProductBrands] = useState<DropdownOption[]>([]);
+  const [categories, setCategories] = useState<DropdownOption[]>(FALLBACK_CATEGORIES);
+  const [batteryTypes, setBatteryTypes] = useState<DropdownOption[]>([]);
+  const [vehicleBrands, setVehicleBrands] = useState<DropdownOption[]>([]);
+  const [vehicleModels, setVehicleModels] = useState<DropdownOption[]>([]);
+
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [dropdownField, setDropdownField] = useState<DropdownField>('brand');
+  const [dropdownSearch, setDropdownSearch] = useState('');
+
+  const isBatteryCategory = useMemo(
+    () => isBatteryCategoryLabel(categoryLabel || categoryValue),
+    [categoryLabel, categoryValue],
+  );
+  const showCompatibleFields = isSparePart && (vehicleType === 'Car' || vehicleType === 'Bike');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const data = await getDropdownOptions();
+      if (cancelled) return;
+      setProductBrands(data.productBrands.length ? data.productBrands : []);
+      setCategories(data.categories.length ? data.categories : FALLBACK_CATEGORIES);
+      setBatteryTypes(data.batteryTypes);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!vehicleType) {
+      setVehicleBrands([]);
+      setVehicleModels([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const data = await getDropdownOptions(vehicleType);
+      if (cancelled) return;
+      setVehicleBrands(data.brands);
+      setVehicleModels([]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicleType]);
+
+  useEffect(() => {
+    if (!vehicleType || !vehicleBrandId) {
+      setVehicleModels([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const data = await getDropdownOptions(vehicleType, vehicleBrandId);
+      if (cancelled) return;
+      setVehicleModels(data.models);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [vehicleType, vehicleBrandId]);
+
+  useEffect(() => {
+    if (!isBatteryCategory) {
+      setBatteryTypeId('');
+      setBatteryTypeLabel('');
+      setVoltageV('');
+    }
+  }, [isBatteryCategory]);
+
+  useEffect(() => {
+    if (!showCompatibleFields) {
+      setVehicleBrandId('');
+      setVehicleBrandLabel('');
+      setVehicleModelId('');
+      setVehicleModelLabel('');
+    }
+  }, [showCompatibleFields]);
 
   useEffect(() => {
     if (!editId) return;
@@ -70,20 +193,38 @@ export function ProductFormScreen({ route, navigation }: Props) {
           (item) => getProductId(item) === editId,
         );
         if (!cancelled && product) {
-          setForm({
-            name: product.name,
-            brand: product.brand,
-            category: product.category || 'Lubricants',
-            price: String(product.price),
-            mrp: String(product.originalPrice ?? product.price),
-            sku: product.tags?.[0] || '',
-            stock: String(product.stock),
-            description: product.description || '',
-            image: product.images?.[0] || '',
-            hsnCode: '',
-            weight: '',
-            lowStockAlert: true,
-          });
+          setName(product.name);
+          setBrand(product.brand);
+          const rawCategory = product.category || '';
+          setCategoryValue(rawCategory);
+          setCategoryLabel(rawCategory);
+          setPrice(String(product.price));
+          setMrp(String(product.originalPrice ?? product.price));
+          setSku(product.tags?.[0] || '');
+          setTags(product.tags?.slice(1) ?? []);
+          setStock(String(product.stock));
+          setDescription(product.description || '');
+          setImages(product.images?.length ? product.images : []);
+          setVehicleType(
+            product.vehicleType === 'Car' || product.vehicleType === 'Bike'
+              ? product.vehicleType
+              : '',
+          );
+          setIsSparePart(Boolean(product.isSparePart));
+          setVehicleBrandId(product.vehicleBrandId || '');
+          setVehicleBrandLabel(product.vehicleBrandName || '');
+          setVehicleModelId(product.vehicleModelId || '');
+          setVehicleModelLabel(product.vehicleModelName || '');
+          setBatteryTypeId(product.batteryTypeId || '');
+          setBatteryTypeLabel(product.batteryTypeName || '');
+          setVoltageV(product.voltageV != null ? String(product.voltageV) : '');
+          const specs: Record<string, string> = {};
+          if (product.specifications) {
+            Object.entries(product.specifications).forEach(([k, v]) => {
+              specs[k] = String(v ?? '');
+            });
+          }
+          setSpecifications(specs);
         }
       } catch (error) {
         if (!cancelled) {
@@ -98,45 +239,261 @@ export function ProductFormScreen({ route, navigation }: Props) {
     };
   }, [editId]);
 
-  const set = (key: string, value: string | boolean) => setForm((p) => ({ ...p, [key]: value }));
+  // Rematch category / battery labels once dropdown options load
+  useEffect(() => {
+    if (!categoryValue || !categories.length) return;
+    const match = categories.find(
+      (c) => c.value === categoryValue || c.label === categoryValue || c.label === categoryLabel,
+    );
+    if (match) {
+      setCategoryValue(match.value);
+      setCategoryLabel(match.label);
+    }
+  }, [categories, categoryValue, categoryLabel]);
 
-  const handleSave = async () => {
-    if (!form.name || !form.brand || !form.price) {
-      Alert.alert('Missing Fields', 'Please fill in Name, Brand, and Price.');
+  useEffect(() => {
+    if (!batteryTypeId || !batteryTypes.length) return;
+    const match = batteryTypes.find((t) => t.value === batteryTypeId);
+    if (match) setBatteryTypeLabel(match.label);
+  }, [batteryTypes, batteryTypeId]);
+
+  const openDropdown = (field: DropdownField) => {
+    lightHaptic();
+    setDropdownField(field);
+    setDropdownSearch('');
+    setDropdownVisible(true);
+  };
+
+  const dropdownOptions = useMemo((): DropdownOption[] => {
+    switch (dropdownField) {
+      case 'brand':
+        return productBrands;
+      case 'category':
+        return categories;
+      case 'batteryType':
+        return batteryTypes;
+      case 'vehicleBrand':
+        return vehicleBrands;
+      case 'vehicleModel':
+        return vehicleModels;
+      default:
+        return [];
+    }
+  }, [dropdownField, productBrands, categories, batteryTypes, vehicleBrands, vehicleModels]);
+
+  const filteredDropdownOptions = useMemo(() => {
+    const query = dropdownSearch.trim().toLowerCase();
+    if (!query) return dropdownOptions;
+    return dropdownOptions.filter(
+      (option) =>
+        option.label.toLowerCase().includes(query) ||
+        option.value.toLowerCase().includes(query),
+    );
+  }, [dropdownOptions, dropdownSearch]);
+
+  const dropdownTitle = useMemo(() => {
+    switch (dropdownField) {
+      case 'brand':
+        return 'Select Brand';
+      case 'category':
+        return 'Select Category';
+      case 'batteryType':
+        return 'Select Battery Type';
+      case 'vehicleBrand':
+        return 'Select Compatible Brand';
+      case 'vehicleModel':
+        return 'Select Compatible Model';
+      default:
+        return 'Select';
+    }
+  }, [dropdownField]);
+
+  const selectedDropdownValue = useMemo(() => {
+    switch (dropdownField) {
+      case 'brand':
+        return productBrands.find((o) => o.label === brand)?.value ?? brand;
+      case 'category':
+        return categoryValue;
+      case 'batteryType':
+        return batteryTypeId;
+      case 'vehicleBrand':
+        return vehicleBrandId;
+      case 'vehicleModel':
+        return vehicleModelId;
+      default:
+        return '';
+    }
+  }, [
+    dropdownField,
+    productBrands,
+    brand,
+    categoryValue,
+    batteryTypeId,
+    vehicleBrandId,
+    vehicleModelId,
+  ]);
+
+  const handleDropdownSelect = (option: DropdownOption) => {
+    switch (dropdownField) {
+      case 'brand':
+        setBrand(option.label);
+        break;
+      case 'category':
+        setCategoryValue(option.value);
+        setCategoryLabel(option.label);
+        break;
+      case 'batteryType':
+        setBatteryTypeId(option.value);
+        setBatteryTypeLabel(option.label);
+        break;
+      case 'vehicleBrand':
+        setVehicleBrandId(option.value);
+        setVehicleBrandLabel(option.label);
+        setVehicleModelId('');
+        setVehicleModelLabel('');
+        break;
+      case 'vehicleModel':
+        setVehicleModelId(option.value);
+        setVehicleModelLabel(option.label);
+        break;
+      default:
+        break;
+    }
+    setDropdownSearch('');
+    setDropdownVisible(false);
+  };
+
+  const addTag = () => {
+    const next = tagInput.trim();
+    if (!next) return;
+    if (tags.includes(next) || next === sku.trim()) {
+      setTagInput('');
       return;
     }
+    setTags((prev) => [...prev, next]);
+    setTagInput('');
+  };
+
+  const addSpec = () => {
+    const key = specKey.trim();
+    const value = specValue.trim();
+    if (!key || !value) {
+      Alert.alert('Specifications', 'Enter both a key and a value.');
+      return;
+    }
+    setSpecifications((prev) => ({ ...prev, [key]: value }));
+    setSpecKey('');
+    setSpecValue('');
+  };
+
+  const handleSave = async () => {
+    const trimmedName = name.trim();
+    const trimmedBrand = brand.trim();
+    const trimmedDescription = description.trim();
+    const parsedPrice = parseFloat(price);
+    const stockNum = parseInt(stock, 10);
+    const parsedMrp = parseFloat(mrp) || parsedPrice;
+
+    if (!trimmedName || !trimmedBrand || !categoryValue) {
+      Alert.alert('Missing Fields', 'Please fill in Name, Brand, and Category.');
+      return;
+    }
+    if (!trimmedDescription) {
+      Alert.alert('Missing Fields', 'Please enter a product description.');
+      return;
+    }
+    if (!vehicleType) {
+      Alert.alert('Missing Fields', 'Please select Vehicle Type (Car or Bike).');
+      return;
+    }
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      Alert.alert('Invalid Price', 'Price must be greater than 0.');
+      return;
+    }
+    if (!Number.isFinite(stockNum) || stockNum < 0) {
+      Alert.alert('Invalid Stock', 'Stock must be 0 or greater.');
+      return;
+    }
+    if (isBatteryCategory) {
+      if (!batteryTypeId) {
+        Alert.alert('Missing Fields', 'Please select a Battery Type.');
+        return;
+      }
+      const voltageNum = parseFloat(voltageV);
+      if (!Number.isFinite(voltageNum) || voltageNum <= 0) {
+        Alert.alert('Invalid Voltage', 'Please enter a valid voltage greater than 0.');
+        return;
+      }
+    }
+    if (showCompatibleFields && !vehicleBrandId) {
+      Alert.alert('Missing Fields', 'Please select a Compatible Brand for spare parts.');
+      return;
+    }
+
     lightHaptic();
     setSaving(true);
     try {
-      const stockNum = parseInt(form.stock, 10) || 0;
-      const parsedPrice = parseFloat(form.price) || 0;
-      const parsedMrp = parseFloat(form.mrp) || parsedPrice;
-      const placeholderImage = `https://placehold.co/200x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 12))}`;
-      const images = form.image ? [form.image] : [placeholderImage];
+      const finalTags = [
+        ...(sku.trim() ? [sku.trim()] : []),
+        ...tags.filter((t) => t.trim() && t.trim() !== sku.trim()),
+      ];
+      const payloadImages =
+        images.length > 0
+          ? images
+          : [
+              `https://placehold.co/200x200/2563EB/white?text=${encodeURIComponent(trimmedName.substring(0, 12))}`,
+            ];
+
+      const basePayload = {
+        name: trimmedName,
+        brand: trimmedBrand,
+        category: categoryValue,
+        price: parsedPrice,
+        originalPrice: parsedMrp,
+        stock: stockNum,
+        description: trimmedDescription,
+        images: payloadImages,
+        vehicleType: vehicleType as 'Car' | 'Bike',
+        isSparePart,
+        tags: finalTags.length ? finalTags : undefined,
+        specifications: Object.keys(specifications).length ? specifications : undefined,
+        returnPolicy: returnPolicy.trim() || undefined,
+        ...(isBatteryCategory
+          ? {
+              batteryTypeId,
+              voltageV: parseFloat(voltageV),
+            }
+          : {
+              batteryTypeId: null as string | null,
+              voltageV: null as number | null,
+            }),
+        ...(showCompatibleFields
+          ? {
+              vehicleBrandId,
+              vehicleModelId: vehicleModelId || undefined,
+            }
+          : {
+              vehicleBrandId: null as string | null,
+              vehicleModelId: null as string | null,
+            }),
+      };
 
       if (isEdit && editId) {
-        await updateDealerProduct(editId, {
-          name: form.name,
-          brand: form.brand,
-          category: form.category,
-          price: parsedPrice,
-          originalPrice: parsedMrp,
-          stock: stockNum,
-          description: form.description,
-          images,
-          tags: form.sku ? [form.sku] : undefined,
-        });
+        await updateDealerProduct(editId, basePayload);
       } else {
+        const { batteryTypeId: batId, voltageV: volt, vehicleBrandId: vbId, vehicleModelId: vmId, ...createRest } =
+          basePayload;
         await createDealerProduct({
-          name: form.name,
-          brand: form.brand,
-          category: form.category,
-          price: parsedPrice,
-          originalPrice: parsedMrp,
-          stock: stockNum,
-          description: form.description,
-          images,
-          tags: form.sku ? [form.sku] : undefined,
+          ...createRest,
+          ...(isBatteryCategory
+            ? { batteryTypeId: batId as string, voltageV: volt as number }
+            : {}),
+          ...(showCompatibleFields
+            ? {
+                vehicleBrandId: vbId as string,
+                ...(vmId ? { vehicleModelId: vmId as string } : {}),
+              }
+            : {}),
         });
       }
       successHaptic();
@@ -173,30 +530,96 @@ export function ProductFormScreen({ route, navigation }: Props) {
 
   if (loadingProduct) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.textSecondary }}>Loading product…</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ProductDetailSkeleton />
       </View>
     );
   }
 
+  const renderSelectRow = (
+    label: string,
+    value: string,
+    placeholder: string,
+    onPress: () => void,
+    icon: string,
+    required?: boolean,
+    disabled?: boolean,
+  ) => (
+    <Pressable
+      onPress={() => {
+        if (disabled) return;
+        onPress();
+      }}
+      style={[
+        styles.selectField,
+        {
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          opacity: disabled ? 0.6 : 1,
+        },
+      ]}
+    >
+      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+        <Feather name={icon as 'folder'} size={14} color={colors.icon} />
+      </View>
+      <View style={styles.selectFieldTextContainer}>
+        <Text style={[styles.selectFieldLabel, { color: colors.textSecondary }]}>
+          {label}
+          {required ? ' *' : ''}
+        </Text>
+        <Text
+          style={[
+            styles.selectFieldValue,
+            {
+              color: value ? colors.textPrimary : colors.textTertiary,
+              paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {value || placeholder}
+        </Text>
+      </View>
+      <Feather
+        name="chevron-down"
+        size={16}
+        color={colors.textTertiary}
+        style={styles.dropdownIcon}
+      />
+    </Pressable>
+  );
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-
         <ChromeHeader style={styles.header} contentPad={8}>
-          <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
+          <Pressable
+            style={styles.backBtn}
+            onPress={() => {
+              lightHaptic();
+              navigation.goBack();
+            }}
+          >
             <Feather name="arrow-left" size={20} color={colors.headerForeground} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{isEdit ? 'Edit Product' : 'Add Product'}</Text>
-            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Add new product to your inventory</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>
+              {isEdit ? 'Edit Product' : 'Add Product'}
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
+              Add new product to your inventory
+            </Text>
           </View>
-          <Pressable style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>
+          <Pressable style={styles.saveHeaderBtn} onPress={() => void handleSave()} disabled={saving}>
             <Feather name="save" size={13} color="#ffffff" style={{ marginRight: 5 }} />
             <Text style={styles.saveHeaderText}>{saving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
           {isEdit ? (
-            <Pressable style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]} onPress={handleDelete} disabled={saving}>
+            <Pressable
+              style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]}
+              onPress={handleDelete}
+              disabled={saving}
+            >
               <Feather name="trash-2" size={13} color="#ffffff" />
             </Pressable>
           ) : null}
@@ -207,246 +630,434 @@ export function ProductFormScreen({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Section 1: Product Images */}
+          {/* 1. Images */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionNumberBadge}><Text style={styles.sectionNumberText}>1</Text></View>
+              <View style={styles.sectionNumberBadge}>
+                <Text style={styles.sectionNumberText}>1</Text>
+              </View>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Product Images</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Upload clear images of your product</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Product Images
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Optional — up to {MAX_IMAGES} images
+                </Text>
               </View>
             </View>
             <InventoryImageUploadSection
-              imageUri={form.image || undefined}
+              imageUris={images}
+              maxImages={MAX_IMAGES}
               title="Upload clear images of your product"
-              onImageChange={(url) => set('image', url)}
+              onImagesChange={setImages}
             />
           </View>
 
-          {/* Section 2: Basic Information */}
+          {/* 2. Basic Information */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}><Text style={styles.sectionNumberText}>2</Text></View>
+              <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
+                <Text style={styles.sectionNumberText}>2</Text>
+              </View>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Basic Information</Text>
             </View>
-            <View style={styles.twoColRow}>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="package" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Product Name *</Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="Castrol GTX 20W-50"
-                  placeholderTextColor={colors.textTertiary}
-                  value={form.name}
-                  onChangeText={(v) => set('name', v)}
-                />
-              </View>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="shield" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Product Name *</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary },
+                ]}
+                placeholder="Castrol GTX 20W-50"
+                placeholderTextColor={colors.textTertiary}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            {productBrands.length > 0
+              ? renderSelectRow('Brand', brand, 'Select brand', () => openDropdown('brand'), 'shield', true)
+              : (
+                <View style={styles.inputWrapper}>
                   <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Brand *</Text>
-                </View>
-                <View style={[styles.inputDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <TextInput
-                    style={[styles.inputInner, { color: colors.textPrimary }]}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
                     placeholder="Castrol"
                     placeholderTextColor={colors.textTertiary}
-                    value={form.brand}
-                    onChangeText={(v) => set('brand', v)}
+                    value={brand}
+                    onChangeText={setBrand}
                   />
-                  <Feather name="chevron-down" size={14} color={colors.textSecondary} />
                 </View>
-              </View>
-            </View>
+              )}
 
-            <View style={styles.twoColRow}>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="hash" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>SKU / Part No. *</Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="CAS-020"
-                  placeholderTextColor={colors.textTertiary}
-                  value={form.sku}
-                  onChangeText={(v) => set('sku', v)}
-                />
-              </View>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="folder" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Category *</Text>
-                </View>
-                <View style={[styles.inputDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={[styles.inputInner, { color: colors.textPrimary }]}>{form.category}</Text>
-                  <Feather name="chevron-down" size={14} color={colors.textSecondary} />
-                </View>
-                {/* Category chips shown inline */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
-                  {CATEGORIES.map((cat) => (
-                    <Pressable
-                      key={cat}
-                      onPress={() => { lightHaptic(); set('category', cat); }}
-                      style={[styles.smallChip, {
-                        backgroundColor: form.category === cat ? '#E60012' : colors.card,
-                        borderColor: form.category === cat ? '#E60012' : colors.border,
-                      }]}
+            {renderSelectRow(
+              'Category',
+              categoryLabel || categoryValue,
+              'Select category',
+              () => openDropdown('category'),
+              'folder',
+              true,
+            )}
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vehicle Type *</Text>
+              <View style={styles.chipRow}>
+                {(['Car', 'Bike'] as const).map((type) => (
+                  <Pressable
+                    key={type}
+                    onPress={() => {
+                      lightHaptic();
+                      setVehicleType(type);
+                      setVehicleBrandId('');
+                      setVehicleBrandLabel('');
+                      setVehicleModelId('');
+                      setVehicleModelLabel('');
+                    }}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: vehicleType === type ? '#E60012' : colors.card,
+                        borderColor: vehicleType === type ? '#E60012' : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        { color: vehicleType === type ? '#fff' : colors.textSecondary },
+                      ]}
                     >
-                      <Text style={[styles.smallChipText, { color: form.category === cat ? '#fff' : colors.textSecondary }]}>{cat}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
+                      {type}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
 
             <View style={styles.inputWrapper}>
-              <View style={styles.inputIconRow}>
-                <Feather name="align-left" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Description</Text>
-              </View>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>SKU / Part No.</Text>
               <TextInput
-                style={[styles.inputMultiline, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary },
+                ]}
+                placeholder="CAS-020"
+                placeholderTextColor={colors.textTertiary}
+                value={sku}
+                onChangeText={setSku}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Description *</Text>
+              <TextInput
+                style={[
+                  styles.inputMultiline,
+                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary },
+                ]}
                 placeholder="High performance engine oil for superior protection and mileage."
                 placeholderTextColor={colors.textTertiary}
-                value={form.description}
-                onChangeText={(v) => set('description', v)}
+                value={description}
+                onChangeText={setDescription}
                 multiline
-                numberOfLines={3}
-                maxLength={250}
+                numberOfLines={4}
               />
-              <Text style={[styles.charCount, { color: colors.textTertiary }]}>{form.description.length}/250</Text>
             </View>
           </View>
 
-          {/* Section 3: Pricing */}
+          {/* 3. Pricing & Inventory */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}><Text style={styles.sectionNumberText}>3</Text></View>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing</Text>
+              <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
+                <Text style={styles.sectionNumberText}>3</Text>
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Inventory</Text>
             </View>
             <View style={styles.twoColRow}>
               <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="dollar-sign" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Selling Price (₹) *</Text>
-                </View>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Selling Price (₹) *</Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="1,150"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="1150"
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="numeric"
-                  value={form.price}
-                  onChangeText={(v) => set('price', v)}
+                  value={price}
+                  onChangeText={setPrice}
                 />
               </View>
               <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="tag" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>MRP (₹)</Text>
-                </View>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>MRP (₹)</Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="1,450"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="1450"
                   placeholderTextColor={colors.textTertiary}
                   keyboardType="numeric"
-                  value={form.mrp}
-                  onChangeText={(v) => set('mrp', v)}
+                  value={mrp}
+                  onChangeText={setMrp}
                 />
               </View>
-            </View>
-          </View>
-
-          {/* Section 4: Inventory */}
-          <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}><Text style={styles.sectionNumberText}>4</Text></View>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Inventory</Text>
             </View>
             <View style={styles.inputWrapper}>
-              <View style={styles.inputIconRow}>
-                <Feather name="box" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Stock Quantity *</Text>
-              </View>
-              <View style={styles.stockRow}>
-                <TextInput
-                  style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="34"
-                  placeholderTextColor={colors.textTertiary}
-                  keyboardType="numeric"
-                  value={form.stock}
-                  onChangeText={(v) => set('stock', v)}
-                />
-                <Text style={[styles.unitsLabel, { color: colors.textSecondary }]}>units</Text>
-              </View>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Stock Quantity *</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary },
+                ]}
+                placeholder="34"
+                placeholderTextColor={colors.textTertiary}
+                keyboardType="numeric"
+                value={stock}
+                onChangeText={setStock}
+              />
             </View>
           </View>
 
-          {/* Section 5: Additional Details */}
+          {/* 4. Spare part / Battery */}
           <View style={styles.sectionBlock}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.sectionNumberBadge, { backgroundColor: '#8B5CF6' }]}><Text style={styles.sectionNumberText}>5</Text></View>
-              <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Additional Details <Text style={[styles.optionalTag, { color: colors.textSecondary }]}>(Optional)</Text></Text>
+              <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
+                <Text style={styles.sectionNumberText}>4</Text>
               </View>
-            </View>
-            <View style={styles.twoColRow}>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="layers" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>HSN Code</Text>
-                </View>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  placeholder="Enter HSN code"
-                  placeholderTextColor={colors.textTertiary}
-                  value={form.hsnCode}
-                  onChangeText={(v) => set('hsnCode', v)}
-                />
-              </View>
-              <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.inputIconRow}>
-                  <Feather name="activity" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Weight</Text>
-                </View>
-                <View style={styles.stockRow}>
-                  <TextInput
-                    style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                    placeholder="Enter weight"
-                    placeholderTextColor={colors.textTertiary}
-                    keyboardType="numeric"
-                    value={form.weight}
-                    onChangeText={(v) => set('weight', v)}
-                  />
-                  <Text style={[styles.unitsLabel, { color: colors.textSecondary }]}>kg</Text>
-                </View>
-              </View>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Compatibility</Text>
             </View>
 
-            {/* Low Stock Toggle */}
-            <View style={[styles.toggleSettingRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.toggleSettingRow,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.toggleSettingLeft}>
-                <View style={[styles.toggleSettingIcon, { backgroundColor: '#ECFDF5' }]}>
-                  <Feather name="bell" size={14} color="#10B981" />
+                <View style={[styles.toggleSettingIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Feather name="tool" size={14} color="#D97706" />
                 </View>
-                <View>
-                  <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>Low Stock Alert</Text>
-                  <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>Get notified when stock is running low</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>Spare Part</Text>
+                  <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>
+                    Mark if this is a vehicle spare part
+                  </Text>
                 </View>
               </View>
               <Switch
-                value={form.lowStockAlert as boolean}
-                onValueChange={(v) => set('lowStockAlert', v)}
+                value={isSparePart}
+                onValueChange={(v) => {
+                  lightHaptic();
+                  setIsSparePart(v);
+                }}
                 trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                 thumbColor="#ffffff"
+              />
+            </View>
+
+            {showCompatibleFields ? (
+              <>
+                {renderSelectRow(
+                  'Compatible Brand',
+                  vehicleBrandLabel,
+                  vehicleType ? 'Select brand' : 'Select vehicle type first',
+                  () => openDropdown('vehicleBrand'),
+                  'truck',
+                  true,
+                  !vehicleType,
+                )}
+                {renderSelectRow(
+                  'Compatible Model',
+                  vehicleModelLabel,
+                  vehicleBrandId ? 'Optional' : 'Select brand first',
+                  () => openDropdown('vehicleModel'),
+                  'git-branch',
+                  false,
+                  !vehicleBrandId,
+                )}
+              </>
+            ) : null}
+
+            {isBatteryCategory ? (
+              <>
+                {renderSelectRow(
+                  'Battery Type',
+                  batteryTypeLabel,
+                  'Select battery type',
+                  () => openDropdown('batteryType'),
+                  'zap',
+                  true,
+                )}
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Voltage (V) *</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    placeholder="12"
+                    placeholderTextColor={colors.textTertiary}
+                    keyboardType="numeric"
+                    value={voltageV}
+                    onChangeText={setVoltageV}
+                  />
+                </View>
+              </>
+            ) : null}
+          </View>
+
+          {/* 5. Specs, tags, return policy */}
+          <View style={styles.sectionBlock}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionNumberBadge, { backgroundColor: '#8B5CF6' }]}>
+                <Text style={styles.sectionNumberText}>5</Text>
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Additional Details{' '}
+                <Text style={[styles.optionalTag, { color: colors.textSecondary }]}>(Optional)</Text>
+              </Text>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Specifications</Text>
+              {Object.entries(specifications).map(([key, value]) => (
+                <View key={key} style={[styles.specRow, { borderColor: colors.border }]}>
+                  <Text style={[styles.specText, { color: colors.textPrimary }]}>
+                    {key}: {value}
+                  </Text>
+                  <Pressable
+                    onPress={() =>
+                      setSpecifications((prev) => {
+                        const next = { ...prev };
+                        delete next[key];
+                        return next;
+                      })
+                    }
+                    hitSlop={8}
+                  >
+                    <Feather name="x" size={16} color={colors.textSecondary} />
+                  </Pressable>
+                </View>
+              ))}
+              <View style={styles.twoColRow}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      flex: 1,
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Key"
+                  placeholderTextColor={colors.textTertiary}
+                  value={specKey}
+                  onChangeText={setSpecKey}
+                />
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      flex: 1,
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Value"
+                  placeholderTextColor={colors.textTertiary}
+                  value={specValue}
+                  onChangeText={setSpecValue}
+                />
+              </View>
+              <Pressable style={styles.addChipBtn} onPress={addSpec}>
+                <Feather name="plus" size={14} color="#E60012" />
+                <Text style={styles.addChipBtnText}>Add specification</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Tags</Text>
+              <View style={styles.chipRow}>
+                {sku.trim() ? (
+                  <View style={[styles.tagChip, { backgroundColor: colors.muted }]}>
+                    <Text style={[styles.tagChipText, { color: colors.textPrimary }]}>{sku.trim()}</Text>
+                  </View>
+                ) : null}
+                {tags.map((tag) => (
+                  <Pressable
+                    key={tag}
+                    style={[styles.tagChip, { backgroundColor: colors.muted }]}
+                    onPress={() => setTags((prev) => prev.filter((t) => t !== tag))}
+                  >
+                    <Text style={[styles.tagChipText, { color: colors.textPrimary }]}>{tag}</Text>
+                    <Feather name="x" size={12} color={colors.textSecondary} />
+                  </Pressable>
+                ))}
+              </View>
+              <View style={styles.stockRow}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      flex: 1,
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Add tag"
+                  placeholderTextColor={colors.textTertiary}
+                  value={tagInput}
+                  onChangeText={setTagInput}
+                  onSubmitEditing={addTag}
+                />
+                <Pressable style={styles.addChipBtn} onPress={addTag}>
+                  <Text style={styles.addChipBtnText}>Add</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Return Policy</Text>
+              <TextInput
+                style={[
+                  styles.inputMultiline,
+                  { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary },
+                ]}
+                placeholder="e.g. 7-day return on unused items"
+                placeholderTextColor={colors.textTertiary}
+                value={returnPolicy}
+                onChangeText={setReturnPolicy}
+                multiline
+                numberOfLines={3}
               />
             </View>
           </View>
         </ScrollView>
 
-        {/* Product Summary Footer */}
         <View style={[styles.previewFooter, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
           <View style={[styles.previewIconBox, { backgroundColor: '#F2F2F2' }]}>
             <Feather name="box" size={18} color={colors.icon} />
@@ -454,32 +1065,104 @@ export function ProductFormScreen({ route, navigation }: Props) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.previewTitle, { color: '#1E3A8A' }]}>Product Summary</Text>
             <Text style={[styles.previewSub, { color: '#FF1A1A' }]}>
-              {form.name || 'Product Name'} • {form.category} • {form.sku || 'SKU'}
+              {name || 'Product Name'} • {categoryLabel || categoryValue || 'Category'} •{' '}
+              {vehicleType || 'Type'}
             </Text>
           </View>
           <View style={styles.previewStats}>
             <View style={{ alignItems: 'center' }}>
               <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Stock</Text>
-              <Text style={[styles.previewStatValue, { color: '#10B981' }]}>{form.stock || '0'} units</Text>
+              <Text style={[styles.previewStatValue, { color: '#10B981' }]}>{stock || '0'} units</Text>
             </View>
             <View style={{ alignItems: 'center', marginLeft: 14 }}>
               <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-              <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>₹{form.price || '0'}</Text>
+              <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>
+                ₹{price || '0'}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Sticky Add button */}
         <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
           <Pressable
             style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
-            onPress={handleSave}
+            onPress={() => void handleSave()}
             disabled={saving}
           >
             <Feather name={isEdit ? 'check' : 'plus'} size={16} color="#ffffff" style={{ marginRight: 8 }} />
             <Text style={styles.addBtnText}>{isEdit ? 'Update Product' : 'Add Product'}</Text>
           </Pressable>
         </View>
+
+        <BookingPickerSheet
+          visible={dropdownVisible}
+          title={dropdownTitle}
+          onClose={() => {
+            setDropdownSearch('');
+            setDropdownVisible(false);
+          }}
+        >
+          <View
+            style={[
+              styles.pickerSearchRow,
+              { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+          >
+            <Feather name="search" size={16} color={colors.textTertiary} />
+            <TextInput
+              style={[styles.pickerSearchInput, { color: colors.textPrimary }]}
+              placeholder={`Search ${dropdownTitle.replace(/^Select\s+/i, '').toLowerCase()}…`}
+              placeholderTextColor={colors.textTertiary}
+              value={dropdownSearch}
+              onChangeText={setDropdownSearch}
+              autoCorrect={false}
+              autoCapitalize="none"
+              clearButtonMode="while-editing"
+            />
+            {dropdownSearch.length > 0 ? (
+              <Pressable
+                onPress={() => setDropdownSearch('')}
+                hitSlop={8}
+              >
+                <Feather name="x-circle" size={16} color={colors.textTertiary} />
+              </Pressable>
+            ) : null}
+          </View>
+
+          {dropdownOptions.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, paddingVertical: 12 }}>No options available</Text>
+          ) : filteredDropdownOptions.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, paddingVertical: 12 }}>
+              No matches for “{dropdownSearch.trim()}”
+            </Text>
+          ) : (
+            filteredDropdownOptions.map((option) => {
+              const selected =
+                option.value === selectedDropdownValue || option.label === selectedDropdownValue;
+              return (
+                <Pressable
+                  key={`${option.value}-${option.label}`}
+                  style={[
+                    styles.pickerOption,
+                    {
+                      backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                      borderColor: selected ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    lightHaptic();
+                    handleDropdownSelect(option);
+                  }}
+                >
+                  <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>
+                    {option.label}
+                  </Text>
+                  {selected ? <Feather name="check" size={16} color={colors.primary} /> : null}
+                </Pressable>
+              );
+            })
+          )}
+        </BookingPickerSheet>
       </View>
     </KeyboardAvoidingView>
   );
@@ -488,27 +1171,40 @@ export function ProductFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   headerSubtitle: { fontSize: 10, marginTop: 1 },
   saveHeaderBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#E60012', paddingHorizontal: 12,
-    paddingVertical: 7, borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E60012',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   saveHeaderText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   content: { padding: 16, gap: 16 },
   sectionBlock: {
-    backgroundColor: '#ffffff', borderRadius: 20, borderWidth: 1,
-    borderColor: '#E2E8F0', padding: 16, gap: 14,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    gap: 14,
   },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionNumberBadge: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#E60012', alignItems: 'center', justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E60012',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionNumberText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
@@ -516,52 +1212,168 @@ const styles = StyleSheet.create({
   optionalTag: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   twoColRow: { flexDirection: 'row', gap: 12 },
   inputWrapper: { gap: 5 },
-  inputIconRow: { flexDirection: 'row', alignItems: 'center' },
   inputLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   input: {
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12,
-    paddingVertical: 10, fontSize: 13, fontFamily: 'Inter_500Medium',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
   },
-  inputDropdown: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+  selectField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 52,
   },
-  inputInner: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium' },
+  fieldIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  selectFieldTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  selectFieldLabel: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
+  selectFieldValue: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    padding: 0,
+    marginTop: 1,
+  },
+  dropdownIcon: {
+    marginLeft: 8,
+  },
   inputMultiline: {
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12,
-    paddingVertical: 10, fontSize: 13, fontFamily: 'Inter_400Regular',
-    height: 80, textAlignVertical: 'top',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    minHeight: 88,
+    textAlignVertical: 'top',
   },
-  charCount: { fontSize: 9, textAlign: 'right' },
-  smallChip: {
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
-    borderWidth: 1, marginRight: 6,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
   },
-  smallChipText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   stockRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  unitsLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
   toggleSettingRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 12, borderRadius: 12, borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   toggleSettingLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  toggleSettingIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  toggleSettingIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   toggleSettingTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   toggleSettingSubtitle: { fontSize: 10, marginTop: 1 },
-  previewFooter: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderTopWidth: 1, gap: 12,
+  specRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  previewIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  specText: { flex: 1, fontSize: 12, fontFamily: 'Inter_500Medium' },
+  addChipBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  addChipBtnText: { color: '#E60012', fontSize: 12, fontFamily: 'Inter_700Bold' },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  tagChipText: { fontSize: 11, fontFamily: 'Inter_500Medium' },
+  previewFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderTopWidth: 1,
+    gap: 12,
+  },
+  previewIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   previewTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
   previewSub: { fontSize: 10, marginTop: 2 },
   previewStats: { flexDirection: 'row', alignItems: 'center' },
   previewStatLabel: { fontSize: 9, fontFamily: 'Inter_500Medium' },
   previewStatValue: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-  stickyAddBtn: { paddingHorizontal: 16, paddingTop: 8, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
+  stickyAddBtn: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
   addBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    height: 48, borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 14,
   },
   addBtnText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  pickerOptionText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  pickerSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    marginBottom: 12,
+  },
+  pickerSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    paddingVertical: Platform.OS === 'ios' ? 2 : 8,
+  },
 });

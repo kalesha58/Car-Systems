@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { SignUp } from '../../models/SignUp';
 import { DealerVehicle } from '../../models/DealerVehicle';
 import { BusinessRegistration } from '../../models/BusinessRegistration';
@@ -71,7 +72,12 @@ export const enrichTestDriveLight = async (doc: any): Promise<ITestDrive & ITest
   const [user, vehicle, businessReg] = await Promise.all([
     SignUp.findById(doc.userId).select('name phone email').lean(),
     DealerVehicle.findById(doc.vehicleId).select('brand vehicleModel year vehicleType images').lean(),
-    BusinessRegistration.findById(doc.dealerId).select('businessName').lean(),
+    BusinessRegistration.findOne({
+      $or: [
+        { userId: doc.dealerId },
+        ...(mongoose.Types.ObjectId.isValid(doc.dealerId) ? [{ _id: doc.dealerId }] : []),
+      ],
+    }).select('businessName').lean(),
   ]);
 
   const vehicleDoc = vehicle as any;
@@ -95,7 +101,12 @@ export const enrichTestDriveDetail = async (doc: any): Promise<ITestDrive & ITes
   const [user, vehicle, businessReg] = await Promise.all([
     SignUp.findById(doc.userId).select('name phone email profileImage status').lean(),
     DealerVehicle.findById(doc.vehicleId).lean(),
-    BusinessRegistration.findById(doc.dealerId).select('businessName phone address type').lean(),
+    BusinessRegistration.findOne({
+      $or: [
+        { userId: doc.dealerId },
+        ...(mongoose.Types.ObjectId.isValid(doc.dealerId) ? [{ _id: doc.dealerId }] : []),
+      ],
+    }).select('businessName phone address type').lean(),
   ]);
 
   const vehicleDoc = vehicle as any;

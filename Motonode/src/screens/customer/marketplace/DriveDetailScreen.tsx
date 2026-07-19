@@ -148,7 +148,7 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={[styles.vehicleOverviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.vehicleOverviewLeft}>
-            <View style={styles.testDriveBadge}>
+            <View style={[styles.testDriveBadge, { backgroundColor: colors.primary }]}>
               <Feather name="navigation" size={10} color="#fff" style={{ marginRight: 4 }} />
               <Text style={styles.testDriveBadgeText}>Test Drive</Text>
             </View>
@@ -157,12 +157,12 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
             <View style={styles.miniSpecsRow}>
               {testDrive.vehicleType ? (
                 <View style={styles.miniSpec}>
-                  <Feather name="zap" size={12} color="#2563EB" />
+                  <Feather name="zap" size={12} color={colors.primary} />
                   <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{testDrive.vehicleType}</Text>
                 </View>
               ) : null}
               <View style={styles.miniSpec}>
-                <Feather name="map-pin" size={12} color="#2563EB" />
+                <Feather name="map-pin" size={12} color={colors.primary} />
                 <Text style={[styles.miniSpecText, { color: colors.textSecondary }]}>{dealerName}</Text>
               </View>
             </View>
@@ -175,9 +175,9 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
         </View>
 
         <View style={[styles.subTabsContainer, { backgroundColor: colors.card }]}>
-          <View style={[styles.subTab, styles.subTabActive]}>
-            <Feather name="navigation" size={14} color="#2563EB" style={{ marginRight: 6 }} />
-            <Text style={styles.subTabTextActive}>Test Drive</Text>
+          <View style={[styles.subTab, styles.subTabActive, { backgroundColor: colors.primarySubtle }]}>
+            <Feather name="navigation" size={14} color={colors.primary} style={{ marginRight: 6 }} />
+            <Text style={[styles.subTabTextActive, { color: colors.primary }]}>Test Drive</Text>
           </View>
           <View style={styles.subTab}>
             <Feather name="tool" size={14} color={colors.textSecondary} style={{ marginRight: 6 }} />
@@ -187,8 +187,8 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
 
         <View style={styles.infoBlocksRow}>
           <View style={[styles.infoBlockItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.infoBlockIconWrapper, { backgroundColor: '#EFF6FF' }]}>
-              <Feather name="calendar" size={16} color="#2563EB" />
+            <View style={[styles.infoBlockIconWrapper, { backgroundColor: colors.primarySubtle }]}>
+              <Feather name="calendar" size={16} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.infoBlockLabel, { color: colors.textSecondary }]}>Date & Time</Text>
@@ -200,8 +200,8 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           </View>
 
           <View style={[styles.infoBlockItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.infoBlockIconWrapper, { backgroundColor: '#EFF6FF' }]}>
-              <Feather name="map-pin" size={16} color="#2563EB" />
+            <View style={[styles.infoBlockIconWrapper, { backgroundColor: colors.primarySubtle }]}>
+              <Feather name="map-pin" size={16} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.infoBlockLabel, { color: colors.textSecondary }]}>Dealer</Text>
@@ -236,8 +236,8 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
               <Feather name="compass" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
               <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Booking Type</Text>
             </View>
-            <View style={styles.badgeBlue}>
-              <Text style={styles.badgeBlueText}>Test Drive</Text>
+            <View style={[styles.badgeBlue, { backgroundColor: colors.primarySubtle }]}>
+              <Text style={[styles.badgeBlueText, { color: colors.primary }]}>Test Drive</Text>
             </View>
           </View>
 
@@ -286,11 +286,11 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
             </View>
           </View>
           <View style={styles.dealerActions}>
-            <Pressable style={styles.dealerIconAction}>
-              <Feather name="phone" size={16} color="#2563EB" />
+            <Pressable style={[styles.dealerIconAction, { backgroundColor: colors.primarySubtle }]}>
+              <Feather name="phone" size={16} color={colors.primary} />
             </Pressable>
-            <Pressable style={styles.dealerIconAction}>
-              <Feather name="navigation" size={16} color="#2563EB" />
+            <Pressable style={[styles.dealerIconAction, { backgroundColor: colors.primarySubtle }]}>
+              <Feather name="navigation" size={16} color={colors.primary} />
             </Pressable>
           </View>
         </View>
@@ -327,7 +327,7 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           <Feather name="x-circle" size={16} color="#EF4444" style={{ marginRight: 6 }} />
           <Text style={styles.cancelText}>Cancel Booking</Text>
         </Pressable>
-        <Pressable style={[styles.rescheduleBtn, { backgroundColor: '#2563EB' }]}>
+        <Pressable style={[styles.rescheduleBtn, { backgroundColor: colors.primary }]}>
           <Feather name="calendar" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.rescheduleText}>Reschedule</Text>
         </Pressable>
@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#000000',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#1A1A1A',
   },
   headerTitle: {
     fontSize: 16,
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#333333',
   },
   scrollContent: { paddingBottom: 110, paddingHorizontal: 16, paddingTop: 70 },
   vehicleOverviewCard: {

@@ -6,12 +6,15 @@ import {
   Pressable,
   Text,
   Platform,
+  ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { useColors } from '@hooks/useColors';
 import { AttachmentSheet } from './AttachmentSheet';
 import { VoiceRecorder } from './VoiceRecorder';
 import type { Message } from '../../types/chat';
+
+const QUICK_EMOJIS = ['😀', '😂', '😍', '👍', '🙏', '🔥', '🚗', '🏍️', '✅', '🎉', '❤️', '👋'];
 
 interface MessageInputProps {
   onSendMessage: (text: string) => void;
@@ -38,7 +41,8 @@ export function MessageInput({
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [sheetVisible, setSheetVisible] = useState(false);
-  const typingTimeoutRef = useRef<any>(null);
+  const [emojiPickerVisible, setEmojiPickerVisible] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle typing state callbacks
   const handleTextChange = (val: string) => {
@@ -71,9 +75,14 @@ export function MessageInput({
     if (!text.trim()) return;
     onSendMessage(text.trim());
     setText('');
+    setEmojiPickerVisible(false);
     if (onTypingStatusChange) {
       onTypingStatusChange(false);
     }
+  };
+
+  const insertEmoji = (emoji: string) => {
+    handleTextChange(text + emoji);
   };
 
   if (isRecording) {
@@ -107,11 +116,34 @@ export function MessageInput({
         </View>
       )}
 
+      {emojiPickerVisible && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.emojiRow}
+          style={[styles.emojiPicker, { borderBottomColor: colors.border }]}
+        >
+          {QUICK_EMOJIS.map((emoji) => (
+            <Pressable
+              key={emoji}
+              onPress={() => insertEmoji(emoji)}
+              style={styles.emojiChip}
+              hitSlop={4}
+            >
+              <Text style={styles.emojiChipText}>{emoji}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
       {/* Input row */}
       <View style={styles.container}>
         <Pressable
           style={[styles.actionBtn, { backgroundColor: colors.muted }]}
-          onPress={() => setSheetVisible(true)}
+          onPress={() => {
+            setEmojiPickerVisible(false);
+            setSheetVisible(true);
+          }}
         >
           <Feather name="plus" size={20} color={colors.textSecondary} />
         </Pressable>
@@ -125,9 +157,18 @@ export function MessageInput({
             onChangeText={handleTextChange}
             multiline
             maxLength={1000}
+            textAlignVertical="center"
           />
-          <Pressable style={styles.emojiBtn}>
-            <Feather name="smile" size={20} color={colors.textSecondary} />
+          <Pressable
+            style={styles.emojiBtn}
+            onPress={() => setEmojiPickerVisible((prev) => !prev)}
+            hitSlop={6}
+          >
+            <Feather
+              name="smile"
+              size={20}
+              color={emojiPickerVisible ? colors.primary : colors.textSecondary}
+            />
           </Pressable>
         </View>
 
@@ -141,7 +182,10 @@ export function MessageInput({
         ) : (
           <Pressable
             style={[styles.actionBtn, { backgroundColor: colors.muted }]}
-            onPress={() => setIsRecording(true)}
+            onPress={() => {
+              setEmojiPickerVisible(false);
+              setIsRecording(true);
+            }}
           >
             <Feather name="mic" size={20} color={colors.textSecondary} />
           </Pressable>
@@ -194,9 +238,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 8,
   },
+  emojiPicker: {
+    marginBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 8,
+  },
+  emojiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 4,
+  },
+  emojiChip: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emojiChipText: {
+    fontSize: 22,
+  },
   container: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 8,
   },
   actionBtn: {
@@ -205,14 +269,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
   },
   inputWrapper: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 20,
-    paddingHorizontal: 12,
+    paddingLeft: 12,
+    paddingRight: 4,
+    minHeight: 40,
     maxHeight: 100,
   },
   input: {
@@ -220,10 +285,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     paddingVertical: Platform.OS === 'ios' ? 8 : 6,
-    paddingRight: 8,
+    paddingRight: 4,
   },
   emojiBtn: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendBtn: {
     width: 40,
@@ -231,6 +300,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
   },
 });

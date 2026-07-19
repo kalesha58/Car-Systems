@@ -17,6 +17,11 @@ export interface ITestDrive {
   vehicleType?: string;
   dealerName?: string;
   customerName?: string;
+  dealer?: {
+    phone: string;
+    address: string;
+    type: string;
+  };
 }
 
 export interface ICreateTestDriveRequest {

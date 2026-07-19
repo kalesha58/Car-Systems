@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -14,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingStatusTabs } from '@components/bookings/BookingStatusTabs';
+import { GarageBookingsListSkeleton } from '@components/loaders';
 import { DealerStackRoutes } from '@constants/routes';
 import type { BookingFilter } from '@data/bookingsData';
 import { getStatusColor, getStatusLabel } from '@data/bookingsData';
@@ -114,8 +114,8 @@ export function DealerServiceBookingsScreen({ navigation }: Props) {
       </View>
 
       {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="#E60012" />
+        <View style={styles.skeletonWrap}>
+          <GarageBookingsListSkeleton />
         </View>
       ) : (
         <FlatList
@@ -220,7 +220,7 @@ export function DealerServiceBookingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  skeletonWrap: { flex: 1, paddingHorizontal: 16, paddingTop: 8 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

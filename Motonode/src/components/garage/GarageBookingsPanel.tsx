@@ -7,6 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BookingListCard } from '@components/bookings/BookingListCard';
 import { BookingStatusTabs } from '@components/bookings/BookingStatusTabs';
 import { BookingSupportBanner } from '@components/bookings/BookingSupportBanner';
+import { GarageBookingsListSkeleton } from '@components/loaders';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useAuth, useBookings } from '@context/index';
 import type { BookingFilter } from '@data/bookingsData';
@@ -20,7 +21,7 @@ interface GarageBookingsPanelProps {
 export function GarageBookingsPanel({ bottomPadding }: GarageBookingsPanelProps) {
   const colors = useColors();
   const { user } = useAuth();
-  const { loadBookings, getCustomerBookings } = useBookings();
+  const { loadBookings, getCustomerBookings, isLoading } = useBookings();
   const navigation = useNavigation<NativeStackNavigationProp<CustomerStackParamList>>();
   const [filter, setFilter] = useState<BookingFilter>('all');
   const [search, setSearch] = useState('');
@@ -41,6 +42,8 @@ export function GarageBookingsPanel({ bottomPadding }: GarageBookingsPanelProps)
           (b.vehicleName ?? '').toLowerCase().includes(search.toLowerCase()),
       )
     : allBookings;
+
+  const showSkeleton = isLoading && allBookings.length === 0 && !search.trim();
 
   return (
     <View style={styles.wrap}>
@@ -72,35 +75,39 @@ export function GarageBookingsPanel({ bottomPadding }: GarageBookingsPanelProps)
 
       <BookingStatusTabs active={filter} onChange={setFilter} />
 
-      <FlatList
-        data={bookings}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Feather name="calendar" size={40} color={colors.textTertiary} />
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No bookings found
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <BookingListCard
-            booking={item}
-            onPress={() =>
-              navigation.navigate(CustomerStackRoutes.BookingDetail, { bookingId: item.id })
-            }
-          />
-        )}
-        ListFooterComponent={
-          bookings.length > 0 ? (
-            <View style={styles.supportWrap}>
-              <BookingSupportBanner />
+      {showSkeleton ? (
+        <GarageBookingsListSkeleton />
+      ) : (
+        <FlatList
+          data={bookings}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomPadding }]}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Feather name="calendar" size={40} color={colors.textTertiary} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No bookings found
+              </Text>
             </View>
-          ) : null
-        }
-      />
+          }
+          renderItem={({ item }) => (
+            <BookingListCard
+              booking={item}
+              onPress={() =>
+                navigation.navigate(CustomerStackRoutes.BookingDetail, { bookingId: item.id })
+              }
+            />
+          )}
+          ListFooterComponent={
+            bookings.length > 0 ? (
+              <View style={styles.supportWrap}>
+                <BookingSupportBanner />
+              </View>
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 }

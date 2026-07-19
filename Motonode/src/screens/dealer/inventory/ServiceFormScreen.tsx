@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,9 +15,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { BookingPickerSheet } from '@components/booking/pickers/BookingPickerSheet';
 import { DealerStackRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
 import { InventoryImageUploadSection } from '@components/dealer/InventoryImageUploadSection';
+import { ServiceDetailSkeleton } from '@components/loaders';
 import { useColors } from '@hooks/useColors';
 import {
   createDealerService,
@@ -25,6 +27,13 @@ import {
   getDealerServices,
   updateDealerService,
 } from '@services/dealer.service';
+import {
+  getServiceCategories,
+  type DeliveryModeValue,
+  type IServiceSection,
+  type ServicePackageValue,
+  type ServiceTypeValue,
+} from '@services/serviceCategory.service';
 import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getServiceDurationLabel, getServiceId, parseDurationMinutes } from '@utils/displayMappers';
@@ -33,19 +42,39 @@ import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
 type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRoutes.ServiceForm>;
 
-const CATEGORIES: { label: string; icon: string }[] = [
-  { label: 'Detailing', icon: 'star' },
-  { label: 'Service', icon: 'settings' },
-  { label: 'AC Service', icon: 'wind' },
-  { label: 'Wash', icon: 'droplet' },
-  { label: 'Protection', icon: 'shield' },
-  { label: 'Body Work', icon: 'truck' },
-  { label: 'Tyres', icon: 'circle' },
-  { label: 'Electrical', icon: 'zap' },
-  { label: 'Other', icon: 'more-horizontal' },
+type PickerField = 'section' | 'subcategory' | 'package';
+
+const MAX_IMAGES = 3;
+
+const DURATIONS = [
+  '30 min',
+  '45 min',
+  '1 hr',
+  '1.5 hrs',
+  '2 hrs',
+  '3 hrs',
+  '4 hrs',
+  '6 hrs',
+  '1 day',
+  '2 days',
 ];
 
-const DURATIONS = ['30 min', '45 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs', '4 hrs', '6 hrs', '1 day', '2 days'];
+function resolveSectionForService(
+  sections: IServiceSection[],
+  serviceType?: ServiceTypeValue | string,
+  vehicleType?: 'Car' | 'Bike',
+): IServiceSection | undefined {
+  if (!serviceType) return undefined;
+  const byType = sections.filter((s) => s.serviceType === serviceType);
+  if (!byType.length) return undefined;
+  if (vehicleType) {
+    const exact = byType.find(
+      (s) => s.vehicleType === vehicleType || s.vehicleType === 'Both' || !s.vehicleType,
+    );
+    if (exact) return exact;
+  }
+  return byType[0];
+}
 
 export function ServiceFormScreen({ route, navigation }: Props) {
   const colors = useColors();
@@ -55,18 +84,69 @@ export function ServiceFormScreen({ route, navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [loadingService, setLoadingService] = useState(!!editId);
-  const [form, setForm] = useState({
-    name: '',
-    category: 'Service',
-    price: '',
-    duration: '1 hr',
-    description: '',
-    available: true,
-    slotsPerDay: '6',
-    image: '',
-    onlineBooking: true,
-  });
   const [saving, setSaving] = useState(false);
+  const [sections, setSections] = useState<IServiceSection[]>([]);
+
+  const [images, setImages] = useState<string[]>([]);
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [durationLabel, setDurationLabel] = useState('1 hr');
+  const [durationMinutes, setDurationMinutes] = useState('60');
+
+  const [sectionId, setSectionId] = useState('');
+  const [serviceType, setServiceType] = useState<ServiceTypeValue | undefined>();
+  const [serviceSubCategory, setServiceSubCategory] = useState('');
+  const [servicePackage, setServicePackage] = useState<ServicePackageValue>('basic');
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryModeValue | null>(null);
+  const [homeService, setHomeService] = useState(false);
+  const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | ''>('');
+  const [vehicleBrand, setVehicleBrand] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [slotBookingEnabled, setSlotBookingEnabled] = useState(true);
+
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [pickerField, setPickerField] = useState<PickerField>('section');
+  const [pickerSearch, setPickerSearch] = useState('');
+
+  const selectedSection = useMemo(
+    () => sections.find((s) => s.id === sectionId) ?? null,
+    [sections, sectionId],
+  );
+
+  const subcategoryRequired = Boolean(
+    selectedSection && selectedSection.subcategories.length > 0,
+  );
+
+  const subcategoryLabel = useMemo(() => {
+    if (!selectedSection || !serviceSubCategory) return '';
+    return (
+      selectedSection.subcategories.find((s) => s.id === serviceSubCategory)?.label ||
+      serviceSubCategory
+    );
+  }, [selectedSection, serviceSubCategory]);
+
+  const packageLabel = useMemo(() => {
+    if (!selectedSection?.packages?.length) {
+      return servicePackage === 'premium' ? 'Premium' : 'Basic';
+    }
+    return (
+      selectedSection.packages.find((p) => p.value === servicePackage)?.label ||
+      servicePackage
+    );
+  }, [selectedSection, servicePackage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const data = await getServiceCategories();
+      if (!cancelled) setSections(data.sections);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!editId) return;
@@ -74,22 +154,61 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     (async () => {
       try {
         setLoadingService(true);
-        const response = await getDealerServices({ limit: 1000 });
+        const [categories, response] = await Promise.all([
+          getServiceCategories(),
+          getDealerServices({ limit: 1000 }),
+        ]);
+        if (cancelled) return;
+        setSections(categories.sections);
+
         const service = (response.Response?.services ?? []).find(
           (item) => getServiceId(item) === editId,
         );
-        if (!cancelled && service) {
-          setForm({
-            name: service.name,
-            category: service.category || 'Service',
-            price: String(service.price),
-            duration: getServiceDurationLabel(service),
-            description: service.description || '',
-            available: service.isActive !== false,
-            slotsPerDay: '6',
-            image: service.images?.[0] || '',
-            onlineBooking: service.slotBookingEnabled ?? true,
-          });
+        if (!service) return;
+
+        setName(service.name);
+        setPrice(String(service.price));
+        setDescription(service.description || '');
+        setImages(service.images?.length ? service.images : []);
+        setIsActive(service.isActive !== false);
+        setSlotBookingEnabled(service.slotBookingEnabled ?? true);
+        setHomeService(Boolean(service.homeService));
+        setVehicleBrand(service.vehicleBrand || '');
+        setVehicleModel(service.vehicleModel || '');
+        setServiceSubCategory(service.serviceSubCategory || '');
+        setServicePackage(service.servicePackage === 'premium' ? 'premium' : 'basic');
+        setServiceType(service.serviceType as ServiceTypeValue | undefined);
+
+        const mins = service.durationMinutes || 60;
+        setDurationMinutes(String(mins));
+        setDurationLabel(getServiceDurationLabel(service));
+
+        if (service.vehicleType === 'Car' || service.vehicleType === 'Bike') {
+          setVehicleType(service.vehicleType);
+        } else {
+          setVehicleType('');
+        }
+
+        const matched = resolveSectionForService(
+          categories.sections,
+          service.serviceType,
+          service.vehicleType,
+        );
+        if (matched) {
+          setSectionId(matched.id);
+          setServiceType(matched.serviceType);
+          if (matched.hasDeliveryModes && matched.deliveryModes?.length) {
+            const mode = service.homeService
+              ? matched.deliveryModes.find((d) => d.value === 'home')?.value
+              : matched.deliveryModes.find((d) => d.value !== 'home')?.value;
+            setDeliveryMode(mode ?? matched.deliveryModes[0].value);
+            setHomeService(Boolean(service.homeService));
+          } else {
+            setDeliveryMode(null);
+          }
+          if (matched.vehicleType === 'Car' || matched.vehicleType === 'Bike') {
+            setVehicleType(matched.vehicleType);
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -104,28 +223,174 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     };
   }, [editId]);
 
-  const set = (key: string, value: string | boolean) => setForm((p) => ({ ...p, [key]: value }));
+  const applySection = (section: IServiceSection) => {
+    setSectionId(section.id);
+    setServiceType(section.serviceType);
+    setServiceSubCategory('');
+    setServicePackage('basic');
+    setDeliveryMode(null);
+    setHomeService(false);
+
+    if (section.vehicleType === 'Car' || section.vehicleType === 'Bike') {
+      setVehicleType(section.vehicleType);
+    } else {
+      setVehicleType('');
+    }
+
+    if (section.hasDeliveryModes && section.deliveryModes?.length) {
+      const first = section.deliveryModes[0];
+      setDeliveryMode(first.value);
+      setHomeService(first.value === 'home');
+    }
+  };
+
+  const handleSectionChange = (nextId: string) => {
+    const section = sections.find((s) => s.id === nextId);
+    if (!section) return;
+    applySection(section);
+  };
+
+  const openPicker = (field: PickerField) => {
+    lightHaptic();
+    setPickerField(field);
+    setPickerSearch('');
+    setPickerVisible(true);
+  };
+
+  const pickerTitle = useMemo(() => {
+    if (pickerField === 'section') return 'Select Service Section';
+    if (pickerField === 'subcategory') return 'Select Subcategory';
+    return 'Select Package';
+  }, [pickerField]);
+
+  const pickerOptions = useMemo(() => {
+    if (pickerField === 'section') {
+      return sections.map((s) => ({ value: s.id, label: s.label }));
+    }
+    if (pickerField === 'subcategory') {
+      return (selectedSection?.subcategories ?? []).map((s) => ({
+        value: s.id,
+        label: s.label,
+      }));
+    }
+    const packages =
+      selectedSection?.packages?.length
+        ? selectedSection.packages
+        : [
+            { value: 'basic' as const, label: 'Basic' },
+            { value: 'premium' as const, label: 'Premium' },
+          ];
+    return packages.map((p) => ({ value: p.value, label: p.label }));
+  }, [pickerField, sections, selectedSection]);
+
+  const filteredPickerOptions = useMemo(() => {
+    const q = pickerSearch.trim().toLowerCase();
+    if (!q) return pickerOptions;
+    return pickerOptions.filter(
+      (o) => o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q),
+    );
+  }, [pickerOptions, pickerSearch]);
+
+  const selectedPickerValue = useMemo(() => {
+    if (pickerField === 'section') return sectionId;
+    if (pickerField === 'subcategory') return serviceSubCategory;
+    return servicePackage;
+  }, [pickerField, sectionId, serviceSubCategory, servicePackage]);
+
+  const handlePickerSelect = (value: string) => {
+    if (pickerField === 'section') {
+      handleSectionChange(value);
+    } else if (pickerField === 'subcategory') {
+      setServiceSubCategory(value);
+    } else {
+      setServicePackage(value as ServicePackageValue);
+    }
+    setPickerSearch('');
+    setPickerVisible(false);
+  };
+
+  const setDurationFromChip = (label: string) => {
+    setDurationLabel(label);
+    setDurationMinutes(String(parseDurationMinutes(label)));
+  };
+
+  const setDurationFromMinutes = (raw: string) => {
+    const cleaned = raw.replace(/[^0-9]/g, '');
+    setDurationMinutes(cleaned);
+    const mins = parseInt(cleaned, 10);
+    if (!Number.isNaN(mins) && mins > 0) {
+      const match = DURATIONS.find((d) => parseDurationMinutes(d) === mins);
+      setDurationLabel(match || `${mins} min`);
+    } else {
+      setDurationLabel('');
+    }
+  };
+
+  const handleDeliveryModeSelect = (mode: DeliveryModeValue) => {
+    lightHaptic();
+    setDeliveryMode(mode);
+    setHomeService(mode === 'home');
+  };
 
   const handleSave = async () => {
-    if (!form.name || !form.price) {
-      Alert.alert('Missing Fields', 'Please fill in Name and Price.');
+    if (!name.trim()) {
+      Alert.alert('Missing Fields', 'Please enter a service name.');
       return;
     }
+    const priceNum = parseFloat(price);
+    if (!price || Number.isNaN(priceNum) || priceNum <= 0) {
+      Alert.alert('Missing Fields', 'Please enter a valid price greater than 0.');
+      return;
+    }
+    const durationNum = parseInt(durationMinutes, 10);
+    if (!durationMinutes || Number.isNaN(durationNum) || durationNum < 1) {
+      Alert.alert('Missing Fields', 'Please set a duration of at least 1 minute.');
+      return;
+    }
+    if (!sectionId || !serviceType) {
+      Alert.alert('Missing Fields', 'Please select a service section.');
+      return;
+    }
+    if (subcategoryRequired && !serviceSubCategory.trim()) {
+      Alert.alert('Missing Fields', 'Please select a subcategory.');
+      return;
+    }
+    let resolvedVehicleType: 'Car' | 'Bike' | undefined;
+    if (selectedSection?.vehicleType === 'Both') {
+      if (vehicleType !== 'Car' && vehicleType !== 'Bike') {
+        Alert.alert('Missing Fields', 'Please select Car or Bike.');
+        return;
+      }
+      resolvedVehicleType = vehicleType;
+    } else if (selectedSection?.vehicleType === 'Car' || selectedSection?.vehicleType === 'Bike') {
+      resolvedVehicleType = selectedSection.vehicleType;
+    } else if (vehicleType === 'Car' || vehicleType === 'Bike') {
+      resolvedVehicleType = vehicleType;
+    }
+
+    const resolvedHomeService = selectedSection?.hasDeliveryModes
+      ? deliveryMode === 'home'
+      : homeService;
+
     lightHaptic();
     setSaving(true);
     try {
-      const placeholderImage = `https://placehold.co/400x200/2563EB/white?text=${encodeURIComponent(form.name.substring(0, 16))}`;
-      const images = form.image ? [form.image] : [placeholderImage];
       const payload = {
-        name: form.name,
-        category: form.category,
-        price: parseFloat(form.price) || 0,
-        durationMinutes: parseDurationMinutes(form.duration),
-        homeService: false,
-        description: form.description,
-        images,
-        isActive: form.available,
-        slotBookingEnabled: form.onlineBooking,
+        name: name.trim(),
+        category: selectedSection?.label || undefined,
+        price: priceNum,
+        durationMinutes: durationNum,
+        homeService: resolvedHomeService,
+        description: description.trim() || undefined,
+        images: images.length ? images : undefined,
+        isActive,
+        serviceType,
+        vehicleType: resolvedVehicleType,
+        vehicleBrand: vehicleBrand.trim() || undefined,
+        vehicleModel: vehicleModel.trim() || undefined,
+        serviceSubCategory: serviceSubCategory.trim() || undefined,
+        servicePackage: selectedSection?.hasPackages ? servicePackage : undefined,
+        slotBookingEnabled,
       };
 
       if (isEdit && editId) {
@@ -165,34 +430,105 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     ]);
   };
 
+  const renderSelectRow = (
+    label: string,
+    value: string,
+    placeholder: string,
+    onPress: () => void,
+    icon: string,
+    required?: boolean,
+    disabled?: boolean,
+  ) => (
+    <Pressable
+      onPress={() => {
+        if (disabled) return;
+        onPress();
+      }}
+      style={[
+        styles.selectField,
+        {
+          borderColor: colors.border,
+          backgroundColor: colors.card,
+          opacity: disabled ? 0.6 : 1,
+        },
+      ]}
+    >
+      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+        <Feather name={icon as 'folder'} size={14} color={colors.icon} />
+      </View>
+      <View style={styles.selectFieldTextContainer}>
+        <Text style={[styles.selectFieldLabel, { color: colors.textSecondary }]}>
+          {label}
+          {required ? ' *' : ''}
+        </Text>
+        <Text
+          style={[
+            styles.selectFieldValue,
+            {
+              color: value ? colors.textPrimary : colors.textTertiary,
+              paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {value || placeholder}
+        </Text>
+      </View>
+      <Feather
+        name="chevron-down"
+        size={16}
+        color={colors.textTertiary}
+        style={styles.dropdownIcon}
+      />
+    </Pressable>
+  );
+
   if (loadingService) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ color: colors.textSecondary }}>Loading service…</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ServiceDetailSkeleton />
       </View>
     );
   }
 
-  const currentCategoryIcon = CATEGORIES.find((c) => c.label === form.category)?.icon ?? 'settings';
-
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Clean White Header */}
         <ChromeHeader style={styles.header} contentPad={8}>
-          <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
+          <Pressable
+            style={styles.backBtn}
+            onPress={() => {
+              lightHaptic();
+              navigation.goBack();
+            }}
+          >
             <Feather name="arrow-left" size={20} color={colors.headerForeground} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{isEdit ? 'Edit Service' : 'Add Service'}</Text>
-            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Add a new service to your catalog</Text>
+            <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>
+              {isEdit ? 'Edit Service' : 'Add Service'}
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
+              {isEdit ? 'Update your service listing' : 'Add a new service to your catalog'}
+            </Text>
           </View>
-          <Pressable style={styles.saveHeaderBtn} onPress={handleSave} disabled={saving}>
+          <Pressable
+            style={styles.saveHeaderBtn}
+            onPress={() => void handleSave()}
+            disabled={saving}
+          >
             <Feather name="save" size={13} color="#ffffff" style={{ marginRight: 5 }} />
             <Text style={styles.saveHeaderText}>{saving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
           {isEdit ? (
-            <Pressable style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]} onPress={handleDelete} disabled={saving}>
+            <Pressable
+              style={[styles.saveHeaderBtn, { backgroundColor: '#EF4444', marginLeft: 8 }]}
+              onPress={handleDelete}
+              disabled={saving}
+            >
               <Feather name="trash-2" size={13} color="#ffffff" />
             </Pressable>
           ) : null}
@@ -203,190 +539,454 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Section 0: Service Images */}
+          {/* 1. Images */}
           <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeader}>
               <View style={styles.sectionNumberBadge}>
                 <Text style={styles.sectionNumberText}>1</Text>
               </View>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Images</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Upload a photo for your service listing</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Service Images
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Optional — up to {MAX_IMAGES} images
+                </Text>
               </View>
             </View>
             <InventoryImageUploadSection
-              imageUri={form.image || undefined}
-              title="Upload a photo for your service"
-              onImageChange={(url) => set('image', url)}
+              imageUris={images}
+              maxImages={MAX_IMAGES}
+              title="Upload clear images of your service"
+              onImagesChange={setImages}
             />
           </View>
 
-          {/* Section 1: Service Information */}
+          {/* 2. Classification */}
           <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
                 <Text style={styles.sectionNumberText}>2</Text>
               </View>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Service Information</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Basic details about your service</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Classification
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Section, subcategory, and delivery options
+                </Text>
               </View>
             </View>
 
-            {/* Service Name */}
-            <View style={styles.inputWrapper}>
-              <View style={styles.labelRow}>
-                <Feather name="tool" size={13} color={colors.textSecondary} />
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Service Name *</Text>
-              </View>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                placeholder="Full Car Detailing"
-                placeholderTextColor={colors.textTertiary}
-                value={form.name}
-                onChangeText={(v) => set('name', v)}
-              />
-            </View>
+            {renderSelectRow(
+              'Service Section',
+              selectedSection?.label || '',
+              'Select service section',
+              () => openPicker('section'),
+              'layers',
+              true,
+            )}
 
-            {/* Description */}
-            <View style={styles.inputWrapper}>
-              <View style={styles.labelRow}>
-                <Feather name="align-left" size={13} color={colors.textSecondary} />
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Description *</Text>
-              </View>
-              <TextInput
-                style={[styles.inputMultiline, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                placeholder="Complete interior and exterior cleaning, polishing, and finishing to make your car look brand new."
-                placeholderTextColor={colors.textTertiary}
-                value={form.description}
-                onChangeText={(v) => set('description', v)}
-                multiline numberOfLines={4} maxLength={250}
-              />
-              <Text style={[styles.charCount, { color: colors.textTertiary }]}>{form.description.length}/250</Text>
-            </View>
+            {subcategoryRequired
+              ? renderSelectRow(
+                  'Subcategory',
+                  subcategoryLabel,
+                  'Select subcategory',
+                  () => openPicker('subcategory'),
+                  'list',
+                  true,
+                )
+              : null}
 
-            {/* Category Grid */}
-            <View style={styles.inputWrapper}>
-              <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Category *</Text>
-              <View style={styles.categoryGrid}>
-                {CATEGORIES.map((cat) => {
-                  const isSelected = form.category === cat.label;
-                  return (
+            {selectedSection?.hasPackages
+              ? renderSelectRow(
+                  'Package',
+                  packageLabel,
+                  'Select package',
+                  () => openPicker('package'),
+                  'package',
+                  false,
+                )
+              : null}
+
+            {selectedSection?.hasDeliveryModes &&
+            (selectedSection.deliveryModes?.length ?? 0) > 0 ? (
+              <View style={styles.inputWrapper}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Delivery Mode
+                </Text>
+                <View style={styles.chipRow}>
+                  {(selectedSection.deliveryModes ?? []).map((dm) => {
+                    const selected = deliveryMode === dm.value;
+                    return (
+                      <Pressable
+                        key={dm.value}
+                        onPress={() => handleDeliveryModeSelect(dm.value)}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: selected ? '#E60012' : colors.card,
+                            borderColor: selected ? '#E60012' : colors.border,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            { color: selected ? '#fff' : colors.textSecondary },
+                          ]}
+                        >
+                          {dm.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : selectedSection ? (
+              <View
+                style={[
+                  styles.toggleSettingRow,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <View style={styles.toggleSettingLeft}>
+                  <View style={[styles.toggleSettingIcon, { backgroundColor: '#EFF6FF' }]}>
+                    <Feather name="home" size={14} color="#1E3A8A" />
+                  </View>
+                  <View>
+                    <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>
+                      Home Service Available
+                    </Text>
+                    <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>
+                      Offer this service at the customer's location
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={homeService}
+                  onValueChange={setHomeService}
+                  trackColor={{ false: '#E2E8F0', true: '#E60012' }}
+                  thumbColor="#ffffff"
+                />
+              </View>
+            ) : null}
+
+            {selectedSection?.vehicleType === 'Both' ? (
+              <View style={styles.inputWrapper}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Vehicle Type *
+                </Text>
+                <View style={styles.chipRow}>
+                  {(['Car', 'Bike'] as const).map((type) => (
                     <Pressable
-                      key={cat.label}
-                      style={[styles.categoryChip, {
-                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
-                      }]}
-                      onPress={() => { lightHaptic(); set('category', cat.label); }}
+                      key={type}
+                      onPress={() => {
+                        lightHaptic();
+                        setVehicleType(type);
+                      }}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: vehicleType === type ? '#E60012' : colors.card,
+                          borderColor: vehicleType === type ? '#E60012' : colors.border,
+                        },
+                      ]}
                     >
-                      <Feather name={cat.icon as any} size={12} color={isSelected ? '#E60012' : colors.textSecondary} />
-                      <Text style={[styles.categoryChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{cat.label}</Text>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: vehicleType === type ? '#fff' : colors.textSecondary },
+                        ]}
+                      >
+                        {type}
+                      </Text>
                     </Pressable>
-                  );
-                })}
+                  ))}
+                </View>
+              </View>
+            ) : selectedSection?.vehicleType === 'Car' ||
+              selectedSection?.vehicleType === 'Bike' ? (
+              <View style={styles.inputWrapper}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Vehicle Type
+                </Text>
+                <View
+                  style={[
+                    styles.readOnlyBadge,
+                    { backgroundColor: colors.muted, borderColor: colors.border },
+                  ]}
+                >
+                  <Feather name="truck" size={14} color={colors.icon} />
+                  <Text style={[styles.readOnlyBadgeText, { color: colors.textPrimary }]}>
+                    {selectedSection.vehicleType}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.twoColRow}>
+              <View style={[styles.inputWrapper, { flex: 1 }]}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Vehicle Brand
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Optional"
+                  placeholderTextColor={colors.textTertiary}
+                  value={vehicleBrand}
+                  onChangeText={setVehicleBrand}
+                />
+              </View>
+              <View style={[styles.inputWrapper, { flex: 1 }]}>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Vehicle Model
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Optional"
+                  placeholderTextColor={colors.textTertiary}
+                  value={vehicleModel}
+                  onChangeText={setVehicleModel}
+                />
               </View>
             </View>
           </View>
 
-          {/* Section 2: Pricing & Booking */}
+          {/* 3. Service Information */}
           <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
                 <Text style={styles.sectionNumberText}>3</Text>
               </View>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pricing & Booking</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Set price, duration and availability</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Service Information
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Name, price, duration, and description
+                </Text>
               </View>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                Service Name *
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                placeholder="Full Car Detailing"
+                placeholderTextColor={colors.textTertiary}
+                value={name}
+                onChangeText={setName}
+              />
             </View>
 
             <View style={styles.twoColRow}>
               <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.labelRow}>
-                  <Feather name="tag" size={13} color={colors.textSecondary} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Price (₹) *</Text>
-                </View>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Price (₹) *
+                </Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  keyboardType="numeric" placeholder="2,499"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  keyboardType="numeric"
+                  placeholder="2499"
                   placeholderTextColor={colors.textTertiary}
-                  value={form.price} onChangeText={(v) => set('price', v)}
+                  value={price}
+                  onChangeText={setPrice}
                 />
               </View>
               <View style={[styles.inputWrapper, { flex: 1 }]}>
-                <View style={styles.labelRow}>
-                  <Feather name="calendar" size={13} color={colors.textSecondary} />
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Slots / Day</Text>
-                </View>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  Duration (min) *
+                </Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-                  keyboardType="numeric" placeholder="6"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  keyboardType="numeric"
+                  placeholder="60"
                   placeholderTextColor={colors.textTertiary}
-                  value={form.slotsPerDay} onChangeText={(v) => set('slotsPerDay', v)}
+                  value={durationMinutes}
+                  onChangeText={setDurationFromMinutes}
                 />
               </View>
             </View>
 
-            {/* Duration chips */}
             <View style={styles.inputWrapper}>
-              <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>Duration</Text>
-              <View style={styles.durationGrid}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                Quick Duration
+              </Text>
+              <View style={styles.chipRow}>
                 {DURATIONS.map((d) => {
-                  const isSelected = form.duration === d;
+                  const selected = parseDurationMinutes(d) === parseInt(durationMinutes, 10);
                   return (
                     <Pressable
                       key={d}
-                      style={[styles.durationChip, {
-                        borderColor: isSelected ? '#E60012' : '#E2E8F0',
-                        backgroundColor: isSelected ? '#F2F2F2' : '#ffffff',
-                      }]}
-                      onPress={() => { lightHaptic(); set('duration', d); }}
+                      onPress={() => {
+                        lightHaptic();
+                        setDurationFromChip(d);
+                      }}
+                      style={[
+                        styles.durationChip,
+                        {
+                          borderColor: selected ? '#E60012' : colors.border,
+                          backgroundColor: selected ? '#F2F2F2' : colors.card,
+                        },
+                      ]}
                     >
-                      <Feather name="clock" size={10} color={isSelected ? '#E60012' : colors.textSecondary} />
-                      <Text style={[styles.durationChipText, { color: isSelected ? '#E60012' : colors.textSecondary }]}>{d}</Text>
+                      <Feather
+                        name="clock"
+                        size={10}
+                        color={selected ? '#E60012' : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.durationChipText,
+                          { color: selected ? '#E60012' : colors.textSecondary },
+                        ]}
+                      >
+                        {d}
+                      </Text>
                     </Pressable>
                   );
                 })}
               </View>
             </View>
 
-            {/* Duration Info Banner */}
-            {form.duration ? (
+            {durationLabel ? (
               <View style={styles.durationInfoBanner}>
                 <Feather name="calendar" size={13} color="#10B981" />
                 <Text style={styles.durationInfoText}>
-                  This service will take approximately <Text style={styles.durationInfoBold}>{form.duration}</Text>
+                  This service will take approximately{' '}
+                  <Text style={styles.durationInfoBold}>{durationLabel}</Text>
                 </Text>
               </View>
             ) : null}
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Description</Text>
+              <TextInput
+                style={[
+                  styles.inputMultiline,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                placeholder="Describe what’s included in this service…"
+                placeholderTextColor={colors.textTertiary}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                maxLength={500}
+              />
+              <Text style={[styles.charCount, { color: colors.textTertiary }]}>
+                {description.length}/500
+              </Text>
+            </View>
           </View>
 
-          {/* Section 3: Additional Settings */}
+          {/* 4. Settings */}
           <View style={styles.sectionBlock}>
-            <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.sectionNumberText}>4</Text>
               </View>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Additional Settings</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>More options for your service</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Additional Settings
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  Availability and booking options
+                </Text>
               </View>
             </View>
 
-            <View style={[styles.toggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.toggleLeft}>
-                <View style={[styles.toggleIconBox, { backgroundColor: '#FFF7ED' }]}>
-                  <Feather name="calendar" size={14} color="#F59E0B" />
+            <View
+              style={[
+                styles.toggleSettingRow,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <View style={styles.toggleSettingLeft}>
+                <View style={[styles.toggleSettingIcon, { backgroundColor: '#ECFDF5' }]}>
+                  <Feather name="check-circle" size={14} color="#10B981" />
                 </View>
                 <View>
-                  <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Enable Online Booking</Text>
-                  <Text style={[styles.toggleSubtitle, { color: colors.textSecondary }]}>Allow customers to book this service</Text>
+                  <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>
+                    Active
+                  </Text>
+                  <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>
+                    Show this service in your catalog
+                  </Text>
                 </View>
               </View>
               <Switch
-                value={form.onlineBooking as boolean}
-                onValueChange={(v) => set('onlineBooking', v)}
+                value={isActive}
+                onValueChange={setIsActive}
+                trackColor={{ false: '#E2E8F0', true: '#E60012' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+
+            <View
+              style={[
+                styles.toggleSettingRow,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <View style={styles.toggleSettingLeft}>
+                <View style={[styles.toggleSettingIcon, { backgroundColor: '#FFF7ED' }]}>
+                  <Feather name="calendar" size={14} color="#F59E0B" />
+                </View>
+                <View>
+                  <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>
+                    Enable Online Booking
+                  </Text>
+                  <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>
+                    Allow customers to book this service
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={slotBookingEnabled}
+                onValueChange={setSlotBookingEnabled}
                 trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                 thumbColor="#ffffff"
               />
@@ -394,50 +994,108 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
         </ScrollView>
 
-        {/* Service Preview Footer */}
-        <View style={[styles.previewFooter, { borderTopColor: colors.border }]}>
+        <View style={[styles.previewFooter, { backgroundColor: '#F2F2F2', borderTopColor: colors.border }]}>
           <View style={[styles.previewIconBox, { backgroundColor: '#F2F2F2' }]}>
-            <Feather name={currentCategoryIcon as any} size={18} color={colors.icon} />
+            <Feather name="tool" size={18} color={colors.icon} />
           </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>Service Preview</Text>
-            <Text style={[styles.previewName, { color: colors.textPrimary }]}>{form.name || 'Service Name'}</Text>
-            <View style={styles.previewTagRow}>
-              {form.duration ? (
-                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
-                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>{form.duration}</Text>
-                </View>
-              ) : null}
-              {form.slotsPerDay ? (
-                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
-                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>{form.slotsPerDay} Slots/Day</Text>
-                </View>
-              ) : null}
-              {form.price ? (
-                <View style={[styles.previewTag, { backgroundColor: '#F2F2F2' }]}>
-                  <Text style={[styles.previewTagText, { color: themeLight.textSecondary }]}>₹{form.price}</Text>
-                </View>
-              ) : null}
-            </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.previewTitle, { color: '#1E3A8A' }]}>Service Summary</Text>
+            <Text style={[styles.previewSub, { color: '#FF1A1A' }]}>
+              {name || 'Service Name'} • {selectedSection?.label || 'Section'} •{' '}
+              {durationLabel || `${durationMinutes || '—'} min`}
+            </Text>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 2 }}>
+          <View style={{ alignItems: 'flex-end' }}>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-            <Text style={[styles.previewPrice, { color: themeLight.textSecondary }]}>₹{Number(form.price || 0).toLocaleString('en-IN')}</Text>
-            <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Duration</Text>
-            <Text style={[styles.previewStock, { color: '#1E3A8A' }]}>{form.duration || '-'}</Text>
+            <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>
+              ₹{Number(price || 0).toLocaleString('en-IN')}
+            </Text>
           </View>
         </View>
 
-        {/* Sticky Add Button */}
         <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
           <Pressable
             style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
-            onPress={handleSave} disabled={saving}
+            onPress={() => void handleSave()}
+            disabled={saving}
           >
-            <Feather name={isEdit ? 'check' : 'plus'} size={16} color="#ffffff" style={{ marginRight: 8 }} />
+            <Feather
+              name={isEdit ? 'check' : 'plus'}
+              size={16}
+              color="#ffffff"
+              style={{ marginRight: 8 }}
+            />
             <Text style={styles.addBtnText}>{isEdit ? 'Update Service' : 'Add Service'}</Text>
           </Pressable>
         </View>
+
+        <BookingPickerSheet
+          visible={pickerVisible}
+          title={pickerTitle}
+          onClose={() => {
+            setPickerSearch('');
+            setPickerVisible(false);
+          }}
+        >
+          <View
+            style={[
+              styles.pickerSearchRow,
+              { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+          >
+            <Feather name="search" size={16} color={colors.textTertiary} />
+            <TextInput
+              style={[styles.pickerSearchInput, { color: colors.textPrimary }]}
+              placeholder={`Search ${pickerTitle.replace(/^Select\s+/i, '').toLowerCase()}…`}
+              placeholderTextColor={colors.textTertiary}
+              value={pickerSearch}
+              onChangeText={setPickerSearch}
+              autoCorrect={false}
+              autoCapitalize="none"
+              clearButtonMode="while-editing"
+            />
+            {pickerSearch.length > 0 ? (
+              <Pressable onPress={() => setPickerSearch('')} hitSlop={8}>
+                <Feather name="x-circle" size={16} color={colors.textTertiary} />
+              </Pressable>
+            ) : null}
+          </View>
+
+          {pickerOptions.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, paddingVertical: 12 }}>
+              No options available
+            </Text>
+          ) : filteredPickerOptions.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, paddingVertical: 12 }}>
+              No matches for “{pickerSearch.trim()}”
+            </Text>
+          ) : (
+            filteredPickerOptions.map((option) => {
+              const selected = option.value === selectedPickerValue;
+              return (
+                <Pressable
+                  key={`${option.value}-${option.label}`}
+                  style={[
+                    styles.pickerOption,
+                    {
+                      backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                      borderColor: selected ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    lightHaptic();
+                    handlePickerSelect(option.value);
+                  }}
+                >
+                  <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>
+                    {option.label}
+                  </Text>
+                  {selected ? <Feather name="check" size={16} color={colors.primary} /> : null}
+                </Pressable>
+              );
+            })
+          )}
+        </BookingPickerSheet>
       </View>
     </KeyboardAvoidingView>
   );
@@ -446,85 +1104,213 @@ export function ServiceFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   headerSubtitle: { fontSize: 10, marginTop: 1 },
   saveHeaderBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#E60012',
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E60012',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   saveHeaderText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   content: { padding: 16, gap: 16 },
   sectionBlock: {
-    backgroundColor: '#ffffff', borderRadius: 20, borderWidth: 1,
-    borderColor: '#E2E8F0', padding: 16, gap: 14,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    gap: 14,
   },
-  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   sectionNumberBadge: {
-    width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#E60012', alignItems: 'center', justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E60012',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionNumberText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   sectionSubtitle: { fontSize: 10, marginTop: 1 },
+  twoColRow: { flexDirection: 'row', gap: 12 },
   inputWrapper: { gap: 5 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   inputLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-  groupLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
   input: {
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12,
-    paddingVertical: 10, fontSize: 13, fontFamily: 'Inter_500Medium',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
   },
   inputMultiline: {
-    borderWidth: 1, borderRadius: 10, paddingHorizontal: 12,
-    paddingVertical: 10, fontSize: 13, fontFamily: 'Inter_400Regular',
-    height: 90, textAlignVertical: 'top',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    minHeight: 88,
+    textAlignVertical: 'top',
   },
   charCount: { fontSize: 9, textAlign: 'right' },
-  twoColRow: { flexDirection: 'row', gap: 12 },
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  categoryChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10, borderWidth: 1.5,
+  selectField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 52,
   },
-  categoryChipText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
-  durationGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  fieldIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  selectFieldTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  selectFieldLabel: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
+  selectFieldValue: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    padding: 0,
+    marginTop: 1,
+  },
+  dropdownIcon: { marginLeft: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   durationChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1.5,
   },
   durationChipText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   durationInfoBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#ECFDF5', borderRadius: 10, padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 10,
+    padding: 10,
   },
-  durationInfoText: { fontSize: 12, color: '#374151', fontFamily: 'Inter_400Regular', flex: 1 },
+  durationInfoText: {
+    fontSize: 12,
+    color: '#374151',
+    fontFamily: 'Inter_400Regular',
+    flex: 1,
+  },
   durationInfoBold: { color: '#10B981', fontFamily: 'Inter_700Bold' },
-  toggleRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 12, borderRadius: 12, borderWidth: 1,
+  readOnlyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  toggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  toggleIconBox: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  toggleTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-  toggleSubtitle: { fontSize: 10, marginTop: 1 },
+  readOnlyBadgeText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  toggleSettingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  toggleSettingLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  toggleSettingIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleSettingTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  toggleSettingSubtitle: { fontSize: 10, marginTop: 1 },
   previewFooter: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderTopWidth: 1, backgroundColor: '#F8FBFF', gap: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderTopWidth: 1,
+    gap: 12,
   },
-  previewIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  previewTitle: { fontSize: 10, fontFamily: 'Inter_700Bold' },
-  previewName: { fontSize: 12, fontFamily: 'Inter_700Bold' },
-  previewTagRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  previewTag: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
-  previewTagText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
+  previewIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  previewSub: { fontSize: 10, marginTop: 2 },
   previewStatLabel: { fontSize: 9, fontFamily: 'Inter_500Medium' },
-  previewPrice: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  previewStock: { fontSize: 11, fontFamily: 'Inter_700Bold' },
-  stickyAddBtn: { paddingHorizontal: 16, paddingTop: 8, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 48, borderRadius: 14 },
+  previewStatValue: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  stickyAddBtn: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 14,
+  },
   addBtnText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  pickerOptionText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
+  pickerSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+    marginBottom: 12,
+  },
+  pickerSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter_500Medium',
+    paddingVertical: Platform.OS === 'ios' ? 2 : 8,
+  },
 });

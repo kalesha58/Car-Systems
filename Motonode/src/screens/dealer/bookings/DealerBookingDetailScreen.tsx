@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerBookingStepper } from '@components/bookings/DealerBookingStepper';
+import { DealerOrderDetailSkeleton } from '@components/loaders';
 import { DealerStackRoutes } from '@constants/routes';
 import type { CustomerBooking } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
@@ -125,8 +125,15 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color="#E60012" />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card }]}>
+          <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()}>
+            <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Booking Details</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <DealerOrderDetailSkeleton />
       </View>
     );
   }
@@ -333,7 +340,6 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  centered: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

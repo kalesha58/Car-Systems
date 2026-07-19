@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -18,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { ChromeHeader } from '@components/common';
+import { GarageVehicleDetailSkeleton } from '@components/loaders';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
@@ -217,9 +217,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
             <View style={styles.headerBtn} />
           </View>
         </ChromeHeader>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <GarageVehicleDetailSkeleton />
       </View>
     );
   }
