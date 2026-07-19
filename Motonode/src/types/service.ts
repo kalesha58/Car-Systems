@@ -34,6 +34,10 @@ export interface IService {
   slotDurationMinutes?: number;
   dealer?: IDealerInfo;
   slotBookingEnabled?: boolean;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
   createdAt: string;
   updatedAt: string;
 }

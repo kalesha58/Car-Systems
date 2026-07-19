@@ -1,11 +1,17 @@
 import { SignUp, ISignUpDocument } from '../../models/SignUp';
-import { NotFoundError, ConflictError } from '../../utils/errorHandler';
+import { AppError, NotFoundError, ConflictError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { deleteFromCloudinary } from '../../config/cloudinary';
 import { IUser } from '../../types/auth';
+import { ISendOtpResponse } from '../../types/otpAuth';
 import { Post } from '../../models/user/Post';
 import { Vehicle } from '../../models/user/Vehicle';
 import { Order } from '../../models/Order';
+import {
+  normalizePhone,
+  sendOtp,
+  verifyOtpCodeOnly,
+} from '../otpAuthService';
 
 /**
  * Convert user document to IUser interface
@@ -50,9 +56,13 @@ export const getUserProfile = async (userId: string): Promise<IUser> => {
  */
 export interface IUpdateProfileRequest {
   name?: string;
+  email?: string;
+  /** Phone changes must go through sendPhoneChangeOtp / verifyPhoneChange. */
   phone?: string;
   profileImage?: string;
 }
+
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
 export const updateUserProfile = async (
   userId: string,
@@ -70,25 +80,34 @@ export const updateUserProfile = async (
       user.name = data.name.trim();
     }
 
-    // Update phone if provided
+    // Update email if provided
+    if (data.email !== undefined) {
+      const cleanEmail = normalizeEmail(data.email);
+      if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        throw new AppError('Please provide a valid email address', 400);
+      }
+
+      if (cleanEmail !== user.email.toLowerCase()) {
+        const existingEmail = await SignUp.findOne({
+          email: cleanEmail,
+          _id: { $ne: userId },
+        });
+        if (existingEmail) {
+          throw new ConflictError('Email address already in use');
+        }
+        user.email = cleanEmail;
+      }
+    }
+
+    // Phone number changes require OTP verification via dedicated endpoints.
     if (data.phone !== undefined) {
-      // Validate phone format
-      const cleanPhone = data.phone.replace(/[^0-9]/g, '');
-      if (cleanPhone.length !== 10) {
-        throw new ConflictError('Phone number must be exactly 10 digits');
+      const cleanPhone = normalizePhone(data.phone);
+      if (cleanPhone !== user.phone) {
+        throw new AppError(
+          'Phone number changes require OTP verification. Use /profile/phone/send-otp and /profile/phone/verify.',
+          400,
+        );
       }
-
-      // Check if phone is already taken by another user
-      const existingUser = await SignUp.findOne({
-        phone: cleanPhone,
-        _id: { $ne: userId },
-      });
-
-      if (existingUser) {
-        throw new ConflictError('Phone number already in use');
-      }
-
-      user.phone = cleanPhone;
     }
 
     // Update profile image if provided
@@ -122,6 +141,71 @@ export const updateUserProfile = async (
     logger.error('Error updating user profile:', error);
     throw error;
   }
+};
+
+/**
+ * Send OTP to a new phone number for an authenticated phone-change flow.
+ */
+export const sendPhoneChangeOtp = async (
+  userId: string,
+  phoneInput: string,
+): Promise<ISendOtpResponse> => {
+  const user = await SignUp.findById(userId);
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const phone = normalizePhone(phoneInput);
+  if (phone === user.phone) {
+    throw new AppError('This is already your current phone number', 400);
+  }
+
+  const existingUser = await SignUp.findOne({
+    phone,
+    _id: { $ne: userId },
+  });
+  if (existingUser) {
+    throw new ConflictError('Phone number already in use');
+  }
+
+  return sendOtp(phone);
+};
+
+/**
+ * Verify OTP and apply the new phone number to the authenticated user.
+ */
+export const verifyPhoneChange = async (
+  userId: string,
+  phoneInput: string,
+  otpInput: string,
+): Promise<IUser> => {
+  const user = await SignUp.findById(userId);
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const phone = normalizePhone(phoneInput);
+  if (phone === user.phone) {
+    throw new AppError('This is already your current phone number', 400);
+  }
+
+  const existingUser = await SignUp.findOne({
+    phone,
+    _id: { $ne: userId },
+  });
+  if (existingUser) {
+    throw new ConflictError('Phone number already in use');
+  }
+
+  await verifyOtpCodeOnly(phone, otpInput);
+
+  user.phone = phone;
+  user.phoneVerified = true;
+  await user.save();
+
+  logger.info(`Phone updated for user ${userId} to ending ${phone.slice(-4)}`);
+
+  return userToIUser(user);
 };
 
 /**

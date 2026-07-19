@@ -20,6 +20,10 @@ import { DealerOrderDetailScreen } from '@screens/dealer/orders/DealerOrderDetai
 import { StoreSettingsScreen } from '@screens/dealer/settings/StoreSettingsScreen';
 import { UPIAccountsScreen } from '@screens/dealer/settings/UPIAccountsScreen';
 import { BusinessDetailsScreen } from '@screens/dealer/profile/BusinessDetailsScreen';
+import { DealerAnalyticsScreen } from '@screens/dealer/profile/DealerAnalyticsScreen';
+import { DealerHelpSupportScreen } from '@screens/dealer/profile/DealerHelpSupportScreen';
+import { DealerEditAccountScreen } from '@screens/dealer/profile/DealerEditAccountScreen';
+import { DealerPrivacySecurityScreen } from '@screens/dealer/profile/DealerPrivacySecurityScreen';
 import {
   ChatListScreen,
   ChatScreen,
@@ -50,6 +54,10 @@ export type DealerStackParamList = {
   };
   [DealerStackRoutes.DealerOrderDetail]: { orderId: string };
   [DealerStackRoutes.BusinessDetails]: undefined;
+  [DealerStackRoutes.PrivacySecurity]: undefined;
+  [DealerStackRoutes.HelpSupport]: undefined;
+  [DealerStackRoutes.Analytics]: undefined;
+  [DealerStackRoutes.EditAccount]: undefined;
   [CustomerStackRoutes.ChatList]: undefined;
   [CustomerStackRoutes.Chat]: undefined;
   [CustomerStackRoutes.CreateChat]: undefined;
@@ -121,6 +129,10 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.DealerBookingDetail} component={DealerBookingDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.DealerOrderDetail} component={DealerOrderDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
+      <Stack.Screen name={DealerStackRoutes.PrivacySecurity} component={DealerPrivacySecurityScreen} />
+      <Stack.Screen name={DealerStackRoutes.HelpSupport} component={DealerHelpSupportScreen} />
+      <Stack.Screen name={DealerStackRoutes.Analytics} component={DealerAnalyticsScreen} />
+      <Stack.Screen name={DealerStackRoutes.EditAccount} component={DealerEditAccountScreen} />
       <Stack.Screen name={CustomerStackRoutes.ChatList} component={ChatListScreen} />
       <Stack.Screen name={CustomerStackRoutes.Chat} component={ChatScreen} />
       <Stack.Screen name={CustomerStackRoutes.CreateChat} component={CreateChatScreen} />

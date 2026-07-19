@@ -49,6 +49,8 @@ const productToDealerProduct = async (doc: IProductDocument): Promise<IDealerPro
     vehicleBrandName: vehicleNames.vehicleBrandName,
     vehicleModelName: vehicleNames.vehicleModelName,
     status: doc.status,
+    returnPolicy: doc.returnPolicy,
+    deliveryTimeMinutes: doc.deliveryTimeMinutes,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -249,6 +251,8 @@ export const createDealerProduct = async (
       vehicleBrandId: data.vehicleBrandId,
       vehicleModelId: data.vehicleModelId,
       userId: dealerId,
+      returnPolicy: data.returnPolicy?.trim(),
+      deliveryTimeMinutes: data.deliveryTimeMinutes,
     });
 
     await product.save();
@@ -409,6 +413,15 @@ export const updateDealerProduct = async (
 
     if (data.vehicleModelId !== undefined) {
       product.vehicleModelId = data.vehicleModelId || undefined;
+    }
+
+    if (data.returnPolicy !== undefined) {
+      product.returnPolicy = data.returnPolicy?.trim() || undefined;
+    }
+
+    if (data.deliveryTimeMinutes !== undefined) {
+      product.deliveryTimeMinutes =
+        data.deliveryTimeMinutes === null ? undefined : data.deliveryTimeMinutes;
     }
 
     if (data.status !== undefined) {

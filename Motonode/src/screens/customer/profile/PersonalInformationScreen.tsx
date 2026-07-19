@@ -59,12 +59,21 @@ export function PersonalInformationScreen() {
       return;
     }
 
+    const phoneChanged =
+      trimmedPhone.length > 0 && trimmedPhone !== (user?.phone ?? '').replace(/[^0-9]/g, '');
+    if (phoneChanged) {
+      Alert.alert(
+        'Phone verification required',
+        'To change your phone number, use Edit Account from your profile. Only name can be updated here.',
+      );
+      return;
+    }
+
     setSaving(true);
     lightHaptic();
     try {
       const updated = await updateProfile({
         name: trimmedName,
-        ...(trimmedPhone ? { phone: trimmedPhone } : {}),
       });
       const mapped = mapServerUserToAuthUser(updated);
       await updateUser({

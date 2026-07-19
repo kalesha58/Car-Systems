@@ -130,9 +130,9 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
                 >
                   Orders
                 </Text>
-                {isFocused && (
-                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: colors.primary }]} />
-                )}
+                {isFocused ? (
+                  <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+                ) : null}
               </Pressable>
             );
           }
@@ -267,9 +267,5 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginTop: 1,
-  },
-  middleActiveDot: {
-    position: 'absolute',
-    bottom: 6,
   },
 });

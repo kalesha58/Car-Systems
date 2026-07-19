@@ -123,12 +123,13 @@ export const sendOtp = async (phoneInput: string): Promise<ISendOtpResponse> => 
 };
 
 /**
- * Verify OTP with MSG91; login existing user or issue registration token.
+ * Verify OTP with MSG91 and mark the session verified.
+ * Does not log in or issue tokens — used for authenticated flows like phone change.
  */
-export const verifyOtp = async (
+export const verifyOtpCodeOnly = async (
   phoneInput: string,
   otpInput: string,
-): Promise<IVerifyOtpResponse> => {
+): Promise<string> => {
   const phone = normalizePhone(phoneInput);
   const otp = otpInput.replace(/\s/g, '');
   if (!/^[0-9]{4,8}$/.test(otp)) {
@@ -162,6 +163,18 @@ export const verifyOtp = async (
   session.verifiedAt = new Date();
   session.failedAttempts = 0;
   await session.save();
+
+  return phone;
+};
+
+/**
+ * Verify OTP with MSG91; login existing user or issue registration token.
+ */
+export const verifyOtp = async (
+  phoneInput: string,
+  otpInput: string,
+): Promise<IVerifyOtpResponse> => {
+  const phone = await verifyOtpCodeOnly(phoneInput, otpInput);
 
   const existingUser = await SignUp.findOne({ phone });
 

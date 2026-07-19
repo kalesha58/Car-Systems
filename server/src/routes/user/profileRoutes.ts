@@ -8,6 +8,8 @@ import {
   getPrivacySettingsController,
   updatePrivacySettingsController,
   deleteAccountController,
+  sendPhoneChangeOtpController,
+  verifyPhoneChangeController,
 } from '../../controllers/user/profileController';
 
 const router = Router();
@@ -36,7 +38,7 @@ router.get('/', getProfileController);
  * /api/profile:
  *   put:
  *     summary: Update user profile
- *     description: Update user profile information. Can update name, phone, and/or profile image. Image can be uploaded from gallery or camera.
+ *     description: Update name, email, and/or profile image. Phone number changes require OTP via /profile/phone endpoints.
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
@@ -50,9 +52,9 @@ router.get('/', getProfileController);
  *               name:
  *                 type: string
  *                 description: User's full name
- *               phone:
+ *               email:
  *                 type: string
- *                 description: User's phone number (10 digits)
+ *                 description: User's email address
  *               image:
  *                 type: string
  *                 format: binary
@@ -65,9 +67,12 @@ router.get('/', getProfileController);
  *       401:
  *         description: Unauthorized
  *       409:
- *         description: Phone number already in use
+ *         description: Email already in use
  */
 router.put('/', uploadSingle, updateProfileController);
+
+router.post('/phone/send-otp', sendPhoneChangeOtpController);
+router.post('/phone/verify', verifyPhoneChangeController);
 
 /**
  * @swagger
@@ -151,4 +156,3 @@ router.put('/privacy-settings', updatePrivacySettingsController);
 router.delete('/account', deleteAccountController);
 
 export default router;
-

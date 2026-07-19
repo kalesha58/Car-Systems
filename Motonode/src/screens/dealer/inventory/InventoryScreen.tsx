@@ -72,6 +72,7 @@ type DealerStackParamList = {
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
+  [DealerStackRoutes.NotificationSettings]: undefined;
 };
 
 type InventoryNavigationProp = CompositeNavigationProp<
@@ -524,15 +525,14 @@ export function InventoryScreen() {
             </Text>
           </View>
           <View style={styles.headerRight}>
-            <Pressable style={styles.notificationBtn}>
+            <Pressable
+              style={styles.notificationBtn}
+              onPress={() => {
+                lightHaptic();
+                navigation.navigate(DealerStackRoutes.NotificationSettings);
+              }}
+            >
               <Feather name="bell" size={22} color={colors.headerForeground} />
-              <View style={styles.redBadge}>
-                <Text style={styles.redBadgeText}>3</Text>
-              </View>
-            </Pressable>
-            <Pressable style={styles.addBtn} onPress={handleAddNew}>
-              <Feather name="plus" size={14} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={styles.addBtnText}>Add New</Text>
             </Pressable>
           </View>
         </View>

@@ -88,6 +88,19 @@ const WEEKDAYS = [
   { key: 'Sunday', short: 'Sun' },
 ] as const;
 
+/** 30-minute AM/PM slots from 6:00 AM through 11:30 PM */
+const WORKING_HOUR_OPTIONS: string[] = (() => {
+  const slots: string[] = [];
+  for (let minutes = 6 * 60; minutes <= 23 * 60 + 30; minutes += 30) {
+    const h24 = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    const period = h24 >= 12 ? 'PM' : 'AM';
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+    slots.push(`${h12}:${m.toString().padStart(2, '0')} ${period}`);
+  }
+  return slots;
+})();
+
 const STATES = [
   'Telangana',
   'Andhra Pradesh',
@@ -174,6 +187,8 @@ export function RegistrationScreen({ navigation }: Props) {
   const [statePickerVisible, setStatePickerVisible] = useState(false);
   const [cityPickerVisible, setCityPickerVisible] = useState(false);
   const [bankPickerVisible, setBankPickerVisible] = useState(false);
+  const [openTimePickerVisible, setOpenTimePickerVisible] = useState(false);
+  const [closeTimePickerVisible, setCloseTimePickerVisible] = useState(false);
   
   const [doc1Uploaded, setDoc1Uploaded] = useState(false);
   const [doc2Uploaded, setDoc2Uploaded] = useState(false);
@@ -630,6 +645,70 @@ export function RegistrationScreen({ navigation }: Props) {
         }) : null}
       </BookingPickerSheet>
 
+      <BookingPickerSheet
+        visible={openTimePickerVisible}
+        title="Opens At"
+        onClose={() => setOpenTimePickerVisible(false)}
+      >
+        <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+          {WORKING_HOUR_OPTIONS.map((item) => {
+            const selected = form.workingHoursOpen === item;
+            return (
+              <Pressable
+                key={`open-${item}`}
+                style={[
+                  styles.pickerOption,
+                  {
+                    backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                    borderColor: selected ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  lightHaptic();
+                  setForm((prev) => ({ ...prev, workingHoursOpen: item }));
+                  setOpenTimePickerVisible(false);
+                }}
+              >
+                <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>{item}</Text>
+                {selected ? <Feather name="check" size={16} color={colors.primary} /> : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </BookingPickerSheet>
+
+      <BookingPickerSheet
+        visible={closeTimePickerVisible}
+        title="Closes At"
+        onClose={() => setCloseTimePickerVisible(false)}
+      >
+        <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
+          {WORKING_HOUR_OPTIONS.map((item) => {
+            const selected = form.workingHoursClose === item;
+            return (
+              <Pressable
+                key={`close-${item}`}
+                style={[
+                  styles.pickerOption,
+                  {
+                    backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                    borderColor: selected ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  lightHaptic();
+                  setForm((prev) => ({ ...prev, workingHoursClose: item }));
+                  setCloseTimePickerVisible(false);
+                }}
+              >
+                <Text style={[styles.pickerOptionText, { color: colors.textPrimary }]}>{item}</Text>
+                {selected ? <Feather name="check" size={16} color={colors.primary} /> : null}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </BookingPickerSheet>
+
       <PhotoPickerSheet
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
@@ -751,42 +830,36 @@ export function RegistrationScreen({ navigation }: Props) {
                   </View>
                 </View>
 
-                {/* Business & Owner Name row */}
-                <View style={styles.formRow}>
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="home" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Business Name *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.businessName}
-                          onChangeText={(v) => set('businessName', v)}
-                          placeholder="Enter business name"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
-                    </View>
+                {/* Business & Owner Name — stacked full-width to avoid clipping */}
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="home" size={14} color={colors.icon} />
                   </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Business Name *</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.businessName}
+                      onChangeText={(v) => set('businessName', v)}
+                      placeholder="Enter business name"
+                      placeholderTextColor={colors.textTertiary}
+                    />
+                  </View>
+                </View>
 
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="user" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Owner Name *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.ownerName}
-                          onChangeText={(v) => set('ownerName', v)}
-                          placeholder="Enter owner name"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
-                    </View>
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="user" size={14} color={colors.icon} />
+                  </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Owner Name *</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.ownerName}
+                      onChangeText={(v) => set('ownerName', v)}
+                      placeholder="Enter owner name"
+                      placeholderTextColor={colors.textTertiary}
+                    />
                   </View>
                 </View>
 
@@ -800,8 +873,9 @@ export function RegistrationScreen({ navigation }: Props) {
                     <TextInput
                       style={[styles.textInputStyle, { color: colors.textPrimary }]}
                       value={form.mobile}
-                      onChangeText={(v) => set('mobile', v)}
+                      onChangeText={(v) => set('mobile', v.replace(/[^0-9]/g, '').slice(0, 10))}
                       keyboardType="phone-pad"
+                      maxLength={10}
                       placeholder="Enter mobile number"
                       placeholderTextColor={colors.textTertiary}
                     />
@@ -1036,8 +1110,9 @@ export function RegistrationScreen({ navigation }: Props) {
                     <TextInput
                       style={[styles.textInputStyle, { color: colors.textPrimary }]}
                       value={form.pincode}
-                      onChangeText={(v) => set('pincode', v)}
+                      onChangeText={(v) => set('pincode', v.replace(/[^0-9]/g, '').slice(0, 6))}
                       keyboardType="numeric"
+                      maxLength={6}
                       placeholder="Enter pincode"
                       placeholderTextColor={colors.textTertiary}
                     />
@@ -1204,41 +1279,62 @@ export function RegistrationScreen({ navigation }: Props) {
                   })}
                 </View>
 
-                <View style={[styles.formRow, { marginTop: 12 }]}>
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="sunrise" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Opens At *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.workingHoursOpen}
-                          onChangeText={(v) => set('workingHoursOpen', v)}
-                          placeholder="Enter opening time"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
+                <View style={{ marginTop: 12, gap: 12 }}>
+                  <Pressable
+                    onPress={() => {
+                      lightHaptic();
+                      setOpenTimePickerVisible(true);
+                    }}
+                    style={[styles.inputWrapper, { borderColor: colors.border }]}
+                  >
+                    <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                      <Feather name="sunrise" size={14} color={colors.icon} />
                     </View>
-                  </View>
-                  <View style={[styles.inputBox, { flex: 1 }]}>
-                    <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
-                      <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
-                        <Feather name="sunset" size={14} color={colors.icon} />
-                      </View>
-                      <View style={styles.inputTextContainer}>
-                        <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Closes At *</Text>
-                        <TextInput
-                          style={[styles.textInputStyle, { color: colors.textPrimary }]}
-                          value={form.workingHoursClose}
-                          onChangeText={(v) => set('workingHoursClose', v)}
-                          placeholder="Enter closing time"
-                          placeholderTextColor={colors.textTertiary}
-                        />
-                      </View>
+                    <View style={styles.inputTextContainer}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Opens At *</Text>
+                      <Text
+                        style={[
+                          styles.textInputStyle,
+                          {
+                            color: form.workingHoursOpen ? colors.textPrimary : colors.textTertiary,
+                            paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {form.workingHoursOpen || 'Select time'}
+                      </Text>
                     </View>
-                  </View>
+                    <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      lightHaptic();
+                      setCloseTimePickerVisible(true);
+                    }}
+                    style={[styles.inputWrapper, { borderColor: colors.border }]}
+                  >
+                    <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                      <Feather name="sunset" size={14} color={colors.icon} />
+                    </View>
+                    <View style={styles.inputTextContainer}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Closes At *</Text>
+                      <Text
+                        style={[
+                          styles.textInputStyle,
+                          {
+                            color: form.workingHoursClose ? colors.textPrimary : colors.textTertiary,
+                            paddingVertical: Platform.OS === 'ios' ? 4 : 0,
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {form.workingHoursClose || 'Select time'}
+                      </Text>
+                    </View>
+                    <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                  </Pressable>
                 </View>
               </View>
 
@@ -1583,6 +1679,8 @@ const styles = StyleSheet.create({
   },
   inputTextContainer: {
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     justifyContent: 'center',
   },
   inputLabel: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
@@ -1591,6 +1689,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     padding: 0,
     marginTop: 1,
+    minWidth: 0,
   },
   rightFieldIcon: {
     marginLeft: 8,

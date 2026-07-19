@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import {
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -49,6 +48,10 @@ type DealerStackParamList = {
   [DealerStackRoutes.UPIAccounts]: undefined;
   [DealerStackRoutes.NotificationSettings]: undefined;
   [DealerStackRoutes.BusinessDetails]: undefined;
+  [DealerStackRoutes.PrivacySecurity]: undefined;
+  [DealerStackRoutes.HelpSupport]: undefined;
+  [DealerStackRoutes.Analytics]: undefined;
+  [DealerStackRoutes.EditAccount]: undefined;
 };
 
 type DealerProfileNavigationProp = CompositeNavigationProp<
@@ -61,7 +64,7 @@ export function DealerProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerProfileNavigationProp>();
   const { user, logout } = useAuth();
-  const { dealerType, businessProfile, resetRegistration, registrationCompleted } = useDealer();
+  const { dealerType, businessProfile, registrationCompleted } = useDealer();
   const { status: onboardingStatus } = useDealerOnboardingStatus();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -101,22 +104,9 @@ export function DealerProfileScreen() {
     }
   };
 
-  const handleEditBusiness = () => {
-    Alert.alert(
-      'Edit Business Info',
-      'This will take you back to Business Registration to update your info.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Continue',
-          onPress: async () => {
-            lightHaptic();
-            await resetRegistration();
-            navigation.navigate(DealerStackRoutes.DealerType);
-          },
-        },
-      ],
-    );
+  const handleEditAccount = () => {
+    lightHaptic();
+    navigation.navigate(DealerStackRoutes.EditAccount);
   };
 
   const handleViewBusinessDetails = () => {
@@ -147,8 +137,8 @@ export function DealerProfileScreen() {
     { icon: 'calendar', label: 'Test Drive Settings', sublabel: 'Manage vehicles, slots & availability', color: '#8B5CF6', bg: '#F3E8FF', route: null },
     { icon: 'file-text', label: 'GST Information', sublabel: 'View and manage GST details', color: '#7C3AED', bg: '#F5F3FF', route: DealerStackRoutes.GSTInfo },
     { icon: 'bell', label: 'Notification Settings', sublabel: 'Manage order & booking alerts', color: '#EF4444', bg: '#FEF2F2', route: DealerStackRoutes.NotificationSettings },
-    { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#FF1A1A', bg: '#F2F2F2', route: null },
-    { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, help center & contact support', color: '#64748B', bg: '#F1F5F9', route: null },
+    { icon: 'shield', label: 'Privacy & Security', sublabel: 'Password, 2FA & security settings', color: '#FF1A1A', bg: '#F2F2F2', route: DealerStackRoutes.PrivacySecurity },
+    { icon: 'help-circle', label: 'Help & Support', sublabel: 'FAQs, Meta AI & contact support', color: '#64748B', bg: '#F1F5F9', route: DealerStackRoutes.HelpSupport },
   ];
 
   const displayRevenue = totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(0)}K` : '₹0';
@@ -162,7 +152,7 @@ export function DealerProfileScreen() {
             <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Store Profile</Text>
             <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>Manage your store & account</Text>
           </View>
-          <Pressable style={[styles.headerEditBtn, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={handleEditBusiness}>
+          <Pressable style={[styles.headerEditBtn, { backgroundColor: 'rgba(255,255,255,0.12)' }]} onPress={handleEditAccount}>
             <Feather name="edit-2" size={18} color={colors.headerForeground} />
           </Pressable>
         </View>
@@ -283,7 +273,13 @@ export function DealerProfileScreen() {
               </Text>
             </View>
           </View>
-          <Pressable style={styles.growBtn} onPress={() => successHaptic()}>
+          <Pressable
+            style={styles.growBtn}
+            onPress={() => {
+              lightHaptic();
+              navigation.navigate(DealerStackRoutes.Analytics);
+            }}
+          >
             <Text style={styles.growBtnText}>View Analytics</Text>
             <Feather name="arrow-right" size={12} color="#ffffff" style={{ marginLeft: 4 }} />
           </Pressable>

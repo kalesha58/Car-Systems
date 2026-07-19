@@ -48,6 +48,7 @@ export function AuthLabeledInput({
   onChangeText,
   secureTextEntry,
   keyboardType,
+  maxLength,
   rightElement,
 }: {
   label: string;
@@ -57,6 +58,7 @@ export function AuthLabeledInput({
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  maxLength?: number;
   rightElement?: React.ReactNode;
 }) {
   const colors = useColors();
@@ -74,6 +76,7 @@ export function AuthLabeledInput({
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
+          maxLength={maxLength}
           autoCapitalize={keyboardType === 'email-address' ? 'none' : 'words'}
         />
         {rightElement}
@@ -267,6 +270,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     padding: 0,

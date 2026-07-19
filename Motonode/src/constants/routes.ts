@@ -85,6 +85,10 @@ export const DealerStackRoutes = {
   DealerBookingDetail: 'DealerBookingDetail',
   DealerOrderDetail: 'DealerOrderDetail',
   BusinessDetails: 'BusinessDetails',
+  PrivacySecurity: 'PrivacySecurity',
+  HelpSupport: 'HelpSupport',
+  Analytics: 'Analytics',
+  EditAccount: 'EditAccount',
 } as const;
 
 export const RootRoutes = {

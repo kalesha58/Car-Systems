@@ -26,6 +26,10 @@ export interface IServiceDocument extends Document {
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
   commissionPercentage?: number;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -132,6 +136,22 @@ const serviceSchema = new Schema<IServiceDocument>(
       default: 0,
       min: 0,
       max: 100,
+    },
+    serviceCoverageAreas: {
+      type: String,
+      trim: true,
+    },
+    travelFeeEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    travelFeeFreeKm: {
+      type: Number,
+      min: 0,
+    },
+    travelFeePerKm: {
+      type: Number,
+      min: 0,
     },
   },
   {

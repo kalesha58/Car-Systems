@@ -44,6 +44,13 @@ type DropdownField =
   | 'vehicleBrand'
   | 'vehicleModel';
 
+const DELIVERY_DAY_OPTIONS = [
+  { days: 1, label: 'Within 1 day' },
+  { days: 3, label: 'Within 3 days' },
+  { days: 5, label: 'Within 5 days' },
+  { days: 7, label: 'Within 7 days' },
+] as const;
+
 const FALLBACK_CATEGORIES: DropdownOption[] = [
   'Filters',
   'Lubricants',
@@ -95,6 +102,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
   const [batteryTypeLabel, setBatteryTypeLabel] = useState('');
   const [voltageV, setVoltageV] = useState('');
   const [returnPolicy, setReturnPolicy] = useState('');
+  const [deliveryDays, setDeliveryDays] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [specKey, setSpecKey] = useState('');
@@ -218,6 +226,14 @@ export function ProductFormScreen({ route, navigation }: Props) {
           setBatteryTypeId(product.batteryTypeId || '');
           setBatteryTypeLabel(product.batteryTypeName || '');
           setVoltageV(product.voltageV != null ? String(product.voltageV) : '');
+          setReturnPolicy(product.returnPolicy || '');
+          if (product.deliveryTimeMinutes && product.deliveryTimeMinutes > 0) {
+            const days = Math.round(product.deliveryTimeMinutes / (24 * 60));
+            const match = DELIVERY_DAY_OPTIONS.find((o) => o.days === days);
+            setDeliveryDays(match ? match.days : days);
+          } else {
+            setDeliveryDays(null);
+          }
           const specs: Record<string, string> = {};
           if (product.specifications) {
             Object.entries(product.specifications).forEach(([k, v]) => {
@@ -458,6 +474,8 @@ export function ProductFormScreen({ route, navigation }: Props) {
         tags: finalTags.length ? finalTags : undefined,
         specifications: Object.keys(specifications).length ? specifications : undefined,
         returnPolicy: returnPolicy.trim() || undefined,
+        deliveryTimeMinutes:
+          deliveryDays != null ? deliveryDays * 24 * 60 : undefined,
         ...(isBatteryCategory
           ? {
               batteryTypeId,
@@ -1037,6 +1055,42 @@ export function ProductFormScreen({ route, navigation }: Props) {
                 <Pressable style={styles.addChipBtn} onPress={addTag}>
                   <Text style={styles.addChipBtnText}>Add</Text>
                 </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                Delivery time
+              </Text>
+              <View style={styles.chipRow}>
+                {DELIVERY_DAY_OPTIONS.map((opt) => {
+                  const selected = deliveryDays === opt.days;
+                  return (
+                    <Pressable
+                      key={opt.days}
+                      onPress={() => {
+                        lightHaptic();
+                        setDeliveryDays(selected ? null : opt.days);
+                      }}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: selected ? '#E60012' : colors.card,
+                          borderColor: selected ? '#E60012' : colors.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: selected ? '#fff' : colors.textSecondary },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
 

@@ -100,6 +100,10 @@ export function ServiceFormScreen({ route, navigation }: Props) {
   const [servicePackage, setServicePackage] = useState<ServicePackageValue>('basic');
   const [deliveryMode, setDeliveryMode] = useState<DeliveryModeValue | null>(null);
   const [homeService, setHomeService] = useState(false);
+  const [serviceCoverageAreas, setServiceCoverageAreas] = useState('');
+  const [travelFeeEnabled, setTravelFeeEnabled] = useState(false);
+  const [travelFeeFreeKm, setTravelFeeFreeKm] = useState('');
+  const [travelFeePerKm, setTravelFeePerKm] = useState('');
   const [vehicleType, setVehicleType] = useState<'Car' | 'Bike' | ''>('');
   const [vehicleBrand, setVehicleBrand] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
@@ -173,6 +177,14 @@ export function ServiceFormScreen({ route, navigation }: Props) {
         setIsActive(service.isActive !== false);
         setSlotBookingEnabled(service.slotBookingEnabled ?? true);
         setHomeService(Boolean(service.homeService));
+        setServiceCoverageAreas(service.serviceCoverageAreas || '');
+        setTravelFeeEnabled(Boolean(service.travelFeeEnabled));
+        setTravelFeeFreeKm(
+          service.travelFeeFreeKm != null ? String(service.travelFeeFreeKm) : '',
+        );
+        setTravelFeePerKm(
+          service.travelFeePerKm != null ? String(service.travelFeePerKm) : '',
+        );
         setVehicleBrand(service.vehicleBrand || '');
         setVehicleModel(service.vehicleModel || '');
         setServiceSubCategory(service.serviceSubCategory || '');
@@ -230,6 +242,10 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     setServicePackage('basic');
     setDeliveryMode(null);
     setHomeService(false);
+    setServiceCoverageAreas('');
+    setTravelFeeEnabled(false);
+    setTravelFeeFreeKm('');
+    setTravelFeePerKm('');
 
     if (section.vehicleType === 'Car' || section.vehicleType === 'Bike') {
       setVehicleType(section.vehicleType);
@@ -329,7 +345,14 @@ export function ServiceFormScreen({ route, navigation }: Props) {
   const handleDeliveryModeSelect = (mode: DeliveryModeValue) => {
     lightHaptic();
     setDeliveryMode(mode);
-    setHomeService(mode === 'home');
+    const isHome = mode === 'home';
+    setHomeService(isHome);
+    if (!isHome) {
+      setServiceCoverageAreas('');
+      setTravelFeeEnabled(false);
+      setTravelFeeFreeKm('');
+      setTravelFeePerKm('');
+    }
   };
 
   const handleSave = async () => {
@@ -372,6 +395,21 @@ export function ServiceFormScreen({ route, navigation }: Props) {
       ? deliveryMode === 'home'
       : homeService;
 
+    let freeKmNum: number | undefined;
+    let perKmNum: number | undefined;
+    if (resolvedHomeService && travelFeeEnabled) {
+      freeKmNum = parseFloat(travelFeeFreeKm);
+      perKmNum = parseFloat(travelFeePerKm);
+      if (!Number.isFinite(freeKmNum) || freeKmNum < 0) {
+        Alert.alert('Missing Fields', 'Enter free travel distance in km (0 or more).');
+        return;
+      }
+      if (!Number.isFinite(perKmNum) || perKmNum < 0) {
+        Alert.alert('Missing Fields', 'Enter travel charge per km (₹).');
+        return;
+      }
+    }
+
     lightHaptic();
     setSaving(true);
     try {
@@ -391,6 +429,12 @@ export function ServiceFormScreen({ route, navigation }: Props) {
         serviceSubCategory: serviceSubCategory.trim() || undefined,
         servicePackage: selectedSection?.hasPackages ? servicePackage : undefined,
         slotBookingEnabled,
+        serviceCoverageAreas: resolvedHomeService
+          ? serviceCoverageAreas.trim() || undefined
+          : undefined,
+        travelFeeEnabled: resolvedHomeService ? travelFeeEnabled : false,
+        travelFeeFreeKm: resolvedHomeService && travelFeeEnabled ? freeKmNum : undefined,
+        travelFeePerKm: resolvedHomeService && travelFeeEnabled ? perKmNum : undefined,
       };
 
       if (isEdit && editId) {
@@ -665,10 +709,116 @@ export function ServiceFormScreen({ route, navigation }: Props) {
                 </View>
                 <Switch
                   value={homeService}
-                  onValueChange={setHomeService}
+                  onValueChange={(v) => {
+                    setHomeService(v);
+                    if (!v) {
+                      setServiceCoverageAreas('');
+                      setTravelFeeEnabled(false);
+                      setTravelFeeFreeKm('');
+                      setTravelFeePerKm('');
+                    }
+                  }}
                   trackColor={{ false: '#E2E8F0', true: '#E60012' }}
                   thumbColor="#ffffff"
                 />
+              </View>
+            ) : null}
+
+            {homeService || deliveryMode === 'home' ? (
+              <View style={styles.homeTravelBlock}>
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Service areas / places
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.inputMultiline,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    value={serviceCoverageAreas}
+                    onChangeText={setServiceCoverageAreas}
+                    placeholder="e.g. Gachibowli, Madhapur, Hitech City"
+                    placeholderTextColor={colors.textTertiary}
+                    multiline
+                  />
+                </View>
+
+                <View
+                  style={[
+                    styles.toggleSettingRow,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                  ]}
+                >
+                  <View style={styles.toggleSettingLeft}>
+                    <View style={[styles.toggleSettingIcon, { backgroundColor: '#FEF3C7' }]}>
+                      <Feather name="navigation" size={14} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[styles.toggleSettingTitle, { color: colors.textPrimary }]}>
+                        Charge travel fee?
+                      </Text>
+                      <Text style={[styles.toggleSettingSubtitle, { color: colors.textSecondary }]}>
+                        Fee after free distance is exceeded
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={travelFeeEnabled}
+                    onValueChange={setTravelFeeEnabled}
+                    trackColor={{ false: '#E2E8F0', true: '#E60012' }}
+                    thumbColor="#ffffff"
+                  />
+                </View>
+
+                {travelFeeEnabled ? (
+                  <View style={styles.twoColRow}>
+                    <View style={[styles.inputWrapper, { flex: 1 }]}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                        Free until (km)
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            color: colors.textPrimary,
+                          },
+                        ]}
+                        value={travelFeeFreeKm}
+                        onChangeText={setTravelFeeFreeKm}
+                        keyboardType="decimal-pad"
+                        placeholder="e.g. 5"
+                        placeholderTextColor={colors.textTertiary}
+                      />
+                    </View>
+                    <View style={[styles.inputWrapper, { flex: 1 }]}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                        ₹ per km after
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: colors.card,
+                            borderColor: colors.border,
+                            color: colors.textPrimary,
+                          },
+                        ]}
+                        value={travelFeePerKm}
+                        onChangeText={setTravelFeePerKm}
+                        keyboardType="decimal-pad"
+                        placeholder="e.g. 15"
+                        placeholderTextColor={colors.textTertiary}
+                      />
+                    </View>
+                  </View>
+                ) : null}
               </View>
             ) : null}
 
@@ -1143,6 +1293,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   sectionSubtitle: { fontSize: 10, marginTop: 1 },
   twoColRow: { flexDirection: 'row', gap: 12 },
+  homeTravelBlock: { gap: 12 },
   inputWrapper: { gap: 5 },
   inputLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   input: {

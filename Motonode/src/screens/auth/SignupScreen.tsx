@@ -164,14 +164,15 @@ export function SignupScreen() {
               icon="phone"
               placeholder="Enter your phone number"
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(v) => setPhone(v.replace(/[^0-9]/g, '').slice(0, 10))}
               keyboardType="phone-pad"
+              maxLength={10}
             />
 
             <AuthLabeledInput
               label="Password"
               icon="lock"
-              placeholder="Create a password (min 6 characters)"
+              placeholder="Min 6 characters"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}

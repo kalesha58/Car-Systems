@@ -93,14 +93,13 @@ export function NotificationSettingsScreen({ navigation }: Props) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color="#1E293B" />
+          <Feather name="arrow-left" size={24} color="#fff" />
         </Pressable>
         <Text style={styles.headerTitle}>Notification Settings</Text>
-        <View style={{ width: 36 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
@@ -108,8 +107,8 @@ export function NotificationSettingsScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {/* Push Notifications */}
-        <Text style={styles.groupHeading}>Push Notifications</Text>
-        <View style={styles.card}>
+        <Text style={[styles.groupHeading, { color: colors.textSecondary }]}>Push Notifications</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {PUSH_NOTIFICATIONS.map((row, idx) =>
             renderNotifRow(
               row,
@@ -121,8 +120,8 @@ export function NotificationSettingsScreen({ navigation }: Props) {
         </View>
 
         {/* Email Notifications */}
-        <Text style={styles.groupHeading}>Email Notifications</Text>
-        <View style={styles.card}>
+        <Text style={[styles.groupHeading, { color: colors.textSecondary }]}>Email Notifications</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {EMAIL_NOTIFICATIONS.map((row, idx) =>
             renderNotifRow(
               row,
@@ -140,16 +139,27 @@ export function NotificationSettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, borderBottomWidth: 1, backgroundColor: '#ffffff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 14,
   },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
+  backBtn: { padding: 4, marginRight: 8 },
+  headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerSpacer: { width: 32 },
   content: { padding: 16, gap: 10 },
-  groupHeading: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B', marginTop: 4, marginBottom: 2, marginLeft: 2 },
+  groupHeading: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginTop: 4,
+    marginBottom: 2,
+  },
   card: {
-    backgroundColor: '#ffffff', borderRadius: 16, padding: 4,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 4,
+    borderWidth: 1,
   },
   notifRow: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 },
   notifIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },

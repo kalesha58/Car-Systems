@@ -327,6 +327,10 @@ export interface ICreateDealerServiceRequest {
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -349,6 +353,10 @@ export interface IUpdateDealerServiceRequest {
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
 }
 
 export async function createDealerService(data: ICreateDealerServiceRequest): Promise<IService> {

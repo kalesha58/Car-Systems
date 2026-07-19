@@ -18,6 +18,7 @@ export interface IProduct {
   tags?: string[];
   status: string;
   deliveryTimeMinutes?: number;
+  returnPolicy?: string;
   isSparePart?: boolean;
   batteryTypeId?: string;
   batteryTypeName?: string;

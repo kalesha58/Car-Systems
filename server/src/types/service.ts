@@ -24,6 +24,10 @@ export interface IService {
   servicePackage?: 'premium' | 'basic';
   slotDurationMinutes?: number;
   slotBookingEnabled?: boolean;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
   createdAt: string;
   updatedAt: string;
 }

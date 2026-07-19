@@ -25,6 +25,8 @@ export interface IDealerProduct {
   vehicleBrandName?: string;
   vehicleModelName?: string;
   status?: ProductStatus;
+  returnPolicy?: string;
+  deliveryTimeMinutes?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +50,7 @@ export interface ICreateDealerProductRequest {
   isSparePart?: boolean;
   vehicleBrandId?: string;
   vehicleModelId?: string;
+  deliveryTimeMinutes?: number;
 }
 
 export interface IUpdateDealerProductRequest {
@@ -70,6 +73,7 @@ export interface IUpdateDealerProductRequest {
   vehicleBrandId?: string | null;
   vehicleModelId?: string | null;
   status?: ProductStatus;
+  deliveryTimeMinutes?: number | null;
 }
 
 export interface IUpdateProductStockRequest {

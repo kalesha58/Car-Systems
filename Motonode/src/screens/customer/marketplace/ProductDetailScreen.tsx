@@ -40,6 +40,13 @@ type ProductDetailScreenProps = NativeStackScreenProps<
   typeof CustomerStackRoutes.ProductDetail
 >;
 
+function formatDeliveryLabel(deliveryTimeMinutes?: number): string {
+  if (!deliveryTimeMinutes || deliveryTimeMinutes <= 0) return '2-4 Days Delivery';
+  const days = Math.max(1, Math.round(deliveryTimeMinutes / (24 * 60)));
+  if (days === 1) return 'Within 1 day';
+  return `Within ${days} days`;
+}
+
 export function ProductDetailScreen({ route, navigation }: ProductDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -289,7 +296,9 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               </View>
               <View>
                 <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Fast Delivery</Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>2-4 Days Delivery</Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>
+                  {formatDeliveryLabel(product.deliveryTimeMinutes)}
+                </Text>
               </View>
             </View>
           </View>

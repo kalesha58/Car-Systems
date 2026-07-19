@@ -7,6 +7,8 @@ import {
   updatePrivacySettings,
   getPrivacySettings,
   deleteUserAccount,
+  sendPhoneChangeOtp,
+  verifyPhoneChange,
 } from '../../services/user/profileService';
 import { uploadToCloudinary } from '../../config/cloudinary';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
@@ -62,11 +64,20 @@ export const updateProfileController = async (
       return;
     }
 
-    const updateData: { name?: string; phone?: string; profileImage?: string } = {};
+    const updateData: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      profileImage?: string;
+    } = {};
 
     // Handle text fields from form data
     if (req.body.name) {
       updateData.name = req.body.name;
+    }
+
+    if (req.body.email) {
+      updateData.email = req.body.email;
     }
 
     if (req.body.phone) {
@@ -138,6 +149,80 @@ export const updateProfileController = async (
       }
     }
 
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Send OTP to a new phone number for phone-change verification.
+ */
+export const sendPhoneChangeOtpController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const { phone } = req.body as { phone?: string };
+    if (!phone) {
+      res.status(400).json({
+        success: false,
+        Response: { ReturnMessage: 'Phone number is required' },
+      });
+      return;
+    }
+
+    const result = await sendPhoneChangeOtp(req.user.userId, phone);
+
+    res.status(200).json({
+      success: true,
+      Response: result,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Verify OTP and update the authenticated user's phone number.
+ */
+export const verifyPhoneChangeController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const { phone, otp } = req.body as { phone?: string; otp?: string };
+    if (!phone || !otp) {
+      res.status(400).json({
+        success: false,
+        Response: { ReturnMessage: 'Phone number and OTP are required' },
+      });
+      return;
+    }
+
+    const profile = await verifyPhoneChange(req.user.userId, phone, otp);
+
+    res.status(200).json({
+      success: true,
+      Response: profile,
+    });
+  } catch (error) {
     errorHandler(error as IAppError, res);
   }
 };

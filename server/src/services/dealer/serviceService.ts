@@ -60,6 +60,10 @@ const serviceToDealerService = (doc: IServiceDocument): IDealerService => {
     servicePackage: doc.servicePackage,
     slotBookingEnabled: doc.slotBookingEnabled,
     slotDurationMinutes: doc.slotDurationMinutes,
+    serviceCoverageAreas: doc.serviceCoverageAreas,
+    travelFeeEnabled: doc.travelFeeEnabled,
+    travelFeeFreeKm: doc.travelFeeFreeKm,
+    travelFeePerKm: doc.travelFeePerKm,
     createdAt: doc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() || new Date().toISOString(),
   };
@@ -244,6 +248,10 @@ export const createDealerService = async (
       slotBookingEnabled:
         data.serviceType === 'tire_service' ? true : data.slotBookingEnabled,
       slotDurationMinutes: data.slotDurationMinutes,
+      serviceCoverageAreas: data.serviceCoverageAreas?.trim(),
+      travelFeeEnabled: data.travelFeeEnabled ?? false,
+      travelFeeFreeKm: data.travelFeeFreeKm,
+      travelFeePerKm: data.travelFeePerKm,
     });
 
     await service.save();
@@ -352,6 +360,12 @@ export const updateDealerService = async (
     if (data.slotBookingEnabled !== undefined) service.slotBookingEnabled = data.slotBookingEnabled;
     if (data.slotDurationMinutes !== undefined) service.slotDurationMinutes = data.slotDurationMinutes;
     if (data.isActive !== undefined) service.isActive = data.isActive;
+    if (data.serviceCoverageAreas !== undefined) {
+      service.serviceCoverageAreas = data.serviceCoverageAreas?.trim() || undefined;
+    }
+    if (data.travelFeeEnabled !== undefined) service.travelFeeEnabled = data.travelFeeEnabled;
+    if (data.travelFeeFreeKm !== undefined) service.travelFeeFreeKm = data.travelFeeFreeKm;
+    if (data.travelFeePerKm !== undefined) service.travelFeePerKm = data.travelFeePerKm;
 
     if (data.vehicleBrandId !== undefined) {
       service.vehicleBrandId = data.vehicleBrandId || undefined;

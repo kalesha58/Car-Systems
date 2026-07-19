@@ -29,6 +29,10 @@ export interface ICreateDealerServiceRequest {
   servicePackage?: 'premium' | 'basic';
   slotBookingEnabled?: boolean;
   slotDurationMinutes?: number;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
 }
 
 export interface IUpdateDealerServiceRequest {
@@ -55,6 +59,10 @@ export interface IUpdateDealerServiceRequest {
   servicePackage?: 'premium' | 'basic';
   slotBookingEnabled?: boolean;
   slotDurationMinutes?: number;
+  serviceCoverageAreas?: string;
+  travelFeeEnabled?: boolean;
+  travelFeeFreeKm?: number;
+  travelFeePerKm?: number;
 }
 
 export interface IUpdateServiceStatusRequest {
