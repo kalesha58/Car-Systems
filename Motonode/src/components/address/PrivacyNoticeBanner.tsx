@@ -8,8 +8,8 @@ export function PrivacyNoticeBanner() {
   const colors = useColors();
 
   return (
-    <View style={[styles.banner, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
-      <View style={[styles.iconWrap, { backgroundColor: '#DBEAFE' }]}>
+    <View style={[styles.banner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.iconWrap, { backgroundColor: colors.primarySubtle }]}>
         <Feather name="shield" size={18} color={colors.primary} />
       </View>
       <View style={styles.content}>

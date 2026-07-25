@@ -8,6 +8,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -189,6 +190,33 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
         ? 'This vehicle has been removed from primary driver access.' 
         : 'This vehicle is now set as your primary garage vehicle.'
     );
+  };
+
+  const handleShareVehicle = async () => {
+    if (!vehicle) return;
+    lightHaptic();
+    const fuelLabel = vehicle.fuelType || 'N/A';
+    const yearLabel = vehicle.year ? String(vehicle.year) : 'N/A';
+    const colorLabel = vehicle.color || 'N/A';
+    const docsVerified = [
+      vehicle.documents?.rc ? '✅ RC' : '❌ RC',
+      vehicle.documents?.insurance ? '✅ Insurance' : '❌ Insurance',
+      vehicle.documents?.pollution ? '✅ PUC' : '❌ PUC',
+    ].join('  ');
+    const message = [
+      `🚗 Vehicle Details — ${vehicle.brand} ${vehicle.model}`,
+      `📋 Number Plate: ${vehicle.numberPlate}`,
+      `📅 Year: ${yearLabel}`,
+      `⛽ Fuel Type: ${fuelLabel}`,
+      `🎨 Color: ${colorLabel}`,
+      `📄 Documents: ${docsVerified}`,
+      `\nShared via Motonode`,
+    ].join('\n');
+    try {
+      await Share.share({ message });
+    } catch {
+      // user dismissed share sheet
+    }
   };
 
   const handleViewDoc = (key: 'rc' | 'insurance' | 'pollution' | 'dl') => {
@@ -493,6 +521,11 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
           <Pressable style={styles.actionBtnItem} onPress={handleTogglePrimary}>
             <Feather name="star" size={18} color={isPrimary ? '#F59E0B' : '#475569'} />
             <Text style={styles.actionBtnLabel}>{isPrimary ? 'Primary' : 'Set as Primary'}</Text>
+          </Pressable>
+          <View style={styles.actionDivider} />
+          <Pressable style={styles.actionBtnItem} onPress={handleShareVehicle}>
+            <Feather name="share-2" size={18} color={colors.primary} />
+            <Text style={[styles.actionBtnLabel, { color: colors.primary }]}>Share</Text>
           </Pressable>
         </View>
 

@@ -19,6 +19,7 @@ export interface UserVehicle {
   isOwnVehicle?: boolean;
   relation?: string;
   ownerName?: string;
+  fuelType?: string;
   createdAt?: string;
   updatedAt?: string;
 }

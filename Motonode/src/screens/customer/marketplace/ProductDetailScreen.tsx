@@ -5,6 +5,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -16,7 +17,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart, useWishlist, useToast } from '@context/index';
 import { useColors } from '@hooks/useColors';
-import { getProductById } from '@services/product.service';
+import { getProductById, getProducts } from '@services/product.service';
 import type { IProduct } from '@app-types/product';
 import type { IReviewSummary } from '@app-types/review';
 import { themeLight } from '@theme/colors';
@@ -56,6 +57,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   // Kept in sync by the reviews section so the header reflects new submissions.
   const [ratingOverride, setRatingOverride] = useState<IReviewSummary | null>(null);
   const { addItem, items, updateQuantity } = useCart();
@@ -102,6 +104,27 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
       cancelled = true;
     };
   }, [id]);
+
+  // Load related products from the same dealer after the product loads
+  useEffect(() => {
+    if (!product) return;
+    let cancelled = false;
+    const loadRelated = async () => {
+      try {
+        const dealerId = product.dealerId || product.dealer?.id || '';
+        if (!dealerId) return;
+        const res = await getProducts({ dealerId, limit: 8 });
+        if (cancelled) return;
+        const all = res?.Response?.products ?? [];
+        setRelatedProducts(all.filter((p: IProduct) => (p.id || (p as any)._id) !== productId));
+      } catch {
+        // silently ignore
+      }
+    };
+    void loadRelated();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id, product?.dealerId]);
 
   const productId = product ? getProductId(product) : id;
   const cartItem = items.find((i) => getProductId(i.product) === productId);
@@ -192,7 +215,18 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           <Feather name="chevron-left" size={24} color={colors.textPrimary} />
         </Pressable>
         <View style={styles.headerRight}>
-          <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]}>
+          <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]} onPress={async () => {
+            lightHaptic();
+            if (!product) return;
+            try {
+              await Share.share({
+                message: `Check out ${product.name} by ${product.dealer?.businessName ?? 'Authorized Dealer'} — ₹${product.price.toLocaleString('en-IN')} on Motonode!`,
+                title: product.name,
+              });
+            } catch {
+              // dismissed
+            }
+          }}>
             <Feather name="share-2" size={20} color={colors.textPrimary} />
           </Pressable>
           <Pressable
@@ -355,28 +389,33 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             </Pressable>
           </View>
 
-          {/* Specifications List */}
+          {/* Specifications List — shown for any product with spec data */}
           {(() => {
             const specs: Array<{ label: string; value: string }> = [];
-            if (product.isSparePart) {
-              if (product.vehicleBrandName) specs.push({ label: 'Compatible Brand', value: product.vehicleBrandName });
-              if (product.vehicleModelName) specs.push({ label: 'Compatible Model', value: product.vehicleModelName });
-              if (product.fitsYear) specs.push({ label: 'Fits Year', value: product.fitsYear });
-              if (product.emissionStandard) specs.push({ label: 'Emission Standard', value: product.emissionStandard });
-              if (product.color) specs.push({ label: 'Color', value: product.color });
-              if (product.weight) specs.push({ label: 'Weight', value: product.weight });
-            } else if (product.batteryTypeName) {
-              specs.push({ label: 'Battery Type', value: product.batteryTypeName });
-              if (product.voltageV) specs.push({ label: 'Voltage', value: `${product.voltageV}V` });
-            }
-            // Add custom specs from product.specifications
+            // Spare part specifics
+            if (product.vehicleBrandName) specs.push({ label: 'Compatible Brand', value: product.vehicleBrandName });
+            if (product.vehicleModelName) specs.push({ label: 'Compatible Model', value: product.vehicleModelName });
+            if (product.fitsYear) specs.push({ label: 'Fits Year', value: product.fitsYear });
+            if (product.emissionStandard) specs.push({ label: 'Emission Standard', value: product.emissionStandard });
+            if (product.color) specs.push({ label: 'Color', value: product.color });
+            if (product.weight) specs.push({ label: 'Weight', value: product.weight });
+            // Battery specifics
+            if (product.batteryTypeName) specs.push({ label: 'Battery Type', value: product.batteryTypeName });
+            if (product.voltageV) specs.push({ label: 'Voltage', value: `${product.voltageV}V` });
+            // Generic custom specs
             if (product.specifications) {
               Object.entries(product.specifications).forEach(([k, v]) => {
                 specs.push({ label: k, value: String(v) });
               });
             }
 
-            if (specs.length === 0) return null;
+            if (specs.length === 0) {
+              return (
+                <View style={[styles.specsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[styles.specLabelText, { color: colors.textTertiary, textAlign: 'center', paddingVertical: 8 }]}>No specifications available</Text>
+                </View>
+              );
+            }
 
             return (
               <View style={[styles.specsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -398,6 +437,41 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             productName={product.name}
             onSummaryChange={setRatingOverride}
           />
+
+          {/* Related Products Section */}
+          {relatedProducts.length > 0 && (
+            <View style={{ marginTop: 24, marginBottom: 8 }}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>More from this Dealer</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
+                {relatedProducts.map((rp) => {
+                  const rpId = rp.id || (rp as any)._id;
+                  const rpImage = rp.images?.[0];
+                  return (
+                    <Pressable
+                      key={rpId}
+                      onPress={() => {
+                        lightHaptic();
+                        navigation.push(CustomerStackRoutes.ProductDetail, { id: rpId });
+                      }}
+                      style={[styles.relatedCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    >
+                      {rpImage ? (
+                        <Image source={{ uri: rpImage }} style={styles.relatedImg} resizeMode="cover" />
+                      ) : (
+                        <View style={[styles.relatedImg, { backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
+                          <Feather name="box" size={24} color={colors.textTertiary} />
+                        </View>
+                      )}
+                      <View style={{ padding: 8 }}>
+                        <Text style={[styles.relatedName, { color: colors.textPrimary }]} numberOfLines={2}>{rp.name}</Text>
+                        <Text style={[styles.relatedPrice, { color: colors.primary }]}>₹{rp.price.toLocaleString('en-IN')}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -476,7 +550,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   scrollContent: { paddingBottom: 110 },
   imageContainerRow: {
@@ -553,7 +626,6 @@ const styles = StyleSheet.create({
   trustBadgesRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     padding: 12,
     marginVertical: 4,
@@ -578,7 +650,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   trustTitle: { fontSize: 9, fontFamily: 'Inter_700Bold' },
-  trustSub: { fontSize: 8, fontFamily: 'Inter_400Regular', marginTop: 1 },
+  trustSub: { fontSize: 10, fontFamily: 'Inter_400Regular', marginTop: 1 },
   dealerCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -626,11 +698,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 12,
     paddingHorizontal: 4,
     height: 48,
-    backgroundColor: '#ffffff',
   },
   qtyBtn: {
     width: 36,
@@ -678,5 +748,25 @@ const styles = StyleSheet.create({
   },
   specDivider: {
     height: 1,
+  },
+  relatedCard: {
+    width: 140,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  relatedImg: {
+    width: '100%',
+    height: 100,
+  },
+  relatedName: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    lineHeight: 15,
+    marginBottom: 4,
+  },
+  relatedPrice: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
   },
 });

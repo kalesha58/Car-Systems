@@ -501,13 +501,13 @@ export function AddLiveLocationScreen() {
             </Pressable>
 
             {/* Glassmorphic Search Bar */}
-            <View style={[styles.glassSearchBar, { backgroundColor: 'rgba(255, 255, 255, 0.92)', borderColor: colors.border }]}>
+            <View style={[styles.glassSearchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="search" size={18} color={colors.textSecondary} style={styles.searchIcon} />
               <TextInput
                 value={searchQuery}
                 onChangeText={handleSearchTextChange}
                 placeholder="Search landmarks, buildings, streets..."
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.placeholder}
                 style={[styles.searchInput, { color: colors.textPrimary }]}
               />
               {searchQuery.length > 0 && (
