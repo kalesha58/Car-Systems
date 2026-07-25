@@ -386,11 +386,6 @@ export const updateBusinessRegistration = async (
       throw new AppError('Unauthorized to update this registration', 403);
     }
 
-    // Can only update if status is pending or rejected
-    if (registration.status === 'approved') {
-      throw new AppError('Cannot update approved business registration', 403);
-    }
-
     // Dealers cannot change the status - only admins can via updateBusinessRegistrationStatus
     if ((data as any).status !== undefined) {
       throw new AppError('Dealers cannot change business registration status. Status can only be updated by admins.', 403);
@@ -453,6 +448,47 @@ export const updateBusinessRegistration = async (
       } else {
         registration.gst = undefined;
       }
+    }
+
+    if ((data as any).registrationNumber !== undefined) {
+      const value = (data as any).registrationNumber;
+      registration.registrationNumber = value?.trim() ? value.trim() : undefined;
+    }
+
+    if ((data as any).establishedYear !== undefined) {
+      const year = Number((data as any).establishedYear);
+      if (!Number.isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
+        registration.establishedYear = year;
+      }
+    }
+
+    if ((data as any).website !== undefined) {
+      const value = (data as any).website;
+      registration.website = value?.trim() ? value.trim() : undefined;
+    }
+
+    if ((data as any).workingDays !== undefined) {
+      const value = (data as any).workingDays;
+      registration.workingDays = value?.trim() ? value.trim() : undefined;
+    }
+
+    if ((data as any).workingHours !== undefined) {
+      const hours = (data as any).workingHours;
+      if (hours?.open?.trim() && hours?.close?.trim()) {
+        registration.workingHours = {
+          open: hours.open.trim(),
+          close: hours.close.trim(),
+        };
+      }
+    }
+
+    if ((data as any).socialLinks !== undefined) {
+      const links = (data as any).socialLinks || {};
+      registration.socialLinks = {
+        facebook: links.facebook?.trim() || undefined,
+        instagram: links.instagram?.trim() || undefined,
+        youtube: links.youtube?.trim() || undefined,
+      };
     }
 
     if ((data as any).shopPhotos !== undefined) {

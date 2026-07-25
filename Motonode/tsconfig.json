@@ -23,5 +23,12 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/node_modules", "**/Pods"]
+  "exclude": [
+    "**/node_modules",
+    "**/Pods",
+    "dist-web",
+    "vite.config.ts",
+    "index.web.tsx",
+    "src/web/**"
+  ]
 }

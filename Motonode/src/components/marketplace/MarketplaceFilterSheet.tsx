@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { BottomSheet } from '@components/bottomSheet';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
 
@@ -198,7 +196,6 @@ export function MarketplaceFilterSheet({
   onApply,
 }: MarketplaceFilterSheetProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const [draftProducts, setDraftProducts] = useState(productFilters);
   const [draftVehicles, setDraftVehicles] = useState(vehicleFilters);
   const [draftServices, setDraftServices] = useState(serviceFilters);
@@ -233,85 +230,79 @@ export function MarketplaceFilterSheet({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+    <BottomSheet visible={visible} onClose={onClose} presentation="panel" contentStyle={styles.sheetPad}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Pressable onPress={onClose} hitSlop={8}>
+          <Feather name="x" size={20} color={colors.textPrimary} />
+        </Pressable>
+      </View>
 
-        <View style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.handle} />
-
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Feather name="x" size={20} color={colors.textPrimary} />
-            </Pressable>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-            {tab === 'products' && (
-              <>
-                <Section title="Category">
-                  {PRODUCT_CATEGORIES.map((cat) => (
-                    <Chip
-                      key={cat.id}
-                      label={cat.label}
-                      selected={draftProducts.categories.includes(cat.id)}
-                      onPress={() =>
-                        setDraftProducts((prev) => ({
-                          ...prev,
-                          categories: toggleList(prev.categories, cat.id),
-                        }))
-                      }
-                    />
-                  ))}
-                </Section>
-
-                <Section title="Brand">
-                  {PRODUCT_BRANDS.map((brand) => (
-                    <Chip
-                      key={brand}
-                      label={brand}
-                      selected={draftProducts.brands.includes(brand)}
-                      onPress={() =>
-                        setDraftProducts((prev) => ({
-                          ...prev,
-                          brands: toggleList(prev.brands, brand),
-                        }))
-                      }
-                    />
-                  ))}
-                </Section>
-
-                <Section title="Price Range">
-                  {[
-                    { id: 'all', label: 'All Prices' },
-                    { id: 'under1k', label: 'Under ₹1,000' },
-                    { id: '1k-5k', label: '₹1,000 – ₹5,000' },
-                    { id: '5k+', label: 'Above ₹5,000' },
-                  ].map((range) => (
-                    <Chip
-                      key={range.id}
-                      label={range.label}
-                      selected={draftProducts.priceRange === range.id}
-                      onPress={() =>
-                        setDraftProducts((prev) => ({
-                          ...prev,
-                          priceRange: range.id as ProductFilters['priceRange'],
-                        }))
-                      }
-                    />
-                  ))}
-                </Section>
-
-                <ToggleRow
-                  label="In stock only"
-                  value={draftProducts.inStockOnly}
-                  onToggle={() =>
-                    setDraftProducts((prev) => ({ ...prev, inStockOnly: !prev.inStockOnly }))
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        {tab === 'products' && (
+          <>
+            <Section title="Category">
+              {PRODUCT_CATEGORIES.map((cat) => (
+                <Chip
+                  key={cat.id}
+                  label={cat.label}
+                  selected={draftProducts.categories.includes(cat.id)}
+                  onPress={() =>
+                    setDraftProducts((prev) => ({
+                      ...prev,
+                      categories: toggleList(prev.categories, cat.id),
+                    }))
                   }
                 />
-              </>
-            )}
+              ))}
+            </Section>
+
+            <Section title="Brand">
+              {PRODUCT_BRANDS.map((brand) => (
+                <Chip
+                  key={brand}
+                  label={brand}
+                  selected={draftProducts.brands.includes(brand)}
+                  onPress={() =>
+                    setDraftProducts((prev) => ({
+                      ...prev,
+                      brands: toggleList(prev.brands, brand),
+                    }))
+                  }
+                />
+              ))}
+            </Section>
+
+            <Section title="Price Range">
+              {[
+                { id: 'all', label: 'All Prices' },
+                { id: 'under1k', label: 'Under ₹1,000' },
+                { id: '1k-5k', label: '₹1,000 – ₹5,000' },
+                { id: '5k+', label: 'Above ₹5,000' },
+              ].map((range) => (
+                <Chip
+                  key={range.id}
+                  label={range.label}
+                  selected={draftProducts.priceRange === range.id}
+                  onPress={() =>
+                    setDraftProducts((prev) => ({
+                      ...prev,
+                      priceRange: range.id as ProductFilters['priceRange'],
+                    }))
+                  }
+                />
+              ))}
+            </Section>
+
+            <ToggleRow
+              label="In stock only"
+              value={draftProducts.inStockOnly}
+              onToggle={() =>
+                setDraftProducts((prev) => ({ ...prev, inStockOnly: !prev.inStockOnly }))
+              }
+            />
+          </>
+        )}
 
             {tab === 'vehicles' && (
               <>
@@ -463,48 +454,23 @@ export function MarketplaceFilterSheet({
               <Text style={styles.applyText}>Apply Filters</Text>
             </Pressable>
           </View>
-        </View>
-      </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-  },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: Dimensions.get('window').height * 0.82,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1',
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
+  sheetPad: {
+    flexGrow: 0,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 4,
+    marginBottom: 8,
   },
   title: { fontSize: 17, fontFamily: 'Inter_700Bold' },
-  body: { paddingHorizontal: 20, paddingBottom: 12, gap: 18 },
+  body: { paddingBottom: 12, gap: 18, flexGrow: 1 },
   section: { gap: 10 },
   sectionTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

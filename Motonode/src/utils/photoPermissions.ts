@@ -33,7 +33,7 @@ export function getPhotoPermissionCopy(source: PhotoSource) {
 }
 
 export async function hasPhotoPermission(source: PhotoSource): Promise<boolean> {
-  if (Platform.OS === 'ios') {
+  if (Platform.OS === 'web' || Platform.OS === 'ios') {
     return true;
   }
 
@@ -49,7 +49,7 @@ export async function hasPhotoPermission(source: PhotoSource): Promise<boolean> 
 }
 
 export async function requestPhotoPermission(source: PhotoSource): Promise<boolean> {
-  if (Platform.OS === 'ios') {
+  if (Platform.OS === 'web' || Platform.OS === 'ios') {
     return true;
   }
 

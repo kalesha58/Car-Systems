@@ -21,22 +21,10 @@ import { ChromeHeader } from '@components/common';
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useCart } from '@context/index';
 import { useColors } from '@hooks/useColors';
+import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { PriceDetailsSheet } from '@components/marketplace/PriceDetailsSheet';
+import { computeCartPricing, type AppliedCoupon } from '@utils/cartPricing';
 import { mediumHaptic, selectionHaptic, successHaptic, lightHaptic } from '@utils/haptics';
-
-type CustomerStackParamList = {
-  [CustomerStackRoutes.CustomerTabs]: {
-    screen?: typeof CustomerTabRoutes.Home | typeof CustomerTabRoutes.Marketplace | typeof CustomerTabRoutes.Garage;
-  };
-  [CustomerStackRoutes.Cart]: undefined;
-  [CustomerStackRoutes.Search]: undefined;
-  [CustomerStackRoutes.Notifications]: undefined;
-  [CustomerStackRoutes.ProductDetail]: { id: string };
-  [CustomerStackRoutes.VehicleDetail]: { id: string };
-  [CustomerStackRoutes.AiAssistant]: undefined;
-  [CustomerStackRoutes.MyOrders]: undefined;
-  [CustomerStackRoutes.OrderTracking]: { id: string };
-  [CustomerStackRoutes.Checkout]: undefined;
-};
 
 type CartNavigationProp = NativeStackNavigationProp<
   CustomerStackParamList,
@@ -63,6 +51,7 @@ export function CartScreen() {
   const navigation = useNavigation<CartNavigationProp>();
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [priceDetailsVisible, setPriceDetailsVisible] = useState(false);
   
   // Coupon State
   const [isCouponModalVisible, setIsCouponModalVisible] = useState(false);
@@ -73,14 +62,18 @@ export function CartScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  // Calculate discount based on active coupon
-  const discount = appliedCoupon 
-    ? appliedCoupon.type === 'percentage'
-      ? Math.round(total * (appliedCoupon.value / 100))
-      : appliedCoupon.value
-    : 0;
-
-  const grandTotal = Math.max(0, total - discount);
+  const couponForPricing: AppliedCoupon = appliedCoupon
+    ? { code: appliedCoupon.code, type: appliedCoupon.type, value: appliedCoupon.value }
+    : null;
+  const pricing = computeCartPricing(items, couponForPricing);
+  const {
+    mrpSubtotal,
+    saleSubtotal,
+    productDiscount,
+    couponDiscount,
+    payable: grandTotal,
+    amountSaved,
+  } = pricing;
 
   const handleApplyCoupon = (coupon: Coupon) => {
     lightHaptic();
@@ -111,7 +104,9 @@ export function CartScreen() {
 
   const handleCheckout = () => {
     lightHaptic();
-    navigation.navigate(CustomerStackRoutes.Checkout);
+    navigation.navigate(CustomerStackRoutes.Checkout, {
+      coupon: couponForPricing,
+    });
   };
 
   if (orderPlaced) {
@@ -203,7 +198,17 @@ export function CartScreen() {
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemBrand}>{item.product.brand}</Text>
                   <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>{item.product.name}</Text>
-                  <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>₹{item.product.price.toLocaleString('en-IN')}</Text>
+                  <View style={styles.priceRow}>
+                    <Text style={[styles.itemPrice, { color: colors.textPrimary }]}>
+                      ₹{item.product.price.toLocaleString('en-IN')}
+                    </Text>
+                    {item.product.originalPrice != null &&
+                      item.product.originalPrice > item.product.price && (
+                      <Text style={[styles.itemMrp, { color: colors.textTertiary }]}>
+                        ₹{item.product.originalPrice.toLocaleString('en-IN')}
+                      </Text>
+                    )}
+                  </View>
                   
                   {/* Quantity selectors */}
                   <View style={styles.quantityRow}>
@@ -267,16 +272,38 @@ export function CartScreen() {
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            {/* Subtotal breakdowns */}
+            {/* Price breakdown */}
             <View style={styles.billingRow}>
-              <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-              <Text style={[styles.billingValue, { color: colors.textPrimary }]}>₹{total.toLocaleString('en-IN')}</Text>
+              <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Original price (MRP)</Text>
+              <Text style={[styles.billingValue, { color: colors.textPrimary }]}>
+                ₹{mrpSubtotal.toLocaleString('en-IN')}
+              </Text>
             </View>
-            
-            {discount > 0 && (
+
+            {productDiscount > 0 && (
               <View style={styles.billingRow}>
-                <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Coupon Discount</Text>
-                <Text style={[styles.billingValueDiscount]}>- ₹{discount.toLocaleString('en-IN')}</Text>
+                <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Product discount</Text>
+                <Text style={styles.billingValueDiscount}>
+                  − ₹{productDiscount.toLocaleString('en-IN')}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.billingRow}>
+              <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Price after discount</Text>
+              <Text style={[styles.billingValue, { color: colors.textPrimary }]}>
+                ₹{saleSubtotal.toLocaleString('en-IN')}
+              </Text>
+            </View>
+
+            {couponDiscount > 0 && (
+              <View style={styles.billingRow}>
+                <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>
+                  Coupon{appliedCoupon ? ` (${appliedCoupon.code})` : ''}
+                </Text>
+                <Text style={styles.billingValueDiscount}>
+                  − ₹{couponDiscount.toLocaleString('en-IN')}
+                </Text>
               </View>
             )}
 
@@ -284,6 +311,23 @@ export function CartScreen() {
               <Text style={[styles.billingLabel, { color: colors.textSecondary }]}>Delivery Fee</Text>
               <Text style={styles.billingValueFree}>Free</Text>
             </View>
+
+            {amountSaved > 0 && (
+              <Text style={styles.amountSavedText}>
+                You saved ₹{amountSaved.toLocaleString('en-IN')} on this order
+              </Text>
+            )}
+
+            <Pressable
+              style={styles.viewDetailsRow}
+              onPress={() => {
+                lightHaptic();
+                setPriceDetailsVisible(true);
+              }}
+            >
+              <Text style={[styles.viewDetailsText, { color: colors.primary }]}>View Price Details</Text>
+              <Feather name="chevron-right" size={14} color={colors.primary} />
+            </Pressable>
 
             <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: 8 }]} />
 
@@ -366,6 +410,12 @@ export function CartScreen() {
           </View>
         </View>
       </Modal>
+
+      <PriceDetailsSheet
+        visible={priceDetailsVisible}
+        onClose={() => setPriceDetailsVisible(false)}
+        pricing={pricing}
+      />
     </View>
   );
 }
@@ -398,7 +448,13 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1, padding: 10 },
   itemBrand: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#E60012', marginBottom: 2 },
   itemName: { fontSize: 12, fontFamily: 'Inter_500Medium', lineHeight: 16, marginBottom: 4 },
-  itemPrice: { fontSize: 14, fontFamily: 'Inter_700Bold', marginBottom: 6 },
+  itemPrice: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  itemMrp: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    textDecorationLine: 'line-through',
+  },
   quantityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qtyBtn: {
     width: 26,
@@ -443,6 +499,20 @@ const styles = StyleSheet.create({
   billingValue: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   billingValueDiscount: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#10B981' },
   billingValueFree: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#10B981' },
+  amountSavedText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+    color: '#059669',
+    marginTop: 4,
+  },
+  viewDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  viewDetailsText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
   totalLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
   total: { fontSize: 20, fontFamily: 'Inter_700Bold' },

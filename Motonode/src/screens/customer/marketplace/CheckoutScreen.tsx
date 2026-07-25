@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   Modal,
   Dimensions,
@@ -25,6 +24,7 @@ import { useColors } from '@hooks/useColors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { formatCurrency, getProductId } from '@utils/displayMappers';
+import { computeCartPricing, type AppliedCoupon } from '@utils/cartPricing';
 import { useFocusEffect } from '@react-navigation/native';
 import { getSavedAddresses } from '@services/address.service';
 import type { IAddress } from '@app-types/address';
@@ -38,6 +38,11 @@ export const DEFAULT_SHIPPING_ADDRESS = {
 };
 
 type Props = NativeStackScreenProps<CustomerStackParamList, typeof CustomerStackRoutes.Checkout>;
+
+const CHECKOUT_COUPONS: NonNullable<AppliedCoupon>[] = [
+  { code: 'HUB10', type: 'percentage', value: 10 },
+  { code: 'MOTONEW', type: 'fixed', value: 200 },
+];
 
 // ── Step Progress Bar ────────────────────────────────────────────────────────
 function StepBar({ current }: { current: 1 | 2 | 3 }) {
@@ -95,20 +100,19 @@ const stepStyles = StyleSheet.create({
 });
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
-export function CheckoutScreen({ navigation }: Props) {
+export function CheckoutScreen({ navigation, route }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-  const { items, total } = useCart();
+  const { items } = useCart();
   const { runWithMobileCheck } = useMobileVerificationGate();
-  const [couponCode, setCouponCode] = useState('HUB10');
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon>(route.params?.coupon ?? null);
   const [addresses, setAddresses] = useState<IAddress[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<IAddress | null>(null);
   const [isAddressModalVisible, setIsAddressModalVisible] = useState(false);
 
-  const discount = couponApplied ? Math.min(100, Math.round(total * 0.1)) : 0;
-  const orderTotal = Math.max(0, total - discount);
+  const pricing = computeCartPricing(items, appliedCoupon);
+  const { payable: orderTotal, amountSaved, couponDiscount } = pricing;
 
   const loadAddresses = useCallback(async () => {
     try {
@@ -130,14 +134,26 @@ export function CheckoutScreen({ navigation }: Props) {
     }, [loadAddresses])
   );
 
+  useEffect(() => {
+    if (route.params?.coupon !== undefined) {
+      setAppliedCoupon(route.params.coupon);
+    }
+  }, [route.params?.coupon]);
+
   const handleApplyCoupon = () => {
     lightHaptic();
-    if (couponCode.trim().toUpperCase() === 'HUB10') {
-      setCouponApplied(true);
-      successHaptic();
-    } else {
-      Alert.alert('Invalid Coupon', 'The coupon code you entered is not valid.');
+    if (appliedCoupon) {
+      setAppliedCoupon(null);
+      return;
     }
+    const defaultCoupon = CHECKOUT_COUPONS[0];
+    const preview = computeCartPricing(items, defaultCoupon);
+    if (preview.couponDiscount <= 0) {
+      Alert.alert('Coupon', 'This coupon cannot be applied to the current cart.');
+      return;
+    }
+    setAppliedCoupon(defaultCoupon);
+    successHaptic();
   };
 
   const handleContinue = () => {
@@ -147,7 +163,10 @@ export function CheckoutScreen({ navigation }: Props) {
     }
     void runWithMobileCheck(() => {
       lightHaptic();
-      navigation.navigate(CustomerStackRoutes.Payment, { address: selectedAddress || undefined });
+      navigation.navigate(CustomerStackRoutes.Payment, {
+        address: selectedAddress || undefined,
+        coupon: appliedCoupon,
+      });
     });
   };
 
@@ -257,14 +276,24 @@ export function CheckoutScreen({ navigation }: Props) {
         </Pressable>
 
         {/* Coupon */}
-        <Pressable style={styles.couponRow} onPress={() => lightHaptic()}>
+        <Pressable style={styles.couponRow} onPress={handleApplyCoupon}>
           <Feather name="tag" size={15} color="#E60012" />
-          <Text style={styles.couponLabel}>Apply Coupon</Text>
+          <Text style={styles.couponLabel}>
+            {appliedCoupon ? `Coupon ${appliedCoupon.code}` : 'Apply Coupon'}
+          </Text>
           <View style={{ flex: 1 }} />
-          <View style={styles.couponCodeBox}>
-            <Text style={styles.couponCodeText}>{couponApplied ? couponCode : ''}</Text>
-          </View>
-          {couponApplied && <Text style={styles.couponSaving}>-₹{discount}</Text>}
+          {appliedCoupon ? (
+            <>
+              <View style={styles.couponCodeBox}>
+                <Text style={styles.couponCodeText}>{appliedCoupon.code}</Text>
+              </View>
+              {couponDiscount > 0 && (
+                <Text style={styles.couponSaving}>-{formatCurrency(couponDiscount)}</Text>
+              )}
+            </>
+          ) : (
+            <Text style={styles.couponHint}>Tap to apply HUB10</Text>
+          )}
           <Feather name="chevron-right" size={16} color="#CBD5E1" />
         </Pressable>
       </ScrollView>
@@ -274,12 +303,12 @@ export function CheckoutScreen({ navigation }: Props) {
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
             <Text style={styles.totalAmount}>{formatCurrency(orderTotal)}</Text>
-            {couponApplied && (
-              <Text style={styles.totalOriginal}>{formatCurrency(total)}</Text>
+            {amountSaved > 0 && (
+              <Text style={styles.totalOriginal}>{formatCurrency(pricing.mrpSubtotal)}</Text>
             )}
           </View>
-          {couponApplied && (
-            <Text style={styles.savingLabel}>You save ₹{discount}</Text>
+          {amountSaved > 0 && (
+            <Text style={styles.savingLabel}>You save ₹{amountSaved.toLocaleString('en-IN')}</Text>
           )}
           <Text style={styles.totalLabel}>Total Amount</Text>
         </View>
@@ -412,6 +441,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0', paddingHorizontal: 14, paddingVertical: 14,
   },
   couponLabel: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#E60012' },
+  couponHint: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#94A3B8' },
   couponCodeBox: { backgroundColor: 'rgba(230,0,18,0.08)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
   couponCodeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#E60012' },
   couponSaving: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#10B981' },

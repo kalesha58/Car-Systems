@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
@@ -14,6 +14,8 @@ interface ServiceCardProps {
   onNavigate?: () => void;
   onBookPress?: () => void;
 }
+
+const isWeb = Platform.OS === 'web';
 
 export function ServiceCard({
   service,
@@ -31,7 +33,7 @@ export function ServiceCard({
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        isList ? styles.cardList : styles.cardCompact,
+        isList ? styles.cardList : isWeb ? styles.cardCompactWeb : styles.cardCompact,
         cardShadow,
         { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.95 : 1 },
         style,
@@ -64,7 +66,13 @@ export function ServiceCard({
         </View>
       ) : null}
 
-      <View style={[styles.info, isList && styles.infoList]}>
+      <View
+        style={[
+          styles.info,
+          isList && styles.infoList,
+          isWeb && !isList && styles.infoWeb,
+        ]}
+      >
         <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
           {service.name}
         </Text>
@@ -109,6 +117,11 @@ const styles = StyleSheet.create({
     width: 200,
     marginBottom: 0,
   },
+  cardCompactWeb: {
+    flex: 1,
+    minWidth: 170,
+    marginBottom: 0,
+  },
   cardList: {
     width: '100%',
     marginBottom: 12,
@@ -147,6 +160,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     height: 118,
     justifyContent: 'space-between',
+  },
+  infoWeb: {
+    height: undefined,
+    minHeight: 96,
   },
   infoList: {
     height: 122,

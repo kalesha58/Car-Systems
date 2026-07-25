@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { PrimaryButton } from '@components/buttons';
+import { ChromeHeader } from '@components/common';
 import { PhotoPermissionModal, PhotoPickerSheet } from '@components/modals';
 import { OtpInput } from '@components/verification';
 import { OTP_LENGTH, OTP_RESEND_COOLDOWN_SECONDS } from '@config/otpConfig';
@@ -50,7 +51,6 @@ export function DealerEditAccountScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { user, updateUser } = useAuth();
   const { showToast } = useToast();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [email, setEmail] = useState(user?.email ?? '');
@@ -231,23 +231,27 @@ export function DealerEditAccountScreen({ navigation }: Props) {
         onDeny={handlePermissionDeny}
       />
 
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
-        <Pressable
-          onPress={() => {
-            if (otpStep) {
-              setOtpStep(false);
-              setOtp('');
-              return;
-            }
-            navigation.goBack();
-          }}
-          style={styles.backBtn}
-        >
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>{otpStep ? 'Verify Phone' : 'Edit Account'}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ChromeHeader contentPad={8}>
+        <View style={styles.headerRow}>
+          <Pressable
+            onPress={() => {
+              if (otpStep) {
+                setOtpStep(false);
+                setOtp('');
+                return;
+              }
+              navigation.goBack();
+            }}
+            style={styles.headerBtn}
+          >
+            <Feather name="arrow-left" size={22} color={colors.headerForeground} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>
+            {otpStep ? 'Verify Phone' : 'Edit Account'}
+          </Text>
+          <View style={styles.headerBtn} />
+        </View>
+      </ChromeHeader>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -391,15 +395,14 @@ export function DealerEditAccountScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  backBtn: { padding: 4, marginRight: 8 },
-  headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
-  headerSpacer: { width: 32 },
+  headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
   content: { padding: 20 },
   avatarBlock: { alignItems: 'center', marginBottom: 24, marginTop: 8 },
   avatarWrap: { position: 'relative' },

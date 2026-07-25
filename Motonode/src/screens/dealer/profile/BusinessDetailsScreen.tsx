@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   Linking,
   Platform,
@@ -15,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { BottomSheet } from '@components/bottomSheet';
 import { ChromeHeader } from '@components/common';
 import { DealerBusinessDetailsSkeleton } from '@components/loaders';
 import { DealerStackRoutes } from '@constants/routes';
@@ -116,6 +116,7 @@ export function BusinessDetailsScreen({ navigation }: Props) {
   const [serviceCount, setServiceCount] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showEditSheet, setShowEditSheet] = useState(false);
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const loadDetails = useCallback(async () => {
@@ -182,17 +183,13 @@ export function BusinessDetailsScreen({ navigation }: Props) {
 
   const handleEdit = () => {
     lightHaptic();
-    Alert.alert(
-      'Edit Business Details',
-      'Update your business registration information.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Continue',
-          onPress: () => navigation.navigate(DealerStackRoutes.BusinessRegistration),
-        },
-      ],
-    );
+    setShowEditSheet(true);
+  };
+
+  const handleEditContinue = () => {
+    lightHaptic();
+    setShowEditSheet(false);
+    navigation.navigate(DealerStackRoutes.BusinessRegistration, { mode: 'edit' });
   };
 
   const statusBadgeStyle =
@@ -239,7 +236,7 @@ export function BusinessDetailsScreen({ navigation }: Props) {
           </Text>
           <Pressable
             style={styles.primaryBtn}
-            onPress={() => navigation.navigate(DealerStackRoutes.BusinessRegistration)}
+            onPress={() => navigation.navigate(DealerStackRoutes.BusinessRegistration, { mode: 'edit' })}
           >
             <Text style={styles.primaryBtnText}>Complete Registration</Text>
           </Pressable>
@@ -453,14 +450,18 @@ export function BusinessDetailsScreen({ navigation }: Props) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.hoursDays, { color: colors.textPrimary }]}>
-                {registration?.workingDays || profile?.workingDays?.replace(/,/g, ' – ') || 'Monday – Saturday'}
+                {registration?.workingDays ||
+                  (profile?.workingDays
+                    ? profile.workingDays.split(',').map((d) => d.trim()).filter(Boolean).join(' – ')
+                    : '') ||
+                  '—'}
               </Text>
               <Text style={[styles.hoursTime, { color: colors.textSecondary }]}>
-                {registration?.workingHours
+                {registration?.workingHours?.open && registration?.workingHours?.close
                   ? `${registration.workingHours.open} – ${registration.workingHours.close}`
                   : profile?.workingHoursOpen && profile?.workingHoursClose
                     ? `${profile.workingHoursOpen} – ${profile.workingHoursClose}`
-                    : '9:00 AM – 8:00 PM'}
+                    : '—'}
               </Text>
             </View>
             <View style={[styles.openBadge, { backgroundColor: registration?.storeOpen === false ? '#FEF2F2' : '#ECFDF5' }]}>
@@ -496,6 +497,34 @@ export function BusinessDetailsScreen({ navigation }: Props) {
           ) : null}
         </SectionCard>
       </ScrollView>
+
+      <BottomSheet
+        visible={showEditSheet}
+        onClose={() => setShowEditSheet(false)}
+        presentation="sheet"
+        maxHeightRatio={0.4}
+        contentStyle={styles.editSheetContent}
+      >
+        <View style={styles.editSheetHandle} />
+        <Text style={[styles.editSheetTitle, { color: colors.textPrimary }]}>Edit Business Details</Text>
+        <Text style={[styles.editSheetSubtitle, { color: colors.textSecondary }]}>
+          Update your business registration information.
+        </Text>
+        <View style={styles.editSheetActions}>
+          <Pressable
+            style={[styles.editSheetCancelBtn, { borderColor: colors.border }]}
+            onPress={() => {
+              lightHaptic();
+              setShowEditSheet(false);
+            }}
+          >
+            <Text style={[styles.editSheetCancelText, { color: colors.textPrimary }]}>Cancel</Text>
+          </Pressable>
+          <Pressable style={styles.editSheetContinueBtn} onPress={handleEditContinue}>
+            <Text style={styles.editSheetContinueText}>Continue</Text>
+          </Pressable>
+        </View>
+      </BottomSheet>
     </View>
   );
 }
@@ -645,4 +674,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   socialHint: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 4 },
+  editSheetContent: { paddingHorizontal: 20, paddingTop: 8, gap: 12 },
+  editSheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+    marginBottom: 4,
+  },
+  editSheetTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  editSheetSubtitle: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  editSheetActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  editSheetCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  editSheetCancelText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  editSheetContinueBtn: {
+    flex: 1,
+    backgroundColor: '#E60012',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  editSheetContinueText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

@@ -1,3 +1,33 @@
+declare module '*.png' {
+  const value: number | string;
+  export default value;
+}
+
+declare module '*.jpg' {
+  const value: number | string;
+  export default value;
+}
+
+declare module '*.jpeg' {
+  const value: number | string;
+  export default value;
+}
+
+declare module '*.webp' {
+  const value: number | string;
+  export default value;
+}
+
+declare module '*.gif' {
+  const value: number | string;
+  export default value;
+}
+
+declare module '*.woff2' {
+  const value: string;
+  export default value;
+}
+
 declare module 'react-native-razorpay' {
   interface RazorpayCheckoutOptions {
     key: string;

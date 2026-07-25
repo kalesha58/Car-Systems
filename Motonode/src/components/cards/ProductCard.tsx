@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useCart } from '@context/CartContext';
@@ -20,6 +20,8 @@ interface ProductCardProps {
   onWishlistPress?: () => void;
 }
 
+const isWeb = Platform.OS === 'web';
+
 export function ProductCard({
   product,
   style,
@@ -35,10 +37,11 @@ export function ProductCard({
   const productId = getProductId(product);
   const liked = isWishlisted(productId);
   const imageUri = product.images?.[0] || '';
-  const discount = product.discountPercentage ?? 0;
+  const discount = Math.round(product.discountPercentage ?? 0);
   const inStock = product.stock > 0 && product.status === 'active';
   const dealerName = product.dealer?.businessName;
   const isGrid = variant === 'grid';
+  const compactFluid = !isGrid && isWeb;
 
   const handleWishlist = () => {
     lightHaptic();
@@ -59,7 +62,7 @@ export function ProductCard({
     <Pressable
       style={({ pressed }) => [
         styles.card,
-        isGrid ? styles.cardGrid : styles.cardCompact,
+        isGrid ? styles.cardGrid : compactFluid ? styles.cardCompactFluid : styles.cardCompact,
         cardShadow,
         { backgroundColor: colors.card, opacity: pressed ? 0.95 : 1 },
         style,
@@ -67,11 +70,25 @@ export function ProductCard({
       onPress={onPress}
     >
       {!!imageUri && (
-        <View style={[styles.imageContainer, isGrid && styles.imageContainerGrid]}>
+        <View
+          style={[
+            styles.imageContainer,
+            isGrid && styles.imageContainerGrid,
+            isGrid && isWeb && styles.imageContainerGridWeb,
+          ]}
+        >
           <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
           {discount > 0 && (
-            <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
-              <Text style={styles.discountText}>{discount}% OFF</Text>
+            <View
+              style={[
+                styles.discountBadge,
+                isWeb && styles.discountBadgeWeb,
+                { backgroundColor: colors.destructive },
+              ]}
+            >
+              <Text style={[styles.discountText, isWeb && styles.discountTextWeb]}>
+                {discount}% OFF
+              </Text>
             </View>
           )}
           <Pressable
@@ -141,7 +158,11 @@ export function ProductCard({
         </View>
         {showAddToCart && inStock && (
           <Pressable
-            style={[styles.addToCartBtn, { borderColor: colors.primary }]}
+            style={[
+              styles.addToCartBtn,
+              isWeb && styles.addToCartBtnWeb,
+              { borderColor: colors.primary },
+            ]}
             onPress={handleAddToCart}
           >
             <Feather name="shopping-cart" size={14} color={colors.primary} />
@@ -159,9 +180,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardCompact: { width: 150 },
+  cardCompactFluid: { flex: 1, minWidth: 160, maxWidth: 220 },
   cardGrid: { width: '100%' },
   imageContainer: { position: 'relative', height: 105 },
   imageContainerGrid: { height: 155 },
+  imageContainerGridWeb: { height: 170 },
   image: { width: '100%', height: '100%' },
   discountBadge: {
     position: 'absolute',
@@ -171,7 +194,12 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     borderRadius: 4,
   },
+  discountBadgeWeb: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
   discountText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  discountTextWeb: { fontSize: 11 },
   wishlistBtn: {
     position: 'absolute',
     top: 6,
@@ -215,6 +243,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  addToCartBtnWeb: {
+    height: 40,
+    paddingVertical: 0,
+    width: '100%',
   },
   addToCartText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
 });

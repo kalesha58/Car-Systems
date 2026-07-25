@@ -52,7 +52,7 @@ type DealerTabParamList = {
 type DealerStackParamList = {
   [DealerStackRoutes.DealerTabs]: undefined;
   [DealerStackRoutes.DealerType]: undefined;
-  [DealerStackRoutes.BusinessRegistration]: undefined;
+  [DealerStackRoutes.BusinessRegistration]: { mode?: 'edit' | 'create' } | undefined;
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };

@@ -1,10 +1,14 @@
-import React from 'react';
-import { StyleSheet, View, Platform, Pressable, Text, Dimensions } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, View, Platform, Pressable } from 'react-native';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { CustomerTabRoutes } from '@constants/routes';
+import { DesktopTopNav, type DesktopNavItem } from '@components/layout/DesktopTopNav';
+import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
+import { useBreakpoint } from '@hooks/useBreakpoint';
 import { useColors } from '@hooks/useColors';
 import { CommunityScreen } from '@screens/customer/community/CommunityScreen';
 import { GarageScreen } from '@screens/customer/garage/GarageScreen';
@@ -23,31 +27,43 @@ export type CustomerTabParamList = {
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
 
+const TAB_LABELS: Record<string, string> = {
+  [CustomerTabRoutes.Home]: 'Home',
+  [CustomerTabRoutes.Marketplace]: 'Marketplace',
+  [CustomerTabRoutes.Community]: 'Community',
+  [CustomerTabRoutes.Garage]: 'Drive',
+  [CustomerTabRoutes.Profile]: 'Profile',
+};
+
+const ICON_MAP: Record<string, string> = {
+  [CustomerTabRoutes.Home]: 'home',
+  [CustomerTabRoutes.Marketplace]: 'shopping-bag',
+  [CustomerTabRoutes.Community]: 'users',
+  [CustomerTabRoutes.Garage]: 'truck',
+  [CustomerTabRoutes.Profile]: 'user',
+};
+
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const iconMap: Record<string, string> = {
-    [CustomerTabRoutes.Home]: 'home',
-    [CustomerTabRoutes.Marketplace]: 'shopping-bag',
-    [CustomerTabRoutes.Community]: 'users',
-    [CustomerTabRoutes.Garage]: 'truck',
-    [CustomerTabRoutes.Profile]: 'user',
-  };
-
-  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 8);
+  const bottomInset = insets.bottom > 0 ? insets.bottom : Platform.OS === 'ios' ? 20 : 8;
 
   return (
     <View style={[styles.tabBarWrapper, { height: 60 + bottomInset }]}>
-      {/* Docked Tab Bar with Top Rounded Corners */}
-      <View style={[styles.mainTabBar, { backgroundColor: colors.tabBar, borderColor: colors.border, paddingBottom: bottomInset }]}>
-        
-        {/* Concave Cutout Background Overlay (screen background color overlaying the tab bar top edge) */}
+      <View
+        style={[
+          styles.mainTabBar,
+          {
+            backgroundColor: colors.tabBar,
+            borderColor: colors.border,
+            paddingBottom: bottomInset,
+          },
+        ]}
+      >
         <View style={[styles.cutoutOverlay, { backgroundColor: colors.background }]} />
 
-        {/* Render Tab Buttons */}
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
 
           const onPress = () => {
@@ -63,46 +79,40 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             }
           };
 
-          // Render Middle Raised Button
           if (route.name === CustomerTabRoutes.Community) {
             return (
-              <Pressable
-                key={route.key}
-                onPress={onPress}
-                style={styles.middleTabBtnWrapper}
-              >
-                <View style={[
-                  styles.raisedCircle,
-                  { backgroundColor: isFocused ? colors.primaryDark : colors.primary }
-                ]}>
+              <Pressable key={route.key} onPress={onPress} style={styles.middleTabBtnWrapper}>
+                <View
+                  style={[
+                    styles.raisedCircle,
+                    { backgroundColor: isFocused ? colors.primaryDark : colors.primary },
+                  ]}
+                >
                   <Feather name="users" size={20} color={colors.white} />
                 </View>
-                
-                {/* Active Indicator dot under the raised button */}
-                {isFocused && (
-                  <View style={[styles.activeDot, styles.middleActiveDot, { backgroundColor: colors.primary }]} />
-                )}
+                {isFocused ? (
+                  <View
+                    style={[
+                      styles.activeDot,
+                      styles.middleActiveDot,
+                      { backgroundColor: colors.primary },
+                    ]}
+                  />
+                ) : null}
               </Pressable>
             );
           }
 
-          // Render Normal Tab Button
           return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              style={styles.normalTabBtn}
-            >
+            <Pressable key={route.key} onPress={onPress} style={styles.normalTabBtn}>
               <Feather
-                name={iconMap[route.name] ?? 'circle'}
+                name={(ICON_MAP[route.name] ?? 'circle') as 'home'}
                 size={22}
                 color={isFocused ? colors.primary : colors.textTertiary}
               />
-              
-              {/* Active Indicator Dot */}
-              {isFocused && (
+              {isFocused ? (
                 <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-              )}
+              ) : null}
             </Pressable>
           );
         })}
@@ -111,11 +121,60 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
+function CustomerDesktopChrome({ state, navigation }: BottomTabBarProps) {
+  const stackNav =
+    useNavigation<NativeStackNavigationProp<Record<string, object | undefined>>>();
+
+  const items: DesktopNavItem[] = state.routes.map((route, index) => ({
+    key: route.key,
+    label: TAB_LABELS[route.name] ?? route.name,
+    icon: ICON_MAP[route.name] ?? 'circle',
+    focused: state.index === index,
+    onPress: () => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (state.index !== index && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    },
+  }));
+
+  return (
+    <DesktopTopNav
+      items={items}
+      showCustomerActions
+      onCartPress={() => stackNav.navigate(CustomerStackRoutes.Cart)}
+      onNotificationsPress={() => stackNav.navigate(CustomerStackRoutes.Notifications)}
+    />
+  );
+}
+
+function CustomerTabLayout(props: BottomTabBarProps) {
+  const { isDesktop } = useBreakpoint();
+  if (isDesktop) {
+    return <CustomerDesktopChrome {...props} />;
+  }
+  return <CustomTabBar {...props} />;
+}
+
 export function CustomerTabsNavigator() {
+  const { isDesktop } = useBreakpoint();
+
+  const renderTabBar = useCallback(
+    (props: BottomTabBarProps) => <CustomerTabLayout {...props} />,
+    [],
+  );
+
   return (
     <Tab.Navigator
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      tabBar={renderTabBar}
+      screenOptions={{
+        headerShown: false,
+        tabBarPosition: isDesktop ? 'top' : 'bottom',
+      }}
     >
       <Tab.Screen name={CustomerTabRoutes.Home} component={HomeScreen} />
       <Tab.Screen name={CustomerTabRoutes.Marketplace} component={MarketplaceScreen} />
@@ -140,65 +199,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
-    alignItems: 'center',
-    position: 'relative',
-    borderWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: 'flex-start',
+    paddingTop: 10,
+    overflow: 'visible',
   },
   cutoutOverlay: {
-    width: 66,
-    height: 38,
-    borderBottomLeftRadius: 33,
-    borderBottomRightRadius: 33,
     position: 'absolute',
-    top: -1,
+    top: -18,
     left: '50%',
-    marginLeft: -33,
-    zIndex: 0,
-  },
-  middleTabBtnWrapper: {
-    flex: 1.2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    height: '100%',
-    zIndex: 2,
-  },
-  raisedCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'absolute',
-    top: -24,
-    shadowColor: '#E60012',
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 6,
-    borderWidth: 3,
-    borderColor: '#ffffff',
+    marginLeft: -36,
+    width: 72,
+    height: 36,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
   },
   normalTabBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
-    gap: 4,
+    height: 44,
+  },
+  middleTabBtnWrapper: {
+    flex: 1.2,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: -28,
+  },
+  raisedCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    marginTop: 2,
+    marginTop: 4,
   },
   middleActiveDot: {
-    position: 'absolute',
-    bottom: 6,
+    marginTop: 6,
   },
 });

@@ -22,10 +22,12 @@ import { createOrder } from '@services/order.service';
 import type { ICreateOrderRequest } from '@app-types/order';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { formatCurrency, getOrderId, getProductId } from '@utils/displayMappers';
+import { computeCartPricing } from '@utils/cartPricing';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import RazorpayService from '@services/payment/RazorpayService';
 import { verifyRazorpayPayment } from '@services/payment.service';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { PriceDetailsSheet } from '@components/marketplace/PriceDetailsSheet';
 import { DEFAULT_SHIPPING_ADDRESS } from './CheckoutScreen';
 
 type Props = NativeStackScreenProps<CustomerStackParamList, typeof CustomerStackRoutes.Payment>;
@@ -86,7 +88,7 @@ const stepStyles = StyleSheet.create({
 });
 
 // ── Payment Method Options ────────────────────────────────────────────────────
-type PaymentMethod = 'upi' | 'card' | 'netbanking' | 'wallet' | 'paylater';
+type PaymentMethod = 'upi' | 'card' | 'netbanking' | 'wallet' | 'paylater' | 'cod';
 
 const PAYMENT_METHODS: {
   id: PaymentMethod;
@@ -95,12 +97,14 @@ const PAYMENT_METHODS: {
   icon: string;
   iconColor: string;
   iconBg: string;
+  comingSoon?: boolean;
 }[] = [
   { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#E60012', iconBg: 'rgba(230,0,18,0.08)' },
   { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#E60012', iconBg: 'rgba(230,0,18,0.08)' },
-  { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#1E293B', iconBg: '#F1F5F9' },
-  { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED', iconBg: '#EDE9FE' },
-  { id: 'paylater', label: 'Pay Later', subtitle: 'Simpl, LazyPay & more', icon: 'clock', iconColor: '#64748B', iconBg: '#F1F5F9' },
+  { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#1E293B', iconBg: '#F1F5F9', comingSoon: true },
+  { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED', iconBg: '#EDE9FE', comingSoon: true },
+  { id: 'cod', label: 'Cash on Delivery', subtitle: 'Pay when your order arrives', icon: 'dollar-sign', iconColor: '#059669', iconBg: 'rgba(5,150,105,0.1)', comingSoon: true },
+  { id: 'paylater', label: 'Pay Later', subtitle: 'Simpl, LazyPay & more', icon: 'clock', iconColor: '#64748B', iconBg: '#F1F5F9', comingSoon: true },
 ];
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
@@ -108,13 +112,22 @@ export function PaymentScreen({ navigation, route }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
-  const { items, total, clearCart } = useCart();
+  const { items, clearCart } = useCart();
   const { runWithMobileCheck } = useMobileVerificationGate();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('upi');
   const [paying, setPaying] = useState(false);
+  const [priceDetailsVisible, setPriceDetailsVisible] = useState(false);
 
-  const platformFee = 0;
-  const totalAmount = total + platformFee;
+  const coupon = route.params?.coupon ?? null;
+  const pricing = computeCartPricing(items, coupon);
+  const {
+    saleSubtotal,
+    productDiscount,
+    couponDiscount,
+    payable: totalAmount,
+    amountSaved,
+    couponCode,
+  } = pricing;
 
   const mapPaymentMethod = (method: PaymentMethod): ICreateOrderRequest['paymentMethod'] => {
     switch (method) {
@@ -122,10 +135,12 @@ export function PaymentScreen({ navigation, route }: Props) {
         return 'upi';
       case 'card':
         return 'credit_card';
+      case 'cod':
+        return 'cash_on_delivery';
       case 'netbanking':
         return 'debit_card';
       default:
-        return 'cash_on_delivery';
+        return 'upi';
     }
   };
 
@@ -262,41 +277,66 @@ export function PaymentScreen({ navigation, route }: Props) {
         </View>
 
         <View style={styles.summaryCard}>
-          {items.map((item) => (
-            <View key={getProductId(item.product)} style={styles.summaryItemRow}>
-              <Image
-                source={{
-                  uri:
-                    item.product.images?.[0] ||
-                    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=120&auto=format&fit=crop&q=80',
-                }}
-                style={styles.summaryThumb}
-              />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.summaryItemName}>{item.product.name}</Text>
-                <Text style={styles.summaryItemQty}>Qty: {item.quantity}</Text>
+          {items.map((item) => {
+            const lineSale = item.product.price * item.quantity;
+            const lineMrp =
+              (item.product.originalPrice != null && item.product.originalPrice > item.product.price
+                ? item.product.originalPrice
+                : item.product.price) * item.quantity;
+            const showMrp = lineMrp > lineSale;
+
+            return (
+              <View key={getProductId(item.product)} style={styles.summaryItemRow}>
+                <Image
+                  source={{
+                    uri:
+                      item.product.images?.[0] ||
+                      'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=120&auto=format&fit=crop&q=80',
+                  }}
+                  style={styles.summaryThumb}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.summaryItemName}>{item.product.name}</Text>
+                  <Text style={styles.summaryItemQty}>Qty: {item.quantity}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.summaryItemPrice}>{formatCurrency(lineSale)}</Text>
+                  {showMrp ? (
+                    <Text style={styles.summaryItemMrp}>{formatCurrency(lineMrp)}</Text>
+                  ) : null}
+                </View>
               </View>
-              <Text style={styles.summaryItemPrice}>
-                {formatCurrency(item.product.price * item.quantity)}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
 
           <View style={styles.divider} />
 
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Subtotal</Text>
-            <Text style={styles.priceValue}>{formatCurrency(total)}</Text>
+            <Text style={styles.priceLabel}>Original price (MRP)</Text>
+            <Text style={styles.priceValue}>{formatCurrency(pricing.mrpSubtotal)}</Text>
           </View>
-          {platformFee > 0 && (
+          {productDiscount > 0 && (
             <View style={styles.priceRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={styles.priceLabel}>Platform Fee</Text>
-                <Feather name="info" size={11} color="#94A3B8" />
-              </View>
-              <Text style={styles.priceValue}>{formatCurrency(platformFee)}</Text>
+              <Text style={styles.priceLabel}>Product discount</Text>
+              <Text style={styles.discountValue}>− {formatCurrency(productDiscount)}</Text>
             </View>
           )}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Price after discount</Text>
+            <Text style={styles.priceValue}>{formatCurrency(saleSubtotal)}</Text>
+          </View>
+          {couponDiscount > 0 && (
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>
+                Coupon{couponCode ? ` (${couponCode})` : ''}
+              </Text>
+              <Text style={styles.discountValue}>− {formatCurrency(couponDiscount)}</Text>
+            </View>
+          )}
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Shipping</Text>
+            <Text style={styles.discountValue}>Free</Text>
+          </View>
 
           <View style={styles.totalDivider} />
 
@@ -304,29 +344,65 @@ export function PaymentScreen({ navigation, route }: Props) {
             <Text style={styles.totalLabel}>Total Amount</Text>
             <Text style={styles.totalValue}>{formatCurrency(totalAmount)}</Text>
           </View>
+          {amountSaved > 0 && (
+            <Text style={styles.savedHint}>
+              You saved {formatCurrency(amountSaved)} on this order
+            </Text>
+          )}
         </View>
 
         {/* Select Payment Method */}
         <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Select Payment Method</Text>
         <View style={styles.methodsCard}>
           {PAYMENT_METHODS.map((method, idx) => {
-            const isSelected = selectedMethod === method.id;
+            const isComingSoon = Boolean(method.comingSoon);
+            const isSelected = !isComingSoon && selectedMethod === method.id;
             return (
               <View key={method.id}>
                 <Pressable
-                  style={styles.methodRow}
-                  onPress={() => { lightHaptic(); setSelectedMethod(method.id); }}
+                  style={[styles.methodRow, isComingSoon && styles.methodRowDisabled]}
+                  disabled={isComingSoon}
+                  onPress={() => {
+                    if (isComingSoon) return;
+                    lightHaptic();
+                    setSelectedMethod(method.id);
+                  }}
                 >
-                  <View style={[styles.methodIconBox, { backgroundColor: method.iconBg }]}>
-                    <Feather name={method.icon as any} size={16} color={method.iconColor} />
+                  <View
+                    style={[
+                      styles.methodIconBox,
+                      { backgroundColor: method.iconBg },
+                      isComingSoon && styles.methodIconDisabled,
+                    ]}
+                  >
+                    <Feather
+                      name={method.icon as any}
+                      size={16}
+                      color={isComingSoon ? '#94A3B8' : method.iconColor}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.methodLabel}>{method.label}</Text>
-                    <Text style={styles.methodSubtitle}>{method.subtitle}</Text>
+                    <View style={styles.methodLabelRow}>
+                      <Text style={[styles.methodLabel, isComingSoon && styles.methodLabelDisabled]}>
+                        {method.label}
+                      </Text>
+                      {isComingSoon ? (
+                        <View style={styles.comingSoonBadge}>
+                          <Text style={styles.comingSoonText}>Coming Soon</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text style={[styles.methodSubtitle, isComingSoon && styles.methodSubtitleDisabled]}>
+                      {method.subtitle}
+                    </Text>
                   </View>
-                  <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                    {isSelected && <View style={styles.radioInner} />}
-                  </View>
+                  {isComingSoon ? (
+                    <View style={[styles.radioOuter, styles.radioOuterDisabled]} />
+                  ) : (
+                    <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
+                      {isSelected && <View style={styles.radioInner} />}
+                    </View>
+                  )}
                 </Pressable>
                 {idx < PAYMENT_METHODS.length - 1 && <View style={styles.divider} />}
               </View>
@@ -340,7 +416,13 @@ export function PaymentScreen({ navigation, route }: Props) {
         <View>
           <Text style={styles.amountPayLabel}>Amount to Pay</Text>
           <Text style={styles.amountPayValue}>{formatCurrency(totalAmount)}</Text>
-          <Pressable onPress={() => lightHaptic()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          <Pressable
+            onPress={() => {
+              lightHaptic();
+              setPriceDetailsVisible(true);
+            }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}
+          >
             <Text style={styles.viewDetails}>View Price Details</Text>
             <Feather name="chevron-right" size={12} color="#E60012" />
           </Pressable>
@@ -354,6 +436,12 @@ export function PaymentScreen({ navigation, route }: Props) {
           <Text style={styles.payBtnText}>{paying ? 'Processing…' : 'Pay Securely'}</Text>
         </Pressable>
       </View>
+
+      <PriceDetailsSheet
+        visible={priceDetailsVisible}
+        onClose={() => setPriceDetailsVisible(false)}
+        pricing={pricing}
+      />
     </View>
   );
 }
@@ -387,6 +475,13 @@ const styles = StyleSheet.create({
   summaryItemName: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B', marginBottom: 3 },
   summaryItemQty: { fontSize: 11, color: '#64748B' },
   summaryItemPrice: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#1E293B' },
+  summaryItemMrp: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
   divider: { height: 1, backgroundColor: '#F1F5F9' },
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   priceLabel: { fontSize: 12, color: '#64748B', fontFamily: 'Inter_400Regular' },
@@ -396,19 +491,43 @@ const styles = StyleSheet.create({
   totalDivider: { height: 1, backgroundColor: '#E2E8F0' },
   totalLabel: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   totalValue: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
+  savedHint: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+    color: '#059669',
+    marginTop: 2,
+  },
   methodsCard: {
     backgroundColor: '#ffffff', borderRadius: 14, borderWidth: 1,
     borderColor: '#E2E8F0', overflow: 'hidden',
   },
   methodRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  methodRowDisabled: { opacity: 0.72 },
   methodIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  methodIconDisabled: { backgroundColor: '#F1F5F9' },
+  methodLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   methodLabel: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
+  methodLabelDisabled: { color: '#64748B' },
   methodSubtitle: { fontSize: 10, color: '#94A3B8', marginTop: 1 },
+  methodSubtitleDisabled: { color: '#CBD5E1' },
+  comingSoonBadge: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  comingSoonText: {
+    fontSize: 9,
+    fontFamily: 'Inter_700Bold',
+    color: '#64748B',
+    letterSpacing: 0.2,
+  },
   radioOuter: {
     width: 20, height: 20, borderRadius: 10, borderWidth: 2,
     borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center',
   },
   radioOuterSelected: { borderColor: '#E60012' },
+  radioOuterDisabled: { borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
   radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
   bottomBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

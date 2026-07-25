@@ -4,6 +4,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -14,7 +15,6 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { useColors } from '@hooks/useColors';
 import { useDealer } from '@context/DealerContext';
 import { lightHaptic } from '@utils/haptics';
 
@@ -36,15 +36,17 @@ interface BannerItem {
 }
 
 export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: BannerCarouselProps) {
-  const colors = useColors();
   const { businessProfile } = useDealer();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [measuredWidth, setMeasuredWidth] = useState(0);
   const flatListRef = useRef<FlatList<BannerItem>>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
 
-  const screenWidth = Dimensions.get('window').width - 32; // padding 16 on each side
+  const isWeb = Platform.OS === 'web';
+  const screenWidth =
+    isWeb && measuredWidth > 0 ? measuredWidth : Dimensions.get('window').width - 32;
+  const bannerHeight = isWeb ? 170 : 130;
 
-  // Load banners dynamically
   const banners: BannerItem[] = [
     {
       id: 'b1',
@@ -75,7 +77,6 @@ export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: Ba
     },
   ];
 
-  // If dealer has uploaded a custom store banner in admin settings, append it
   if (businessProfile?.storeBanner) {
     banners.push({
       id: 'b_custom',
@@ -89,7 +90,6 @@ export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: Ba
     });
   }
 
-  // Auto-scrolling carousel timer (moves from right to left)
   useEffect(() => {
     if (banners.length <= 1) return;
 
@@ -127,63 +127,108 @@ export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: Ba
     }
   };
 
+  const ctaLabel = (type: BannerItem['type']) => {
+    if (!isWeb) {
+      return type === 'ai' ? 'Chat' : type === 'testDrive' ? 'Book' : 'View';
+    }
+    return type === 'ai'
+      ? 'Try AI Assistant'
+      : type === 'testDrive'
+        ? 'Book Now'
+        : 'View Offer';
+  };
+
   return (
-    <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={banners}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false, listener: handleScroll }
-        )}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Pressable
-            style={[styles.bannerWrapper, { width: screenWidth }]}
-            onPress={() => handlePressItem(item)}
-          >
-            {item.customImage ? (
-              <View style={styles.bannerCard}>
-                <Image source={{ uri: item.customImage }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                <View style={styles.customImageOverlay}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.subtitle}>{item.subtitle}</Text>
-                  <Text style={styles.description}>{item.description}</Text>
-                </View>
-              </View>
-            ) : (
-              <LinearGradient
-                colors={item.colors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.bannerCard}
-              >
-                <View style={styles.content}>
-                  <View style={styles.iconContainer}>
-                    <Feather name={item.icon as any} size={28} color="#fff" />
-                  </View>
-                  <View style={styles.text}>
+    <View
+      style={styles.container}
+      onLayout={e => {
+        if (isWeb) {
+          const w = e.nativeEvent.layout.width;
+          if (w > 0 && Math.abs(w - measuredWidth) > 1) {
+            setMeasuredWidth(w);
+          }
+        }
+      }}
+    >
+      {screenWidth > 0 ? (
+        <FlatList
+          ref={flatListRef}
+          data={banners}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+            useNativeDriver: false,
+            listener: handleScroll,
+          })}
+          keyExtractor={item => item.id}
+          getItemLayout={(_, index) => ({
+            length: screenWidth,
+            offset: screenWidth * index,
+            index,
+          })}
+          renderItem={({ item }) => (
+            <Pressable
+              style={[styles.bannerWrapper, { width: screenWidth }]}
+              onPress={() => handlePressItem(item)}
+            >
+              {item.customImage ? (
+                <View style={[styles.bannerCard, { height: bannerHeight }]}>
+                  <Image
+                    source={{ uri: item.customImage }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.customImageOverlay}>
                     <Text style={styles.title}>{item.title}</Text>
                     <Text style={styles.subtitle}>{item.subtitle}</Text>
                     <Text style={styles.description}>{item.description}</Text>
                   </View>
-                  <View style={styles.actionBtn}>
-                    <Text style={[styles.actionBtnText, { color: item.colors[0] }]}>
-                      {item.type === 'ai' ? 'Chat' : item.type === 'testDrive' ? 'Book' : 'View'}
-                    </Text>
-                    <Feather name="chevron-right" size={14} color={item.colors[0]} />
-                  </View>
                 </View>
-              </LinearGradient>
-            )}
-          </Pressable>
-        )}
-      />
+              ) : (
+                <LinearGradient
+                  colors={item.colors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.bannerCard, { height: bannerHeight }]}
+                >
+                  <View style={[styles.content, isWeb && styles.contentWeb]}>
+                    <View style={styles.iconContainer}>
+                      <Feather name={item.icon as 'cpu'} size={isWeb ? 32 : 28} color="#fff" />
+                    </View>
+                    <View style={styles.text}>
+                      <Text style={[styles.title, isWeb && styles.titleWeb]}>{item.title}</Text>
+                      <Text style={[styles.subtitle, isWeb && styles.subtitleWeb]}>
+                        {item.subtitle}
+                      </Text>
+                      <Text style={[styles.description, isWeb && styles.descriptionWeb]}>
+                        {item.description}
+                      </Text>
+                      {isWeb ? (
+                        <View style={styles.actionBtnWeb}>
+                          <Text style={[styles.actionBtnTextWeb, { color: item.colors[0] }]}>
+                            {ctaLabel(item.type)}
+                          </Text>
+                          <Feather name="chevron-right" size={14} color={item.colors[0]} />
+                        </View>
+                      ) : null}
+                    </View>
+                    {!isWeb ? (
+                      <View style={styles.actionBtn}>
+                        <Text style={[styles.actionBtnText, { color: item.colors[0] }]}>
+                          {ctaLabel(item.type)}
+                        </Text>
+                        <Feather name="chevron-right" size={14} color={item.colors[0]} />
+                      </View>
+                    ) : null}
+                  </View>
+                </LinearGradient>
+              )}
+            </Pressable>
+          )}
+        />
+      ) : null}
 
-      {/* Page indicator dots */}
       <View style={styles.pagination}>
         {banners.map((_, idx) => {
           const isActive = idx === activeIndex;
@@ -192,7 +237,9 @@ export function BannerCarousel({ onAiPress, onPromoPress, onTestDrivePress }: Ba
               key={idx}
               style={[
                 styles.dot,
-                isActive ? { backgroundColor: '#E60012', width: 16 } : { backgroundColor: '#CBD5E1', width: 6 }
+                isActive
+                  ? { backgroundColor: '#E60012', width: 16 }
+                  : { backgroundColor: '#CBD5E1', width: 6 },
               ]}
             />
           );
@@ -206,9 +253,10 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
     position: 'relative',
+    width: '100%',
   },
   bannerWrapper: {
-    paddingRight: 4,
+    paddingRight: 0,
   },
   bannerCard: {
     height: 130,
@@ -228,6 +276,11 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  contentWeb: {
+    paddingHorizontal: 28,
+    paddingVertical: 22,
+    gap: 16,
+  },
   iconContainer: {
     width: 56,
     height: 56,
@@ -238,13 +291,16 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1 },
   title: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  titleWeb: { fontSize: 22 },
   subtitle: {
     color: 'rgba(255,255,255,0.9)',
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
     marginBottom: 2,
   },
+  subtitleWeb: { fontSize: 14, marginTop: 2 },
   description: { color: 'rgba(255,255,255,0.75)', fontSize: 10, fontFamily: 'Inter_400Regular' },
+  descriptionWeb: { fontSize: 13, marginTop: 4 },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -255,6 +311,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   actionBtnText: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  actionBtnWeb: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 12,
+  },
+  actionBtnTextWeb: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   pagination: {
     flexDirection: 'row',
     alignItems: 'center',

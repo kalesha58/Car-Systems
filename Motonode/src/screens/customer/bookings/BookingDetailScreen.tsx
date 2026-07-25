@@ -18,6 +18,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BookingCardFooter } from '@components/bookings/BookingCardFooter';
 import { BookingProgressStepper } from '@components/bookings/BookingProgressStepper';
 import { BookingSupportBanner } from '@components/bookings/BookingSupportBanner';
+import { ChromeHeader } from '@components/common';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useBookings } from '@context/index';
 import { getStatusColor, getStatusLabel } from '@data/bookingsData';
@@ -36,7 +37,6 @@ type Props = NativeStackScreenProps<
 export function BookingDetailScreen({ route, navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const { bookingId } = route.params;
   const { getBookingById, loadBookings, cancelBooking } = useBookings();
@@ -84,13 +84,13 @@ export function BookingDetailScreen({ route, navigation }: Props) {
   if (!booking) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={[styles.header, { paddingTop: topPad + 8 }]}>
+        <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-            <Feather name="chevron-left" size={24} color="#0F172A" />
+            <Feather name="chevron-left" size={24} color="#ffffff" />
           </Pressable>
           <Text style={styles.headerTitle}>Booking Details</Text>
           <View style={styles.iconBtn} />
-        </View>
+        </ChromeHeader>
         <View style={styles.notFound}>
           <Text style={[styles.notFoundText, { color: colors.textSecondary }]}>
             Booking not found
@@ -131,13 +131,13 @@ export function BookingDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card }]}>
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={24} color="#0F172A" />
+          <Feather name="chevron-left" size={24} color="#ffffff" />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Booking</Text>
+        <Text style={styles.headerTitle}>My Booking</Text>
         <View style={styles.iconBtn} />
-      </View>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
@@ -261,12 +261,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingBottom: 8,
   },
   iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 17,
+    fontFamily: 'Inter_700Bold',
+    color: '#ffffff',
+  },
   content: { padding: 16, gap: 14 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   notFoundText: { fontSize: 14, fontFamily: 'Inter_500Medium' },

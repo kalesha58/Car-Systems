@@ -15,6 +15,7 @@ import {
   type CustomerBooking,
 } from '@data/bookingsData';
 import type { ServiceBookingDraft } from '@context/ServiceBookingContext';
+import { useAuth } from '@context/AuthContext';
 import {
   cancelUserServiceBooking,
   getDealerServiceBookings,
@@ -100,11 +101,19 @@ function mapDealerTestDriveStatus(status: BookingStatus): TestDriveStatus {
 }
 
 export function BookingsProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [dealerBookings, setDealerBookings] = useState<CustomerBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadBookings = useCallback(async () => {
+    // Guests and logged-out sessions have no JWT — skip protected endpoints.
+    if (!isAuthenticated || user?.isGuest) {
+      setBookings([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const [testDrivesRes, serviceBookingsRes] = await Promise.all([
@@ -123,9 +132,14 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, user?.isGuest]);
 
   const loadDealerBookings = useCallback(async () => {
+    if (!isAuthenticated || user?.isGuest || user?.role !== 'dealer') {
+      setDealerBookings([]);
+      return;
+    }
+
     try {
       const [testDrivesRes, serviceBookingsRes] = await Promise.all([
         getDealerTestDrives({ limit: 100 }),
@@ -141,11 +155,14 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     } catch {
       setDealerBookings([]);
     }
-  }, []);
+  }, [isAuthenticated, user?.isGuest, user?.role]);
 
   useEffect(() => {
-    loadBookings();
-  }, [loadBookings]);
+    if (authLoading) {
+      return;
+    }
+    void loadBookings();
+  }, [authLoading, loadBookings]);
 
   const getBookingById = useCallback(
     (id: string) =>

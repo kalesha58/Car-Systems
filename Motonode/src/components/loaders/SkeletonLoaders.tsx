@@ -647,6 +647,59 @@ export function DealerBankSkeleton() {
   );
 }
 
+export function RegistrationFormSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={[styles.registrationFormSkeleton, { backgroundColor: colors.background }]}>
+      <Skeleton style={styles.registrationBannerSkeleton} />
+
+      <View style={styles.registrationStepperWrap}>
+        <View style={[styles.registrationStepperCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={styles.registrationStepItem}>
+              <Skeleton style={styles.registrationStepCircle} />
+              <Skeleton style={styles.registrationStepLabel} />
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.registrationFormBody}>
+        <View style={[styles.registrationFormCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.registrationFormCardHeader}>
+            <Skeleton style={styles.registrationFormCardIcon} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton style={styles.registrationFormCardTitle} />
+              <Skeleton style={styles.registrationFormCardSub} />
+            </View>
+          </View>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} style={styles.registrationFieldSkeleton} />
+          ))}
+        </View>
+
+        <View style={[styles.registrationFormCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.registrationFormCardHeader}>
+            <Skeleton style={styles.registrationFormCardIcon} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton style={styles.registrationFormCardTitle} />
+              <Skeleton style={styles.registrationFormCardSub} />
+            </View>
+          </View>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} style={styles.registrationFieldSkeleton} />
+          ))}
+        </View>
+      </View>
+
+      <View style={[styles.registrationCtaBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <Skeleton style={styles.registrationCtaBtn} />
+      </View>
+    </View>
+  );
+}
+
 export function DriveListSkeleton() {
   const colors = useColors();
 
@@ -2029,6 +2082,100 @@ const styles = StyleSheet.create({
     width: '85%',
     height: 14,
     borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationFormSkeleton: {
+    flex: 1,
+  },
+  registrationBannerSkeleton: {
+    width: '100%',
+    height: 160,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationStepperWrap: {
+    paddingHorizontal: 16,
+    marginTop: -28,
+    zIndex: 10,
+  },
+  registrationStepperCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  registrationStepItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  registrationStepCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationStepLabel: {
+    width: 56,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationFormBody: {
+    padding: 14,
+    gap: 12,
+    paddingBottom: 100,
+  },
+  registrationFormCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+  },
+  registrationFormCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
+  registrationFormCardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationFormCardTitle: {
+    width: 120,
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationFormCardSub: {
+    width: 160,
+    height: 11,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationFieldSkeleton: {
+    width: '100%',
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  registrationCtaBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopWidth: 1,
+    padding: 14,
+  },
+  registrationCtaBtn: {
+    width: '100%',
+    height: 48,
+    borderRadius: 14,
     backgroundColor: '#E2E8F0',
   },
 });

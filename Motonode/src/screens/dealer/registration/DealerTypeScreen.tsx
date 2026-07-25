@@ -14,7 +14,7 @@ import { lightHaptic } from '@utils/haptics';
 type DealerStackParamList = {
   [DealerStackRoutes.DealerTabs]: undefined;
   [DealerStackRoutes.DealerType]: undefined;
-  [DealerStackRoutes.BusinessRegistration]: undefined;
+  [DealerStackRoutes.BusinessRegistration]: { mode?: 'edit' | 'create' } | undefined;
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
@@ -38,7 +38,7 @@ export function DealerTypeScreen() {
     if (!selected) return;
     lightHaptic();
     await saveDealerType(selected);
-    navigation.replace(DealerStackRoutes.BusinessRegistration);
+    navigation.replace(DealerStackRoutes.BusinessRegistration, { mode: 'create' });
   };
 
   return (

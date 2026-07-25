@@ -23,24 +23,30 @@ import {
 
 import { PhotoPermissionModal, PhotoPickerSheet, type PhotoPickerOption } from '@components/modals';
 import { BookingPickerSheet } from '@components/booking/pickers/BookingPickerSheet';
+import { RegistrationFormSkeleton } from '@components/loaders';
 import { uploadImage } from '@services/upload.service';
 import { getString, setString } from '@storage/index';
 import { StorageKeys } from '@storage/keys';
 import { hasPhotoPermission, requestPhotoPermission, type PhotoSource } from '@utils/photoPermissions';
 
 import { DealerStackRoutes } from '@constants/routes';
-import { useDealer } from '@context/index';
+import { useAuth, useDealer } from '@context/index';
 import { BusinessProfile } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
-import { createBusinessRegistrationApi } from '@services/dealer.service';
+import {
+  createBusinessRegistrationApi,
+  getBusinessRegistrationByUserId,
+  updateBusinessRegistrationApi,
+} from '@services/dealer.service';
+import type { IBusinessRegistration } from '@app-types/dealer';
 import { validateUpiFormat } from '@services/upi.service';
 
 type DealerStackParamList = {
   [DealerStackRoutes.DealerTabs]: undefined;
   [DealerStackRoutes.DealerType]: undefined;
-  [DealerStackRoutes.BusinessRegistration]: undefined;
+  [DealerStackRoutes.BusinessRegistration]: { mode?: 'edit' | 'create' } | undefined;
   [DealerStackRoutes.ProductForm]: { id?: string };
   [DealerStackRoutes.VehicleForm]: { id?: string };
   [DealerStackRoutes.ServiceForm]: { id?: string };
@@ -88,6 +94,121 @@ const WEEKDAYS = [
   { key: 'Saturday', short: 'Sat' },
   { key: 'Sunday', short: 'Sun' },
 ] as const;
+
+function parseWorkingDaysToForm(workingDays?: string): string {
+  if (!workingDays?.trim()) return EMPTY.workingDays;
+  if (workingDays.includes(',')) {
+    return workingDays
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .join(',');
+  }
+  const parts = workingDays
+    .split(/\s*[–—-]\s*/)
+    .map((d) => d.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    const dayKeys = WEEKDAYS.map((d) => d.key);
+    const startIdx = dayKeys.indexOf(parts[0] as (typeof dayKeys)[number]);
+    const endIdx = dayKeys.indexOf(parts[parts.length - 1] as (typeof dayKeys)[number]);
+    if (startIdx >= 0 && endIdx >= startIdx && parts.length === 2) {
+      return dayKeys.slice(startIdx, endIdx + 1).join(',');
+    }
+    return parts.join(',');
+  }
+  return parts[0] || EMPTY.workingDays;
+}
+
+function parseAddressParts(rawAddress: string, state?: string, city?: string) {
+  let address = rawAddress || '';
+  let pincode = '';
+  let parsedState = state || '';
+  let parsedCity = city || '';
+
+  const pincodeMatch = address.match(/Pincode:\s*(\d{6})/i) || address.match(/\b(\d{6})\b/);
+  if (pincodeMatch) {
+    pincode = pincodeMatch[1];
+  }
+
+  const stateMatch = address.match(/State:\s*([^,]+)/i);
+  if (stateMatch && !parsedState) {
+    parsedState = stateMatch[1].trim();
+  }
+
+  address = address
+    .replace(/,?\s*Pincode:\s*\d{6}/gi, '')
+    .replace(/,?\s*State:\s*[^,]+/gi, '')
+    .replace(/,\s*$/, '')
+    .trim();
+
+  if (!parsedCity && parsedState) {
+    const cityMatch = address.match(new RegExp(`,\\s*([^,]+),\\s*${parsedState}`, 'i'));
+    if (cityMatch) {
+      parsedCity = cityMatch[1].trim();
+    }
+  }
+
+  return { address, city: parsedCity, state: parsedState, pincode };
+}
+
+function mapRegistrationToForm(
+  registration: IBusinessRegistration,
+  fallback?: BusinessProfile | null,
+  user?: { name?: string; phone?: string; email?: string } | null,
+): BusinessProfile {
+  const parsed = parseAddressParts(
+    registration.address || '',
+    registration.state,
+    registration.city,
+  );
+  const cover = registration.coverPhoto || registration.shopPhotos?.[0]?.url || null;
+
+  return {
+    ...EMPTY,
+    ...fallback,
+    businessName: registration.businessName || fallback?.businessName || '',
+    ownerName:
+      registration.payout?.bank?.accountName ||
+      fallback?.ownerName ||
+      user?.name ||
+      '',
+    mobile: registration.phone || fallback?.mobile || user?.phone || '',
+    alternateMobile: fallback?.alternateMobile || '',
+    email: fallback?.email || user?.email || '',
+    gst: registration.gst || fallback?.gst || '',
+    registrationNumber: registration.registrationNumber || fallback?.registrationNumber || '',
+    establishedYear: registration.establishedYear
+      ? String(registration.establishedYear)
+      : fallback?.establishedYear || '',
+    website: registration.website || fallback?.website || '',
+    address: parsed.address || fallback?.address || '',
+    city: parsed.city || fallback?.city || '',
+    state: parsed.state || fallback?.state || '',
+    pincode: parsed.pincode || fallback?.pincode || '',
+    workingDays: parseWorkingDaysToForm(registration.workingDays) || fallback?.workingDays || EMPTY.workingDays,
+    workingHoursOpen: registration.workingHours?.open || fallback?.workingHoursOpen || '',
+    workingHoursClose: registration.workingHours?.close || fallback?.workingHoursClose || '',
+    facebook: registration.socialLinks?.facebook || fallback?.facebook || '',
+    instagram: registration.socialLinks?.instagram || fallback?.instagram || '',
+    youtube: registration.socialLinks?.youtube || fallback?.youtube || '',
+    upiId:
+      registration.payout?.type === 'UPI'
+        ? registration.payout.upiId || fallback?.upiId || ''
+        : fallback?.upiId || '',
+    bankName: fallback?.bankName || '',
+    accountNumber:
+      registration.payout?.type === 'BANK'
+        ? registration.payout.bank?.accountNumber || fallback?.accountNumber || ''
+        : fallback?.accountNumber || '',
+    ifsc:
+      registration.payout?.type === 'BANK'
+        ? registration.payout.bank?.ifsc || fallback?.ifsc || ''
+        : fallback?.ifsc || '',
+    storeLogo: fallback?.storeLogo || null,
+    storeBanner: cover || fallback?.storeBanner || null,
+  };
+}
 
 /** 30-minute AM/PM slots from 6:00 AM through 11:30 PM */
 const WORKING_HOUR_OPTIONS: string[] = (() => {
@@ -178,20 +299,19 @@ const INDIAN_BANKS = [
   'Bandhan Bank',
 ];
 
-export function RegistrationScreen({ navigation }: Props) {
+export function RegistrationScreen({ navigation, route }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { saveBusinessProfile, completeRegistration, dealerType, registrationCompleted, businessProfile } = useDealer();
   const [form, setForm] = useState<BusinessProfile>(EMPTY);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [hydrating, setHydrating] = useState(true);
 
-  useEffect(() => {
-    if (registrationCompleted && businessProfile) {
-      setForm((prev) => ({
-        ...prev,
-        ...businessProfile,
-      }));
-    }
-  }, [registrationCompleted, businessProfile]);
+  const wantsEdit = route.params?.mode !== 'create';
+  const isEditMode = !!registrationId;
+  const isLocked = registrationCompleted && !isEditMode;
+  const isGstBankLocked = isEditMode || isLocked;
 
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // Step 1: Basic Info, Step 2: Business Details, Step 3: Documents
@@ -223,6 +343,61 @@ export function RegistrationScreen({ navigation }: Props) {
 
   const [gstDocUrl, setGstDocUrl] = useState<string | null>(null);
   const [panDocUrl, setPanDocUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateFromServer() {
+      if (!user?.id) {
+        if (registrationCompleted && businessProfile) {
+          setForm((prev) => ({ ...prev, ...businessProfile }));
+        }
+        setHydrating(false);
+        return;
+      }
+
+      try {
+        setHydrating(true);
+        const registration = await getBusinessRegistrationByUserId(user.id);
+        if (cancelled) return;
+
+        if (registration?.id && wantsEdit) {
+          setRegistrationId(registration.id);
+          setForm(mapRegistrationToForm(registration, businessProfile, user));
+
+          const gstDoc = registration.documents?.find((d) => d.kind === 'GST');
+          const panDoc = registration.documents?.find((d) => d.kind === 'PAN');
+          if (gstDoc?.url) {
+            setGstDocUrl(gstDoc.url);
+            setDoc1Uploaded(true);
+          }
+          if (panDoc?.url) {
+            setPanDocUrl(panDoc.url);
+            setDoc2Uploaded(true);
+          }
+          if (registration.coverPhoto || registration.shopPhotos?.[0]?.url) {
+            setBannerUploaded(true);
+          }
+          if (registration.gst?.trim()) {
+            setGstVerified(true);
+          }
+        } else if (registrationCompleted && businessProfile) {
+          setForm((prev) => ({ ...prev, ...businessProfile }));
+        }
+      } catch {
+        if (!cancelled && registrationCompleted && businessProfile) {
+          setForm((prev) => ({ ...prev, ...businessProfile }));
+        }
+      } finally {
+        if (!cancelled) setHydrating(false);
+      }
+    }
+
+    void hydrateFromServer();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user, wantsEdit, registrationCompleted, businessProfile]);
 
   const handleGstChange = (val: string) => {
     setForm(prev => ({ ...prev, gst: val.toUpperCase() }));
@@ -281,7 +456,8 @@ export function RegistrationScreen({ navigation }: Props) {
   };
 
   const openPhotoPickerFor = (target: 'banner' | 'gst' | 'pan') => {
-    if (registrationCompleted) return;
+    if (isLocked) return;
+    if (isEditMode && target === 'gst') return;
     lightHaptic();
     setUploadTarget(target);
     setPickerVisible(true);
@@ -412,7 +588,7 @@ export function RegistrationScreen({ navigation }: Props) {
     : [];
 
   const toggleWorkingDay = (day: string) => {
-    if (registrationCompleted) return;
+    if (isLocked) return;
     lightHaptic();
     const next = selectedWorkingDays.includes(day)
       ? selectedWorkingDays.filter((d) => d !== day)
@@ -460,17 +636,21 @@ export function RegistrationScreen({ navigation }: Props) {
         return;
       }
 
-      if ((!isGstOptional || form.gst.trim()) && !gstVerified) {
+      if ((!isGstOptional || form.gst.trim()) && !gstVerified && !isEditMode) {
         Alert.alert('GST Unverified', 'Please verify your GST Number before proceeding.');
         return;
       }
       setCurrentStep(2);
     } else if (currentStep === 2) {
       const missing: string[] = [];
-      if (!form.upiId) missing.push('UPI ID');
-      if (!form.bankName) missing.push('Bank Name');
-      if (!form.accountNumber) missing.push('Account Number');
-      if (!form.ifsc) missing.push('IFSC Code');
+      if (!isEditMode) {
+        if (!form.upiId) missing.push('UPI ID');
+        if (!form.bankName) missing.push('Bank Name');
+        if (!form.accountNumber) missing.push('Account Number');
+        if (!form.ifsc) missing.push('IFSC Code');
+      } else if (!form.upiId && !form.accountNumber) {
+        missing.push('UPI ID or Bank Account');
+      }
       if (!form.workingDays) missing.push('Working Days');
       if (!form.workingHoursOpen) missing.push('Opening Time');
       if (!form.workingHoursClose) missing.push('Closing Time');
@@ -479,7 +659,7 @@ export function RegistrationScreen({ navigation }: Props) {
         Alert.alert('Missing Fields', `Please fill in: ${missing.join(', ')}`);
         return;
       }
-      if (!isUpiFormatValid) {
+      if (!isEditMode && !isUpiFormatValid) {
         setUpiError('Invalid UPI ID Format\nPlease enter a valid UPI ID.');
         Alert.alert('Invalid UPI ID', 'Please enter a valid UPI ID before proceeding.');
         return;
@@ -504,7 +684,15 @@ export function RegistrationScreen({ navigation }: Props) {
       dealerType === 'Vehicle Wash Station' ||
       dealerType === 'Battery Dealer';
 
-    if (!isGstOptional) {
+    if (isEditMode) {
+      if (!doc2Uploaded) {
+        Alert.alert('Documents Required', 'Please upload your PAN Card to proceed.');
+        return;
+      }
+      if (!isGstOptional && form.gst.trim() && !doc1Uploaded) {
+        // Existing GST number without cert is allowed in edit; do not block.
+      }
+    } else if (!isGstOptional) {
       if (!doc1Uploaded || !doc2Uploaded) {
         Alert.alert('Documents Required', 'Please upload both GST Registration Certificate and PAN Card to proceed.');
         return;
@@ -540,7 +728,9 @@ export function RegistrationScreen({ navigation }: Props) {
         phone: form.mobile,
         gst: form.gst,
         registrationNumber: form.registrationNumber || undefined,
-        establishedYear: parseInt(form.establishedYear, 10),
+        establishedYear: form.establishedYear
+          ? parseInt(form.establishedYear, 10)
+          : undefined,
         website: form.website || undefined,
         workingDays: formatWorkingDaysLabel(form.workingDays),
         workingHours: {
@@ -570,21 +760,45 @@ export function RegistrationScreen({ navigation }: Props) {
         documents: docPayload,
       };
 
-      await createBusinessRegistrationApi(payload);
-      await saveBusinessProfile(form);
-      await completeRegistration();
-      successHaptic();
-      navigation.replace(DealerStackRoutes.DealerTabs);
+      if (isEditMode && registrationId) {
+        await updateBusinessRegistrationApi(registrationId, payload);
+        await saveBusinessProfile(form);
+        successHaptic();
+        navigation.goBack();
+      } else {
+        await createBusinessRegistrationApi(payload);
+        await saveBusinessProfile(form);
+        await completeRegistration();
+        successHaptic();
+        navigation.replace(DealerStackRoutes.DealerTabs);
+      }
     } catch (error: any) {
       console.error('Registration failed:', error);
       Alert.alert(
-        'Registration Failed',
+        isEditMode ? 'Update Failed' : 'Registration Failed',
         error.response?.data?.Response?.ReturnMessage || error.message || 'Something went wrong while submitting registration.'
       );
     } finally {
       setSaving(false);
     }
   };
+
+  if (hydrating) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={[styles.hydrateBackRow, { paddingTop: topPad + 8 }]}>
+          <Pressable style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
+            <Feather name="arrow-left" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.hydrateBackTitle, { color: colors.textPrimary }]}>
+            {route.params?.mode === 'edit' ? 'Edit Business Registration' : 'Business Registration'}
+          </Text>
+          <View style={{ width: 36 }} />
+        </View>
+        <RegistrationFormSkeleton />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -794,7 +1008,9 @@ export function RegistrationScreen({ navigation }: Props) {
                 <Feather name="arrow-left" size={20} color="#ffffff" />
               </Pressable>
               <View style={styles.headerTextGroup}>
-                <Text style={styles.bannerTitle}>Business Registration</Text>
+                <Text style={styles.bannerTitle}>
+                  {isEditMode ? 'Edit Business Registration' : 'Business Registration'}
+                </Text>
                 <Text style={styles.bannerSubtitle}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
             </View>
@@ -884,7 +1100,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('businessName', v)}
                       placeholder="Enter business name"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -901,7 +1117,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('ownerName', v)}
                       placeholder="Enter owner name"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -921,7 +1137,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       maxLength={10}
                       placeholder="Enter mobile number"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                   {form.mobile.length > 5 && (
@@ -963,7 +1179,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter email address"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                   {form.email.includes('@') && (
@@ -979,6 +1195,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       {
                         borderColor: gstError ? colors.destructive : gstVerified ? '#10B981' : colors.border,
                         marginBottom: 0,
+                        opacity: isGstBankLocked ? 0.75 : 1,
                       },
                     ]}
                   >
@@ -998,19 +1215,21 @@ export function RegistrationScreen({ navigation }: Props) {
                         style={[styles.textInputStyle, { color: colors.textPrimary }]}
                         value={form.gst}
                         onChangeText={handleGstChange}
-                        onBlur={verifyGst}
+                        onBlur={() => { if (!isGstBankLocked) verifyGst(); }}
                         autoCapitalize="characters"
                         placeholder="Enter GST number"
                         placeholderTextColor={colors.textTertiary}
-                        editable={!registrationCompleted}
+                        editable={!isGstBankLocked}
                       />
                     </View>
                     {gstVerifying ? (
                       <ActivityIndicator size="small" color={colors.primary} style={styles.rightFieldIcon} />
                     ) : gstVerified ? (
                       <Feather name="check-circle" size={16} color="#10B981" style={styles.rightFieldIcon} />
+                    ) : isGstBankLocked ? (
+                      <Feather name="lock" size={14} color={colors.textTertiary} style={styles.rightFieldIcon} />
                     ) : (
-                      <Pressable style={styles.verifyBtn} onPress={() => { if (registrationCompleted) return; verifyGst(); }}>
+                      <Pressable style={styles.verifyBtn} onPress={() => { if (isGstBankLocked) return; verifyGst(); }}>
                         <Text style={styles.verifyBtnText}>Verify</Text>
                       </Pressable>
                     )}
@@ -1040,7 +1259,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           onChangeText={(v) => set('registrationNumber', v)}
                           placeholder="Enter registration no."
                           placeholderTextColor={colors.textTertiary}
-                          editable={!registrationCompleted}
+                          editable={!isLocked}
                         />
                       </View>
                     </View>
@@ -1060,7 +1279,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           keyboardType="numeric"
                           placeholder="Enter year"
                           placeholderTextColor={colors.textTertiary}
-                          editable={!registrationCompleted}
+                          editable={!isLocked}
                         />
                       </View>
                     </View>
@@ -1110,7 +1329,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('address', v)}
                       placeholder="Enter address"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -1118,7 +1337,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 {/* State Input */}
                 <Pressable
                   onPress={() => {
-                    if (registrationCompleted) return;
+                    if (isLocked) return;
                     lightHaptic();
                     setStatePickerVisible(true);
                   }}
@@ -1147,7 +1366,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 {/* City Input */}
                 <Pressable
                   onPress={() => {
-                    if (registrationCompleted) return;
+                    if (isLocked) return;
                     if (!form.state) {
                       Alert.alert('Select State First', 'Please select a state before selecting a city.');
                       return;
@@ -1192,7 +1411,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       maxLength={6}
                       placeholder="Enter pincode"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -1226,6 +1445,7 @@ export function RegistrationScreen({ navigation }: Props) {
                         : isUpiFormatValid
                           ? '#28A745'
                           : colors.border,
+                      opacity: isGstBankLocked ? 0.75 : 1,
                     },
                   ]}
                 >
@@ -1249,22 +1469,25 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter UPI ID"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isGstBankLocked}
                     />
                     {upiError ? (
                       <Text style={styles.upiErrorText}>{upiError}</Text>
                     ) : null}
                   </View>
+                  {isGstBankLocked ? (
+                    <Feather name="lock" size={14} color={colors.textTertiary} style={styles.rightFieldIcon} />
+                  ) : null}
                 </View>
 
                 {/* Bank Name Input */}
                 <Pressable
                   onPress={() => {
-                    if (registrationCompleted) return;
+                    if (isGstBankLocked) return;
                     lightHaptic();
                     setBankPickerVisible(true);
                   }}
-                  style={[styles.inputWrapper, { borderColor: colors.border }]}
+                  style={[styles.inputWrapper, { borderColor: colors.border, opacity: isGstBankLocked ? 0.75 : 1 }]}
                 >
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
                     <Feather name="home" size={14} color={colors.icon} />
@@ -1283,11 +1506,14 @@ export function RegistrationScreen({ navigation }: Props) {
                       {form.bankName || 'Select Bank Name'}
                     </Text>
                   </View>
-                  <Feather name="chevron-down" size={16} color={colors.textTertiary} style={styles.dropdownIcon} />
+                  <Feather
+                    name={isGstBankLocked ? 'lock' : 'chevron-down'}
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.dropdownIcon}
+                  />
                 </Pressable>
-
-                {/* Account Number Input */}
-                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                <View style={[styles.inputWrapper, { borderColor: colors.border, opacity: isGstBankLocked ? 0.75 : 1 }]}>
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
                     <Feather name="hash" size={14} color={colors.icon} />
                   </View>
@@ -1300,13 +1526,16 @@ export function RegistrationScreen({ navigation }: Props) {
                       keyboardType="numeric"
                       placeholder="Enter account number"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isGstBankLocked}
                     />
                   </View>
+                  {isGstBankLocked ? (
+                    <Feather name="lock" size={14} color={colors.textTertiary} style={styles.rightFieldIcon} />
+                  ) : null}
                 </View>
 
                 {/* IFSC Code Input */}
-                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                <View style={[styles.inputWrapper, { borderColor: colors.border, opacity: isGstBankLocked ? 0.75 : 1 }]}>
                   <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
                     <Feather name="code" size={14} color={colors.icon} />
                   </View>
@@ -1319,9 +1548,12 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="characters"
                       placeholder="Enter IFSC code"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isGstBankLocked}
                     />
                   </View>
+                  {isGstBankLocked ? (
+                    <Feather name="lock" size={14} color={colors.textTertiary} style={styles.rightFieldIcon} />
+                  ) : null}
                 </View>
               </View>
 
@@ -1364,7 +1596,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 <View style={{ marginTop: 12, gap: 12 }}>
                   <Pressable
                     onPress={() => {
-                      if (registrationCompleted) return;
+                      if (isLocked) return;
                       lightHaptic();
                       setOpenTimePickerVisible(true);
                     }}
@@ -1393,7 +1625,7 @@ export function RegistrationScreen({ navigation }: Props) {
 
                   <Pressable
                     onPress={() => {
-                      if (registrationCompleted) return;
+                      if (isLocked) return;
                       lightHaptic();
                       setCloseTimePickerVisible(true);
                     }}
@@ -1447,7 +1679,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter Facebook link"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -1465,7 +1697,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter Instagram link"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -1483,7 +1715,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter YouTube link"
                       placeholderTextColor={colors.textTertiary}
-                      editable={!registrationCompleted}
+                      editable={!isLocked}
                     />
                   </View>
                 </View>
@@ -1508,11 +1740,11 @@ export function RegistrationScreen({ navigation }: Props) {
               <Pressable
                 style={[
                   styles.docUploadCard,
-                  { borderColor: colors.border, backgroundColor: '#F8FAFC' },
+                  { borderColor: colors.border, backgroundColor: '#F8FAFC', opacity: isGstBankLocked ? 0.75 : 1 },
                   doc1Uploaded && { borderColor: '#10B981', backgroundColor: '#ECFDF5' }
                 ]}
-                onPress={() => !gstUploading && openPhotoPickerFor('gst')}
-                disabled={gstUploading}
+                onPress={() => !isGstBankLocked && !gstUploading && openPhotoPickerFor('gst')}
+                disabled={gstUploading || isGstBankLocked}
               >
                 <View style={styles.docLeft}>
                   <View style={[styles.docIconWrapper, { backgroundColor: doc1Uploaded ? '#D1FAE5' : '#E2E8F0' }]}>
@@ -1532,7 +1764,13 @@ export function RegistrationScreen({ navigation }: Props) {
                         : ' *'}
                     </Text>
                     <Text style={[styles.docLabelSub, { color: colors.textSecondary }]}>
-                      {gstUploading ? 'Uploading document...' : doc1Uploaded ? 'GST Certificate uploaded ✓' : 'Upload PDF or image of GST certificate'}
+                      {gstUploading
+                        ? 'Uploading document...'
+                        : doc1Uploaded
+                          ? isGstBankLocked
+                            ? 'GST Certificate on file (locked)'
+                            : 'GST Certificate uploaded ✓'
+                          : 'Upload PDF or image of GST certificate'}
                     </Text>
                   </View>
                 </View>
@@ -1540,9 +1778,9 @@ export function RegistrationScreen({ navigation }: Props) {
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <Feather
-                    name={doc1Uploaded ? "check-circle" : "upload-cloud"}
+                    name={isGstBankLocked ? 'lock' : doc1Uploaded ? 'check-circle' : 'upload-cloud'}
                     size={18}
-                    color={doc1Uploaded ? "#10B981" : "#E60012"}
+                    color={isGstBankLocked ? colors.textTertiary : doc1Uploaded ? '#10B981' : '#E60012'}
                   />
                 )}
               </Pressable>
@@ -1595,17 +1833,25 @@ export function RegistrationScreen({ navigation }: Props) {
               style={[styles.saveBtn, { backgroundColor: '#E60012' }]}
               onPress={handleNext}
             >
-              <Text style={styles.saveBtnText}>Save & Continue</Text>
+              <Text style={styles.saveBtnText}>
+                {isEditMode ? 'Continue' : 'Save & Continue'}
+              </Text>
               <Feather name="arrow-right" size={16} color="#ffffff" style={{ marginLeft: 6 }} />
             </Pressable>
           ) : (
             <Pressable
-              style={[styles.saveBtn, { backgroundColor: '#10B981' }]}
+              style={[styles.saveBtn, { backgroundColor: isEditMode ? '#E60012' : '#10B981' }]}
               onPress={handleCompleteRegistration}
-              disabled={saving}
+              disabled={saving || hydrating}
             >
-              <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Complete Registration'}</Text>
-              <Feather name="check" size={16} color="#ffffff" style={{ marginLeft: 6 }} />
+              <Text style={styles.saveBtnText}>
+                {saving
+                  ? 'Saving...'
+                  : isEditMode
+                    ? 'Save Changes'
+                    : 'Complete Registration'}
+              </Text>
+              <Feather name={isEditMode ? 'save' : 'check'} size={16} color="#ffffff" style={{ marginLeft: 6 }} />
             </Pressable>
           )}
         </View>
@@ -1712,12 +1958,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E60012',
   },
 
-  content: { padding: 16, paddingTop: 20, gap: 16 },
+  content: { padding: 14, paddingTop: 12, gap: 12 },
   formCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
-    gap: 12,
+    padding: 14,
+    gap: 10,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -1937,5 +2183,30 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Inter_500Medium',
     marginTop: 4,
+  },
+  hydrateOverlay: {
+    zIndex: 100,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  hydrateText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#64748B',
+  },
+  hydrateBackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  hydrateBackTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
   },
 });

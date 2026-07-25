@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,8 +10,8 @@ import {
   View,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BottomSheet } from '@components/bottomSheet';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
 import type { IReview } from '@app-types/review';
@@ -46,7 +45,6 @@ export function WriteReviewSheet({
   onSubmit,
 }: WriteReviewSheetProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [comment, setComment] = useState(existingReview?.comment ?? '');
 
@@ -60,120 +58,100 @@ export function WriteReviewSheet({
   const canSubmit = rating >= 1 && rating <= 5 && !submitting;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={styles.backdropTouchable} onPress={onClose} />
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.sheetWrapper}
-        >
-          <View
-            style={[
-              styles.sheet,
-              { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 },
-            ]}
-          >
-            <View style={styles.sheetHeader}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {existingReview ? 'Edit your review' : 'Write a review'}
-              </Text>
-              <Pressable hitSlop={8} onPress={onClose}>
-                <Feather name="x" size={20} color={colors.textSecondary} />
-              </Pressable>
-            </View>
-
-            <Text style={[styles.productName, { color: colors.textSecondary }]} numberOfLines={2}>
+    <BottomSheet visible={visible} onClose={onClose} presentation="panel">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.sheetHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {existingReview ? 'Edit your review' : 'Write a review'}
+            </Text>
+            <Text style={[styles.productName, { color: colors.textSecondary }]} numberOfLines={1}>
               {productName}
             </Text>
-
-            <View style={styles.starPickerRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Pressable
-                  key={star}
-                  hitSlop={6}
-                  onPress={() => {
-                    lightHaptic();
-                    setRating(star);
-                  }}
-                >
-                  <Feather
-                    name="star"
-                    size={32}
-                    color={star <= rating ? colors.starActive : colors.border}
-                  />
-                </Pressable>
-              ))}
-            </View>
-
-            <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>
-              {rating > 0 ? RATING_LABELS[rating] : 'Tap a star to rate'}
-            </Text>
-
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                },
-              ]}
-              placeholder="Share what you liked or what could be better (optional)"
-              placeholderTextColor={colors.textTertiary}
-              value={comment}
-              onChangeText={setComment}
-              multiline
-              maxLength={MAX_COMMENT_LENGTH}
-              textAlignVertical="top"
-            />
-
-            <Text style={[styles.counter, { color: colors.textTertiary }]}>
-              {comment.length}/{MAX_COMMENT_LENGTH}
-            </Text>
-
-            <Pressable
-              style={[
-                styles.submitBtn,
-                { backgroundColor: canSubmit ? colors.primary : colors.muted },
-              ]}
-              disabled={!canSubmit}
-              onPress={() => onSubmit(rating, comment.trim())}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={colors.primaryForeground} />
-              ) : (
-                <Text
-                  style={[
-                    styles.submitText,
-                    { color: canSubmit ? colors.primaryForeground : colors.textTertiary },
-                  ]}
-                >
-                  {existingReview ? 'Update review' : 'Submit review'}
-                </Text>
-              )}
-            </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+          <Pressable onPress={onClose} hitSlop={8}>
+            <Feather name="x" size={20} color={colors.textPrimary} />
+          </Pressable>
+        </View>
+
+        <View style={styles.starPickerRow}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <Pressable
+              key={star}
+              onPress={() => {
+                lightHaptic();
+                setRating(star);
+              }}
+              hitSlop={6}
+            >
+              <Feather
+                name="star"
+                size={32}
+                color={star <= rating ? colors.starActive : colors.border}
+              />
+            </Pressable>
+          ))}
+        </View>
+        <Text style={[styles.ratingLabel, { color: colors.textSecondary }]}>
+          {rating > 0 ? RATING_LABELS[rating] : 'Tap to rate'}
+        </Text>
+
+        <TextInput
+          style={[
+            styles.input,
+            {
+              color: colors.textPrimary,
+              borderColor: colors.border,
+              backgroundColor: colors.background,
+            },
+          ]}
+          placeholder="Share details of your experience (optional)"
+          placeholderTextColor={colors.textTertiary}
+          multiline
+          textAlignVertical="top"
+          maxLength={MAX_COMMENT_LENGTH}
+          value={comment}
+          onChangeText={setComment}
+        />
+        <Text style={[styles.counter, { color: colors.textTertiary }]}>
+          {comment.length}/{MAX_COMMENT_LENGTH}
+        </Text>
+
+        <Pressable
+          style={[
+            styles.submitBtn,
+            { backgroundColor: canSubmit ? colors.primary : colors.muted },
+          ]}
+          disabled={!canSubmit}
+          onPress={() => {
+            lightHaptic();
+            onSubmit(rating, comment.trim());
+          }}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text
+              style={[
+                styles.submitText,
+                { color: canSubmit ? '#fff' : colors.textTertiary },
+              ]}
+            >
+              {existingReview ? 'Update review' : 'Submit review'}
+            </Text>
+          )}
+        </Pressable>
+      </KeyboardAvoidingView>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  backdropTouchable: { flex: 1 },
-  sheetWrapper: { width: '100%' },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   title: { fontSize: 17, fontFamily: 'Inter_700Bold' },
   productName: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 },

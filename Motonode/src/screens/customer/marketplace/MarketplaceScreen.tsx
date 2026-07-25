@@ -44,6 +44,7 @@ import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useMobileVerificationGate } from '@context/MobileVerificationContext';
 import { useDealerVehiclesCatalog, useProducts, useServicesCatalog } from '@hooks/useCatalogData';
+import { useBreakpoint } from '@hooks/useBreakpoint';
 import { useColors } from '@hooks/useColors';
 import { useTabBarBottomPadding } from '@hooks/useTabBarBottomPadding';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
@@ -84,6 +85,7 @@ type MarketplaceScreenNavigationProp = CompositeNavigationProp<
 
 export function MarketplaceScreen() {
   const colors = useColors();
+  const { columns, contentPadding, isDesktop } = useBreakpoint();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<MarketplaceScreenNavigationProp>();
   const route = useRoute<RouteProp<CustomerTabParamList, typeof CustomerTabRoutes.Marketplace>>();
@@ -243,7 +245,7 @@ export function MarketplaceScreen() {
         </View>
       </ChromeHeader>
 
-      <View style={[styles.contentSheet, { backgroundColor: colors.card }]}>
+      <View style={[styles.contentSheet, { backgroundColor: colors.card, paddingHorizontal: contentPadding }]}>
         <View style={styles.tabsWrapper}>
           <MarketplaceTabs
             activeTab={activeTab}
@@ -253,7 +255,7 @@ export function MarketplaceScreen() {
         </View>
 
         {filterTab && (
-          <View style={styles.filterWrapper}>
+          <View style={[styles.filterWrapper, { marginHorizontal: -contentPadding }]}>
             <FilterSortRow
               tab={filterTab}
               filterActive={activeFilterCount > 0}
@@ -268,10 +270,11 @@ export function MarketplaceScreen() {
             <ProductsGridSkeleton />
           ) : (
           <FlatList
+            key={`mp-products-${columns}`}
             style={styles.listFlex}
           data={filteredProducts}
           keyExtractor={(i) => getProductId(i)}
-          numColumns={2}
+          numColumns={columns}
           contentContainerStyle={[styles.gridContent, { paddingBottom: tabBarPadding }]}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
@@ -303,15 +306,18 @@ export function MarketplaceScreen() {
             <VehiclesListSkeleton />
           ) : (
           <FlatList
+            key={`mp-vehicles-${isDesktop ? 2 : 1}`}
             style={styles.listFlex}
           data={filteredVehicles}
           keyExtractor={(i) => getVehicleId(i)}
+          numColumns={isDesktop ? 2 : 1}
           contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPadding }]}
+          columnWrapperStyle={isDesktop ? styles.columnWrapper : undefined}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <VehicleCard
               vehicle={item}
-              style={styles.vehicleItem}
+              style={[styles.vehicleItem, isDesktop && styles.vehicleItemDesktop]}
               onNavigate={() =>
                 navigation.navigate(CustomerStackRoutes.VehicleDetail, { id: getVehicleId(item) })
               }
@@ -507,14 +513,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: spacing.md,
-    paddingHorizontal: spacing.md,
   },
   tabsWrapper: { marginBottom: spacing.sm },
-  filterWrapper: { marginHorizontal: -spacing.md },
+  filterWrapper: {},
   listFlex: { flex: 1 },
   gridContent: { paddingTop: 4, paddingBottom: spacing.md },
   columnWrapper: { gap: 12, marginBottom: 12 },
-  gridItem: { flex: 1, maxWidth: '48%' },
+  gridItem: { flex: 1 },
   listContent: { paddingTop: 4, paddingBottom: spacing.md },
   serviceCategorySection: { marginBottom: 16 },
   serviceCategoryTitle: {
@@ -524,6 +529,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   vehicleItem: { width: '100%', marginBottom: 12 },
+  vehicleItemDesktop: { flex: 1, maxWidth: '49%' },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
   emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular' },
   bookingCardContainer: { paddingVertical: 8 },

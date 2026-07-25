@@ -25,6 +25,7 @@ import {
 import { getDealerOrderStats } from '@services/order.service';
 import type { IDealerOrderStats } from '@app-types/order';
 import { lightHaptic } from '@utils/haptics';
+import { ChromeHeader } from '@components/common';
 
 type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRoutes.Analytics>;
 
@@ -37,7 +38,6 @@ function formatRupee(amount: number): string {
 export function DealerAnalyticsScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [loading, setLoading] = useState(true);
@@ -114,21 +114,23 @@ export function DealerAnalyticsScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <Pressable
-          onPress={() => {
-            lightHaptic();
-            void load(true);
-          }}
-          style={styles.backBtn}
-        >
-          <Feather name="refresh-cw" size={18} color="#fff" />
-        </Pressable>
-      </View>
+      <ChromeHeader contentPad={8}>
+        <View style={styles.headerRow}>
+          <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
+            <Feather name="arrow-left" size={22} color={colors.headerForeground} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Analytics</Text>
+          <Pressable
+            onPress={() => {
+              lightHaptic();
+              void load(true);
+            }}
+            style={styles.headerBtn}
+          >
+            <Feather name="refresh-cw" size={18} color={colors.headerForeground} />
+          </Pressable>
+        </View>
+      </ChromeHeader>
 
       {loading ? (
         <View style={styles.loadingWrap}>
@@ -197,14 +199,14 @@ export function DealerAnalyticsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  backBtn: { padding: 4, marginRight: 8 },
-  headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, gap: 12 },
   sectionTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },

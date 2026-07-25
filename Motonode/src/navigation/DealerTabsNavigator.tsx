@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator, type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { DesktopTopNav, type DesktopNavItem } from '@components/layout/DesktopTopNav';
 import { DealerTabRoutes } from '@constants/routes';
 import { useDealer } from '@context/DealerContext';
+import { useBreakpoint } from '@hooks/useBreakpoint';
 import { useColors } from '@hooks/useColors';
 import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
 import { DealerBankScreen } from '@screens/dealer/bank/DealerBankScreen';
@@ -28,7 +30,6 @@ export type DealerTabParamList = {
 
 const Tab = createBottomTabNavigator<DealerTabParamList>();
 
-// Icon map for each dealer tab
 const ICON_MAP: Record<string, string> = {
   [DealerTabRoutes.Dashboard]: 'grid',
   [DealerTabRoutes.Inventory]: 'package',
@@ -47,16 +48,14 @@ const LABEL_MAP: Record<string, string> = {
   [DealerTabRoutes.Profile]: 'Profile',
 };
 
-// The middle raised button route — Orders sits at index 2
 const MIDDLE_ROUTE = DealerTabRoutes.Orders;
 
-function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function DealerCustomTabBar({ state, navigation }: BottomTabBarProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { canAccessDealerApis, status } = useDealerOnboardingStatus();
-  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 8);
+  const bottomInset = insets.bottom > 0 ? insets.bottom : Platform.OS === 'ios' ? 20 : 8;
 
-  // Dynamically calculate the horizontal center of the middle tab (Orders)
   const middleIndex = state.routes.findIndex(r => r.name === MIDDLE_ROUTE);
   let leftPercentage = '50%';
   if (middleIndex !== -1) {
@@ -70,13 +69,12 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
         flexBeforeMiddle += flexVal;
       }
     });
-    const middleFlexCenter = flexBeforeMiddle + 0.6; // 1.2 / 2
+    const middleFlexCenter = flexBeforeMiddle + 0.6;
     leftPercentage = `${(middleFlexCenter / totalFlex) * 100}%`;
   }
 
   return (
     <View style={[styles.tabBarWrapper, { height: 60 + bottomInset }]}>
-      {/* Main floating pill bar */}
       <View
         style={[
           styles.mainTabBar,
@@ -87,8 +85,12 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
           },
         ]}
       >
-        {/* Concave cutout overlay so the raised button has a background notch */}
-        <View style={[styles.cutoutOverlay, { backgroundColor: colors.background, left: leftPercentage as any }]} />
+        <View
+          style={[
+            styles.cutoutOverlay,
+            { backgroundColor: colors.background, left: leftPercentage as `${number}%` },
+          ]}
+        />
 
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -109,7 +111,6 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
             }
           };
 
-          // ── Raised "Orders" centre button ──────────────────────────────
           if (isMiddle) {
             return (
               <Pressable key={route.key} onPress={onPress} style={styles.middleTabBtnWrapper}>
@@ -121,7 +122,6 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
                 >
                   <Feather name="shopping-cart" size={20} color={colors.white} />
                 </View>
-                {/* Small label below raised circle */}
                 <Text
                   style={[
                     styles.middleLabel,
@@ -137,11 +137,10 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
             );
           }
 
-          // ── Normal tab button ───────────────────────────────────────────
           return (
             <Pressable key={route.key} onPress={onPress} style={styles.normalTabBtn}>
               <Feather
-                name={(ICON_MAP[route.name] ?? 'circle') as any}
+                name={(ICON_MAP[route.name] ?? 'circle') as 'grid'}
                 size={22}
                 color={isFocused ? colors.primary : colors.textTertiary}
               />
@@ -154,9 +153,9 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
               >
                 {LABEL_MAP[route.name] ?? route.name}
               </Text>
-              {isFocused && (
+              {isFocused ? (
                 <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-              )}
+              ) : null}
             </Pressable>
           );
         })}
@@ -165,13 +164,54 @@ function DealerCustomTabBar({ state, descriptors, navigation }: BottomTabBarProp
   );
 }
 
+function DealerDesktopChrome({ state, navigation }: BottomTabBarProps) {
+  const { canAccessDealerApis, status } = useDealerOnboardingStatus();
+
+  const items: DesktopNavItem[] = state.routes.map((route, index) => ({
+    key: route.key,
+    label: LABEL_MAP[route.name] ?? route.name,
+    icon: ICON_MAP[route.name] ?? 'circle',
+    focused: state.index === index,
+    onPress: () => {
+      if (route.name === DealerTabRoutes.Inventory && !canAccessDealerApis) {
+        showRegistrationBlockedAlert(status);
+      }
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (state.index !== index && !event.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    },
+  }));
+
+  return <DesktopTopNav items={items} />;
+}
+
+function DealerTabLayout(props: BottomTabBarProps) {
+  const { isDesktop } = useBreakpoint();
+  if (isDesktop) return <DealerDesktopChrome {...props} />;
+  return <DealerCustomTabBar {...props} />;
+}
+
 export function DealerTabsNavigator() {
   const { capabilities } = useDealer();
+  const { isDesktop } = useBreakpoint();
+
+  const renderTabBar = useCallback(
+    (props: BottomTabBarProps) => <DealerTabLayout {...props} />,
+    [],
+  );
 
   return (
     <Tab.Navigator
-      tabBar={(props) => <DealerCustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      tabBar={renderTabBar}
+      screenOptions={{
+        headerShown: false,
+        tabBarPosition: isDesktop ? 'top' : 'bottom',
+      }}
     >
       <Tab.Screen name={DealerTabRoutes.Dashboard} component={DealerDashboardScreen} />
       <Tab.Screen name={DealerTabRoutes.Inventory} component={InventoryScreen} />
@@ -208,7 +248,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderWidth: 1,
   },
-  // Concave notch behind the raised button
   cutoutOverlay: {
     width: 66,
     height: 38,

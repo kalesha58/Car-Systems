@@ -24,6 +24,7 @@ import {
   authScreenStyles,
 } from '@components/auth';
 import { ScreenStatusBar } from '@components/common';
+import { MotonodeAppLogo } from '@assets/images/brand';
 import { AuthRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
@@ -112,7 +113,7 @@ export function SignupScreen() {
             </Pressable>
 
             <Image
-              source={require('@assets/images/Motonode-App-Logo.png')}
+              source={MotonodeAppLogo}
               style={authScreenStyles.logo}
               resizeMode="contain"
             />

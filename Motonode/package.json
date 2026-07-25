@@ -7,9 +7,14 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "web": "vite",
+    "web:build": "vite build",
+    "web:preview": "vite preview",
+    "web:typecheck": "tsc -p tsconfig.web.json --noEmit"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
     "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@react-native-firebase/app": "^21.6.1",
@@ -24,7 +29,9 @@
     "@react-navigation/native-stack": "^7.17.6",
     "@shopify/flash-list": "^2.3.2",
     "axios": "^1.18.1",
+    "firebase": "^11.10.0",
     "react": "19.2.3",
+    "react-dom": "^19.2.3",
     "react-native": "0.86.0",
     "react-native-audio-recorder-player": "^3.6.10",
     "react-native-blob-util": "^0.24.10",
@@ -39,6 +46,8 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.25.2",
     "react-native-vector-icons": "^10.3.0",
+    "react-native-web": "^0.21.2",
+    "react-native-web-linear-gradient": "^1.1.2",
     "react-native-webview": "^14.0.1"
   },
   "devDependencies": {
@@ -52,16 +61,20 @@
     "@react-native/eslint-config": "0.86.0",
     "@react-native/metro-config": "0.86.0",
     "@react-native/typescript-config": "0.86.0",
+    "@types/google.maps": "^3.65.3",
     "@types/jest": "^29.5.13",
     "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.3",
     "@types/react-native-vector-icons": "^6.4.18",
     "@types/react-test-renderer": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "babel-plugin-module-resolver": "^5.0.3",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",
     "prettier": "2.8.8",
     "react-test-renderer": "19.2.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^6.4.3"
   },
   "engines": {
     "node": ">= 22.11.0"

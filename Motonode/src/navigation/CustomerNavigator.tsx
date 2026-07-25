@@ -58,9 +58,15 @@ import { OtpLoadingScreen } from '@screens/customer/verification/OtpLoadingScree
 import { OtpSuccessScreen } from '@screens/customer/verification/OtpSuccessScreen';
 import { CustomerTabsNavigator } from './CustomerTabsNavigator';
 import type { IAddress } from '@app-types/address';
+import type { AppliedCoupon } from '@utils/cartPricing';
 
 export type CustomerStackParamList = {
-  [CustomerStackRoutes.CustomerTabs]: undefined;
+  [CustomerStackRoutes.CustomerTabs]:
+    | {
+        screen?: string;
+        params?: object;
+      }
+    | undefined;
   [CustomerStackRoutes.Cart]: undefined;
   [CustomerStackRoutes.Search]: undefined;
   [CustomerStackRoutes.Notifications]: undefined;
@@ -72,8 +78,8 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.DriveDetail]: { id: string };
   [CustomerStackRoutes.MyOrders]: undefined;
   [CustomerStackRoutes.OrderTracking]: { id: string };
-  [CustomerStackRoutes.Checkout]: undefined;
-  [CustomerStackRoutes.Payment]: { address?: IAddress } | undefined;
+  [CustomerStackRoutes.Checkout]: { coupon?: AppliedCoupon } | undefined;
+  [CustomerStackRoutes.Payment]: { address?: IAddress; coupon?: AppliedCoupon } | undefined;
   [CustomerStackRoutes.ServiceBookingDateTime]: { serviceId: string };
   [CustomerStackRoutes.ServiceBookingVehicle]: undefined;
   [CustomerStackRoutes.ServiceBookingLocation]: undefined;

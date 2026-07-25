@@ -97,6 +97,19 @@ export interface IUpdateBusinessRegistrationRequest {
   city?: string;
   phone?: string;
   gst?: string;
+  registrationNumber?: string;
+  establishedYear?: number;
+  website?: string;
+  workingDays?: string;
+  workingHours?: {
+    open: string;
+    close: string;
+  };
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    youtube?: string;
+  };
   location?: {
     latitude: number;
     longitude: number;

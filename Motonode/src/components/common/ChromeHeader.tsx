@@ -15,7 +15,8 @@ interface ChromeHeaderProps {
 export function ChromeHeader({ children, style, contentPad = 12 }: ChromeHeaderProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  // Web has no native status bar; keep a small inset (not the old 67px phone-frame hack).
+  const topPad = Platform.OS === 'web' ? Math.max(insets.top, 8) : insets.top;
 
   return (
     <View

@@ -159,7 +159,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     );
   }
 
-  const discount = product.discountPercentage ?? 0;
+  const discount = Math.round(product.discountPercentage ?? 0);
   const averageRating = ratingOverride?.averageRating ?? product.averageRating ?? 0;
   const reviewCount = ratingOverride?.reviewCount ?? product.reviewCount ?? 0;
   const inStock = product.stock > 0 && product.status === 'active';
@@ -209,13 +209,13 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Premium Circular Header Buttons */}
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
-        <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+      {/* Solid Header Bar */}
+      <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.header }]}>
+        <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
+          <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
         <View style={styles.headerRight}>
-          <Pressable style={[styles.iconBtn, { backgroundColor: colors.card }]} onPress={async () => {
+          <Pressable style={styles.iconBtn} onPress={async () => {
             lightHaptic();
             if (!product) return;
             try {
@@ -227,16 +227,16 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               // dismissed
             }
           }}>
-            <Feather name="share-2" size={20} color={colors.textPrimary} />
+            <Feather name="share-2" size={20} color={colors.headerForeground} />
           </Pressable>
           <Pressable
-            style={[styles.iconBtn, { backgroundColor: colors.card }]}
+            style={styles.iconBtn}
             onPress={() => {
               lightHaptic();
               toggleWishlist(productId);
             }}
           >
-            <Feather name="heart" size={20} color={wishlisted ? colors.destructive : colors.textPrimary} />
+            <Feather name="heart" size={20} color={wishlisted ? colors.destructive : colors.headerForeground} />
           </Pressable>
         </View>
       </View>
@@ -526,12 +526,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 12,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 10,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   headerRight: {
     flexDirection: 'row',
@@ -544,12 +546,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-    borderWidth: 1,
   },
   scrollContent: { paddingBottom: 110 },
   imageContainerRow: {

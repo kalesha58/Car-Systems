@@ -99,7 +99,7 @@ export function BlockedAccountsScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
+      <View style={[styles.header, { backgroundColor: colors.header, paddingTop: topPad + 12 }]}>
         <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </Pressable>

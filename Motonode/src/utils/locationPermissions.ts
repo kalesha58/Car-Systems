@@ -26,6 +26,15 @@ export function showLocationServicesAlert(): void {
 }
 
 export async function requestLocationPermission(): Promise<LocationPermissionResult> {
+  if (Platform.OS === 'web') {
+    const browserNavigator = (globalThis as { navigator?: { geolocation?: unknown } })
+      .navigator;
+    if (!browserNavigator?.geolocation) {
+      return 'blocked';
+    }
+    return 'granted';
+  }
+
   if (Platform.OS === 'android') {
     try {
       const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;

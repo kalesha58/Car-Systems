@@ -156,6 +156,21 @@ export async function createBusinessRegistrationApi(
   throw new Error('Failed to create business registration');
 }
 
+export async function updateBusinessRegistrationApi(
+  registrationId: string,
+  payload: Record<string, unknown>,
+): Promise<IBusinessRegistration> {
+  const response = await api.put<IBusinessRegistrationResponse>(
+    `/dealer/business-registration/${registrationId}`,
+    payload,
+    { timeout: BUSINESS_REGISTRATION_TIMEOUT_MS },
+  );
+  if (response.data.success && response.data.Response) {
+    return response.data.Response;
+  }
+  throw new Error('Failed to update business registration');
+}
+
 export interface ICreateDealerProductRequest {
   name: string;
   brand: string;

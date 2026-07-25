@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Linking,
   Platform,
@@ -9,52 +9,99 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { ChromeHeader } from '@components/common';
+import { DealerBankSkeleton } from '@components/loaders';
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
-import { useDealer } from '@context/index';
+import { useAuth, useDealer } from '@context/index';
+import { getBusinessRegistrationByUserId } from '@services/dealer.service';
+import type { IBusinessRegistration } from '@app-types/dealer';
 
 type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRoutes.GSTInfo>;
+
+const GST_OPTIONAL_TYPES = ['Mechanic Workshop', 'Vehicle Wash Station', 'Battery Dealer'];
 
 export function GSTInfoScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { businessProfile, dealerType } = useDealer();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const [registration, setRegistration] = useState<IBusinessRegistration | null>(null);
+  const [loading, setLoading] = useState(true);
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  const isGstOptional =
-    dealerType === 'Mechanic Workshop' ||
-    dealerType === 'Vehicle Wash Station' ||
-    dealerType === 'Battery Dealer';
-  
-  const hasGst = !!businessProfile?.gst?.trim();
+  const loadRegistration = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setRegistration(await getBusinessRegistrationByUserId(user.id));
+    } catch {
+      setRegistration(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadRegistration();
+    }, [loadRegistration]),
+  );
+
+  const businessType = registration?.type || dealerType;
+  const isGstOptional = GST_OPTIONAL_TYPES.includes(businessType ?? '');
+
+  const gst = (registration?.gst || businessProfile?.gst || '').trim();
+  const hasGst = !!gst;
+  const isApproved = (registration?.status ?? '').toLowerCase() === 'approved';
+  const gstDocument = registration?.documents?.find(doc => doc.kind === 'GST');
 
   const GST_ROWS = [
-    { label: 'GST Number', value: businessProfile?.gst || '—' },
-    { label: 'Business Name', value: businessProfile?.businessName || '—' },
-    { label: 'Owner Name', value: businessProfile?.ownerName || '—' },
-    { label: 'Established Year', value: businessProfile?.establishedYear || '—' },
-    { label: 'State', value: businessProfile?.state || '—' },
-    { label: 'City', value: businessProfile?.city || '—' },
+    { label: 'GST Number', value: gst || '—' },
+    {
+      label: 'Business Name',
+      value: registration?.businessName || businessProfile?.businessName || '—',
+    },
+    {
+      label: 'Owner Name',
+      value:
+        registration?.payout?.bank?.accountName || businessProfile?.ownerName || user?.name || '—',
+    },
+    {
+      label: 'Established Year',
+      value: registration?.establishedYear
+        ? String(registration.establishedYear)
+        : businessProfile?.establishedYear || '—',
+    },
+    { label: 'State', value: registration?.state || businessProfile?.state || '—' },
+    { label: 'City', value: registration?.city || businessProfile?.city || '—' },
   ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>GST Information</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <ChromeHeader contentPad={8}>
+        <View style={styles.headerRow}>
+          <Pressable style={styles.headerBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
+            <Feather name="arrow-left" size={22} color={colors.headerForeground} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>GST Information</Text>
+          <View style={styles.headerBtn} />
+        </View>
+      </ChromeHeader>
 
+      {loading ? (
+        <DealerBankSkeleton />
+      ) : (
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
@@ -70,8 +117,8 @@ export function GSTInfoScreen({ navigation }: Props) {
                 <Text style={styles.bannerTitle}>Goods and Services Tax</Text>
                 <Text style={styles.bannerSubtitle}>Manage your GST details</Text>
               </View>
-              <View style={styles.verifiedPill}>
-                <Text style={styles.verifiedPillText}>Verified</Text>
+              <View style={[styles.verifiedPill, !isApproved && { backgroundColor: '#F59E0B' }]}>
+                <Text style={styles.verifiedPillText}>{isApproved ? 'Verified' : 'Pending'}</Text>
               </View>
             </View>
 
@@ -82,7 +129,7 @@ export function GSTInfoScreen({ navigation }: Props) {
                 <Pressable
                   onPress={() => {
                     lightHaptic();
-                    navigation.navigate(DealerStackRoutes.BusinessRegistration);
+                    navigation.navigate(DealerStackRoutes.BusinessRegistration, { mode: 'edit' });
                   }}
                   style={[styles.editBtn, { backgroundColor: colors.background }]}
                 >
@@ -110,23 +157,37 @@ export function GSTInfoScreen({ navigation }: Props) {
             </View>
 
             {/* GST Certificate */}
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>GST Certificate</Text>
-              <View style={styles.documentRow}>
-                <View style={[styles.pdfIconBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                  <View style={styles.pdfBadge}>
-                    <Text style={styles.pdfBadgeText}>PDF</Text>
+            {gstDocument ? (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>GST Certificate</Text>
+                <View style={styles.documentRow}>
+                  <View style={[styles.pdfIconBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <View style={styles.pdfBadge}>
+                      <Text style={styles.pdfBadgeText}>PDF</Text>
+                    </View>
                   </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.documentName, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {gstDocument.originalName || 'GST Certificate'}
+                    </Text>
+                    <Text style={[styles.documentDate, { color: colors.textSecondary }]}>
+                      {isApproved ? 'Uploaded and Verified' : 'Uploaded — pending verification'}
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={styles.downloadBtn}
+                    onPress={() => {
+                      lightHaptic();
+                      if (gstDocument.url) {
+                        Linking.openURL(gstDocument.url).catch(() => {});
+                      }
+                    }}
+                  >
+                    <Feather name="download" size={16} color={colors.textSecondary} />
+                  </Pressable>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.documentName, { color: colors.textPrimary }]}>GST Certificate</Text>
-                  <Text style={[styles.documentDate, { color: colors.textSecondary }]}>Uploaded and Verified</Text>
-                </View>
-                <Pressable style={styles.downloadBtn} onPress={() => lightHaptic()}>
-                  <Feather name="download" size={16} color={colors.textSecondary} />
-                </Pressable>
               </View>
-            </View>
+            ) : null}
           </>
         ) : (
           <>
@@ -137,7 +198,9 @@ export function GSTInfoScreen({ navigation }: Props) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.bannerTitle}>Goods and Services Tax</Text>
-                <Text style={styles.bannerSubtitle}>GST is optional for your business</Text>
+                <Text style={styles.bannerSubtitle}>
+                  {isGstOptional ? 'GST is optional for your business' : 'GST is required for your business'}
+                </Text>
               </View>
               <View style={[styles.verifiedPill, { backgroundColor: '#94A3B8' }]}>
                 <Text style={styles.verifiedPillText}>Not Added</Text>
@@ -149,12 +212,14 @@ export function GSTInfoScreen({ navigation }: Props) {
               <Feather name="info" size={32} color={colors.textTertiary} />
               <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: 'center', fontSize: 15 }]}>No GST Details Added</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
-                Your business type ({dealerType}) does not require GST to operate. If you wish to register your GST details for billing or tax filings, you can update them anytime.
+                {isGstOptional
+                  ? `Your business type (${businessType ?? 'Dealer'}) does not require GST to operate. If you wish to register your GST details for billing or tax filings, you can update them anytime.`
+                  : `Your business type (${businessType ?? 'Dealer'}) requires a GST number. Add your GST details to enable billing and tax filings.`}
               </Text>
               <Pressable
                 onPress={() => {
                   lightHaptic();
-                  navigation.navigate(DealerStackRoutes.BusinessRegistration);
+                  navigation.navigate(DealerStackRoutes.BusinessRegistration, { mode: 'edit' });
                 }}
                 style={[styles.editBtn, { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, marginTop: 12 }]}
               >
@@ -176,18 +241,21 @@ export function GSTInfoScreen({ navigation }: Props) {
           <Feather name="external-link" size={14} color={colors.icon} />
         </Pressable>
       </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, borderBottomWidth: 1, backgroundColor: '#ffffff',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
+  headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
   content: { padding: 16, gap: 14 },
   banner: {
     flexDirection: 'row', alignItems: 'center', gap: 14,

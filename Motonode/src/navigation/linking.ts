@@ -11,7 +11,12 @@ import {
 import type { RootStackParamList } from './RootNavigator';
 
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['motonode://', 'https://motonode.in'],
+  prefixes: [
+    'motonode://',
+    'https://motonode.in',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+  ],
   config: {
     screens: {
       [RootRoutes.Auth]: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
@@ -13,6 +13,8 @@ interface VehicleCardProps {
   onNavigate?: () => void;
 }
 
+const isWeb = Platform.OS === 'web';
+
 export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
   const colors = useColors();
   const imageUri = vehicle.images?.[0] || '';
@@ -22,13 +24,18 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
     <Pressable
       style={({ pressed }) => [
         styles.card,
+        isWeb ? styles.cardFluid : styles.cardFixed,
         cardShadow,
         { backgroundColor: colors.card, opacity: pressed ? 0.95 : 1 },
         style,
       ]}
       onPress={onNavigate}
     >
-      <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+      <Image
+        source={{ uri: imageUri }}
+        style={[styles.image, isWeb && styles.imageWeb]}
+        resizeMode="cover"
+      />
       <View style={[styles.typeBadge, { backgroundColor: colors.primarySubtle }]}>
         <Text style={[styles.typeText, { color: colors.textSecondary }]}>{typeLabel}</Text>
       </View>
@@ -41,25 +48,47 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
           {vehicle.fuelType ? (
             <View style={styles.specItem}>
               <Feather name="droplet" size={11} color={colors.textTertiary} />
-              <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.fuelType}</Text>
+              <Text
+                style={[
+                  styles.specText,
+                  isWeb && styles.specTextWeb,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {vehicle.fuelType}
+              </Text>
             </View>
           ) : null}
           {vehicle.mileage != null ? (
             <View style={styles.specItem}>
               <Feather name="trending-up" size={11} color={colors.textTertiary} />
-              <Text style={[styles.specText, { color: colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.specText,
+                  isWeb && styles.specTextWeb,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 {vehicle.mileage} km
               </Text>
             </View>
           ) : null}
           <View style={styles.specItem}>
             <Feather name="calendar" size={11} color={colors.textTertiary} />
-            <Text style={[styles.specText, { color: colors.textSecondary }]}>{vehicle.year}</Text>
+            <Text
+              style={[
+                styles.specText,
+                isWeb && styles.specTextWeb,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {vehicle.year}
+            </Text>
           </View>
         </View>
         <View style={styles.priceRow}>
           <View />
-          <Text style={[styles.price, { color: colors.textPrimary }]}>
+          <Text style={[styles.price, { color: isWeb ? colors.primary : colors.textPrimary }]}>
             ₹{(vehicle.price / 100000).toFixed(2)}L
           </Text>
         </View>
@@ -74,8 +103,11 @@ export function VehicleCard({ vehicle, style, onNavigate }: VehicleCardProps) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 16, overflow: 'hidden', width: 200 },
+  card: { borderRadius: 16, overflow: 'hidden' },
+  cardFixed: { width: 200 },
+  cardFluid: { flex: 1, minWidth: 200, maxWidth: 280 },
   image: { width: '100%', height: 130 },
+  imageWeb: { height: 170 },
   typeBadge: {
     position: 'absolute',
     top: 8,
@@ -91,6 +123,7 @@ const styles = StyleSheet.create({
   specs: { flexDirection: 'row', gap: 10, marginBottom: 8, flexWrap: 'wrap' },
   specItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   specText: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  specTextWeb: { fontSize: 12 },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -98,5 +131,5 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   price: { fontSize: 18, fontFamily: 'Inter_700Bold' },
-  dealer: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  dealer: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 4 },
 });

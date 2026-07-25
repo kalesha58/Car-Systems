@@ -12,6 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { ChromeHeader } from '@components/common';
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
@@ -46,7 +47,6 @@ const EMAIL_NOTIFICATIONS: NotifRow[] = [
 export function NotificationSettingsScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   const [pushSettings, setPushSettings] = useState<Record<string, boolean>>(
@@ -94,13 +94,15 @@ export function NotificationSettingsScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
-        <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={24} color="#fff" />
-        </Pressable>
-        <Text style={styles.headerTitle}>Notification Settings</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ChromeHeader contentPad={8}>
+        <View style={styles.headerRow}>
+          <Pressable style={styles.headerBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
+            <Feather name="arrow-left" size={22} color={colors.headerForeground} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Notification Settings</Text>
+          <View style={styles.headerBtn} />
+        </View>
+      </ChromeHeader>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
@@ -138,15 +140,14 @@ export function NotificationSettingsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
-  backBtn: { padding: 4, marginRight: 8 },
-  headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
-  headerSpacer: { width: 32 },
+  headerBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontFamily: 'Inter_700Bold' },
   content: { padding: 16, gap: 10 },
   groupHeading: {
     fontSize: 11,

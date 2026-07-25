@@ -29,6 +29,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }): void {
+    // Always surface the root cause; a crashing fallback would otherwise hide it.
+    console.error('[ErrorBoundary]', error, info.componentStack);
+
     if (typeof this.props.onError === 'function') {
       this.props.onError(error, info.componentStack);
     }

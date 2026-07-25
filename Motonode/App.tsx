@@ -1,4 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppStatusBar, ErrorBoundary } from '@components/common';
@@ -17,11 +18,19 @@ import {
 import { ThemeProvider } from './src/context/ThemeContext';
 import { linking, navigationRef, RootNavigator } from '@navigation/index';
 
+function AppShell({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== 'web') {
+    return <>{children}</>;
+  }
+
+  return <View style={styles.webShell}>{children}</View>;
+}
+
 function App() {
   return (
     <SafeAreaProvider>
-      <ErrorBoundary>
-        <ThemeProvider>
+      <ThemeProvider>
+        <ErrorBoundary>
           <AuthProvider>
             <ToastProvider>
               <MobileVerificationProvider>
@@ -32,10 +41,12 @@ function App() {
                         <WishlistProvider>
                           <ServiceBookingProvider>
                             <AppStatusBar />
-                            <NavigationContainer ref={navigationRef} linking={linking}>
-                              <RootNavigator />
-                              <PushNotificationHandler />
-                            </NavigationContainer>
+                            <AppShell>
+                              <NavigationContainer ref={navigationRef} linking={linking}>
+                                <RootNavigator />
+                                <PushNotificationHandler />
+                              </NavigationContainer>
+                            </AppShell>
                           </ServiceBookingProvider>
                         </WishlistProvider>
                       </CartProvider>
@@ -45,10 +56,18 @@ function App() {
               </MobileVerificationProvider>
             </ToastProvider>
           </AuthProvider>
-        </ThemeProvider>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  webShell: {
+    flex: 1,
+    width: '100%',
+    minHeight: '100%' as unknown as number,
+  },
+});
 
 export default App;
