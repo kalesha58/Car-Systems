@@ -141,14 +141,22 @@ export const createBusinessRegistration = async (
       throw new AppError('Phone number is required', 400);
     }
 
-    // Validate GST number (required)
-    if (!data.gst || !data.gst.trim()) {
-      throw new AppError('GST number is required', 400);
+    const isGstOptional =
+      data.type === 'Mechanic Workshop' ||
+      data.type === 'Vehicle Wash Station' ||
+      data.type === 'Battery Dealer';
+
+    if (!isGstOptional) {
+      if (!data.gst || !data.gst.trim()) {
+        throw new AppError('GST number is required', 400);
+      }
     }
-    // Validate GST format: 15 characters, alphanumeric pattern
-    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-    if (!gstRegex.test(data.gst.trim().toUpperCase())) {
-      throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+
+    if (data.gst && data.gst.trim()) {
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstRegex.test(data.gst.trim().toUpperCase())) {
+        throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+      }
     }
 
     if (data.establishedYear != null) {
@@ -230,7 +238,7 @@ export const createBusinessRegistration = async (
       state: data.state?.trim(),
       city: data.city?.trim(),
       phone: data.phone.trim(),
-      gst: data.gst.trim().toUpperCase(),
+      gst: data.gst ? data.gst.trim().toUpperCase() : undefined,
       payout: payoutData,
       status: 'pending', // Requires admin approval
       userId,
@@ -422,15 +430,29 @@ export const updateBusinessRegistration = async (
     }
 
     if (data.gst !== undefined) {
-      if (!data.gst.trim()) {
-        throw new AppError('GST number is required', 400);
+      const isGstOptional =
+        registration.type === 'Mechanic Workshop' ||
+        registration.type === 'Vehicle Wash Station' ||
+        registration.type === 'Battery Dealer' ||
+        (data as any).type === 'Mechanic Workshop' ||
+        (data as any).type === 'Vehicle Wash Station' ||
+        (data as any).type === 'Battery Dealer';
+
+      if (!isGstOptional) {
+        if (!data.gst.trim()) {
+          throw new AppError('GST number is required', 400);
+        }
       }
-      // Validate GST format: 15 characters, alphanumeric pattern
-      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-      if (!gstRegex.test(data.gst.trim().toUpperCase())) {
-        throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+
+      if (data.gst.trim()) {
+        const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        if (!gstRegex.test(data.gst.trim().toUpperCase())) {
+          throw new AppError('Invalid GST number format. Expected format: 27AABCU9603R1ZX', 400);
+        }
+        registration.gst = data.gst.trim().toUpperCase();
+      } else {
+        registration.gst = undefined;
       }
-      registration.gst = data.gst.trim().toUpperCase();
     }
 
     if ((data as any).shopPhotos !== undefined) {

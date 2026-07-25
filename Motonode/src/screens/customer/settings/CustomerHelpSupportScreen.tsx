@@ -1,0 +1,235 @@
+import React, { useState } from 'react';
+import {
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Feather from 'react-native-vector-icons/Feather';
+
+import { CustomerStackRoutes } from '@constants/routes';
+import { useColors } from '@hooks/useColors';
+import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { lightHaptic } from '@utils/haptics';
+
+type Props = NativeStackScreenProps<
+  CustomerStackParamList,
+  typeof CustomerStackRoutes.CustomerHelpSupport
+>;
+
+const SUPPORT_EMAIL = 'support@motonode.com';
+const SUPPORT_PHONE = '+918000000000';
+
+const FAQS: Array<{ q: string; a: string }> = [
+  {
+    q: 'Where can I track my order?',
+    a: 'Open Profile → My Orders and select the order. The tracking screen shows every status update from confirmation to delivery.',
+  },
+  {
+    q: 'How do I return or cancel an order?',
+    a: 'Open the order from My Orders. Cancellation is available until the order is shipped; after delivery, use the return option within the return window shown on the product.',
+  },
+  {
+    q: 'How do I review a product I bought?',
+    a: 'Open the product and tap "Write a review" in the Ratings & Reviews section. Orders you have received are marked as verified purchases.',
+  },
+  {
+    q: 'How do I reschedule a service booking or test drive?',
+    a: 'Go to Garage → Bookings, open the booking and use the reschedule option, or contact the dealer directly from the booking screen.',
+  },
+  {
+    q: 'Someone is messaging me and I want it to stop.',
+    a: 'Open the chat and block the account. You can review and undo this any time from Settings → Blocked Accounts.',
+  },
+  {
+    q: 'How do I change my password or phone number?',
+    a: 'Password changes live in Settings → Change Password. Phone number changes are made in Profile → Personal Information and are confirmed with an OTP.',
+  },
+];
+
+export function CustomerHelpSupportScreen({ navigation }: Props) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.secondary, paddingTop: topPad + 12 }]}>
+        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={24} color="#fff" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Help & Support</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Pressable
+          style={[styles.aiCard, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            lightHaptic();
+            navigation.navigate(CustomerStackRoutes.AIChat);
+          }}
+        >
+          <View style={styles.aiIconBox}>
+            <Feather name="cpu" size={22} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.aiTitle}>Ask Motonode Assistant</Text>
+            <Text style={styles.aiSub}>
+              Get instant answers about orders, bookings, products and your account
+            </Text>
+          </View>
+          <Feather name="arrow-right" size={18} color="#fff" />
+        </Pressable>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>FAQs</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          {FAQS.map((faq, index) => {
+            const open = openFaq === index;
+            return (
+              <View key={faq.q}>
+                <Pressable
+                  style={styles.faqRow}
+                  onPress={() => {
+                    lightHaptic();
+                    setOpenFaq(open ? null : index);
+                  }}
+                >
+                  <Text style={[styles.faqQ, { color: colors.textPrimary, flex: 1 }]}>{faq.q}</Text>
+                  <Feather
+                    name={open ? 'chevron-up' : 'chevron-down'}
+                    size={16}
+                    color={colors.textTertiary}
+                  />
+                </Pressable>
+                {open ? (
+                  <Text style={[styles.faqA, { color: colors.textSecondary }]}>{faq.a}</Text>
+                ) : null}
+                {index < FAQS.length - 1 ? (
+                  <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
+
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Contact us</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable
+            style={styles.row}
+            onPress={() => {
+              lightHaptic();
+              void Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Motonode%20Support`);
+            }}
+          >
+            <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+              <Feather name="mail" size={16} color={colors.icon} />
+            </View>
+            <View style={styles.textWrap}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Email support</Text>
+              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>{SUPPORT_EMAIL}</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.textTertiary} />
+          </Pressable>
+
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
+          <Pressable
+            style={styles.row}
+            onPress={() => {
+              lightHaptic();
+              void Linking.openURL(`tel:${SUPPORT_PHONE}`);
+            }}
+          >
+            <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+              <Feather name="phone" size={16} color={colors.icon} />
+            </View>
+            <View style={styles.textWrap}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Call support</Text>
+              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+                Mon-Sat, 9 AM - 7 PM IST
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.textTertiary} />
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+  backBtn: { padding: 4, marginRight: 8 },
+  headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
+  headerSpacer: { width: 32 },
+  content: { padding: 16, gap: 10 },
+  aiCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 16,
+    padding: 16,
+  },
+  aiIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiTitle: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
+  aiSub: { color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 3, lineHeight: 15 },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginTop: 8,
+  },
+  card: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  faqRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  faqQ: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  faqA: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 18,
+  },
+  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textWrap: { flex: 1 },
+  label: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  sublabel: { fontSize: 10, marginTop: 2 },
+});

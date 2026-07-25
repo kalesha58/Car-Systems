@@ -1,5 +1,11 @@
-import { SignUp, ISignUpDocument } from '../../models/SignUp';
-import { AppError, NotFoundError, ConflictError } from '../../utils/errorHandler';
+import bcrypt from 'bcryptjs';
+import {
+  SignUp,
+  ISignUpDocument,
+  INotificationSettings,
+  DEFAULT_NOTIFICATION_SETTINGS,
+} from '../../models/SignUp';
+import { AppError, NotFoundError, ConflictError, ValidationError } from '../../utils/errorHandler';
 import { logger } from '../../utils/logger';
 import { deleteFromCloudinary } from '../../config/cloudinary';
 import { IUser } from '../../types/auth';
@@ -7,6 +13,7 @@ import { ISendOtpResponse } from '../../types/otpAuth';
 import { Post } from '../../models/user/Post';
 import { Vehicle } from '../../models/user/Vehicle';
 import { Order } from '../../models/Order';
+import { Review } from '../../models/Review';
 import {
   normalizePhone,
   sendOtp,
@@ -215,19 +222,22 @@ export interface IUserStats {
   postsCount: number;
   vehiclesCount: number;
   ordersCount: number;
+  reviewsCount: number;
 }export const getUserStats = async (userId: string): Promise<IUserStats> => {
   try {
     const user = await SignUp.findById(userId);    if (!user) {
       throw new NotFoundError('User not found');
     }    // Get counts in parallel for better performance
-    const [postsCount, vehiclesCount, ordersCount] = await Promise.all([
+    const [postsCount, vehiclesCount, ordersCount, reviewsCount] = await Promise.all([
       Post.countDocuments({ userId: userId.toString() }),
       Vehicle.countDocuments({ ownerId: userId.toString() }),
       Order.countDocuments({ userId: userId.toString() }),
+      Review.countDocuments({ userId: userId.toString() }),
     ]);    return {
       postsCount,
       vehiclesCount,
       ordersCount,
+      reviewsCount,
     };
   } catch (error) {
     logger.error('Error getting user stats:', error);
@@ -325,10 +335,150 @@ export const getPrivacySettings = async (
 };
 
 /**
+ * Get notification preferences, falling back to defaults for older accounts.
+ */
+export const getNotificationSettings = async (
+  userId: string,
+): Promise<INotificationSettings> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    return { ...DEFAULT_NOTIFICATION_SETTINGS, ...(user.notificationSettings || {}) };
+  } catch (error) {
+    logger.error('Error getting notification settings:', error);
+    throw error;
+  }
+};
+
+export const updateNotificationSettings = async (
+  userId: string,
+  data: Partial<INotificationSettings>,
+): Promise<INotificationSettings> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const current = { ...DEFAULT_NOTIFICATION_SETTINGS, ...(user.notificationSettings || {}) };
+    const allowedKeys = Object.keys(DEFAULT_NOTIFICATION_SETTINGS) as Array<
+      keyof INotificationSettings
+    >;
+
+    allowedKeys.forEach((key) => {
+      if (typeof data[key] === 'boolean') {
+        current[key] = data[key] as boolean;
+      }
+    });
+
+    user.notificationSettings = current;
+    await user.save();
+
+    logger.info(`Notification settings updated for userId: ${userId}`);
+
+    return current;
+  } catch (error) {
+    logger.error('Error updating notification settings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reasons arrive from a JSON body, so reject anything that is not a string and
+ * cap the length to match the schema instead of letting the save fail.
+ */
+const sanitizeReason = (reason?: unknown): string | undefined => {
+  if (typeof reason !== 'string') return undefined;
+  const trimmed = reason.trim().slice(0, 500);
+  return trimmed || undefined;
+};
+
+/**
+ * Change the password of an authenticated user after verifying the current one.
+ * The SignUp pre-save hook hashes the new value.
+ */
+export const changeUserPassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> => {
+  try {
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+      throw new ValidationError('Current password and new password must be text values');
+    }
+
+    if (!currentPassword || !newPassword) {
+      throw new ValidationError('Current password and new password are required');
+    }
+
+    if (newPassword.length < 8) {
+      throw new ValidationError('New password must be at least 8 characters');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new ValidationError('New password must be different from the current password');
+    }
+
+    const user = await SignUp.findById(userId).select('+password');
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentValid) {
+      throw new AppError('Current password is incorrect', 401);
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    logger.info(`Password changed for userId: ${userId}`);
+  } catch (error) {
+    logger.error('Error changing password:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reversibly deactivate an account: blocks sign-in but keeps PII intact so the
+ * user can be restored, unlike deleteUserAccount which anonymizes.
+ */
+export const deactivateUserAccount = async (
+  userId: string,
+  reason?: unknown,
+): Promise<void> => {
+  try {
+    const user = await SignUp.findById(userId);
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    user.status = 'inactive';
+    user.deactivationReason = sanitizeReason(reason);
+    user.deactivatedAt = new Date();
+    user.fcmToken = undefined;
+
+    await user.save();
+
+    logger.info(`Account deactivated for userId: ${userId}`);
+  } catch (error) {
+    logger.error('Error deactivating user account:', error);
+    throw error;
+  }
+};
+
+/**
  * Deactivate and anonymize user account data.
  * This preserves historical relational data while removing PII and login access.
  */
-export const deleteUserAccount = async (userId: string): Promise<void> => {
+export const deleteUserAccount = async (userId: string, reason?: unknown): Promise<void> => {
   try {
     const user = await SignUp.findById(userId).select('+password');
 
@@ -356,6 +506,8 @@ export const deleteUserAccount = async (userId: string): Promise<void> => {
     user.phone = anonymizedPhone;
     user.password = `deleted_${timestamp}_${Math.random().toString(36).slice(2)}`;
     user.status = 'inactive';
+    user.deactivationReason = sanitizeReason(reason);
+    user.deactivatedAt = new Date();
     user.profileImage = undefined;
     user.googleId = undefined;
     user.fcmToken = undefined;

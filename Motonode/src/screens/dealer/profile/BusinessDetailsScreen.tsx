@@ -329,7 +329,22 @@ export function BusinessDetailsScreen({ navigation }: Props) {
             <InfoField icon="home" label="Business Name" value={registration?.businessName || profile?.businessName || user?.name || ''} />
             <InfoField icon="layers" label="Business Type" value={registration?.type || dealerType || ''} />
             <InfoField icon="user" label="Owner Name" value={registration?.payout?.bank?.accountName || profile?.ownerName || user?.name || ''} />
-            <InfoField icon="file-text" label="GST Number" value={registration?.gst || profile?.gst || ''} />
+            <InfoField
+              icon="file-text"
+              label="GST Number"
+              value={
+                registration?.gst || profile?.gst
+                  ? registration?.gst || profile?.gst || ''
+                  : (registration?.type === 'Mechanic Workshop' ||
+                     registration?.type === 'Vehicle Wash Station' ||
+                     registration?.type === 'Battery Dealer' ||
+                     dealerType === 'Mechanic Workshop' ||
+                     dealerType === 'Vehicle Wash Station' ||
+                     dealerType === 'Battery Dealer')
+                    ? 'Optional (Not Added)'
+                    : ''
+              }
+            />
             <InfoField icon="hash" label="Registration No." value={registration?.registrationNumber || profile?.registrationNumber || ''} />
             <InfoField
               icon="calendar"
@@ -341,7 +356,7 @@ export function BusinessDetailsScreen({ navigation }: Props) {
               }
             />
             <InfoField icon="phone" label="Phone Number" value={registration?.phone || profile?.mobile || user?.phone || ''} />
-            <InfoField icon="phone" label="Alternate Number" value="—" />
+            <InfoField icon="phone" label="Alternate Number" value={profile?.alternateMobile || '—'} />
             <InfoField icon="mail" label="Email Address" value={profile?.email || user?.email || ''} />
             <InfoField
               icon="globe"

@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
   Image,
@@ -25,6 +26,7 @@ import { getDealerProducts } from '@services/dealer.service';
 import { getDealerOrderStats } from '@services/order.service';
 import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { useTheme } from '@context/ThemeContext';
 
 type DealerTabParamList = {
   [DealerTabRoutes.Dashboard]: undefined;
@@ -61,6 +63,7 @@ type DealerProfileNavigationProp = CompositeNavigationProp<
 
 export function DealerProfileScreen() {
   const colors = useColors();
+  const { isDark, setTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<DealerProfileNavigationProp>();
   const { user, logout } = useAuth();
@@ -238,7 +241,7 @@ export function DealerProfileScreen() {
               key={item.label}
               style={({ pressed }) => [
                 styles.menuItem,
-                i < menuItems.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.divider },
+                { borderBottomWidth: 1, borderBottomColor: colors.divider },
                 { opacity: pressed ? 0.75 : 1 },
               ]}
               onPress={() => {
@@ -258,12 +261,31 @@ export function DealerProfileScreen() {
               <Feather name="chevron-right" size={16} color={colors.textTertiary} />
             </Pressable>
           ))}
+          {/* Manual Dark Mode Toggle */}
+          <View style={styles.menuItem}>
+            <View style={[styles.menuIconBox, { backgroundColor: isDark ? '#374151' : '#FFF9DB' }]}>
+              <Feather name={isDark ? 'moon' : 'sun'} size={16} color={isDark ? '#FBBF24' : '#F59E0B'} />
+            </View>
+            <View style={styles.menuTextContent}>
+              <Text style={[styles.menuLabel, { color: colors.textPrimary }]}>Dark Mode</Text>
+              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>Switch between light and dark themes</Text>
+            </View>
+            <Switch
+              value={isDark}
+              onValueChange={(val) => {
+                lightHaptic();
+                setTheme(val ? 'dark' : 'light');
+              }}
+              trackColor={{ false: '#E2E8F0', true: '#E60012' }}
+              thumbColor="#ffffff"
+            />
+          </View>
         </View>
 
         {/* Bottom CTA Banner (Grow your business) */}
-        <View style={[styles.growBusinessBanner, { backgroundColor: '#F2F2F2', borderColor: colors.border }]}>
+        <View style={[styles.growBusinessBanner, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <View style={styles.growBannerLeft}>
-            <View style={[styles.growIconBox, { backgroundColor: '#F2F2F2' }]}>
+            <View style={[styles.growIconBox, { backgroundColor: colors.card }]}>
               <Feather name="trending-up" size={18} color={colors.icon} />
             </View>
             <View style={{ flex: 1 }}>

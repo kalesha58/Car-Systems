@@ -48,6 +48,10 @@ const productToDealerProduct = async (doc: IProductDocument): Promise<IDealerPro
     vehicleModelId: doc.vehicleModelId,
     vehicleBrandName: vehicleNames.vehicleBrandName,
     vehicleModelName: vehicleNames.vehicleModelName,
+    color: doc.color,
+    weight: doc.weight,
+    emissionStandard: doc.emissionStandard,
+    fitsYear: doc.fitsYear,
     status: doc.status,
     returnPolicy: doc.returnPolicy,
     deliveryTimeMinutes: doc.deliveryTimeMinutes,
@@ -250,6 +254,10 @@ export const createDealerProduct = async (
       isSparePart: data.isSparePart,
       vehicleBrandId: data.vehicleBrandId,
       vehicleModelId: data.vehicleModelId,
+      color: data.color?.trim(),
+      weight: data.weight?.trim(),
+      emissionStandard: data.emissionStandard?.trim(),
+      fitsYear: data.fitsYear?.trim(),
       userId: dealerId,
       returnPolicy: data.returnPolicy?.trim(),
       deliveryTimeMinutes: data.deliveryTimeMinutes,
@@ -413,6 +421,22 @@ export const updateDealerProduct = async (
 
     if (data.vehicleModelId !== undefined) {
       product.vehicleModelId = data.vehicleModelId || undefined;
+    }
+
+    if (data.color !== undefined) {
+      product.color = data.color?.trim() || undefined;
+    }
+
+    if (data.weight !== undefined) {
+      product.weight = data.weight?.trim() || undefined;
+    }
+
+    if (data.emissionStandard !== undefined) {
+      product.emissionStandard = data.emissionStandard?.trim() || undefined;
+    }
+
+    if (data.fitsYear !== undefined) {
+      product.fitsYear = data.fitsYear?.trim() || undefined;
     }
 
     if (data.returnPolicy !== undefined) {

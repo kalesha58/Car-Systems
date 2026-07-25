@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -20,6 +20,7 @@ import { useCart } from '@context/CartContext';
 import { useToast } from '@context/ToastContext';
 import { useColors } from '@hooks/useColors';
 import { DealerStoreSkeleton } from '@components/loaders';
+import { StarRating } from '@components/reviews';
 import { getDealerById } from '@services/dealer.service';
 import { getProducts } from '@services/product.service';
 import { getServicesByDealerId } from '@services/service.service';
@@ -111,6 +112,33 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   const dealerAddress = dealer?.address ?? dealer?.location ?? 'Address not available';
   const isOpen = dealer?.storeOpen !== false;
 
+  // Store-level rating rolled up from the per-product aggregates the API returns.
+  const reviewedProducts = useMemo(
+    () =>
+      products
+        .filter((product) => (product.reviewCount ?? 0) > 0)
+        .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0)),
+    [products],
+  );
+
+  const storeRating = useMemo(() => {
+    const totalReviews = reviewedProducts.reduce(
+      (sum, product) => sum + (product.reviewCount ?? 0),
+      0,
+    );
+    if (totalReviews === 0) return { average: 0, totalReviews: 0 };
+
+    const weighted = reviewedProducts.reduce(
+      (sum, product) => sum + (product.averageRating ?? 0) * (product.reviewCount ?? 0),
+      0,
+    );
+
+    return {
+      average: Math.round((weighted / totalReviews) * 10) / 10,
+      totalReviews,
+    };
+  }, [reviewedProducts]);
+
   const handleFollowToggle = () => {
     lightHaptic();
     setIsFollowed(!isFollowed);
@@ -123,21 +151,21 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top Header */}
-      <ChromeHeader style={styles.header} contentPad={8}>
+      <ChromeHeader style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]} contentPad={8}>
         <View style={styles.headerLeft}>
-          <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={22} color="#ffffff" />
+          <Pressable style={[styles.iconBtn, { borderColor: colors.border }]} onPress={() => navigation.goBack()}>
+            <Feather name="arrow-left" size={22} color={colors.textPrimary} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: '#ffffff' }]} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
             {dealerName}
           </Text>
         </View>
         <View style={styles.headerRight}>
-          <Pressable style={styles.iconBtn}>
-            <Feather name="heart" size={22} color="#ffffff" />
+          <Pressable style={[styles.iconBtn, { borderColor: colors.border }]}>
+            <Feather name="heart" size={22} color={colors.textPrimary} />
           </Pressable>
-          <Pressable style={styles.iconBtn}>
-            <Feather name="share-2" size={22} color="#ffffff" />
+          <Pressable style={[styles.iconBtn, { borderColor: colors.border }]}>
+            <Feather name="share-2" size={22} color={colors.textPrimary} />
           </Pressable>
         </View>
       </ChromeHeader>
@@ -280,10 +308,12 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                   <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>
                     {product.name}
                   </Text>
-                  {product.rating != null ? (
+                  {(product.reviewCount ?? 0) > 0 ? (
                     <View style={styles.productRatingRow}>
-                      <Feather name="star" size={10} color="#FBBF24" />
-                      <Text style={[styles.productRatingVal, { color: colors.textSecondary }]}>{product.rating}</Text>
+                      <Feather name="star" size={10} color={colors.starActive} />
+                      <Text style={[styles.productRatingVal, { color: colors.textSecondary }]}>
+                        {(product.averageRating ?? 0).toFixed(1)} ({product.reviewCount})
+                      </Text>
                     </View>
                   ) : null}
                   <View style={styles.productPriceRow}>
@@ -356,27 +386,76 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
         {activeTab === 'reviews' && (
           <View style={{ padding: 20 }}>
             <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>Customer Reviews</Text>
-            <View style={styles.reviewsSummary}>
-              <View style={styles.ratingBigContainer}>
-                <Text style={[styles.ratingBig, { color: colors.textPrimary }]}>4.7</Text>
-                <View style={styles.starsRow}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Feather key={star} name="star" size={14} color="#FBBF24" />
-                  ))}
-                </View>
-                <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>Customer reviews</Text>
+
+            {storeRating.totalReviews === 0 ? (
+              <View style={styles.reviewsEmpty}>
+                <Feather name="message-square" size={30} color={colors.textTertiary} />
+                <Text style={[styles.reviewsEmptyTitle, { color: colors.textPrimary }]}>
+                  No reviews yet
+                </Text>
+                <Text style={[styles.emptyTabText, { color: colors.textSecondary }]}>
+                  Reviews from this store's products will appear here.
+                </Text>
               </View>
-              <View style={styles.ratingBars}>
-                {[5, 4, 3, 2, 1].map((stars) => (
-                  <View key={stars} style={styles.barRow}>
-                    <Text style={[styles.barLabel, { color: colors.textSecondary }]}>{stars}★</Text>
-                    <View style={styles.barContainer}>
-                      <View style={[styles.barFill, { width: stars === 5 ? '78%' : stars === 4 ? '15%' : '2%' }]} />
-                    </View>
+            ) : (
+              <>
+                <View style={styles.reviewsSummary}>
+                  <View style={styles.ratingBigContainer}>
+                    <Text style={[styles.ratingBig, { color: colors.textPrimary }]}>
+                      {storeRating.average.toFixed(1)}
+                    </Text>
+                    <StarRating rating={storeRating.average} size={14} />
+                    <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
+                      {storeRating.totalReviews.toLocaleString('en-IN')}{' '}
+                      {storeRating.totalReviews === 1 ? 'review' : 'reviews'}
+                    </Text>
                   </View>
+                  <View style={styles.ratingBars}>
+                    <Text style={[styles.emptyTabText, { color: colors.textSecondary }]}>
+                      Averaged across {reviewedProducts.length}{' '}
+                      {reviewedProducts.length === 1 ? 'product' : 'products'} in this store.
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+                <Text style={[styles.aboutTitle, { color: colors.textPrimary }]}>
+                  Top rated products
+                </Text>
+
+                {reviewedProducts.map((product) => (
+                  <Pressable
+                    key={getProductId(product)}
+                    style={[
+                      styles.reviewedProductRow,
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                    ]}
+                    onPress={() =>
+                      navigation.navigate(CustomerStackRoutes.ProductDetail, {
+                        id: getProductId(product),
+                      })
+                    }
+                  >
+                    <Image source={{ uri: product.images?.[0] ?? '' }} style={styles.reviewedProductImg} />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[styles.serviceName, { color: colors.textPrimary }]}
+                        numberOfLines={2}
+                      >
+                        {product.name}
+                      </Text>
+                      <View style={styles.productRatingRow}>
+                        <StarRating rating={product.averageRating ?? 0} size={11} />
+                        <Text style={[styles.productRatingVal, { color: colors.textSecondary }]}>
+                          {(product.averageRating ?? 0).toFixed(1)} ({product.reviewCount})
+                        </Text>
+                      </View>
+                    </View>
+                    <Feather name="chevron-right" size={16} color={colors.textSecondary} />
+                  </Pressable>
                 ))}
-              </View>
-            </View>
+              </>
+            )}
           </View>
         )}
       </ScrollView>
@@ -416,9 +495,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -783,6 +860,7 @@ const styles = StyleSheet.create({
   },
   ratingBigContainer: {
     alignItems: 'center',
+    gap: 4,
   },
   ratingBig: {
     fontSize: 32,
@@ -794,6 +872,29 @@ const styles = StyleSheet.create({
   },
   reviewsCount: {
     fontSize: 10,
+  },
+  reviewsEmpty: {
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 28,
+  },
+  reviewsEmptyTitle: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+  },
+  reviewedProductRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 10,
+    marginBottom: 10,
+  },
+  reviewedProductImg: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
   },
   ratingBars: {
     flex: 1,

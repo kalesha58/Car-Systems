@@ -14,11 +14,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { useColors } from '@hooks/useColors';
 import { useChat } from '@context/ChatContext';
 import { ChatBubble, MessageInput, TypingIndicator, DealerHeader, GroupHeader } from '@components/chat/index';
 import { CustomerStackRoutes } from '@constants/routes';
+import { blockUser } from '@services/block.service';
 import { lightHaptic } from '@utils/haptics';
 import auth from '@react-native-firebase/auth';
 import type { Message } from '../../../types/chat';
@@ -26,6 +28,7 @@ import type { Message } from '../../../types/chat';
 export function ChatScreen() {
   const colors = useColors();
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const insets = useSafeAreaInsets();
   const {
     activeConversation,
     activeMessages,
@@ -92,6 +95,38 @@ export function ChatScreen() {
 
     sendMessage(text, replyPayload);
     setReplyMessage(null);
+  };
+
+  /** Blocked accounts can be reviewed and undone from Settings → Blocked Accounts. */
+  const handleBlockParticipant = (participantId?: string, participantName?: string) => {
+    lightHaptic();
+
+    if (!participantId) {
+      Alert.alert('Unable to block', 'This account could not be identified.');
+      return;
+    }
+
+    const displayName = participantName || 'this user';
+    Alert.alert(
+      `Block ${displayName}?`,
+      'They will no longer be able to message you. You can unblock them from Settings.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(participantId);
+              Alert.alert('Blocked', `${displayName} has been blocked.`);
+              navigation.goBack();
+            } catch {
+              Alert.alert('Unable to block', 'Please try again.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleMessageLongPress = (message: Message) => {
@@ -186,7 +221,7 @@ export function ChatScreen() {
 
     // Default Private Header
     return (
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, paddingTop: insets.top || 10 }]}>
         <Pressable onPress={() => navigation.goBack()} style={styles.headerBtn}>
           <Feather name="arrow-left" size={22} color={colors.textPrimary} />
         </Pressable>
@@ -213,6 +248,17 @@ export function ChatScreen() {
           </Pressable>
           <Pressable style={styles.headerBtn} onPress={() => Alert.alert('Video Call', 'Placing video call...')}>
             <Feather name="video" size={18} color={colors.textPrimary} />
+          </Pressable>
+          <Pressable
+            style={styles.headerBtn}
+            onPress={() =>
+              handleBlockParticipant(
+                activeConversation.otherParticipantId,
+                activeConversation.otherParticipantName,
+              )
+            }
+          >
+            <Feather name="slash" size={18} color={colors.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -350,7 +396,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    paddingTop: Platform.OS === 'ios' ? 44 : 10,
   },
   headerBtn: {
     padding: 6,

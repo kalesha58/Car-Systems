@@ -33,7 +33,7 @@ export function DealerHeader({
   name,
   avatar,
   online,
-  rating = 4.8,
+  rating,
   businessHours = '9:00 AM - 7:00 PM',
   onBack,
   onVoiceCall,
@@ -78,11 +78,18 @@ export function DealerHeader({
               </View>
             </View>
             <View style={styles.metaRow}>
-              <View style={styles.ratingRow}>
-                <Feather name="star" size={10} color={colors.starActive} />
-                <Text style={[styles.metaText, { color: colors.textSecondary }]}>{rating}</Text>
-              </View>
-              <Text style={[styles.metaText, { color: colors.textTertiary }]}>• {businessHours}</Text>
+              {rating != null ? (
+                <View style={styles.ratingRow}>
+                  <Feather name="star" size={10} color={colors.starActive} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                    {rating.toFixed(1)}
+                  </Text>
+                </View>
+              ) : null}
+              <Text style={[styles.metaText, { color: colors.textTertiary }]}>
+                {rating != null ? '• ' : ''}
+                {businessHours}
+              </Text>
             </View>
           </View>
         </View>

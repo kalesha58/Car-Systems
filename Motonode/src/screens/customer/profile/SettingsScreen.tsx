@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -14,57 +15,106 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
+import { useTheme } from '@context/ThemeContext';
 import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
+
+type SettingsRoute =
+  | typeof CustomerStackRoutes.CustomerNotificationSettings
+  | typeof CustomerStackRoutes.BlockedAccounts
+  | typeof CustomerStackRoutes.ChangePassword
+  | typeof CustomerStackRoutes.AppPermissions
+  | typeof CustomerStackRoutes.TermsConditions
+  | typeof CustomerStackRoutes.CustomerHelpSupport
+  | typeof CustomerStackRoutes.DeleteAccount;
 
 type MenuRow = {
   icon: string;
   label: string;
   sublabel: string;
-  route:
-    | typeof CustomerStackRoutes.PersonalInformation
-    | typeof CustomerStackRoutes.Notifications
-    | typeof CustomerStackRoutes.SavedAddresses
-    | typeof CustomerStackRoutes.PaymentMethods
-    | typeof CustomerStackRoutes.Wishlist;
+  route: SettingsRoute;
+  destructive?: boolean;
 };
 
-const SETTINGS_ROWS: MenuRow[] = [
+type MenuSection = {
+  title: string;
+  rows: MenuRow[];
+};
+
+/**
+ * Account-level items (profile, addresses, wishlist) live on the Profile
+ * screen; this screen owns preferences, privacy, and account lifecycle.
+ */
+const SETTINGS_SECTIONS: MenuSection[] = [
   {
-    icon: 'user',
-    label: 'Personal Information',
-    sublabel: 'Name, email, and phone',
-    route: CustomerStackRoutes.PersonalInformation,
+    title: 'Preferences',
+    rows: [
+      {
+        icon: 'bell',
+        label: 'Notification Preferences',
+        sublabel: 'Choose which alerts you receive',
+        route: CustomerStackRoutes.CustomerNotificationSettings,
+      },
+    ],
   },
   {
-    icon: 'bell',
-    label: 'Notifications',
-    sublabel: 'Push notification preferences',
-    route: CustomerStackRoutes.Notifications,
+    title: 'Privacy & Security',
+    rows: [
+      {
+        icon: 'slash',
+        label: 'Blocked Accounts',
+        sublabel: 'Review and unblock accounts',
+        route: CustomerStackRoutes.BlockedAccounts,
+      },
+      {
+        icon: 'lock',
+        label: 'Change Password',
+        sublabel: 'Update your account password',
+        route: CustomerStackRoutes.ChangePassword,
+      },
+      {
+        icon: 'shield',
+        label: 'Permissions',
+        sublabel: 'Camera, location, photos and alerts',
+        route: CustomerStackRoutes.AppPermissions,
+      },
+    ],
   },
   {
-    icon: 'map-pin',
-    label: 'Saved Addresses',
-    sublabel: 'Delivery and service addresses',
-    route: CustomerStackRoutes.SavedAddresses,
+    title: 'Support & Legal',
+    rows: [
+      {
+        icon: 'help-circle',
+        label: 'Help & Support',
+        sublabel: 'Get help or contact our team',
+        route: CustomerStackRoutes.CustomerHelpSupport,
+      },
+      {
+        icon: 'file-text',
+        label: 'Terms & Conditions',
+        sublabel: 'Terms of use and privacy policy',
+        route: CustomerStackRoutes.TermsConditions,
+      },
+    ],
   },
   {
-    icon: 'credit-card',
-    label: 'Payment Methods',
-    sublabel: 'Cards and wallets at checkout',
-    route: CustomerStackRoutes.PaymentMethods,
-  },
-  {
-    icon: 'heart',
-    label: 'Wishlist',
-    sublabel: 'Items you have saved',
-    route: CustomerStackRoutes.Wishlist,
+    title: 'Account',
+    rows: [
+      {
+        icon: 'user-x',
+        label: 'Deactivate or Delete Account',
+        sublabel: 'Pause or permanently remove your account',
+        route: CustomerStackRoutes.DeleteAccount,
+        destructive: true,
+      },
+    ],
   },
 ];
 
 export function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { isDark, setTheme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<CustomerStackParamList>>();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
@@ -82,34 +132,85 @@ export function SettingsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {SETTINGS_ROWS.map((row, index) => (
-            <Pressable
-              key={row.route}
-              style={({ pressed }) => [
-                styles.row,
-                index < SETTINGS_ROWS.length - 1 && {
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: colors.divider,
-                },
-                { opacity: pressed ? 0.75 : 1 },
-              ]}
-              onPress={() => {
-                lightHaptic();
-                navigation.navigate(row.route);
-              }}
-            >
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>APPEARANCE</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.row}>
               <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
-                <Feather name={row.icon as 'user'} size={18} color={colors.icon} />
+                <Feather name={isDark ? 'moon' : 'sun'} size={18} color={colors.icon} />
               </View>
               <View style={styles.textWrap}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>{row.label}</Text>
-                <Text style={[styles.sublabel, { color: colors.textSecondary }]}>{row.sublabel}</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Dark Mode</Text>
+                <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+                  Switch between light and dark themes
+                </Text>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.textTertiary} />
-            </Pressable>
-          ))}
+              <Switch
+                value={isDark}
+                onValueChange={(value) => {
+                  lightHaptic();
+                  setTheme(value ? 'dark' : 'light');
+                }}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#ffffff"
+              />
+            </View>
+          </View>
         </View>
+
+        {SETTINGS_SECTIONS.map((section) => (
+          <View key={section.title} style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>
+              {section.title.toUpperCase()}
+            </Text>
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {section.rows.map((row, index) => (
+                <Pressable
+                  key={row.route}
+                  style={({ pressed }) => [
+                    styles.row,
+                    index < section.rows.length - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.divider,
+                    },
+                    { opacity: pressed ? 0.75 : 1 },
+                  ]}
+                  onPress={() => {
+                    lightHaptic();
+                    navigation.navigate(row.route);
+                  }}
+                >
+                  <View
+                    style={[
+                      styles.iconWrap,
+                      { backgroundColor: row.destructive ? colors.destructive + '1A' : colors.muted },
+                    ]}
+                  >
+                    <Feather
+                      name={row.icon as 'user'}
+                      size={18}
+                      color={row.destructive ? colors.destructive : colors.icon}
+                    />
+                  </View>
+                  <View style={styles.textWrap}>
+                    <Text
+                      style={[
+                        styles.label,
+                        { color: row.destructive ? colors.destructive : colors.textPrimary },
+                      ]}
+                    >
+                      {row.label}
+                    </Text>
+                    <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+                      {row.sublabel}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={18} color={colors.textTertiary} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ))}
 
         <Text style={[styles.version, { color: colors.textTertiary }]}>Motonode v1.0.0</Text>
       </ScrollView>
@@ -129,6 +230,14 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: '#fff' },
   headerSpacer: { width: 32 },
   content: { padding: 16 },
+  section: { marginBottom: 20 },
+  sectionTitle: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    paddingLeft: 4,
+  },
   card: {
     borderRadius: 20,
     borderWidth: 1,
@@ -154,6 +263,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
-    marginTop: 20,
+    marginTop: 4,
   },
 });

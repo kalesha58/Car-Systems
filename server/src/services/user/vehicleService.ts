@@ -33,6 +33,9 @@ const vehicleToIVehicle = (vehicleDoc: IVehicleDocument): IVehicle => {
     year: vehicleDoc.year,
     color: vehicleDoc.color,
     images: vehicleDoc.images || [],
+    isOwnVehicle: vehicleDoc.isOwnVehicle !== undefined ? vehicleDoc.isOwnVehicle : true,
+    relation: vehicleDoc.relation || 'Self',
+    ownerName: vehicleDoc.ownerName,
     createdAt: vehicleDoc.createdAt?.toISOString(),
     updatedAt: vehicleDoc.updatedAt?.toISOString(),
   };
@@ -45,7 +48,7 @@ export const createVehicle = async (
   ownerId: string,
   data: ICreateVehicleRequest,
 ): Promise<IVehicleResponse> => {
-  const { brand, model, numberPlate, documents, primaryDriverId, year, color, images } = data;
+  const { brand, model, numberPlate, documents, primaryDriverId, year, color, images, isOwnVehicle, relation, ownerName } = data;
 
   // Check if vehicle with same number plate already exists
   const existingVehicle = await Vehicle.findOne({ numberPlate: numberPlate.toUpperCase() });
@@ -65,6 +68,9 @@ export const createVehicle = async (
     year,
     color,
     images: images || [],
+    isOwnVehicle: isOwnVehicle !== undefined ? isOwnVehicle : true,
+    relation: relation || 'Self',
+    ownerName: ownerName || undefined,
   });
 
   await vehicle.save();
@@ -162,6 +168,15 @@ export const updateVehicle = async (
   }
   if (data.images !== undefined) {
     vehicle.set('images', data.images);
+  }
+  if (data.isOwnVehicle !== undefined) {
+    vehicle.set('isOwnVehicle', data.isOwnVehicle);
+  }
+  if (data.relation !== undefined) {
+    vehicle.set('relation', data.relation);
+  }
+  if (data.ownerName !== undefined) {
+    vehicle.set('ownerName', data.ownerName);
   }
 
   await vehicle.save();

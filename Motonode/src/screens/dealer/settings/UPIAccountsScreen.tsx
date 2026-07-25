@@ -72,13 +72,13 @@ export function UPIAccountsScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color="#1E293B" />
+          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>UPI Accounts</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>UPI Accounts</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -112,18 +112,18 @@ export function UPIAccountsScreen({ navigation }: Props) {
         </View>
 
         {/* UPI IDs Card */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>UPI IDs</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>UPI IDs</Text>
             <Pressable
-              style={styles.addNewBtn}
+              style={[styles.addNewBtn, { backgroundColor: colors.background }]}
               onPress={() => {
                 lightHaptic();
                 Alert.alert('Add UPI', 'Enter your UPI ID to add a new payment account.');
               }}
             >
               <Feather name="plus" size={12} color={colors.icon} />
-              <Text style={styles.addNewText}>Add New</Text>
+              <Text style={[styles.addNewText, { color: colors.textSecondary }]}>Add New</Text>
             </Pressable>
           </View>
 
@@ -133,10 +133,10 @@ export function UPIAccountsScreen({ navigation }: Props) {
                 <UpiAvatar initial={account.appInitial} color={account.appColor} />
                 <View style={{ flex: 1 }}>
                   <View style={styles.upiTopRow}>
-                    <Text style={styles.upiId}>{account.upiId}</Text>
+                    <Text style={[styles.upiId, { color: colors.textPrimary }]}>{account.upiId}</Text>
                     {account.isPrimary && (
-                      <View style={styles.primaryBadge}>
-                        <Text style={styles.primaryBadgeText}>Primary</Text>
+                      <View style={[styles.primaryBadge, { backgroundColor: colors.background }]}>
+                        <Text style={[styles.primaryBadgeText, { color: colors.textSecondary }]}>Primary</Text>
                       </View>
                     )}
                   </View>
@@ -148,19 +148,19 @@ export function UPIAccountsScreen({ navigation }: Props) {
                     <Text style={styles.activePillText}>Active</Text>
                   </View>
                   <Pressable style={styles.menuBtn} onPress={() => { lightHaptic(); handleMenu(account); }}>
-                    <Feather name="more-vertical" size={16} color="#64748B" />
+                    <Feather name="more-vertical" size={16} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               </View>
-              {idx < accounts.length - 1 && <View style={styles.divider} />}
+              {idx < accounts.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
             </View>
           ))}
         </View>
 
         {/* Info note */}
-        <View style={styles.infoNote}>
-          <Feather name="info" size={14} color="#64748B" />
-          <Text style={styles.infoNoteText}>
+        <View style={[styles.infoNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="info" size={14} color={colors.textSecondary} />
+          <Text style={[styles.infoNoteText, { color: colors.textSecondary }]}>
             Payments from customers will be settled to your Primary UPI ID within 2 business days.
           </Text>
         </View>

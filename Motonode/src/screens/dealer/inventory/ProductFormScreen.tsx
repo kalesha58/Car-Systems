@@ -79,6 +79,11 @@ export function ProductFormScreen({ route, navigation }: Props) {
   const isEdit = !!editId;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const blockStyle = [
+    styles.sectionBlock,
+    { backgroundColor: colors.card, borderColor: colors.border },
+  ];
+
   const [loadingProduct, setLoadingProduct] = useState(!!editId);
   const [saving, setSaving] = useState(false);
 
@@ -101,6 +106,10 @@ export function ProductFormScreen({ route, navigation }: Props) {
   const [batteryTypeId, setBatteryTypeId] = useState('');
   const [batteryTypeLabel, setBatteryTypeLabel] = useState('');
   const [voltageV, setVoltageV] = useState('');
+  const [color, setColor] = useState('');
+  const [weight, setWeight] = useState('');
+  const [emissionStandard, setEmissionStandard] = useState<'BS4' | 'BS6' | 'Other' | ''>('');
+  const [fitsYear, setFitsYear] = useState('');
   const [returnPolicy, setReturnPolicy] = useState('');
   const [deliveryDays, setDeliveryDays] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -187,6 +196,10 @@ export function ProductFormScreen({ route, navigation }: Props) {
       setVehicleBrandLabel('');
       setVehicleModelId('');
       setVehicleModelLabel('');
+      setColor('');
+      setWeight('');
+      setEmissionStandard('');
+      setFitsYear('');
     }
   }, [showCompatibleFields]);
 
@@ -226,6 +239,10 @@ export function ProductFormScreen({ route, navigation }: Props) {
           setBatteryTypeId(product.batteryTypeId || '');
           setBatteryTypeLabel(product.batteryTypeName || '');
           setVoltageV(product.voltageV != null ? String(product.voltageV) : '');
+          setColor(product.color || '');
+          setWeight(product.weight || '');
+          setEmissionStandard((product.emissionStandard as any) || '');
+          setFitsYear(product.fitsYear || '');
           setReturnPolicy(product.returnPolicy || '');
           if (product.deliveryTimeMinutes && product.deliveryTimeMinutes > 0) {
             const days = Math.round(product.deliveryTimeMinutes / (24 * 60));
@@ -489,10 +506,18 @@ export function ProductFormScreen({ route, navigation }: Props) {
           ? {
               vehicleBrandId,
               vehicleModelId: vehicleModelId || undefined,
+              color: color.trim() || undefined,
+              weight: weight.trim() || undefined,
+              emissionStandard: emissionStandard || undefined,
+              fitsYear: fitsYear.trim() || undefined,
             }
           : {
               vehicleBrandId: null as string | null,
               vehicleModelId: null as string | null,
+              color: null as string | null,
+              weight: null as string | null,
+              emissionStandard: null as string | null,
+              fitsYear: null as string | null,
             }),
       };
 
@@ -649,7 +674,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           {/* 1. Images */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionNumberBadge}>
                 <Text style={styles.sectionNumberText}>1</Text>
@@ -672,7 +697,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 2. Basic Information */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
                 <Text style={styles.sectionNumberText}>2</Text>
@@ -792,7 +817,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 3. Pricing & Inventory */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
                 <Text style={styles.sectionNumberText}>3</Text>
@@ -854,7 +879,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 4. Spare part / Battery */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.sectionNumberText}>4</Text>
@@ -910,6 +935,98 @@ export function ProductFormScreen({ route, navigation }: Props) {
                   false,
                   !vehicleBrandId,
                 )}
+
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Color</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    placeholder="e.g. Red, Black, Silver"
+                    placeholderTextColor={colors.textTertiary}
+                    value={color}
+                    onChangeText={setColor}
+                  />
+                </View>
+
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Weight</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    placeholder="e.g. 500g, 1.5kg"
+                    placeholderTextColor={colors.textTertiary}
+                    value={weight}
+                    onChangeText={setWeight}
+                  />
+                </View>
+
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Emission Standard</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                    {(['BS4', 'BS6', 'Other'] as const).map((std) => {
+                      const selected = emissionStandard === std;
+                      return (
+                        <Pressable
+                          key={std}
+                          onPress={() => {
+                            lightHaptic();
+                            setEmissionStandard(selected ? '' : std);
+                          }}
+                          style={{
+                            flex: 1,
+                            height: 40,
+                            borderRadius: 8,
+                            borderWidth: 1.5,
+                            borderColor: selected ? colors.primary : colors.border,
+                            backgroundColor: selected ? colors.primary + '10' : colors.card,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              fontFamily: 'Inter_700Bold',
+                              color: selected ? colors.primary : colors.textSecondary,
+                            }}
+                          >
+                            {std}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Fits Year</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    placeholder="e.g. 2020, 2018-2022"
+                    placeholderTextColor={colors.textTertiary}
+                    value={fitsYear}
+                    onChangeText={setFitsYear}
+                  />
+                </View>
               </>
             ) : null}
 
@@ -946,7 +1063,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 5. Specs, tags, return policy */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#8B5CF6' }]}>
                 <Text style={styles.sectionNumberText}>5</Text>
@@ -1137,7 +1254,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
+        <View style={[styles.stickyAddBtn, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           <Pressable
             style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={() => void handleSave()}

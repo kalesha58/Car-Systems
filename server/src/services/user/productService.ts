@@ -58,6 +58,8 @@ export interface IProductWithDealer {
   vehicleModelId?: string;
   vehicleBrandName?: string;
   vehicleModelName?: string;
+  averageRating: number;
+  reviewCount: number;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
@@ -156,6 +158,8 @@ const productToIProductWithDealer = async (
     vehicleModelId: productDoc.vehicleModelId,
     vehicleBrandName: vehicleNames.vehicleBrandName,
     vehicleModelName: vehicleNames.vehicleModelName,
+    averageRating: productDoc.averageRating ?? 0,
+    reviewCount: productDoc.reviewCount ?? 0,
     dealer: dealerInfo || undefined,
     createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
     updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),
@@ -261,6 +265,8 @@ export const getAllProductsForUsers = async (
           status: productDoc.status,
           deliveryTimeMinutes: productDoc.deliveryTimeMinutes,
           isSparePart: productDoc.isSparePart,
+          averageRating: productDoc.averageRating ?? 0,
+          reviewCount: productDoc.reviewCount ?? 0,
           dealer: undefined, // No dealer info assignment - backend already validates approved dealers
           createdAt: productDoc.createdAt?.toISOString() || new Date().toISOString(),
           updatedAt: productDoc.updatedAt?.toISOString() || new Date().toISOString(),

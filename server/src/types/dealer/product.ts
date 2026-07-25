@@ -24,8 +24,11 @@ export interface IDealerProduct {
   vehicleModelId?: string;
   vehicleBrandName?: string;
   vehicleModelName?: string;
+  color?: string;
+  weight?: string;
+  emissionStandard?: string;
+  fitsYear?: string;
   status?: ProductStatus;
-  returnPolicy?: string;
   deliveryTimeMinutes?: number;
   createdAt: string;
   updatedAt: string;
@@ -50,6 +53,10 @@ export interface ICreateDealerProductRequest {
   isSparePart?: boolean;
   vehicleBrandId?: string;
   vehicleModelId?: string;
+  color?: string;
+  weight?: string;
+  emissionStandard?: string;
+  fitsYear?: string;
   deliveryTimeMinutes?: number;
 }
 
@@ -72,6 +79,10 @@ export interface IUpdateDealerProductRequest {
   isSparePart?: boolean;
   vehicleBrandId?: string | null;
   vehicleModelId?: string | null;
+  color?: string | null;
+  weight?: string | null;
+  emissionStandard?: string | null;
+  fitsYear?: string | null;
   status?: ProductStatus;
   deliveryTimeMinutes?: number | null;
 }

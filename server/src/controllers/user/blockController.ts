@@ -1,7 +1,12 @@
 import { Response } from 'express';
 import { IAuthRequest } from '../../middleware/authMiddleware';
 import { errorHandler, IAppError } from '../../utils/errorHandler';
-import { blockUser, isBlockedEitherDirection, listBlockedUsers, unblockUser } from '../../services/user/blockService';
+import {
+  blockUser,
+  isBlockedEitherDirection,
+  listBlockedUsersDetailed,
+  unblockUser,
+} from '../../services/user/blockService';
 
 export const blockUserController = async (req: IAuthRequest, res: Response): Promise<void> => {
   try {
@@ -77,8 +82,8 @@ export const listBlockedUsersController = async (req: IAuthRequest, res: Respons
       return;
     }
 
-    const blockedUserIds = await listBlockedUsers(blockerId);
-    res.status(200).json({ success: true, Response: blockedUserIds });
+    const blockedUsers = await listBlockedUsersDetailed(blockerId);
+    res.status(200).json({ success: true, Response: blockedUsers });
   } catch (error) {
     errorHandler(error as IAppError, res);
   }

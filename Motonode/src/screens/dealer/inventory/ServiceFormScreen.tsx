@@ -535,6 +535,11 @@ export function ServiceFormScreen({ route, navigation }: Props) {
     );
   }
 
+  const blockStyle = [
+    styles.sectionBlock,
+    { backgroundColor: colors.card, borderColor: colors.border },
+  ];
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -584,7 +589,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           {/* 1. Images */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionNumberBadge}>
                 <Text style={styles.sectionNumberText}>1</Text>
@@ -607,7 +612,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 2. Classification */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
                 <Text style={styles.sectionNumberText}>2</Text>
@@ -918,7 +923,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 3. Service Information */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
                 <Text style={styles.sectionNumberText}>3</Text>
@@ -1073,7 +1078,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 4. Settings */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.sectionNumberText}>4</Text>
@@ -1163,7 +1168,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
+        <View style={[styles.stickyAddBtn, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           <Pressable
             style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={() => void handleSave()}

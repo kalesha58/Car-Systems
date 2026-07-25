@@ -12,3 +12,19 @@ export const otpIpRateLimiter = rateLimit({
     Response: { ReturnMessage: 'Too many requests from this IP. Please try again later.' },
   },
 });
+
+/**
+ * Per-IP limit for endpoints that verify a credential or destroy account state,
+ * so a stolen access token cannot be used to brute-force the current password.
+ */
+export const sensitiveAccountRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many attempts. Please try again later.',
+    Response: { ReturnMessage: 'Too many attempts. Please try again later.' },
+  },
+});

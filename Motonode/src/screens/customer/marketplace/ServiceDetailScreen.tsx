@@ -207,23 +207,6 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
           <Text style={[styles.categoryText, { color: colors.link }]}>{service.category ?? 'Service'}</Text>
           <Text style={[styles.name, { color: colors.textPrimary }]}>{service.name}</Text>
 
-          <View style={styles.ratingRow}>
-            <View style={styles.starsContainer}>
-              {[1, 2, 3, 4].map((star) => (
-                <Feather
-                  key={star}
-                  name="star"
-                  size={14}
-                  color={colors.starActive}
-                  style={{ marginRight: 2 }}
-                />
-              ))}
-              <Feather name="star" size={14} color={colors.border} />
-            </View>
-            <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>4.7</Text>
-            <Text style={[styles.reviewsCount, { color: colors.link }]}>(reviews)</Text>
-          </View>
-
           <View style={styles.priceRow}>
             <Text style={[styles.priceText, { color: colors.textPrimary }]}>₹{service.price}</Text>
             <View style={[styles.discountBadge, { backgroundColor: colors.primarySubtle }]}>

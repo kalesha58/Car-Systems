@@ -6,6 +6,10 @@ import {
   getUserStats,
   updatePrivacySettings,
   getPrivacySettings,
+  getNotificationSettings,
+  updateNotificationSettings,
+  changeUserPassword,
+  deactivateUserAccount,
   deleteUserAccount,
   sendPhoneChangeOtp,
   verifyPhoneChange,
@@ -314,6 +318,138 @@ export const updatePrivacySettingsController = async (
 };
 
 /**
+ * Get user notification preferences
+ */
+export const getNotificationSettingsController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const settings = await getNotificationSettings(req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      Response: settings,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Update user notification preferences
+ */
+export const updateNotificationSettingsController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const settings = await updateNotificationSettings(req.user.userId, req.body || {});
+
+    res.status(200).json({
+      success: true,
+      Response: settings,
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Change password for the authenticated user
+ */
+export const changePasswordController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body as {
+      currentPassword?: string;
+      newPassword?: string;
+    };
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required',
+        Response: { ReturnMessage: 'Current password and new password are required' },
+      });
+      return;
+    }
+
+    await changeUserPassword(req.user.userId, currentPassword, newPassword);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'Password changed successfully',
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
+ * Deactivate current user account (reversible)
+ */
+export const deactivateAccountController = async (
+  req: IAuthRequest,
+  res: Response,
+  _next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        Response: { ReturnMessage: 'Unauthorized' },
+      });
+      return;
+    }
+
+    const reason: unknown = req.body?.reason;
+
+    await deactivateUserAccount(req.user.userId, reason);
+
+    res.status(200).json({
+      success: true,
+      Response: {
+        ReturnMessage: 'Account deactivated successfully',
+      },
+    });
+  } catch (error) {
+    errorHandler(error as IAppError, res);
+  }
+};
+
+/**
  * Delete current user account
  */
 export const deleteAccountController = async (
@@ -332,7 +468,11 @@ export const deleteAccountController = async (
       return;
     }
 
-    await deleteUserAccount(req.user.userId);
+    // Accept the reason from the body, or the query string for clients that
+    // cannot attach a body to a DELETE request.
+    const reason: unknown = req.body?.reason ?? req.query?.reason;
+
+    await deleteUserAccount(req.user.userId, reason);
 
     res.status(200).json({
       success: true,

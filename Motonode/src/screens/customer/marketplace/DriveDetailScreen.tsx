@@ -299,21 +299,21 @@ export function DriveDetailScreen({ route, navigation }: DriveDetailScreenProps)
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Important Instructions</Text>
           <View style={styles.instructionsGrid}>
             <View style={styles.instructionItem}>
-              <View style={[styles.instructionIconWrapper, { backgroundColor: '#EEF2F6' }]}>
+              <View style={[styles.instructionIconWrapper, { backgroundColor: colors.muted }]}>
                 <Feather name="file-text" size={16} color="#3F83F8" />
               </View>
               <Text style={[styles.instructionText, { color: colors.textSecondary }]}>Bring valid driving license</Text>
             </View>
 
             <View style={styles.instructionItem}>
-              <View style={[styles.instructionIconWrapper, { backgroundColor: '#EEF2F6' }]}>
+              <View style={[styles.instructionIconWrapper, { backgroundColor: colors.muted }]}>
                 <Feather name="battery-charging" size={16} color="#10B981" />
               </View>
               <Text style={[styles.instructionText, { color: colors.textSecondary }]}>Keep 80% battery for best experience</Text>
             </View>
 
             <View style={styles.instructionItem}>
-              <View style={[styles.instructionIconWrapper, { backgroundColor: '#EEF2F6' }]}>
+              <View style={[styles.instructionIconWrapper, { backgroundColor: colors.muted }]}>
                 <Feather name="user" size={16} color="#8B5CF6" />
               </View>
               <Text style={[styles.instructionText, { color: colors.textSecondary }]}>One person only during test drive</Text>

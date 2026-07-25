@@ -74,6 +74,9 @@ export interface IUserVehicle {
   year?: number;
   color?: string;
   images: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -87,6 +90,9 @@ export interface ICreateVehicleRequest {
   year?: number;
   color?: string;
   images: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
 }
 
 export interface IUpdateVehicleRequest {
@@ -98,6 +104,9 @@ export interface IUpdateVehicleRequest {
   year?: number;
   color?: string;
   images?: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
 }
 
 export interface IUserVehicleResponse {

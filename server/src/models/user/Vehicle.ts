@@ -19,6 +19,9 @@ export interface IVehicleDocumentFields {
   year?: number;
   color?: string;
   images: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +45,10 @@ const vehicleSchema = new Schema<any>(
     ownerId: {
       type: String,
       required: true,
+    },
+    ownerName: {
+      type: String,
+      trim: true,
     },
     brand: {
       type: String,
@@ -86,6 +93,15 @@ const vehicleSchema = new Schema<any>(
         },
         message: 'Vehicle must have at most 3 images',
       },
+    },
+    isOwnVehicle: {
+      type: Boolean,
+      default: true,
+    },
+    relation: {
+      type: String,
+      default: 'Self',
+      trim: true,
     },
   },
   {

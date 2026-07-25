@@ -16,6 +16,9 @@ export interface UserVehicle {
   year?: number;
   color?: string;
   images: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -29,6 +32,9 @@ export interface CreateVehicleRequest {
   year?: number;
   color?: string;
   images: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
 }
 
 export interface UpdateVehicleRequest {
@@ -40,6 +46,9 @@ export interface UpdateVehicleRequest {
   year?: number;
   color?: string;
   images?: string[];
+  isOwnVehicle?: boolean;
+  relation?: string;
+  ownerName?: string;
 }
 
 export interface UserVehicleResponse {

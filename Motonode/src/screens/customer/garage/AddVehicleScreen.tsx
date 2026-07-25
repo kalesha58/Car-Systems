@@ -55,7 +55,7 @@ type PickerTarget =
   | 'pollution'
   | 'dl'
   | 'additional';
-type DropdownField = 'brand' | 'model' | 'variant' | 'fuel' | 'year' | 'color';
+type DropdownField = 'brand' | 'model' | 'variant' | 'fuel' | 'year' | 'color' | 'relation';
 
 const PLATE_REGEX = /^[A-Z0-9]{6,15}$/i;
 const MAX_VEHICLE_IMAGES = 3;
@@ -86,6 +86,16 @@ const FUEL_OPTIONS: DropdownOption[] = [
   'Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG',
 ].map((f) => ({ label: f, value: f }));
 
+const RELATION_OPTIONS: DropdownOption[] = [
+  { label: 'Father', value: 'Father' },
+  { label: 'Mother', value: 'Mother' },
+  { label: 'Spouse', value: 'Spouse' },
+  { label: 'Sibling', value: 'Sibling' },
+  { label: 'Friend', value: 'Friend' },
+  { label: 'Client', value: 'Client' },
+  { label: 'Other', value: 'Other' },
+];
+
 export function AddVehicleScreen({ navigation }: Props) {
   const colors = useColors();
   const { user } = useAuth();
@@ -96,6 +106,8 @@ export function AddVehicleScreen({ navigation }: Props) {
 
   const [vehicleTypeKey, setVehicleTypeKey] = useState<VehicleTypeKey>('four');
   const [ownerName, setOwnerName] = useState(user?.name ?? '');
+  const [isOwnVehicle, setIsOwnVehicle] = useState(true);
+  const [relation, setRelation] = useState('Self');
   const [numberPlate, setNumberPlate] = useState('');
   const [plateVerified, setPlateVerified] = useState(false);
   const [verifyingPlate, setVerifyingPlate] = useState(false);
@@ -190,6 +202,8 @@ export function AddVehicleScreen({ navigation }: Props) {
         return modelOptions.length > 0
           ? modelOptions
           : [{ label: 'Standard', value: 'standard' }];
+      case 'relation':
+        return RELATION_OPTIONS;
       default:
         return [];
     }
@@ -220,7 +234,8 @@ export function AddVehicleScreen({ navigation }: Props) {
       case 'color':
         setColor(selected.label);
         break;
-      default:
+      case 'relation':
+        setRelation(selected.label);
         break;
     }
     setDropdownVisible(false);
@@ -240,6 +255,8 @@ export function AddVehicleScreen({ navigation }: Props) {
         return year;
       case 'color':
         return color;
+      case 'relation':
+        return relation;
       default:
         return '';
     }
@@ -493,6 +510,8 @@ export function AddVehicleScreen({ navigation }: Props) {
         images: uploadedImages,
         year: year ? parseInt(year, 10) : undefined,
         color: color.trim() || undefined,
+        isOwnVehicle,
+        relation: isOwnVehicle ? 'Self' : relation,
         documents: {
           ...(rcUrl ? { rc: rcUrl } : {}),
           ...(insuranceUrl ? { insurance: insuranceUrl } : {}),
@@ -663,6 +682,49 @@ export function AddVehicleScreen({ navigation }: Props) {
         placeholder="Full name as on RC"
         placeholderTextColor={colors.placeholder}
       />
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 12, paddingHorizontal: 4 }}>
+        <Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary }}>Is this vehicle owned by you?</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {(['Yes', 'No'] as const).map((opt) => {
+            const selected = opt === 'Yes' ? isOwnVehicle : !isOwnVehicle;
+            return (
+              <Pressable
+                key={opt}
+                onPress={() => {
+                  lightHaptic();
+                  setIsOwnVehicle(opt === 'Yes');
+                  if (opt === 'Yes') {
+                    setRelation('Self');
+                    setOwnerName(user?.name ?? '');
+                  } else {
+                    setRelation('Father');
+                    setOwnerName('');
+                  }
+                }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  borderWidth: 1.5,
+                  borderColor: selected ? colors.primary : colors.border,
+                  backgroundColor: selected ? colors.primary + '10' : colors.card,
+                }}
+              >
+                <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: selected ? colors.primary : colors.textSecondary }}>
+                  {opt}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {!isOwnVehicle ? (
+        <View style={{ marginBottom: 12, flexDirection: 'row' }}>
+          {renderDropdownField('Relation', relation, 'relation', 'Select relation')}
+        </View>
+      ) : null}
 
       <View style={styles.fieldRow}>
         {renderDropdownField('Brand', brand, 'brand', loadingBrands ? 'Loading…' : 'Select brand')}

@@ -200,7 +200,7 @@ export function DealerOrdersScreen() {
                   key={item}
                   style={[
                     styles.filterChip,
-                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: colors.surfaceSecondary },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -211,7 +211,7 @@ export function DealerOrdersScreen() {
                     {item}
                   </Text>
                   {count > 0 && (
-                    <View style={[styles.filterCountBadge, isSelected ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: '#E2E8F0' }]}>
+                    <View style={[styles.filterCountBadge, isSelected ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: colors.border }]}>
                       <Text style={[styles.filterCountText, isSelected ? { color: '#ffffff' } : { color: colors.textSecondary }]}>
                         {count}
                       </Text>

@@ -75,3 +75,99 @@ export async function verifyPhoneChange(phone: string, otp: string): Promise<Ser
 
   throw new Error(response.data?.message || 'Failed to verify phone');
 }
+
+export type ProfileStats = {
+  postsCount?: number;
+  vehiclesCount?: number;
+  ordersCount?: number;
+  reviewsCount?: number;
+};
+
+export async function getProfileStats(): Promise<ProfileStats> {
+  const response = await api.get<{
+    success: boolean;
+    Response: ProfileStats;
+  }>('/profile/stats');
+
+  return response.data?.Response ?? {};
+}
+
+export type NotificationSettings = {
+  pushEnabled: boolean;
+  orderUpdates: boolean;
+  bookingUpdates: boolean;
+  promotions: boolean;
+  communityActivity: boolean;
+  emailUpdates: boolean;
+};
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  pushEnabled: true,
+  orderUpdates: true,
+  bookingUpdates: true,
+  promotions: false,
+  communityActivity: true,
+  emailUpdates: false,
+};
+
+export async function getNotificationSettings(): Promise<NotificationSettings> {
+  const response = await api.get<{
+    success: boolean;
+    Response: Partial<NotificationSettings>;
+  }>('/profile/notification-settings');
+
+  return { ...DEFAULT_NOTIFICATION_SETTINGS, ...(response.data?.Response ?? {}) };
+}
+
+export async function updateNotificationSettings(
+  data: Partial<NotificationSettings>,
+): Promise<NotificationSettings> {
+  const response = await api.put<{
+    success: boolean;
+    Response: Partial<NotificationSettings>;
+    message?: string;
+  }>('/profile/notification-settings', data);
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || 'Failed to update notification settings');
+  }
+
+  return { ...DEFAULT_NOTIFICATION_SETTINGS, ...(response.data.Response ?? {}) };
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const response = await api.post<{ success: boolean; message?: string }>(
+    '/profile/change-password',
+    { currentPassword, newPassword },
+  );
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || 'Failed to change password');
+  }
+}
+
+/** Reversible: keeps the account data but blocks sign-in until reactivated. */
+export async function deactivateAccount(reason?: string): Promise<void> {
+  const response = await api.post<{ success: boolean; message?: string }>(
+    '/profile/deactivate',
+    { reason },
+  );
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || 'Failed to deactivate account');
+  }
+}
+
+/** Permanent: the backend anonymizes the account's personal data. */
+export async function deleteAccount(reason?: string): Promise<void> {
+  const response = await api.delete<{ success: boolean; message?: string }>('/profile/account', {
+    data: { reason },
+  });
+
+  if (!response.data?.success) {
+    throw new Error(response.data?.message || 'Failed to delete account');
+  }
+}

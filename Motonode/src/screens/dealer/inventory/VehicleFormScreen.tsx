@@ -461,6 +461,11 @@ export function VehicleFormScreen({ route, navigation }: Props) {
     );
   }
 
+  const blockStyle = [
+    styles.sectionBlock,
+    { backgroundColor: colors.card, borderColor: colors.border },
+  ];
+
   const renderSelectRow = (
     label: string,
     value: string,
@@ -556,7 +561,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
         >
           {/* 1. Images */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionNumberBadge}>
                 <Text style={styles.sectionNumberText}>1</Text>
@@ -579,7 +584,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 2. Basic Information */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#1E3A8A' }]}>
                 <Text style={styles.sectionNumberText}>2</Text>
@@ -713,7 +718,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 3. Specifications */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#10B981' }]}>
                 <Text style={styles.sectionNumberText}>3</Text>
@@ -765,7 +770,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 4. Pricing & Availability */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.sectionNumberText}>4</Text>
@@ -831,7 +836,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
 
           {/* 5. Features */}
-          <View style={styles.sectionBlock}>
+          <View style={blockStyle}>
             <View style={styles.sectionHeader}>
               <View style={[styles.sectionNumberBadge, { backgroundColor: '#8B5CF6' }]}>
                 <Text style={styles.sectionNumberText}>5</Text>
@@ -905,7 +910,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <View style={[styles.stickyAddBtn, { paddingBottom: bottomPad + 8 }]}>
+        <View style={[styles.stickyAddBtn, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           <Pressable
             style={[styles.addBtn, { backgroundColor: saving ? '#93C5FD' : '#E60012' }]}
             onPress={() => void handleSave()}

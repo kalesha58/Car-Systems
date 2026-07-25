@@ -14,35 +14,38 @@ import {
   ToastProvider,
   ChatProvider,
 } from '@context/index';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { linking, navigationRef, RootNavigator } from '@navigation/index';
 
 function App() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <AuthProvider>
-          <ToastProvider>
-            <MobileVerificationProvider>
-              <ChatProvider>
-                <BookingsProvider>
-                  <DealerProvider>
-                    <CartProvider>
-                      <WishlistProvider>
-                        <ServiceBookingProvider>
-                          <AppStatusBar />
-                          <NavigationContainer ref={navigationRef} linking={linking}>
-                            <RootNavigator />
-                            <PushNotificationHandler />
-                          </NavigationContainer>
-                        </ServiceBookingProvider>
-                      </WishlistProvider>
-                    </CartProvider>
-                  </DealerProvider>
-                </BookingsProvider>
-              </ChatProvider>
-            </MobileVerificationProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <MobileVerificationProvider>
+                <ChatProvider>
+                  <BookingsProvider>
+                    <DealerProvider>
+                      <CartProvider>
+                        <WishlistProvider>
+                          <ServiceBookingProvider>
+                            <AppStatusBar />
+                            <NavigationContainer ref={navigationRef} linking={linking}>
+                              <RootNavigator />
+                              <PushNotificationHandler />
+                            </NavigationContainer>
+                          </ServiceBookingProvider>
+                        </WishlistProvider>
+                      </CartProvider>
+                    </DealerProvider>
+                  </BookingsProvider>
+                </ChatProvider>
+              </MobileVerificationProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

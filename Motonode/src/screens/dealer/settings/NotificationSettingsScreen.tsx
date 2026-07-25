@@ -78,8 +78,8 @@ export function NotificationSettingsScreen({ navigation }: Props) {
           <Feather name={row.icon as any} size={15} color={row.iconColor} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.notifTitle}>{row.title}</Text>
-          <Text style={styles.notifSubtitle}>{row.subtitle}</Text>
+          <Text style={[styles.notifTitle, { color: colors.textPrimary }]}>{row.title}</Text>
+          <Text style={[styles.notifSubtitle, { color: colors.textSecondary }]}>{row.subtitle}</Text>
         </View>
         <Switch
           value={isEnabled}
@@ -88,7 +88,7 @@ export function NotificationSettingsScreen({ navigation }: Props) {
           thumbColor="#ffffff"
         />
       </View>
-      {!isLast && <View style={styles.divider} />}
+      {!isLast && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
     </View>
   );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Image,
   Platform,
@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +21,7 @@ import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { successHaptic, lightHaptic } from '@utils/haptics';
+import { getProfileStats, type ProfileStats } from '@services/profile.service';
 import type { CustomerTabParamList } from '@navigation/CustomerTabsNavigator';
 
 interface MenuItem {
@@ -59,7 +60,28 @@ export function CustomerProfileScreen() {
   const { user, logout } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [stats, setStats] = useState<ProfileStats | null>(null);
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const loadStats = async () => {
+        try {
+          const result = await getProfileStats();
+          if (!cancelled) setStats(result);
+        } catch {
+          if (!cancelled) setStats(null);
+        }
+      };
+
+      void loadStats();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   const handleLogoutConfirm = async () => {
     setLoggingOut(true);
@@ -102,15 +124,10 @@ export function CustomerProfileScreen() {
       ],
     },
     {
-      title: 'Services',
+      title: 'Activity',
       items: [
         { icon: 'tool', label: 'My Services', sublabel: 'View and manage service bookings', action: () => navigation.navigate(CustomerTabRoutes.Garage, { initialTab: 'bookings' }) },
-      ],
-    },
-    {
-      title: 'Settings',
-      items: [
-        { icon: 'bell', label: 'Notifications', sublabel: 'Manage push notifications', action: () => navigation.navigate(CustomerStackRoutes.Notifications) },
+        { icon: 'bell', label: 'Notifications', sublabel: 'View your recent notifications', action: () => navigation.navigate(CustomerStackRoutes.Notifications) },
       ],
     },
   ];
@@ -191,7 +208,9 @@ export function CustomerProfileScreen() {
               <View style={[styles.statIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="shopping-bag" size={16} color={colors.link} />
               </View>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>3</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.ordersCount ?? 0}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Orders</Text>
             </View>
             
@@ -201,7 +220,9 @@ export function CustomerProfileScreen() {
               <View style={[styles.statIconWrapper, { backgroundColor: colors.muted }]}>
                 <Feather name="truck" size={16} color={colors.success} />
               </View>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>2</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.vehiclesCount ?? 0}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Vehicles</Text>
             </View>
 
@@ -211,7 +232,9 @@ export function CustomerProfileScreen() {
               <View style={[styles.statIconWrapper, { backgroundColor: colors.muted }]}>
                 <Feather name="star" size={16} color={colors.starActive} />
               </View>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>8</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.reviewsCount ?? 0}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Reviews</Text>
             </View>
           </View>

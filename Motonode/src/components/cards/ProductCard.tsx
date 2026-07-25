@@ -66,15 +66,35 @@ export function ProductCard({
       ]}
       onPress={onPress}
     >
-      <View style={[styles.imageContainer, isGrid && styles.imageContainerGrid]}>
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
-        {discount > 0 && (
-          <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
-            <Text style={styles.discountText}>{discount}% OFF</Text>
-          </View>
-        )}
+      {!!imageUri && (
+        <View style={[styles.imageContainer, isGrid && styles.imageContainerGrid]}>
+          <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+          {discount > 0 && (
+            <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
+              <Text style={styles.discountText}>{discount}% OFF</Text>
+            </View>
+          )}
+          <Pressable
+            style={[styles.wishlistBtn, { backgroundColor: colors.card }]}
+            onPress={handleWishlist}
+            hitSlop={8}
+          >
+            <Feather
+              name="heart"
+              size={16}
+              color={liked ? colors.destructive : colors.icon}
+            />
+          </Pressable>
+          {!inStock && (
+            <View style={[styles.outOfStock, { backgroundColor: colors.overlay }]}>
+              <Text style={styles.outOfStockText}>Out of Stock</Text>
+            </View>
+          )}
+        </View>
+      )}
+      {!imageUri && (
         <Pressable
-          style={[styles.wishlistBtn, { backgroundColor: colors.card }]}
+          style={[styles.wishlistBtn, { backgroundColor: colors.card, top: 8, right: 8 }]}
           onPress={handleWishlist}
           hitSlop={8}
         >
@@ -84,12 +104,7 @@ export function ProductCard({
             color={liked ? colors.destructive : colors.icon}
           />
         </Pressable>
-        {!inStock && (
-          <View style={[styles.outOfStock, { backgroundColor: colors.overlay }]}>
-            <Text style={styles.outOfStockText}>Out of Stock</Text>
-          </View>
-        )}
-      </View>
+      )}
       <View style={styles.info}>
         <Text style={[styles.brand, { color: colors.textSecondary }]} numberOfLines={1}>
           {product.brand}
@@ -105,12 +120,12 @@ export function ProductCard({
             </Text>
           </View>
         )}
-        {(product.rating != null || product.reviewCount != null) && (
+        {(product.reviewCount ?? 0) > 0 && (
           <View style={styles.ratingRow}>
             <Feather name="star" size={10} color={colors.starActive} />
             <Text style={[styles.rating, { color: colors.textSecondary }]}>
               {' '}
-              {product.rating ?? 0} ({product.reviewCount ?? 0})
+              {(product.averageRating ?? 0).toFixed(1)} ({product.reviewCount})
             </Text>
           </View>
         )}

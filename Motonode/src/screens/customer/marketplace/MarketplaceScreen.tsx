@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -17,7 +16,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
-import { ProductsGridSkeleton, VehiclesListSkeleton, ServicesListSkeleton } from '@components/loaders';
+import {
+  ProductsGridSkeleton,
+  VehiclesListSkeleton,
+  ServicesListSkeleton,
+  MarketplaceDriveListSkeleton,
+} from '@components/loaders';
 
 import { ProductCard } from '@components/cards/ProductCard';
 import { ServiceCard } from '@components/cards/ServiceCard';
@@ -374,9 +378,7 @@ export function MarketplaceScreen() {
 
         {activeTab === 3 && (
           testDrivesLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <MarketplaceDriveListSkeleton />
           ) : (
           <ScrollView
             style={styles.listFlex}
@@ -523,7 +525,6 @@ const styles = StyleSheet.create({
   },
   vehicleItem: { width: '100%', marginBottom: 12 },
   empty: { alignItems: 'center', justifyContent: 'center', padding: 60, gap: 12 },
-  loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 60 },
   emptyText: { fontSize: 15, fontFamily: 'Inter_400Regular' },
   bookingCardContainer: { paddingVertical: 8 },
   bookingTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginBottom: 12 },

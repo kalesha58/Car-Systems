@@ -24,22 +24,21 @@
     "forceConsistentCasingInFileNames": true,
 
     /* Path aliases */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@features/*": ["src/features/*"],
-      "@services/*": ["src/services/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@theme/*": ["src/theme/*"],
-      "@layouts/*": ["src/layouts/*"],
-      "@pages/*": ["src/pages/*"],
-      "@store/*": ["src/store/*"],
-      "@data/*": ["src/data/*"],
-      "@assets/*": ["src/assets/*"],
-      "@constants/*": ["src/constants/*"]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@services/*": ["./src/services/*"],
+      "@types/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@theme/*": ["./src/theme/*"],
+      "@layouts/*": ["./src/layouts/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@store/*": ["./src/store/*"],
+      "@data/*": ["./src/data/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@constants/*": ["./src/constants/*"]
     }
   },
   "include": ["src"],

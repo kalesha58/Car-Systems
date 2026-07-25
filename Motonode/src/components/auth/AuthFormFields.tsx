@@ -6,7 +6,6 @@ import LinearGradient from 'react-native-linear-gradient';
 
 import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
-import { brand } from '@theme/brand';
 import { lightHaptic } from '@utils/haptics';
 
 type InputIcon = 'user' | 'mail' | 'phone' | 'lock';
@@ -155,10 +154,6 @@ export function AuthSocialSection() {
           <FontAwesome name="apple" size={18} color={colors.textPrimary} />
           <Text style={[styles.socialBtnText, { color: colors.textPrimary }]}>Apple</Text>
         </Pressable>
-        <Pressable style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <FontAwesome name="facebook" size={16} color={brand.semantic.info} />
-          <Text style={[styles.socialBtnText, { color: colors.textPrimary }]}>Facebook</Text>
-        </Pressable>
       </View>
     </>
   );
@@ -187,7 +182,7 @@ export const authScreenStyles = StyleSheet.create({
   logo: {
     width: 118,
     height: 118,
-    marginTop: 4,
+    marginTop: 56,
     marginBottom: 16,
   },
   titleRow: {

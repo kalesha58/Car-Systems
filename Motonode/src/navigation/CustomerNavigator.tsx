@@ -44,6 +44,15 @@ import { WishlistScreen } from '@screens/customer/profile/WishlistScreen';
 import { PaymentMethodsScreen } from '@screens/customer/profile/PaymentMethodsScreen';
 import { PersonalInformationScreen } from '@screens/customer/profile/PersonalInformationScreen';
 import { SettingsScreen } from '@screens/customer/profile/SettingsScreen';
+import {
+  BlockedAccountsScreen,
+  ChangePasswordScreen,
+  CustomerNotificationSettingsScreen,
+  AppPermissionsScreen,
+  TermsConditionsScreen,
+  CustomerHelpSupportScreen,
+  DeleteAccountScreen,
+} from '@screens/customer/settings';
 import { OtpVerificationScreen } from '@screens/customer/verification/OtpVerificationScreen';
 import { OtpLoadingScreen } from '@screens/customer/verification/OtpLoadingScreen';
 import { OtpSuccessScreen } from '@screens/customer/verification/OtpSuccessScreen';
@@ -92,6 +101,13 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.PaymentMethods]: undefined;
   [CustomerStackRoutes.PersonalInformation]: undefined;
   [CustomerStackRoutes.Settings]: undefined;
+  [CustomerStackRoutes.BlockedAccounts]: undefined;
+  [CustomerStackRoutes.ChangePassword]: undefined;
+  [CustomerStackRoutes.CustomerNotificationSettings]: undefined;
+  [CustomerStackRoutes.TermsConditions]: undefined;
+  [CustomerStackRoutes.AppPermissions]: undefined;
+  [CustomerStackRoutes.CustomerHelpSupport]: undefined;
+  [CustomerStackRoutes.DeleteAccount]: undefined;
   [CustomerStackRoutes.AddAddressMethod]: undefined;
   [CustomerStackRoutes.AddLiveLocation]: { address?: IAddress; isEdit?: boolean } | undefined;
   [CustomerStackRoutes.ManualAddress]: { address?: IAddress; isEdit?: boolean } | undefined;
@@ -186,6 +202,25 @@ export function CustomerNavigator() {
         component={PersonalInformationScreen}
       />
       <Stack.Screen name={CustomerStackRoutes.Settings} component={SettingsScreen} />
+      <Stack.Screen
+        name={CustomerStackRoutes.BlockedAccounts}
+        component={BlockedAccountsScreen}
+      />
+      <Stack.Screen name={CustomerStackRoutes.ChangePassword} component={ChangePasswordScreen} />
+      <Stack.Screen
+        name={CustomerStackRoutes.CustomerNotificationSettings}
+        component={CustomerNotificationSettingsScreen}
+      />
+      <Stack.Screen name={CustomerStackRoutes.AppPermissions} component={AppPermissionsScreen} />
+      <Stack.Screen
+        name={CustomerStackRoutes.TermsConditions}
+        component={TermsConditionsScreen}
+      />
+      <Stack.Screen
+        name={CustomerStackRoutes.CustomerHelpSupport}
+        component={CustomerHelpSupportScreen}
+      />
+      <Stack.Screen name={CustomerStackRoutes.DeleteAccount} component={DeleteAccountScreen} />
       <Stack.Screen name={CustomerStackRoutes.AddAddressMethod} component={AddAddressMethodScreen} />
       <Stack.Screen name={CustomerStackRoutes.AddLiveLocation} component={AddLiveLocationScreen} />
       <Stack.Screen name={CustomerStackRoutes.ManualAddress} component={ManualAddressScreen} />

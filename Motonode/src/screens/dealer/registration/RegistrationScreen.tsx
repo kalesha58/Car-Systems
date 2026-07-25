@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -55,6 +55,7 @@ const EMPTY: BusinessProfile = {
   businessName: '',
   ownerName: '',
   mobile: '',
+  alternateMobile: '',
   email: '',
   gst: '',
   registrationNumber: '',
@@ -180,8 +181,18 @@ const INDIAN_BANKS = [
 export function RegistrationScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { saveBusinessProfile, completeRegistration, dealerType } = useDealer();
+  const { saveBusinessProfile, completeRegistration, dealerType, registrationCompleted, businessProfile } = useDealer();
   const [form, setForm] = useState<BusinessProfile>(EMPTY);
+
+  useEffect(() => {
+    if (registrationCompleted && businessProfile) {
+      setForm((prev) => ({
+        ...prev,
+        ...businessProfile,
+      }));
+    }
+  }, [registrationCompleted, businessProfile]);
+
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // Step 1: Basic Info, Step 2: Business Details, Step 3: Documents
   const [statePickerVisible, setStatePickerVisible] = useState(false);
@@ -238,6 +249,15 @@ export function RegistrationScreen({ navigation }: Props) {
   const verifyGst = () => {
     const gstVal = form.gst.trim().toUpperCase();
     if (!gstVal) {
+      const isGstOptional =
+        dealerType === 'Mechanic Workshop' ||
+        dealerType === 'Vehicle Wash Station' ||
+        dealerType === 'Battery Dealer';
+      if (isGstOptional) {
+        setGstVerified(false);
+        setGstError(null);
+        return;
+      }
       setGstError('GST number is required.');
       return;
     }
@@ -261,6 +281,7 @@ export function RegistrationScreen({ navigation }: Props) {
   };
 
   const openPhotoPickerFor = (target: 'banner' | 'gst' | 'pan') => {
+    if (registrationCompleted) return;
     lightHaptic();
     setUploadTarget(target);
     setPickerVisible(true);
@@ -391,6 +412,7 @@ export function RegistrationScreen({ navigation }: Props) {
     : [];
 
   const toggleWorkingDay = (day: string) => {
+    if (registrationCompleted) return;
     lightHaptic();
     const next = selectedWorkingDays.includes(day)
       ? selectedWorkingDays.filter((d) => d !== day)
@@ -418,7 +440,14 @@ export function RegistrationScreen({ navigation }: Props) {
       if (!form.city) missing.push('City');
       if (!form.state) missing.push('State');
       if (!form.pincode) missing.push('Pincode');
-      if (!form.gst) missing.push('GST Number');
+      const isGstOptional =
+        dealerType === 'Mechanic Workshop' ||
+        dealerType === 'Vehicle Wash Station' ||
+        dealerType === 'Battery Dealer';
+
+      if (!isGstOptional) {
+        if (!form.gst) missing.push('GST Number');
+      }
 
       if (missing.length > 0) {
         Alert.alert('Missing Fields', `Please fill in: ${missing.join(', ')}`);
@@ -431,7 +460,7 @@ export function RegistrationScreen({ navigation }: Props) {
         return;
       }
 
-      if (!gstVerified) {
+      if ((!isGstOptional || form.gst.trim()) && !gstVerified) {
         Alert.alert('GST Unverified', 'Please verify your GST Number before proceeding.');
         return;
       }
@@ -470,9 +499,21 @@ export function RegistrationScreen({ navigation }: Props) {
 
   const handleCompleteRegistration = async () => {
     lightHaptic();
-    if (!doc1Uploaded || !doc2Uploaded) {
-      Alert.alert('Documents Required', 'Please upload both GST Registration Certificate and PAN Card to proceed.');
-      return;
+    const isGstOptional =
+      dealerType === 'Mechanic Workshop' ||
+      dealerType === 'Vehicle Wash Station' ||
+      dealerType === 'Battery Dealer';
+
+    if (!isGstOptional) {
+      if (!doc1Uploaded || !doc2Uploaded) {
+        Alert.alert('Documents Required', 'Please upload both GST Registration Certificate and PAN Card to proceed.');
+        return;
+      }
+    } else {
+      if (!doc2Uploaded) {
+        Alert.alert('Documents Required', 'Please upload your PAN Card to proceed.');
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -777,33 +818,33 @@ export function RegistrationScreen({ navigation }: Props) {
 
         {/* Stepper Card */}
         <View style={styles.stepperContainer}>
-          <View style={styles.stepperCard}>
+          <View style={[styles.stepperCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {/* Step 1 */}
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, currentStep >= 1 ? styles.activeStepCircle : null]}>
-                <Text style={[styles.stepText, currentStep >= 1 ? styles.activeStepText : null]}>1</Text>
+              <View style={[styles.stepCircle, currentStep >= 1 ? styles.activeStepCircle : { backgroundColor: colors.background }]}>
+                <Text style={[styles.stepText, currentStep >= 1 ? styles.activeStepText : { color: colors.textSecondary }]}>1</Text>
               </View>
-              <Text style={[styles.stepLabel, currentStep >= 1 ? styles.activeStepLabel : null]}>Basic Info</Text>
+              <Text style={[styles.stepLabel, currentStep >= 1 ? { color: colors.textPrimary } : { color: colors.textSecondary }]}>Basic Info</Text>
             </View>
             
-            <View style={[styles.stepDivider, currentStep >= 2 ? styles.activeStepDivider : null]} />
+            <View style={[styles.stepDivider, currentStep >= 2 ? styles.activeStepDivider : { backgroundColor: colors.border }]} />
 
             {/* Step 2 */}
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, currentStep >= 2 ? styles.activeStepCircle : null]}>
-                <Text style={[styles.stepText, currentStep >= 2 ? styles.activeStepText : null]}>2</Text>
+              <View style={[styles.stepCircle, currentStep >= 2 ? styles.activeStepCircle : { backgroundColor: colors.background }]}>
+                <Text style={[styles.stepText, currentStep >= 2 ? styles.activeStepText : { color: colors.textSecondary }]}>2</Text>
               </View>
-              <Text style={[styles.stepLabel, currentStep >= 2 ? styles.activeStepLabel : null]}>Details</Text>
+              <Text style={[styles.stepLabel, currentStep >= 2 ? { color: colors.textPrimary } : { color: colors.textSecondary }]}>Details</Text>
             </View>
 
-            <View style={[styles.stepDivider, currentStep >= 3 ? styles.activeStepDivider : null]} />
+            <View style={[styles.stepDivider, currentStep >= 3 ? styles.activeStepDivider : { backgroundColor: colors.border }]} />
 
             {/* Step 3 */}
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, currentStep >= 3 ? styles.activeStepCircle : null]}>
-                <Text style={[styles.stepText, currentStep >= 3 ? styles.activeStepText : null]}>3</Text>
+              <View style={[styles.stepCircle, currentStep >= 3 ? styles.activeStepCircle : { backgroundColor: colors.background }]}>
+                <Text style={[styles.stepText, currentStep >= 3 ? styles.activeStepText : { color: colors.textSecondary }]}>3</Text>
               </View>
-              <Text style={[styles.stepLabel, currentStep >= 3 ? styles.activeStepLabel : null]}>Documents</Text>
+              <Text style={[styles.stepLabel, currentStep >= 3 ? { color: colors.textPrimary } : { color: colors.textSecondary }]}>Documents</Text>
             </View>
           </View>
         </View>
@@ -843,6 +884,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('businessName', v)}
                       placeholder="Enter business name"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -859,6 +901,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('ownerName', v)}
                       placeholder="Enter owner name"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -878,11 +921,31 @@ export function RegistrationScreen({ navigation }: Props) {
                       maxLength={10}
                       placeholder="Enter mobile number"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                   {form.mobile.length > 5 && (
                     <Feather name="check-circle" size={16} color="#10B981" style={styles.rightFieldIcon} />
                   )}
+                </View>
+
+                {/* Alternate Number input */}
+                <View style={[styles.inputWrapper, { borderColor: colors.border }]}>
+                  <View style={[styles.fieldIconContainer, { backgroundColor: '#F2F2F2' }]}>
+                    <Feather name="phone" size={14} color={colors.icon} style={{ transform: [{ scaleX: -1 }] }} />
+                  </View>
+                  <View style={styles.inputTextContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Alternate Number</Text>
+                    <TextInput
+                      style={[styles.textInputStyle, { color: colors.textPrimary }]}
+                      value={form.alternateMobile}
+                      onChangeText={(v) => set('alternateMobile', v.replace(/[^0-9]/g, '').slice(0, 10))}
+                      keyboardType="phone-pad"
+                      maxLength={10}
+                      placeholder="Enter alternate number"
+                      placeholderTextColor={colors.textTertiary}
+                    />
+                  </View>
                 </View>
 
                 {/* Email Address input */}
@@ -900,6 +963,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter email address"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                   {form.email.includes('@') && (
@@ -922,7 +986,14 @@ export function RegistrationScreen({ navigation }: Props) {
                       <Feather name="file-text" size={14} color={colors.icon} />
                     </View>
                     <View style={styles.inputTextContainer}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>GST Number *</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                        GST Number
+                        {dealerType === 'Mechanic Workshop' ||
+                        dealerType === 'Vehicle Wash Station' ||
+                        dealerType === 'Battery Dealer'
+                          ? ' (Optional)'
+                          : ' *'}
+                      </Text>
                       <TextInput
                         style={[styles.textInputStyle, { color: colors.textPrimary }]}
                         value={form.gst}
@@ -931,6 +1002,7 @@ export function RegistrationScreen({ navigation }: Props) {
                         autoCapitalize="characters"
                         placeholder="Enter GST number"
                         placeholderTextColor={colors.textTertiary}
+                        editable={!registrationCompleted}
                       />
                     </View>
                     {gstVerifying ? (
@@ -938,7 +1010,7 @@ export function RegistrationScreen({ navigation }: Props) {
                     ) : gstVerified ? (
                       <Feather name="check-circle" size={16} color="#10B981" style={styles.rightFieldIcon} />
                     ) : (
-                      <Pressable style={styles.verifyBtn} onPress={verifyGst}>
+                      <Pressable style={styles.verifyBtn} onPress={() => { if (registrationCompleted) return; verifyGst(); }}>
                         <Text style={styles.verifyBtnText}>Verify</Text>
                       </Pressable>
                     )}
@@ -968,6 +1040,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           onChangeText={(v) => set('registrationNumber', v)}
                           placeholder="Enter registration no."
                           placeholderTextColor={colors.textTertiary}
+                          editable={!registrationCompleted}
                         />
                       </View>
                     </View>
@@ -987,6 +1060,7 @@ export function RegistrationScreen({ navigation }: Props) {
                           keyboardType="numeric"
                           placeholder="Enter year"
                           placeholderTextColor={colors.textTertiary}
+                          editable={!registrationCompleted}
                         />
                       </View>
                     </View>
@@ -1036,6 +1110,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       onChangeText={(v) => set('address', v)}
                       placeholder="Enter address"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1043,6 +1118,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 {/* State Input */}
                 <Pressable
                   onPress={() => {
+                    if (registrationCompleted) return;
                     lightHaptic();
                     setStatePickerVisible(true);
                   }}
@@ -1071,6 +1147,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 {/* City Input */}
                 <Pressable
                   onPress={() => {
+                    if (registrationCompleted) return;
                     if (!form.state) {
                       Alert.alert('Select State First', 'Please select a state before selecting a city.');
                       return;
@@ -1115,6 +1192,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       maxLength={6}
                       placeholder="Enter pincode"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1171,6 +1249,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter UPI ID"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                     {upiError ? (
                       <Text style={styles.upiErrorText}>{upiError}</Text>
@@ -1181,6 +1260,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 {/* Bank Name Input */}
                 <Pressable
                   onPress={() => {
+                    if (registrationCompleted) return;
                     lightHaptic();
                     setBankPickerVisible(true);
                   }}
@@ -1220,6 +1300,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       keyboardType="numeric"
                       placeholder="Enter account number"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1238,6 +1319,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="characters"
                       placeholder="Enter IFSC code"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1282,6 +1364,7 @@ export function RegistrationScreen({ navigation }: Props) {
                 <View style={{ marginTop: 12, gap: 12 }}>
                   <Pressable
                     onPress={() => {
+                      if (registrationCompleted) return;
                       lightHaptic();
                       setOpenTimePickerVisible(true);
                     }}
@@ -1310,6 +1393,7 @@ export function RegistrationScreen({ navigation }: Props) {
 
                   <Pressable
                     onPress={() => {
+                      if (registrationCompleted) return;
                       lightHaptic();
                       setCloseTimePickerVisible(true);
                     }}
@@ -1363,6 +1447,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter Facebook link"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1380,6 +1465,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter Instagram link"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1397,6 +1483,7 @@ export function RegistrationScreen({ navigation }: Props) {
                       autoCapitalize="none"
                       placeholder="Enter YouTube link"
                       placeholderTextColor={colors.textTertiary}
+                      editable={!registrationCompleted}
                     />
                   </View>
                 </View>
@@ -1436,7 +1523,14 @@ export function RegistrationScreen({ navigation }: Props) {
                     )}
                   </View>
                   <View>
-                    <Text style={[styles.docLabelTitle, { color: colors.textPrimary }]}>GST Registration Certificate *</Text>
+                    <Text style={[styles.docLabelTitle, { color: colors.textPrimary }]}>
+                      GST Registration Certificate
+                      {dealerType === 'Mechanic Workshop' ||
+                      dealerType === 'Vehicle Wash Station' ||
+                      dealerType === 'Battery Dealer'
+                        ? ' (Optional)'
+                        : ' *'}
+                    </Text>
                     <Text style={[styles.docLabelSub, { color: colors.textSecondary }]}>
                       {gstUploading ? 'Uploading document...' : doc1Uploaded ? 'GST Certificate uploaded ✓' : 'Upload PDF or image of GST certificate'}
                     </Text>

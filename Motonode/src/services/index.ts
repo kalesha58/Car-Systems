@@ -3,6 +3,8 @@ export * from './auth.service';
 export * from './dealer.service';
 export * from './profile.service';
 export * from './product.service';
+export * from './review.service';
+export * from './block.service';
 export * from './vehicle.service';
 export * from './userVehicle.service';
 export * from './vehicleAlert.service';

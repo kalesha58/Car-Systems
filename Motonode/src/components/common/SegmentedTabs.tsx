@@ -37,7 +37,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
           return (
             <Pressable
               key={tab.key}
-              style={[styles.tab, isActive && styles.tabActive]}
+              style={[styles.tab, isActive && { backgroundColor: colors.card }]}
               onPress={() => onTabChange(i)}
             >
               <View style={styles.tabContent}>
@@ -56,7 +56,7 @@ export function SegmentedTabs({ tabs, activeTab, onTabChange, counts }: Segmente
                   style={[
                     styles.badge,
                     isActive
-                      ? { backgroundColor: '#F2F2F2' }
+                      ? { backgroundColor: colors.background }
                       : { backgroundColor: colors.border },
                   ]}
                 >
@@ -98,9 +98,6 @@ const styles = StyleSheet.create({
     minWidth: 88,
     borderRadius: 8,
     overflow: 'hidden',
-  },
-  tabActive: {
-    backgroundColor: '#FFFFFF',
   },
   tabContent: {
     flexDirection: 'row',

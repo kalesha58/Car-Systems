@@ -23,7 +23,14 @@ export interface IProductDocument extends Document {
   voltageV?: number;
   vehicleBrandId?: string;
   vehicleModelId?: string;
+  color?: string;
+  weight?: string;
+  emissionStandard?: string;
+  fitsYear?: string;
+  returnPolicy?: string;
   commissionPercentage?: number;
+  averageRating: number;
+  reviewCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -101,6 +108,26 @@ const productSchema = new Schema<IProductDocument>(
       type: Boolean,
       default: false,
     },
+    color: {
+      type: String,
+      trim: true,
+    },
+    weight: {
+      type: String,
+      trim: true,
+    },
+    emissionStandard: {
+      type: String,
+      trim: true,
+    },
+    fitsYear: {
+      type: String,
+      trim: true,
+    },
+    returnPolicy: {
+      type: String,
+      trim: true,
+    },
     batteryTypeId: {
       type: String,
       index: true,
@@ -124,6 +151,18 @@ const productSchema = new Schema<IProductDocument>(
       min: 0,
       max: 100,
     },
+    // Denormalized from the Review collection by recalculateProductRating().
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,
@@ -137,6 +176,7 @@ productSchema.index({ price: 1 });
 productSchema.index({ userId: 1 });
 productSchema.index({ vehicleType: 1 });
 productSchema.index({ isSparePart: 1 });
+productSchema.index({ averageRating: -1 });
 productSchema.index({ name: 'text', description: 'text' });
 
 export const Product = mongoose.model<IProductDocument>('Product', productSchema);

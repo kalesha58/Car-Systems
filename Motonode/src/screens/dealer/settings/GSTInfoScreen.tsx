@@ -17,33 +17,41 @@ import { useColors } from '@hooks/useColors';
 import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
+import { useDealer } from '@context/index';
 
 type Props = NativeStackScreenProps<DealerStackParamList, typeof DealerStackRoutes.GSTInfo>;
-
-const GST_ROWS = [
-  { label: 'GST Number', value: '29ABCDE1234F1Z5' },
-  { label: 'Business Name', value: 'Motonode Auto Hub Private Limited' },
-  { label: 'Trade Name', value: 'Motonode Auto Hub' },
-  { label: 'Registration Date', value: '15 Apr 2023' },
-  { label: 'GST Type', value: 'Regular' },
-  { label: 'Filing Frequency', value: 'Monthly' },
-  { label: 'State', value: 'Karnataka (29)' },
-];
 
 export function GSTInfoScreen({ navigation }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { businessProfile, dealerType } = useDealer();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const isGstOptional =
+    dealerType === 'Mechanic Workshop' ||
+    dealerType === 'Vehicle Wash Station' ||
+    dealerType === 'Battery Dealer';
+  
+  const hasGst = !!businessProfile?.gst?.trim();
+
+  const GST_ROWS = [
+    { label: 'GST Number', value: businessProfile?.gst || '—' },
+    { label: 'Business Name', value: businessProfile?.businessName || '—' },
+    { label: 'Owner Name', value: businessProfile?.ownerName || '—' },
+    { label: 'Established Year', value: businessProfile?.establishedYear || '—' },
+    { label: 'State', value: businessProfile?.state || '—' },
+    { label: 'City', value: businessProfile?.city || '—' },
+  ];
+
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color="#1E293B" />
+          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>GST Information</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>GST Information</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -51,75 +59,120 @@ export function GSTInfoScreen({ navigation }: Props) {
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Purple Banner */}
-        <View style={styles.banner}>
-          <View style={styles.bannerGstBox}>
-            <Text style={styles.bannerGstText}>GST</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Goods and Services Tax</Text>
-            <Text style={styles.bannerSubtitle}>Manage your GST details</Text>
-          </View>
-          <View style={styles.verifiedPill}>
-            <Text style={styles.verifiedPillText}>Verified</Text>
-          </View>
-        </View>
+        {hasGst ? (
+          <>
+            {/* Purple Banner */}
+            <View style={styles.banner}>
+              <View style={styles.bannerGstBox}>
+                <Text style={styles.bannerGstText}>GST</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bannerTitle}>Goods and Services Tax</Text>
+                <Text style={styles.bannerSubtitle}>Manage your GST details</Text>
+              </View>
+              <View style={styles.verifiedPill}>
+                <Text style={styles.verifiedPillText}>Verified</Text>
+              </View>
+            </View>
 
-        {/* GST Details */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>GST Details</Text>
-            <Pressable onPress={() => lightHaptic()} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit</Text>
-            </Pressable>
-          </View>
-          {GST_ROWS.map((row, idx) => (
-            <View key={row.label}>
-              <View style={styles.gstRow}>
-                <Text style={styles.gstLabel}>{row.label}</Text>
-                <Text
-                  style={[
-                    styles.gstValue,
-                    row.label === 'GST Number' && styles.gstNumberStyle,
-                  ]}
-                  numberOfLines={2}
+            {/* GST Details */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.cardHeader}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>GST Details</Text>
+                <Pressable
+                  onPress={() => {
+                    lightHaptic();
+                    navigation.navigate(DealerStackRoutes.BusinessRegistration);
+                  }}
+                  style={[styles.editBtn, { backgroundColor: colors.background }]}
                 >
-                  {row.value}
-                </Text>
+                  <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Edit</Text>
+                </Pressable>
               </View>
-              {idx < GST_ROWS.length - 1 && <View style={styles.divider} />}
+              {GST_ROWS.map((row, idx) => (
+                <View key={row.label}>
+                  <View style={styles.gstRow}>
+                    <Text style={[styles.gstLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                    <Text
+                      style={[
+                        styles.gstValue,
+                        row.label === 'GST Number' && styles.gstNumberStyle,
+                        { color: colors.textPrimary },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {row.value}
+                    </Text>
+                  </View>
+                  {idx < GST_ROWS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
 
-        {/* GST Certificate */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>GST Certificate</Text>
-          <View style={styles.documentRow}>
-            <View style={styles.pdfIconBox}>
-              <View style={styles.pdfBadge}>
-                <Text style={styles.pdfBadgeText}>PDF</Text>
+            {/* GST Certificate */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>GST Certificate</Text>
+              <View style={styles.documentRow}>
+                <View style={[styles.pdfIconBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <View style={styles.pdfBadge}>
+                    <Text style={styles.pdfBadgeText}>PDF</Text>
+                  </View>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.documentName, { color: colors.textPrimary }]}>GST Certificate</Text>
+                  <Text style={[styles.documentDate, { color: colors.textSecondary }]}>Uploaded and Verified</Text>
+                </View>
+                <Pressable style={styles.downloadBtn} onPress={() => lightHaptic()}>
+                  <Feather name="download" size={16} color={colors.textSecondary} />
+                </Pressable>
               </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.documentName}>GST Certificate</Text>
-              <Text style={styles.documentDate}>Uploaded on 15 Apr 2023</Text>
+          </>
+        ) : (
+          <>
+            {/* Gray/Optional Banner */}
+            <View style={[styles.banner, { backgroundColor: '#64748B' }]}>
+              <View style={styles.bannerGstBox}>
+                <Text style={styles.bannerGstText}>GST</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bannerTitle}>Goods and Services Tax</Text>
+                <Text style={styles.bannerSubtitle}>GST is optional for your business</Text>
+              </View>
+              <View style={[styles.verifiedPill, { backgroundColor: '#94A3B8' }]}>
+                <Text style={styles.verifiedPillText}>Not Added</Text>
+              </View>
             </View>
-            <Pressable style={styles.downloadBtn} onPress={() => lightHaptic()}>
-              <Feather name="download" size={16} color="#64748B" />
-            </Pressable>
-          </View>
-        </View>
+
+            {/* Empty/Optional State Card */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, alignItems: 'center', padding: 24, gap: 12 }]}>
+              <Feather name="info" size={32} color={colors.textTertiary} />
+              <Text style={[styles.cardTitle, { color: colors.textPrimary, textAlign: 'center', fontSize: 15 }]}>No GST Details Added</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+                Your business type ({dealerType}) does not require GST to operate. If you wish to register your GST details for billing or tax filings, you can update them anytime.
+              </Text>
+              <Pressable
+                onPress={() => {
+                  lightHaptic();
+                  navigation.navigate(DealerStackRoutes.BusinessRegistration);
+                }}
+                style={[styles.editBtn, { backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 8, marginTop: 12 }]}
+              >
+                <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Inter_700Bold' }}>Add GST Details</Text>
+              </Pressable>
+            </View>
+          </>
+        )}
 
         {/* View GST Portal */}
         <Pressable
-          style={styles.portalBtn}
+          style={[styles.portalBtn, { backgroundColor: colors.background }]}
           onPress={() => {
             lightHaptic();
             Linking.openURL('https://www.gst.gov.in').catch(() => {});
           }}
         >
-          <Text style={styles.portalBtnText}>View GST Portal</Text>
+          <Text style={[styles.portalBtnText, { color: colors.textPrimary }]}>View GST Portal</Text>
           <Feather name="external-link" size={14} color={colors.icon} />
         </Pressable>
       </ScrollView>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Alert,
   FlatList,
@@ -107,6 +107,18 @@ export function InventoryScreen() {
   const [activeTab, setActiveTab] = useState<'products' | 'vehicles' | 'services'>(
     capabilities.hasProducts ? 'products' : capabilities.hasServices ? 'services' : 'products',
   );
+  const [sortBy, setSortBy] = useState<'newest' | 'price_asc' | 'price_desc' | 'name_asc'>('newest');
+
+  const handleSortPress = () => {
+    lightHaptic();
+    Alert.alert('Sort By', 'Select a sorting option', [
+      { text: 'Newest First', onPress: () => setSortBy('newest') },
+      { text: 'Price: Low to High', onPress: () => setSortBy('price_asc') },
+      { text: 'Price: High to Low', onPress: () => setSortBy('price_desc') },
+      { text: 'Name: A to Z', onPress: () => setSortBy('name_asc') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   useEffect(() => {
     const allowed: Array<'products' | 'vehicles' | 'services'> = [];
@@ -504,12 +516,36 @@ export function InventoryScreen() {
     );
   };
 
-  const data =
-    activeTab === 'products'
-      ? filteredProducts
-      : activeTab === 'vehicles'
-        ? filteredVehicles
-        : filteredServices;
+  const sortedAndFilteredData = useMemo(() => {
+    const list =
+      activeTab === 'products'
+        ? filteredProducts
+        : activeTab === 'vehicles'
+          ? filteredVehicles
+          : filteredServices;
+
+    const sorted = [...list];
+    if (sortBy === 'newest') {
+      sorted.sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.id || 0).getTime();
+        const timeB = new Date(b.createdAt || b.id || 0).getTime();
+        return timeB - timeA;
+      });
+    } else if (sortBy === 'price_asc') {
+      sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (sortBy === 'price_desc') {
+      sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+    } else if (sortBy === 'name_asc') {
+      sorted.sort((a, b) => {
+        const nameA = (activeTab === 'vehicles' ? getVehicleDisplayName(a as IDealerVehicle) : (a as any).name || '').toLowerCase();
+        const nameB = (activeTab === 'vehicles' ? getVehicleDisplayName(b as IDealerVehicle) : (b as any).name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    }
+    return sorted;
+  }, [activeTab, filteredProducts, filteredVehicles, filteredServices, sortBy]);
+
+  const data = sortedAndFilteredData;
         
   const summary = getSummary();
 
@@ -550,7 +586,7 @@ export function InventoryScreen() {
           }
         />
 
-        <View style={[styles.searchBar, { backgroundColor: '#ffffff', borderColor: '#E2E8F0' }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="search" size={18} color={colors.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
@@ -573,7 +609,7 @@ export function InventoryScreen() {
                   key={tab.key}
                   style={[
                     styles.tab,
-                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: colors.surfaceSecondary },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -609,8 +645,12 @@ export function InventoryScreen() {
           All {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
         </Text>
         <View style={styles.listHeaderActions}>
-          <Text style={[styles.sortText, { color: colors.textSecondary }]}>Sort by: Newest</Text>
-          <Feather name="chevron-down" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
+          <Pressable style={{ flexDirection: 'row', alignItems: 'center' }} onPress={handleSortPress}>
+            <Text style={[styles.sortText, { color: colors.textSecondary }]}>
+              Sort: {sortBy === 'newest' ? 'Newest' : sortBy === 'price_asc' ? 'Price ↑' : sortBy === 'price_desc' ? 'Price ↓' : 'Name'}
+            </Text>
+            <Feather name="chevron-down" size={14} color={colors.textSecondary} style={{ marginRight: 8 }} />
+          </Pressable>
           <Pressable style={styles.gridToggleBtn}>
             <Feather name="grid" size={14} color={colors.icon} />
           </Pressable>

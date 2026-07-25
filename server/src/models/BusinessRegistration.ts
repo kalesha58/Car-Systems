@@ -7,7 +7,8 @@ export type DealerType =
   | 'Detailing Center'
   | 'Mechanic Workshop'
   | 'Spare Parts Dealer'
-  | 'Riding Gear Store';
+  | 'Riding Gear Store'
+  | 'Battery Dealer';
 
 export type BusinessRegistrationStatus = 'pending' | 'approved' | 'rejected';
 
@@ -119,6 +120,7 @@ const businessRegistrationSchema = new Schema<IBusinessRegistrationDocument>(
         'Mechanic Workshop',
         'Spare Parts Dealer',
         'Riding Gear Store',
+        'Battery Dealer',
       ],
     },
     address: {

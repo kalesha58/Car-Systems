@@ -247,7 +247,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
   }
 
   // --- Dynamic Value Generators & Helper Functions ---
-  const currentOwnerName = user?.name || 'Rohit Sharma';
+  const currentOwnerName = vehicle.ownerName || user?.name || 'Rohit Sharma';
   const vehicleColorName = vehicle.color || 'Red';
   const vehicleYear = vehicle.year || 2022;
 
@@ -621,6 +621,19 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.gridValue}>{currentOwnerName}</Text>
               </View>
             </View>
+
+            {/* Owner Relation (if not own vehicle) */}
+            {!vehicle.isOwnVehicle && vehicle.relation && vehicle.relation !== 'Self' ? (
+              <View style={styles.gridItem}>
+                <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
+                  <Feather name="users" size={15} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.gridLabel}>Owner Relation</Text>
+                  <Text style={styles.gridValue}>{vehicle.relation}</Text>
+                </View>
+              </View>
+            ) : null}
 
             {/* Item 2: Registration Number */}
             <View style={styles.gridItem}>

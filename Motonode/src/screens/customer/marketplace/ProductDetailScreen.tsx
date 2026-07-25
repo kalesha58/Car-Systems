@@ -18,11 +18,13 @@ import { useCart, useWishlist, useToast } from '@context/index';
 import { useColors } from '@hooks/useColors';
 import { getProductById } from '@services/product.service';
 import type { IProduct } from '@app-types/product';
+import type { IReviewSummary } from '@app-types/review';
 import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import { ProductDetailSkeleton } from '@components/loaders';
+import { ProductReviewsSection, StarRating } from '@components/reviews';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -54,6 +56,8 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const [product, setProduct] = useState<IProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Kept in sync by the reviews section so the header reflects new submissions.
+  const [ratingOverride, setRatingOverride] = useState<IReviewSummary | null>(null);
   const { addItem, items, updateQuantity } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { showToast } = useToast();
@@ -133,7 +137,8 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   }
 
   const discount = product.discountPercentage ?? 0;
-  const reviewCount = product.reviewCount ?? 0;
+  const averageRating = ratingOverride?.averageRating ?? product.averageRating ?? 0;
+  const reviewCount = ratingOverride?.reviewCount ?? product.reviewCount ?? 0;
   const inStock = product.stock > 0 && product.status === 'active';
   const dealerName = product.dealer?.businessName ?? 'Authorized Dealer';
   const dealerId = product.dealerId || product.dealer?.id || '';
@@ -212,7 +217,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
                 key={idx}
                 style={[
                   styles.thumbnailWrapper,
-                  { borderColor: activeImageIndex === idx ? '#E60012' : '#E2E8F0' }
+                  { borderColor: activeImageIndex === idx ? '#E60012' : colors.border, backgroundColor: colors.card }
                 ]}
                 onPress={() => {
                   lightHaptic();
@@ -225,7 +230,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           </View>
 
           {/* Main Product Image Panel */}
-          <View style={styles.mainImagePanel}>
+          <View style={[styles.mainImagePanel, { backgroundColor: colors.muted }]}>
             <Image source={{ uri: productImages[activeImageIndex] }} style={styles.productImage} resizeMode="cover" />
             {discount > 0 && (
               <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
@@ -244,16 +249,22 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           <Text style={[styles.name, { color: colors.textPrimary }]}>{product.name}</Text>
 
           {/* Rating Block */}
-          <View style={styles.ratingRow}>
-            <View style={styles.starsContainer}>
-              {[1, 2, 3, 4].map((star) => (
-                <Feather key={star} name="star" size={14} color="#FBBF24" style={{ marginRight: 2 }} />
-              ))}
-              <Feather name="star" size={14} color="#E2E8F0" />
+          {reviewCount > 0 ? (
+            <View style={styles.ratingRow}>
+              <StarRating rating={averageRating} size={14} />
+              <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>
+                {averageRating.toFixed(1)}
+              </Text>
+              <Text style={styles.reviewsCount}>
+                ({reviewCount.toLocaleString('en-IN')} {reviewCount === 1 ? 'review' : 'reviews'})
+              </Text>
             </View>
-            <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>4.5</Text>
-            <Text style={styles.reviewsCount}>({reviewCount.toLocaleString()} reviews)</Text>
-          </View>
+          ) : (
+            <View style={styles.ratingRow}>
+              <StarRating rating={0} size={14} />
+              <Text style={styles.reviewsCount}>No reviews yet</Text>
+            </View>
+          )}
 
           {/* Price Block */}
           <View style={styles.priceRow}>
@@ -269,9 +280,9 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           </View>
 
           {/* Trust Value Badges Row */}
-          <View style={styles.trustBadgesRow}>
+          <View style={[styles.trustBadgesRow, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}>
             <View style={styles.trustBadge}>
-              <View style={styles.trustIconWrapper}>
+              <View style={[styles.trustIconWrapper, { backgroundColor: colors.background }]}>
                 <Feather name="shield" size={16} color={colors.icon} />
               </View>
               <View>
@@ -281,7 +292,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             </View>
 
             <View style={styles.trustBadge}>
-              <View style={styles.trustIconWrapper}>
+              <View style={[styles.trustIconWrapper, { backgroundColor: colors.background }]}>
                 <Feather name="refresh-cw" size={16} color={colors.icon} />
               </View>
               <View>
@@ -291,7 +302,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             </View>
 
             <View style={styles.trustBadge}>
-              <View style={styles.trustIconWrapper}>
+              <View style={[styles.trustIconWrapper, { backgroundColor: colors.background }]}>
                 <Feather name="truck" size={16} color={colors.icon} />
               </View>
               <View>
@@ -343,18 +354,62 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               <Feather name="chevron-right" size={12} color={colors.icon} />
             </Pressable>
           </View>
+
+          {/* Specifications List */}
+          {(() => {
+            const specs: Array<{ label: string; value: string }> = [];
+            if (product.isSparePart) {
+              if (product.vehicleBrandName) specs.push({ label: 'Compatible Brand', value: product.vehicleBrandName });
+              if (product.vehicleModelName) specs.push({ label: 'Compatible Model', value: product.vehicleModelName });
+              if (product.fitsYear) specs.push({ label: 'Fits Year', value: product.fitsYear });
+              if (product.emissionStandard) specs.push({ label: 'Emission Standard', value: product.emissionStandard });
+              if (product.color) specs.push({ label: 'Color', value: product.color });
+              if (product.weight) specs.push({ label: 'Weight', value: product.weight });
+            } else if (product.batteryTypeName) {
+              specs.push({ label: 'Battery Type', value: product.batteryTypeName });
+              if (product.voltageV) specs.push({ label: 'Voltage', value: `${product.voltageV}V` });
+            }
+            // Add custom specs from product.specifications
+            if (product.specifications) {
+              Object.entries(product.specifications).forEach(([k, v]) => {
+                specs.push({ label: k, value: String(v) });
+              });
+            }
+
+            if (specs.length === 0) return null;
+
+            return (
+              <View style={[styles.specsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                {specs.map((item, index) => (
+                  <View key={index}>
+                    <View style={styles.specItemRow}>
+                      <Text style={[styles.specLabelText, { color: colors.textSecondary }]}>{item.label}</Text>
+                      <Text style={[styles.specValueText, { color: colors.textPrimary }]}>{item.value}</Text>
+                    </View>
+                    {index < specs.length - 1 && <View style={[styles.specDivider, { backgroundColor: colors.border }]} />}
+                  </View>
+                ))}
+              </View>
+            );
+          })()}
+
+          <ProductReviewsSection
+            productId={productId}
+            productName={product.name}
+            onSummaryChange={setRatingOverride}
+          />
         </View>
       </ScrollView>
 
       {/* Sticky Bottom Bar */}
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
-        <View style={styles.quantityContainer}>
+        <View style={[styles.quantityContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <Pressable style={styles.qtyBtn} onPress={handleDecrease}>
-            <Feather name="minus" size={14} color="#1F2937" />
+            <Feather name="minus" size={14} color={colors.textPrimary} />
           </Pressable>
           <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{localQty}</Text>
           <Pressable style={styles.qtyBtn} onPress={handleIncrease}>
-            <Feather name="plus" size={14} color="#1F2937" />
+            <Feather name="plus" size={14} color={colors.textPrimary} />
           </Pressable>
         </View>
 
@@ -601,4 +656,27 @@ const styles = StyleSheet.create({
   cartBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
   notFound: { fontSize: 18, fontFamily: 'Inter_600SemiBold', marginBottom: 12 },
   backLink: { fontSize: 15, fontFamily: 'Inter_500Medium' },
+  specsCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    marginVertical: 12,
+    gap: 2,
+  },
+  specItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  specLabelText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  specValueText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+  },
+  specDivider: {
+    height: 1,
+  },
 });

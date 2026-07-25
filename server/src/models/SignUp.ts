@@ -13,6 +13,24 @@ export interface IPrivacySettings {
 
 export type AuthProvider = 'email' | 'phone' | 'google';
 
+export interface INotificationSettings {
+  pushEnabled: boolean;
+  orderUpdates: boolean;
+  bookingUpdates: boolean;
+  promotions: boolean;
+  communityActivity: boolean;
+  emailUpdates: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_SETTINGS: INotificationSettings = {
+  pushEnabled: true,
+  orderUpdates: true,
+  bookingUpdates: true,
+  promotions: false,
+  communityActivity: true,
+  emailUpdates: false,
+};
+
 export interface ISignUpDocument extends Document {
   name: string;
   email: string;
@@ -28,10 +46,14 @@ export interface ISignUpDocument extends Document {
   googleId?: string;
   fcmToken?: string;
   privacySettings?: IPrivacySettings;
+  notificationSettings?: INotificationSettings;
   termsAcceptedAt?: Date;
   privacyAcceptedAt?: Date;
   termsVersion?: string;
   privacyVersion?: string;
+  /** Why the user deactivated or deleted the account, captured at request time. */
+  deactivationReason?: string;
+  deactivatedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -108,6 +130,25 @@ const signUpSchema = new Schema<ISignUpDocument>(
         hideEmail: false,
         hideVehicleNumber: false,
       },
+    },
+    notificationSettings: {
+      type: {
+        pushEnabled: { type: Boolean, default: true },
+        orderUpdates: { type: Boolean, default: true },
+        bookingUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: false },
+        communityActivity: { type: Boolean, default: true },
+        emailUpdates: { type: Boolean, default: false },
+      },
+      default: () => ({ ...DEFAULT_NOTIFICATION_SETTINGS }),
+    },
+    deactivationReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    deactivatedAt: {
+      type: Date,
     },
     termsAcceptedAt: {
       type: Date,

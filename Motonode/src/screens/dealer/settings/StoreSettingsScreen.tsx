@@ -47,13 +47,13 @@ export function StoreSettingsScreen({ navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color="#1E293B" />
+          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>Store Settings</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Store Settings</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -62,7 +62,7 @@ export function StoreSettingsScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {/* Store Identity Card */}
-        <View style={styles.storeCard}>
+        <View style={[styles.storeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.storeCardTop}>
             <Image
               source={{ uri: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=120&auto=format&fit=crop&q=80' }}
@@ -70,83 +70,85 @@ export function StoreSettingsScreen({ navigation }: Props) {
             />
             <View style={{ flex: 1 }}>
               <View style={styles.storeNameRow}>
-                <Text style={styles.storeName}>Motonode Auto Hub</Text>
-                <View style={styles.dmcBadge}><Text style={styles.dmcBadgeText}>DMC</Text></View>
-                <View style={styles.verifiedBadge}>
+                <Text style={[styles.storeName, { color: colors.textPrimary }]}>Motonode Auto Hub</Text>
+                <View style={[styles.dmcBadge, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.dmcBadgeText, { color: colors.textSecondary }]}>DMC</Text>
+                </View>
+                <View style={[styles.verifiedBadge, { backgroundColor: colors.background }]}>
                   <Feather name="check-circle" size={10} color={colors.icon} />
-                  <Text style={styles.verifiedBadgeText}>Verified</Text>
+                  <Text style={[styles.verifiedBadgeText, { color: colors.textSecondary }]}>Verified</Text>
                 </View>
               </View>
               <View style={styles.storeRatingRow}>
                 <Feather name="star" size={11} color="#F59E0B" />
                 <Text style={styles.storeRating}>4.6</Text>
-                <Text style={styles.storeReviews}>(512 Reviews)</Text>
+                <Text style={[styles.storeReviews, { color: colors.textSecondary }]}>(512 Reviews)</Text>
               </View>
-              <Text style={styles.storeAddress}>80 Feet Rd, Koramangala 3 Block,{'\n'}Bengaluru, Karnataka 560034</Text>
+              <Text style={[styles.storeAddress, { color: colors.textSecondary }]}>80 Feet Rd, Koramangala 3 Block,{'\n'}Bengaluru, Karnataka 560034</Text>
             </View>
           </View>
         </View>
 
         {/* Store Information */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Store Information</Text>
-            <Pressable onPress={() => lightHaptic()} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Store Information</Text>
+            <Pressable onPress={() => lightHaptic()} style={[styles.editBtn, { backgroundColor: colors.background }]}>
+              <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Edit</Text>
             </Pressable>
           </View>
           {INFO_ROWS.map((row, idx) => (
             <View key={row.label}>
               <Pressable style={styles.infoRow} onPress={() => lightHaptic()}>
-                <View style={styles.infoIconBox}>
-                  <Feather name={row.icon as any} size={14} color="#64748B" />
+                <View style={[styles.infoIconBox, { backgroundColor: colors.background }]}>
+                  <Feather name={row.icon as any} size={14} color={colors.textSecondary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.infoLabel}>{row.label}</Text>
-                  <Text style={styles.infoValue}>{row.value}</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{row.value}</Text>
                 </View>
-                <Feather name="chevron-right" size={16} color="#CBD5E1" />
+                <Feather name="chevron-right" size={16} color={colors.textTertiary} />
               </Pressable>
-              {idx < INFO_ROWS.length - 1 && <View style={styles.divider} />}
+              {idx < INFO_ROWS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
             </View>
           ))}
         </View>
 
         {/* Business Hours */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Business Hours</Text>
-            <Pressable onPress={() => lightHaptic()} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Business Hours</Text>
+            <Pressable onPress={() => lightHaptic()} style={[styles.editBtn, { backgroundColor: colors.background }]}>
+              <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Edit</Text>
             </Pressable>
           </View>
           {BUSINESS_HOURS.map((bh, idx) => (
             <View key={bh.days}>
               <View style={styles.hoursRow}>
-                <Text style={styles.hoursDay}>{bh.days}</Text>
-                <Text style={styles.hoursTime}>{bh.hours}</Text>
+                <Text style={[styles.hoursDay, { color: colors.textSecondary }]}>{bh.days}</Text>
+                <Text style={[styles.hoursTime, { color: colors.textPrimary }]}>{bh.hours}</Text>
               </View>
-              {idx < BUSINESS_HOURS.length - 1 && <View style={styles.divider} />}
+              {idx < BUSINESS_HOURS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
             </View>
           ))}
         </View>
 
         {/* Store Description */}
-        <View style={styles.sectionCard}>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Store Description</Text>
-            <Pressable onPress={() => lightHaptic()} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Store Description</Text>
+            <Pressable onPress={() => lightHaptic()} style={[styles.editBtn, { backgroundColor: colors.background }]}>
+              <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Edit</Text>
             </Pressable>
           </View>
-          <Text style={styles.descriptionText}>
+          <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
             We provide expert car services, repairs, and maintenance with quality assurance and genuine parts.
           </Text>
         </View>
 
         {/* Settings Links */}
-        <View style={styles.sectionCard}>
-          <Text style={[styles.sectionTitle, { marginBottom: 4 }]}>Billing & Notifications</Text>
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 4 }]}>Billing & Notifications</Text>
           {SETTINGS_MENU.map((item, idx) => (
             <View key={item.label}>
               <Pressable
@@ -159,10 +161,10 @@ export function StoreSettingsScreen({ navigation }: Props) {
                 <View style={[styles.settingsIconBox, { backgroundColor: item.color + '15' }]}>
                   <Feather name={item.icon as any} size={15} color={item.color} />
                 </View>
-                <Text style={styles.settingsLabel}>{item.label}</Text>
-                <Feather name="chevron-right" size={16} color="#CBD5E1" />
+                <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>{item.label}</Text>
+                <Feather name="chevron-right" size={16} color={colors.textTertiary} />
               </Pressable>
-              {idx < SETTINGS_MENU.length - 1 && <View style={styles.divider} />}
+              {idx < SETTINGS_MENU.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
             </View>
           ))}
         </View>

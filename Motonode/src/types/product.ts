@@ -27,10 +27,15 @@ export interface IProduct {
   vehicleModelId?: string;
   vehicleBrandName?: string;
   vehicleModelName?: string;
+  color?: string;
+  weight?: string;
+  emissionStandard?: string;
+  fitsYear?: string;
   dealer?: IDealerInfo;
   createdAt: string;
   updatedAt: string;
-  rating?: number;
+  /** Aggregate of this product's reviews, maintained by the backend. */
+  averageRating?: number;
   reviewCount?: number;
 }
 

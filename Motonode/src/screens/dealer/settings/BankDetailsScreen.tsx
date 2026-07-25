@@ -35,13 +35,13 @@ export function BankDetailsScreen({ navigation }: Props) {
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: '#E2E8F0' }]}>
+      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
-          <Feather name="arrow-left" size={20} color="#1E293B" />
+          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={styles.headerTitle}>Bank Details</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Bank Details</Text>
         <View style={{ width: 36 }} />
       </View>
 
@@ -64,50 +64,50 @@ export function BankDetailsScreen({ navigation }: Props) {
         </View>
 
         {/* Account Information */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Account Information</Text>
-            <Pressable onPress={() => lightHaptic()} style={styles.editBtn}>
-              <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Account Information</Text>
+            <Pressable onPress={() => lightHaptic()} style={[styles.editBtn, { backgroundColor: colors.background }]}>
+              <Text style={[styles.editBtnText, { color: colors.textSecondary }]}>Edit</Text>
             </Pressable>
           </View>
           {ACCOUNT_ROWS.map((row, idx) => (
             <View key={row.label}>
               <View style={styles.accountRow}>
-                <Text style={styles.accountLabel}>{row.label}</Text>
-                <Text style={[styles.accountValue, row.label === 'Account Number' && styles.monoText]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                <Text style={[styles.accountValue, row.label === 'Account Number' && styles.monoText, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit>
                   {row.value}
                 </Text>
               </View>
-              {idx < ACCOUNT_ROWS.length - 1 && <View style={styles.divider} />}
+              {idx < ACCOUNT_ROWS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
             </View>
           ))}
 
           {/* Verified Banner */}
-          <View style={styles.verifiedBanner}>
+          <View style={[styles.verifiedBanner, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <View style={styles.verifiedIconBox}>
               <Feather name="check-circle" size={16} color="#10B981" />
             </View>
             <View>
-              <Text style={styles.verifiedTitle}>Account Verified</Text>
+              <Text style={[styles.verifiedTitle, { color: colors.textPrimary }]}>Account Verified</Text>
               <Text style={styles.verifiedSubtitle}>Your bank account has been verified successfully.</Text>
             </View>
           </View>
         </View>
 
         {/* Documents */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Documents</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Documents</Text>
           <View style={styles.documentRow}>
-            <View style={styles.documentIconBox}>
+            <View style={[styles.documentIconBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <Feather name="file-text" size={18} color={colors.icon} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.documentName}>Cancelled Cheque</Text>
-              <Text style={styles.documentDate}>Uploaded on 12 Jan 2025</Text>
+              <Text style={[styles.documentName, { color: colors.textPrimary }]}>Cancelled Cheque</Text>
+              <Text style={[styles.documentDate, { color: colors.textSecondary }]}>Uploaded on 12 Jan 2025</Text>
             </View>
             <Pressable style={styles.downloadBtn} onPress={() => lightHaptic()}>
-              <Feather name="download" size={16} color="#64748B" />
+              <Feather name="download" size={16} color={colors.textSecondary} />
             </Pressable>
           </View>
         </View>

@@ -5,7 +5,8 @@ export type DealerType =
   | "Vehicle Wash Station"
   | "Mechanic Workshop"
   | "Detailing Center"
-  | "Riding Gear Store";
+  | "Riding Gear Store"
+  | "Battery Dealer";
 
 export interface DealerCapabilities {
   hasProducts: boolean;
@@ -22,6 +23,7 @@ export const DEALER_TYPE_CAPABILITIES: Record<DealerType, DealerCapabilities> = 
   "Mechanic Workshop":    { hasProducts: false, hasVehicles: false, hasServices: true,  hasDrive: false },
   "Detailing Center":     { hasProducts: false, hasVehicles: false, hasServices: true,  hasDrive: false },
   "Riding Gear Store":    { hasProducts: true,  hasVehicles: false, hasServices: true,  hasDrive: false },
+  "Battery Dealer":       { hasProducts: true,  hasVehicles: false, hasServices: true,  hasDrive: false },
 };
 
 export const DEFAULT_DEALER_CAPABILITIES: DealerCapabilities = {
@@ -59,6 +61,7 @@ export const DEALER_TYPE_LIST: DealerTypeInfo[] = [
   { type: "Mechanic Workshop",    icon: "settings",    description: "Repairs, maintenance and general servicing for vehicles",    color: "#B45309" },
   { type: "Detailing Center",     icon: "star",        description: "Premium exterior and interior detailing and protection",     color: "#059669" },
   { type: "Riding Gear Store",    icon: "shield",      description: "Helmets, jackets, gloves, boots and riding accessories",    color: "#E11D48" },
+  { type: "Battery Dealer",       icon: "zap",         description: "Sell batteries, chargers, and offer testing & replacements",  color: "#F59E0B" },
 ];
 
 /** Dashboard hero illustrations keyed by dealer business type */
@@ -77,12 +80,15 @@ export const DEALER_TYPE_ILLUSTRATIONS: Record<DealerType, string> = {
     'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=400&auto=format&fit=crop&q=80',
   "Riding Gear Store":
     'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80',
+  "Battery Dealer":
+    'https://images.unsplash.com/photo-1620214878077-3465263777a6?w=400&auto=format&fit=crop&q=80',
 };
 
 export interface BusinessProfile {
   businessName: string;
   ownerName: string;
   mobile: string;
+  alternateMobile?: string;
   email: string;
   gst: string;
   registrationNumber: string;

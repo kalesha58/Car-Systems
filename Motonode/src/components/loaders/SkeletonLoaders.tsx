@@ -664,6 +664,36 @@ export function DriveListSkeleton() {
   );
 }
 
+export function MarketplaceDriveCardSkeleton() {
+  const colors = useColors();
+
+  return (
+    <View style={[styles.marketplaceDriveCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <Skeleton style={styles.marketplaceDriveImg} />
+      <View style={styles.marketplaceDriveInfo}>
+        <View style={styles.marketplaceDriveBadgeRow}>
+          <Skeleton style={styles.marketplaceDriveBadge} />
+          <Skeleton style={styles.marketplaceDriveDate} />
+        </View>
+        <Skeleton style={styles.marketplaceDriveTitle} />
+        <Skeleton style={styles.marketplaceDriveSubtitle} />
+        <Skeleton style={styles.marketplaceDriveLink} />
+      </View>
+    </View>
+  );
+}
+
+export function MarketplaceDriveListSkeleton() {
+  return (
+    <View style={styles.marketplaceDriveList}>
+      <Skeleton style={styles.marketplaceDriveSectionTitle} />
+      {[1, 2].map((i) => (
+        <MarketplaceDriveCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
+
 export function DealerBusinessDetailsSkeleton() {
   const colors = useColors();
 
@@ -1902,6 +1932,72 @@ const styles = StyleSheet.create({
     height: 11,
     borderRadius: 5,
     backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveList: {
+    paddingVertical: 8,
+    gap: 12,
+  },
+  marketplaceDriveSectionTitle: {
+    width: 180,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 4,
+  },
+  marketplaceDriveCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    alignItems: 'center',
+  },
+  marketplaceDriveImg: {
+    width: 100,
+    height: 70,
+    borderRadius: 8,
+    marginRight: 12,
+    backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveInfo: {
+    flex: 1,
+    gap: 6,
+  },
+  marketplaceDriveBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  marketplaceDriveBadge: {
+    width: 52,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveDate: {
+    width: 72,
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveTitle: {
+    width: '90%',
+    height: 14,
+    borderRadius: 6,
+    backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveSubtitle: {
+    width: '65%',
+    height: 10,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  marketplaceDriveLink: {
+    width: 120,
+    height: 10,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+    marginTop: 4,
   },
   dealerBusinessSkeleton: {
     padding: 16,

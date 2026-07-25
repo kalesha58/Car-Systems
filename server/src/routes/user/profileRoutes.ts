@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../../middleware/authMiddleware';
+import { sensitiveAccountRateLimiter } from '../../middleware/otpRateLimitMiddleware';
 import { uploadSingle } from '../../middleware/uploadMiddleware';
 import {
   getProfileController,
@@ -7,6 +8,10 @@ import {
   getUserStatsController,
   getPrivacySettingsController,
   updatePrivacySettingsController,
+  getNotificationSettingsController,
+  updateNotificationSettingsController,
+  changePasswordController,
+  deactivateAccountController,
   deleteAccountController,
   sendPhoneChangeOtpController,
   verifyPhoneChangeController,
@@ -153,6 +158,134 @@ router.get('/privacy-settings', getPrivacySettingsController);
  */
 router.put('/privacy-settings', updatePrivacySettingsController);
 
-router.delete('/account', deleteAccountController);
+/**
+ * @swagger
+ * /api/profile/notification-settings:
+ *   get:
+ *     summary: Get user notification preferences
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Notification settings retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/notification-settings', getNotificationSettingsController);
+
+/**
+ * @swagger
+ * /api/profile/notification-settings:
+ *   put:
+ *     summary: Update user notification preferences
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pushEnabled:
+ *                 type: boolean
+ *               orderUpdates:
+ *                 type: boolean
+ *               bookingUpdates:
+ *                 type: boolean
+ *               promotions:
+ *                 type: boolean
+ *               communityActivity:
+ *                 type: boolean
+ *               emailUpdates:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Notification settings updated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/notification-settings', updateNotificationSettingsController);
+
+/**
+ * @swagger
+ * /api/profile/change-password:
+ *   post:
+ *     summary: Change the authenticated user's password
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Current password is incorrect
+ */
+router.post('/change-password', sensitiveAccountRateLimiter, changePasswordController);
+
+/**
+ * @swagger
+ * /api/profile/deactivate:
+ *   post:
+ *     summary: Deactivate the authenticated user's account (reversible)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Account deactivated successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/deactivate', sensitiveAccountRateLimiter, deactivateAccountController);
+
+/**
+ * @swagger
+ * /api/profile/account:
+ *   delete:
+ *     summary: Delete (anonymize) the authenticated user's account
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.delete('/account', sensitiveAccountRateLimiter, deleteAccountController);
 
 export default router;

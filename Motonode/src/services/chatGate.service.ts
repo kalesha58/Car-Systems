@@ -44,6 +44,13 @@ export async function verifyDealerForChat(dealerId: string): Promise<DealerChatV
 }
 
 export async function fetchBlockedUserIds(): Promise<string[]> {
-  const response = await api.get<{ success: boolean; Response: string[] }>('/user/blocks');
-  return response.data.Response || [];
+  const response = await api.get<{
+    success: boolean;
+    // Newer backends return detailed objects; older ones returned plain IDs.
+    Response: Array<string | { id: string }>;
+  }>('/user/blocks');
+
+  return (response.data.Response || [])
+    .map((entry) => (typeof entry === 'string' ? entry : entry?.id))
+    .filter((id): id is string => Boolean(id));
 }
