@@ -169,34 +169,34 @@ export function HomeScreen() {
           onViewAll={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
         />
         
-        <View style={[styles.categoriesContainer, isWeb && styles.categoriesWeb]}>
+        <View style={[styles.categoriesContainer, isDesktop && styles.categoriesWeb]}>
           {categories.map((category) => (
             <Pressable
               key={category.label}
               style={[
                 styles.categoryCard,
-                isWeb && styles.categoryCardWeb,
-                isWeb && { borderColor: colors.border, backgroundColor: colors.card },
+                isDesktop && styles.categoryCardWeb,
+                isDesktop && { borderColor: colors.border, backgroundColor: colors.card },
               ]}
               onPress={() => navigation.navigate(CustomerTabRoutes.Marketplace)}
             >
               <View
                 style={[
                   styles.categoryIconBox,
-                  isWeb && styles.categoryIconBoxWeb,
+                  isDesktop && styles.categoryIconBoxWeb,
                   { borderColor: colors.border, backgroundColor: colors.card },
                 ]}
               >
                 <Feather
                   name={category.icon}
-                  size={isWeb ? 24 : 20}
-                  color={isWeb ? colors.primary : colors.textPrimary}
+                  size={isDesktop ? 24 : 20}
+                  color={isDesktop ? colors.primary : colors.textPrimary}
                 />
               </View>
               <Text
                 style={[
                   styles.categoryLabelText,
-                  isWeb && styles.categoryLabelWeb,
+                  isDesktop && styles.categoryLabelWeb,
                   { color: colors.textPrimary },
                 ]}
               >
