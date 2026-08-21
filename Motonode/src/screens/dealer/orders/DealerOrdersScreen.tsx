@@ -31,7 +31,6 @@ import {
 } from '@services/serviceBooking.service';
 import type { IOrderData } from '@app-types/order';
 import type { IServiceBooking, ServiceBookingStatus } from '../../../types/serviceBooking';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import {
   mapServiceBookingStatus,
@@ -293,7 +292,13 @@ export function DealerOrdersScreen() {
             </Text>
           </View>
           <View style={styles.headerRight}>
-            <Pressable style={styles.notificationBtn}>
+            <Pressable
+              style={styles.notificationBtn}
+              onPress={() => {
+                lightHaptic();
+                navigation.navigate(DealerStackRoutes.NotificationSettings);
+              }}
+            >
               <Feather name="bell" size={22} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>
@@ -523,7 +528,7 @@ export function DealerOrdersScreen() {
                     <Text style={[styles.productQty, { color: colors.textSecondary }]}>
                       × {getOrderItemQty(item)}
                     </Text>
-                    <Text style={[styles.productPrice, { color: themeLight.textSecondary }]}>
+                    <Text style={[styles.productPrice, { color: colors.textSecondary }]}>
                       ₹{item.totalAmount.toLocaleString('en-IN')}
                     </Text>
                   </View>
@@ -561,7 +566,7 @@ export function DealerOrdersScreen() {
                   )
                 ) : (
                   <Pressable
-                    style={[styles.fullWidthActionBtn, { backgroundColor: '#F1F5F9' }]}
+                    style={[styles.fullWidthActionBtn, { backgroundColor: colors.muted }]}
                     onPress={() => openOrderDetail(item)}
                   >
                     <Feather name="eye" size={15} color={colors.textPrimary} />

@@ -233,7 +233,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
 
   if (loading && !vehicle) {
     return (
-      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ChromeHeader contentPad={8}>
           <View style={styles.headerRow}>
             <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()} hitSlop={8}>
@@ -252,7 +252,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
 
   if (error || !vehicle) {
     return (
-      <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ChromeHeader contentPad={8}>
           <View style={styles.headerRow}>
             <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()} hitSlop={8}>
@@ -265,8 +265,8 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
           </View>
         </ChromeHeader>
         <View style={styles.centered}>
-          <Feather name="alert-circle" size={40} color="#94A3B8" />
-          <Text style={[styles.errorText, { color: '#64748B' }]}>
+          <Feather name="alert-circle" size={40} color={colors.textTertiary} />
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             {error ?? 'Vehicle not found'}
           </Text>
         </View>
@@ -371,11 +371,11 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
   const expiryCountdown = getInsuranceExpiryCountdown();
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Modal visible={Boolean(viewingDocUrl)} transparent animationType="fade">
         <View style={styles.docModalBackdrop}>
           <Pressable style={styles.docModalClose} onPress={() => setViewingDocUrl(null)}>
-            <Feather name="x" size={24} color="#fff" />
+            <Feather name="x" size={24} color={colors.white} />
           </Pressable>
           {viewingDocUrl ? (
             <Image source={{ uri: viewingDocUrl }} style={styles.docModalImage} resizeMode="contain" />
@@ -406,6 +406,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
               <Pressable
                 style={({ pressed }) => [
                   styles.optionRow,
+                  { borderColor: colors.border },
                   pressed && { backgroundColor: colors.primarySubtle }
                 ]}
                 onPress={() => {
@@ -422,7 +423,8 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
               <Pressable
                 style={({ pressed }) => [
                   styles.optionRow,
-                  pressed && { backgroundColor: '#FEE2E2' }
+                  { borderColor: colors.border },
+                  pressed && { backgroundColor: colors.destructive + '22' }
                 ]}
                 onPress={() => {
                   setOptionsModalVisible(false);
@@ -431,10 +433,10 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
                   }, 300);
                 }}
               >
-                <View style={[styles.optionIconBox, { backgroundColor: '#FEE2E2' }]}>
-                  <Feather name="trash-2" size={18} color="#EF4444" />
+                <View style={[styles.optionIconBox, { backgroundColor: colors.destructive + '22' }]}>
+                  <Feather name="trash-2" size={18} color={colors.destructive} />
                 </View>
-                <Text style={[styles.optionText, { color: '#EF4444' }]}>Delete Vehicle</Text>
+                <Text style={[styles.optionText, { color: colors.destructive }]}>Delete Vehicle</Text>
               </Pressable>
             </View>
 
@@ -477,7 +479,7 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
       >
         {/* Main Vehicle Header Card */}
         <View style={styles.overviewContainer}>
-          <View style={styles.overviewImgContainer}>
+          <View style={[styles.overviewImgContainer, { borderColor: colors.border, backgroundColor: colors.card }]}>
             <Image
               source={{ uri: vehicle.images?.[0] || DEFAULT_IMAGE }}
               style={styles.vehicleImg}
@@ -485,44 +487,44 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
             />
           </View>
           <View style={styles.overviewTextContainer}>
-            <Text style={styles.vehicleNameText}>
+            <Text style={[styles.vehicleNameText, { color: colors.textPrimary }]}>
               {vehicle.brand} {vehicle.model}
             </Text>
             
             {/* Indian Flag number plate badge */}
-            <View style={styles.plateBadge}>
+            <View style={[styles.plateBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={styles.plateFlag}>🇮🇳</Text>
-              <Text style={styles.plateNum}>{vehicle.numberPlate}</Text>
+              <Text style={[styles.plateNum, { color: colors.textPrimary }]}>{vehicle.numberPlate}</Text>
             </View>
 
-            <Text style={styles.vehicleSpecsText}>
+            <Text style={[styles.vehicleSpecsText, { color: colors.textSecondary }]}>
               {vehicleYear}  •  {fuelType}  •  {vehicleColorName}
             </Text>
           </View>
         </View>
 
         {/* Action buttons row inside outline card wrapper */}
-        <View style={styles.actionsOutlineRow}>
+        <View style={[styles.actionsOutlineRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Pressable style={styles.actionBtnItem} onPress={handleEditDetails}>
-            <Feather name="edit-3" size={18} color="#475569" />
-            <Text style={styles.actionBtnLabel}>Edit Details</Text>
+            <Feather name="edit-3" size={18} color={colors.icon} />
+            <Text style={[styles.actionBtnLabel, { color: colors.textPrimary }]}>Edit Details</Text>
           </Pressable>
-          <View style={styles.actionDivider} />
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
           <Pressable style={styles.actionBtnItem} onPress={handleAddReminder}>
-            <Feather name="bell" size={18} color="#475569" />
-            <Text style={styles.actionBtnLabel}>Add Reminder</Text>
+            <Feather name="bell" size={18} color={colors.icon} />
+            <Text style={[styles.actionBtnLabel, { color: colors.textPrimary }]}>Add Reminder</Text>
           </Pressable>
-          <View style={styles.actionDivider} />
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
           <Pressable style={styles.actionBtnItem} onPress={handleViewHistory}>
-            <Feather name="clock" size={18} color="#475569" />
-            <Text style={styles.actionBtnLabel}>View History</Text>
+            <Feather name="clock" size={18} color={colors.icon} />
+            <Text style={[styles.actionBtnLabel, { color: colors.textPrimary }]}>View History</Text>
           </Pressable>
-          <View style={styles.actionDivider} />
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
           <Pressable style={styles.actionBtnItem} onPress={handleTogglePrimary}>
-            <Feather name="star" size={18} color={isPrimary ? '#F59E0B' : '#475569'} />
-            <Text style={styles.actionBtnLabel}>{isPrimary ? 'Primary' : 'Set as Primary'}</Text>
+            <Feather name="star" size={18} color={isPrimary ? colors.starActive : colors.icon} />
+            <Text style={[styles.actionBtnLabel, { color: colors.textPrimary }]}>{isPrimary ? 'Primary' : 'Set as Primary'}</Text>
           </Pressable>
-          <View style={styles.actionDivider} />
+          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
           <Pressable style={styles.actionBtnItem} onPress={handleShareVehicle}>
             <Feather name="share-2" size={18} color={colors.primary} />
             <Text style={[styles.actionBtnLabel, { color: colors.primary }]}>Share</Text>
@@ -537,9 +539,9 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
           style={styles.sectionMargin}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleText}>Documents</Text>
+            <Text style={[styles.sectionTitleText, { color: colors.textPrimary }]}>Documents</Text>
             <Pressable onPress={() => lightHaptic()}>
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
             </Pressable>
           </View>
 
@@ -549,267 +551,267 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
             contentContainerStyle={styles.documentsContainer}
           >
             {/* Document Card 1: RC */}
-            <Pressable style={styles.documentCard} onPress={() => handleViewDoc('rc')}>
+            <Pressable style={[styles.documentCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleViewDoc('rc')}>
               <View style={styles.docHeaderRow}>
-                <View style={[styles.docIconWrapper, { backgroundColor: '#ECFDF5' }]}>
-                  <Feather name="file-text" size={16} color="#10B981" />
+                <View style={[styles.docIconWrapper, { backgroundColor: colors.muted }]}>
+                  <Feather name="file-text" size={16} color={colors.success} />
                 </View>
-                <View style={styles.verifiedBadge}>
-                  <Feather name="check" size={8} color="#10B981" style={{ marginRight: 2 }} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+                <View style={[styles.verifiedBadge, { backgroundColor: colors.muted }]}>
+                  <Feather name="check" size={8} color={colors.success} style={{ marginRight: 2 }} />
+                  <Text style={[styles.verifiedText, { color: colors.success }]}>Verified</Text>
                 </View>
               </View>
-              <Text style={styles.docCardTitle} numberOfLines={2}>
+              <Text style={[styles.docCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
                 RC (Registration Certificate)
               </Text>
-              <Text style={styles.docCardDetail}>{vehicle.numberPlate}</Text>
-              <Text style={styles.docCardExpiry}>Exp: 15 Mar 2037</Text>
+              <Text style={[styles.docCardDetail, { color: colors.textSecondary }]}>{vehicle.numberPlate}</Text>
+              <Text style={[styles.docCardExpiry, { color: colors.textTertiary }]}>Exp: 15 Mar 2037</Text>
             </Pressable>
 
             {/* Document Card 2: Insurance */}
-            <Pressable style={styles.documentCard} onPress={() => handleViewDoc('insurance')}>
+            <Pressable style={[styles.documentCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleViewDoc('insurance')}>
               <View style={styles.docHeaderRow}>
                 <View style={[styles.docIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                   <Feather name="shield" size={16} color={colors.primary} />
                 </View>
-                <View style={styles.verifiedBadge}>
-                  <Feather name="check" size={8} color="#10B981" style={{ marginRight: 2 }} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+                <View style={[styles.verifiedBadge, { backgroundColor: colors.muted }]}>
+                  <Feather name="check" size={8} color={colors.success} style={{ marginRight: 2 }} />
+                  <Text style={[styles.verifiedText, { color: colors.success }]}>Verified</Text>
                 </View>
               </View>
-              <Text style={styles.docCardTitle} numberOfLines={2}>
+              <Text style={[styles.docCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
                 Insurance Certificate
               </Text>
-              <Text style={styles.docCardDetail}>{vehicle.brand}</Text>
-              <Text style={styles.docCardExpiry}>Exp: 20 Nov 2025</Text>
+              <Text style={[styles.docCardDetail, { color: colors.textSecondary }]}>{vehicle.brand}</Text>
+              <Text style={[styles.docCardExpiry, { color: colors.textTertiary }]}>Exp: 20 Nov 2025</Text>
               <Text style={[styles.docLinkText, { color: colors.primary }]}>View Policy</Text>
             </Pressable>
 
             {/* Document Card 3: PUC */}
-            <Pressable style={styles.documentCard} onPress={() => handleViewDoc('pollution')}>
+            <Pressable style={[styles.documentCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleViewDoc('pollution')}>
               <View style={styles.docHeaderRow}>
-                <View style={[styles.docIconWrapper, { backgroundColor: '#F3E8FF' }]}>
-                  <Feather name="wind" size={16} color="#A855F7" />
+                <View style={[styles.docIconWrapper, { backgroundColor: colors.muted }]}>
+                  <Feather name="wind" size={16} color={colors.info} />
                 </View>
-                <View style={styles.verifiedBadge}>
-                  <Feather name="check" size={8} color="#10B981" style={{ marginRight: 2 }} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+                <View style={[styles.verifiedBadge, { backgroundColor: colors.muted }]}>
+                  <Feather name="check" size={8} color={colors.success} style={{ marginRight: 2 }} />
+                  <Text style={[styles.verifiedText, { color: colors.success }]}>Verified</Text>
                 </View>
               </View>
-              <Text style={styles.docCardTitle} numberOfLines={2}>
+              <Text style={[styles.docCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
                 PUC Certificate
               </Text>
-              <Text style={styles.docCardDetail}>{vehicle.numberPlate}</Text>
-              <Text style={styles.docCardExpiry}>Exp: 10 May 2025</Text>
+              <Text style={[styles.docCardDetail, { color: colors.textSecondary }]}>{vehicle.numberPlate}</Text>
+              <Text style={[styles.docCardExpiry, { color: colors.textTertiary }]}>Exp: 10 May 2025</Text>
             </Pressable>
 
             {/* Document Card 4: Driving License */}
-            <Pressable style={styles.documentCard} onPress={() => handleViewDoc('dl')}>
+            <Pressable style={[styles.documentCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleViewDoc('dl')}>
               <View style={styles.docHeaderRow}>
-                <View style={[styles.docIconWrapper, { backgroundColor: '#FEE2E2' }]}>
-                  <Feather name="credit-card" size={16} color="#EF4444" />
+                <View style={[styles.docIconWrapper, { backgroundColor: colors.muted }]}>
+                  <Feather name="credit-card" size={16} color={colors.destructive} />
                 </View>
-                <View style={styles.verifiedBadge}>
-                  <Feather name="check" size={8} color="#10B981" style={{ marginRight: 2 }} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+                <View style={[styles.verifiedBadge, { backgroundColor: colors.muted }]}>
+                  <Feather name="check" size={8} color={colors.success} style={{ marginRight: 2 }} />
+                  <Text style={[styles.verifiedText, { color: colors.success }]}>Verified</Text>
                 </View>
               </View>
-              <Text style={styles.docCardTitle} numberOfLines={2}>
+              <Text style={[styles.docCardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
                 Driving License
               </Text>
-              <Text style={styles.docCardDetail}>{currentOwnerName}</Text>
-              <Text style={styles.docCardExpiry}>Exp: 14 Aug 2032</Text>
+              <Text style={[styles.docCardDetail, { color: colors.textSecondary }]}>{currentOwnerName}</Text>
+              <Text style={[styles.docCardExpiry, { color: colors.textTertiary }]}>Exp: 14 Aug 2032</Text>
             </Pressable>
           </ScrollView>
 
           {/* Verification Status Banner */}
-          <View style={styles.verificationBanner}>
-            <View style={styles.verifiedBannerIconBox}>
-              <Feather name="shield" size={16} color="#10B981" />
+          <View style={[styles.verificationBanner, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+            <View style={[styles.verifiedBannerIconBox, { backgroundColor: colors.card }]}>
+              <Feather name="shield" size={16} color={colors.success} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.verifiedBannerTitle}>
+              <Text style={[styles.verifiedBannerTitle, { color: colors.textPrimary }]}>
                 All documents are verified and up to date
               </Text>
-              <Text style={styles.verifiedBannerSub}>
+              <Text style={[styles.verifiedBannerSub, { color: colors.textSecondary }]}>
                 You're good to go! Keep your documents updated for hassle-free services.
               </Text>
             </View>
-            <Feather name="chevron-right" size={16} color="#A7F3D0" />
+            <Feather name="chevron-right" size={16} color={colors.textTertiary} />
           </View>
         </View>
 
         {/* Vehicle Information Grid Section */}
         <View style={styles.sectionMargin}>
-          <Text style={styles.sectionTitleText}>Vehicle Information</Text>
+          <Text style={[styles.sectionTitleText, { color: colors.textPrimary }]}>Vehicle Information</Text>
           
           <View style={styles.infoGrid}>
             {/* Item 1: Owner Name */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="user" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Owner Name</Text>
-                <Text style={styles.gridValue}>{currentOwnerName}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Owner Name</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{currentOwnerName}</Text>
               </View>
             </View>
 
             {/* Owner Relation (if not own vehicle) */}
             {!vehicle.isOwnVehicle && vehicle.relation && vehicle.relation !== 'Self' ? (
-              <View style={styles.gridItem}>
+              <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
                 <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                   <Feather name="users" size={15} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.gridLabel}>Owner Relation</Text>
-                  <Text style={styles.gridValue}>{vehicle.relation}</Text>
+                  <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Owner Relation</Text>
+                  <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicle.relation}</Text>
                 </View>
               </View>
             ) : null}
 
             {/* Item 2: Registration Number */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="credit-card" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Registration Number</Text>
-                <Text style={styles.gridValue}>{vehicle.numberPlate}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Registration Number</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicle.numberPlate}</Text>
               </View>
             </View>
 
             {/* Item 3: Registration Date */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="calendar" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Registration Date</Text>
-                <Text style={styles.gridValue}>15 Mar {vehicleYear}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Registration Date</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>15 Mar {vehicleYear}</Text>
               </View>
             </View>
 
             {/* Item 4: Manufacturing Year */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="calendar" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Manufacturing Year</Text>
-                <Text style={styles.gridValue}>{vehicleYear}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Manufacturing Year</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicleYear}</Text>
               </View>
             </View>
 
             {/* Item 5: Chassis Number */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="hash" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Chassis Number</Text>
-                <Text style={styles.gridValue}>{chassisNumber}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Chassis Number</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{chassisNumber}</Text>
               </View>
             </View>
 
             {/* Item 6: Vehicle Make */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="award" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Vehicle Make</Text>
-                <Text style={styles.gridValue}>{vehicle.brand}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Vehicle Make</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicle.brand}</Text>
               </View>
             </View>
 
             {/* Item 7: Engine Number */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="cpu" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Engine Number</Text>
-                <Text style={styles.gridValue}>{engineNumber}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Engine Number</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{engineNumber}</Text>
               </View>
             </View>
 
             {/* Item 8: Model */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="settings" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Model</Text>
-                <Text style={styles.gridValue}>{vehicle.model}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Model</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicle.model}</Text>
               </View>
             </View>
 
             {/* Item 9: Insurance Provider */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="umbrella" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Insurance Provider</Text>
-                <Text style={styles.gridValue}>{insuranceProvider}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Insurance Provider</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{insuranceProvider}</Text>
               </View>
             </View>
 
             {/* Item 10: Insurance Policy No. */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="file-text" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Insurance Policy No.</Text>
-                <Text style={styles.gridValue}>{insurancePolicyNo}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Insurance Policy No.</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{insurancePolicyNo}</Text>
               </View>
             </View>
 
             {/* Item 11: Vehicle Age */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="clock" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Vehicle Age</Text>
-                <Text style={styles.gridValue}>{vehicleAge}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Vehicle Age</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicleAge}</Text>
               </View>
             </View>
 
             {/* Item 12: Variant */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="layers" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Variant</Text>
-                <Text style={styles.gridValue}>{variantStr}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Variant</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{variantStr}</Text>
               </View>
             </View>
 
             {/* Item 13: Fuel Type */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="droplet" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Fuel Type</Text>
-                <Text style={styles.gridValue}>{fuelType}</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Fuel Type</Text>
+                <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{fuelType}</Text>
               </View>
             </View>
 
             {/* Item 14: Color */}
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.card }]}>
               <View style={[styles.gridIconWrapper, { backgroundColor: colors.primarySubtle }]}>
                 <Feather name="aperture" size={15} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.gridLabel}>Color</Text>
+                <Text style={[styles.gridLabel, { color: colors.textTertiary }]}>Color</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={[styles.colorIndicatorDot, { backgroundColor: colorHex }]} />
-                  <Text style={styles.gridValue}>{vehicleColorName}</Text>
+                  <Text style={[styles.gridValue, { color: colors.textPrimary }]}>{vehicleColorName}</Text>
                 </View>
               </View>
             </View>
@@ -819,19 +821,22 @@ export function GarageVehicleDetailScreen({ route, navigation }: Props) {
         {/* Upcoming Reminders Section */}
         <View style={[styles.sectionMargin, { marginBottom: 40 }]}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleText}>Upcoming Reminders</Text>
+            <Text style={[styles.sectionTitleText, { color: colors.textPrimary }]}>Upcoming Reminders</Text>
             <Pressable onPress={() => lightHaptic()}>
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>View All</Text>
             </Pressable>
           </View>
 
-          <Pressable style={styles.reminderCard} onPress={handleBookService}>
+          <Pressable
+            style={[styles.reminderCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={handleBookService}
+          >
             <View style={[styles.reminderBellWrapper, { backgroundColor: colors.primarySubtle }]}>
               <Feather name="bell" size={18} color={colors.primary} />
             </View>
             
             <View style={{ flex: 1 }}>
-              <Text style={styles.reminderTitle}>Insurance Renewal</Text>
+              <Text style={[styles.reminderTitle, { color: colors.textPrimary }]}>Insurance Renewal</Text>
               <Text style={[styles.reminderDate, { color: colors.primary }]}>{insuranceExpiryDate}</Text>
             </View>
 

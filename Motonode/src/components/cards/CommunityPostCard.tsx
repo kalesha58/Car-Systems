@@ -1,8 +1,21 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { useAuth } from '@context/index';
+import { useToast } from '@context/ToastContext';
 import { useColors } from '@hooks/useColors';
+import { blockUser } from '@services/block.service';
 import { likePost, unlikePost } from '@services/post.service';
 import type { Post } from '../../types/post';
 import { formatRelativeTime } from '@utils/formatRelativeTime';
@@ -15,6 +28,7 @@ const DEFAULT_AVATAR =
 interface CommunityPostCardProps {
   post: Post;
   onPostUpdated?: (post: Post) => void;
+  onUserBlocked?: (userId: string) => void;
 }
 
 function formatCount(count: number) {
@@ -24,11 +38,14 @@ function formatCount(count: number) {
   return String(count);
 }
 
-export function CommunityPostCard({ post, onPostUpdated }: CommunityPostCardProps) {
+export function CommunityPostCard({ post, onPostUpdated, onUserBlocked }: CommunityPostCardProps) {
   const colors = useColors();
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [liked, setLiked] = useState(Boolean(post.isLiked));
   const [likes, setLikes] = useState(post.likes);
   const [liking, setLiking] = useState(false);
+  const isOwnPost = Boolean(user?.id && user.id === post.userId);
 
   const userName = post.userName ?? 'User';
   const avatar = post.userAvatar ?? DEFAULT_AVATAR;
@@ -61,6 +78,61 @@ export function CommunityPostCard({ post, onPostUpdated }: CommunityPostCardProp
     }
   };
 
+  const handleSave = () => {
+    lightHaptic();
+    showToast('Save is coming soon', 'info');
+  };
+
+  const handleShare = async () => {
+    lightHaptic();
+    try {
+      await Share.share({
+        message: post.text
+          ? `${userName}: ${post.text}`
+          : `Check out this post from ${userName} on Motonode`,
+      });
+    } catch {
+      // dismissed
+    }
+  };
+
+  const confirmBlock = () => {
+    Alert.alert(
+      'Block user',
+      `Block ${userName}? You can unblock them later from Settings → Blocked Accounts.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                await blockUser(post.userId);
+                showToast(`${userName} has been blocked`, 'success');
+                onUserBlocked?.(post.userId);
+              } catch {
+                showToast('Could not block this user', 'error');
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
+  const handleMore = () => {
+    lightHaptic();
+    const options: Array<{ text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }> = [
+      { text: 'Share', onPress: () => void handleShare() },
+    ];
+    if (!isOwnPost) {
+      options.push({ text: 'Block user', style: 'destructive', onPress: confirmBlock });
+    }
+    options.push({ text: 'Cancel', style: 'cancel' });
+    Alert.alert(userName, undefined, options);
+  };
+
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
       <View style={styles.header}>
@@ -71,7 +143,7 @@ export function CommunityPostCard({ post, onPostUpdated }: CommunityPostCardProp
             <Text style={[styles.location, { color: colors.textSecondary }]}>{subtitle}</Text>
           ) : null}
         </View>
-        <Pressable style={styles.moreBtn} hitSlop={8}>
+        <Pressable style={styles.moreBtn} hitSlop={8} onPress={handleMore}>
           <Feather name="more-horizontal" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
@@ -104,7 +176,7 @@ export function CommunityPostCard({ post, onPostUpdated }: CommunityPostCardProp
             <Feather name="send" size={22} color={colors.textPrimary} />
           </Pressable>
         </View>
-        <Pressable style={styles.actionBtn} hitSlop={6}>
+        <Pressable style={styles.actionBtn} hitSlop={6} onPress={handleSave}>
           <Feather name="bookmark" size={22} color={colors.textPrimary} />
         </Pressable>
       </View>

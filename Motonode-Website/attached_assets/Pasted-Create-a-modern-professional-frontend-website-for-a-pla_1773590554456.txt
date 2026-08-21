@@ -1,0 +1,248 @@
+Create a modern, professional frontend website for a platform called "CarConnect".
+
+CarConnect is a digital automobile service platform that connects customers and automobile service providers. The platform already has a mobile app where users can book services and make payments. This website will act as a marketing and service showcase website with an attractive landing page and smooth user experience.
+
+Website Requirements:
+- Frontend only (no backend needed)
+- Modern UI/UX
+- Fully responsive (mobile + tablet + desktop)
+- Smooth animations and transitions
+- Attractive car-related visuals
+- Use carousel sliders to showcase services and products
+- Theme color: Black background with Light Green accents
+- All buttons, hover effects, icons, and highlights should use Light Green color
+- Clean typography and modern layout
+- Add subtle motion effects and scroll animations
+
+Brand Name:
+CarConnect
+
+Tagline:
+"Your One-Stop Automobile Service Platform"
+
+Main Purpose of Website:
+1. Showcase services provided in the CarConnect platform
+2. Showcase product categories
+3. Attract customers to use the app
+4. Allow business owners to take dealership and join the platform
+
+----------------------------------------
+
+HERO SECTION (Premium 3D Animated Section)
+
+Create a premium hero section with a modern 3D animated car.
+
+Requirements:
+- Add a realistic 3D car model animation
+- The car should slowly rotate or move slightly to create a premium feel
+- Use Three.js or similar WebGL-based library
+- Add glowing light effects and reflections
+- Car should appear on a dark background with subtle green highlights
+- Add soft particle or motion effects around the car
+- Make the hero section look futuristic and premium like Tesla or Apple product websites
+
+Hero Content:
+
+Title:
+"Connect Your Vehicle to the Best Services"
+
+Subtitle:
+"CarConnect helps you find trusted automobile services, spare parts, and accessories near you."
+
+Buttons:
+• Explore Services
+• Become a Dealer
+
+Buttons should have:
+- Light green glow effect
+- Hover animation
+- Smooth transitions
+
+----------------------------------------
+
+SERVICES CAROUSEL
+
+Display the main services provided in the platform:
+
+- Car Services
+- Bike Services
+- Car Wash
+- Tire Services
+- Battery Services
+
+Each service card should include:
+- Icon or image
+- Short description
+- Hover animation
+
+----------------------------------------
+
+PRODUCT CATEGORIES SECTION
+
+Show categories in modern grid cards:
+
+• Engine Oil & Lubricants
+• Car Care & Maintenance
+• Tires & Wheels
+• Brakes & Suspension
+
+Each card should have:
+- Category image
+- Title
+- Hover animation
+
+----------------------------------------
+
+VEHICLE PARTS CATEGORIES
+
+Display marketplace categories:
+
+• Brakes & Suspension
+• Interior Accessories
+• Lighting & Electrical
+• Filters & Belts
+• Batteries & Chargers
+
+----------------------------------------
+
+SERVICE CATEGORIES
+
+• Car Parts
+• Accessories
+• Tools & Equipment
+• Spare Parts
+
+----------------------------------------
+
+BEST SELLER PRODUCTS SECTION
+
+Create a horizontal product carousel displaying:
+
+• Car Chargers
+• Bike Gloves
+• Car Phone Mount
+• Bike Phone Mount
+• Car Wiper Blades
+• Helmets
+• Seat Covers
+
+Each product card should include:
+- Product image
+- Product name
+- Clean modern card design
+
+----------------------------------------
+
+BUSINESS OWNERS / DEALERS SECTION
+
+Explain that CarConnect also supports businesses.
+
+Businesses that can join the platform:
+
+• Automobile Dealers
+• Bike Dealers
+• Vehicle Wash Dealers
+• Mechanical Workshops
+• Detailing Centers
+• Spare Parts Dealers
+• Riding Gear Stores
+
+Display using modern cards with icons.
+
+----------------------------------------
+
+BECOME A DEALER SECTION
+
+Explain the dealership process using a timeline or step UI.
+
+Step 1:
+Register your service in the CarConnect App.
+
+Step 2:
+Add your business details including:
+- Business Name
+- Address
+- Documents
+
+Step 3:
+Submit your application for verification.
+
+Step 4:
+Admin reviews and approves your dealership.
+
+Step 5:
+After approval you receive dealer login access.
+
+Step 6:
+Dealers can add their services and products into the CarConnect platform.
+
+Add CTA button:
+"Apply for Dealership"
+
+----------------------------------------
+
+WHY CHOOSE CARCONNECT
+
+Show features:
+
+• Trusted Service Providers
+• Easy Booking
+• Genuine Spare Parts
+• Fast Vehicle Services
+• Verified Dealers
+• Convenient Mobile App
+
+----------------------------------------
+
+MOBILE APP PROMOTION SECTION
+
+Encourage users to download the CarConnect App.
+
+Text:
+"Book vehicle services, buy spare parts, and connect with trusted dealers easily using the CarConnect mobile app."
+
+Buttons:
+• Download App
+• Learn More
+
+----------------------------------------
+
+TESTIMONIALS SECTION
+
+Add customer review carousel.
+
+----------------------------------------
+
+FOOTER
+
+Include:
+
+• About CarConnect
+• Services
+• Become a Dealer
+• Contact
+• Social Media Links
+
+----------------------------------------
+
+DESIGN REQUIREMENTS
+
+Color Theme:
+Primary: Black
+Accent: Light Green
+
+Use light green for:
+• Buttons
+• Hover effects
+• Icons
+• Highlights
+• Animations
+
+Add:
+- Smooth scroll animations
+- Card hover effects
+- Button glow effects
+- Animated service icons
+- Modern carousel sliders
+
+Make the UI look like a premium automotive tech startup website similar to Tesla or Apple product landing pages.

@@ -19,7 +19,6 @@ import {
   AuthLabeledInput,
   AuthMessageBox,
   AuthPrimaryButton,
-  AuthSocialSection,
   authScreenStyles,
 } from '@components/auth';
 import { ScreenStatusBar } from '@components/common';
@@ -82,7 +81,7 @@ export function LoginScreen() {
   };
 
   return (
-    <View style={authScreenStyles.container}>
+    <View style={[authScreenStyles.container, { backgroundColor: colors.background }]}>
       <ScreenStatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <AuthHeaderDecoration />
       <AuthFooterDecoration />
@@ -104,10 +103,10 @@ export function LoginScreen() {
             />
 
             <View style={authScreenStyles.titleRow}>
-              <Text style={authScreenStyles.titleText}>Welcome </Text>
-              <Text style={authScreenStyles.titleAccent}>Back!</Text>
+              <Text style={[authScreenStyles.titleText, { color: colors.textPrimary }]}>Welcome </Text>
+              <Text style={[authScreenStyles.titleAccent, { color: colors.primary }]}>Back!</Text>
             </View>
-            <Text style={authScreenStyles.subtitle}>Login to continue to your account</Text>
+            <Text style={[authScreenStyles.subtitle, { color: colors.textSecondary }]}>Login to continue to your account</Text>
 
             {success ? <AuthMessageBox message={success} type="success" /> : null}
             {error ? <AuthMessageBox message={error} type="error" /> : null}
@@ -141,16 +140,15 @@ export function LoginScreen() {
               </Text>
             </Pressable>
 
-            <AuthPrimaryButton label="Login" loading={loading} onPress={handleLogin} />
-            <AuthSocialSection />
+            <AuthPrimaryButton label="Sign In" loading={loading} onPress={handleLogin} />
 
             <Pressable
               style={authScreenStyles.footerLink}
               onPress={() => navigation.navigate(AuthRoutes.Signup)}
             >
-              <Text style={authScreenStyles.footerText}>
+              <Text style={[authScreenStyles.footerText, { color: colors.textSecondary }]}>
                 Don't have an account?{' '}
-                <Text style={authScreenStyles.footerAccent}>Sign Up</Text>
+                <Text style={[authScreenStyles.footerAccent, { color: colors.primary }]}>Sign Up</Text>
               </Text>
             </Pressable>
           </ScrollView>

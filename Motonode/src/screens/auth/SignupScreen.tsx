@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -20,11 +21,11 @@ import {
   AuthMessageBox,
   AuthPrimaryButton,
   AuthRoleTab,
-  AuthSocialSection,
   authScreenStyles,
 } from '@components/auth';
 import { ScreenStatusBar } from '@components/common';
 import { MotonodeAppLogo } from '@assets/images/brand';
+import { LEGAL_URLS } from '@constants/legal';
 import { AuthRoutes } from '@constants/routes';
 import { useAuth } from '@context/index';
 import { useColors } from '@hooks/useColors';
@@ -93,7 +94,7 @@ export function SignupScreen() {
   };
 
   return (
-    <View style={authScreenStyles.container}>
+    <View style={[authScreenStyles.container, { backgroundColor: colors.background }]}>
       <ScreenStatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <AuthHeaderDecoration />
       <AuthFooterDecoration />
@@ -119,10 +120,10 @@ export function SignupScreen() {
             />
 
             <View style={authScreenStyles.titleRow}>
-              <Text style={authScreenStyles.titleText}>Create </Text>
-              <Text style={authScreenStyles.titleAccent}>Account!</Text>
+              <Text style={[authScreenStyles.titleText, { color: colors.textPrimary }]}>Create </Text>
+              <Text style={[authScreenStyles.titleAccent, { color: colors.primary }]}>Account!</Text>
             </View>
-            <Text style={authScreenStyles.subtitle}>
+            <Text style={[authScreenStyles.subtitle, { color: colors.textSecondary }]}>
               Sign up to join India's largest automotive community
             </Text>
 
@@ -189,15 +190,38 @@ export function SignupScreen() {
               loading={loading}
               onPress={handleRegister}
             />
-            <AuthSocialSection />
+
+            <Text style={[authScreenStyles.legalLine, { color: colors.textSecondary }]}>
+              By creating an account you agree to our{' '}
+              <Text
+                style={{ color: colors.primary, fontFamily: 'Inter_600SemiBold' }}
+                onPress={() => {
+                  lightHaptic();
+                  void Linking.openURL(LEGAL_URLS.terms);
+                }}
+              >
+                Terms
+              </Text>
+              {' '}and{' '}
+              <Text
+                style={{ color: colors.primary, fontFamily: 'Inter_600SemiBold' }}
+                onPress={() => {
+                  lightHaptic();
+                  void Linking.openURL(LEGAL_URLS.privacy);
+                }}
+              >
+                Privacy Policy
+              </Text>
+              .
+            </Text>
 
             <Pressable
               style={authScreenStyles.footerLink}
               onPress={() => navigation.navigate(AuthRoutes.Login)}
             >
-              <Text style={authScreenStyles.footerText}>
+              <Text style={[authScreenStyles.footerText, { color: colors.textSecondary }]}>
                 Already have an account?{' '}
-                <Text style={authScreenStyles.footerAccent}>Sign In</Text>
+                <Text style={[authScreenStyles.footerAccent, { color: colors.primary }]}>Sign In</Text>
               </Text>
             </Pressable>
           </ScrollView>

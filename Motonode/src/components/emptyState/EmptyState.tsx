@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 
-import { themeLight as colors } from '@theme/colors';
+import { useColors } from '@hooks/useColors';
 import { typography } from '@theme/typography';
 
 interface EmptyStateProps {
@@ -9,10 +9,12 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ title, message }: EmptyStateProps) {
+  const colors = useColors();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      {message ? <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text> : null}
     </View>
   );
 }
@@ -27,13 +29,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.semibold,
-    color: colors.text,
     textAlign: 'center',
   } satisfies TextStyle,
   message: {
     marginTop: 8,
     fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
     textAlign: 'center',
   } satisfies TextStyle,
 });

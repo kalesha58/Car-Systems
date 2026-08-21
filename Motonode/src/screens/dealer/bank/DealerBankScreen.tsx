@@ -179,7 +179,7 @@ export function DealerBankScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ChromeHeader contentPad={12}>
         <View style={styles.headerRow}>
           <View>

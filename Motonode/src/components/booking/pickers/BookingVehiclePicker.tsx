@@ -4,7 +4,6 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import type { UserVehicle } from '../../../types/userVehicle';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 
 interface BookingVehiclePickerProps {
   vehicles: UserVehicle[];
@@ -34,7 +33,7 @@ export function BookingVehiclePicker({
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderColor: selected ? '#E60012' : colors.border,
+                borderColor: selected ? colors.primary : colors.border,
               },
             ]}
             onPress={() => !locked && onSelect(vehicle.id)}
@@ -43,7 +42,7 @@ export function BookingVehiclePicker({
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.image} />
             ) : (
-              <View style={[styles.image, styles.imagePlaceholder]}>
+              <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: colors.muted }]}>
                 <Feather name="truck" size={16} color={colors.icon} />
               </View>
             )}
@@ -51,7 +50,7 @@ export function BookingVehiclePicker({
               <Text style={[styles.name, { color: colors.textPrimary }]}>
                 {vehicle.brand} {vehicle.model}
               </Text>
-              <Text style={styles.plate}>{vehicle.numberPlate}</Text>
+              <Text style={[styles.plate, { color: colors.textSecondary }]}>{vehicle.numberPlate}</Text>
               {vehicle.year ? (
                 <Text style={[styles.meta, { color: colors.textSecondary }]}>{vehicle.year}</Text>
               ) : null}
@@ -64,7 +63,7 @@ export function BookingVehiclePicker({
       {!locked && (
         <Pressable style={[styles.addBtn, { borderColor: colors.border }]}>
           <Feather name="plus" size={16} color={colors.icon} />
-          <Text style={styles.addText}>Add New Vehicle</Text>
+          <Text style={[styles.addText, { color: colors.textSecondary }]}>Add New Vehicle</Text>
         </Pressable>
       )}
     </View>
@@ -83,13 +82,12 @@ const styles = StyleSheet.create({
   },
   image: { width: 72, height: 52, borderRadius: 8 },
   imagePlaceholder: {
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   info: { flex: 1 },
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary, marginTop: 2 },
+  plate: { fontSize: 11, fontFamily: 'Inter_700Bold', marginTop: 2 },
   meta: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
   addBtn: {
     flexDirection: 'row',
@@ -101,5 +99,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
-  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 });

@@ -3,5 +3,6 @@ export { ChangePasswordScreen } from './ChangePasswordScreen';
 export { CustomerNotificationSettingsScreen } from './CustomerNotificationSettingsScreen';
 export { AppPermissionsScreen } from './AppPermissionsScreen';
 export { TermsConditionsScreen } from './TermsConditionsScreen';
+export { PrivacyPolicyScreen } from './PrivacyPolicyScreen';
 export { CustomerHelpSupportScreen } from './CustomerHelpSupportScreen';
 export { DeleteAccountScreen } from './DeleteAccountScreen';

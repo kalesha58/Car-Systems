@@ -2,7 +2,7 @@
 
 Prerequisites: Firebase configs from [client/firebase/README.md](firebase/README.md). Run `npm run verify:firebase-android` in `client/`. Server must log `Firebase Admin SDK initialized successfully`.
 
-If Android shows `Please set a valid API key`, ensure `google-services.json` `package_name` is `com.motonode` (not `com.carconnect`).
+If Android shows `Please set a valid API key`, ensure `google-services.json` `package_name` is `com.motonode.new` (not `com.carconnect` or `com.motonode`).
 
 ## 1. Token registration
 

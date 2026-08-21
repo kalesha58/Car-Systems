@@ -33,7 +33,6 @@ import { DealerStackRoutes } from '@constants/routes';
 import { useAuth, useDealer } from '@context/index';
 import { BusinessProfile } from '@data/dealerData';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import {
   createBusinessRegistrationApi,
@@ -1946,7 +1945,7 @@ const styles = StyleSheet.create({
   stepText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
   activeStepText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#ffffff' },
   stepLabel: { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: '#94A3B8' },
-  activeStepLabel: { color: themeLight.textSecondary },
+  activeStepLabel: {},
   stepDivider: {
     width: 40,
     height: 2,

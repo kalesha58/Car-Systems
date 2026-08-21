@@ -14,6 +14,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useCart } from '@context/CartContext';
@@ -194,7 +195,7 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
               <Pressable
                 style={[
                   styles.followBtn,
-                  isFollowed ? { backgroundColor: 'rgba(255,255,255,0.25)', borderColor: '#fff' } : { backgroundColor: '#ffffff' }
+                  isFollowed ? { backgroundColor: 'rgba(255,255,255,0.25)', borderColor: '#fff' } : { backgroundColor: colors.card }
                 ]}
                 onPress={handleFollowToggle}
               >
@@ -303,7 +304,11 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                   style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => navigation.navigate(CustomerStackRoutes.ProductDetail, { id: getProductId(product) })}
                 >
-                  <Image source={{ uri: product.images?.[0] ?? '' }} style={styles.productImg} />
+                  <OrderItemThumbnail
+                    uri={product.images?.find((uri) => uri && !uri.includes('placehold.co'))}
+                    style={styles.productImg}
+                    iconSize={28}
+                  />
                   <Text style={[styles.productBrand, { color: colors.primary }]}>{product.brand}</Text>
                   <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>
                     {product.name}
@@ -436,7 +441,11 @@ export function DealerStoreScreen({ route, navigation }: DealerStoreScreenProps)
                       })
                     }
                   >
-                    <Image source={{ uri: product.images?.[0] ?? '' }} style={styles.reviewedProductImg} />
+                    <OrderItemThumbnail
+                      uri={product.images?.find((uri) => uri && !uri.includes('placehold.co'))}
+                      style={styles.reviewedProductImg}
+                      iconSize={24}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text
                         style={[styles.serviceName, { color: colors.textPrimary }]}

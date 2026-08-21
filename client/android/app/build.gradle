@@ -85,7 +85,7 @@ android {
 
     namespace "com.motonode"
     defaultConfig {
-        applicationId "com.motonode"
+        applicationId "com.motonode.new"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 24

@@ -21,27 +21,28 @@ export function BookingProgressStepper({ steps, compact }: BookingProgressSteppe
             <View
               style={[
                 styles.circle,
-                step.completed && styles.circleDone,
-                step.active && styles.circleActive,
+                { borderColor: colors.border, backgroundColor: colors.muted },
+                step.completed && { backgroundColor: colors.success, borderColor: colors.success },
+                step.active && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
             >
               {step.completed ? (
-                <Feather name="check" size={compact ? 10 : 12} color="#fff" />
+                <Feather name="check" size={compact ? 10 : 12} color={colors.white} />
               ) : step.active ? (
                 <Feather
                   name={step.key === 'in_progress' ? 'tool' : 'circle'}
                   size={compact ? 10 : 12}
-                  color="#fff"
+                  color={colors.white}
                 />
               ) : (
-                <View style={styles.dot} />
+                <View style={[styles.dot, { backgroundColor: colors.border }]} />
               )}
             </View>
             <Text
               style={[
                 styles.label,
-                { color: step.active ? '#E60012' : colors.textSecondary },
-                step.completed && { color: '#10B981' },
+                { color: step.active ? colors.primary : colors.textSecondary },
+                step.completed && { color: colors.success },
               ]}
               numberOfLines={2}
             >
@@ -57,7 +58,8 @@ export function BookingProgressStepper({ steps, compact }: BookingProgressSteppe
             <View
               style={[
                 styles.line,
-                step.completed && styles.lineDone,
+                { backgroundColor: colors.border },
+                step.completed && { backgroundColor: colors.success },
               ]}
             />
           )}
@@ -76,21 +78,15 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleDone: { backgroundColor: '#10B981', borderColor: '#10B981' },
-  circleActive: { backgroundColor: '#E60012', borderColor: '#E60012' },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#CBD5E1' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
   label: { fontSize: 9, fontFamily: 'Inter_500Medium', textAlign: 'center', lineHeight: 12 },
   dateLabel: { fontSize: 8, fontFamily: 'Inter_400Regular' },
   line: {
     width: 12,
     height: 2,
-    backgroundColor: '#E2E8F0',
     marginTop: 14,
   },
-  lineDone: { backgroundColor: '#10B981' },
 });

@@ -41,11 +41,11 @@ export function DocumentUploadCard({
         <View style={styles.previewWrap}>
           <Image source={{ uri }} style={styles.preview} resizeMode="cover" />
           <View style={[styles.checkBadge, { backgroundColor: colors.success }]}>
-            <Feather name="check" size={10} color="#fff" />
+            <Feather name="check" size={10} color={colors.white} />
           </View>
           {onRemove ? (
             <Pressable style={styles.removeBtn} onPress={onRemove} hitSlop={6}>
-              <Feather name="x" size={12} color="#fff" />
+              <Feather name="x" size={12} color={colors.white} />
             </Pressable>
           ) : null}
         </View>

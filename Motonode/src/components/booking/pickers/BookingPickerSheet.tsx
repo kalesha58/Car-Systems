@@ -40,7 +40,7 @@ export function BookingPickerSheet({ visible, title, onClose, children }: Bookin
             },
           ]}
         >
-          <View style={styles.handle} />
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
             <Pressable
@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 12,
   },

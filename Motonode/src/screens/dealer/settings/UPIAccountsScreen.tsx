@@ -15,7 +15,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -202,14 +201,14 @@ const styles = StyleSheet.create({
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   addNewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, backgroundColor: '#F2F2F2' },
-  addNewText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  addNewText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   upiRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
   upiAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   upiAvatarText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   upiTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   upiId: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#1E293B' },
   primaryBadge: { backgroundColor: '#F2F2F2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  primaryBadgeText: { color: themeLight.textSecondary, fontSize: 9, fontFamily: 'Inter_700Bold' },
+  primaryBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
   upiAppName: { fontSize: 10, color: '#94A3B8', marginTop: 2, fontFamily: 'Inter_400Regular' },
   upiRightCol: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   activePill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },

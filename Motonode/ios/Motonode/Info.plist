@@ -24,6 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -35,11 +37,33 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Motonode uses your location to save delivery addresses, confirm your address on a map, and when you add location to a community post.</string>
+	<string>Motonode uses your location to save delivery addresses, show nearby workshops on the map, confirm pickup for home service, and optionally tag a community post.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Motonode needs access to your photos so you can share images in community posts.</string>
+	<string>Motonode needs access to your photos to upload vehicle and RC documents, dealer registration images, chat attachments, and community posts.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Motonode needs camera access so you can take photos for community posts.</string>
+	<string>Motonode needs camera access to photograph vehicles and documents for your garage, dealer onboarding, chat attachments, and community posts.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Feather.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
+		<string>Ionicons.ttf</string>
+		<string>AntDesign.ttf</string>
+		<string>Entypo.ttf</string>
+		<string>EvilIcons.ttf</string>
+		<string>FontAwesome.ttf</string>
+		<string>FontAwesome5_Brands.ttf</string>
+		<string>FontAwesome5_Regular.ttf</string>
+		<string>FontAwesome5_Solid.ttf</string>
+		<string>FontAwesome6_Brands.ttf</string>
+		<string>FontAwesome6_Regular.ttf</string>
+		<string>FontAwesome6_Solid.ttf</string>
+		<string>Fontisto.ttf</string>
+		<string>Foundation.ttf</string>
+		<string>Octicons.ttf</string>
+		<string>SimpleLineIcons.ttf</string>
+		<string>Zocial.ttf</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

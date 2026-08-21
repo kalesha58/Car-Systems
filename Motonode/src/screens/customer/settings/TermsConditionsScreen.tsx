@@ -12,6 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
+import { LEGAL_URLS } from '@constants/legal';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
@@ -123,6 +124,22 @@ export function TermsConditionsScreen({ navigation }: Props) {
           style={({ pressed }) => [
             styles.contactBtn,
             { borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+          ]}
+          onPress={() => {
+            lightHaptic();
+            void Linking.openURL(LEGAL_URLS.terms);
+          }}
+        >
+          <Feather name="external-link" size={16} color={colors.icon} />
+          <Text style={[styles.contactText, { color: colors.textPrimary }]}>
+            View on motonode.in
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.contactBtn,
+            { borderColor: colors.border, opacity: pressed ? 0.8 : 1, marginTop: 10 },
           ]}
           onPress={() => {
             lightHaptic();

@@ -10,7 +10,6 @@ import {
   type CustomerBooking,
 } from '@data/bookingsData';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 interface BookingListCardProps {
@@ -72,8 +71,8 @@ export function BookingListCard({ booking, onPress }: BookingListCardProps) {
         {booking.vehicleImage ? (
           <Image source={{ uri: booking.vehicleImage }} style={styles.thumb} />
         ) : (
-          <View style={[styles.thumb, styles.thumbPlaceholder]}>
-            <Feather name="truck" size={20} color="#94A3B8" />
+          <View style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: colors.muted }]}>
+            <Feather name="truck" size={20} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.info}>
@@ -105,7 +104,7 @@ export function BookingListCard({ booking, onPress }: BookingListCardProps) {
             </Text>
           )}
           <View style={styles.viewRow}>
-            <Text style={styles.viewText}>View Details</Text>
+            <Text style={[styles.viewText, { color: colors.textSecondary }]}>View Details</Text>
             <Feather name="chevron-right" size={12} color={colors.icon} />
           </View>
         </View>
@@ -142,7 +141,6 @@ const styles = StyleSheet.create({
   bodyRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   thumb: { width: 72, height: 56, borderRadius: 10 },
   thumbPlaceholder: {
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -154,5 +152,5 @@ const styles = StyleSheet.create({
   priceCol: { alignItems: 'flex-end', gap: 6 },
   price: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   viewRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  viewText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  viewText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
 });

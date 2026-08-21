@@ -171,7 +171,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#F8FAFC' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <ChromeHeader style={styles.header} contentPad={10}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
@@ -182,7 +182,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
       </ChromeHeader>
 
       {/* Progress */}
-      <View style={{ backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+      <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <StepBar current={1} />
       </View>
 
@@ -193,7 +193,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
       >
         {/* Deliver To */}
         <Text style={styles.sectionLabel}>Deliver To</Text>
-        <Pressable style={styles.card} onPress={() => { lightHaptic(); setIsAddressModalVisible(true); }}>
+        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => { lightHaptic(); setIsAddressModalVisible(true); }}>
           <View style={styles.addressIconBox}>
             <Feather name={selectedAddress?.addressType === 'home' ? 'home' : selectedAddress?.addressType === 'office' ? 'briefcase' : 'map-pin'} size={18} color="#E60012" />
           </View>
@@ -230,7 +230,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
         {/* Order Items */}
         <Text style={styles.sectionLabel}>Order Items</Text>
         {items.map((item) => (
-          <View key={getProductId(item.product)} style={[styles.card, { marginBottom: 8 }]}>
+          <View key={getProductId(item.product)} style={[styles.card, { marginBottom: 8, backgroundColor: colors.card, borderColor: colors.border }]}>
             <Image
               source={{ uri: item.product.images?.[0] || 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=120&auto=format&fit=crop&q=80' }}
               style={styles.serviceThumb}
@@ -248,7 +248,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
 
         {/* Choose Date & Time */}
         <Text style={styles.sectionLabel}>Choose Date & Time</Text>
-        <Pressable style={styles.card} onPress={() => lightHaptic()}>
+        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => lightHaptic()}>
           <View style={[styles.dateIconBox, { backgroundColor: '#EFF6FF' }]}>
             <Feather name="calendar" size={18} color="#2563EB" />
           </View>
@@ -261,7 +261,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
 
         {/* Delivery / Service Location */}
         <Text style={styles.sectionLabel}>Delivery / Service Location</Text>
-        <Pressable style={styles.card} onPress={() => lightHaptic()}>
+        <Pressable style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => lightHaptic()}>
           <View style={[styles.dateIconBox, { backgroundColor: 'rgba(230,0,18,0.08)' }]}>
             <Feather name="home" size={18} color="#E60012" />
           </View>
@@ -404,7 +404,7 @@ export function CheckoutScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, backgroundColor: '#E60012',
+    paddingBottom: 14,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },

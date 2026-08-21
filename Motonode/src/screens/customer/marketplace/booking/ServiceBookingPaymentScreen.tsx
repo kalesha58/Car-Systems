@@ -25,12 +25,11 @@ const PAYMENT_METHODS: {
   subtitle: string;
   icon: React.ComponentProps<typeof Feather>['name'];
   iconColor: string;
-  iconBg: string;
 }[] = [
-  { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#F59E0B', iconBg: '#FEF3C7' },
-  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#E60012', iconBg: '#F2F2F2' },
-  { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#1E293B', iconBg: '#F1F5F9' },
-  { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED', iconBg: '#EDE9FE' },
+  { id: 'upi', label: 'UPI', subtitle: 'Pay using any UPI app', icon: 'smartphone', iconColor: '#F59E0B' },
+  { id: 'card', label: 'Credit / Debit Card', subtitle: 'Visa, Mastercard, Rupay', icon: 'credit-card', iconColor: '#E60012' },
+  { id: 'netbanking', label: 'Net Banking', subtitle: 'All major banks supported', icon: 'home', iconColor: '#64748B' },
+  { id: 'wallet', label: 'Wallets', subtitle: 'Paytm, PhonePe, Amazon Pay', icon: 'briefcase', iconColor: '#7C3AED' },
 ];
 
 export function ServiceBookingPaymentScreen({ navigation }: Props) {
@@ -71,11 +70,11 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
       continueDisabled={paying}
       footerExtra={<BookingTrustFooter />}
     >
-      <View style={styles.secureBanner}>
-        <Feather name="shield" size={16} color={colors.icon} />
+      <View style={[styles.secureBanner, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+        <Feather name="shield" size={16} color={colors.primary} />
         <View>
-          <Text style={styles.secureTitle}>100% Secure Payments</Text>
-          <Text style={styles.secureSub}>Your payment information is safe with us.</Text>
+          <Text style={[styles.secureTitle, { color: colors.textPrimary }]}>100% Secure Payments</Text>
+          <Text style={[styles.secureSub, { color: colors.textSecondary }]}>Your payment information is safe with us.</Text>
         </View>
       </View>
 
@@ -85,7 +84,7 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
             {service.images?.[0] ? (
               <Image source={{ uri: service.images[0] }} style={styles.thumb} />
             ) : (
-              <View style={[styles.thumb, { backgroundColor: '#E2E8F0' }]} />
+              <View style={[styles.thumb, { backgroundColor: colors.muted }]} />
             )}
             <View style={{ flex: 1 }}>
               <Text style={[styles.itemName, { color: colors.textPrimary }]}>{service.name}</Text>
@@ -110,18 +109,25 @@ export function ServiceBookingPaymentScreen({ navigation }: Props) {
                   updateBooking({ paymentMethod: method.id });
                 }}
               >
-                <View style={[styles.methodIcon, { backgroundColor: method.iconBg }]}>
+                <View style={[styles.methodIcon, { backgroundColor: colors.muted }]}>
                   <Feather name={method.icon} size={16} color={method.iconColor} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.methodLabel, { color: colors.textPrimary }]}>{method.label}</Text>
                   <Text style={[styles.methodSub, { color: colors.textTertiary }]}>{method.subtitle}</Text>
                 </View>
-                <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                  {isSelected && <View style={styles.radioInner} />}
+                <View
+                  style={[
+                    styles.radio,
+                    { borderColor: isSelected ? colors.primary : colors.border },
+                  ]}
+                >
+                  {isSelected && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}
                 </View>
               </Pressable>
-              {idx < PAYMENT_METHODS.length - 1 && <View style={styles.divider} />}
+              {idx < PAYMENT_METHODS.length - 1 && (
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              )}
             </View>
           );
         })}
@@ -144,17 +150,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#F2F2F2',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#D9D9D9',
   },
-  secureTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E3A8A' },
-  secureSub: { fontSize: 10, color: '#FF1A1A', marginTop: 1 },
+  secureTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  secureSub: { fontSize: 10, marginTop: 1 },
   summaryCard: { borderRadius: 16, borderWidth: 1, padding: 14 },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  thumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: '#E2E8F0' },
+  thumb: { width: 56, height: 56, borderRadius: 10 },
   itemName: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   itemMeta: { fontSize: 11, marginTop: 2 },
   sectionLabel: { fontSize: 14, fontFamily: 'Inter_700Bold' },
@@ -168,11 +172,9 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: '#E60012' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
-  divider: { height: 1, backgroundColor: '#F1F5F9' },
+  radioInner: { width: 10, height: 10, borderRadius: 5 },
+  divider: { height: 1 },
 });

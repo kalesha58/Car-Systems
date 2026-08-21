@@ -7,7 +7,6 @@ import { BookingFlowLayout } from '@components/booking/BookingFlowLayout';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 
@@ -39,7 +38,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
       )}
 
       {serviceLoading ? (
-        <ActivityIndicator color="#E60012" style={{ marginVertical: 24 }} />
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
       ) : list.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           No vehicles in your garage. Add a vehicle first.
@@ -55,7 +54,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
                 styles.card,
                 {
                   backgroundColor: colors.card,
-                  borderColor: selected ? '#E60012' : colors.border,
+                  borderColor: selected ? colors.primary : colors.border,
                 },
               ]}
               onPress={() => {
@@ -68,7 +67,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
               {imageUri ? (
                 <Image source={{ uri: imageUri }} style={styles.image} />
               ) : (
-                <View style={[styles.image, styles.imagePlaceholder]}>
+                <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: colors.muted }]}>
                   <Feather name="truck" size={20} color={colors.icon} />
                 </View>
               )}
@@ -84,8 +83,8 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
               {draft.vehicleLocked ? (
                 <Feather name="check-circle" size={20} color={colors.icon} />
               ) : (
-                <View style={[styles.radio, selected && styles.radioSelected]}>
-                  {selected && <View style={styles.radioInner} />}
+                <View style={[styles.radio, { borderColor: colors.border }, selected && { borderColor: colors.primary }]}>
+                  {selected && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}
                 </View>
               )}
             </Pressable>
@@ -99,7 +98,7 @@ export function ServiceBookingVehicleScreen({ navigation }: Props) {
           onPress={() => lightHaptic()}
         >
           <Feather name="plus" size={16} color={colors.icon} />
-          <Text style={styles.addText}>Add New Vehicle</Text>
+          <Text style={[styles.addText, { color: colors.textSecondary }]}>Add New Vehicle</Text>
         </Pressable>
       )}
     </BookingFlowLayout>
@@ -119,7 +118,6 @@ const styles = StyleSheet.create({
   },
   image: { width: 72, height: 52, borderRadius: 8 },
   imagePlaceholder: {
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -132,12 +130,10 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioSelected: { borderColor: '#E60012' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E60012' },
+  radioInner: { width: 10, height: 10, borderRadius: 5 },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -148,5 +144,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
-  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  addText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 });

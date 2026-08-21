@@ -15,16 +15,25 @@ import {
 const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=200&auto=format&fit=crop&q=80';
 
-const STATUS_STYLE: Record<
-  OrderDisplayStatus,
-  { bg: string; text: string; accent: string; icon: React.ComponentProps<typeof Feather>['name'] }
-> = {
-  Processing: { bg: '#FFEDD5', text: '#C2410C', accent: '#F97316', icon: 'clock' },
-  Shipped: { bg: '#DBEAFE', text: '#1D4ED8', accent: '#3B82F6', icon: 'package' },
-  'Out for Delivery': { bg: '#F3E8FF', text: '#7E22CE', accent: '#8B5CF6', icon: 'truck' },
-  Delivered: { bg: '#DCFCE7', text: '#15803D', accent: '#10B981', icon: 'check-circle' },
-  Cancelled: { bg: '#FEE2E2', text: '#B91C1C', accent: '#EF4444', icon: 'x-circle' },
-};
+function getStatusStyle(
+  displayStatus: OrderDisplayStatus,
+  colors: ReturnType<typeof useColors>,
+): { bg: string; text: string; accent: string; icon: React.ComponentProps<typeof Feather>['name'] } {
+  switch (displayStatus) {
+    case 'Processing':
+      return { bg: colors.muted, text: colors.warning, accent: colors.warning, icon: 'clock' };
+    case 'Shipped':
+      return { bg: colors.muted, text: colors.info, accent: colors.info, icon: 'package' };
+    case 'Out for Delivery':
+      return { bg: colors.muted, text: colors.info, accent: colors.info, icon: 'truck' };
+    case 'Delivered':
+      return { bg: colors.muted, text: colors.success, accent: colors.success, icon: 'check-circle' };
+    case 'Cancelled':
+      return { bg: colors.muted, text: colors.destructive, accent: colors.destructive, icon: 'x-circle' };
+    default:
+      return { bg: colors.muted, text: colors.textSecondary, accent: colors.primary, icon: 'clock' };
+  }
+}
 
 interface OrderCardProps {
   order: IOrderData;
@@ -54,7 +63,7 @@ function getStatusMessage(order: IOrderData, displayStatus: OrderDisplayStatus):
 export function OrderCard({ order, onPress }: OrderCardProps) {
   const colors = useColors();
   const displayStatus = normalizeOrderDisplayStatus(order.status);
-  const status = STATUS_STYLE[displayStatus];
+  const status = getStatusStyle(displayStatus, colors);
   const firstItem = order.items[0];
   const extraCount = Math.max(order.items.length - 1, 0);
   const orderDate = new Date(order.createdAt).toLocaleDateString('en-IN', {

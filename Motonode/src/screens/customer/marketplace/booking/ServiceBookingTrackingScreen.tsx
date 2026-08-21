@@ -50,9 +50,9 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={24} color="#ffffff" />
+          <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
-        <Text style={styles.headerTitle}>My Booking</Text>
+        <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>My Booking</Text>
         <View style={styles.iconBtn} />
       </ChromeHeader>
 
@@ -65,8 +65,8 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
             <Text style={[styles.idLabel, { color: colors.textSecondary }]}>Booking ID</Text>
             <Text style={[styles.idValue, { color: colors.textPrimary }]}>{bookingId}</Text>
           </View>
-          <View style={styles.confirmedBadge}>
-            <Text style={styles.confirmedText}>Confirmed</Text>
+          <View style={[styles.confirmedBadge, { backgroundColor: colors.muted }]}>
+            <Text style={[styles.confirmedText, { color: colors.success }]}>Confirmed</Text>
           </View>
         </View>
 
@@ -85,8 +85,9 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
                 <View
                   style={[
                     styles.stepDot,
-                    step.completed && styles.stepDotDone,
-                    step.active && styles.stepDotActive,
+                    { backgroundColor: colors.muted, borderColor: colors.border },
+                    step.completed && { backgroundColor: colors.success, borderColor: colors.success },
+                    step.active && { borderColor: colors.primary, backgroundColor: colors.card },
                   ]}
                 >
                   {step.completed && <Feather name="check" size={10} color="#fff" />}
@@ -95,7 +96,8 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
                   <View
                     style={[
                       styles.stepLine,
-                      step.completed && styles.stepLineDone,
+                      { backgroundColor: colors.border },
+                      step.completed && { backgroundColor: colors.success },
                     ]}
                   />
                 )}
@@ -114,7 +116,7 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottomPad + 12, borderTopColor: colors.border }]}>
+      <View style={[styles.footer, { paddingBottom: bottomPad + 12, borderTopColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable
           style={styles.footerAction}
           onPress={() => {
@@ -122,8 +124,8 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
             Alert.alert('Call Workshop', `Calling ${location?.name ?? 'service center'}…`);
           }}
         >
-          <Feather name="phone" size={18} color="#2563EB" />
-          <Text style={styles.footerActionText}>Call</Text>
+          <Feather name="phone" size={18} color={colors.primary} />
+          <Text style={[styles.footerActionText, { color: colors.primary }]}>Call</Text>
         </Pressable>
         <Pressable
           style={styles.footerAction}
@@ -132,8 +134,8 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
             Alert.alert('Directions', `Opening directions to ${location?.address ?? 'service center'}`);
           }}
         >
-          <Feather name="navigation" size={18} color="#2563EB" />
-          <Text style={styles.footerActionText}>Directions</Text>
+          <Feather name="navigation" size={18} color={colors.primary} />
+          <Text style={[styles.footerActionText, { color: colors.primary }]}>Directions</Text>
         </Pressable>
         <Pressable
           style={styles.footerAction}
@@ -145,8 +147,8 @@ export function ServiceBookingTrackingScreen({ route, navigation }: Props) {
             ]);
           }}
         >
-          <Feather name="x-circle" size={18} color="#EF4444" />
-          <Text style={[styles.footerActionText, { color: '#EF4444' }]}>Cancel</Text>
+          <Feather name="x-circle" size={18} color={colors.destructive} />
+          <Text style={[styles.footerActionText, { color: colors.destructive }]}>Cancel</Text>
         </Pressable>
       </View>
     </View>
@@ -163,18 +165,17 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
   },
   iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#ffffff' },
+  headerTitle: { fontSize: 17, fontFamily: 'Inter_700Bold' },
   content: { padding: 16, gap: 16 },
   idRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   idLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
   idValue: { fontSize: 16, fontFamily: 'Inter_700Bold', marginTop: 2 },
   confirmedBadge: {
-    backgroundColor: '#D1FAE5',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  confirmedText: { color: '#065F46', fontSize: 11, fontFamily: 'Inter_700Bold' },
+  confirmedText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   serviceCard: { borderRadius: 14, borderWidth: 1, padding: 14 },
   serviceName: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   serviceMeta: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 },
@@ -198,10 +199,8 @@ const styles = StyleSheet.create({
     width: 2,
     flex: 1,
     minHeight: 24,
-    backgroundColor: '#E2E8F0',
     marginVertical: 4,
   },
-  stepLineDone: { backgroundColor: '#10B981' },
   stepLabel: { fontSize: 13, fontFamily: 'Inter_500Medium', paddingTop: 1 },
   stepLabelActive: { fontFamily: 'Inter_600SemiBold' },
   footer: {
@@ -209,9 +208,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingTop: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
   },
   footerAction: { alignItems: 'center', gap: 4, padding: 8 },
-  footerActionText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#2563EB' },
+  footerActionText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
 });

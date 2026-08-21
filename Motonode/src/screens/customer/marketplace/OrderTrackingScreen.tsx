@@ -29,7 +29,7 @@ import { lightHaptic, successHaptic } from '@utils/haptics';
 import { InAppBrowserModal } from '@components/common/InAppBrowserModal';
 import { getString, StorageKeys } from '@storage/index';
 import { API_BASE_URL } from '@config/env';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 
 type CustomerStackParamList = {
   [CustomerStackRoutes.CustomerTabs]: undefined;
@@ -231,9 +231,9 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-            <Feather name="chevron-left" size={24} color="#ffffff" />
+            <Feather name="chevron-left" size={24} color={colors.headerForeground} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Order Tracking</Text>
           <View style={styles.iconBtn} />
         </ChromeHeader>
         <OrderTrackingSkeleton />
@@ -246,9 +246,9 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <ChromeHeader style={styles.header} contentPad={8}>
           <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-            <Feather name="chevron-left" size={24} color="#ffffff" />
+            <Feather name="chevron-left" size={24} color={colors.headerForeground} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
+          <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Order Tracking</Text>
           <View style={styles.iconBtn} />
         </ChromeHeader>
         <View style={styles.centered}>
@@ -268,11 +268,11 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
-          <Feather name="chevron-left" size={24} color="#ffffff" />
+          <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: '#ffffff' }]}>Order Tracking</Text>
+        <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Order Tracking</Text>
         <Pressable style={styles.iconBtn}>
-          <Feather name="headphones" size={20} color="#ffffff" />
+          <Feather name="headphones" size={20} color={colors.headerForeground} />
         </Pressable>
       </ChromeHeader>
 
@@ -288,22 +288,25 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
               Placed on {formatOrderDate(order.createdAt)}
             </Text>
           </View>
-          <Pressable style={styles.copyBtn} onPress={handleCopyOrderId}>
-            <Text style={styles.copyBtnText}>Copy</Text>
+          <Pressable
+            style={[styles.copyBtn, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
+            onPress={handleCopyOrderId}
+          >
+            <Text style={[styles.copyBtnText, { color: colors.textPrimary }]}>Copy</Text>
           </Pressable>
         </View>
 
-        <View style={[styles.statusCard, { backgroundColor: 'rgba(230,0,18,0.04)', borderColor: 'rgba(230,0,18,0.1)' }]}>
+        <View style={[styles.statusCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.statusInfo}>
-            <Text style={styles.statusTitle}>{displayStatus}</Text>
-            <Text style={styles.statusSubtitle}>
+            <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>{displayStatus}</Text>
+            <Text style={[styles.statusSubtitle, { color: colors.textSecondary }]}>
               {order.expectedDeliveryDate
                 ? `Expected by ${new Date(order.expectedDeliveryDate).toLocaleDateString('en-IN')}`
                 : `Payment: ${order.paymentStatus}`}
             </Text>
           </View>
-          <View style={[styles.scooterIconContainer, { backgroundColor: 'rgba(230,0,18,0.08)' }]}>
-            <Feather name="truck" size={28} color="#E60012" />
+          <View style={[styles.scooterIconContainer, { backgroundColor: colors.muted }]}>
+            <Feather name="truck" size={28} color={colors.primary} />
           </View>
         </View>
 
@@ -340,7 +343,7 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
           <MapView
             ref={mapRef}
             style={styles.map}
-            provider={Platform.OS === 'android' ? 'google' : undefined}
+            provider={PROVIDER_GOOGLE}
             initialRegion={{
               latitude: (destCoords.latitude + startCoords.latitude) / 2,
               longitude: (destCoords.longitude + startCoords.longitude) / 2,
@@ -393,8 +396,10 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                     <View
                       style={[
                         styles.circleNode,
-                        step.completed ? { backgroundColor: '#7E22CE' } : { backgroundColor: '#E2E8F0' },
-                        step.active && { borderWidth: 2, borderColor: '#C084FC' },
+                        step.completed
+                          ? { backgroundColor: colors.success }
+                          : { backgroundColor: colors.muted },
+                        step.active && { borderWidth: 2, borderColor: colors.primary },
                       ]}
                     >
                       {step.completed ? (
@@ -412,17 +417,16 @@ export function OrderTrackingScreen({ route, navigation }: OrderTrackingScreenPr
                     >
                       {step.label}
                     </Text>
-                    {step.date ? <Text style={styles.stepDate}>{step.date}</Text> : null}
+                    {step.date ? (
+                      <Text style={[styles.stepDate, { color: colors.textSecondary }]}>{step.date}</Text>
+                    ) : null}
                   </View>
                   {idx < steps.length - 1 && (
                     <View
                       style={[
                         styles.stepLine,
                         {
-                          backgroundColor:
-                            steps[idx + 1].completed
-                              ? '#E60012'
-                              : '#E2E8F0',
+                          backgroundColor: steps[idx + 1].completed ? colors.primary : colors.border,
                         },
                       ]}
                     />
@@ -527,7 +531,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: '#E60012',
   },
   headerTitle: {
     fontSize: 16,
@@ -554,7 +557,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_500Medium',
     textAlign: 'center',
   },
-  scrollContent: { padding: 16, gap: 16, paddingTop: 70 },
+  scrollContent: { padding: 16, gap: 16 },
   orderIdRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -568,9 +571,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#F1F5F9',
   },
-  copyBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#475569' },
+  copyBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   statusCard: {
     flexDirection: 'row',
     borderRadius: 20,
@@ -579,8 +581,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusInfo: { flex: 1 },
-  statusTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: '#E60012' },
-  statusSubtitle: { fontSize: 12, color: '#E60012', opacity: 0.8, marginTop: 4 },
+  statusTitle: { fontSize: 18, fontFamily: 'Inter_700Bold' },
+  statusSubtitle: { fontSize: 12, marginTop: 4 },
   scooterIconContainer: {
     width: 50,
     height: 50,
@@ -628,15 +630,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     textAlign: 'center',
     marginTop: 6,
-    color: '#94A3B8',
   },
   stepLabelActive: {
-    color: '#E60012',
     fontFamily: 'Inter_700Bold',
   },
   stepDate: {
-    fontSize: 7,
-    color: '#94A3B8',
+    fontSize: 11,
     marginTop: 2,
     fontFamily: 'Inter_500Medium',
   },

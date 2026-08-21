@@ -1,0 +1,21 @@
+{
+  "name": "Moto Node",
+  "short_name": "MotoNode",
+  "description": "India's 1st Automobile Super App for services, spare parts, community, and rides.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#4ade80",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

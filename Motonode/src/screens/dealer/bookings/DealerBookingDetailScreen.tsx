@@ -29,7 +29,6 @@ import {
   mapServiceBookingToCustomerBooking,
   mapTestDriveToCustomerBooking,
 } from '@utils/bookingMappers';
-import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 import type { ServiceBookingStatus } from '../../../types/serviceBooking';
@@ -170,7 +169,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
     (!isService && booking.status === 'pending');
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F1F5F9' }]}>
+    <View style={[styles.container, { backgroundColor: colors.muted }]}>
       <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.card }]}>
         <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.textPrimary} />
@@ -198,7 +197,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.heroTop}>
             <View style={styles.newBadge}>
-              <Text style={styles.newBadgeText}>
+              <Text style={[styles.newBadgeText, { color: colors.textSecondary }]}>
                 {booking.status === 'pending' ? 'New Booking' : 'Booking'}
               </Text>
             </View>
@@ -250,7 +249,7 @@ export function DealerBookingDetailScreen({ route, navigation }: Props) {
             <View style={styles.acceptRejectRow}>
               <Pressable style={styles.acceptOutlineBtn} onPress={() => runAction('confirmed')}>
                 <Feather name="check" size={16} color={colors.icon} />
-                <Text style={styles.acceptOutlineText}>Accept Booking</Text>
+                <Text style={[styles.acceptOutlineText, { color: colors.textSecondary }]}>Accept Booking</Text>
               </Pressable>
               <Pressable
                 style={styles.rejectOutlineBtn}
@@ -355,7 +354,7 @@ const styles = StyleSheet.create({
   heroCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 12 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   newBadge: { backgroundColor: '#F2F2F2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  newBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  newBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   idCopyRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   idText: { fontSize: 10, fontFamily: 'Inter_500Medium' },
   heroBody: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
@@ -383,7 +382,7 @@ const styles = StyleSheet.create({
     borderColor: '#E60012',
     backgroundColor: '#fff',
   },
-  acceptOutlineText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  acceptOutlineText: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   rejectOutlineBtn: {
     flex: 1,
     flexDirection: 'row',

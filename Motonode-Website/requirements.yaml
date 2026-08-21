@@ -1,0 +1,26 @@
+packages:
+  "framer-motion": "For premium scroll reveals, hover animations, and the hero car animation"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+
+images:
+  - path: "artifacts/carconnect/public/images/hero-car.png"
+    description: "Glowing neon light green 3D wireframe model of a sleek futuristic sports car floating on a pure black background, premium automotive tech style, dynamic angle"
+    aspect_ratio: "16:9"
+  - path: "artifacts/carconnect/public/images/app-mockup.png"
+    description: "Two sleek dark mode mobile app interface screens overlapping, featuring neon green accents, glowing buttons, and automotive service booking UI on a pure black background"
+    aspect_ratio: "4:3"
+  - path: "artifacts/carconnect/public/images/engine-oil.png"
+    description: "Premium synthetic engine oil bottle with glowing green tech accents on dark background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/carconnect/public/images/brakes.png"
+    description: "High performance car brake caliper and rotor with subtle neon green lighting on black background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/carconnect/public/images/tires.png"
+    description: "Sport car tire with deep tread pattern, dark atmospheric lighting with green edge light"
+    aspect_ratio: "1:1"
+
+notes:
+  - No backend required for this phase.
+  - Using Framer Motion for scroll animations and interactions.
+  - Relying on pure black (#000) and bright light green (#4ade80) for the color palette.

@@ -156,6 +156,28 @@ export function DealerPrivacySecurityScreen({ navigation }: Props) {
           </View>
         </View>
 
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Account</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable
+            style={styles.row}
+            onPress={() => {
+              lightHaptic();
+              navigation.navigate(DealerStackRoutes.DeleteAccount);
+            }}
+          >
+            <View style={[styles.iconWrap, { backgroundColor: '#FEF2F2' }]}>
+              <Feather name="user-x" size={16} color="#E60012" />
+            </View>
+            <View style={styles.textWrap}>
+              <Text style={[styles.label, { color: '#E60012' }]}>Deactivate or delete account</Text>
+              <Text style={[styles.sublabel, { color: colors.textSecondary }]}>
+                Pause or permanently remove this dealer account
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.textTertiary} />
+          </Pressable>
+        </View>
+
         <Text style={[styles.hint, { color: colors.textTertiary }]}>
           Signed in as {user?.email || user?.phone || 'dealer account'}
         </Text>

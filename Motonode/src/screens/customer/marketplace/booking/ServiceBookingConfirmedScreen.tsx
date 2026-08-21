@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingMasterStepBar } from '@components/booking/BookingMasterStepBar';
+import { ChromeHeader } from '@components/common';
 
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
@@ -34,15 +35,18 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+      <ChromeHeader style={styles.header} contentPad={8}>
+        <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>Confirmation</Text>
+      </ChromeHeader>
+      <View style={[styles.topBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <BookingMasterStepBar current={4} />
       </View>
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.successIcon}>
-          <Feather name="check" size={36} color="#ffffff" />
+        <View style={[styles.successIcon, { backgroundColor: colors.success }]}>
+          <Feather name="check" size={36} color={colors.white} />
         </View>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Booking Confirmed!</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -71,7 +75,7 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottomPad + 12, borderTopColor: colors.border }]}>
+      <View style={[styles.footer, { paddingBottom: bottomPad + 12, borderTopColor: colors.border, backgroundColor: colors.card }]}>
         <Pressable
           style={[styles.secondaryBtn, { borderColor: colors.border }]}
           onPress={() => {
@@ -82,14 +86,14 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
           <Text style={[styles.secondaryText, { color: colors.textPrimary }]}>View Booking</Text>
         </Pressable>
         <Pressable
-          style={styles.primaryBtn}
+          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
             lightHaptic();
             resetBooking();
             navigation.popToTop();
           }}
         >
-          <Text style={styles.primaryText}>Go to Home</Text>
+          <Text style={[styles.primaryText, { color: colors.primaryForeground }]}>Go to Home</Text>
         </Pressable>
       </View>
     </View>
@@ -98,13 +102,23 @@ export function ServiceBookingConfirmedScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topBar: { backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  header: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontFamily: 'Inter_700Bold',
+    textAlign: 'center',
+  },
+  topBar: { borderBottomWidth: 1 },
   content: { alignItems: 'center', padding: 24, paddingTop: 32, gap: 12 },
   successIcon: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -136,7 +150,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
   },
   secondaryBtn: {
@@ -152,9 +165,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  primaryText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

@@ -630,7 +630,7 @@ export function AddVehicleScreen({ navigation }: Props) {
 
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Registration Number</Text>
       <View style={[styles.plateRow, { borderColor: colors.border, backgroundColor: colors.card }]}>
-        <View style={styles.platePrefix}>
+        <View style={[styles.platePrefix, { borderRightColor: colors.border }]}>
           <Text style={styles.flag}>🇮🇳</Text>
           <Text style={[styles.indText, { color: colors.textSecondary }]}>IND</Text>
         </View>
@@ -838,8 +838,8 @@ export function AddVehicleScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <View style={[styles.tipsBox, { backgroundColor: '#FEF9C3' }]}>
-        <Text style={[styles.infoTitle, { color: '#A16207' }]}>Document Tips</Text>
+      <View style={[styles.tipsBox, { backgroundColor: colors.muted, borderColor: colors.border, borderWidth: 1 }]}>
+        <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>Document Tips</Text>
         {[
           'Ensure documents are clear and readable',
           'All corners of the document should be visible',
@@ -847,7 +847,7 @@ export function AddVehicleScreen({ navigation }: Props) {
         ].map((item) => (
           <View key={item} style={styles.infoRow}>
             <View style={styles.tipDot} />
-            <Text style={[styles.infoText, { color: '#854D0E' }]}>{item}</Text>
+            <Text style={[styles.infoText, { color: colors.textSecondary }]}>{item}</Text>
           </View>
         ))}
       </View>
@@ -1167,7 +1167,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 12,
     borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
   },
   flag: { fontSize: 14 },
   indText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },

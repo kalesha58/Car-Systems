@@ -1,11 +1,9 @@
 import React from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import LinearGradient from 'react-native-linear-gradient';
 
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 
 type InputIcon = 'user' | 'mail' | 'phone' | 'lock';
@@ -117,52 +115,34 @@ export function AuthPrimaryButton({
   const colors = useColors();
 
   return (
-    <Pressable onPress={onPress} disabled={loading} style={styles.primaryBtnWrap}>
-      <LinearGradient
-        colors={[...colors.gradients.primary]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
-      >
+    <Pressable
+      onPress={onPress}
+      disabled={loading}
+      style={[styles.primaryBtnWrap, loading && styles.primaryBtnDisabled]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <View style={[styles.primaryBtn, { backgroundColor: colors.primary }]}>
+        <LinearGradient
+          colors={[...colors.gradients.primary]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
+        />
         {loading ? (
-          <ActivityIndicator color={colors.white} />
+          <ActivityIndicator color="#FFFFFF" />
         ) : (
           <Text style={styles.primaryBtnText}>{label}</Text>
         )}
-      </LinearGradient>
+      </View>
     </Pressable>
-  );
-}
-
-export function AuthSocialSection() {
-  const colors = useColors();
-
-  return (
-    <>
-      <View style={styles.orRow}>
-        <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-        <Text style={[styles.orText, { color: colors.textSecondary }]}>OR</Text>
-        <View style={[styles.orLine, { backgroundColor: colors.border }]} />
-      </View>
-      <Text style={[styles.continueWith, { color: colors.textSecondary }]}>Continue with</Text>
-      <View style={styles.socialRow}>
-        <Pressable style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <FontAwesome name="google" size={16} color="#DB4437" />
-          <Text style={[styles.socialBtnText, { color: colors.textPrimary }]}>Google</Text>
-        </Pressable>
-        <Pressable style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <FontAwesome name="apple" size={18} color={colors.textPrimary} />
-          <Text style={[styles.socialBtnText, { color: colors.textPrimary }]}>Apple</Text>
-        </Pressable>
-      </View>
-    </>
   );
 }
 
 export const authScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeLight.card,
   },
   flex: { flex: 1 },
   safe: { flex: 1 },
@@ -195,18 +175,15 @@ export const authScreenStyles = StyleSheet.create({
   titleText: {
     fontSize: 26,
     fontFamily: 'Inter_700Bold',
-    color: themeLight.textPrimary,
   },
   titleAccent: {
     fontSize: 26,
     fontFamily: 'Inter_700Bold',
     fontStyle: 'italic',
-    color: themeLight.primary,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: themeLight.textSecondary,
     marginBottom: 22,
     textAlign: 'center',
   },
@@ -216,16 +193,23 @@ export const authScreenStyles = StyleSheet.create({
     gap: 12,
     marginBottom: 22,
   },
+  legalLine: {
+    width: '100%',
+    textAlign: 'center',
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 18,
+    marginBottom: 20,
+    marginTop: -4,
+  },
   footerLink: {
     alignItems: 'center',
   },
   footerText: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: themeLight.textSecondary,
   },
   footerAccent: {
-    color: themeLight.primary,
     fontFamily: 'Inter_700Bold',
   },
 });
@@ -293,6 +277,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    minHeight: 52,
   },
   primaryBtnDisabled: {
     opacity: 0.85,
@@ -301,47 +287,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontFamily: 'Inter_700Bold',
-  },
-  orRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    gap: 12,
-    marginBottom: 10,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-  },
-  orText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 0.5,
-  },
-  continueWith: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    marginBottom: 14,
-    textAlign: 'center',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: 10,
-    marginBottom: 28,
-  },
-  socialBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  socialBtnText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
   },
 });

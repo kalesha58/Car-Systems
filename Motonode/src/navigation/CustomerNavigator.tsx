@@ -50,6 +50,7 @@ import {
   CustomerNotificationSettingsScreen,
   AppPermissionsScreen,
   TermsConditionsScreen,
+  PrivacyPolicyScreen,
   CustomerHelpSupportScreen,
   DeleteAccountScreen,
 } from '@screens/customer/settings';
@@ -111,6 +112,7 @@ export type CustomerStackParamList = {
   [CustomerStackRoutes.ChangePassword]: undefined;
   [CustomerStackRoutes.CustomerNotificationSettings]: undefined;
   [CustomerStackRoutes.TermsConditions]: undefined;
+  [CustomerStackRoutes.PrivacyPolicy]: undefined;
   [CustomerStackRoutes.AppPermissions]: undefined;
   [CustomerStackRoutes.CustomerHelpSupport]: undefined;
   [CustomerStackRoutes.DeleteAccount]: undefined;
@@ -221,6 +223,10 @@ export function CustomerNavigator() {
       <Stack.Screen
         name={CustomerStackRoutes.TermsConditions}
         component={TermsConditionsScreen}
+      />
+      <Stack.Screen
+        name={CustomerStackRoutes.PrivacyPolicy}
+        component={PrivacyPolicyScreen}
       />
       <Stack.Screen
         name={CustomerStackRoutes.CustomerHelpSupport}

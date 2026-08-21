@@ -4,6 +4,5 @@ export {
   AuthMessageBox,
   AuthPrimaryButton,
   AuthRoleTab,
-  AuthSocialSection,
   authScreenStyles,
 } from './AuthFormFields';

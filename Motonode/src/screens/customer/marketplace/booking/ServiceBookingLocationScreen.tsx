@@ -1,10 +1,12 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingFlowLayout } from '@components/booking/BookingFlowLayout';
 import { CustomerStackRoutes } from '@constants/routes';
+import { DEFAULT_COORDINATES } from '@constants/indianStates';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import type { LocationType } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
@@ -21,6 +23,8 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
   const service = getService();
   const location = getLocation();
   const homeServiceEnabled = service?.homeService ?? false;
+  const latitude = location?.latitude ?? DEFAULT_COORDINATES.latitude;
+  const longitude = location?.longitude ?? DEFAULT_COORDINATES.longitude;
 
   const setLocationType = (locationType: LocationType) => {
     updateBooking({ locationType });
@@ -41,10 +45,18 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
             return (
               <Pressable
                 key={type}
-                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                style={[
+                  styles.toggleBtn,
+                  selected && { backgroundColor: colors.primary },
+                ]}
                 onPress={() => setLocationType(type)}
               >
-                <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: selected ? colors.primaryForeground : colors.textSecondary },
+                  ]}
+                >
                   {type === 'workshop' ? 'Workshop' : 'Home Service'}
                 </Text>
               </Pressable>
@@ -53,17 +65,33 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
         </View>
       )}
 
-      <View style={[styles.mapPlaceholder, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-        <Feather name="map-pin" size={24} color={colors.icon} />
-        <Text style={[styles.mapText, { color: colors.textSecondary }]}>
-          {draft.locationType === 'pickup'
-            ? 'Service will be performed at your location'
-            : 'Service center location'}
-        </Text>
+      <View style={[styles.mapWrap, { borderColor: colors.border }]}>
+        <MapView
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={{
+            latitude,
+            longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }}
+        >
+          <Marker
+            coordinate={{ latitude, longitude }}
+            title={location?.name ?? 'Service location'}
+            description={location?.address}
+          />
+        </MapView>
       </View>
 
+      <Text style={[styles.mapHint, { color: colors.textSecondary }]}>
+        {draft.locationType === 'pickup'
+          ? 'Service will be performed at your location'
+          : 'Service center location'}
+      </Text>
+
       {location && (
-        <View style={[styles.workshopCard, { backgroundColor: colors.card, borderColor: '#E60012' }]}>
+        <View style={[styles.workshopCard, { backgroundColor: colors.card, borderColor: colors.primary }]}>
           <View style={styles.workshopInfo}>
             <Text style={[styles.workshopName, { color: colors.textPrimary }]}>{location.name}</Text>
             <Text style={[styles.workshopAddr, { color: colors.textSecondary }]}>{location.address}</Text>
@@ -78,18 +106,15 @@ export function ServiceBookingLocationScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   toggle: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  toggleBtnActive: { backgroundColor: '#E60012' },
-  toggleText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
-  toggleTextActive: { color: '#ffffff' },
-  mapPlaceholder: {
-    height: 100,
+  toggleText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  mapWrap: {
+    height: 180,
     borderRadius: 14,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    overflow: 'hidden',
   },
-  mapText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  map: { flex: 1 },
+  mapHint: { fontSize: 12, fontFamily: 'Inter_500Medium', textAlign: 'center' },
   workshopCard: {
     flexDirection: 'row',
     alignItems: 'center',

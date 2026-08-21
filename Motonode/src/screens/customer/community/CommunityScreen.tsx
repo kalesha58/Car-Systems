@@ -108,6 +108,10 @@ export function CommunityScreen() {
     setPosts((current) => current.map((post) => (post.id === updated.id ? updated : post)));
   };
 
+  const handleUserBlocked = (userId: string) => {
+    setPosts((current) => current.filter((post) => post.userId !== userId));
+  };
+
   const handleCreate = () => {
     lightHaptic();
     if (user?.isGuest) {
@@ -175,7 +179,11 @@ export function CommunityScreen() {
             />
           }
           renderItem={({ item }) => (
-            <CommunityPostCard post={item} onPostUpdated={handlePostUpdated} />
+            <CommunityPostCard
+              post={item}
+              onPostUpdated={handlePostUpdated}
+              onUserBlocked={handleUserBlocked}
+            />
           )}
           ListEmptyComponent={
             <View style={styles.empty}>

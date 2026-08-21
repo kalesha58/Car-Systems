@@ -58,6 +58,7 @@ type DealerStackParamList = {
   [DealerStackRoutes.ServiceForm]: { id?: string };
   [DealerStackRoutes.ServiceBookings]: undefined;
   [DealerStackRoutes.DealerOrderDetail]: { orderId: string };
+  [DealerStackRoutes.NotificationSettings]: undefined;
 };
 
 type DealerDashboardNavigationProp = CompositeNavigationProp<
@@ -292,7 +293,13 @@ export function DealerDashboardScreen() {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <Pressable style={styles.headerIconBtn} onPress={() => lightHaptic()}>
+            <Pressable
+              style={styles.headerIconBtn}
+              onPress={() => {
+                lightHaptic();
+                navigation.navigate(DealerStackRoutes.NotificationSettings);
+              }}
+            >
               <Feather name="bell" size={19} color={colors.headerForeground} />
               <View style={styles.redBadge}>
                 <Text style={styles.redBadgeText}>3</Text>

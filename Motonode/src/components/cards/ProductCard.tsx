@@ -10,6 +10,7 @@ import { cardShadow } from '@utils/shadows';
 import { lightHaptic } from '@utils/haptics';
 import type { IProduct } from '@app-types/product';
 import { getProductId } from '@utils/displayMappers';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 
 interface ProductCardProps {
   product: IProduct;
@@ -36,7 +37,7 @@ export function ProductCard({
   const { showToast } = useToast();
   const productId = getProductId(product);
   const liked = isWishlisted(productId);
-  const imageUri = product.images?.[0] || '';
+  const imageUri = product.images?.find((uri) => uri && !uri.includes('placehold.co')) || '';
   const discount = Math.round(product.discountPercentage ?? 0);
   const inStock = product.stock > 0 && product.status === 'active';
   const dealerName = product.dealer?.businessName;
@@ -69,49 +70,34 @@ export function ProductCard({
       ]}
       onPress={onPress}
     >
-      {!!imageUri && (
-        <View
-          style={[
-            styles.imageContainer,
-            isGrid && styles.imageContainerGrid,
-            isGrid && isWeb && styles.imageContainerGridWeb,
-          ]}
-        >
+      <View
+        style={[
+          styles.imageContainer,
+          isGrid && styles.imageContainerGrid,
+          isGrid && isWeb && styles.imageContainerGridWeb,
+          { backgroundColor: colors.muted },
+        ]}
+      >
+        {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
-          {discount > 0 && (
-            <View
-              style={[
-                styles.discountBadge,
-                isWeb && styles.discountBadgeWeb,
-                { backgroundColor: colors.destructive },
-              ]}
-            >
-              <Text style={[styles.discountText, isWeb && styles.discountTextWeb]}>
-                {discount}% OFF
-              </Text>
-            </View>
-          )}
-          <Pressable
-            style={[styles.wishlistBtn, { backgroundColor: colors.card }]}
-            onPress={handleWishlist}
-            hitSlop={8}
+        ) : (
+          <OrderItemThumbnail iconSize={28} style={styles.image} />
+        )}
+        {discount > 0 && (
+          <View
+            style={[
+              styles.discountBadge,
+              isWeb && styles.discountBadgeWeb,
+              { backgroundColor: colors.destructive },
+            ]}
           >
-            <Feather
-              name="heart"
-              size={16}
-              color={liked ? colors.destructive : colors.icon}
-            />
-          </Pressable>
-          {!inStock && (
-            <View style={[styles.outOfStock, { backgroundColor: colors.overlay }]}>
-              <Text style={styles.outOfStockText}>Out of Stock</Text>
-            </View>
-          )}
-        </View>
-      )}
-      {!imageUri && (
+            <Text style={[styles.discountText, isWeb && styles.discountTextWeb]}>
+              {discount}% OFF
+            </Text>
+          </View>
+        )}
         <Pressable
-          style={[styles.wishlistBtn, { backgroundColor: colors.card, top: 8, right: 8 }]}
+          style={[styles.wishlistBtn, { backgroundColor: colors.card }]}
           onPress={handleWishlist}
           hitSlop={8}
         >
@@ -121,7 +107,12 @@ export function ProductCard({
             color={liked ? colors.destructive : colors.icon}
           />
         </Pressable>
-      )}
+        {!inStock && (
+          <View style={[styles.outOfStock, { backgroundColor: colors.overlay }]}>
+            <Text style={styles.outOfStockText}>Out of Stock</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.info}>
         <Text style={[styles.brand, { color: colors.textSecondary }]} numberOfLines={1}>
           {product.brand}

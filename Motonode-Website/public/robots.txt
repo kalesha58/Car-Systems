@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /temp/
+Disallow: /cache/
+Disallow: /user/account/
+Disallow: /user/settings/
+
+Sitemap: https://motonode.in/sitemap.xml

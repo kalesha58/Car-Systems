@@ -5,7 +5,6 @@ import { BookingSectionCard } from '@components/booking/sections/BookingSectionC
 import type { IServiceSlot } from '../../../types/service';
 import { useColors } from '@hooks/useColors';
 import { getBookingDateOptions, formatSlotTime } from '@utils/bookingMappers';
-import { themeLight } from '@theme/colors';
 
 interface BookingDateTimeSectionProps {
   date: string;
@@ -55,8 +54,8 @@ export function BookingDateTimeSection({
               style={[
                 styles.dateChip,
                 {
-                  backgroundColor: selected ? '#E60012' : '#F1F5F9',
-                  borderColor: selected ? '#E60012' : '#E2E8F0',
+                  backgroundColor: selected ? colors.primary : colors.muted,
+                  borderColor: selected ? colors.primary : colors.border,
                 },
               ]}
               onPress={() => onDateChange(d.value)}
@@ -76,7 +75,7 @@ export function BookingDateTimeSection({
       </ScrollView>
 
       {slotsLoading ? (
-        <ActivityIndicator color="#E60012" style={{ marginVertical: 8 }} />
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 8 }} />
       ) : visibleSlots.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           No slots available for this date
@@ -92,8 +91,8 @@ export function BookingDateTimeSection({
                 style={[
                   styles.timeChip,
                   {
-                    backgroundColor: selected ? '#E60012' : '#F1F5F9',
-                    borderColor: selected ? '#E60012' : '#E2E8F0',
+                    backgroundColor: selected ? colors.primary : colors.card,
+                    borderColor: selected ? colors.primary : colors.border,
                   },
                 ]}
                 onPress={() => onTimeChange(slot.id, slot.startTime)}
@@ -105,8 +104,16 @@ export function BookingDateTimeSection({
             );
           })}
           {hasMore && onToggleExpand && (
-            <Pressable style={styles.moreChip} onPress={onToggleExpand}>
-              <Text style={styles.moreText}>{expanded ? 'Less' : 'More'}</Text>
+            <Pressable
+              style={[
+                styles.moreChip,
+                { borderColor: colors.border, backgroundColor: colors.card },
+              ]}
+              onPress={onToggleExpand}
+            >
+              <Text style={[styles.moreText, { color: colors.textSecondary }]}>
+                {expanded ? 'Less' : 'More'}
+              </Text>
             </Pressable>
           )}
         </ScrollView>
@@ -141,10 +148,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
   },
-  moreText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  moreText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   emptyText: { fontSize: 11, fontFamily: 'Inter_400Regular', paddingVertical: 8 },
 });

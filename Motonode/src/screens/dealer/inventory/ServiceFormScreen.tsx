@@ -34,7 +34,6 @@ import {
   type ServicePackageValue,
   type ServiceTypeValue,
 } from '@services/serviceCategory.service';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getServiceDurationLabel, getServiceId, parseDurationMinutes } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
@@ -1162,7 +1161,7 @@ export function ServiceFormScreen({ route, navigation }: Props) {
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-            <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>
+            <Text style={[styles.previewStatValue, { color: colors.textSecondary }]}>
               ₹{Number(price || 0).toLocaleString('en-IN')}
             </Text>
           </View>

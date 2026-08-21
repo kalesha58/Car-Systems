@@ -29,10 +29,18 @@ export function BookingLocationPicker({
             return (
               <Pressable
                 key={type}
-                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                style={[
+                  styles.toggleBtn,
+                  selected && { backgroundColor: colors.primary },
+                ]}
                 onPress={() => onSelectLocationType(type)}
               >
-                <Text style={[styles.toggleText, selected && styles.toggleTextActive]}>
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: selected ? colors.primaryForeground : colors.textSecondary },
+                  ]}
+                >
                   {type === 'workshop' ? 'Workshop Visit' : 'Home Service'}
                 </Text>
               </Pressable>
@@ -42,7 +50,7 @@ export function BookingLocationPicker({
       )}
 
       {location && (
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: '#E60012' }]}>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.primary }]}>
           <View style={styles.info}>
             <Text style={[styles.name, { color: colors.textPrimary }]}>{location.name}</Text>
             <Text style={[styles.addr, { color: colors.textSecondary }]}>{location.address}</Text>
@@ -58,9 +66,7 @@ const styles = StyleSheet.create({
   wrap: { gap: 10 },
   toggle: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-  toggleBtnActive: { backgroundColor: '#E60012' },
-  toggleText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#64748B' },
-  toggleTextActive: { color: '#ffffff' },
+  toggleText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',

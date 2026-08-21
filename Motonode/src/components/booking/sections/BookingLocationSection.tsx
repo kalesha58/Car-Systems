@@ -5,7 +5,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import { BookingSectionCard } from '@components/booking/sections/BookingSectionCard';
 import type { ServiceLocationInfo } from '@context/ServiceBookingContext';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 
 interface BookingLocationSectionProps {
   location: ServiceLocationInfo | undefined;
@@ -25,7 +24,7 @@ export function BookingLocationSection({
       <BookingSectionCard title="Select Location" onChange={onPress}>
         <Pressable style={styles.emptyRow} onPress={onPress}>
           <Feather name="map-pin" size={20} color={colors.icon} />
-          <Text style={styles.emptyText}>Choose service location</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Choose service location</Text>
           <Feather name="chevron-right" size={18} color={colors.textTertiary} />
         </Pressable>
       </BookingSectionCard>
@@ -44,8 +43,8 @@ export function BookingLocationSection({
             {location.address}
           </Text>
           {locationType === 'pickup' && (
-            <View style={styles.pickupBadge}>
-              <Text style={styles.pickupText}>Home Service</Text>
+            <View style={[styles.pickupBadge, { backgroundColor: colors.muted }]}>
+              <Text style={[styles.pickupText, { color: colors.textSecondary }]}>Home Service</Text>
             </View>
           )}
         </View>
@@ -68,14 +67,13 @@ const styles = StyleSheet.create({
   name: { fontSize: 14, fontFamily: 'Inter_700Bold' },
   addr: { fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 },
   pickupBadge: {
-    backgroundColor: '#F2F2F2',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
-  pickupText: { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  pickupText: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
   emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
-  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
+  emptyText: { flex: 1, fontSize: 13, fontFamily: 'Inter_500Medium' },
 });

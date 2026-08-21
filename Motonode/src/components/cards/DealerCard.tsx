@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 
-import { themeLight as colors } from '@theme/colors';
+import { useColors } from '@hooks/useColors';
 import { spacing } from '@theme/spacing';
 import { typography } from '@theme/typography';
 
@@ -10,10 +10,12 @@ interface DealerCardProps {
 }
 
 export function DealerCard({ name, location }: DealerCardProps) {
+  const colors = useColors();
+
   return (
-    <View style={styles.card}>
-      <Text style={styles.name}>{name}</Text>
-      <Text style={styles.location}>{location}</Text>
+    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.card }]}>
+      <Text style={[styles.name, { color: colors.textPrimary }]}>{name}</Text>
+      <Text style={[styles.location, { color: colors.textSecondary }]}>{location}</Text>
     </View>
   );
 }
@@ -23,17 +25,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
   } satisfies ViewStyle,
   name: {
     fontSize: typography.fontSize.md,
     fontWeight: typography.fontWeight.semibold,
-    color: colors.text,
   } satisfies TextStyle,
   location: {
     marginTop: spacing.xs,
     fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
   } satisfies TextStyle,
 });

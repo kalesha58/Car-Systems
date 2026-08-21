@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   FlatList,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -17,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 
 import { CustomerStackRoutes, CustomerTabRoutes } from '@constants/routes';
 import { useCart } from '@context/index';
@@ -194,7 +194,11 @@ export function CartScreen() {
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={[styles.cartItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Image source={{ uri: item.product.images?.[0] || '' }} style={styles.itemImage} resizeMode="cover" />
+                <OrderItemThumbnail
+                  uri={item.product.images?.find((uri) => uri && !uri.includes('placehold.co'))}
+                  style={styles.itemImage}
+                  iconSize={28}
+                />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemBrand}>{item.product.brand}</Text>
                   <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>{item.product.name}</Text>
@@ -213,7 +217,7 @@ export function CartScreen() {
                   {/* Quantity selectors */}
                   <View style={styles.quantityRow}>
                     <Pressable
-                      style={[styles.qtyBtn, { borderColor: colors.border }]}
+                      style={[styles.qtyBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
                       onPress={() => {
                         selectionHaptic();
                         updateQuantity(item.product.id, item.quantity - 1);
@@ -223,7 +227,7 @@ export function CartScreen() {
                     </Pressable>
                     <Text style={[styles.qty, { color: colors.textPrimary }]}>{item.quantity}</Text>
                     <Pressable
-                      style={[styles.qtyBtn, { borderColor: colors.border }]}
+                      style={[styles.qtyBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
                       onPress={() => {
                         selectionHaptic();
                         updateQuantity(item.product.id, item.quantity + 1);

@@ -56,6 +56,7 @@ export const CustomerStackRoutes = {
   ChangePassword: 'ChangePassword',
   CustomerNotificationSettings: 'CustomerNotificationSettings',
   TermsConditions: 'TermsConditions',
+  PrivacyPolicy: 'PrivacyPolicy',
   AppPermissions: 'AppPermissions',
   CustomerHelpSupport: 'CustomerHelpSupport',
   DeleteAccount: 'DeleteAccount',
@@ -96,6 +97,7 @@ export const DealerStackRoutes = {
   HelpSupport: 'HelpSupport',
   Analytics: 'Analytics',
   EditAccount: 'EditAccount',
+  DeleteAccount: 'DeleteAccount',
 } as const;
 
 export const RootRoutes = {

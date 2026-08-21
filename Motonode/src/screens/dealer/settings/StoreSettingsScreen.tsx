@@ -15,7 +15,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
 import { DealerStackRoutes } from '@constants/routes';
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 import { lightHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -35,7 +34,7 @@ const INFO_ROWS = [
 ];
 
 const SETTINGS_MENU = [
-  { icon: 'credit-card', label: 'Bank Details', route: DealerStackRoutes.BankDetails, color: themeLight.textSecondary },
+  { icon: 'credit-card', label: 'Bank Details', route: DealerStackRoutes.BankDetails, color: '#6D6D6D' },
   { icon: 'file-text', label: 'GST Information', route: DealerStackRoutes.GSTInfo, color: '#7C3AED' },
   { icon: 'smartphone', label: 'UPI Accounts', route: DealerStackRoutes.UPIAccounts, color: '#059669' },
   { icon: 'bell', label: 'Notification Settings', route: DealerStackRoutes.NotificationSettings, color: '#F59E0B' },
@@ -194,12 +193,12 @@ const styles = StyleSheet.create({
   storeNameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 },
   storeName: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   dmcBadge: { backgroundColor: '#F2F2F2', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
-  dmcBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  dmcBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
   verifiedBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
     backgroundColor: '#F2F2F2', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6,
   },
-  verifiedBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  verifiedBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
   storeRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
   storeRating: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#F59E0B' },
   storeReviews: { fontSize: 11, color: '#64748B', fontFamily: 'Inter_400Regular' },
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   sectionTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   editBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F2F2F2' },
-  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  editBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   infoRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
   infoIconBox: {
     width: 32, height: 32, borderRadius: 8, backgroundColor: '#F1F5F9',

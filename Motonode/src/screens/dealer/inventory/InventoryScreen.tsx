@@ -21,6 +21,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import { DealerStackRoutes, DealerTabRoutes } from '@constants/routes';
 import { ChromeHeader } from '@components/common';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 import { RegistrationStatusBanner } from '@components/dealer/RegistrationStatusBanner';
 import {
   ProductsGridSkeleton,
@@ -41,7 +42,6 @@ import {
 import type { IProduct } from '@app-types/product';
 import type { IService } from '@app-types/service';
 import type { IDealerVehicle } from '@app-types/vehicle';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage, isApiForbiddenError } from '@utils/apiHelpers';
 import { showRegistrationBlockedAlert } from '@utils/dealerRegistration';
 import {
@@ -272,7 +272,7 @@ export function InventoryScreen() {
   const getSummary = () => {
     if (activeTab === 'products') {
       return [
-        { label: 'Total Items', value: products.length, color: themeLight.textSecondary, icon: 'shopping-bag', bg: '#F2F2F2' },
+        { label: 'Total Items', value: products.length, color: colors.textSecondary, icon: 'shopping-bag', bg: colors.muted },
         {
           label: 'In Stock',
           value: products.filter((p) => getProductStockStatus(p.stock) === 'in_stock').length,
@@ -298,7 +298,7 @@ export function InventoryScreen() {
     }
     if (activeTab === 'vehicles') {
       return [
-        { label: 'Total Items', value: vehicles.length, color: themeLight.textSecondary, icon: 'truck', bg: '#F2F2F2' },
+        { label: 'Total Items', value: vehicles.length, color: colors.textSecondary, icon: 'truck', bg: colors.muted },
         {
           label: 'Available',
           value: vehicles.filter((v) => v.availability === 'available').length,
@@ -317,7 +317,7 @@ export function InventoryScreen() {
       ];
     }
     return [
-      { label: 'Total Items', value: services.length, color: themeLight.textSecondary, icon: 'tool', bg: '#F2F2F2' },
+      { label: 'Total Items', value: services.length, color: colors.textSecondary, icon: 'tool', bg: colors.muted },
       { label: 'Active', value: services.filter((s) => s.isActive !== false).length, color: '#10B981', icon: 'check-circle', bg: '#ECFDF5' },
       { label: 'Paused', value: services.filter((s) => s.isActive === false).length, color: '#F59E0B', icon: 'pause-circle', bg: '#FFFBEB' },
       {
@@ -339,9 +339,10 @@ export function InventoryScreen() {
 
     return (
       <View style={[styles.itemCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Image
-          source={{ uri: getProductImage(item) }}
+        <OrderItemThumbnail
+          uri={getProductImage(item) || undefined}
           style={styles.itemImage}
+          iconSize={22}
         />
 
         <View style={styles.itemInfo}>

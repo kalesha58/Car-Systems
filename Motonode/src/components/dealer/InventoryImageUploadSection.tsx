@@ -15,7 +15,6 @@ import { PhotoPermissionModal, PhotoPickerSheet } from '@components/modals';
 import { useColors } from '@hooks/useColors';
 import { usePhotoPicker } from '@hooks/usePhotoPicker';
 import { uploadImage } from '@services/upload.service';
-import { themeLight } from '@theme/colors';
 import { successHaptic } from '@utils/haptics';
 
 interface InventoryImageUploadSectionProps {
@@ -134,7 +133,7 @@ export function InventoryImageUploadSection({
           {uploading ? (
             <View style={styles.uploadingOverlay}>
               <ActivityIndicator color="#E60012" />
-              <Text style={styles.uploadingText}>Uploading…</Text>
+              <Text style={[styles.uploadingText, { color: colors.textSecondary }]}>Uploading…</Text>
             </View>
           ) : (
             <>
@@ -152,7 +151,7 @@ export function InventoryImageUploadSection({
               {canAddMore ? (
                 <Pressable style={styles.galleryBtn} onPress={openPicker} disabled={uploading}>
                   <Feather name="image" size={13} color={colors.icon} style={{ marginRight: 5 }} />
-                  <Text style={styles.galleryBtnText}>
+                  <Text style={[styles.galleryBtnText, { color: colors.textSecondary }]}>
                     {multi
                       ? uris.length > 0
                         ? 'Add Photo'
@@ -221,7 +220,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  galleryBtnText: { color: themeLight.textSecondary, fontSize: 11, fontFamily: 'Inter_700Bold' },
+  galleryBtnText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
   uploadHint: { fontSize: 9, marginTop: 4, textAlign: 'center' },
   uploadingOverlay: {
     alignItems: 'center',
@@ -231,6 +230,5 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: themeLight.textSecondary,
   },
 });

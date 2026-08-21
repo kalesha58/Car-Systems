@@ -28,7 +28,6 @@ import {
   updateDealerVehicle,
 } from '@services/dealer.service';
 import { getDropdownOptions } from '@services/dropdown.service';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getVehicleId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
@@ -903,7 +902,7 @@ export function VehicleFormScreen({ route, navigation }: Props) {
             </View>
             <View style={{ alignItems: 'center', marginLeft: 14 }}>
               <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-              <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>
+              <Text style={[styles.previewStatValue, { color: colors.textSecondary }]}>
                 ₹{price || '0'}
               </Text>
             </View>

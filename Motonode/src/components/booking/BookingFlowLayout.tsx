@@ -42,11 +42,10 @@ export function BookingFlowLayout({
 }: BookingFlowLayoutProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ChromeHeader style={styles.header} contentPad={10}>
         <Pressable
           style={styles.backBtn}
@@ -55,13 +54,13 @@ export function BookingFlowLayout({
             onBack();
           }}
         >
-          <Feather name="arrow-left" size={20} color="#ffffff" />
+          <Feather name="arrow-left" size={20} color={colors.headerForeground} />
         </Pressable>
-        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{title}</Text>
         <View style={styles.headerSpacer} />
       </ChromeHeader>
 
-      <View style={styles.stepBarWrap}>
+      <View style={[styles.stepBarWrap, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <BookingStepBar current={step} />
       </View>
 
@@ -72,10 +71,22 @@ export function BookingFlowLayout({
         {children}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: bottomPad + 12 }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            paddingBottom: bottomPad + 12,
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+          },
+        ]}
+      >
         {footerExtra}
         <Pressable
-          style={[styles.ctaBtn, continueDisabled && styles.ctaBtnDisabled]}
+          style={[
+            styles.ctaBtn,
+            { backgroundColor: continueDisabled ? colors.disabled : colors.primary },
+          ]}
           onPress={() => {
             if (continueDisabled) return;
             lightHaptic();
@@ -83,7 +94,7 @@ export function BookingFlowLayout({
           }}
           disabled={continueDisabled}
         >
-          <Text style={styles.ctaText}>{continueLabel}</Text>
+          <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>{continueLabel}</Text>
         </Pressable>
       </View>
     </View>
@@ -91,7 +102,7 @@ export function BookingFlowLayout({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -104,30 +115,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    color: '#ffffff',
   },
   headerSpacer: { width: 36 },
   stepBarWrap: {
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   content: { padding: 16, paddingBottom: 24, gap: 16 },
   footer: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     gap: 8,
   },
   ctaBtn: {
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#E60012',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ctaBtnDisabled: { backgroundColor: '#93C5FD' },
-  ctaText: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  ctaText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

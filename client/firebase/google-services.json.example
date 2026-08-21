@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:REPLACE:android:REPLACE",
         "android_client_info": {
-          "package_name": "com.motonode"
+          "package_name": "com.motonode.new"
         }
       },
       "oauth_client": [],

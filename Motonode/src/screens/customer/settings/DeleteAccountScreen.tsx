@@ -12,21 +12,17 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { CustomerStackRoutes } from '@constants/routes';
 import { useAuth, useToast } from '@context/index';
 import { useColors } from '@hooks/useColors';
-import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { deactivateAccount, deleteAccount } from '@services/profile.service';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { lightHaptic } from '@utils/haptics';
 
-type Props = NativeStackScreenProps<
-  CustomerStackParamList,
-  typeof CustomerStackRoutes.DeleteAccount
->;
+type Props = NativeStackScreenProps<ParamListBase>;
 
 type AccountAction = 'deactivate' | 'delete';
 

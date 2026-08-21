@@ -44,8 +44,15 @@ export function getProductStockStatus(stock: number): ProductStockStatus {
   return 'in_stock';
 }
 
+export function getProductImageUri(product: { images?: string[] }): string | undefined {
+  const uri = product.images?.find(
+    (value) => Boolean(value) && !value.includes('placehold.co'),
+  );
+  return uri || undefined;
+}
+
 export function getProductImage(product: IProduct): string {
-  return product.images?.[0] || 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=200&auto=format&fit=crop&q=80';
+  return getProductImageUri(product) ?? '';
 }
 
 export function getVehicleImage(vehicle: IDealerVehicle): string {

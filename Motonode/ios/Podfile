@@ -8,23 +8,28 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
+# Firebase Auth is Swift and needs a generated FirebaseAuth-Swift.h.
+# Static frameworks is the supported RNFirebase setup for that header.
+$RNFirebaseAsStaticFramework = true
+linkage = ENV['USE_FRAMEWORKS'] || 'static'
+Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+use_frameworks! :linkage => linkage.to_sym
+
+# Keep Firebase as static frameworks (needed for FirebaseAuth-Swift.h) but build
+# RNFB* as static libraries so RCTBridgeModule is not claimed by the RNFBApp module.
+pre_install do |installer|
+  installer.pod_targets.each do |pod|
+    next unless pod.name.start_with?('RNFB')
+    def pod.build_type
+      Pod::BuildType.static_library
+    end
+  end
 end
 
 target 'Motonode' do
   config = use_native_modules!
 
   pod 'react-native-maps/Google', :path => '../node_modules/react-native-maps'
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'FirebaseCore', :modular_headers => true
-  pod 'FirebaseCoreExtension', :modular_headers => true
-  pod 'FirebaseFirestoreInternal', :modular_headers => true
-  pod 'FirebaseAppCheckInterop', :modular_headers => true
-  pod 'FirebaseAuthInterop', :modular_headers => true
-  pod 'RecaptchaInterop', :modular_headers => true
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -39,5 +44,34 @@ target 'Motonode' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['SWIFT_ENABLE_EXPLICIT_MODULES'] = 'NO'
+        config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+        if target.name.start_with?('RNFB')
+          config.build_settings['DEFINES_MODULE'] = 'NO'
+        end
+      end
+    end
+    # RN prebuilds React-VFS.yaml with single-quoted paths. An apostrophe in the
+    # project path (e.g. Baig's) makes that YAML invalid for clang -ivfsoverlay.
+    fix_react_vfs_yaml_quoting
   end
+end
+
+def fix_react_vfs_yaml_quoting
+  vfs_path = File.join(__dir__, 'Pods/React-Core-prebuilt/React-VFS.yaml')
+  return unless File.exist?(vfs_path)
+
+  content = File.read(vfs_path)
+  # Single-quoted YAML cannot contain an unescaped apostrophe.
+  fixed = content.gsub(/'([^'\n]*'[^'\n]*)'/) do
+    inner = Regexp.last_match(1)
+    '"' + inner.gsub('\\', '\\\\').gsub('"', '\\"') + '"'
+  end
+  return if fixed == content
+
+  File.write(vfs_path, fixed)
+  Pod::UI.puts 'Fixed React-VFS.yaml quoting for paths that contain apostrophes'.green
 end

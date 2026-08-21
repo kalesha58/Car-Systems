@@ -21,7 +21,6 @@ import { DriveListSkeleton } from '@components/loaders';
 import { useColors } from '@hooks/useColors';
 import { getDealerTestDrives, updateTestDriveStatus } from '@services/testDrive.service';
 import type { ITestDrive, TestDriveStatus } from '../../../types/testDrive';
-import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import type { DealerStackParamList } from '@navigation/DealerNavigator';
 
@@ -106,7 +105,7 @@ export function DriveScreen() {
       case 'pending':
         return { icon: 'truck', bg: '#FFFBEB', color: '#F59E0B' };
       case 'approved':
-        return { icon: 'truck', bg: '#F2F2F2', color: themeLight.textSecondary };
+        return { icon: 'truck', bg: colors.muted, color: colors.textSecondary };
       default:
         return { icon: 'truck', bg: '#F3E8FF', color: '#8B5CF6' };
     }
@@ -139,7 +138,7 @@ export function DriveScreen() {
                   key={item}
                   style={[
                     styles.filterChip,
-                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: '#F1F5F9' },
+                    isSelected ? { backgroundColor: '#E60012' } : { backgroundColor: colors.muted },
                   ]}
                   onPress={() => {
                     lightHaptic();
@@ -179,7 +178,7 @@ export function DriveScreen() {
             </View>
           }
           renderItem={({ item }) => {
-            const st = STATUS_CONFIG[item.status] ?? { color: themeLight.textSecondary, label: item.status };
+            const st = STATUS_CONFIG[item.status] ?? { color: colors.textSecondary, label: item.status };
             const headerIconInfo = getHeaderIcon(item.status);
             const vehicleImage =
               item.vehicleImage ??
@@ -217,7 +216,7 @@ export function DriveScreen() {
                           <Feather name="check" size={8} color="#ffffff" />
                         </View>
                       </View>
-                      <Text style={styles.vehicleName}>{vehicleLabel}</Text>
+                      <Text style={[styles.vehicleName, { color: colors.textSecondary }]}>{vehicleLabel}</Text>
                     </View>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: st.color + '15' }]}>
@@ -387,7 +386,6 @@ const styles = StyleSheet.create({
   },
   vehicleName: {
     fontSize: 12,
-    color: themeLight.textSecondary,
     fontFamily: 'Inter_700Bold',
     marginTop: 1,
   },

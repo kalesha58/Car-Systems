@@ -5,7 +5,6 @@ import Feather from 'react-native-vector-icons/Feather';
 import type { IService } from '../../../types/service';
 import { useColors } from '@hooks/useColors';
 import { getServiceDurationLabel } from '@utils/displayMappers';
-import { themeLight } from '@theme/colors';
 
 interface ServiceSummaryCardProps {
   service: IService;
@@ -20,7 +19,7 @@ export function ServiceSummaryCard({ service }: ServiceSummaryCardProps) {
       {imageUri ? (
         <Image source={{ uri: imageUri }} style={styles.image} />
       ) : (
-        <View style={[styles.image, styles.imagePlaceholder]}>
+        <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: colors.muted }]}>
           <Feather name="tool" size={24} color={colors.icon} />
         </View>
       )}
@@ -41,7 +40,7 @@ export function ServiceSummaryCard({ service }: ServiceSummaryCardProps) {
         </View>
       </View>
       <View style={styles.priceCol}>
-        <Text style={styles.price}>₹{service.price.toLocaleString('en-IN')}</Text>
+        <Text style={[styles.price, { color: colors.textPrimary }]}>₹{service.price.toLocaleString('en-IN')}</Text>
       </View>
     </View>
   );
@@ -58,7 +57,6 @@ const styles = StyleSheet.create({
   },
   image: { width: 72, height: 72, borderRadius: 12 },
   imagePlaceholder: {
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -68,5 +66,5 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, flexWrap: 'wrap' },
   meta: { fontSize: 10, fontFamily: 'Inter_500Medium' },
   priceCol: { alignItems: 'flex-end', gap: 2 },
-  price: { fontSize: 16, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  price: { fontSize: 16, fontFamily: 'Inter_700Bold' },
 });

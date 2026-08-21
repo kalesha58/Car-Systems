@@ -238,7 +238,7 @@ export function PaymentScreen({ navigation, route }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F8FAFC' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <ChromeHeader style={styles.header} contentPad={10}>
         <Pressable style={styles.backBtn} onPress={() => { lightHaptic(); navigation.goBack(); }}>
@@ -249,7 +249,7 @@ export function PaymentScreen({ navigation, route }: Props) {
       </ChromeHeader>
 
       {/* Progress */}
-      <View style={{ backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+      <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}>
         <StepBar current={2} />
       </View>
 
@@ -276,7 +276,7 @@ export function PaymentScreen({ navigation, route }: Props) {
           </Pressable>
         </View>
 
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {items.map((item) => {
             const lineSale = item.product.price * item.quantity;
             const lineMrp =
@@ -353,7 +353,7 @@ export function PaymentScreen({ navigation, route }: Props) {
 
         {/* Select Payment Method */}
         <Text style={[styles.sectionLabel, { marginTop: 4 }]}>Select Payment Method</Text>
-        <View style={styles.methodsCard}>
+        <View style={[styles.methodsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {PAYMENT_METHODS.map((method, idx) => {
             const isComingSoon = Boolean(method.comingSoon);
             const isSelected = !isComingSoon && selectedMethod === method.id;
@@ -372,7 +372,7 @@ export function PaymentScreen({ navigation, route }: Props) {
                     style={[
                       styles.methodIconBox,
                       { backgroundColor: method.iconBg },
-                      isComingSoon && styles.methodIconDisabled,
+                      isComingSoon && { backgroundColor: colors.muted },
                     ]}
                   >
                     <Feather
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
-    paddingBottom: 14, backgroundColor: '#E60012',
+    paddingBottom: 14,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontFamily: 'Inter_700Bold', color: '#1E293B' },
@@ -504,7 +504,6 @@ const styles = StyleSheet.create({
   methodRow: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
   methodRowDisabled: { opacity: 0.72 },
   methodIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  methodIconDisabled: { backgroundColor: '#F1F5F9' },
   methodLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   methodLabel: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#1E293B' },
   methodLabelDisabled: { color: '#64748B' },

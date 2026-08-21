@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -20,10 +19,11 @@ import { useColors } from '@hooks/useColors';
 import { getProductById, getProducts } from '@services/product.service';
 import type { IProduct } from '@app-types/product';
 import type { IReviewSummary } from '@app-types/review';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
-import { getProductId } from '@utils/displayMappers';
+import { getProductId, getProductImageUri } from '@utils/displayMappers';
+import { OrderItemThumbnail } from '@components/orders/OrderItemThumbnail';
 import { lightHaptic, successHaptic } from '@utils/haptics';
+import { ChromeHeader } from '@components/common';
 import { ProductDetailSkeleton } from '@components/loaders';
 import { ProductReviewsSection, StarRating } from '@components/reviews';
 
@@ -64,7 +64,6 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { showToast } = useToast();
   
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   useEffect(() => {
@@ -136,11 +135,9 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
     setLocalQty(cartItem ? cartItem.quantity : 1);
   }, [cartItem]);
 
-  const productImages = product?.images?.length
-    ? product.images
-    : product
-      ? ['https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500&auto=format&fit=crop&q=80']
-      : [];
+  const productImages = (product?.images ?? []).filter(
+    (uri) => uri && !uri.includes('placehold.co'),
+  );
 
   if (loading) {
     return <ProductDetailSkeleton />;
@@ -209,8 +206,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Solid Header Bar */}
-      <View style={[styles.header, { paddingTop: topPad + 8, backgroundColor: colors.header }]}>
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
@@ -239,13 +235,14 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
             <Feather name="heart" size={20} color={wishlisted ? colors.destructive : colors.headerForeground} />
           </Pressable>
         </View>
-      </View>
+      </ChromeHeader>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Product Image Panel with Left Sidebar Selector */}
         <View style={styles.imageContainerRow}>
           {/* Left Thumbnails Selector Sidebar */}
-          <View style={styles.thumbnailSidebar}>
+          {productImages.length > 0 ? (
+            <View style={styles.thumbnailSidebar}>
             {productImages.map((imgUri, idx) => (
               <Pressable
                 key={idx}
@@ -261,25 +258,32 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
                 <Image source={{ uri: imgUri }} style={styles.thumbnailImg} resizeMode="cover" />
               </Pressable>
             ))}
-          </View>
+            </View>
+          ) : null}
 
           {/* Main Product Image Panel */}
           <View style={[styles.mainImagePanel, { backgroundColor: colors.muted }]}>
-            <Image source={{ uri: productImages[activeImageIndex] }} style={styles.productImage} resizeMode="cover" />
+            {productImages[activeImageIndex] ? (
+              <Image source={{ uri: productImages[activeImageIndex] }} style={styles.productImage} resizeMode="cover" />
+            ) : (
+              <OrderItemThumbnail iconSize={48} style={styles.productImage} />
+            )}
             {discount > 0 && (
               <View style={[styles.discountBadge, { backgroundColor: colors.destructive }]}>
                 <Text style={styles.discountText}>{discount}% OFF</Text>
               </View>
             )}
+            {productImages.length > 0 ? (
             <View style={styles.pageIndicator}>
               <Text style={styles.pageIndicatorText}>{activeImageIndex + 1} / {productImages.length}</Text>
             </View>
+            ) : null}
           </View>
         </View>
 
         <View style={[styles.content, { backgroundColor: colors.background }]}>
           {/* Brand & Name */}
-          <Text style={styles.brand}>{product.brand}</Text>
+          <Text style={[styles.brand, { color: colors.textSecondary }]}>{product.brand}</Text>
           <Text style={[styles.name, { color: colors.textPrimary }]}>{product.name}</Text>
 
           {/* Rating Block */}
@@ -289,14 +293,14 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               <Text style={[styles.ratingScore, { color: colors.textPrimary }]}>
                 {averageRating.toFixed(1)}
               </Text>
-              <Text style={styles.reviewsCount}>
+              <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
                 ({reviewCount.toLocaleString('en-IN')} {reviewCount === 1 ? 'review' : 'reviews'})
               </Text>
             </View>
           ) : (
             <View style={styles.ratingRow}>
               <StarRating rating={0} size={14} />
-              <Text style={styles.reviewsCount}>No reviews yet</Text>
+              <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>No reviews yet</Text>
             </View>
           )}
 
@@ -384,7 +388,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
           <View style={styles.specsHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Specifications</Text>
             <Pressable style={styles.viewAllBtn}>
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: colors.textSecondary }]}>View All</Text>
               <Feather name="chevron-right" size={12} color={colors.icon} />
             </Pressable>
           </View>
@@ -445,7 +449,7 @@ export function ProductDetailScreen({ route, navigation }: ProductDetailScreenPr
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 4 }}>
                 {relatedProducts.map((rp) => {
                   const rpId = rp.id || (rp as any)._id;
-                  const rpImage = rp.images?.[0];
+                  const rpImage = getProductImageUri(rp);
                   return (
                     <Pressable
                       key={rpId}
@@ -525,15 +529,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingHorizontal: 8,
+    paddingBottom: 8,
   },
   headerRight: {
     flexDirection: 'row',
@@ -551,7 +548,7 @@ const styles = StyleSheet.create({
   imageContainerRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginTop: 100,
+    marginTop: 12,
     gap: 12,
     height: 280,
   },
@@ -603,12 +600,12 @@ const styles = StyleSheet.create({
   },
   pageIndicatorText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   content: { paddingHorizontal: 16, paddingTop: 16 },
-  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary, marginBottom: 4 },
+  brand: { fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
   name: { fontSize: 20, fontFamily: 'Inter_700Bold', lineHeight: 28, marginBottom: 8 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
   starsContainer: { flexDirection: 'row', alignItems: 'center' },
   ratingScore: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium', color: themeLight.textSecondary },
+  reviewsCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   price: { fontSize: 24, fontFamily: 'Inter_700Bold' },
   originalPrice: { fontSize: 14, fontFamily: 'Inter_400Regular', textDecorationLine: 'line-through' },
@@ -678,7 +675,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   viewAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  viewAllText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  viewAllText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   bottomBar: {
     flexDirection: 'row',
     borderTopWidth: 1,

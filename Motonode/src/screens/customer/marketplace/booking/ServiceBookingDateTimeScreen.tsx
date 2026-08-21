@@ -58,8 +58,8 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
               style={[
                 styles.dateChip,
                 {
-                  backgroundColor: selected ? '#E60012' : colors.card,
-                  borderColor: selected ? '#E60012' : colors.border,
+                  backgroundColor: selected ? colors.primary : colors.muted,
+                  borderColor: selected ? colors.primary : colors.border,
                 },
               ]}
               onPress={() => updateBooking({ date: d.value })}
@@ -74,7 +74,7 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
 
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Slots</Text>
       {slotsLoading ? (
-        <ActivityIndicator color="#E60012" style={{ marginVertical: 16 }} />
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 16 }} />
       ) : slots.length === 0 ? (
         <Text style={[styles.emptySlots, { color: colors.textSecondary }]}>
           No slots available for this date
@@ -89,14 +89,14 @@ export function ServiceBookingDateTimeScreen({ navigation }: Props) {
                 style={[
                   styles.slotChip,
                   {
-                    backgroundColor: selected ? '#F2F2F2' : colors.card,
-                    borderColor: selected ? '#E60012' : colors.border,
+                    backgroundColor: selected ? colors.primarySubtle : colors.muted,
+                    borderColor: selected ? colors.primary : colors.border,
                   },
                 ]}
                 onPress={() => selectSlot(slot.id, slot.startTime)}
               >
                 <Text
-                  style={[styles.slotText, { color: selected ? '#E60012' : colors.textSecondary }]}
+                  style={[styles.slotText, { color: selected ? colors.primary : colors.textSecondary }]}
                 >
                   {formatSlotTime(slot.startTime)}
                 </Text>

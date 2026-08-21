@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 
 interface BookingPriceSummaryProps {
   serviceAmount: number;
@@ -59,11 +58,11 @@ export function BookingPriceSummary({
         </View>
       )}
 
-      <View style={styles.divider} />
+      <View style={[styles.divider, { borderColor: colors.border }]} />
 
       <View style={styles.totalRow}>
         <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total Amount</Text>
-        <Text style={styles.totalValue}>₹{total.toLocaleString('en-IN')}</Text>
+        <Text style={[styles.totalValue, { color: colors.textPrimary }]}>₹{total.toLocaleString('en-IN')}</Text>
       </View>
     </View>
   );
@@ -78,10 +77,9 @@ const styles = StyleSheet.create({
   divider: {
     borderStyle: 'dashed',
     borderTopWidth: 1,
-    borderColor: '#E2E8F0',
     marginVertical: 4,
   },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  totalValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: themeLight.textSecondary },
+  totalValue: { fontSize: 20, fontFamily: 'Inter_700Bold' },
 });

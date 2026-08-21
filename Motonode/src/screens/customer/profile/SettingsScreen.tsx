@@ -25,6 +25,7 @@ type SettingsRoute =
   | typeof CustomerStackRoutes.ChangePassword
   | typeof CustomerStackRoutes.AppPermissions
   | typeof CustomerStackRoutes.TermsConditions
+  | typeof CustomerStackRoutes.PrivacyPolicy
   | typeof CustomerStackRoutes.CustomerHelpSupport
   | typeof CustomerStackRoutes.DeleteAccount;
 
@@ -90,9 +91,15 @@ const SETTINGS_SECTIONS: MenuSection[] = [
         route: CustomerStackRoutes.CustomerHelpSupport,
       },
       {
+        icon: 'shield',
+        label: 'Privacy Policy',
+        sublabel: 'How we collect, use and delete your data',
+        route: CustomerStackRoutes.PrivacyPolicy,
+      },
+      {
         icon: 'file-text',
         label: 'Terms & Conditions',
-        sublabel: 'Terms of use and privacy policy',
+        sublabel: 'Rules for using Motonode',
         route: CustomerStackRoutes.TermsConditions,
       },
     ],

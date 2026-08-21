@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { useColors } from '@hooks/useColors';
-import { themeLight } from '@theme/colors';
 
 interface BookingSectionCardProps {
   title: string;
@@ -26,7 +25,7 @@ export function BookingSectionCard({
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         {onChange && (
           <Pressable onPress={onChange} hitSlop={8}>
-            <Text style={styles.changeText}>{changeLabel}</Text>
+            <Text style={[styles.changeText, { color: colors.textSecondary }]}>{changeLabel}</Text>
           </Pressable>
         )}
       </View>
@@ -48,5 +47,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  changeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: themeLight.textSecondary },
+  changeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 });

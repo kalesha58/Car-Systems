@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 
 import { BookingMasterStepBar, type BookingMasterStep } from '@components/booking/BookingMasterStepBar';
+import { ChromeHeader } from '@components/common';
+import { useColors } from '@hooks/useColors';
 import { lightHaptic } from '@utils/haptics';
 
 interface BookingFlowShellProps {
@@ -40,13 +42,13 @@ export function BookingFlowShell({
   contentContainerStyle,
   children,
 }: BookingFlowShellProps) {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: topPad + 8 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ChromeHeader style={styles.header} contentPad={8}>
         <Pressable
           style={styles.backBtn}
           onPress={() => {
@@ -54,13 +56,15 @@ export function BookingFlowShell({
             onBack();
           }}
         >
-          <Feather name="chevron-left" size={24} color="#0F172A" />
+          <Feather name="chevron-left" size={24} color={colors.headerForeground} />
         </Pressable>
-        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={[styles.headerTitle, { color: colors.headerForeground }]}>{title}</Text>
         <View style={styles.headerSpacer} />
-      </View>
+      </ChromeHeader>
 
-      <BookingMasterStepBar current={step} />
+      <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <BookingMasterStepBar current={step} />
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -70,11 +74,23 @@ export function BookingFlowShell({
       </ScrollView>
 
       {(showContinue || footerExtra) && (
-        <View style={[styles.footer, { paddingBottom: bottomPad + 12 }]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              paddingBottom: bottomPad + 12,
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+            },
+          ]}
+        >
           {footerExtra}
           {showContinue && onContinue && (
             <Pressable
-              style={[styles.ctaBtn, continueDisabled && styles.ctaBtnDisabled]}
+              style={[
+                styles.ctaBtn,
+                { backgroundColor: continueDisabled ? colors.disabled : colors.primary },
+              ]}
               onPress={() => {
                 if (continueDisabled) return;
                 lightHaptic();
@@ -82,8 +98,8 @@ export function BookingFlowShell({
               }}
               disabled={continueDisabled}
             >
-              <Text style={styles.ctaText}>{continueLabel}</Text>
-              <Feather name="arrow-right" size={18} color="#ffffff" />
+              <Text style={[styles.ctaText, { color: colors.primaryForeground }]}>{continueLabel}</Text>
+              <Feather name="arrow-right" size={18} color={colors.primaryForeground} />
             </Pressable>
           )}
         </View>
@@ -93,13 +109,12 @@ export function BookingFlowShell({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingBottom: 4,
-    backgroundColor: '#ffffff',
   },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   headerTitle: {
@@ -107,27 +122,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 17,
     fontFamily: 'Inter_700Bold',
-    color: '#0F172A',
   },
   headerSpacer: { width: 44 },
   content: { padding: 16, paddingBottom: 24, gap: 14 },
   footer: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     gap: 10,
   },
   ctaBtn: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#E60012',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  ctaBtnDisabled: { backgroundColor: '#93C5FD' },
-  ctaText: { color: '#ffffff', fontSize: 15, fontFamily: 'Inter_700Bold' },
+  ctaText: { fontSize: 15, fontFamily: 'Inter_700Bold' },
 });

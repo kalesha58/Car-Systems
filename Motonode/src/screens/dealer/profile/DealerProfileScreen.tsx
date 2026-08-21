@@ -24,7 +24,6 @@ import { useColors } from '@hooks/useColors';
 import { useDealerOnboardingStatus } from '@hooks/useDealerOnboardingStatus';
 import { getDealerProducts } from '@services/dealer.service';
 import { getDealerOrderStats } from '@services/order.service';
-import { themeLight } from '@theme/colors';
 import { lightHaptic, successHaptic } from '@utils/haptics';
 import { useTheme } from '@context/ThemeContext';
 
@@ -186,7 +185,7 @@ export function DealerProfileScreen() {
               </Text>
               
               <View style={styles.dealerTypeBadge}>
-                <Text style={styles.dealerTypeBadgeText}>{dealerType ?? 'Automobile Showroom'}</Text>
+                <Text style={[styles.dealerTypeBadgeText, { color: colors.textSecondary }]}>{dealerType ?? 'Automobile Showroom'}</Text>
               </View>
 
               <View style={[styles.registrationStatusBadge, { backgroundColor: `${registrationStatusColor}18` }]}>
@@ -389,7 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
   },
-  dealerTypeBadgeText: { color: themeLight.textSecondary, fontSize: 9, fontFamily: 'Inter_700Bold' },
+  dealerTypeBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
   registrationStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',

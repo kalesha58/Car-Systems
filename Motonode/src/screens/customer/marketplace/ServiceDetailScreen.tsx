@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -13,10 +13,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from 'react-native-vector-icons/Feather';
 import { ChromeHeader } from '@components/common';
-
+import { BottomSheet } from '@components/bottomSheet';
 import { CustomerStackRoutes } from '@constants/routes';
 import { useServiceBooking } from '@context/ServiceBookingContext';
 import { useMobileVerificationGate } from '@context/MobileVerificationContext';
+import { useWishlist } from '@context/WishlistContext';
 import { useColors } from '@hooks/useColors';
 import type { CustomerStackParamList } from '@navigation/CustomerNavigator';
 import { getServiceById } from '@services/service.service';
@@ -34,8 +35,9 @@ type ServiceDetailScreenProps = NativeStackScreenProps<
 export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { startBooking } = useServiceBooking();
+  const { startBooking, updateBooking } = useServiceBooking();
   const { runWithMobileCheck } = useMobileVerificationGate();
+  const { toggleWishlist, isWishlisted } = useWishlist();
   const { id } = route.params;
   const [service, setService] = useState<IService | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,8 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
 
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [addonsSheetVisible, setAddonsSheetVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +102,7 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
   }
 
   const serviceId = getServiceId(service);
+  const wishlisted = isWishlisted(serviceId);
   const durationLabel = getServiceDurationLabel(service);
   const serviceImages = service.images?.length
     ? service.images
@@ -153,11 +158,34 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
           {service.name}
         </Text>
         <View style={[styles.headerSide, styles.headerSideRight]}>
-          <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={async () => {
+              lightHaptic();
+              try {
+                await Share.share({
+                  message: `Check out ${service.name} — ₹${service.price} on Motonode!`,
+                  title: service.name,
+                });
+              } catch {
+                // dismissed
+              }
+            }}
+          >
             <Feather name="share-2" size={20} color={colors.headerForeground} />
           </Pressable>
-          <Pressable style={styles.iconBtn} onPress={() => lightHaptic()}>
-            <Feather name="heart" size={20} color={colors.headerForeground} />
+          <Pressable
+            style={styles.iconBtn}
+            onPress={() => {
+              lightHaptic();
+              toggleWishlist(serviceId);
+            }}
+          >
+            <Feather
+              name="heart"
+              size={20}
+              color={wishlisted ? colors.destructive : colors.headerForeground}
+            />
           </Pressable>
         </View>
       </ChromeHeader>
@@ -221,32 +249,38 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
           <View style={[styles.trustBadgesRow, { backgroundColor: colors.muted }]}>
             <View style={styles.trustBadge}>
               <View style={[styles.trustIconWrapper, { backgroundColor: colors.card }]}>
-                <Feather name="shield" size={14} color={colors.icon} />
+                <Feather name="shield" size={16} color={colors.icon} />
               </View>
-              <View>
-                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Genuine Parts</Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>100% Genuine</Text>
-              </View>
+              <Text style={[styles.trustTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                Genuine Parts
+              </Text>
+              <Text style={[styles.trustSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                100% Genuine
+              </Text>
             </View>
 
             <View style={styles.trustBadge}>
               <View style={[styles.trustIconWrapper, { backgroundColor: colors.card }]}>
-                <Feather name="clock" size={14} color={colors.icon} />
+                <Feather name="clock" size={16} color={colors.icon} />
               </View>
-              <View>
-                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Quick Service</Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>{durationLabel}</Text>
-              </View>
+              <Text style={[styles.trustTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                Quick Service
+              </Text>
+              <Text style={[styles.trustSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                {durationLabel}
+              </Text>
             </View>
 
             <View style={styles.trustBadge}>
               <View style={[styles.trustIconWrapper, { backgroundColor: colors.card }]}>
-                <Feather name="award" size={14} color={colors.icon} />
+                <Feather name="award" size={16} color={colors.icon} />
               </View>
-              <View>
-                <Text style={[styles.trustTitle, { color: colors.textPrimary }]}>Expert Technicians</Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>Certified Experts</Text>
-              </View>
+              <Text style={[styles.trustTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                Expert Techs
+              </Text>
+              <Text style={[styles.trustSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                Certified
+              </Text>
             </View>
           </View>
 
@@ -286,7 +320,13 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
 
           <View style={styles.addonsHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>You May Also Need</Text>
-            <Pressable style={styles.viewAllRow} onPress={() => lightHaptic()}>
+            <Pressable
+              style={styles.viewAllRow}
+              onPress={() => {
+                lightHaptic();
+                setAddonsSheetVisible(true);
+              }}
+            >
               <Text style={[styles.viewAllText, { color: colors.link }]}>View All</Text>
               <Feather name="chevron-right" size={12} color={colors.link} />
             </Pressable>
@@ -297,7 +337,9 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalAddons}
           >
-            {addOns.map((item) => (
+            {addOns.map((item) => {
+              const selected = selectedAddonIds.includes(item.id);
+              return (
               <View
                 key={item.id}
                 style={[styles.addonCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -308,14 +350,39 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
                 </Text>
                 <Text style={[styles.addonPrice, { color: colors.textPrimary }]}>₹{item.price}</Text>
                 <Pressable
-                  style={[styles.addonAddBtn, { borderColor: colors.border, backgroundColor: colors.primarySubtle }]}
-                  onPress={() => successHaptic()}
+                  style={[
+                    styles.addonAddBtn,
+                    {
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.primary : colors.primarySubtle,
+                    },
+                  ]}
+                  onPress={() => {
+                    successHaptic();
+                    setSelectedAddonIds((current) =>
+                      current.includes(item.id)
+                        ? current.filter((id) => id !== item.id)
+                        : [...current, item.id],
+                    );
+                  }}
                 >
-                  <Feather name="plus" size={10} color={colors.link} />
-                  <Text style={[styles.addonAddBtnText, { color: colors.link }]}>Add</Text>
+                  <Feather
+                    name={selected ? 'check' : 'plus'}
+                    size={10}
+                    color={selected ? colors.primaryForeground : colors.link}
+                  />
+                  <Text
+                    style={[
+                      styles.addonAddBtnText,
+                      { color: selected ? colors.primaryForeground : colors.link },
+                    ]}
+                  >
+                    {selected ? 'Added' : 'Add'}
+                  </Text>
                 </Pressable>
               </View>
-            ))}
+              );
+            })}
           </ScrollView>
         </View>
       </ScrollView>
@@ -329,9 +396,10 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
         <Pressable
           style={[styles.bookBtn, { backgroundColor: colors.primary }]}
           onPress={() => {
-            void runWithMobileCheck(() => {
+            void runWithMobileCheck(async () => {
               lightHaptic();
-              startBooking(serviceId);
+              await startBooking(serviceId);
+              updateBooking({ selectedAddonIds });
               navigation.navigate(CustomerStackRoutes.ServiceBookingDateTime, {
                 serviceId,
               });
@@ -345,6 +413,43 @@ export function ServiceDetailScreen({ route, navigation }: ServiceDetailScreenPr
           </View>
         </Pressable>
       </View>
+      <BottomSheet visible={addonsSheetVisible} onClose={() => setAddonsSheetVisible(false)}>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, paddingHorizontal: 16, marginBottom: 12 }]}>
+          Add-ons
+        </Text>
+        {addOns.map((item) => {
+          const selected = selectedAddonIds.includes(item.id);
+          return (
+            <Pressable
+              key={item.id}
+              style={[styles.sheetAddonRow, { borderBottomColor: colors.border }]}
+              onPress={() => {
+                successHaptic();
+                setSelectedAddonIds((current) =>
+                  current.includes(item.id)
+                    ? current.filter((id) => id !== item.id)
+                    : [...current, item.id],
+                );
+              }}
+            >
+              <Image source={{ uri: item.image }} style={styles.sheetAddonImg} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.addonName, { color: colors.textPrimary, textAlign: 'left' }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.addonPrice, { color: colors.textPrimary, textAlign: 'left' }]}>
+                  ₹{item.price}
+                </Text>
+              </View>
+              <Feather
+                name={selected ? 'check-circle' : 'plus-circle'}
+                size={22}
+                color={selected ? colors.success : colors.link}
+              />
+            </Pressable>
+          );
+        })}
+      </BottomSheet>
     </View>
   );
 }
@@ -458,20 +563,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   trustBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     flex: 1,
+    alignItems: 'center',
+    gap: 6,
   },
   trustIconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  trustTitle: { fontSize: 9, fontFamily: 'Inter_700Bold' },
-  trustSub: { fontSize: 8, fontFamily: 'Inter_400Regular', marginTop: 1 },
+  trustTitle: { fontSize: 11, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  trustSub: { fontSize: 10, fontFamily: 'Inter_400Regular', textAlign: 'center' },
   sectionCard: {
     borderWidth: 1,
     borderRadius: 16,
@@ -522,6 +626,15 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   addonAddBtnText: { fontSize: 10, fontFamily: 'Inter_700Bold' },
+  sheetAddonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  sheetAddonImg: { width: 48, height: 48, borderRadius: 8 },
   bottomBar: {
     borderTopWidth: 1,
     padding: 16,

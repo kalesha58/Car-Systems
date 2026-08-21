@@ -61,7 +61,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           },
         ]}
       >
-        <View style={[styles.cutoutOverlay, { backgroundColor: colors.background }]} />
+        <View style={[styles.cutoutOverlay, { backgroundColor: colors.tabBar }]} />
 
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -85,7 +85,10 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 <View
                   style={[
                     styles.raisedCircle,
-                    { backgroundColor: isFocused ? colors.primaryDark : colors.primary },
+                    {
+                      backgroundColor: isFocused ? colors.primaryDark : colors.primary,
+                      borderColor: colors.tabBar,
+                    },
                   ]}
                 >
                   <Feather name="users" size={20} color={colors.white} />
@@ -206,25 +209,28 @@ const styles = StyleSheet.create({
   },
   cutoutOverlay: {
     position: 'absolute',
-    top: -18,
+    top: -1,
     left: '50%',
-    marginLeft: -36,
-    width: 72,
-    height: 36,
-    borderBottomLeftRadius: 36,
-    borderBottomRightRadius: 36,
+    marginLeft: -33,
+    width: 66,
+    height: 38,
+    borderBottomLeftRadius: 33,
+    borderBottomRightRadius: 33,
+    zIndex: 0,
   },
   normalTabBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     height: 44,
+    zIndex: 2,
   },
   middleTabBtnWrapper: {
     flex: 1.2,
     alignItems: 'center',
     justifyContent: 'flex-start',
     marginTop: -28,
+    zIndex: 2,
   },
   raisedCircle: {
     width: 56,
@@ -232,6 +238,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 3,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

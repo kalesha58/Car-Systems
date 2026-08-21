@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 
-import { themeLight } from '@theme/colors';
+import { useColors } from '@hooks/useColors';
 
 export type BookingMasterStep = 1 | 2 | 3 | 4;
 
@@ -18,8 +18,10 @@ interface BookingMasterStepBarProps {
 }
 
 export function BookingMasterStepBar({ current }: BookingMasterStepBarProps) {
+  const colors = useColors();
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { backgroundColor: colors.card }]}>
       {STEPS.map((step, idx) => {
         const done = step.num < current;
         const active = step.num === current;
@@ -29,20 +31,42 @@ export function BookingMasterStepBar({ current }: BookingMasterStepBarProps) {
               <View
                 style={[
                   styles.circle,
-                  done && styles.circleDone,
-                  active && styles.circleActive,
+                  { borderColor: colors.border, backgroundColor: colors.card },
+                  (done || active) && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
               >
                 {done ? (
-                  <Feather name="check" size={12} color="#fff" />
+                  <Feather name="check" size={12} color={colors.white} />
                 ) : (
-                  <Text style={[styles.num, active && styles.numActive]}>{step.num}</Text>
+                  <Text
+                    style={[
+                      styles.num,
+                      { color: colors.textTertiary },
+                      active && { color: colors.white },
+                    ]}
+                  >
+                    {step.num}
+                  </Text>
                 )}
               </View>
-              <Text style={[styles.label, active && styles.labelActive]}>{step.label}</Text>
+              <Text
+                style={[
+                  styles.label,
+                  { color: colors.textTertiary },
+                  active && { color: colors.textPrimary, fontFamily: 'Inter_700Bold' },
+                ]}
+              >
+                {step.label}
+              </Text>
             </View>
             {idx < STEPS.length - 1 && (
-              <View style={[styles.line, done && styles.lineDone]} />
+              <View
+                style={[
+                  styles.line,
+                  { backgroundColor: colors.border },
+                  done && { backgroundColor: colors.primary },
+                ]}
+              />
             )}
           </React.Fragment>
         );
@@ -57,7 +81,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
   },
   item: { alignItems: 'center', gap: 6, minWidth: 56 },
   circle: {
@@ -65,17 +88,10 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleDone: { backgroundColor: '#E60012', borderColor: '#E60012' },
-  circleActive: { backgroundColor: '#E60012', borderColor: '#E60012' },
-  num: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#94A3B8' },
-  numActive: { color: '#ffffff' },
-  label: { fontSize: 10, fontFamily: 'Inter_500Medium', color: '#94A3B8' },
-  labelActive: { color: themeLight.textPrimary, fontFamily: 'Inter_700Bold' },
-  line: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginBottom: 18, marginHorizontal: 4 },
-  lineDone: { backgroundColor: '#E60012' },
+  num: { fontSize: 11, fontFamily: 'Inter_700Bold' },
+  label: { fontSize: 10, fontFamily: 'Inter_500Medium' },
+  line: { flex: 1, height: 2, marginBottom: 18, marginHorizontal: 4 },
 });

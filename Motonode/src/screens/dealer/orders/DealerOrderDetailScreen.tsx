@@ -264,7 +264,7 @@ export function DealerOrderDetailScreen({ route, navigation }: Props) {
   const addressLine = getOrderShippingAddress(order);
 
   return (
-    <View style={[styles.container, { backgroundColor: '#F1F5F9' }]}>
+    <View style={[styles.container, { backgroundColor: colors.muted }]}>
       <ChromeHeader contentPad={8}>
         <View style={styles.headerRow}>
           <Pressable style={styles.headerBtn} onPress={() => navigation.goBack()}>

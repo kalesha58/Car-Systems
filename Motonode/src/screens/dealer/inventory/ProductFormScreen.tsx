@@ -28,7 +28,6 @@ import {
   updateDealerProduct,
 } from '@services/dealer.service';
 import { getDropdownOptions } from '@services/dropdown.service';
-import { themeLight } from '@theme/colors';
 import { getApiErrorMessage } from '@utils/apiHelpers';
 import { getProductId } from '@utils/displayMappers';
 import { lightHaptic, successHaptic } from '@utils/haptics';
@@ -470,12 +469,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
         ...(sku.trim() ? [sku.trim()] : []),
         ...tags.filter((t) => t.trim() && t.trim() !== sku.trim()),
       ];
-      const payloadImages =
-        images.length > 0
-          ? images
-          : [
-              `https://placehold.co/200x200/2563EB/white?text=${encodeURIComponent(trimmedName.substring(0, 12))}`,
-            ];
+      const payloadImages = images;
 
       const basePayload = {
         name: trimmedName,
@@ -1247,7 +1241,7 @@ export function ProductFormScreen({ route, navigation }: Props) {
             </View>
             <View style={{ alignItems: 'center', marginLeft: 14 }}>
               <Text style={[styles.previewStatLabel, { color: '#64748B' }]}>Price</Text>
-              <Text style={[styles.previewStatValue, { color: themeLight.textSecondary }]}>
+              <Text style={[styles.previewStatValue, { color: colors.textSecondary }]}>
                 ₹{price || '0'}
               </Text>
             </View>

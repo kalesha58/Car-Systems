@@ -34,5 +34,23 @@ target 'motonode' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # RN prebuilds React-VFS.yaml with single-quoted paths. An apostrophe in the
+    # project path (e.g. Baig's) makes that YAML invalid for clang -ivfsoverlay.
+    fix_react_vfs_yaml_quoting
   end
+end
+
+def fix_react_vfs_yaml_quoting
+  vfs_path = File.join(__dir__, 'Pods/React-Core-prebuilt/React-VFS.yaml')
+  return unless File.exist?(vfs_path)
+
+  content = File.read(vfs_path)
+  fixed = content.gsub(/'([^'\n]*'[^'\n]*)'/) do
+    inner = Regexp.last_match(1)
+    '"' + inner.gsub('\\', '\\\\').gsub('"', '\\"') + '"'
+  end
+  return if fixed == content
+
+  File.write(vfs_path, fixed)
+  Pod::UI.puts 'Fixed React-VFS.yaml quoting for paths that contain apostrophes'.green
 end

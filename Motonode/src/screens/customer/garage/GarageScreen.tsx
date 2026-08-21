@@ -434,9 +434,6 @@ const styles = StyleSheet.create({
   iconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   contentSheet: {
     flex: 1,
-    marginTop: -20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
   },

@@ -24,6 +24,7 @@ import { DealerAnalyticsScreen } from '@screens/dealer/profile/DealerAnalyticsSc
 import { DealerHelpSupportScreen } from '@screens/dealer/profile/DealerHelpSupportScreen';
 import { DealerEditAccountScreen } from '@screens/dealer/profile/DealerEditAccountScreen';
 import { DealerPrivacySecurityScreen } from '@screens/dealer/profile/DealerPrivacySecurityScreen';
+import { DeleteAccountScreen } from '@screens/customer/settings';
 import {
   ChatListScreen,
   ChatScreen,
@@ -58,6 +59,7 @@ export type DealerStackParamList = {
   [DealerStackRoutes.HelpSupport]: undefined;
   [DealerStackRoutes.Analytics]: undefined;
   [DealerStackRoutes.EditAccount]: undefined;
+  [DealerStackRoutes.DeleteAccount]: undefined;
   [CustomerStackRoutes.ChatList]: undefined;
   [CustomerStackRoutes.Chat]: undefined;
   [CustomerStackRoutes.CreateChat]: undefined;
@@ -130,6 +132,7 @@ export function DealerNavigator() {
       <Stack.Screen name={DealerStackRoutes.DealerOrderDetail} component={DealerOrderDetailScreen} />
       <Stack.Screen name={DealerStackRoutes.BusinessDetails} component={BusinessDetailsScreen} />
       <Stack.Screen name={DealerStackRoutes.PrivacySecurity} component={DealerPrivacySecurityScreen} />
+      <Stack.Screen name={DealerStackRoutes.DeleteAccount} component={DeleteAccountScreen} />
       <Stack.Screen name={DealerStackRoutes.HelpSupport} component={DealerHelpSupportScreen} />
       <Stack.Screen name={DealerStackRoutes.Analytics} component={DealerAnalyticsScreen} />
       <Stack.Screen name={DealerStackRoutes.EditAccount} component={DealerEditAccountScreen} />

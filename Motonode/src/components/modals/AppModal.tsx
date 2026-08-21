@@ -1,7 +1,5 @@
 import { Modal, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { themeLight as colors } from '@theme/colors';
-
 interface AppModalProps {
   visible: boolean;
   children?: React.ReactNode;
@@ -11,7 +9,9 @@ interface AppModalProps {
 export function AppModal({ visible, children, onRequestClose }: AppModalProps) {
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onRequestClose}>
-      <View style={styles.backdrop}>{children}</View>
+      <View style={styles.backdrop}>
+        {children}
+      </View>
     </Modal>
   );
 }
@@ -23,11 +23,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-  } satisfies ViewStyle,
-  content: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
   } satisfies ViewStyle,
 });
