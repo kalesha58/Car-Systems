@@ -39,6 +39,7 @@ export default function BlogPage() {
         description={page.description}
         path={page.path}
         keywords={page.keywords}
+        noindex
         structuredData={buildPageStructuredData("blog")}
       />
 
@@ -62,7 +63,7 @@ export default function BlogPage() {
                   <h2 className="text-2xl font-display font-semibold text-white mb-3">{post.title}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-6 flex-1">{post.excerpt}</p>
                   <span className="inline-flex items-center text-primary font-medium">
-                    SEO-ready resource content <ArrowRight className="w-4 h-4 ml-2" />
+                    Coming soon in the Motonode app <ArrowRight className="w-4 h-4 ml-2" />
                   </span>
                 </article>
               </FadeIn>

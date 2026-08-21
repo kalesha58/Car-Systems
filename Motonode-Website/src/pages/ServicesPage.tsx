@@ -148,6 +148,8 @@ export default function ServicesPage() {
                 src="/images/services-bike.png" 
                 alt="Genuine parts e-commerce" 
                 className="w-full h-[400px] object-cover rounded-3xl group-hover:scale-105 transition-transform duration-700"
+                loading="lazy"
+                decoding="async"
                 onError={(e) => { e.currentTarget.src = "/images/community-hero.png" }}
               />
               {/* Floating Product Card */}
@@ -177,6 +179,8 @@ export default function ServicesPage() {
                   src="/images/community-hero.png" 
                   alt="Motonode Community" 
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
                 

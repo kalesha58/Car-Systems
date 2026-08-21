@@ -12,22 +12,14 @@ type StructuredDataType =
   | "website"
   | "localBusiness"
   | "breadcrumb"
-  | "product"
   | "service"
-  | "faq";
+  | "faq"
+  | "softwareApplication";
 
 interface ServiceStructuredDataInput {
   name?: string;
   description?: string;
   serviceType?: string[];
-}
-
-interface ProductStructuredDataInput {
-  name?: string;
-  description?: string;
-  lowPrice?: string;
-  highPrice?: string;
-  offerCount?: string;
 }
 
 interface GenerateMetaOptions {
@@ -71,7 +63,6 @@ export const generateStructuredData = (
     | BreadcrumbLink[]
     | FAQItem[]
     | ServiceStructuredDataInput
-    | ProductStructuredDataInput
     | Record<string, unknown> = {},
 ) => {
   switch (type) {
@@ -96,7 +87,7 @@ export const generateStructuredData = (
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
         name: siteConfig.name,
-        image: `${siteConfig.url}/images/logo-icon.png`,
+        image: siteConfig.ogImage,
         description: siteConfig.description,
         url: siteConfig.url,
         telephone: siteConfig.contact.phoneE164,
@@ -119,31 +110,23 @@ export const generateStructuredData = (
       };
     case "breadcrumb":
       return createBreadcrumb((data as BreadcrumbLink[]) || []);
-    case "product": {
-      const productData = data as ProductStructuredDataInput;
-
+    case "softwareApplication":
       return {
         "@context": "https://schema.org",
-        "@type": "Product",
-        name: productData.name || "Automobile Spare Parts",
-        description:
-          productData.description ||
-          "Wide range of genuine automobile spare parts available on Moto Node.",
-        brand: {
-          "@type": "Brand",
-          name: siteConfig.name,
-        },
+        "@type": "SoftwareApplication",
+        name: siteConfig.shortName,
+        alternateName: siteConfig.name,
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "iOS, Android",
+        url: siteConfig.url,
+        image: siteConfig.ogImage,
+        description: siteConfig.description,
         offers: {
-          "@type": "AggregateOffer",
-          url: `${siteConfig.url}/parts`,
-          availability: "https://schema.org/InStock",
+          "@type": "Offer",
+          price: "0",
           priceCurrency: "INR",
-          lowPrice: productData.lowPrice || "100",
-          highPrice: productData.highPrice || "5000",
-          offerCount: productData.offerCount || "10",
         },
       };
-    }
     case "service": {
       const serviceData = data as ServiceStructuredDataInput;
 
@@ -188,7 +171,7 @@ export const generateStructuredData = (
         name: siteConfig.name,
         alternateName: siteConfig.shortName,
         url: siteConfig.url,
-        logo: `${siteConfig.url}/images/logo-icon.png`,
+        logo: siteConfig.ogImage,
         description: siteConfig.description,
         sameAs: siteConfig.sameAs,
         contactPoint: {
@@ -276,7 +259,6 @@ export const buildPageStructuredData = (
     faqItems?: FAQItem[];
     breadcrumbs?: BreadcrumbLink[];
     serviceData?: ServiceStructuredDataInput;
-    productData?: ProductStructuredDataInput;
   },
 ) => {
   const baseData = [
@@ -285,12 +267,12 @@ export const buildPageStructuredData = (
     generateStructuredData("localBusiness"),
   ];
 
-  if (page === "services") {
-    baseData.push(generateStructuredData("service", options?.serviceData));
+  if (page === "home") {
+    baseData.push(generateStructuredData("softwareApplication"));
   }
 
-  if (page === "parts") {
-    baseData.push(generateStructuredData("product", options?.productData));
+  if (page === "services") {
+    baseData.push(generateStructuredData("service", options?.serviceData));
   }
 
   if (options?.faqItems?.length) {

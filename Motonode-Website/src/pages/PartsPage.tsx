@@ -57,11 +57,6 @@ export default function PartsPage() {
         keywords={page.keywords}
         structuredData={buildPageStructuredData("parts", {
           faqItems,
-          productData: {
-            name: "Automobile Spare Parts",
-            description:
-              "Moto Node helps users discover genuine automobile parts, verified categories, and smarter maintenance-ready purchases.",
-          },
         })}
       />
 
@@ -108,6 +103,8 @@ export default function PartsPage() {
                 src="/images/hero-parts.jpg" 
                 alt="Premium automobile parts floating in a sleek studio setting" 
                 className="w-full h-auto object-cover transform scale-100 group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                loading="eager"
+                decoding="async"
               />
             </div>
           </FadeIn>

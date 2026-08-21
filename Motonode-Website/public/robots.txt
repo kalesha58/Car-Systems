@@ -9,4 +9,4 @@ Disallow: /cache/
 Disallow: /user/account/
 Disallow: /user/settings/
 
-Sitemap: https://motonode.in/sitemap.xml
+Sitemap: https://www.motonode.in/sitemap.xml

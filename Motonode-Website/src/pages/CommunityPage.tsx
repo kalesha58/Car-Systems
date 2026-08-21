@@ -173,6 +173,8 @@ export default function CommunityPage() {
                     src="/images/community-hero.png"
                     alt="Motonode rider community expedition gathering"
                     className="w-full h-[400px] sm:h-[480px] object-cover object-center brightness-105 contrast-105 group-hover:scale-105 transition-transform duration-700"
+                    loading="eager"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 

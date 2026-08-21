@@ -127,7 +127,7 @@ export function SEOHead({
       { property: "og:image:secure_url" },
       openGraph.image,
     );
-    upsertMeta('meta[property="og:image:type"]', { property: "og:image:type" }, "image/png");
+    upsertMeta('meta[property="og:image:type"]', { property: "og:image:type" }, "image/jpeg");
     upsertMeta('meta[property="og:image:width"]', { property: "og:image:width" }, "1200");
     upsertMeta('meta[property="og:image:height"]', { property: "og:image:height" }, "630");
     upsertMeta(

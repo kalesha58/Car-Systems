@@ -336,7 +336,9 @@ export default function AboutPage() {
                       <img 
                         src={item.image} 
                         alt={item.title}
-                        className="w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-110 transition-transform duration-700" 
+                        className="w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-110 transition-transform duration-700"
+                        loading="lazy"
+                        decoding="async" 
                         onError={(e) => {
                           e.currentTarget.src = "/images/community-hero.png";
                         }}

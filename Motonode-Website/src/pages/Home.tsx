@@ -11,7 +11,7 @@ import { BecomePartnerSection } from "@/components/sections/BecomePartnerSection
 import { Features } from "@/components/sections/Features";
 import { AppPromo } from "@/components/sections/AppPromo";
 import { homeFaqs, sitePageMap } from "@/config/site";
-import { buildPageStructuredData, generateStructuredData } from "@/utils/seoHelpers";
+import { buildPageStructuredData } from "@/utils/seoHelpers";
 
 export default function Home() {
   return (
@@ -21,11 +21,7 @@ export default function Home() {
         description={sitePageMap.home.description}
         path={sitePageMap.home.path}
         keywords={sitePageMap.home.keywords}
-        structuredData={[
-          ...buildPageStructuredData("home", { faqItems: homeFaqs }),
-          generateStructuredData("product"),
-          generateStructuredData("service"),
-        ]}
+        structuredData={buildPageStructuredData("home", { faqItems: homeFaqs })}
       />
 
       <>

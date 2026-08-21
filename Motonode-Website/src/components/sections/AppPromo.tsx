@@ -53,6 +53,7 @@ export function AppPromo() {
                   width="420"
                   height="840"
                   loading="lazy"
+                  decoding="async"
                 />
               </div>
             </FadeIn>

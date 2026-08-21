@@ -38,6 +38,7 @@ export function Products() {
                     alt={`${cat.name} available on Motonode`}
                     className="absolute inset-0 w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-110 transition-transform duration-700"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/25 to-transparent p-6 flex flex-col justify-end">
                     <span className="text-xs font-semibold text-rose-400 mb-1 block">

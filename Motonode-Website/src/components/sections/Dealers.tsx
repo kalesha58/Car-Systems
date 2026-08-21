@@ -53,7 +53,8 @@ export function Dealers() {
                   className="w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-105 transition-transform duration-700"
                   width="2048"
                   height="2048"
-                  loading="eager"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-6 md:p-8">
                   <div className="glass-panel p-5 rounded-2xl border border-white/10 w-full backdrop-blur-md">

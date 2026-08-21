@@ -1,3 +1,15 @@
-# Cloudflare Pages / Netlify: serve the SPA for every path.
-# Without this, only / works; /privacy and /terms 404 because they are not real files.
-/*    /index.html   200
+# Apex host → www (one canonical).
+https://motonode.in/*   https://www.motonode.in/:splat  301
+http://motonode.in/*    https://www.motonode.in/:splat  301
+
+# SPA routes only. Do not rewrite .jpg/.png or WhatsApp gets HTML.
+/privacy     /index.html   200
+/terms       /index.html   200
+/about       /index.html   200
+/services    /index.html   200
+/parts       /index.html   200
+/community   /index.html   200
+/rides       /index.html   200
+/blog        /index.html   200
+/contact     /index.html   200
+/search      /index.html   200

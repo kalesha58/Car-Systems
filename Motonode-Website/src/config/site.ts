@@ -31,7 +31,7 @@ export interface SitePageConfig {
   indexable?: boolean;
 }
 
-const fallbackSiteUrl = "https://motonode.in";
+const fallbackSiteUrl = "https://www.motonode.in";
 const envSiteUrl = import.meta.env.VITE_SITE_URL?.trim();
 const resolvedSiteUrl = (envSiteUrl && envSiteUrl.replace(/\/$/, "")) || fallbackSiteUrl;
 
@@ -55,7 +55,7 @@ export const siteConfig = {
       "automobile super app",
     ]
   ),
-  ogImage: import.meta.env.VITE_OG_IMAGE?.trim() || `${resolvedSiteUrl}/og-image.png?v=20260821b`,
+  ogImage: import.meta.env.VITE_OG_IMAGE?.trim() || "https://www.motonode.in/opengraph.jpg",
   twitterHandle: import.meta.env.VITE_TWITTER_HANDLE?.trim() || "@motonode",
   themeColor: "#E60012",
   locale: "en_IN",
@@ -205,7 +205,7 @@ export const sitePages: SitePageConfig[] = [
     ],
     changefreq: "weekly",
     priority: "0.8",
-    indexable: true,
+    indexable: false,
   },
   {
     key: "contact",

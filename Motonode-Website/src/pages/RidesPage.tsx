@@ -170,6 +170,8 @@ export default function RidesPage() {
                     src="/images/community-hero.png"
                     alt="Motonode luxury highway expedition convoy"
                     className="w-full h-[400px] sm:h-[480px] object-cover object-center brightness-105 contrast-105 group-hover:scale-105 transition-transform duration-700"
+                    loading="eager"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
@@ -227,7 +229,9 @@ export default function RidesPage() {
                       <img 
                         src={exp.image} 
                         alt={exp.title}
-                        className="w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-110 transition-transform duration-700" 
+                        className="w-full h-full object-cover brightness-105 contrast-105 group-hover:scale-110 transition-transform duration-700"
+                        loading="lazy"
+                        decoding="async" 
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
                       
