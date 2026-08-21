@@ -1,0 +1,3 @@
+# Cloudflare Pages / Netlify: serve the SPA for every path.
+# Without this, only / works; /privacy and /terms 404 because they are not real files.
+/*    /index.html   200
