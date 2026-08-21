@@ -123,6 +123,20 @@ export function SEOHead({
     );
     upsertMeta('meta[property="og:image"]', { property: "og:image" }, openGraph.image);
     upsertMeta(
+      'meta[property="og:image:secure_url"]',
+      { property: "og:image:secure_url" },
+      openGraph.image,
+    );
+    upsertMeta('meta[property="og:image:type"]', { property: "og:image:type" }, "image/png");
+    upsertMeta('meta[property="og:image:width"]', { property: "og:image:width" }, "1200");
+    upsertMeta('meta[property="og:image:height"]', { property: "og:image:height" }, "630");
+    upsertMeta(
+      'meta[property="og:image:alt"]',
+      { property: "og:image:alt" },
+      `${siteConfig.name} logo`,
+    );
+    upsertLink('link[rel="image_src"]', { rel: "image_src", href: openGraph.image });
+    upsertMeta(
       'meta[property="og:site_name"]',
       { property: "og:site_name" },
       siteConfig.name,

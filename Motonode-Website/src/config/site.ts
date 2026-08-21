@@ -55,7 +55,7 @@ export const siteConfig = {
       "automobile super app",
     ]
   ),
-  ogImage: import.meta.env.VITE_OG_IMAGE?.trim() || `${resolvedSiteUrl}/opengraph.jpg`,
+  ogImage: import.meta.env.VITE_OG_IMAGE?.trim() || `${resolvedSiteUrl}/og-image.png`,
   twitterHandle: import.meta.env.VITE_TWITTER_HANDLE?.trim() || "@motonode",
   themeColor: "#E60012",
   locale: "en_IN",
