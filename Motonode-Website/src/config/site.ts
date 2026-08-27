@@ -20,6 +20,7 @@ export interface SitePageConfig {
     | "contact"
     | "privacy"
     | "terms"
+    | "delete-account"
     | "search";
   path: string;
   navLabel?: string;
@@ -243,6 +244,22 @@ export const sitePages: SitePageConfig[] = [
     indexable: true,
   },
   {
+    key: "delete-account",
+    path: "/delete-account",
+    title: "Delete Account | Moto Node",
+    description:
+      "Request deletion of your Motonode account and associated personal data by email, or delete the account from the Motonode app.",
+    keywords: [
+      "Moto Node delete account",
+      "account deletion",
+      "data deletion request",
+      "GDPR delete account",
+    ],
+    changefreq: "yearly",
+    priority: "0.5",
+    indexable: true,
+  },
+  {
     key: "terms",
     path: "/terms",
     title: "Terms of Service | Moto Node",
@@ -323,6 +340,10 @@ export const defaultBreadcrumbs: Record<
   privacy: [
     { name: "Home", path: "/" },
     { name: "Privacy Policy", path: "/privacy" },
+  ],
+  "delete-account": [
+    { name: "Home", path: "/" },
+    { name: "Delete Account", path: "/delete-account" },
   ],
   terms: [
     { name: "Home", path: "/" },

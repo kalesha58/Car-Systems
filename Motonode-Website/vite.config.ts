@@ -30,6 +30,13 @@ const seoPages: Array<{
       "How Motonode collects and uses account, location, photo, map, payment, and booking data, and how you can delete your account.",
   },
   {
+    file: "delete-account.html",
+    path: "/delete-account",
+    title: "Delete Account | Moto Node",
+    description:
+      "Request deletion of your Motonode account and associated personal data by email, or delete the account from the Motonode app.",
+  },
+  {
     file: "terms.html",
     path: "/terms",
     title: "Terms of Service | Moto Node",

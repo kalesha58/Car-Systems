@@ -4,6 +4,7 @@ http://motonode.in/*    https://www.motonode.in/:splat  301
 
 # SPA routes only. Do not rewrite .jpg/.png or WhatsApp gets HTML.
 /privacy     /index.html   200
+/delete-account  /index.html   200
 /terms       /index.html   200
 /about       /index.html   200
 /services    /index.html   200

@@ -13,6 +13,7 @@ import AboutPage from "@/pages/AboutPage";
 import BlogPage from "@/pages/BlogPage";
 import ContactPage from "@/pages/ContactPage";
 import PrivacyPage from "@/pages/PrivacyPage";
+import DeleteAccountPage from "@/pages/DeleteAccountPage";
 import TermsPage from "@/pages/TermsPage";
 import SearchPage from "@/pages/SearchPage";
 import NotFound from "@/pages/not-found";
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/blog" component={BlogPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/delete-account" component={DeleteAccountPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/search" component={SearchPage} />
       <Route component={NotFound} />

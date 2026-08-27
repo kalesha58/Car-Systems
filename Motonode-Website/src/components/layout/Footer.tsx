@@ -79,6 +79,7 @@ export function Footer() {
                 { label: "Become a Dealer", href: "/contact" },
                 { label: "About Moto Node", href: "/about" },
                 { label: "Privacy Policy", href: "/privacy" },
+                { label: "Delete Account", href: "/delete-account" },
                 { label: "Terms of Service", href: "/terms" },
               ].map((item) => (
                 <li key={item.label}>

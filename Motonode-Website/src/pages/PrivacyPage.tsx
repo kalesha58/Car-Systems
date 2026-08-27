@@ -44,7 +44,7 @@ const privacySections = [
   {
     title: "Retention and account deletion",
     body:
-      "We keep account and transaction records while your account is active and afterwards for as long as tax, accounting, dispute, or other legal rules require. In the Motonode app you can deactivate or permanently delete your account from Settings (customers) or Privacy & Security (dealers). Deletion removes your profile and personal details from active systems. Some records may be retained where the law requires us to keep them.",
+      `We keep account and transaction records while your account is active and afterwards for as long as tax, accounting, dispute, or other legal rules require. In the Motonode app you can deactivate or permanently delete your account from Settings (customers) or Privacy & Security (dealers). You can also request deletion at ${siteConfig.url}/delete-account. Deletion removes your profile and personal details from active systems. Some records may be retained where the law requires us to keep them.`,
   },
   {
     title: "Your choices and contact",
