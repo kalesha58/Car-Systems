@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type ReportTargetType = 'post' | 'comment' | 'message' | 'user';
+export type ReportTargetType = 'post' | 'comment' | 'message' | 'user' | 'review';
 export type ReportStatus = 'open' | 'under_review' | 'actioned' | 'dismissed';
 
 export interface IContentReportDocument extends Document {
@@ -22,7 +22,7 @@ export interface IContentReportDocument extends Document {
 const contentReportSchema = new Schema<IContentReportDocument>(
   {
     reporterId: { type: String, required: true, index: true },
-    targetType: { type: String, enum: ['post', 'comment', 'message', 'user'], required: true, index: true },
+    targetType: { type: String, enum: ['post', 'comment', 'message', 'user', 'review'], required: true, index: true },
     targetId: { type: String, required: true, index: true },
     targetOwnerId: { type: String, index: true },
     reason: { type: String, required: true, trim: true },

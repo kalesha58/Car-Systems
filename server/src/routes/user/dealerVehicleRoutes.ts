@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { getAllDealerVehiclesForUsersController } from '../../controllers/user/vehicleController';
-import { authMiddleware } from '../../middleware/authMiddleware';
 
 const router = Router();
 
@@ -10,8 +9,6 @@ const router = Router();
  *   get:
  *     summary: Get all dealer vehicles for users with dealer information
  *     tags: [User]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -66,10 +63,8 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Dealer vehicles retrieved successfully
- *       401:
- *         description: Unauthorized
  */
-router.get('/', authMiddleware, getAllDealerVehiclesForUsersController);
+router.get('/', getAllDealerVehiclesForUsersController);
 
 export default router;
 

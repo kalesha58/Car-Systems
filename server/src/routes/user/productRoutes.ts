@@ -21,8 +21,6 @@ logger.info('[productRoutes] Registering user product routes: GET /, GET /diagno
  *   get:
  *     summary: Get all active products for marketplace
  *     tags: [User]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -69,10 +67,8 @@ logger.info('[productRoutes] Registering user product routes: GET /, GET /diagno
  *     responses:
  *       200:
  *         description: Products retrieved successfully
- *       401:
- *         description: Unauthorized
  */
-router.get('/', authMiddleware, getAllProductsController);
+router.get('/', getAllProductsController);
 
 /**
  * @swagger
@@ -94,8 +90,6 @@ router.get('/diagnostic', authMiddleware, getProductsDiagnosticController);
  *   get:
  *     summary: Get product by ID with dealer information
  *     tags: [User]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -108,10 +102,8 @@ router.get('/diagnostic', authMiddleware, getProductsDiagnosticController);
  *         description: Product retrieved successfully
  *       404:
  *         description: Product not found
- *       401:
- *         description: Unauthorized
  */
-router.get('/:id', authMiddleware, getProductByIdController);
+router.get('/:id', getProductByIdController);
 
 /**
  * @swagger
@@ -119,8 +111,6 @@ router.get('/:id', authMiddleware, getProductByIdController);
  *   get:
  *     summary: List reviews for a product with rating summary
  *     tags: [User]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -143,7 +133,7 @@ router.get('/:id', authMiddleware, getProductByIdController);
  *       404:
  *         description: Product not found
  */
-router.get('/:id/reviews', authMiddleware, getProductReviewsController);
+router.get('/:id/reviews', getProductReviewsController);
 
 /**
  * @swagger
@@ -151,8 +141,6 @@ router.get('/:id/reviews', authMiddleware, getProductReviewsController);
  *   get:
  *     summary: Get aggregate rating and star distribution for a product
  *     tags: [User]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -163,7 +151,7 @@ router.get('/:id/reviews', authMiddleware, getProductReviewsController);
  *       200:
  *         description: Summary retrieved successfully
  */
-router.get('/:id/reviews/summary', authMiddleware, getProductReviewSummaryController);
+router.get('/:id/reviews/summary', getProductReviewSummaryController);
 
 /**
  * @swagger
