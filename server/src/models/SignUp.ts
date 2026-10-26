@@ -39,6 +39,12 @@ export interface ISignUpDocument extends Document {
   role: UserRole[];
   status: UserStatus;
   phoneVerified?: boolean;
+  /** false only for email signups awaiting OTP; missing on legacy accounts (treated as verified). */
+  emailVerified?: boolean;
+  emailOtpHash?: string;
+  emailOtpExpires?: Date;
+  emailOtpAttempts?: number;
+  emailOtpLastSentAt?: Date;
   authProvider?: AuthProvider;
   profileImage?: string;
   resetPasswordCode?: string;
@@ -100,6 +106,25 @@ const signUpSchema = new Schema<ISignUpDocument>(
     },
     resetPasswordCode: {
       type: String,
+      select: false,
+    },
+    emailVerified: {
+      type: Boolean,
+    },
+    emailOtpHash: {
+      type: String,
+      select: false,
+    },
+    emailOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    emailOtpAttempts: {
+      type: Number,
+      select: false,
+    },
+    emailOtpLastSentAt: {
+      type: Date,
       select: false,
     },
     resetPasswordCodeExpires: {

@@ -36,6 +36,14 @@ export interface ILoginRequest {
 export interface IAuthResponse {
   Response: IUser;
 }
+export interface IEmailVerificationRequired {
+  emailVerificationRequired: true;
+  email: string;
+  otpLength: number;
+  otpExpiresInSeconds: number;
+  resendAfterSeconds: number;
+}
+
 export interface ILoginResponse {
   Response: IUser;
   token: string;

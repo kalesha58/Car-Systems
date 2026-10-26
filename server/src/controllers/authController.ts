@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { signup, login, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
+import { signup, login, verifyEmailOtp, resendEmailOtp, forgotPassword, resetPassword, googleAuth, refreshToken, acceptPolicy } from '../services/authService';
 import { createFirebaseCustomToken } from '../utils/firebaseTokens';
 import {
   ensureFirebaseReady,
@@ -56,6 +56,49 @@ export const loginController = async (
     });
   } catch (error) {
     logger.error('Login controller error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Verify signup email OTP controller
+ */
+export const verifyEmailOtpController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { email, otp } = req.body;
+    const result = await verifyEmailOtp(email, otp);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    logger.error('Verify email OTP controller error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Resend signup email OTP controller
+ */
+export const resendEmailOtpController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const result = await resendEmailOtp(req.body.email);
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    logger.error('Resend email OTP controller error:', error);
     next(error);
   }
 };

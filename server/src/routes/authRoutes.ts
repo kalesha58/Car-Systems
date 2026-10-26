@@ -7,6 +7,8 @@ import {
   googleAuthController,
   acceptPolicyController,
   firebaseTokenController,
+  verifyEmailOtpController,
+  resendEmailOtpController,
 } from '../controllers/authController';
 import {
   validateSignup,
@@ -14,6 +16,7 @@ import {
   validateForgotPassword,
   validateResetPassword,
   validateGoogleAuth,
+  validateEmailOtp,
 } from '../middleware/validationMiddleware';
 import { authMiddleware } from '../middleware/authMiddleware';
 import {
@@ -98,6 +101,24 @@ router.post('/signup', validateSignup, signupController);
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/login', validateLogin, loginController);
+
+/**
+ * @swagger
+ * /api/auth/email-otp/verify:
+ *   post:
+ *     summary: Verify the signup email OTP (sent via Resend) and log in
+ *     tags: [Authentication]
+ */
+router.post('/email-otp/verify', otpIpRateLimiter, validateEmailOtp, verifyEmailOtpController);
+
+/**
+ * @swagger
+ * /api/auth/email-otp/resend:
+ *   post:
+ *     summary: Resend the signup email OTP
+ *     tags: [Authentication]
+ */
+router.post('/email-otp/resend', otpIpRateLimiter, validateEmailOtp, resendEmailOtpController);
 
 /**
  * @swagger

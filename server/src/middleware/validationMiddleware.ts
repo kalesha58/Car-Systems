@@ -574,3 +574,24 @@ export const validateUpdatePreBookingStatus = (
     next(error);
   }
 };
+
+/**
+ * Validate email OTP verify / resend requests
+ */
+export const validateEmailOtp = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  const { email, otp } = req.body;
+
+  if (!email || typeof email !== 'string' || !isValidEmail(email)) {
+    return next(new ValidationError('A valid email is required'));
+  }
+
+  if (req.path.endsWith('/verify') && (typeof otp !== 'string' || !/^[0-9]{6}$/.test(otp.trim()))) {
+    return next(new ValidationError('A 6-digit code is required'));
+  }
+
+  next();
+};

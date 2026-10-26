@@ -14,16 +14,23 @@ import {
   IResetPasswordRequest,
   IGoogleAuthRequest,
   IPolicyAcceptanceRequest,
+  IEmailVerificationRequired,
 } from '../types/auth';
 import { AppError, ConflictError, UnauthorizedError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
 import { sendPasswordResetCodeEmail, sendPasswordResetSuccessEmail } from '../utils/emailService';
+import { sendEmailVerificationOtp } from '../utils/resendEmailService';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d';
 const GOOGLE_CLIENT_ID: string = process.env.GOOGLE_CLIENT_ID || '';
 const CURRENT_TERMS_VERSION: string = process.env.CURRENT_TERMS_VERSION || '2026-05';
 const CURRENT_PRIVACY_VERSION: string = process.env.CURRENT_PRIVACY_VERSION || '2026-05';
+const EMAIL_OTP_LENGTH = 6;
+const EMAIL_OTP_EXPIRY_SECONDS = 10 * 60;
+const EMAIL_OTP_RESEND_COOLDOWN_SECONDS = 30;
+const EMAIL_OTP_MAX_ATTEMPTS = 5;
+const EMAIL_OTP_SELECT = '+emailOtpHash +emailOtpExpires +emailOtpAttempts +emailOtpLastSentAt';
 
 /**
  * Generate JWT token for user
@@ -57,7 +64,9 @@ const userToIUser = (userDoc: ISignUpDocument): IUser => {
 /**
  * Signup a new user
  */
-export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
+export const signup = async (
+  data: ISignupRequest,
+): Promise<IAuthResponse & IEmailVerificationRequired> => {
   const { name, email, phone, password, role, termsAccepted, privacyAccepted, termsVersion, privacyVersion } = data;
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -89,21 +98,139 @@ export const signup = async (data: ISignupRequest): Promise<IAuthResponse> => {
     privacyAcceptedAt: privacyAccepted ? new Date() : undefined,
     termsVersion,
     privacyVersion,
+    emailVerified: false,
   });
 
   await signUpUser.save();
 
   logger.info(`New user signed up: ${signUpUser.email} with role: ${validRole}`);
 
+  // Don't fail signup if the email can't be sent; the user can resend from the OTP screen.
+  try {
+    await issueEmailOtp(signUpUser);
+  } catch (error) {
+    logger.error(`Failed to send signup OTP to ${signUpUser.email}:`, error);
+  }
+
   return ({
     Response: userToIUser(signUpUser),
+    ...emailVerificationPayload(signUpUser.email),
   });
+};
+
+const hashEmailOtp = (otp: string): string => crypto.createHash('sha256').update(otp).digest('hex');
+
+const emailVerificationPayload = (email: string): IEmailVerificationRequired => ({
+  emailVerificationRequired: true,
+  email,
+  otpLength: EMAIL_OTP_LENGTH,
+  otpExpiresInSeconds: EMAIL_OTP_EXPIRY_SECONDS,
+  resendAfterSeconds: EMAIL_OTP_RESEND_COOLDOWN_SECONDS,
+});
+
+/**
+ * Generate, store (hashed) and email a new verification OTP
+ */
+const issueEmailOtp = async (user: ISignUpDocument): Promise<void> => {
+  const otp = crypto.randomInt(0, 10 ** EMAIL_OTP_LENGTH).toString().padStart(EMAIL_OTP_LENGTH, '0');
+
+  user.emailOtpHash = hashEmailOtp(otp);
+  user.emailOtpExpires = new Date(Date.now() + EMAIL_OTP_EXPIRY_SECONDS * 1000);
+  user.emailOtpAttempts = 0;
+  user.emailOtpLastSentAt = new Date();
+  await user.save();
+
+  await sendEmailVerificationOtp(user.email, user.name, otp, EMAIL_OTP_EXPIRY_SECONDS / 60);
+};
+
+const isEmailOtpCooldownActive = (user: ISignUpDocument): boolean =>
+  Boolean(user.emailOtpLastSentAt) &&
+  Date.now() - user.emailOtpLastSentAt!.getTime() < EMAIL_OTP_RESEND_COOLDOWN_SECONDS * 1000;
+
+const buildLoginResponse = (signUpUser: ISignUpDocument): ILoginResponse => {
+  const token = generateToken({
+    userId: signUpUser.id,
+    email: signUpUser.email,
+    role: signUpUser.role,
+    phone: signUpUser.phone,
+  });
+
+  return {
+    Response: userToIUser(signUpUser),
+    token,
+    requiresPolicyAcceptance:
+      signUpUser.termsVersion !== CURRENT_TERMS_VERSION ||
+      signUpUser.privacyVersion !== CURRENT_PRIVACY_VERSION,
+    currentTermsVersion: CURRENT_TERMS_VERSION,
+    currentPrivacyVersion: CURRENT_PRIVACY_VERSION,
+  };
+};
+
+/**
+ * Resend the signup verification OTP (respects cooldown)
+ */
+export const resendEmailOtp = async (email: string): Promise<IEmailVerificationRequired> => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await SignUp.findOne({ email: normalizedEmail }).select(EMAIL_OTP_SELECT);
+
+  if (!user || user.emailVerified !== false) {
+    throw new AppError('No pending email verification for this account', 400);
+  }
+
+  if (isEmailOtpCooldownActive(user)) {
+    throw new AppError('Please wait before requesting a new code', 429);
+  }
+
+  await issueEmailOtp(user);
+
+  return emailVerificationPayload(user.email);
+};
+
+/**
+ * Verify the signup OTP, mark email verified and sign the user in
+ */
+export const verifyEmailOtp = async (email: string, otp: string): Promise<ILoginResponse> => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await SignUp.findOne({ email: normalizedEmail }).select(EMAIL_OTP_SELECT);
+
+  if (!user || user.emailVerified !== false) {
+    throw new AppError('No pending email verification for this account', 400);
+  }
+
+  if (!user.emailOtpHash || !user.emailOtpExpires || user.emailOtpExpires.getTime() < Date.now()) {
+    throw new AppError('Code has expired. Please request a new one.', 400);
+  }
+
+  if ((user.emailOtpAttempts ?? 0) >= EMAIL_OTP_MAX_ATTEMPTS) {
+    throw new AppError('Too many incorrect attempts. Please request a new code.', 429);
+  }
+
+  const expected = Buffer.from(user.emailOtpHash, 'hex');
+  const actual = Buffer.from(hashEmailOtp(otp.trim()), 'hex');
+  if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+    user.emailOtpAttempts = (user.emailOtpAttempts ?? 0) + 1;
+    await user.save();
+    throw new AppError('Invalid verification code', 400);
+  }
+
+  user.emailVerified = true;
+  user.emailOtpHash = undefined;
+  user.emailOtpExpires = undefined;
+  user.emailOtpAttempts = undefined;
+  user.emailOtpLastSentAt = undefined;
+  await user.save();
+
+  logger.info(`Email verified for: ${user.email}`);
+
+  return buildLoginResponse(user);
 };
 
 /**
  * Login user with phone/email and password
  */
-export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
+export const login = async (
+  data: ILoginRequest,
+): Promise<ILoginResponse | (IAuthResponse & IEmailVerificationRequired)> => {
   const { email, password } = data;
 
   if (!email) {
@@ -144,30 +271,28 @@ export const login = async (data: ILoginRequest): Promise<ILoginResponse> => {
     throw new UnauthorizedError('Invalid credentials');
   }
 
-  const requiresPolicyAcceptance =
-    signUpUser.termsVersion !== CURRENT_TERMS_VERSION ||
-    signUpUser.privacyVersion !== CURRENT_PRIVACY_VERSION;
+  // Email signups must verify their OTP before they get a session.
+  if (signUpUser.emailVerified === false) {
+    const pendingUser = await SignUp.findById(signUpUser.id).select(EMAIL_OTP_SELECT);
+    if (pendingUser && !isEmailOtpCooldownActive(pendingUser)) {
+      try {
+        await issueEmailOtp(pendingUser);
+      } catch (error) {
+        logger.error(`Failed to send login OTP to ${signUpUser.email}:`, error);
+      }
+    }
+    logger.info(`Login pending email verification: ${signUpUser.email}`);
+    return {
+      Response: userToIUser(signUpUser),
+      ...emailVerificationPayload(signUpUser.email),
+    };
+  }
 
   logger.info(`User logged in: ${signUpUser.email}`);
 
-  // Generate token
-  const token = generateToken({
-    userId: signUpUser.id,
-    email: signUpUser.email,
-    role: signUpUser.role,
-    phone: signUpUser.phone,
-  });
-
   // Note: Greeting notification is now sent after FCM token registration
   // This ensures the token is available before sending the notification
-
-  return ({
-    Response: userToIUser(signUpUser),
-    token,
-    requiresPolicyAcceptance,
-    currentTermsVersion: CURRENT_TERMS_VERSION,
-    currentPrivacyVersion: CURRENT_PRIVACY_VERSION,
-  });
+  return buildLoginResponse(signUpUser);
 };
 
 export const acceptPolicy = async (userId: string, data: IPolicyAcceptanceRequest): Promise<IAuthResponse> => {
