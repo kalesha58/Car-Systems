@@ -18,8 +18,11 @@ import {
 } from '../types/auth';
 import { AppError, ConflictError, UnauthorizedError } from '../utils/errorHandler';
 import { logger } from '../utils/logger';
-import { sendPasswordResetCodeEmail, sendPasswordResetSuccessEmail } from '../utils/emailService';
-import { sendEmailVerificationOtp } from '../utils/resendEmailService';
+import {
+  sendEmailVerificationOtp,
+  sendPasswordResetCodeEmail,
+  sendPasswordResetSuccessEmail,
+} from '../utils/resendEmailService';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30d';
@@ -342,7 +345,7 @@ export const forgotPassword = async (data: IForgotPasswordRequest): Promise<{ su
   }
 
   // Generate 6-digit reset code
-  const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const resetCode = crypto.randomInt(100000, 1000000).toString();
   
   // Hash the code before storing (for security)
   const hashedCode = crypto.createHash('sha256').update(resetCode).digest('hex');
@@ -419,6 +422,10 @@ export const resetPassword = async (data: IResetPasswordRequest): Promise<{ succ
 
   // Update password
   user.password = password;
+  // Receiving the reset code proves the user owns this email.
+  if (user.emailVerified === false) {
+    user.emailVerified = true;
+  }
   user.resetPasswordCode = undefined;
   user.resetPasswordCodeExpires = undefined;
   await user.save();
